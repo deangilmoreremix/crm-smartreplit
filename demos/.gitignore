@@ -1,0 +1,9 @@
+# Ignore all generated demo files
+output/
+*.mp4
+*.gif
+*.webm
+frames/
+
+# Keep the directory structure
+!.gitkeep

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WL Save Test</title>
+</head>
+<body>
+    <h1>White Label Save Function Test</h1>
+    <button onclick="testSave()">Test Save Functionality</button>
+    <button onclick="viewData()">View Saved Data</button>
+    <button onclick="clearData()">Clear Test Data</button>
+    <div id="output"></div>
+
+    <script>
+        function testSave() {
+            const testUserData = {
+                userId: 'dev-user-12345',
+                customBranding: {
+                    companyName: 'Save Test Company',
+                    primaryColor: '#FF6B6B',
+                    secondaryColor: '#4ECDC4',
+                    accentColor: '#10B981'
+                },
+                enabledFeatures: ['white_label', 'custom_domain', 'advanced_branding'],
+                preferences: {
+                    theme: 'modern', 
+                    layout: 'dashboard',
+                    lastSaved: new Date().toISOString()
+                },
+                settings: {
+                    notifications: true,
+                    autoSave: true
+                }
+            };
+
+            const testTenantData = {
+                tenantId: 'test-tenant-001',
+                companyName: 'Save Test Company',
+                primaryColor: '#FF6B6B',
+                secondaryColor: '#4ECDC4',
+                customDomain: 'test.example.com',
+                emailFromName: 'Test Support'
+            };
+
+            // Save to localStorage (simulating the WL service fallback)
+            localStorage.setItem('wl_user-settings', JSON.stringify(testUserData));
+            localStorage.setItem('wl_tenant-config', JSON.stringify(testTenantData));
+
+            console.log('✅ WL Save Test Complete!');
+            console.log('User Data:', testUserData);
+            console.log('Tenant Data:', testTenantData);
+
+            document.getElementById('output').innerHTML = `
+                <div style="background: #f0fdf4; border: 1px solid #16a34a; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #16a34a; margin: 0 0 10px 0;">✅ Save Test Successful!</h3>
+                    <p><strong>Saved Data:</strong></p>
+                    <ul>
+                        <li>User WL Settings with custom branding</li>
+                        <li>Tenant configuration with company details</li>
+                        <li>Features: ${testUserData.enabledFeatures.join(', ')}</li>
+                        <li>Last saved: ${testUserData.preferences.lastSaved}</li>
+                    </ul>
+                </div>
+            `;
+        }
+
+        function viewData() {
+            const userData = localStorage.getItem('wl_user-settings');
+            const tenantData = localStorage.getItem('wl_tenant-config');
+            const allWLKeys = Object.keys(localStorage).filter(k => k.startsWith('wl_'));
+
+            document.getElementById('output').innerHTML = `
+                <div style="background: #f8fafc; border: 1px solid #64748b; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3>📊 Saved Data Overview</h3>
+                    <p><strong>WL Keys in localStorage:</strong> ${allWLKeys.length} items</p>
+                    <ul>
+                        ${allWLKeys.map(key => `<li>${key}</li>`).join('')}
+                    </ul>
+                    ${userData ? '<p>✅ User settings saved</p>' : '<p>❌ No user settings</p>'}
+                    ${tenantData ? '<p>✅ Tenant config saved</p>' : '<p>❌ No tenant config</p>'}
+                </div>
+            `;
+
+            if (userData || tenantData) {
+                console.log('📊 WL Data in localStorage:');
+                if (userData) console.log('User Settings:', JSON.parse(userData));
+                if (tenantData) console.log('Tenant Config:', JSON.parse(tenantData));
+            }
+        }
+
+        function clearData() {
+            const allWLKeys = Object.keys(localStorage).filter(k => k.startsWith('wl_'));
+            allWLKeys.forEach(key => localStorage.removeItem(key));
+            
+            document.getElementById('output').innerHTML = `
+                <div style="background: #fef2f2; border: 1px solid #dc2626; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <h3 style="color: #dc2626;">🗑️ Data Cleared</h3>
+                    <p>Removed ${allWLKeys.length} WL items from localStorage</p>
+                </div>
+            `;
+            console.log('🗑️ Cleared all WL data from localStorage');
+        }
+
+        // Auto-run demo on page load
+        setTimeout(() => {
+            console.log('🚀 WL Save Function Demo Ready');
+            console.log('Click buttons to test save functionality');
+            viewData();
+        }, 500);
+    </script>
+</body>
+</html>

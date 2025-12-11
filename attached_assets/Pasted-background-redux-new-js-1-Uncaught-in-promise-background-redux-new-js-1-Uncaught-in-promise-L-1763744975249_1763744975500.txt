@@ -1,0 +1,1038 @@
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+ Loading content_topFrameLifeline.js
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ [Coframe] Replit Enterprise watcher loaded
+ [HMR] Waiting for update signal from WDS...
+ All: content script loaded
+ HelpViber: Injected successfully on REPLIT platform.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+ [LaunchDarkly] LaunchDarkly client initialized
+web-client-content-script.js:2 Uncaught 
+web-client-content-script.js:2 Uncaught 
+web-client-content-script.js:2 Uncaught 
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+background-redux-new.js:1 Uncaught (in promise) 
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ Adding extension: Prettier - Code Formatter Object
+ Adding extension: ZIP Extractor Object
+ task queue exceeded allotted deadline by 43ms
+(anonymous) @ 12554fc973475a41.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ [Coframe] Mutation callback infinite loop protection triggered, disconnecting mutation observer Object
+(anonymous) @ 12554fc973475a41.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ 
+le @ background-redux-new.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ task queue exceeded allotted deadline by 235ms
+(anonymous) @ 12554fc973475a41.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ 
+le @ background-redux-new.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'battery'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'layout-animations'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'legacy-image-formats'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'navigation-override'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'oversized-images'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'publickey-credentials'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'unoptimized-images'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Unrecognized feature: 'unsized-media'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ar19a%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+workspace_iframe.html?initialPath=%2Fsignin&id=%3Ar19a%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html?initialPath=%2Fsignin&id=%3Ar19a%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+injected.js:37 🔍 Supabase URL: https://gadedbrnqzpfqtsdfzcg.supabase.co
+injected.js:37 🔍 Supabase Anon Key: ***Q1e4
+injected.js:37 Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+(anonymous) @ injected.js:37
+injected.js:37 Connecting to WebSocket signaling server: wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/signaling
+injected.js:37 🔄 Initializing Universal Data Sync Service
+injected.js:37 ✅ User role loaded: Object
+injected.js:37 ✅ WebSocket connected to signaling server
+injected.js:37 Auth state changed: INITIAL_SESSION 5178b85a-8007-4e7f-8ade-53efcadba5e3
+injected.js:37 Supabase AI service connected successfully
+injected.js:37 GPT5Service: API status checked Object
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028458766.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028459058.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028459058.
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+injected.js:37 Auth state changed: TOKEN_REFRESHED 5178b85a-8007-4e7f-8ade-53efcadba5e3

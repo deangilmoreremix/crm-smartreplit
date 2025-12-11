@@ -1,0 +1,110 @@
+{
+  "outputDir": "screenshots",
+  "defaultWait": 1200,
+  "viewports": {
+    "desktop": { "width": 1440, "height": 900 },
+    "tablet":  { "width": 834, "height": 1112 },
+    "mobile":  { "width": 390, "height": 844 }
+  },
+  "themes": ["light", "dark"],
+  "auth": {
+    "enabled": false,
+    "loginUrl": "https://smartcrm-videoremix.replit.app/login",
+    "usernameSelector": "#email",
+    "passwordSelector": "#password",
+    "submitSelector": "button[type='submit']",
+    "username": "admin@smartcrm.com",
+    "password": "changeme"
+  },
+  "pages": [
+    {
+      "name": "FE_Dashboard",
+      "url": "https://smartcrm-videoremix.replit.app/app/dashboard",
+      "shots": [
+        { "label": "dashboard-full", "fullPage": true },
+        { "label": "kpi-cards", "selector": "[data-testid='kpi-cards']" },
+        { "label": "recent-activity", "selector": "[data-testid='recent-activity']" },
+        { "label": "tasks-funnel", "selector": "[data-testid='tasks-and-funnel']" }
+      ]
+    },
+    {
+      "name": "FE_Contacts",
+      "url": "https://smartcrm-videoremix.replit.app/app/contacts",
+      "shots": [
+        { "label": "contacts-list", "selector": "[data-testid='contacts-list']" },
+        { "label": "contact-card", "selector": "[data-testid='contact-card']:nth-of-type(1)" },
+        { "label": "ai-insights-panel", "selector": "[data-testid='ai-insights-panel']" }
+      ]
+    },
+    {
+      "name": "FE_Pipeline",
+      "url": "https://smartcrm-videoremix.replit.app/app/pipeline",
+      "shots": [
+        { "label": "pipeline-full", "fullPage": true },
+        { "label": "kanban-board", "selector": "[data-testid='kanban-board']" },
+        { "label": "deal-card", "selector": "[data-testid='deal-card']:nth-of-type(1)" },
+        { "label": "pipeline-stats", "selector": "[data-testid='pipeline-stats']" }
+      ]
+    },
+    {
+      "name": "FE_Calendar",
+      "url": "https://smartcrm-videoremix.replit.app/app/calendar",
+      "shots": [
+        { "label": "calendar-month", "selector": "[data-testid='calendar-month']" },
+        { "label": "calendar-kanban", "selector": "[data-testid='calendar-kanban']" },
+        { "label": "calendar-list", "selector": "[data-testid='calendar-list']" }
+      ]
+    },
+    {
+      "name": "OTO1_AIAgencySuite",
+      "url": "https://tubular-choux-2a9b3c.netlify.app",
+      "shots": [{ "label": "ai-agency-suite", "fullPage": true }]
+    },
+    {
+      "name": "OTO1_ProductResearch",
+      "url": "https://clever-syrniki-4df87f.netlify.app",
+      "shots": [{ "label": "product-research", "fullPage": true }]
+    },
+    {
+      "name": "OTO1_InsightsAI_Dashboard",
+      "url": "https://analytics-dashboard-mv66.bolt.host/",
+      "shots": [{ "label": "insights-ai", "fullPage": true }]
+    },
+    {
+      "name": "OTO2_AIBoost_Upsell",
+      "url": "https://smartcrm-videoremix.replit.app/upsell/ai-boost-unlimited",
+      "shots": [{ "label": "ai-boost-upsell", "fullPage": true }]
+    },
+    {
+      "name": "OTO3_CommunicationSuite",
+      "url": "https://smartcrm-videoremix.replit.app/app/communications",
+      "shots": [
+        { "label": "video-email", "selector": "[data-testid='video-email']" },
+        { "label": "sms-center", "selector": "[data-testid='sms-center']" },
+        { "label": "voip-dialer", "selector": "[data-testid='voip-dialer']" },
+        { "label": "invoicing", "selector": "[data-testid='invoicing']" },
+        { "label": "forms-surveys", "selector": "[data-testid='forms-surveys']" }
+      ]
+    },
+    {
+      "name": "OTO4_SalesMaximizer_Remote",
+      "url": "https://magnificent-lamington-619374.netlify.app",
+      "shots": [{ "label": "sales-maximizer", "fullPage": true }]
+    },
+    {
+      "name": "OTO4_ReferralMaximizer_Remote",
+      "url": "https://eloquent-kleicha-7e3a3e.netlify.app",
+      "shots": [{ "label": "referral-maximizer", "fullPage": true }]
+    },
+    {
+      "name": "OTO4_ContentAI_Remote",
+      "url": "https://social-media-calenda-75j1.bolt.host/",
+      "shots": [{ "label": "content-ai", "fullPage": true }]
+    },
+    {
+      "name": "OTO4_BusinessIntel_InApp",
+      "url": "https://smartcrm-videoremix.replit.app/app/intel",
+      "shots": [{ "label": "business-intel", "fullPage": true }]
+    }
+  ]
+}

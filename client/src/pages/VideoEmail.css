@@ -1,0 +1,93 @@
+/* Video Email Component Styles */
+
+/* Filter styles */
+.filter {
+  filter: var(--filter-value);
+}
+
+/* Video controls */
+.video-controls {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.video-container:hover .video-controls {
+  opacity: 1;
+}
+
+/* Trimmer slider styling */
+.trim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4f46e5;
+  cursor: pointer;
+}
+
+.trim-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4f46e5;
+  cursor: pointer;
+}
+
+/* Overlay text styles */
+.overlay-text {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+/* Record button pulse animation */
+.record-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Talking points animation */
+.talking-point {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Preview thumbnail hover effect */
+.thumbnail-preview {
+  transition: transform 0.2s ease;
+}
+
+.thumbnail-preview:hover {
+  transform: scale(1.05);
+}
+
+/* Filter preview thumbnails */
+.filter-option {
+  transition: all 0.2s ease;
+}
+
+.filter-option:hover {
+  transform: translateY(-2px);
+}
+
+.filter-option.selected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}

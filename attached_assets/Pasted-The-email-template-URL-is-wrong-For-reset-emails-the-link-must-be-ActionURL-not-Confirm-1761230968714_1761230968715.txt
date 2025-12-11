@@ -1,0 +1,135 @@
+The email template URL is wrong
+For reset emails, the link must be {{ .ActionURL }} (not {{ .ConfirmationURL }}). You’ve already corrected this—good.
+Redirect/domain not allowed in Auth settings
+In Supabase Dashboard → Authentication → URL Configuration:
+Add your reset route to “Redirect URLs” (Allowed URLs), e.g.:
+https://your-domain.com/auth/reset-password
+http://localhost:3000/auth/reset-password (for local dev)
+Ensure “Site URL” is your main app origin, not a docs/marketing page.
+Your frontend route isn’t handling the token
+Your /auth/reset-password page must:
+Read access_token (or token_hash/session) from the URL (either as a query param or fragment).
+Set the session using supabase.auth.exchangeCodeForSession if using a code flow.
+Call supabase.auth.updateUser({ password: 'newpass' }) after user enters a new password.
+Avoid redirecting away before updateUser completes.
+Minimal client flow example (Next.js/React)
+
+// /auth/reset-password page
+
+import
+ { createClient } 
+from
+ 
+'@supabase/supabase-js'
+
+const
+ supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+export
+ 
+default
+ 
+function
+ 
+ResetPassword
+(
+) 
+{
+  useEffect(
+() =>
+ {
+    
+const
+ url = 
+new
+ URL(
+window
+.location.href)
+    
+// 1) If OAuth/code flow, exchange the code for a session first
+
+    
+const
+ code = url.searchParams.get(
+'code'
+)
+    
+if
+ (code) {
+      supabase.auth.exchangeCodeForSession(code).catch(
+console
+.error)
+    }
+    
+// If password reset arrives as access_token (fragment or query), supabase-js will often pick it up automatically.
+
+    
+// You can also read from hash: new URLSearchParams(window.location.hash.slice(1)).get('access_token')
+
+  }, [])
+  
+const
+ onSubmit = 
+async
+ (newPassword: 
+string
+) => {
+    
+const
+ { data, error } = 
+await
+ supabase.auth.updateUser({ 
+password
+: newPassword })
+    
+if
+ (error) {
+      
+// show error to user
+
+      
+return
+
+    }
+    
+// redirect to app or login
+
+    
+window
+.location.href = 
+'/app'
+
+  }
+  
+return
+ 
+/* render form that calls onSubmit */
+
+}
+
+Automatic redirect happening too early
+Common pitfall: global auth guard redirects unauthenticated users from /auth/reset-password to the landing page before the token is processed.
+Fix: mark /auth/reset-password as a public route in your middleware/guard, or defer the redirect until after you’ve attempted token/session handling:
+Example: In Next.js middleware, exclude /auth/reset-password from protected routes.
+In React router guards, allow this route to render without requiring an active session.
+Token is expired or already used
+Reset links typically expire in 24 hours and are single-use. If expired or consumed, Supabase won’t be able to create a session and your guard may bounce the user.
+Try generating a fresh reset email and test again.
+Quick checklist
+
+Email template uses {{ .ActionURL }}.
+Auth → URL Configuration includes your reset route in Allowed URLs.
+Your route is publicly accessible (not blocked by auth middleware).
+The page reads the code/access_token and calls updateUser correctly.
+No automatic redirects fire before the reset flow completes.
+Test with a fresh reset link.
+If you can share:
+
+Your app framework (Next.js, React Router, etc.)
+How you guard routes (middleware/guards)
+The exact URL you land on from the email I can give you precise code for your setup.
+Regarding “check for superadmin users”
+
+If you want to enforce that only superadmins can reset via a special route or access certain pages, store a role/flag (e.g., user_profiles.is_superadmin) and attach it as a JWT claim or fetch it client-side after session.
+For sensitive admin pages, use RLS and server-side checks. If you want, tell me where you store superadmin status (table/column name), and I’ll provide the SQL policy and a minimal check in your app.
+
+

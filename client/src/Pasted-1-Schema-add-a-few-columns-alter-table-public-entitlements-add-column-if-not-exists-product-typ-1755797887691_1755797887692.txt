@@ -1,0 +1,157 @@
+1) Schema (add a few columns)
+alter table public.entitlements
+  add column if not exists product_type text check (product_type in ('lifetime','monthly','yearly','payment_plan')),
+  add column if not exists revoke_at timestamptz,                -- when access should flip off (UTC)
+  add column if not exists last_invoice_status text,             -- paid | open | uncollectible | void | failed
+  add column if not exists delinquency_count int default 0;      -- for payment plan misses
+
+
+Notes
+
+Keep status as your real-time flag (active, past_due, canceled, refunded, etc.).
+
+Use revoke_at for your rule-based “future cutoff”. UI checks status === 'active' AND now < revoke_at (if set).
+
+2) Put the plan type in checkout metadata
+
+When you create the checkout (Stripe or Zaxaa), include:
+
+metadata: {
+  user_id: supabaseUserId,
+  product_type: 'monthly' | 'yearly' | 'lifetime' | 'payment_plan'
+}
+
+
+That one field lets your webhooks apply the correct rule.
+
+3) Webhook logic (Stripe/Zaxaa) — how to set revoke_at
+
+Pseudocode—apply the same in both your stripe-webhook and zaxaa-webhook Edge Functions you already have.
+
+Helpers
+import { DateTime } from "npm:luxon"; // Deno: use a TS date util or hand-roll; server TZ is UTC.
+
+// Compute revocation boundaries in America/New_York, then convert to UTC.
+const ZONE = "America/New_York";
+
+function startOfNextMonthUTC(nowISO: string): string {
+  const dt = DateTime.fromISO(nowISO, { zone: ZONE }).startOf('month').plus({ months: 1 });
+  return dt.toUTC().toISO();
+}
+
+function startOfNextYearUTC(nowISO: string): string {
+  const dt = DateTime.fromISO(nowISO, { zone: ZONE }).startOf('year').plus({ years: 1 });
+  return dt.toUTC().toISO();
+}
+
+On successful purchase / renewal
+const now = new Date().toISOString();
+const pt = metadata.product_type as 'lifetime'|'monthly'|'yearly'|'payment_plan';
+
+let revoke_at: string | null = null;
+
+if (pt === 'lifetime') {
+  revoke_at = null; // never revoke
+}
+if (pt === 'monthly') {
+  revoke_at = startOfNextMonthUTC(now); // revoke at 12:00am ET next month
+}
+if (pt === 'yearly') {
+  revoke_at = startOfNextYearUTC(now); // revoke at 12:00am ET next year
+}
+if (pt === 'payment_plan') {
+  revoke_at = startOfNextMonthUTC(now); // default rolling window; only enforced on miss
+}
+
+await upsertEntitlement({
+  status: 'active',
+  product_type: pt,
+  revoke_at,
+  last_invoice_status: 'paid',
+  delinquency_count: 0
+});
+
+On invoice paid (recurring)
+
+Monthly/Yearly: refresh revoke_at to the next boundary again.
+
+Payment plan: set last_invoice_status='paid', keep delinquency_count at 0.
+
+On payment failure / past_due
+
+Monthly: don’t revoke immediately; keep status='past_due', do not change revoke_at (it already points to the first of next month). If they pay before that date, a later invoice.paid will push revoke_at again.
+
+Yearly: same idea; keep access until startOfNextYear.
+
+Payment plan: the first failed installment should revoke immediately:
+
+if (pt === 'payment_plan') {
+  await upsertEntitlement({
+    status: 'past_due',
+    delinquency_count: (existing?.delinquency_count ?? 0) + 1,
+    revoke_at: new Date().toISOString() // immediate lock
+  });
+}
+
+
+If you receive a later invoice.paid (they caught up), you can restore status='active' and set revoke_at to the next calendar boundary.
+
+On cancellation
+
+Monthly: leave access until the next month start (don’t change revoke_at if it already points there).
+
+Yearly: leave until next year start.
+
+Payment plan: if the plan is canceled early → revoke now.
+
+On refunds
+
+You said: one-time (lifetime) should not revoke at all. So ignore refunds for product_type='lifetime'.
+
+For the others, follow your policy (commonly revoke now). If you want to keep the month/year access even on refund, simply don’t change status/revoke_at.
+
+4) Enforce revocations with a tiny scheduled function
+
+Create a Supabase Edge Function (e.g., entitlements-sweeper) and schedule it hourly:
+
+// supabase/functions/entitlements-sweeper/index.ts
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+Deno.serve(async () => {
+  const now = new Date().toISOString();
+
+  // Any entitlement whose revoke_at has passed but still says active/past_due -> flip to inactive
+  const { data, error } = await supabase
+    .from('entitlements')
+    .select('user_id, status, revoke_at')
+    .not('revoke_at', 'is', null)
+    .lte('revoke_at', now);
+
+  if (!error && data?.length) {
+    for (const row of data) {
+      if (row.status !== 'inactive') {
+        await supabase.from('entitlements')
+          .update({ status: 'inactive', updated_at: now })
+          .eq('user_id', row.user_id);
+      }
+    }
+  }
+
+  return new Response('ok');
+});
+
+
+Schedule it in Supabase: run hourly (or every 15 min). This guarantees the “beginning of next month/year” flip happens even if no new webhook arrives that day.
+
+5) Frontend gating
+
+In your RequireActive guard:
+
+Fetch entitlements for the logged-in user.
+
+Treat as active only if status === 'active' and either revoke_at is null or now < revoke_at.
+
+const now = Date.now();
+const isActive = ent.status === 'active' && (!ent.revoke_at || new Date(ent.revoke_at).getTime() > now);

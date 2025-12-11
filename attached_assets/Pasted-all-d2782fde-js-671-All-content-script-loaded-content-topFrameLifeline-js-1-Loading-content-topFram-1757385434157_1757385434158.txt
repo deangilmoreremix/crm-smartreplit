@@ -1,0 +1,33 @@
+all.d2782fde.js:671 All: content script loaded
+content_topFrameLifeline.js:1 Loading content_topFrameLifeline.js
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+index.js:1410 [HMR] Waiting for update signal from WDS...
+index-BRHXOdAN.js:1699 🚀 Starting Universal Data Sync System
+index-BRHXOdAN.js:1297 🔄 Initializing Universal Data Sync Service
+index-BRHXOdAN.js:1287 Auth state changed: INITIAL_SESSION undefined
+api/auth/user-role:1  Failed to load resource: the server responded with a status of 403 ()
+index-BRHXOdAN.js:50 Throttling navigation to prevent the browser from hanging. See https://crbug.com/1038223. Command line switch --disable-ipc-flooding-protection can be used to bypass the protection
+m @ index-BRHXOdAN.js:50
+index-BRHXOdAN.js:1297 GPT5Service: API status checked Object
+index-BRHXOdAN.js:1287 Tab clicked: dashboard Dashboard
+index-BRHXOdAN.js:1287 Navigation triggered: Object
+index-BRHXOdAN.js:50 Throttling navigation to prevent the browser from hanging. See https://crbug.com/1038223. Command line switch --disable-ipc-flooding-protection can be used to bypass the protection
+m @ index-BRHXOdAN.js:50
+index-BRHXOdAN.js:1287 Tab clicked: dashboard Dashboard
+index-BRHXOdAN.js:1287 Navigation triggered: Object
+index-BRHXOdAN.js:1287 Tab clicked: contacts Contacts
+index-BRHXOdAN.js:1287 Navigation triggered: Object
+index-BRHXOdAN.js:1287 Tab clicked: dashboard Dashboard
+index-BRHXOdAN.js:1287 Navigation triggered: Object
+index-BRHXOdAN.js:1287 Tab clicked: pipeline Pipeline
+index-BRHXOdAN.js:1287 Navigation triggered: Object
+index-BRHXOdAN.js:1287 Tab clicked: pipeline Pipeline
+index-BRHXOdAN.js:1287 Navigation triggered: Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+index-BRHXOdAN.js:741 Supabase AI service connected successfully
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object

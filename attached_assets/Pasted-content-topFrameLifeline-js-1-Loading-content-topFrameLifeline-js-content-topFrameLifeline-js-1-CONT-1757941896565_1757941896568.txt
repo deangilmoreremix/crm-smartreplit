@@ -1,0 +1,117 @@
+content_topFrameLifeline.js:1 Loading content_topFrameLifeline.js
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+chunk-5MJJNU6A.js?v=96e65632:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+simple-peer.js?v=96e65632:879 Module "stream" has been externalized for browser compatibility. Cannot access "stream.Duplex" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+get @ simple-peer.js?v=96e65632:879
+index.js:1410 [HMR] Waiting for update signal from WDS...
+AuthContext.tsx:73 Using dev bypass session: dev@smartcrm.local
+App.tsx:202 🚀 Starting Universal Data Sync System
+universalDataSync.ts:32 🔄 Initializing Universal Data Sync Service
+VideoCallContext.tsx:126 Cleaning up video call...
+universalDataSync.ts:206 🔌 Universal Data Sync Service destroyed
+App.tsx:202 🚀 Starting Universal Data Sync System
+universalDataSync.ts:32 🔄 Initializing Universal Data Sync Service
+gpt5Service.ts:15 GPT5Service: API status checked Object
+Dashboard.tsx:89 Initializing dashboard...
+Dashboard.tsx:113 Dashboard initialized successfully
+chunk-5MJJNU6A.js?v=96e65632:1233 Error while parsing the 'sandbox' attribute: 'allow-navigation' is an invalid sandbox flag.
+setValueForProperty @ chunk-5MJJNU6A.js?v=96e65632:1233
+logger.service.ts:75 [INFO] Contacts fetched successfully 5 contacts loaded
+index-u6bYDQ3T.js:1 🔗 CRM Bridge initialized in remote app
+__federation_expose_App-CotsyXX9.js:1827 🔧 AppContent: Initializing application...
+__federation_expose_App-CotsyXX9.js:1827 🎨 Theme initialized: false
+__federation_expose_App-CotsyXX9.js:49 ✅ Supabase client initialized
+__federation_expose_App-CotsyXX9.js:1430 ✅ OpenAI Function Calling service initialized
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:1818 🔄 Pipeline: Loading data...
+__federation_expose_App-CotsyXX9.js:1827 🔧 AppContent: Initializing application...
+__federation_expose_App-CotsyXX9.js:1827 🎨 Theme initialized: true
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:49 ✅ Loaded 0 deals from database
+__federation_expose_App-CotsyXX9.js:1818 📊 Pipeline: Deals loaded: 6 deals
+__federation_expose_App-CotsyXX9.js:1818 💾 Pipeline: Data source: database
+__federation_expose_App-CotsyXX9.js:1818 ✅ Pipeline: Data loading complete
+__federation_expose_App-CotsyXX9.js:1435 ✅ Voice Assistant service initialized
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+__federation_expose_App-CotsyXX9.js:913 🔄 Attempting to use Real OpenAI Service...
+__federation_expose_App-CotsyXX9.js:1573 Gemini API key not found. Using mock responses.
+xhe @ __federation_expose_App-CotsyXX9.js:1573
+index-u6bYDQ3T.js:1 📢 Notifying CRM that remote app is ready
+index-u6bYDQ3T.js:1 ⚠️ Cannot send to CRM - no parent origin set
+sendToCRM @ index-u6bYDQ3T.js:1
+Navbar.tsx:400 Tab clicked: analytics Analytics
+Navbar.tsx:302 📊 Analytics action called, event: true
+Navbar.tsx:228 🔧 toggleDropdown called with: analytics event: true
+Navbar.tsx:232 🔄 activeDropdown changing from null to analytics
+main.tsx:37 🚨 Suppressed error to prevent runtime overlay: Script error.
+(anonymous) @ main.tsx:37
+main.tsx:63 🚨 Global onerror caught: Object
+window.onerror @ main.tsx:63
+main.tsx:95 🚨 Prevented error overlay: Script error.
+(anonymous) @ main.tsx:95
+main.tsx:37 🚨 Suppressed error to prevent runtime overlay: Script error.
+(anonymous) @ main.tsx:37
+main.tsx:63 🚨 Global onerror caught: Object
+window.onerror @ main.tsx:63
+main.tsx:95 🚨 Prevented error overlay: Script error.
+(anonymous) @ main.tsx:95
+supabaseAIService.ts:211 Supabase AI service connected successfully
+api/openai/kpi-analysis:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/openai/kpi-analysis:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/openai/kpi-analysis:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/openai/kpi-analysis:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/openai/business-intelligence:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api/openai/business-intelligence:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+Navbar.tsx:400 Tab clicked: analytics Analytics
+Navbar.tsx:302 📊 Analytics action called, event: true
+Navbar.tsx:228 🔧 toggleDropdown called with: analytics event: true
+Navbar.tsx:232 🔄 activeDropdown changing from analytics to null
+Navbar.tsx:400 Tab clicked: analytics Analytics
+Navbar.tsx:302 📊 Analytics action called, event: true
+Navbar.tsx:228 🔧 toggleDropdown called with: analytics event: true
+Navbar.tsx:232 🔄 activeDropdown changing from null to analytics
+Navbar.tsx:400 Tab clicked: ai-tools AI Tools
+Navbar.tsx:322 🤖 AI Tools action called, event: true
+Navbar.tsx:228 🔧 toggleDropdown called with: ai-tools event: true
+Navbar.tsx:232 🔄 activeDropdown changing from analytics to ai-tools
+Navbar.tsx:400 Tab clicked: ai-tools AI Tools
+Navbar.tsx:322 🤖 AI Tools action called, event: true
+Navbar.tsx:228 🔧 toggleDropdown called with: ai-tools event: true
+Navbar.tsx:232 🔄 activeDropdown changing from ai-tools to null
+Navbar.tsx:232 🔄 activeDropdown changing from ai-tools to null
+Navbar.tsx:228 🔧 toggleDropdown called with: sales event: true
+Navbar.tsx:232 🔄 activeDropdown changing from null to sales
+Navbar.tsx:232 🔄 activeDropdown changing from null to sales
+Navbar.tsx:228 🔧 toggleDropdown called with: sales event: true
+Navbar.tsx:232 🔄 activeDropdown changing from sales to null
+Navbar.tsx:232 🔄 activeDropdown changing from sales to null
+Navbar.tsx:228 🔧 toggleDropdown called with: apps event: true
+Navbar.tsx:232 🔄 activeDropdown changing from null to apps
+Navbar.tsx:232 🔄 activeDropdown changing from null to apps

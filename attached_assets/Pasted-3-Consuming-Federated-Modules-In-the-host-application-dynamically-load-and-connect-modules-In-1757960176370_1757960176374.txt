@@ -1,0 +1,114 @@
+3. Consuming Federated Modules
+In the host application, dynamically load and connect modules:
+
+// In your main app
+import { loadRemoteComponent } from './utils/moduleFederationLoader';
+
+const MyConnectedApp = () => {
+  const [modules, setModules] = useState({});
+  const [sharedData, setSharedData] = useState({});
+
+  useEffect(() => {
+    const loadModules = async () => {
+      const module1 = await loadRemoteComponent(
+        'https://module1.example.com',
+        'Module1App',
+        './Module1App'
+      );
+      
+      const module2 = await loadRemoteComponent(
+        'https://module2.example.com', 
+        'Module2App',
+        './Module2App'
+      );
+
+      setModules({ module1, module2 });
+    };
+
+    loadModules();
+  }, []);
+
+  // Handle cross-module communication
+  useEffect(() => {
+    const handleModuleMessage = (event: MessageEvent) => {
+      switch (event.data.type) {
+        case 'MODULE_DATA_UPDATED':
+          // Update shared state
+          setSharedData(prev => ({
+            ...prev,
+            [event.data.module]: event.data.data
+          }));
+          break;
+        case 'MODULE_READY':
+          console.log(`${event.data.module} is ready`);
+          break;
+      }
+    };
+
+    window.addEventListener('message', handleModuleMessage);
+    return () => window.removeEventListener('message', handleModuleMessage);
+  }, []);
+
+  return (
+    <div>
+      {modules.module1 && (
+        <modules.module1 
+          sharedState={sharedData}
+          onDataUpdate={(data) => {
+            // Handle data updates from module1
+            setSharedData(prev => ({...prev, module1: data}));
+          }}
+        />
+      )}
+      
+      {modules.module2 && (
+        <modules.module2 
+          sharedState={sharedData}
+          onDataUpdate={(data) => {
+            // Handle data updates from module2
+            setSharedData(prev => ({...prev, module2: data}));
+          }}
+        />
+      )}
+    </div>
+  );
+};
+4. Data Passing Mechanisms
+Props Interface
+Pass initial data and callbacks through component props
+Best for parent-child relationships
+PostMessage API
+Cross-origin communication between modules
+Use for real-time updates and events
+Shared State Management
+Implement a shared state store (Redux, Zustand, etc.)
+Modules can subscribe to and update shared state
+Event Bus Pattern
+// Create a global event bus
+class EventBus {
+  private listeners: { [key: string]: Function[] } = {};
+
+  emit(event: string, data: any) {
+    this.listeners[event]?.forEach(callback => callback(data));
+  }
+
+  on(event: string, callback: Function) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(callback);
+  }
+}
+
+export const globalEventBus = new EventBus();
+5. Communication Flow Diagram
+Host App
+├── Module A (Federated)
+│   ├── Receives props from host
+│   ├── Emits postMessage events
+│   └── Updates shared state
+├── Module B (Federated)
+│   ├── Receives props from host
+│   ├── Listens to postMessage events
+│   └── Reads shared state
+└── Shared State Manager
+    ├── Manages cross-module data
+    └── Handles synchronization

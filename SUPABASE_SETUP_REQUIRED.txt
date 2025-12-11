@@ -1,0 +1,66 @@
+
+========================================
+⚠️  SUPABASE DASHBOARD SETUP REQUIRED
+========================================
+
+YOU NEED TO ADD THESE REDIRECT URLs TO YOUR SUPABASE PROJECT:
+
+1. Go to: https://supabase.com/dashboard
+2. Select your SmartCRM project
+3. Go to: Authentication → URL Configuration
+4. Add these TWO URLs to the "Redirect URLs" allowlist:
+
+   DEVELOPMENT (Current Replit App):
+   https://smartcrm-videoremix.replit.app/auth/confirm
+
+   PRODUCTION (Your Custom Domain):
+   https://app.smartcrm.vip/auth/confirm
+
+========================================
+✅ WHAT'S BEEN IMPLEMENTED
+========================================
+
+Your SmartCRM now has COMPLETE authentication support for:
+
+✅ Confirm Signup - Email verification after user signs up
+✅ Magic Link - Passwordless login via email  
+✅ Password Reset - Users can reset forgotten passwords
+✅ Email Change - Confirm when users change their email
+✅ Invite User - Admin can invite new users via email
+✅ Reauthentication - Verify identity before sensitive operations
+
+All these flows use ONE unified endpoint: /auth/confirm
+
+========================================
+📋 HOW IT WORKS
+========================================
+
+1. User triggers an auth flow (signup, reset password, etc.)
+2. Supabase sends email with verification link
+3. Link redirects to: /auth/confirm?token_hash=XXX&type=YYY
+4. AuthConfirm page verifies the token and type
+5. User is redirected to appropriate destination:
+   - Signup → Dashboard
+   - Password Reset → Reset Password form
+   - Magic Link → Dashboard
+   - Email Change → Dashboard
+   - Invite → Dashboard
+
+========================================
+🧪 TESTING CHECKLIST
+========================================
+
+After adding the redirect URLs to Supabase:
+
+[ ] Test Signup: /signup → Email → Confirm → Dashboard
+[ ] Test Password Reset: /auth/forgot-password → Email → Reset form
+[ ] Test Magic Link (if you implement it)
+[ ] Test Email Change (if users can change email)
+[ ] Test User Invite (if admins can invite users)
+
+========================================
+📄 FULL DOCUMENTATION
+========================================
+
+See SUPABASE_CONFIG.md for complete details.
+

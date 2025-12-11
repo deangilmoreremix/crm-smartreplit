@@ -1,0 +1,228 @@
+<!-- HTML Integration Example -->
+<!-- If you're using plain HTML/JavaScript instead of React -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline App with CRM Integration</title>
+    <style>
+        .connection-status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .deal-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Pipeline Management</h1>
+        
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="connection-status disconnected">
+            🔶 Connecting to CRM...
+        </div>
+        
+        <!-- Deals Container -->
+        <div id="dealsContainer">
+            <h2>Deals</h2>
+            <div id="dealsList"></div>
+            <button class="btn-primary" onclick="createSampleDeal()">Add Sample Deal</button>
+        </div>
+    </div>
+
+    <!-- Include the CRM bridge -->
+    <script src="integration-code.js"></script>
+    
+    <script>
+        // Your app's data
+        let deals = [];
+        let connectionStatus = { connected: false };
+
+        // Wait for CRM bridge to be ready
+        function initializeApp() {
+            if (window.crmBridge) {
+                console.log('🎉 CRM Bridge is ready!');
+                
+                // Override bridge methods to update our HTML app
+                window.crmBridge.updateLocalDeals = (newDeals) => {
+                    deals = newDeals;
+                    renderDeals();
+                };
+
+                window.crmBridge.updateLocalDeal = (dealId, updates) => {
+                    deals = deals.map(deal => 
+                        deal.id === dealId ? { ...deal, ...updates } : deal
+                    );
+                    renderDeals();
+                };
+
+                window.crmBridge.addLocalDeal = (deal) => {
+                    deals.push(deal);
+                    renderDeals();
+                };
+
+                window.crmBridge.removeLocalDeal = (dealId) => {
+                    deals = deals.filter(deal => deal.id !== dealId);
+                    renderDeals();
+                };
+
+                window.crmBridge.moveLocalDeal = (dealId, newStage, position) => {
+                    deals = deals.map(deal => 
+                        deal.id === dealId ? { ...deal, stage: newStage } : deal
+                    );
+                    renderDeals();
+                };
+
+                window.crmBridge.updateConnectionStatus = (connected, crmInfo) => {
+                    connectionStatus = { connected, crmInfo };
+                    renderConnectionStatus();
+                };
+
+                window.crmBridge.getCurrentPipelineData = () => {
+                    return {
+                        deals: deals,
+                        stages: ['Lead', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'],
+                        totalValue: deals.reduce((sum, deal) => sum + (deal.value || 0), 0),
+                        activeDeals: deals.filter(d => !['Closed Won', 'Closed Lost'].includes(d.stage)).length
+                    };
+                };
+
+                // Initial render
+                renderConnectionStatus();
+                renderDeals();
+            } else {
+                // Bridge not ready, try again
+                setTimeout(initializeApp, 100);
+            }
+        }
+
+        // Render connection status
+        function renderConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connectionStatus.connected) {
+                statusEl.className = 'connection-status connected';
+                statusEl.innerHTML = '🟢 Connected to CRM';
+                if (connectionStatus.crmInfo) {
+                    statusEl.innerHTML += ` - ${connectionStatus.crmInfo.name} v${connectionStatus.crmInfo.version}`;
+                }
+            } else {
+                statusEl.className = 'connection-status disconnected';
+                statusEl.innerHTML = '🔶 Standalone Mode';
+            }
+        }
+
+        // Render deals list
+        function renderDeals() {
+            const dealsListEl = document.getElementById('dealsList');
+            dealsListEl.innerHTML = deals.map(deal => `
+                <div class="deal-card">
+                    <h3>${deal.title}</h3>
+                    <p><strong>Value:</strong> $${deal.value || 0}</p>
+                    <p><strong>Stage:</strong> ${deal.stage}</p>
+                    <p><strong>Contact:</strong> ${deal.contactName || 'N/A'}</p>
+                    <button class="btn-success" onclick="updateDeal('${deal.id}', { value: ${(deal.value || 0) + 1000} })">
+                        Add $1000
+                    </button>
+                    <button class="btn-warning" onclick="moveDeal('${deal.id}', 'Negotiation')">
+                        Move to Negotiation
+                    </button>
+                    <button class="btn-primary" onclick="deleteDeal('${deal.id}')">
+                        Delete Deal
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Create a sample deal
+        function createSampleDeal() {
+            const newDeal = {
+                id: Date.now().toString(),
+                title: 'Sample Deal #' + Date.now(),
+                value: Math.floor(Math.random() * 10000) + 1000,
+                stage: 'Lead',
+                contactName: 'John Doe',
+                createdAt: new Date().toISOString()
+            };
+            
+            // Update local state
+            deals.push(newDeal);
+            renderDeals();
+            
+            // Notify CRM if connected
+            if (window.crmBridge) {
+                window.crmBridge.notifyDealCreated(newDeal);
+            }
+        }
+
+        // Update a deal
+        function updateDeal(dealId, updates) {
+            deals = deals.map(deal => 
+                deal.id === dealId ? { ...deal, ...updates } : deal
+            );
+            renderDeals();
+            
+            // Notify CRM if connected
+            if (window.crmBridge) {
+                const updatedDeal = deals.find(d => d.id === dealId);
+                if (updatedDeal) {
+                    window.crmBridge.notifyDealUpdated(updatedDeal);
+                }
+            }
+        }
+
+        // Move a deal between stages
+        function moveDeal(dealId, newStage) {
+            const deal = deals.find(d => d.id === dealId);
+            if (!deal) return;
+            
+            const oldStage = deal.stage;
+            
+            // Update local state
+            deals = deals.map(d => 
+                d.id === dealId ? { ...d, stage: newStage } : d
+            );
+            renderDeals();
+            
+            // Notify CRM if connected
+            if (window.crmBridge) {
+                window.crmBridge.notifyDealMoved(dealId, oldStage, newStage);
+            }
+        }
+
+        // Delete a deal
+        function deleteDeal(dealId) {
+            deals = deals.filter(deal => deal.id !== dealId);
+            renderDeals();
+            
+            // Notify CRM if connected
+            if (window.crmBridge) {
+                window.crmBridge.notifyDealDeleted(dealId);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

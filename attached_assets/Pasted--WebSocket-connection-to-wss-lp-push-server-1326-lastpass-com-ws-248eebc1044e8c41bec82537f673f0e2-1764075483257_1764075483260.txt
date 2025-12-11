@@ -1,0 +1,763 @@
+ WebSocket connection to 'wss://lp-push-server-1326.lastpass.com/ws/248eebc1044e8c41bec82537f673f0e2e7136e26f35162000dd6832308e5b7af' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED
+(anonymous) @ background-redux-new.js:2
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id separator <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password <URL>
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+ 
+le @ background-redux-new.js:2
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+background-redux-new.js:1 Uncaught (in promise) 
+ Loading content_topFrameLifeline.js
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ [Coframe] Replit Enterprise watcher loaded
+ [HMR] Waiting for update signal from WDS...
+ All: content script loaded
+ HelpViber: Injected successfully on REPLIT platform.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+ [LaunchDarkly] LaunchDarkly client initialized
+Framing 'https://www.google.com/' violates the following report-only Content Security Policy directive: "frame-ancestors 'self'". The violation has been logged, but no further action has been taken.
+
+web-client-content-script.js:2 Uncaught 
+/repls:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+ Adding extension: Prettier - Code Formatter Object
+ Adding extension: ZIP Extractor Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ task queue exceeded allotted deadline by 21ms
+(anonymous) @ af7e8e86b3c2492b.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+ Unrecognized feature: 'battery'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'layout-animations'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'legacy-image-formats'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'navigation-override'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'oversized-images'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'publickey-credentials'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'unoptimized-images'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'unsized-media'.
+z @ ed1e693c96a75807.js:2
+ Unrecognized feature: 'pointer-lock'.
+z @ ed1e693c96a75807.js:2
+ Allow attribute will take precedence over 'allowfullscreen'.
+z @ ed1e693c96a75807.js:2
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+z @ ed1e693c96a75807.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ stallwart: failed ping 1
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ 
+le @ background-redux-new.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ [Coframe] Mutation callback infinite loop protection triggered, disconnecting mutation observer Object
+(anonymous) @ af7e8e86b3c2492b.js:2
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+ CONTENT <-> SERVICE LIFELINE: TIMEOUT
+ CONTENT <-> SERVICE LIFELINE: CONNECT
+ CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Ar1e3%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ WebSocket connection to 'wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/?token=QQFP85Mu-RkT' failed: 
+createConnection @ client:745
+ WebSocket connection to 'wss://localhost:5173/?token=QQFP85Mu-RkT' failed: 
+createConnection @ client:755
+ [vite] failed to connect to websocket.
+your current setup:
+  (browser) 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev:/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+(anonymous) @ injected.js:37
+ 🔍 Supabase URL: https://gadedbrnqzpfqtsdfzcg.supabase.co
+ 🔍 Supabase Anon Key: ***Q1e4
+ Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+(anonymous) @ injected.js:37
+ Module "stream" has been externalized for browser compatibility. Cannot access "stream.Duplex" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+(anonymous) @ injected.js:37
+ Connecting to WebSocket signaling server: wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/signaling
+ Using dev bypass session: dev@smartcrm.local
+ 🔄 Initializing Universal Data Sync Service
+ Cleaning up video call...
+ 🔌 Universal Data Sync Service destroyed
+ Connecting to WebSocket signaling server: wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/signaling
+ 🔄 Initializing Universal Data Sync Service
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ ParallaxHero component mounted
+ Updating parallax scroll position: 0
+ ParallaxHero container element: 
+ Container styles: Object
+ Icons container: 
+ Parallax items count: 7
+ Parallax icons rendered: 7
+ 🔧 Dev environment check: Object
+ 🔧 Dev mode from localStorage: true
+ ParallaxHero component mounted
+ Updating parallax scroll position: 0
+ ParallaxHero container element: 
+ Container styles: Object
+ Icons container: 
+ Parallax items count: 7
+ Parallax icons rendered: 7
+ 🔧 Dev environment check: Object
+ 🔧 Dev mode from localStorage: true
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ Updating parallax scroll position: 0
+ ParallaxHero container element: 
+ Container styles: Object
+ Icons container: 
+ Parallax items count: 7
+ Parallax icons rendered: 7
+ ✅ User role loaded: Object
+ ✅ User role loaded: Object
+ ✅ WebSocket connected to signaling server
+ GPT5Service: API status checked Object
+ Supabase AI service connected successfully
+ ✅ WebSocket connected to signaling server
+ 🔴 DEV BUTTON CLICKED! Object
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ 🔴 DEV BUTTON CLICKED! Object
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ LandingHeader component rendering
+ WhitelabelContext working, config: Object
+ 🔧 DevBypassButton: Rendering with isDev= false , isDevMode= false
+ 🔧 DevBypassButton: Not in dev, returning null
+ 🔧 DevBypassButton: Rendering with isDev= false , isDevMode= false
+ 🔧 DevBypassButton: Not in dev, returning null
+ 🔧 DevBypassButton: Current hostname: 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev
+ 🔧 DevBypassButton: Is dev environment? true
+ 🔧 DevBypassButton: Dev mode currently enabled? true
+ Initializing dashboard...
+ 🔧 DevBypassButton: Current hostname: 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev
+ 🔧 DevBypassButton: Is dev environment? true
+ 🔧 DevBypassButton: Dev mode currently enabled? true
+ 🔧 DevBypassButton: Rendering with isDev= false , isDevMode= false
+ 🔧 DevBypassButton: Not in dev, returning null
+ 🔧 DevBypassButton: Rendering with isDev= false , isDevMode= false
+ 🔧 DevBypassButton: Not in dev, returning null
+ 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+ 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+ 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+ 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 Dashboard initialized successfully
+ Unrecognized feature: 'pointer-lock'.
+setValueForProperty @ chunk-5MJJNU6A.js?v=20316638:1233
+ Error while parsing the 'sandbox' attribute: 'allow-navigation' is an invalid sandbox flag.
+setValueForProperty @ chunk-5MJJNU6A.js?v=20316638:1233
+injected.js:37 🚀 Attempting Module Federation for Pipeline...
+injected.js:37 🔄 Trying Module Federation script: https://cheery-syrniki-b5b6ca.netlify.app/remoteEntry.js
+injected.js:37 Starting auto-refresh for wl-remote-iframe every 120000ms
+injected.js:37 🚀 Loading Module Federation Analytics...
+injected.js:37 🔄 Trying Module Federation script: https://ai-analytics.smartcrm.vip/remoteEntry.js
+injected.js:37 Stopped auto-refresh for wl-remote-iframe
+injected.js:37 🚀 Attempting Module Federation for Pipeline...
+injected.js:37 🔄 Trying Module Federation script: https://cheery-syrniki-b5b6ca.netlify.app/remoteEntry.js
+injected.js:37 Starting auto-refresh for wl-remote-iframe every 120000ms
+injected.js:37 🚀 Loading Module Federation Analytics...
+injected.js:37 🔄 Trying Module Federation script: https://ai-analytics.smartcrm.vip/remoteEntry.js
+injected.js:37 [INFO] Contacts fetched successfully 5 contacts loaded
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 Tab clicked: admin Admin Panel
+injected.js:37 Navigation triggered: Object
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= false , isDevMode= false
+injected.js:37 🔧 DevBypassButton: Not in dev, returning null
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= false , isDevMode= false
+injected.js:37 🔧 DevBypassButton: Not in dev, returning null
+injected.js:37 Stopped auto-refresh for wl-remote-iframe
+injected.js:37 🔧 DevBypassButton: Current hostname: 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev
+injected.js:37 🔧 DevBypassButton: Is dev environment? true
+injected.js:37 🔧 DevBypassButton: Dev mode currently enabled? true
+injected.js:37 🔧 DevBypassButton: Current hostname: 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev
+injected.js:37 🔧 DevBypassButton: Is dev environment? true
+injected.js:37 🔧 DevBypassButton: Dev mode currently enabled? true
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/admin/stats:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+injected.js:37 Failed to fetch admin stats: Error: Failed to fetch admin stats
+    at fetchAdminStats (AdminDashboard.tsx:47:17)
+(anonymous) @ injected.js:37
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/admin/stats:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+injected.js:37 Failed to fetch admin stats: Error: Failed to fetch admin stats
+    at fetchAdminStats (AdminDashboard.tsx:47:17)
+(anonymous) @ injected.js:37
+injected.js:37 📺 Module Federation not available, using iframe fallback (remote app needs MF configuration)
+injected.js:37 📺 Module Federation not available, using iframe fallback (remote app needs MF configuration)
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 🔧 DevBypassButton: Rendering with isDev= true , isDevMode= true
+injected.js:37 🔄 Trying Module Federation script: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:37 🔍 Looking for Module Federation container: PipelineApp
+injected.js:37 ✅ Module Federation script loaded: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:37 🔄 Trying Module Federation script: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:37 🔍 Looking for Module Federation container: AnalyticsApp
+injected.js:37 🔄 Trying Module Federation script: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:37 🔍 Looking for Module Federation container: PipelineApp
+injected.js:37 ✅ Module Federation script loaded: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:37 🔄 Trying Module Federation script: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:37 🔍 Looking for Module Federation container: AnalyticsApp
+injected.js:37 ✅ Module Federation script loaded: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:37 ✅ Module Federation script loaded: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:37 ⏳ Still waiting for container "PipelineApp" (10/20)
+injected.js:37 ⏳ Still waiting for container "AnalyticsApp" (10/20)
+injected.js:37 ⏳ Still waiting for container "PipelineApp" (10/20)
+injected.js:37 ⏳ Still waiting for container "AnalyticsApp" (10/20)
+injected.js:37 ⏳ Still waiting for container "PipelineApp" (20/20)
+injected.js:37 ⏳ Still waiting for container "AnalyticsApp" (20/20)
+injected.js:37 ❌ Module Federation failed, using iframe fallback: SecurityError: Failed to read a named property 'get' from 'Window': Blocked a frame with origin "https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev" from accessing a cross-origin frame.
+    at Array.filter (<anonymous>)
+    at DynamicModuleFederation.getContainer (dynamicModuleFederation.ts:130:55)
+    at async DynamicModuleFederation.loadRemoteModule (dynamicModuleFederation.ts:33:23)
+    at async loadRemote (ModuleFederationAnalytics.tsx:85:24)
+(anonymous) @ injected.js:37
+injected.js:37 ⏳ Still waiting for container "PipelineApp" (20/20)
+injected.js:37 ⏳ Still waiting for container "AnalyticsApp" (20/20)
+injected.js:37 ❌ Module Federation failed, using iframe fallback: SecurityError: Failed to read a named property 'get' from 'Window': Blocked a frame with origin "https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev" from accessing a cross-origin frame.
+    at Array.filter (<anonymous>)
+    at DynamicModuleFederation.getContainer (dynamicModuleFederation.ts:130:55)
+    at async DynamicModuleFederation.loadRemoteModule (dynamicModuleFederation.ts:33:23)
+    at async loadRemote (ModuleFederationAnalytics.tsx:85:24)
+(anonymous) @ injected.js:37
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/users/878fc56c-71d7-4f55-b5c9-e8b274459114/product-tier:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/users/878fc56c-71d7-4f55-b5c9-e8b274459114/product-tier:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+background-redux-new.js:2 Error: Invalid frameId for foreground frameId: 0
+    at le (background-redux-new.js:2:9565220)
+    at p (background-redux-new.js:2:9632157)
+    at background-redux-new.js:2:9633147
+le @ background-redux-new.js:2
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/users/878fc56c-71d7-4f55-b5c9-e8b274459114/product-tier:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/users/878fc56c-71d7-4f55-b5c9-e8b274459114/product-tier:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 3
+stallwart.build.js:1 stallwart: failed ping 4
+stallwart.build.js:1 stallwart: failed ping 5
+stallwart.build.js:1 stallwart: session stalled

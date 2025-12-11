@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <title>SmartCRM - AI-Powered Sales Platform</title>
+    <style>
+      /* Ensure full-screen display */
+      html, body {
+        height: 100vh;
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        position: relative;
+      }
+      
+      #root {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Hide any replit banners or overlays */
+      .replit-banner,
+      .replit-dev-banner,
+      [class*="replit"],
+      [id*="replit"],
+      iframe[src*="replit"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+      
+      /* Force full screen */
+      body, html {
+        overflow-x: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    </style>
+    <script>
+      // Fix for "global is not defined" error
+      if (typeof global === 'undefined') {
+        window.global = globalThis;
+      }
+      
+      // Remove any replit banners on load
+      document.addEventListener('DOMContentLoaded', function() {
+        const removeReplitElements = () => {
+          const banners = document.querySelectorAll('.replit-banner, .replit-dev-banner, [class*="replit"]');
+          banners.forEach(banner => {
+            banner.style.display = 'none';
+            banner.remove();
+          });
+        };
+        
+        removeReplitElements();
+        // Run again after a short delay in case elements load later
+        setTimeout(removeReplitElements, 100);
+        setTimeout(removeReplitElements, 500);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

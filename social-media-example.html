@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT-5 Social Media Research</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="social-research-container"></div>
+    
+    <!-- Include the service and component -->
+    <script src="gpt5-social-research-service.js"></script>
+    <script src="social-media-component.js"></script>
+    
+    <script>
+        // Initialize the component
+        document.addEventListener('DOMContentLoaded', function() {
+            // Replace 'your-openai-api-key' with actual GPT-5 API key
+            const socialResearch = new SocialMediaResearchComponent('social-research-container', {
+                apiKey: 'your-openai-api-key', // Set to null for mock mode
+                mockMode: true, // Set to false when using real API
+                baseUrl: 'https://api.openai.com/v1'
+            });
+            
+            // Example: Research a contact programmatically
+            // const contact = {
+            //     id: '1',
+            //     name: 'John Smith',
+            //     email: 'john@company.com',
+            //     company: 'Tech Corp',
+            //     title: 'VP Sales'
+            // };
+            // 
+            // socialResearch.researchContact(contact, {
+            //     platforms: ['LinkedIn', 'Twitter'],
+            //     depth: 'comprehensive'
+            // }).then(results => {
+            //     console.log('Research results:', results);
+            // });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,606 @@
+background-redux-new.js:2 Error: Invalid frameId for foreground frameId: 0
+    at le (background-redux-new.js:2:9565220)
+    at p (background-redux-new.js:2:9632157)
+    at background-redux-new.js:2:9633147
+le @ background-redux-new.js:2
+content_topFrameLifeline.js:1 Loading content_topFrameLifeline.js
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+VM597:8 [Coframe] Replit Enterprise watcher loaded
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+SmartCRM:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+SmartCRM:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+SmartCRM:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+index.js:1410 [HMR] Waiting for update signal from WDS...
+all.f9ebc303.js:2293 All: content script loaded
+content.js:33 HelpViber: Injected successfully on REPLIT platform.
+1ba44b075b96d9d0.js:2 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+1ba44b075b96d9d0.js:2 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+1ba44b075b96d9d0.js:2 [LaunchDarkly] LaunchDarkly client initialized
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 1
+web-client-content-script.js:2 Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.
+    at HTMLIFrameElement.<anonymous> (web-client-content-script.js:2:1434139)
+1ba44b075b96d9d0.js:2 Adding extension: Prettier - Code Formatter Object
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+ed1e693c96a75807.js:2 Unrecognized feature: 'battery'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'layout-animations'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'legacy-image-formats'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'navigation-override'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'oversized-images'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'publickey-credentials'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'unoptimized-images'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'unsized-media'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Unrecognized feature: 'pointer-lock'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Allow attribute will take precedence over 'allowfullscreen'.
+z @ ed1e693c96a75807.js:2
+ed1e693c96a75807.js:2 Allow attribute will take precedence over 'allowpaymentrequest'.
+z @ ed1e693c96a75807.js:2
+1ba44b075b96d9d0.js:2 Adding extension: ZIP Extractor Object
+SmartCRM:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 3
+stallwart.build.js:1 stallwart: failed ping 4
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455504.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455501.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455498.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455507.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455516.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455513.
+background-redux-new.js:1 Uncaught (in promise) Error: No tab with id: 1028455510.
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+Unchecked runtime.lastError: Cannot create item with duplicate id LastPass https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id separator https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Item https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Password https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Address https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Add Payment Card https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Add other item https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Save all entered data https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+Unchecked runtime.lastError: Cannot create item with duplicate id Generate Secure Password https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Arhp%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+client:745 WebSocket connection to 'wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/?token=xuuBNJdIWIvZ' failed: 
+createConnection @ client:745
+client:755 WebSocket connection to 'wss://localhost:5173/?token=xuuBNJdIWIvZ' failed: 
+createConnection @ client:755
+injected.js:27 [vite] failed to connect to websocket.
+your current setup:
+  (browser) 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/ <--[HTTP]--> localhost:5173/ (server)
+  (browser) 9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev:/ <--[WebSocket (failing)]--> localhost:5173/ (server)
+Check out your Vite / network configuration and https://vite.dev/config/server-options.html#server-hmr .
+(anonymous) @ injected.js:27
+injected.js:27 🔍 Supabase URL: https://gadedbrnqzpfqtsdfzcg.supabase.co
+injected.js:27 🔍 Supabase Anon Key: ***Q1e4
+injected.js:27 Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.
+(anonymous) @ injected.js:27
+injected.js:27 Module "stream" has been externalized for browser compatibility. Cannot access "stream.Duplex" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+(anonymous) @ injected.js:27
+injected.js:27 Connecting to WebSocket signaling server: wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/signaling
+injected.js:27 🔄 Initializing Universal Data Sync Service
+injected.js:27 Cleaning up video call...
+injected.js:27 🔌 Universal Data Sync Service destroyed
+injected.js:27 Connecting to WebSocket signaling server: wss://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/signaling
+injected.js:27 🔄 Initializing Universal Data Sync Service
+injected.js:27 GPT5Service: API status checked Object
+injected.js:27 ✅ User role loaded: Object
+injected.js:27 LandingHeader component rendering
+injected.js:27 WhitelabelContext working, config: Object
+injected.js:27 LandingHeader component rendering
+injected.js:27 WhitelabelContext working, config: Object
+injected.js:27 ParallaxHero component mounted
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+injected.js:27 Updating parallax scroll position: 0
+injected.js:27 ParallaxHero container element: <div class=​"relative min-h-[600px]​ overflow-hidden bg-gradient-to-b from-gray-50 to-indigo-50 py-24">​…​</div>​
+injected.js:27 Container styles: Object
+injected.js:27 Icons container: <div class=​"absolute inset-0 pointer-events-none">​…​</div>​
+injected.js:27 Parallax items count: 7
+injected.js:27 Parallax icons rendered: 7
+injected.js:27 ParallaxHero component mounted
+injected.js:27 Updating parallax scroll position: 0
+injected.js:27 ParallaxHero container element: <div class=​"relative min-h-[600px]​ overflow-hidden bg-gradient-to-b from-gray-50 to-indigo-50 py-24">​…​</div>​
+injected.js:27 Container styles: Object
+injected.js:27 Icons container: <div class=​"absolute inset-0 pointer-events-none">​…​</div>​
+injected.js:27 Parallax items count: 7
+injected.js:27 Parallax icons rendered: 7
+injected.js:27 Updating parallax scroll position: 0
+injected.js:27 ParallaxHero container element: <div class=​"relative min-h-[600px]​ overflow-hidden bg-gradient-to-b from-gray-50 to-indigo-50 py-24">​…​</div>​
+injected.js:27 Container styles: Object
+injected.js:27 Icons container: <div class=​"absolute inset-0 pointer-events-none">​…​</div>​
+injected.js:27 Parallax items count: 7
+injected.js:27 Parallax icons rendered: 7
+injected.js:27 ✅ WebSocket connected to signaling server
+injected.js:27 Auth state changed: INITIAL_SESSION 5178b85a-8007-4e7f-8ade-53efcadba5e3
+injected.js:27 ✅ WebSocket connected to signaling server
+injected.js:27 LandingHeader component rendering
+injected.js:27 WhitelabelContext working, config: Object
+injected.js:27 LandingHeader component rendering
+injected.js:27 WhitelabelContext working, config: Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+injected.js:27 Supabase AI service connected successfully
+injected.js:27 ✅ User role loaded: Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 1
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+injected.js:27 Auth state changed: SIGNED_IN 5178b85a-8007-4e7f-8ade-53efcadba5e3
+injected.js:27 Initializing dashboard...
+injected.js:27 Dashboard initialized successfully
+chunk-5MJJNU6A.js?v=cb52e293:1233 Unrecognized feature: 'pointer-lock'.
+setValueForProperty @ chunk-5MJJNU6A.js?v=cb52e293:1233
+chunk-5MJJNU6A.js?v=cb52e293:1233 Error while parsing the 'sandbox' attribute: 'allow-navigation' is an invalid sandbox flag.
+setValueForProperty @ chunk-5MJJNU6A.js?v=cb52e293:1233
+injected.js:27 🚀 Attempting Module Federation for Pipeline...
+injected.js:27 🔄 Trying Module Federation script: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:27 Starting auto-refresh for wl-remote-iframe every 120000ms
+injected.js:27 🚀 Loading Module Federation Analytics...
+injected.js:27 🔄 Trying Module Federation script: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:27 Stopped auto-refresh for wl-remote-iframe
+injected.js:27 🚀 Attempting Module Federation for Pipeline...
+injected.js:27 🔄 Trying Module Federation script: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:27 Starting auto-refresh for wl-remote-iframe every 120000ms
+injected.js:27 🚀 Loading Module Federation Analytics...
+injected.js:27 🔄 Trying Module Federation script: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:27 [INFO] Contacts fetched successfully 5 contacts loaded
+injected.js:27 ✅ Module Federation script loaded: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:27 🔍 Looking for Module Federation container: PipelineApp
+injected.js:27 ✅ Module Federation script loaded: https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js
+injected.js:27 🔍 Looking for Module Federation container: PipelineApp
+injected.js:27 ✅ Module Federation script loaded: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:27 🔍 Looking for Module Federation container: AnalyticsApp
+injected.js:27 ✅ Module Federation script loaded: https://ai-analytics.smartcrm.vip/assets/remoteEntry.js
+injected.js:27 🔍 Looking for Module Federation container: AnalyticsApp
+injected.js:27 ⏳ Still waiting for container "PipelineApp" (10/20)
+injected.js:27 ⏳ Still waiting for container "PipelineApp" (10/20)
+injected.js:27 ⏳ Still waiting for container "AnalyticsApp" (10/20)
+injected.js:27 ⏳ Still waiting for container "AnalyticsApp" (10/20)
+injected.js:27 📺 Module Federation not available, using iframe fallback (remote app needs MF configuration)
+injected.js:27 📺 Module Federation not available, using iframe fallback (remote app needs MF configuration)
+chunk-5MJJNU6A.js?v=cb52e293:1233 Error while parsing the 'sandbox' attribute: 'allow-navigation' is an invalid sandbox flag.
+setValueForProperty @ chunk-5MJJNU6A.js?v=cb52e293:1233
+injected.js:27 ⏳ Still waiting for container "PipelineApp" (20/20)
+injected.js:27 ⏳ Still waiting for container "PipelineApp" (20/20)
+injected.js:27 ⏳ Still waiting for container "AnalyticsApp" (20/20)
+injected.js:27 ❌ Module Federation failed, using iframe fallback: SecurityError: Failed to read a named property 'get' from 'Window': Blocked a frame with origin "https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev" from accessing a cross-origin frame.
+    at Array.filter (<anonymous>)
+    at DynamicModuleFederation.getContainer (dynamicModuleFederation.ts:111:55)
+    at async DynamicModuleFederation.loadRemoteModule (dynamicModuleFederation.ts:33:23)
+    at async loadRemote (ModuleFederationAnalytics.tsx:12:24)
+(anonymous) @ injected.js:27
+injected.js:27 ⏳ Still waiting for container "AnalyticsApp" (20/20)
+injected.js:27 ❌ Module Federation failed, using iframe fallback: SecurityError: Failed to read a named property 'get' from 'Window': Blocked a frame with origin "https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev" from accessing a cross-origin frame.
+    at Array.filter (<anonymous>)
+    at DynamicModuleFederation.getContainer (dynamicModuleFederation.ts:111:55)
+    at async DynamicModuleFederation.loadRemoteModule (dynamicModuleFederation.ts:33:23)
+    at async loadRemote (ModuleFederationAnalytics.tsx:12:24)
+(anonymous) @ injected.js:27
+injected.js:27 GPT-5 KPI Analysis Error: Error: Analysis timeout
+    at GPT5SmartKPICards.tsx:67:33
+(anonymous) @ injected.js:27
+injected.js:27 GPT-5 KPI Analysis Error: Error: Analysis timeout
+    at GPT5SmartKPICards.tsx:67:33
+(anonymous) @ injected.js:27
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: TIMEOUT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: CONNECT
+content_topFrameLifeline.js:1 CONTENT <-> SERVICE LIFELINE: MESSAGE Object
+injected.js:27 Tab clicked: admin Admin Panel
+injected.js:27 Navigation triggered: Object
+injected.js:27 Stopped auto-refresh for wl-remote-iframe
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/admin/stats:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+injected.js:27 Failed to fetch admin stats: Error: Failed to fetch admin stats
+    at fetchAdminStats (AdminDashboard.tsx:46:17)
+(anonymous) @ injected.js:27
+9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/admin/stats:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+injected.js:27 Failed to fetch admin stats: Error: Failed to fetch admin stats
+    at fetchAdminStats (AdminDashboard.tsx:46:17)
+(anonymous) @ injected.js:27
+injected.js:27 TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+    at UserManagement.tsx:211:38
+    at Array.filter (<anonymous>)
+    at UserManagement (UserManagement.tsx:210:31)
+    at renderWithHooks (chunk-5MJJNU6A.js?v=cb52e293:11596:26)
+    at updateFunctionComponent (chunk-5MJJNU6A.js?v=cb52e293:14630:28)
+    at beginWork (chunk-5MJJNU6A.js?v=cb52e293:15972:22)
+    at beginWork$1 (chunk-5MJJNU6A.js?v=cb52e293:19806:22)
+    at performUnitOfWork (chunk-5MJJNU6A.js?v=cb52e293:19251:20)
+    at workLoopSync (chunk-5MJJNU6A.js?v=cb52e293:19190:13)
+    at renderRootSync (chunk-5MJJNU6A.js?v=cb52e293:19169:15)
+(anonymous) @ injected.js:27
+injected.js:27 The above error occurred in the <ErrorBoundary> component:
+
+    at ErrorBoundary (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@hello-pangea_dnd.js?v=cb52e293:1585:5)
+    at DragDropContext (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@hello-pangea_dnd.js?v=cb52e293:7484:21)
+    at AppContent (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/App.tsx:361:29)
+    at NavbarPositionProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/NavbarPositionContext.tsx:20:42)
+    at RoleProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/components/RoleBasedAccess.tsx:30:32)
+    at AIProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/AIContext.tsx:20:30)
+    at DashboardLayoutProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/DashboardLayoutContext.tsx:276:43)
+    at NavigationProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/NavigationContext.tsx:31:38)
+    at VideoCallProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/VideoCallContext.tsx:30:37)
+    at EnhancedHelpProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/EnhancedHelpContext.tsx:29:40)
+    at ModalsProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/components/ModalsProvider.tsx:31:34)
+    at AIToolsProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/components/AIToolsProvider.tsx:95:35)
+    at WhitelabelProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/WhitelabelContext.tsx:31:38)
+    at TenantProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/TenantProvider.tsx:29:34)
+    at DemoDataProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/DemoDataContext.tsx:20:36)
+    at ThemeProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/ThemeContext.tsx:29:33)
+    at AuthProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/contexts/AuthContext.tsx:30:32)
+    at QueryClientProvider (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=cb52e293:2963:3)
+    at App (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/src/App.tsx:285:3)
+    at Router (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3C3BDVNA.js?v=cb52e293:6279:13)
+    at BrowserRouter (https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3C3BDVNA.js?v=cb52e293:9370:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+(anonymous) @ injected.js:27
+injected.js:27 🔌 Universal Data Sync Service destroyed
+injected.js:27 Cleaning up video call...
+injected.js:27 🔌 WebSocket disconnected from signaling server
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 1
+1ba44b075b96d9d0.js:2 Fetch finished loading: POST "https://logs.browser-intake-us5-datadoghq.com/api/v2/logs?ddsource=browser&ddtags=sdk_version%3A4.46.0%2Capi%3Afetch%2Cenv%3Aproduction%2Cservice%3Awebsite%2Cversion%3A0150bf8f&dd-api-key=pub31a5047a3a4692afb84a423db984dc57&dd-evp-origin-version=4.46.0&dd-evp-origin=browser&dd-request-id=310ebbac-fa30-4f64-9fca-47eecbbdceee".
+(anonymous) @ 1ba44b075b96d9d0.js:2
+o @ 221975db142c3259.js:2
+rr @ 221975db142c3259.js:2
+re @ 221975db142c3259.js:2
+send @ 221975db142c3259.js:2
+t.flush @ 221975db142c3259.js:2
+(anonymous) @ 221975db142c3259.js:2
+(anonymous) @ 221975db142c3259.js:2
+t.notify @ 221975db142c3259.js:2
+l @ 221975db142c3259.js:2
+(anonymous) @ 221975db142c3259.js:2
+U @ 221975db142c3259.js:2
+(anonymous) @ 221975db142c3259.js:2
+o @ 1ba44b075b96d9d0.js:2
+injected.js:204 Fetch finished loading: POST "https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/openai/business-intelligence".
+apply @ injected.js:204
+generateBusinessIntelligence @ gpt5Service.ts:111
+runGPT5Analysis @ GPT5AnalyticsPanel.tsx:112
+injected.js:204 Fetch finished loading: POST "https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/openai/business-intelligence".
+apply @ injected.js:204
+generateBusinessIntelligence @ gpt5Service.ts:111
+runGPT5Analysis @ GPT5AnalyticsPanel.tsx:112

@@ -1,0 +1,54 @@
+he Smart CRM application leverages several Supabase Edge Functions to manage and enhance contact data. The core function for contact management is contacts, which handles the basic CRUD (Create, Read, Update, Delete) operations for your contacts.
+
+Beyond basic management, the application uses a suite of AI-powered Edge Functions that interact with contact data to provide intelligent features. These include:
+
+contacts: This is the primary function for managing your contact records (creating, retrieving, updating, and deleting contacts).
+ai-enrichment: Used for enriching contact profiles with additional information from AI providers.
+smart-score: Provides AI-powered scoring for contacts, helping to prioritize leads.
+smart-categorize: Categorizes and tags contacts based on their attributes.
+smart-qualify: Qualifies leads by assessing their potential and fit.
+smart-enrichment: A more advanced enrichment function that might use different AI models or strategies.
+smart-bulk: Handles bulk AI operations on multiple contacts, such as scoring or categorization for a large dataset.
+email-composer: Generates personalized email content for contacts.
+email-analyzer: Analyzes the effectiveness and tone of emails, often in the context of a specific contact.
+email-templates: Manages and applies email templates, which can be personalized for contacts.
+personalized-messages: Generates personalized messages for various platforms (e.g., LinkedIn, SMS) for contacts.
+ai-insights: Provides general AI-driven insights related to contacts.
+ai-reasoning: Offers explanations and reasoning behind AI-generated scores or recommendations for contacts.
+automation-ai: Supports AI-powered automation suggestions and rule management for contact workflows.
+contact-card-ai: Provides quick AI analysis and insights directly on contact cards.
+contact-detail-ai: Offers comprehensive AI analysis for detailed contact views.
+conversation-analysis: Analyzes communication history with contacts to extract patterns and sentiment.
+duplicate-detection: Helps identify and manage duplicate contact entries.
+meeting-optimizer: Suggests optimal times and strategies for meetings with contacts.
+predictive-analytics: Generates predictions (e.g., conversion probability, response time) for contacts.
+relationship-insights: Provides insights into the strength and nature of relationships with contacts.
+timeline-generator: Creates a chronological timeline of interactions and events for a contact.
+To ensure all these features work correctly, you should deploy all the relevant Edge Functions to your Supabase project. You can do this using the Supabase CLI.
+
+Here's the command to deploy all the AI-related functions, including the core contacts function:
+
+
+npx supabase functions deploy contacts --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy ai-enrichment --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy smart-score --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy smart-categorize --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy smart-qualify --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy smart-enrichment --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy smart-bulk --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy email-composer --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy email-analyzer --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy personalized-messages --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy email-templates --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy ai-insights --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy ai-reasoning --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy automation-ai --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy contact-card-ai --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy contact-detail-ai --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy conversation-analysis --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy duplicate-detection --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy meeting-optimizer --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy predictive-analytics --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy relationship-insights --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy timeline-generator --project-ref YOUR_PROJECT_REF
+Remember to replace YOUR_PROJECT_REF with your actual Supabase project reference ID.

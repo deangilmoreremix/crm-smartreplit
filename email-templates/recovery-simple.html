@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password - SmartCRM</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">
+                SmartCRM
+            </h1>
+            <p style="color: #e8eaff; margin: 10px 0 0 0; font-size: 18px;">
+                Intelligent Customer Relationship Management
+            </p>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 40px 30px;">
+            <h2 style="color: #4a5568; margin: 0 0 30px 0; font-size: 24px; font-weight: 600;">
+                Reset Password
+            </h2>
+            
+            <p style="color: #2d3748; font-size: 16px; margin: 0 0 30px 0;">
+                Follow this link to reset the password for your user:
+            </p>
+
+            <!-- CTA Button -->
+            <div style="margin: 30px 0;">
+                <a href="{{ .ConfirmationURL }}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                          color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; 
+                          font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                    Reset Password
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="color: #a0aec0; font-size: 12px; margin: 0; line-height: 1.5;">
+                This email was sent to {{ .Email }} from SmartCRM.<br>
+                SmartCRM - Intelligent Sales Management Platform
+            </p>
+            
+            <div style="margin-top: 20px;">
+                <a href="mailto:support@videoremix.io" 
+                   style="color: #667eea; text-decoration: none; font-weight: 500; font-size: 14px;">
+                    Contact Support
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

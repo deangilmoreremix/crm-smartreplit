@@ -1,0 +1,249 @@
+Understanding the field mapping across the application's core entities and its AI-powered features is crucial for effective development and data management. Below is a comprehensive breakdown of the key fields, their types, and their association with different features within the Smart CRM application.
+
+Core Entities
+The primary entities in this application are Contact and Deal.
+
+1. Contact Fields (src/types/contact.ts, supabase/functions/contacts/index.ts)
+These fields represent the fundamental information stored for each contact.
+
+id: string - Unique identifier for the contact.
+firstName: string - Contact's first name.
+lastName: string - Contact's last name.
+name: string - Full name of the contact (often derived from firstName and lastName).
+email: string - Contact's primary email address.
+phone: string (optional) - Contact's phone number.
+title: string - Contact's job title.
+company: string - Company where the contact works.
+industry: string (optional) - Industry of the contact's company.
+avatarSrc: string (optional) - URL for the contact's avatar/profile picture.
+sources: string[] (optional) - Array of sources from which the contact was acquired (e.g., 'LinkedIn', 'Referral').
+interestLevel: 'hot' | 'medium' | 'low' | 'cold' - Indicates the contact's level of interest.
+status: 'active' | 'pending' | 'inactive' | 'lead' | 'prospect' | 'customer' | 'churned' - Current status of the contact in the CRM pipeline.
+lastConnected: string (optional) - Timestamp of the last interaction with the contact.
+notes: string (optional) - General notes or remarks about the contact.
+aiScore: number (optional) - AI-generated score indicating lead quality or potential.
+tags: string[] (optional) - Array of descriptive tags for the contact.
+isFavorite: boolean (optional) - Flag indicating if the contact is marked as a favorite.
+socialProfiles: object (optional) - Object containing URLs for various social media profiles.
+linkedin: string (optional) - LinkedIn profile URL.
+twitter: string (optional) - Twitter profile URL.
+website: string (optional) - Company or personal website URL.
+whatsapp: string (optional) - WhatsApp contact link/number.
+facebook: string (optional) - Facebook profile URL.
+instagram: string (optional) - Instagram profile URL.
+customFields: Record<string, any> (optional) - Object for storing arbitrary custom data.
+createdAt: string - Timestamp when the contact record was created.
+updatedAt: string - Timestamp of the last update to the contact record.
+activityLog: any[] (optional) - Array of recent activities related to the contact.
+nextSendDate: string (optional) - Predicted next optimal date for communication.
+isTeamMember: boolean (optional) - Flag indicating if the contact is an internal team member.
+role: string (optional) - Role within the organization (if isTeamMember is true).
+gamificationStats: Record<string, any> (optional) - Statistics related to gamification features.
+2. Deal Fields (src/types/deal.ts, supabase/functions/deal-management/index.ts)
+These fields represent information about sales opportunities or deals.
+
+id: string - Unique identifier for the deal.
+customer_id: string - ID of the customer associated with the deal.
+title: string - Name or title of the deal.
+description: string (optional) - Detailed description of the deal.
+value: number - Monetary value of the deal.
+currency: string - Currency of the deal value (e.g., 'USD', 'EUR').
+stage_id: string - Current stage of the deal in the sales pipeline.
+probability: number - Probability of closing the deal (0-100%).
+expected_close_date: string (optional) - Expected date for the deal to close.
+actual_close_date: string (optional) - Actual date the deal was closed.
+contact_id: string (optional) - ID of the primary contact associated with the deal.
+assigned_to: string (optional) - User ID of the team member assigned to the deal.
+created_by: string (optional) - User ID of the team member who created the deal.
+status: 'open' | 'won' | 'lost' | 'cancelled' - Current status of the deal.
+deal_type: string (optional) - Type of deal (e.g., 'New Business', 'Upsell', 'Renewal').
+lead_source: string (optional) - Source of the lead that generated this deal.
+competitors: string[] (optional) - Array of competitor names involved in the deal.
+tags: string[] (optional) - Array of tags for the deal.
+custom_fields: Record<string, any> (optional) - Object for storing arbitrary custom data for the deal.
+attachments: any[] (optional) - Array of attachments related to the deal.
+created_at: string - Timestamp when the deal record was created.
+updated_at: string - Timestamp of the last update to the deal record.
+company: string (optional) - Company name associated with the deal (often derived from contact_id).
+contact: object (optional) - Object containing basic contact info (e.g., name, email).
+dueDate: string (optional) - Due date for the deal (often expected_close_date).
+AI-Enhanced Fields and Data Structures
+The application extensively uses AI to enrich, analyze, and predict various aspects of contacts and deals.
+
+3. AI Enrichment Fields (Extending Contact, from src/services/aiEnrichmentService.ts)
+These fields are added to the Contact object through AI enrichment processes.
+
+inferredPersonalityTraits: Record<string, string> (optional) - AI-inferred personality traits (e.g., 'extroversion': 'high').
+communicationStyle: string (optional) - AI-analyzed communication style (e.g., 'direct and confident').
+professionalDemeanor: string (optional) - AI-analyzed professional demeanor.
+imageAnalysisNotes: string (optional) - Notes derived from AI analysis of the contact's profile image.
+4. AI Analysis & Scoring Data (src/types/index.ts, src/services/contact-ai.service.ts, supabase/functions/smart-score/index.ts, supabase/functions/ai-insights/index.ts)
+These structures represent the results of AI analysis, often linked to a Contact.
+
+AIAnalysisResult (Interface in src/types/index.ts):
+
+contactId: string
+score: number (optional) - Overall AI score.
+confidence: number (optional) - Confidence level of the AI analysis.
+insights: string[] (optional) - Key insights generated by AI.
+recommendations: string[] (optional) - Actionable recommendations from AI.
+categories: string[] (optional) - AI-assigned categories.
+tags: string[] (optional) - AI-assigned tags.
+provider: string (optional) - AI provider used (e.g., 'openai', 'gemini').
+model: string (optional) - Specific AI model used.
+timestamp: string (optional) - Time of analysis.
+processingTime: number (optional) - Time taken for analysis in milliseconds.
+ContactScore (Interface in src/services/contact-ai.service.ts):
+
+overall: number - Overall lead score (0-100).
+breakdown: object - Detailed score breakdown.
+fitScore: number
+engagementScore: number
+conversionProbability: number
+urgencyScore: number
+reasoning: string[] - Explanations for the score.
+recommendations: string[] - General recommendations.
+nextBestActions: string[] - Specific next steps.
+provider: string (optional)
+model: string (optional)
+timestamp: string (optional)
+ContactInsight (Interface in src/services/contact-ai.service.ts):
+
+id: string
+type: 'opportunity' | 'risk' | 'recommendation' | 'prediction' | 'pattern'
+title: string
+description: string
+confidence: number
+impact: 'high' | 'medium' | 'low'
+category: string
+actionable: boolean
+suggestedActions: string[] (optional)
+relatedContacts: string[] (optional)
+dataPoints: string[]
+5. Communication AI Fields (src/hooks/useEmailAI.ts, src/services/communication-ai.service.ts)
+These fields are related to AI-generated emails, messages, and communication strategies.
+
+EmailComposition:
+subject: string
+body: string
+purpose: string
+tone: string
+confidence: number
+model: string
+EmailAnalysis:
+metrics: object
+wordCount: number
+sentenceCount: number
+avgSentenceLength: number
+paragraphCount: number
+subjectLength: number
+toneAnalysis: Record<string, number>
+dominantTone: string
+qualityScore: number
+responseLikelihood: number
+improvements: Array<{ type: string; description: string; }>
+assessment: string
+confidence: number
+model: string
+PersonalizedMessage:
+message: string
+platform: string
+purpose: string
+tone: string
+characterCount: number
+characterLimit: object
+min: number
+max: number
+ideal: number
+confidence: number
+model: string
+EmailTemplate:
+id: string
+name: string
+description: string (optional)
+subject: string
+body: string
+variables: string[]
+category: string
+isDefault: boolean (optional)
+6. Advanced AI Fields (src/hooks/useAdvancedAI.ts, src/services/ai-intelligence-engine.service.ts, src/services/ai-automation-engine.service.ts, src/services/ai-predictive-analytics.service.ts)
+These fields are part of the more sophisticated AI capabilities like intelligence correlation, automation suggestions, and predictive analytics.
+
+IntelligenceCorrelation:
+id: string
+contactId: string
+correlationType: 'behavioral' | 'predictive' | 'strategic' | 'risk'
+insights: Array<{ source: string; insight: ContactInsight; weight: number; confidence: number; }>
+metaInsight: object
+title: string
+description: string
+actionPriority: 'urgent' | 'high' | 'medium' | 'low'
+suggestedActions: string[]
+predictedOutcome: string
+confidence: number
+createdAt: string
+SmartRecommendation:
+id: string
+contactId: string
+type: 'action' | 'communication' | 'automation' | 'content'
+title: string
+description: string
+reasoning: string[]
+expectedOutcome: string
+priority: number
+urgency: 'immediate' | 'this_week' | 'this_month' | 'future'
+effort: 'low' | 'medium' | 'high'
+impact: 'low' | 'medium' | 'high'
+confidence: number
+basedOnPatterns: string[]
+createdAt: string
+AutomationRule:
+id: string
+name: string
+description: string
+trigger: object
+type: 'contact_created' | 'score_change' | 'interaction' | 'time_based' | 'manual'
+config: Record<string, any>
+conditions: Array<{ field: string; operator: string; value: any; logic?: 'AND' | 'OR'; }>
+actions: Array<{ type: string; config: Record<string, any>; delay?: number; }>
+isActive: boolean
+performance: object
+triggerCount: number
+successCount: number
+failureCount: number
+avgExecutionTime: number
+lastTriggered: string (optional)
+aiOptimized: boolean
+optimizationSuggestions: string[]
+createdAt: string
+updatedAt: string
+Prediction:
+id: string
+contactId: string
+modelId: string
+predictionType: 'conversion' | 'response_time' | 'deal_size' | 'churn_risk' | 'engagement'
+value: number
+confidence: number
+reasoning: string[]
+factors: Array<{ factor: string; impact: number; weight: number; }>
+timeframe: string
+createdAt: string
+validUntil: string
+TrendAnalysis:
+contactId: string
+trends: Array<{ metric: string; direction: 'increasing' | 'decreasing' | 'stable'; strength: number; significance: 'high' | 'medium' | 'low'; dataPoints: number; timeframe: string; }>
+seasonality: object
+detected: boolean
+pattern: string (optional)
+confidence: number
+anomalies: Array<{ date: string; metric: string; expectedValue: number; actualValue: number; deviation: number; }>
+forecast: Array<{ date: string; metric: string; predictedValue: number; confidence: number; }>
+RiskAssessment:
+contactId: string
+overallRisk: 'low' | 'medium' | 'high' | 'critical'
+riskScore: number
+riskFactors: Array<{ factor: string; impact: 'low' | 'medium' | 'high'; probability: number; description: string; mitigation: string[]; }>
+opportunities: Array<{ opportunity: string; potential: 'low' | 'medium' | 'high'; probability: number; description: string; actions: string[]; }>
+recommendations: string[]
+nextReviewDate: string
+This detailed mapping should provide a clear understanding of the data structures and fields used throughout the Smart CRM application and its AI capabilities.

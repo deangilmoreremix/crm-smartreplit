@@ -1,0 +1,1382 @@
+Edge Functions
+Deploy edge functions to handle complex business logic
+
+Docs
+Examples
+
+Deploy a new function
+Name	URL	Created	Last updated	Deployments
+api-proxy
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/api-proxy
+
+
+27 Mar, 2025 20:05
+
+
+5 months ago
+
+8
+
+ai-features
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-features
+
+
+28 Mar, 2025 00:26
+
+
+5 months ago
+
+6
+
+api-test
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/api-test
+
+
+28 Mar, 2025 00:33
+
+
+5 months ago
+
+5
+
+audience-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/audience-insights
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+content-analyze
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/content-analyze
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+content-optimize
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/content-optimize
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+content-performance
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/content-performance
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+enhanced-calendar
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/enhanced-calendar
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+gemini-generate
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/gemini-generate
+
+
+02 Jun, 2025 17:03
+
+
+2 months ago
+
+6
+
+gptimage1
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/gptimage1
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+openai-generate
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/openai-generate
+
+
+02 Jun, 2025 17:03
+
+
+2 months ago
+
+6
+
+optimal-times
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/optimal-times
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+personalized-hashtags
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/personalized-hashtags
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+video-generation
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/video-generation
+
+
+02 Jun, 2025 17:03
+
+
+3 months ago
+
+5
+
+ai-analysis
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-analysis
+
+
+12 Jun, 2025 10:52
+
+
+2 months ago
+
+5
+
+customer-operations
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/customer-operations
+
+
+12 Jun, 2025 10:53
+
+
+2 months ago
+
+5
+
+ai-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-insights
+
+
+18 Jun, 2025 15:36
+
+
+2 months ago
+
+8
+
+automation-rules
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/automation-rules
+
+
+18 Jun, 2025 15:36
+
+
+2 months ago
+
+5
+
+workflow-execution
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/workflow-execution
+
+
+18 Jun, 2025 15:36
+
+
+2 months ago
+
+5
+
+ai-workflow-builder
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-workflow-builder
+
+
+18 Jun, 2025 16:57
+
+
+2 months ago
+
+5
+
+email-template-generator
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/email-template-generator
+
+
+18 Jun, 2025 16:57
+
+
+2 months ago
+
+5
+
+ai-automation-analysis
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-automation-analysis
+
+
+19 Jun, 2025 01:14
+
+
+2 months ago
+
+5
+
+generate-cross-app-token
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/generate-cross-app-token
+
+
+20 Jun, 2025 04:53
+
+
+2 months ago
+
+5
+
+sync-white-label
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/sync-white-label
+
+
+20 Jun, 2025 04:53
+
+
+2 months ago
+
+5
+
+available-models
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/available-models
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+5
+
+build-status
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/build-status
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+6
+
+content-tools
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/content-tools
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+5
+
+deployment-dashboard
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/deployment-dashboard
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+5
+
+deployment-info
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/deployment-info
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+5
+
+deployment-status
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/deployment-status
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+9
+
+file-check
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/file-check
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+6
+
+python-check
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/python-check
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+5
+
+python-setup
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/python-setup
+
+
+20 Jun, 2025 05:21
+
+
+2 months ago
+
+5
+
+admin-create-user
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/admin-create-user
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+admin-update-user
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/admin-update-user
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+analyze-sentiment
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/analyze-sentiment
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+6
+
+composio-schedule
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/composio-schedule
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+create-payment-intent
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/create-payment-intent
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+enrich-contact
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/enrich-contact
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+gemini-flash
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/gemini-flash
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+gemini-stage
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/gemini-stage
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+gemini-strategy
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/gemini-strategy
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+openai-message
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/openai-message
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+6
+
+openai-stream
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/openai-stream
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+persona-recommendation
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/persona-recommendation
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+secure-api-proxy
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/secure-api-proxy
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+stripe-webhook
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/stripe-webhook
+
+
+20 Jun, 2025 10:37
+
+
+2 months ago
+
+5
+
+ai-content-generator
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-content-generator
+
+
+22 Jun, 2025 03:33
+
+
+2 months ago
+
+6
+
+business-analyzer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/business-analyzer
+
+
+22 Jun, 2025 03:33
+
+
+2 months ago
+
+5
+
+email-analyzer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/email-analyzer
+
+
+22 Jun, 2025 03:33
+
+
+2 months ago
+
+7
+
+meeting-summarizer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/meeting-summarizer
+
+
+22 Jun, 2025 03:33
+
+
+2 months ago
+
+5
+
+realtime-analysis
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/realtime-analysis
+
+
+22 Jun, 2025 03:33
+
+
+2 months ago
+
+5
+
+sales-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/sales-insights
+
+
+22 Jun, 2025 03:33
+
+
+2 months ago
+
+5
+
+ai-assistant-api
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-assistant-api
+
+
+22 Jun, 2025 04:04
+
+
+2 months ago
+
+5
+
+function-assistant-api
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/function-assistant-api
+
+
+22 Jun, 2025 04:04
+
+
+2 months ago
+
+5
+
+image-generator
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/image-generator
+
+
+22 Jun, 2025 04:04
+
+
+2 months ago
+
+5
+
+semantic-search
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/semantic-search
+
+
+22 Jun, 2025 04:04
+
+
+a month ago
+
+6
+
+streaming-chat-api
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/streaming-chat-api
+
+
+22 Jun, 2025 04:04
+
+
+2 months ago
+
+5
+
+auth-api
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/auth-api
+
+
+28 Jun, 2025 17:13
+
+
+2 months ago
+
+5
+
+tenant-api
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/tenant-api
+
+
+28 Jun, 2025 17:13
+
+
+2 months ago
+
+5
+
+webhooks
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/webhooks
+
+
+28 Jun, 2025 17:13
+
+
+2 months ago
+
+5
+
+ai-analyze
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-analyze
+
+
+03 Jul, 2025 10:18
+
+
+2 months ago
+
+5
+
+ai-bulk-analyze
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-bulk-analyze
+
+
+03 Jul, 2025 10:18
+
+
+2 months ago
+
+5
+
+ai-enrich
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-enrich
+
+
+03 Jul, 2025 10:18
+
+
+2 months ago
+
+5
+
+ai-providers-status
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-providers-status
+
+
+03 Jul, 2025 10:18
+
+
+2 months ago
+
+5
+
+ai-enrichment
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-enrichment
+
+
+03 Jul, 2025 11:01
+
+
+9 days ago
+
+9
+
+contacts
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/contacts
+
+
+03 Jul, 2025 11:01
+
+
+2 months ago
+
+9
+
+smart-bulk
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/smart-bulk
+
+
+09 Jul, 2025 17:28
+
+
+2 months ago
+
+6
+
+smart-categorize
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/smart-categorize
+
+
+09 Jul, 2025 17:28
+
+
+2 months ago
+
+6
+
+smart-enrichment
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/smart-enrichment
+
+
+09 Jul, 2025 17:28
+
+
+2 months ago
+
+5
+
+smart-qualify
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/smart-qualify
+
+
+09 Jul, 2025 17:28
+
+
+2 months ago
+
+6
+
+smart-score
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/smart-score
+
+
+09 Jul, 2025 17:28
+
+
+2 months ago
+
+6
+
+email-composer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/email-composer
+
+
+09 Jul, 2025 19:09
+
+
+2 months ago
+
+6
+
+email-templates
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/email-templates
+
+
+09 Jul, 2025 19:09
+
+
+2 months ago
+
+5
+
+personalized-messages
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/personalized-messages
+
+
+09 Jul, 2025 19:09
+
+
+2 months ago
+
+6
+
+draft-email-response
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/draft-email-response
+
+
+10 Jul, 2025 20:40
+
+
+2 months ago
+
+5
+
+generate-sales-pitch
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/generate-sales-pitch
+
+
+10 Jul, 2025 20:40
+
+
+2 months ago
+
+5
+
+natural-language-query
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/natural-language-query
+
+
+10 Jul, 2025 20:40
+
+
+2 months ago
+
+5
+
+prioritize-tasks
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/prioritize-tasks
+
+
+10 Jul, 2025 20:40
+
+
+2 months ago
+
+5
+
+summarize-customer-notes
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/summarize-customer-notes
+
+
+10 Jul, 2025 20:40
+
+
+2 months ago
+
+5
+
+analyze-image
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/analyze-image
+
+
+25 Jul, 2025 12:36
+
+
+a month ago
+
+5
+
+analyze-text
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/analyze-text
+
+
+25 Jul, 2025 12:36
+
+
+a month ago
+
+5
+
+analyze-with-tools
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/analyze-with-tools
+
+
+25 Jul, 2025 12:36
+
+
+a month ago
+
+5
+
+store-analysis
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/store-analysis
+
+
+25 Jul, 2025 12:36
+
+
+8 days ago
+
+6
+
+communication-logs
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/communication-logs
+
+
+25 Jul, 2025 14:17
+
+
+a month ago
+
+5
+
+deal-management
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/deal-management
+
+
+25 Jul, 2025 14:17
+
+
+a month ago
+
+5
+
+task-management
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/task-management
+
+
+25 Jul, 2025 14:17
+
+
+a month ago
+
+5
+
+ai-reasoning
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-reasoning
+
+
+09 Aug, 2025 03:41
+
+
+2 days ago
+
+9
+
+ai-gateway
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-gateway
+
+
+10 Aug, 2025 00:40
+
+
+9 days ago
+
+10
+
+contact-card-ai
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/contact-card-ai
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+contact-detail-ai
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/contact-detail-ai
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+conversation-analysis
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/conversation-analysis
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+duplicate-detection
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/duplicate-detection
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+meeting-optimizer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/meeting-optimizer
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+relationship-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/relationship-insights
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+timeline-generator
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/timeline-generator
+
+
+16 Aug, 2025 07:05
+
+
+11 days ago
+
+5
+
+predictive-analytics
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/predictive-analytics
+
+
+16 Aug, 2025 18:11
+
+
+11 days ago
+
+2
+
+automation-ai
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/automation-ai
+
+
+17 Aug, 2025 22:45
+
+
+10 days ago
+
+2
+
+company-researcher
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/company-researcher
+
+
+18 Aug, 2025 12:13
+
+
+9 days ago
+
+3
+
+contact-analyzer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/contact-analyzer
+
+
+18 Aug, 2025 12:13
+
+
+9 days ago
+
+3
+
+deal-analyzer
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/deal-analyzer
+
+
+18 Aug, 2025 12:14
+
+
+9 days ago
+
+2
+
+email-generator
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/email-generator
+
+
+18 Aug, 2025 12:14
+
+
+9 days ago
+
+2
+
+sales-coach
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/sales-coach
+
+
+18 Aug, 2025 12:14
+
+
+9 days ago
+
+2
+
+social-discovery
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/social-discovery
+
+
+18 Aug, 2025 12:14
+
+
+9 days ago
+
+3
+
+automation-builder
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/automation-builder
+
+
+18 Aug, 2025 12:49
+
+
+9 days ago
+
+2
+
+deal-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/deal-insights
+
+
+18 Aug, 2025 13:57
+
+
+9 days ago
+
+2
+
+contact-automation
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/contact-automation
+
+
+18 Aug, 2025 14:13
+
+
+9 days ago
+
+2
+
+ai-anomaly-detection
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-anomaly-detection
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-coaching-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-coaching-insights
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-content-generation
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-content-generation
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-cross-app-insights
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-cross-app-insights
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-natural-language-query
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-natural-language-query
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-pattern-recognition
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-pattern-recognition
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-smart-summary
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-smart-summary
+
+
+20 Aug, 2025 14:22
+
+
+7 days ago
+
+1
+
+ai-universal-analysis
+
+https://gadedbrnqzpfqtsdfzcg.supabase.co/functions/v1/ai-universal-analysis
+
+
+20 Aug, 2025 14:22

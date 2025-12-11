@@ -1,0 +1,57 @@
+// Example CalendarApp.tsx for https://calendar.smartcrm.vip/
+// Place this file in your calendar app's src/ folder
+
+import React from 'react';
+
+// Import your main calendar component
+// Replace this with your actual calendar component import
+import YourMainCalendar from './components/YourMainCalendar'; 
+
+interface CalendarAppProps {
+  theme?: 'light' | 'dark';
+  mode?: 'light' | 'dark';
+  sharedData?: {
+    appointments?: any[];
+    contacts?: any[];
+    user?: any;
+  };
+  onDataUpdate?: (data: any) => void;
+}
+
+const CalendarApp: React.FC<CalendarAppProps> = ({ 
+  theme = 'light', 
+  mode = 'light',
+  sharedData = {},
+  onDataUpdate 
+}) => {
+  console.log('📅 CalendarApp loaded via Module Federation');
+  console.log('🎨 Theme:', theme, 'Mode:', mode);
+  console.log('📊 Shared data:', sharedData);
+
+  // Handle data updates from calendar
+  const handleCalendarChange = (data: any) => {
+    console.log('📤 Calendar data update:', data);
+    if (onDataUpdate) {
+      onDataUpdate(data);
+    }
+  };
+
+  return (
+    <div className="w-full h-full" data-module-federation="calendar">
+      {/* Replace YourMainCalendar with your actual component */}
+      <YourMainCalendar 
+        theme={theme}
+        mode={mode}
+        appointments={sharedData.appointments}
+        contacts={sharedData.contacts}
+        user={sharedData.user}
+        onAppointmentChange={handleCalendarChange}
+        onAppointmentCreate={handleCalendarChange}
+        onAppointmentUpdate={handleCalendarChange}
+        onAppointmentDelete={handleCalendarChange}
+      />
+    </div>
+  );
+};
+
+export default CalendarApp;

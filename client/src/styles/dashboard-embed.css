@@ -1,0 +1,194 @@
+/* Dashboard Embed Styles */
+.embed-container {
+  width: 100%;
+  max-width: 1200px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+}
+
+.embed-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+}
+
+.embed-header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.embed-header p {
+  font-size: 1.25rem;
+  opacity: 0.9;
+}
+
+.feature-badges {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.feature-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.embed-content {
+  padding: 2rem;
+}
+
+.embed-actions {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 2rem 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.embed-actions p {
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: white;
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+  border: 2px solid #2563eb;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #eff6ff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .embed-header {
+    padding: 1.5rem;
+  }
+
+  .embed-header h1 {
+    font-size: 2rem;
+  }
+
+  .embed-header p {
+    font-size: 1rem;
+  }
+
+  .feature-badges {
+    gap: 0.5rem;
+  }
+
+  .feature-badge {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .embed-content {
+    padding: 1.5rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+  }
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Card styles for metrics */
+.metric-card {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.2s;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.metric-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.metric-change {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.metric-change.positive {
+  color: #059669;
+}
+
+.metric-change.negative {
+  color: #dc2626;
+}

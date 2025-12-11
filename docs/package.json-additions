@@ -1,0 +1,9 @@
+// Add these dependencies to your Bolt app's package.json
+
+{
+  "devDependencies": {
+    "@originjs/vite-plugin-federation": "^1.3.5"
+  }
+}
+
+// Then run: npm install

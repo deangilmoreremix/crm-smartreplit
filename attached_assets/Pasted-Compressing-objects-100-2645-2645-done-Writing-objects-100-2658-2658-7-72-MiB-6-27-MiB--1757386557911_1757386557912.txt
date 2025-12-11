@@ -1,0 +1,50 @@
+Compressing objects: 100% (2645/2645), done.
+Writing objects: 100% (2658/2658), 7.72 MiB | 6.27 MiB/s, done.
+Total 2658 (delta 2080), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (2080/2080), completed with 96 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:      (?) This repository does not have Secret Scanning enabled, but is eligible. Enable Secret Scanning to view and manage detected secrets.
+remote:      Visit the repository settings page, https://github.com/deangilmoreremix/smartcrmdash/settings/security_analysis
+remote:     
+remote:     
+remote:       —— OpenAI API Key ————————————————————————————————————
+remote:        locations:
+remote:          - commit: fec8e90ba23c374a3dcfd294e57ad9298dcb9130
+remote:            path: test-gpt5-new-key.js:3
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/deangilmoreremix/smartcrmdash/security/secret-scanning/unblock-secret/32RbqoTUV2vml4Pcniwzylf9zDa
+remote:     
+remote:     
+remote:       —— OpenAI API Key ————————————————————————————————————
+remote:        locations:
+remote:          - commit: 664090e055286b7d9cc35d9cb63d2d8f83a865f2
+remote:            path: server/routes.ts:24
+remote:          - commit: cb303654d227022fb330f55b0b2edce0d5a1ab52
+remote:            path: server/routes.ts:31
+remote:          - commit: 93f4fdbc441ee216c9fff46393b88f9ab65e97e6
+remote:            path: server/routes.ts:31
+remote:          - commit: 664090e055286b7d9cc35d9cb63d2d8f83a865f2
+remote:            path: server/routes.ts:299
+remote:          - commit: cb303654d227022fb330f55b0b2edce0d5a1ab52
+remote:            path: server/routes.ts:342
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/deangilmoreremix/smartcrmdash/security/secret-scanning/unblock-secret/32RbqsnwXXIPzNsNrHrFinjtCVf
+remote:     
+remote: 
+remote: 
+To https://github.com/deangilmoreremix/smartcrmdash
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/deangilmoreremix/smartcrmdash'

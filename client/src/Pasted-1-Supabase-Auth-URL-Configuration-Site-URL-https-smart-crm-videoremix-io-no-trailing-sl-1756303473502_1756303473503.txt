@@ -1,0 +1,106 @@
+1) Supabase → Auth → URL Configuration
+
+Site URL:
+
+https://smart-crm.videoremix.io
+
+
+(no trailing slash is safest)
+
+Redirect URLs allow-list: add every URL your auth flow may bounce to:
+
+https://smart-crm.videoremix.io
+http://localhost:3000
+https://*.netlify.app        (if you use Netlify previews)
+
+
+Add any staging domains too. (Wildcards are allowed here, not in Site URL.)
+
+That’s the only place you “add” your domain. You don’t need to hardcode it in the email template if you’re using {{ .ConfirmationURL }}.
+
+2) Email template (your example is perfect)
+
+Keep your CTA as:
+
+<a href="{{ .ConfirmationURL }}" class="cta-button">Confirm Your Account</a>
+<div class="link-text">{{ .ConfirmationURL }}</div>
+
+
+{{ .ConfirmationURL }} already includes the right tokens and the eventual redirect target based on your settings/parameters.
+
+When you DO reference your domain in code (optional)
+
+If you want users to land on a specific route (e.g., /auth/callback or straight to /dashboard) after verification, pass a redirect when you trigger the email in your app code:
+
+Example (JS/TypeScript)
+const redirectTo = 'https://smart-crm.videoremix.io/auth/callback'; // or /dashboard
+
+// Self-signup flow
+await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: redirectTo
+  }
+});
+
+// Admin invite flow
+await supabase.auth.admin.inviteUserByEmail(email, {
+  redirectTo
+});
+
+
+Make sure that exact URL (including path) is in Redirect URLs.
+
+In the email template you can still use {{ .ConfirmationURL }} (recommended).
+
+If you also want to show the target URL in the email body, you can use {{ .RedirectTo }} (it will contain the value you passed in code).
+
+What each template var is for (quick mapping)
+
+{{ .ConfirmationURL }} → The complete, click-ready link (use this for your button).
+
+{{ .RedirectTo }} → The redirect you passed in code (optional to display).
+
+{{ .SiteURL }} → Your base app URL from settings (not a verification link).
+
+{{ .Token }} → Short OTP code (if you want to show a code).
+
+{{ .TokenHash }} → For building a custom URL manually (advanced; usually unnecessary).
+
+{{ .Email }} → Recipient email (for personalization).
+
+{{ .Data }} → JSON metadata you attached when inviting/creating; use like {{ .Data.first_name }}.
+
+App-side must-have (why some links “work” but you’re not logged in)
+
+The page you redirect to must initialize Supabase on mount so it consumes the hash (e.g., /#access_token=...) and establishes the session.
+
+For a Vite/React SPA:
+
+// auth/callback route component
+useEffect(() => {
+  // supabase-js automatically picks up tokens from the URL hash when the client initializes
+  // Make sure your Supabase client is imported/created before this renders
+  supabase.auth.getSession().then(() => {
+    // session should now be set; you can navigate to dashboard
+    navigate('/dashboard');
+  });
+}, []);
+
+
+(Exact code varies, but the idea is: load the Supabase client immediately on that route so it processes the tokens.)
+
+Quick sanity checklist
+
+Site URL is the production domain (no localhost).
+
+All final redirect targets are in Redirect URLs (exact match, includes path if you used one).
+
+Email uses {{ .ConfirmationURL }} for the button.
+
+If you set emailRedirectTo/redirectTo in code, that URL is allow-listed.
+
+The landing route initializes Supabase so the session is created.
+
+If you want, tell me which route you want users to land on after confirming (e.g., /dashboard or /auth/callback), and I’ll give you the exact redirectTo value, the allow-list entry, and a ready-to-paste snippet for your signup/invite code.

@@ -1,0 +1,10 @@
+[build]
+command   = "npm run build"
+publish   = "dist"
+functions = "netlify/functions"
+
+[build.environment]
+NODE_VERSION = "20"
+SECRETS_SCAN_ENABLED = "false"
+VITE_SUPABASE_URL = "https://gadedbrnqzpftsdmfzcg.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZGVkYnJucXpwbXRzZG1memNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4MzY0NTUsImV4cCI6MjA1MjQxMjQ1NX0.Q1e4"

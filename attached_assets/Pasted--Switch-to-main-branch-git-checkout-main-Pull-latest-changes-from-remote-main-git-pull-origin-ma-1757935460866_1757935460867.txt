@@ -1,0 +1,49 @@
+# Switch to main branch
+git checkout main
+
+# Pull latest changes from remote main
+git pull origin main
+
+# Merge your resolved branch into main
+git merge final-sync-1757926956
+
+# Push the updated main branch
+git push origin main
+Switched to branch 'main'
+Your branch and 'origin/main' have diverged,
+and have 460 and 4 different commits each, respectively.
+  (use "git pull" if you want to integrate the remote branch with yours)
+From https://github.com/deangilmoreremix/smartcrmdash
+ * branch            main       -> FETCH_HEAD
+Auto-merging client/src/App.tsx
+CONFLICT (content): Merge conflict in client/src/App.tsx
+Auto-merging client/src/components/RoleBasedAccess.tsx
+Auto-merging client/src/components/TaskKanbanBoard.tsx
+Auto-merging client/src/contexts/AuthContext.tsx
+CONFLICT (add/add): Merge conflict in client/src/contexts/AuthContext.tsx
+Auto-merging client/src/lib/queryClient.ts
+CONFLICT (add/add): Merge conflict in client/src/lib/queryClient.ts
+Auto-merging client/src/main.tsx
+CONFLICT (content): Merge conflict in client/src/main.tsx
+CONFLICT (modify/delete): client/src/services/dealService.ts deleted in 3602e87ceb9d8bb355d317c415910613989051d3 and modified in HEAD.  Version HEAD of client/src/services/dealService.ts left in tree.
+CONFLICT (modify/delete): client/src/services/supabaseClient.ts deleted in 3602e87ceb9d8bb355d317c415910613989051d3 and modified in HEAD.  Version HEAD of client/src/services/supabaseClient.ts left in tree.
+Auto-merging client/src/store/taskStore.ts
+CONFLICT (content): Merge conflict in client/src/store/taskStore.ts
+Auto-merging package-lock.json
+CONFLICT (content): Merge conflict in package-lock.json
+Auto-merging package.json
+CONFLICT (content): Merge conflict in package.json
+Auto-merging server/index.ts
+CONFLICT (content): Merge conflict in server/index.ts
+Automatic merge failed; fix conflicts and then commit the result.
+error: Merging is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+To https://github.com/deangilmoreremix/smartcrmdash
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/deangilmoreremix/smartcrmdash'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
