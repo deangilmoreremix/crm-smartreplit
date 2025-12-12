@@ -8,6 +8,7 @@ import { queryClient } from './lib/queryClient';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TenantProvider } from './contexts/TenantProvider';
 import { WhitelabelProvider } from './contexts/WhitelabelContext';
+import { CompanyProvider } from './contexts/CompanyContext';
 import { AIToolsProvider } from './components/AIToolsProvider';
 import { ModalsProvider } from './components/ModalsProvider';
 import { EnhancedHelpProvider } from './contexts/EnhancedHelpContext';
@@ -97,6 +98,7 @@ const WLPage = lazy(() => import('./pages/WLPage'));
 const IntelPage = lazy(() => import('./pages/IntelPage'));
 
 // White-label management components
+import CompanyAdminDashboard from './pages/CompanyAdminDashboard';
 const WhiteLabelManagementDashboard = lazy(() => import('./pages/WhiteLabelManagementDashboard'));
 const WhiteLabelPackageBuilder = lazy(() => import('./pages/WhiteLabelPackageBuilder'));
 const RevenueSharingPage = lazy(() => import('./pages/RevenueSharingPage'));
@@ -216,15 +218,20 @@ const PlaceholderPage = ({ title, description }: { title: string; description?: 
 );
 
 // Loading screen component
-const AuthLoadingScreen = () => (
-  <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Smart CRM</h2>
-      <p className="text-gray-600">Please wait while we initialize your session...</p>
+const AuthLoadingScreen = () => {
+  // Use whitelabel config for loading screen
+  const { config } = useWhitelabel();
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading {config.companyName || 'Smart CRM'}</h2>
+        <p className="text-gray-600">Please wait while we initialize your session...</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Removed conflicting useDarkMode - now using unified ThemeContext
 
@@ -246,6 +253,7 @@ function App() {
           <DemoDataProvider>
             <TenantProvider>
               <WhitelabelProvider>
+              <CompanyProvider>
                 <AIToolsProvider>
                   <ModalsProvider>
                     <EnhancedHelpProvider>
@@ -265,7 +273,8 @@ function App() {
                     </EnhancedHelpProvider>
                   </ModalsProvider>
                 </AIToolsProvider>
-              </WhitelabelProvider>
+                </CompanyProvider>
+            </WhitelabelProvider>
             </TenantProvider>
           </DemoDataProvider>
         </ThemeProvider>

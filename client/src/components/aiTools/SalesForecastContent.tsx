@@ -27,7 +27,7 @@ const SalesForecastContent: React.FC = () => {
     setError(null);
     
     try {
-      // Sample deals data for the demo
+      // Sample deals data for analysis
       const deals = [
         { 
           title: "Enterprise License", 

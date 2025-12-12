@@ -66,8 +66,8 @@ export default function SocialMediaGenerator() {
         variations.push({
           content: variation,
           id: i + 1,
-          engagement: Math.floor(Math.random() * 100) + 50, // Mock engagement score
-          readability: Math.floor(Math.random() * 20) + 80,  // Mock readability score
+          engagement: Math.floor(// TODO: Replace with real AI implementation * 100) + 50, // Mock engagement score
+          readability: Math.floor(// TODO: Replace with real AI implementation * 20) + 80,  // Mock readability score
         });
       }
 
@@ -101,7 +101,7 @@ export default function SocialMediaGenerator() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
+      // TODO: Replace with real AI implementation;
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
     }
@@ -256,7 +256,7 @@ Readability Score: ${post.readability}/100
               type="text"
               value={formData.callToAction}
               onChange={(e) => handleInputChange('callToAction', e.target.value)}
-              placeholder="e.g., Visit our website, Book a demo..."
+              placeholder="e.g., Visit our website, Book a meeting..."
               className={`w-full p-3 rounded-lg border ${
                 isDark 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 

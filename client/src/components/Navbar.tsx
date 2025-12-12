@@ -11,6 +11,7 @@ import {
   ChevronLeft, ChevronRight, ChevronUp
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useRole } from './RoleBasedAccess';
@@ -89,6 +90,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const { isDark, toggleTheme } = useTheme();
+  const { config } = useWhitelabel();
   const { openAITool } = useNavigation(); // expected from your AIToolsProvider/Navigation layer
   const { signOut, user } = useAuth();
   const { canAccess, isSuperAdmin, isWLUser, isRegularUser } = useRole();

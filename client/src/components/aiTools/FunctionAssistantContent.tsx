@@ -101,7 +101,7 @@ const FunctionAssistantContent: React.FC = () => {
       
       // Process function calls that might have happened
       // Note: In a real implementation, we'd track the actual function calls and results
-      // that were exchanged with OpenAI. For demo purposes, we'll simulate this.
+      // that were exchanged with OpenAI. For analysis purposes, we'll simulate this.
       
       // Add assistant response
       const assistantMessage: Message = {

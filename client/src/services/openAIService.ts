@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { rateLimiter } from './rate-limiter.service';
 import { supabaseAIService } from './supabaseAIService';
 
 interface ChatMessage {
@@ -92,6 +93,18 @@ class OpenAIService {
   async generateContent(request: GenerateRequest): Promise<GenerateResponse> {
     const startTime = Date.now();
     const model = request.model || this.defaultModel;
+
+    // Check rate limits for AI usage
+    const rateLimitCheck = await rateLimiter.checkLimit(
+      'openai',
+      request.customerId || 'anonymous',
+      'generate',
+      { maxRequests: 50, windowMs: 60000 } // 50 requests per minute per user
+    );
+
+    if (!rateLimitCheck.allowed) {
+      throw new Error(`Rate limit exceeded. Try again in ${Math.ceil((rateLimitCheck.resetTime - Date.now()) / 1000)} seconds.`);
+    }
 
     try {
       const response = await fetch('/api/respond', {

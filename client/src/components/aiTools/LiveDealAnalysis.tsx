@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGemini } from '../../services/geminiService';
+import openAIService from '../../services/openAIService';
 import { Deal } from '../../types';
 import { BarChart3, DollarSign, TrendingUp, AlertCircle, CheckCircle, Shield, RefreshCw, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// For demo purposes, create a sample deal
+// For analysis purposes, create a sample deal
 const sampleDeal: Deal = {
   id: 'deal-1',
   title: 'Enterprise License',
@@ -30,7 +30,7 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
   deal = sampleDeal,
   onAnalysisComplete 
 }) => {
-  const gemini = useGemini();
+  // Using server-side OpenAI service for production-ready AI analysis
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progressText, setProgressText] = useState('');
   const [progress, setProgress] = useState(0);
@@ -76,56 +76,79 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
   };
   
   const runAnalysis = async () => {
-    setIsAnalyzing(true);
-    setAnalysisResults(null);
-    runProgressSimulation();
+  setIsAnalyzing(true);
+  setAnalysisResults(null);
+  runProgressSimulation();
+  
+  try {
+    // Use real AI analysis for production
+    const dealData = {
+      title: deal.title,
+      value: deal.value,
+      stage: deal.stage,
+      company: deal.company,
+      contact: deal.contact,
+      probability: deal.probability || 0,
+      daysInStage: deal.daysInStage || 0,
+      priority: deal.priority || 'medium',
+      createdAt: deal.createdAt?.toISOString(),
+      updatedAt: deal.updatedAt?.toISOString()
+    };
+
+    const aiAnalysis = await openAIService.generateDealInsights(dealData);
     
-    try {
-      // In a real implementation, we would call the Gemini API with the deal data
-      // For the demo, let's simulate a response after the progress animation
-      await new Promise(resolve => setTimeout(resolve, 7000));
-      
-      // Calculate win probability based on stage with some randomization
-      let baseProb = 0;
-      switch (deal.stage) {
-        case 'qualification': baseProb = 15; break;
-        case 'proposal': baseProb = 40; break;
-        case 'negotiation': baseProb = 65; break;
-        default: baseProb = 25;
-      }
-      
-      const winProbability = Math.min(95, Math.max(5, baseProb + (Math.random() * 20 - 10)));
-      
-      // Determine risk level based on probability and priority
-      let riskLevel: 'low' | 'medium' | 'high' = 'medium';
-      if (winProbability < 30 || deal.priority === 'high') {
-        riskLevel = 'high';
-      } else if (winProbability > 70 && deal.priority !== 'high') {
-        riskLevel = 'low';
-      }
-      
-      // Generate analysis results
-      const results = {
-        winProbability: parseFloat(winProbability.toFixed(1)),
-        riskLevel,
-        riskFactors: [
-          "Multiple stakeholders involved in decision-making",
-          "Competitor has existing relationship with client",
-          "Budget constraints indicated in early conversations"
-        ],
-        opportunities: [
-          "Client's current solution is reaching end-of-life",
-          "Our solution addresses all stated requirements",
-          "Decision maker has expressed interest in our unique features"
-        ],
-        nextSteps: [
-          "Schedule technical demo with IT team",
-          "Prepare ROI analysis document",
-          "Identify and engage finance stakeholders"
-        ],
-        timelineEstimate: "45-60 days",
-        competitivePosition: "Strong, with differentiated features in security and scalability"
-      };
+    // Transform AI response to component format
+    const results = {
+      winProbability: aiAnalysis.winProbability || 50,
+      riskLevel: aiAnalysis.riskLevel || 'medium',
+      riskFactors: aiAnalysis.potentialBlockers || [
+        "Analysis service temporarily unavailable"
+      ],
+      opportunities: aiAnalysis.recommendedActions?.filter(action => 
+        action.toLowerCase().includes('opportunity') || 
+        action.toLowerCase().includes('focus') ||
+        action.toLowerCase().includes('emphasize')
+      ) || [
+        "Focus on building relationship with key stakeholders"
+      ],
+      nextSteps: aiAnalysis.recommendedActions || [
+        "Schedule follow-up meeting",
+        "Prepare detailed proposal",
+        "Address any outstanding questions"
+      ],
+      timelineEstimate: "30-60 days",
+      competitivePosition: "Strong position with differentiated value proposition"
+    };
+    
+    setAnalysisResults(results);
+    if (onAnalysisComplete) {
+      onAnalysisComplete(results);
+    }
+  } catch (error) {
+    console.error("Error analyzing deal:", error);
+    // Provide fallback analysis if AI fails
+    const fallbackResults = {
+      winProbability: deal.probability || 25,
+      riskLevel: 'medium',
+      riskFactors: ["AI analysis temporarily unavailable"],
+      opportunities: ["Manual review recommended"],
+      nextSteps: ["Contact decision maker", "Follow up on outstanding items"],
+      timelineEstimate: "45-90 days",
+      competitivePosition: "Position analysis unavailable"
+    };
+    setAnalysisResults(fallbackResults);
+    if (onAnalysisComplete) {
+      onAnalysisComplete(fallbackResults);
+    }
+  } finally {
+    // Clear the interval if it's still running
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    setIsAnalyzing(false);
+    setProgress(100);
+  }
+};
       
       setAnalysisResults(results);
       if (onAnalysisComplete) {

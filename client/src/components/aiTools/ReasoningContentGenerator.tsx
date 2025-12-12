@@ -127,7 +127,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
     if (result) {
       navigator.clipboard.writeText(result);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // TODO: Replace with real AI implementation;
     }
   };
   
@@ -229,7 +229,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               value={formData.objective}
               onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-              placeholder="What do you want to achieve? (e.g., 'Schedule a product demo call', 'Get approval on the proposal')"
+              placeholder="What do you want to achieve? (e.g., 'Schedule a product presentation call', 'Get approval on the proposal')"
               required
             ></textarea>
           </div>

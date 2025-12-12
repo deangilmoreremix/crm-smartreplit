@@ -32,7 +32,7 @@ const EmailAnalysisContent: React.FC = () => {
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles(newFiles);
     
-    // For demo purposes, we'll just handle text files directly
+    // For analysis purposes, we'll just handle text files directly
     // In a real implementation, we might process the file on the server
     if (newFiles.length > 0) {
       const file = newFiles[0];

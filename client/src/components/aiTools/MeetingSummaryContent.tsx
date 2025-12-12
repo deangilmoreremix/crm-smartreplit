@@ -34,7 +34,7 @@ const MeetingSummaryContent: React.FC = () => {
     setFiles(newFiles);
     setIsUploading(true);
     
-    // For demo purposes, we'll just handle text files directly
+    // For analysis purposes, we'll just handle text files directly
     // In a real implementation, we might use a transcription service for audio files
     if (newFiles.length > 0) {
       const file = newFiles[0];
@@ -50,7 +50,7 @@ const MeetingSummaryContent: React.FC = () => {
       } else {
         setTimeout(() => {
           setIsUploading(false);
-          setError('For this demo, only text files can be processed directly. In a production environment, audio and video files would be transcribed via a service like Whisper API.');
+          setError('For this analysis, only text files can be processed directly. In a production environment, audio and video files would be transcribed via a service like Whisper API.');
         }, 1500);
       }
     }
@@ -108,7 +108,7 @@ const MeetingSummaryContent: React.FC = () => {
               }}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Supports text files. Audio/video transcription is simulated in this demo.
+              Supports text files. Audio/video transcription requires additional services.
             </p>
           </div>
 

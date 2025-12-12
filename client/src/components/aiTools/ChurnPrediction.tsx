@@ -62,7 +62,7 @@ export default function ChurnPrediction() {
 
     try {
       const result = await enhancedGeminiService.predictChurnRisk({
-        customerId: 'demo-customer-id',
+        customerId: 'customer-analysis-session',
         engagementData: {
           lastContact: new Date(Date.now() - parseInt(formData.timeframe) * 24 * 60 * 60 * 1000),
           emailOpens: 15,

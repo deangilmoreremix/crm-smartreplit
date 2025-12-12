@@ -5,99 +5,12 @@ import { Search, FileText, User, Briefcase, Clock, ArrowRight, RefreshCw, X, Spa
 import { motion, AnimatePresence } from 'framer-motion';
 import { Contact, Deal } from '../../types';
 
-// Mock data for the demo
-const mockContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '(555) 123-4567',
-    company: 'Acme Inc',
-    position: 'CTO',
-    status: 'customer',
-    score: 85,
-    lastContact: new Date('2023-06-15'),
-    notes: 'Interested in enterprise plan. Has concerns about implementation timeline.',
-    industry: 'Technology',
-    location: 'San Francisco, CA'
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane.smith@globex.com',
-    phone: '(555) 987-6543',
-    company: 'Globex Corp',
-    position: 'Marketing Director',
-    status: 'lead',
-    score: 65,
-    lastContact: new Date('2023-05-28'),
-    notes: 'Looking for marketing automation tools. Complained about current vendor being too expensive.',
-    industry: 'Manufacturing',
-    location: 'Chicago, IL'
-  },
-  {
-    id: '3',
-    name: 'Robert Johnson',
-    email: 'robert@initech.com',
-    phone: '(555) 456-7890',
-    company: 'Initech',
-    position: 'CEO',
-    status: 'prospect',
-    score: 75,
-    lastContact: new Date('2023-06-02'),
-    notes: 'Interested in comprehensive CRM solution. Budget concerns, but decision maker.',
-    industry: 'Financial Services',
-    location: 'New York, NY'
-  }
-];
+// Sample data for testing
+const sampleContacts: Contact[] = []; // TODO: Replace with real CRM data
 
-const mockDeals: Deal[] = [
-  {
-    id: 'deal-1',
-    title: 'Enterprise License',
-    value: 75000,
-    stage: 'qualification',
-    company: 'Acme Inc',
-    contact: 'John Doe',
-    contactId: '1',
-    dueDate: new Date('2025-07-15'),
-    createdAt: new Date('2025-06-01'),
-    updatedAt: new Date('2025-06-01'),
-    probability: 10,
-    daysInStage: 5,
-    priority: 'high'
-  },
-  {
-    id: 'deal-2',
-    title: 'Software Renewal',
-    value: 45000,
-    stage: 'proposal',
-    company: 'Globex Corp',
-    contact: 'Jane Smith',
-    contactId: '2',
-    dueDate: new Date('2025-06-30'),
-    createdAt: new Date('2025-05-15'),
-    updatedAt: new Date('2025-06-01'),
-    probability: 50,
-    daysInStage: 3,
-    priority: 'medium'
-  },
-  {
-    id: 'deal-3',
-    title: 'Support Contract',
-    value: 25000,
-    stage: 'negotiation',
-    company: 'Initech',
-    contact: 'Robert Johnson',
-    contactId: '3',
-    dueDate: new Date('2025-07-10'),
-    createdAt: new Date('2025-05-20'),
-    updatedAt: new Date('2025-06-01'),
-    probability: 75,
-    daysInStage: 7,
-    priority: 'low'
-  }
-];
+
+const sampleDeals: Deal[] = []; // TODO: Replace with real CRM data
+
 
 interface SearchResult {
   type: 'contact' | 'deal';
@@ -172,8 +85,8 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     const initializeEmbeddings = async () => {
       try {
         // Generate embeddings for contacts and deals
-        const contactEmbs = await embeddings.createContactEmbeddings(mockContacts);
-        const dealEmbs = await embeddings.createDealEmbeddings(mockDeals);
+        const contactEmbs = await embeddings.createContactEmbeddings(sampleContacts);
+        const dealEmbs = await embeddings.createDealEmbeddings(sampleDeals);
         
         setEmbedData({
           ready: true,
@@ -234,7 +147,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
   const generateSearchSuggestions = async (query: string) => {
     try {
       // In a real implementation, call Gemini API
-      // For demo, generate simple suggestions
+      // For analysis, generate simple suggestions
       const baseSuggestions = [
         `${query} in technology companies`,
         `high priority ${query}`,
@@ -260,7 +173,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     
     // Search contacts
     if (filters.type === 'all' || filters.type === 'contacts') {
-      mockContacts.forEach(contact => {
+      sampleContacts.forEach(contact => {
         const searchableText = `${contact.name} ${contact.email} ${contact.company} ${contact.position} ${contact.notes} ${contact.industry} ${contact.location}`.toLowerCase();
         if (searchableText.includes(searchTerm)) {
           results.push({
@@ -274,7 +187,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     
     // Search deals
     if (filters.type === 'all' || filters.type === 'deals') {
-      mockDeals.forEach(deal => {
+      sampleDeals.forEach(deal => {
         const searchableText = `${deal.title} ${deal.company} ${deal.contact} ${deal.stage} ${deal.priority}`.toLowerCase();
         if (searchableText.includes(searchTerm)) {
           results.push({
@@ -306,7 +219,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         
         // Search contacts if not filtered out
         if (filters.type === 'all' || filters.type === 'contacts') {
-          const contactsById = mockContacts.reduce((acc, contact) => {
+          const contactsById = sampleContacts.reduce((acc, contact) => {
             acc[contact.id] = contact;
             return acc;
           }, {} as Record<string, Contact>);
@@ -322,7 +235,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         
         // Search deals if not filtered out
         if (filters.type === 'all' || filters.type === 'deals') {
-          const dealsById = mockDeals.reduce((acc, deal) => {
+          const dealsById = sampleDeals.reduce((acc, deal) => {
             acc[deal.id] = deal;
             return acc;
           }, {} as Record<string, Deal>);
@@ -589,14 +502,14 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
               <>
                 <CheckCircle size={14} className="text-blue-500 mr-1.5" />
                 <span>
-                  AI semantic search ready ({mockContacts.length} contacts, {mockDeals.length} deals)
+                  AI semantic search ready ({sampleContacts.length} contacts, {sampleDeals.length} deals)
                 </span>
               </>
             ) : (
               <>
                 <AlertCircle size={14} className="text-amber-500 mr-1.5" />
                 <span>
-                  Basic keyword search active ({mockContacts.length} contacts, {mockDeals.length} deals)
+                  Basic keyword search active ({sampleContacts.length} contacts, {sampleDeals.length} deals)
                 </span>
               </>
             )}

@@ -168,7 +168,7 @@ const AgentWorkflowChat: React.FC = () => {
           throw new Error('Assistant run failed');
         }
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => // TODO: Replace with real AI implementation);
         attempts++;
       } catch (error) {
         console.error('Error polling for response:', error);
@@ -280,7 +280,7 @@ const AgentWorkflowChat: React.FC = () => {
       ));
       
       // Simulate step execution
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => // TODO: Replace with real AI implementation);
       
       setWorkflows(prev => prev.map(w => 
         w.id === workflow.id 

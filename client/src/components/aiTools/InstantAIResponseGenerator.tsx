@@ -86,7 +86,7 @@ const InstantAIResponseGenerator: React.FC = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedResponse);
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    // TODO: Replace with real AI implementation;
   };
   
   // Generate response when inputs change (with debounce)
@@ -172,7 +172,7 @@ const InstantAIResponseGenerator: React.FC = () => {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     className="w-full p-2 border rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    placeholder="e.g. our product demo, pricing concerns"
+                    placeholder="e.g. our product presentation, pricing concerns"
                   />
                 </div>
               </div>

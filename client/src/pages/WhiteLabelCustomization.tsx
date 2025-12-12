@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useToast } from '../hooks/use-toast';
 import { WhitelabelButton } from '../types/whitelabel';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -8,6 +9,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
+import { ColorInput } from '../components/ui/ColorInput';
 import {
   Save,
   RotateCcw,
@@ -33,16 +35,38 @@ import {
 const WhiteLabelCustomization: React.FC = () => {
   const { config, updateConfig, resetToDefault, exportConfig, importConfig } = useWhitelabel();
   const { isDark, toggleTheme } = useTheme(); // Use global theme context
+const { toast } = useToast();
+  // Validation functions
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateUrl = (url: string) => {
+    if (!url) return true; // Optional field
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const validatePhone = (phone: string) => {
+    if (!phone) return true; // Optional field
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  };
   const [copied, setCopied] = useState(false);
   const [importText, setImportText] = useState('');
 
-  const handleButtonUpdate = (index: number, updates: Partial<WhitelabelButton>) => {
+  const handleButtonUpdate = useCallback((index: number, updates: Partial<WhitelabelButton>) => {
     const newButtons = [...config.ctaButtons];
     newButtons[index] = { ...newButtons[index], ...updates };
     updateConfig({ ctaButtons: newButtons });
   };
 
-  const addButton = () => {
+  const addButton = useCallback(() => {
     const newButton: WhitelabelButton = {
       id: `button_${Date.now()}`,
       text: 'New Button',
@@ -54,24 +78,78 @@ const WhiteLabelCustomization: React.FC = () => {
     updateConfig({ ctaButtons: [...config.ctaButtons, newButton] });
   };
 
-  const removeButton = (index: number) => {
+  const removeButton = useCallback((index: number) => {
     const newButtons = config.ctaButtons.filter((_, i) => i !== index);
     updateConfig({ ctaButtons: newButtons });
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const configString = exportConfig();
-    navigator.clipboard.writeText(configString);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(configString);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast({
+          title: "Export Successful",
+          description: "Configuration copied to clipboard"
+        });
+      } catch (error) {
+        // Fallback to document.execCommand
+        const textArea = document.createElement("textarea");
+        textArea.value = configString;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast({
+          title: "Export Successful",
+          description: "Configuration copied to clipboard (fallback method)"
+        });
+      }
+    } else {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = configString;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "Export Successful",
+        description: "Configuration copied to clipboard (legacy method)"
+      });
+    }
   };
 
   const handleImport = () => {
+    if (!importText.trim()) {
+      toast({
+        title: "Import Error",
+        description: "Please enter configuration data to import",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       importConfig(importText);
       setImportText('');
+      toast({
+        title: "Import Successful",
+        description: "Configuration imported successfully"
+      });
     } catch (error) {
       console.error('Failed to import config:', error);
+      toast({
+        title: "Import Failed",
+        description: error instanceof Error ? error.message : "Invalid configuration format",
+        variant: "destructive"
+      });
     }
   };
 
@@ -133,6 +211,15 @@ const WhiteLabelCustomization: React.FC = () => {
                 id="logoUrl"
                 value={config.logoUrl}
                 onChange={(e) => updateConfig({ logoUrl: e.target.value })}
+                onBlur={(e) => {
+                  if (e.target.value && !validateUrl(e.target.value)) {
+                    toast({
+                      title: "Invalid URL",
+                      description: "Please enter a valid URL",
+                      variant: "destructive"
+                    });
+                  }
+                }}
                 placeholder="https://your-logo.png"
               />
             </div>
@@ -142,6 +229,15 @@ const WhiteLabelCustomization: React.FC = () => {
                 id="supportEmail"
                 value={config.supportEmail}
                 onChange={(e) => updateConfig({ supportEmail: e.target.value })}
+                onBlur={(e) => {
+                  if (e.target.value && !validateEmail(e.target.value)) {
+                    toast({
+                      title: "Invalid Email",
+                      description: "Please enter a valid email address",
+                      variant: "destructive"
+                    });
+                  }
+                }}
                 placeholder="support@yourcompany.com"
               />
             </div>
@@ -151,6 +247,15 @@ const WhiteLabelCustomization: React.FC = () => {
                 id="supportPhone"
                 value={config.supportPhone}
                 onChange={(e) => updateConfig({ supportPhone: e.target.value })}
+                onBlur={(e) => {
+                  if (e.target.value && !validatePhone(e.target.value)) {
+                    toast({
+                      title: "Invalid Phone Number",
+                      description: "Please enter a valid phone number",
+                      variant: "destructive"
+                    });
+                  }
+                }}
                 placeholder="+1 (555) 123-4567"
               />
             </div>
@@ -166,42 +271,22 @@ const WhiteLabelCustomization: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="primaryColor">Primary Color</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="primaryColor"
-                  type="color"
-                  value={config.primaryColor}
-                  onChange={(e) => updateConfig({ primaryColor: e.target.value })}
-                  className="w-12 h-10 p-1"
-                />
-                <Input
-                  value={config.primaryColor}
-                  onChange={(e) => updateConfig({ primaryColor: e.target.value })}
-                  placeholder="#3B82F6"
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="secondaryColor">Secondary Color</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="secondaryColor"
-                  type="color"
-                  value={config.secondaryColor}
-                  onChange={(e) => updateConfig({ secondaryColor: e.target.value })}
-                  className="w-12 h-10 p-1"
-                />
-                <Input
-                  value={config.secondaryColor}
-                  onChange={(e) => updateConfig({ secondaryColor: e.target.value })}
-                  placeholder="#1E40AF"
-                  className="flex-1"
-                />
-              </div>
-            </div>
+            <ColorInput
+              id="primaryColor"
+              value={config.primaryColor}
+              onChange={(value) => updateConfig({ primaryColor: value })}
+              label="Primary Color"
+              placeholder="#3B82F6"
+              ariaDescribedBy="primaryColorHelp"
+            />
+            <ColorInput
+              id="secondaryColor"
+              value={config.secondaryColor}
+              onChange={(value) => updateConfig({ secondaryColor: value })}
+              label="Secondary Color"
+              placeholder="#1E40AF"
+              ariaDescribedBy="secondaryColorHelp"
+            />
           </CardContent>
         </Card>
 
@@ -248,6 +333,7 @@ const WhiteLabelCustomization: React.FC = () => {
                           value={button.color}
                           onChange={(e) => handleButtonUpdate(index, { color: e.target.value })}
                           className="w-12 h-10 p-1"
+                          aria-label="Button color picker"
                         />
                         <Input
                           value={button.color}

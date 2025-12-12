@@ -57,25 +57,39 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const configParam = urlParams.get('wl_config');
     if (configParam) {
       try {
-        const decodedConfig = JSON.parse(atob(configParam));
-        setConfig(prev => ({ ...prev, ...decodedConfig }));
+        const decoded = atob(configParam);
+        const parsedConfig = JSON.parse(decoded);
+        // Basic validation
+        if (typeof parsedConfig === 'object' && parsedConfig !== null) {
+          setConfig(prev => ({ ...prev, ...parsedConfig }));
+        } else {
+          console.error('Invalid whitelabel config structure from URL');
+        }
       } catch (error) {
         console.error('Error parsing whitelabel config from URL:', error);
       }
     }
 
-    // Load individual parameters
+    // Load individual parameters with validation
     const companyName = urlParams.get('wl_company');
     const primaryColor = urlParams.get('wl_primary');
     const heroTitle = urlParams.get('wl_title');
 
     if (companyName || primaryColor || heroTitle) {
-      setConfig(prev => ({
-        ...prev,
-        ...(companyName && { companyName }),
-        ...(primaryColor && { primaryColor }),
-        ...(heroTitle && { heroTitle })
-      }));
+      const updates: Partial<WhitelabelConfig> = {};
+      if (companyName && typeof companyName === 'string') {
+        updates.companyName = companyName;
+      }
+      if (primaryColor && typeof primaryColor === 'string' && /^#[0-9A-F]{6}$/i.test(primaryColor)) {
+        updates.primaryColor = primaryColor;
+      }
+      if (heroTitle && typeof heroTitle === 'string') {
+        updates.heroTitle = heroTitle;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        setConfig(prev => ({ ...prev, ...updates }));
+      }
     }
   }, []);
 
@@ -86,10 +100,39 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const importConfig = useCallback((configJson: string) => {
     try {
       const parsed = JSON.parse(configJson);
-      setConfig(prev => ({ ...prev, ...parsed }));
+      // Validate the parsed config structure
+      if (typeof parsed === 'object' && parsed !== null) {
+        // Basic validation for required fields
+        const validatedConfig: Partial<WhitelabelConfig> = {};
+        
+        if (parsed.companyName && typeof parsed.companyName === 'string') {
+          validatedConfig.companyName = parsed.companyName;
+        }
+        if (parsed.primaryColor && typeof parsed.primaryColor === 'string' && /^#[0-9A-F]{6}$/i.test(parsed.primaryColor)) {
+          validatedConfig.primaryColor = parsed.primaryColor;
+        }
+        if (parsed.secondaryColor && typeof parsed.secondaryColor === 'string' && /^#[0-9A-F]{6}$/i.test(parsed.secondaryColor)) {
+          validatedConfig.secondaryColor = parsed.secondaryColor;
+        }
+        if (parsed.heroTitle && typeof parsed.heroTitle === 'string') {
+          validatedConfig.heroTitle = parsed.heroTitle;
+        }
+        if (parsed.heroSubtitle && typeof parsed.heroSubtitle === 'string') {
+          validatedConfig.heroSubtitle = parsed.heroSubtitle;
+        }
+        if (Array.isArray(parsed.ctaButtons)) {
+          validatedConfig.ctaButtons = parsed.ctaButtons.filter(button => 
+            button && typeof button === 'object' && button.text && button.url
+          );
+        }
+        
+        setConfig(prev => ({ ...prev, ...validatedConfig }));
+      } else {
+        throw new Error('Configuration must be a valid object');
+      }
     } catch (error) {
       console.error('Error importing whitelabel config:', error);
-      throw new Error('Invalid configuration format');
+      throw new Error('Invalid configuration format: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   }, []);
 

@@ -168,7 +168,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
     setFormErrors([]);
     
     // In a real app, submit the form data to your backend
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => // TODO: Replace with real AI implementation);
     
     // Reset form after successful submission
     setFields(fields.map(field => ({ ...field, value: '', validation: undefined })));

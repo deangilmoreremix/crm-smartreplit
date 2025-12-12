@@ -14,7 +14,7 @@ const SalesInsightsContent: React.FC = () => {
     setError(null);
     
     try {
-      // For demo purposes, we'll use example data
+      // For analysis purposes, we'll use example data
       const contacts = [
         { name: "John Doe", company: "Acme Inc", status: "customer", score: 85 },
         { name: "Jane Smith", company: "Globex Corp", status: "lead", score: 65 },

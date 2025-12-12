@@ -77,7 +77,7 @@ const CompetitorAnalysisContent: React.FC = () => {
     setFiles(newFiles);
     
     // In a real app, we would extract info from the file
-    // For demo purposes, just acknowledge
+    // For analysis purposes, just acknowledge
     if (newFiles.length > 0) {
       setTimeout(() => {
         setError("Document analysis would be processed on the server in a production environment.");

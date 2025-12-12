@@ -7,47 +7,69 @@ const ConnectedApps: React.FC = () => {
   
   // Connected apps
   const connectedApps = [
-    { 
-      name: 'FunnelCraft AI', 
-      url: 'https://serene-valkyrie-fec320.netlify.app/', 
-      icon: Megaphone, 
+    {
+      name: 'Remote Pipeline',
+      url: 'https://cheery-syrniki-b5b6ca.netlify.app/',
+      icon: Grid3X3,
+      team: 'Sales Team',
+      description: 'Advanced pipeline management and analytics',
+      color: isDark
+        ? 'from-blue-500/10 to-indigo-500/10 border-white/10 hover:border-blue-400/30'
+        : 'from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border-gray-200 hover:border-blue-300',
+      iconColor: isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+    },
+    {
+      name: 'Remote Contacts',
+      url: 'https://taupe-sprinkles-83c9ee.netlify.app/',
+      icon: Users,
+      team: 'CRM Team',
+      description: 'Advanced contact management and enrichment',
+      color: isDark
+        ? 'from-green-500/10 to-teal-500/10 border-white/10 hover:border-green-400/30'
+        : 'from-green-50 to-teal-50 hover:from-green-100 hover:to-teal-100 border-gray-200 hover:border-green-300',
+      iconColor: isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
+    },
+    {
+      name: 'FunnelCraft AI',
+      url: 'https://serene-valkyrie-fec320.netlify.app/',
+      icon: Megaphone,
       team: 'Marketing Team',
       description: 'Create high-converting funnels with AI-powered optimization',
-      color: isDark 
-        ? 'from-purple-500/10 to-indigo-500/10 border-white/10 hover:border-purple-400/30' 
+      color: isDark
+        ? 'from-purple-500/10 to-indigo-500/10 border-white/10 hover:border-purple-400/30'
         : 'from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 border-gray-200 hover:border-purple-300',
       iconColor: isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
     },
-    { 
-      name: 'SmartCRM Closer', 
-      url: 'https://stupendous-twilight-64389a.netlify.app/', 
-      icon: Users, 
+    {
+      name: 'SmartCRM Closer',
+      url: 'https://stupendous-twilight-64389a.netlify.app/',
+      icon: Users,
       team: 'Outreach Team',
       description: 'Advanced outreach automation and deal closing tools',
-      color: isDark 
-        ? 'from-blue-500/10 to-cyan-500/10 border-white/10 hover:border-blue-400/30' 
-        : 'from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 border-gray-200 hover:border-blue-300',
-      iconColor: isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+      color: isDark
+        ? 'from-cyan-500/10 to-blue-500/10 border-white/10 hover:border-cyan-400/30'
+        : 'from-cyan-50 to-blue-50 hover:from-cyan-100 hover:to-blue-100 border-gray-200 hover:border-cyan-300',
+      iconColor: isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600'
     },
-    { 
-      name: 'ContentAI', 
-      url: 'https://capable-mermaid-3c73fa.netlify.app/', 
-      icon: FileText, 
+    {
+      name: 'ContentAI',
+      url: 'https://capable-mermaid-3c73fa.netlify.app/',
+      icon: FileText,
       team: 'Content & Support',
       description: 'AI-powered content creation and support documentation',
-      color: isDark 
-        ? 'from-green-500/10 to-emerald-500/10 border-white/10 hover:border-green-400/30' 
-        : 'from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border-gray-200 hover:border-green-300',
-      iconColor: isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
+      color: isDark
+        ? 'from-emerald-500/10 to-green-500/10 border-white/10 hover:border-emerald-400/30'
+        : 'from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 border-gray-200 hover:border-emerald-300',
+      iconColor: isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600'
     },
-    { 
-      name: 'White-Label Platform', 
-      url: 'https://moonlit-tarsier-239e70.netlify.app', 
-      icon: Palette, 
+    {
+      name: 'White-Label Platform',
+      url: 'https://moonlit-tarsier-239e70.netlify.app/',
+      icon: Palette,
       team: 'Platform Management',
       description: 'Customize and manage your branded platform solutions',
-      color: isDark 
-        ? 'from-orange-500/10 to-amber-500/10 border-white/10 hover:border-orange-400/30' 
+      color: isDark
+        ? 'from-orange-500/10 to-amber-500/10 border-white/10 hover:border-orange-400/30'
         : 'from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-gray-200 hover:border-orange-300',
       iconColor: isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
     }

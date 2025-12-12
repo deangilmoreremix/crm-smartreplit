@@ -47,6 +47,7 @@ interface PackageUser {
 const WhiteLabelPackageBuilder: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('builder');
+  const [isCreatingPackage, setIsCreatingPackage] = useState(false);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [packageName, setPackageName] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
@@ -79,6 +80,37 @@ const WhiteLabelPackageBuilder: React.FC = () => {
     email: '',
     role: 'user'
   });
+  const [bulkImportFile, setBulkImportFile] = useState<File | null>(null);
+  const [bulkImportData, setBulkImportData] = useState<PackageUser[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  // Persistence for package builder state
+  useEffect(() => {
+    const saved = localStorage.getItem('package-builder-state');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSelectedFeatures(parsed.selectedFeatures || []);
+        setPackageName(parsed.packageName || ');
+        setPackageDescription(parsed.packageDescription || ');
+        setPackageUsers(parsed.packageUsers || []);
+        setUserRoles(parsed.userRoles || userRoles);
+      } catch (error) {
+        console.error('Error loading package builder state:', error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const state = {
+      selectedFeatures,
+      packageName,
+      packageDescription,
+      packageUsers,
+      userRoles
+    };
+    localStorage.setItem('package-builder-state', JSON.stringify(state));
+  }, [selectedFeatures, packageName, packageDescription, packageUsers, userRoles]);
 
   // WhiteLabelPackageBuilder respects global theme but starts optimized for light mode UI
   // Users can toggle via the theme button if they prefer dark mode
@@ -173,6 +205,111 @@ const WhiteLabelPackageBuilder: React.FC = () => {
   };
 
   const addUser = (userData: typeof newUserForm) => {
+  const createPackage = async () => {
+    if (!packageName.trim()) {
+      // Show validation error
+      return;
+    }
+    
+    setIsCreatingPackage(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Here you would make actual API call to create package
+      console.log('Package created:', {
+        name: packageName,
+        description: packageDescription,
+        features: selectedFeatures,
+        users: packageUsers,
+        totalPrice: calculateTotalPrice()
+      });
+      
+      // Show success message
+    } catch (error) {
+      console.error('Error creating package:', error);
+      // Show error message
+    } finally {
+      setIsCreatingPackage(false);
+    }
+  };
+  const parseCSV = (csvText: string): PackageUser[] => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIndex = headers.indexOf('name');
+    const emailIndex = headers.indexOf('email');
+    const roleIndex = headers.indexOf('role');
+    
+    if (nameIndex === -1 || emailIndex === -1) {
+      throw new Error('CSV must contain name and email columns');
+    }
+    
+    return lines.slice(1).map((line, index) => {
+      const values = line.split(',').map(v => v.trim());
+      const name = values[nameIndex];
+      const email = values[emailIndex];
+      const role = values[roleIndex] || 'user';
+      
+      if (!name || !email) {
+        throw new Error(`Row ${index + 2}: Missing name or email`);
+      }
+      
+      return {
+        id: `bulk_${Date.now()}_${index}`,
+        name,
+        email,
+        role: ['admin', 'manager', 'user'].includes(role) ? role : 'user',
+        status: 'pending' as const
+      };
+    });
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'text/csv') {
+      setBulkImportFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csvText = e.target?.result as string;
+          const parsed = parseCSV(csvText);
+          setBulkImportData(parsed);
+        } catch (error) {
+          console.error('Error parsing CSV:', error);
+          // Show error toast
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (bulkImportData.length === 0) return;
+    
+    setIsImporting(true);
+    setImportProgress(0);
+    
+    try {
+      for (let i = 0; i < bulkImportData.length; i++) {
+        setPackageUsers(prev => [...prev, bulkImportData[i]]);
+        setImportProgress(((i + 1) / bulkImportData.length) * 100);
+        await new Promise(resolve => setTimeout(resolve, 100)); // Simulate processing time
+      }
+      
+      setBulkImportData([]);
+      setBulkImportFile(null);
+      setShowBulkUserModal(false);
+      // Show success toast
+    } catch (error) {
+      console.error('Bulk import error:', error);
+      // Show error toast
+    } finally {
+      setIsImporting(false);
+      setImportProgress(0);
+    }
+  };
     const newUser: PackageUser = {
       id: Date.now().toString(),
       name: userData.name,
@@ -407,7 +544,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                         </span>
                       </div>
                       
-                      <Button className="w-full" data-testid="button-create-package">
+                      <Button onClick={createPackage} disabled={isCreatingPackage} className="w-full" data-testid="button-create-package">
                         <Save className="h-4 w-4 mr-2" />
                         Create Package
                       </Button>
@@ -704,7 +841,15 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Upload a CSV file with user information
                 </p>
-                <Button variant="outline" data-testid="button-choose-user-file">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                  id="bulk-import-file"
+                />
+                <label htmlFor="bulk-import-file">
+                  <Button variant="outline" asChild data-testid="button-choose-user-file">
                   <Upload className="h-4 w-4 mr-2" />
                   Choose File
                 </Button>
@@ -738,7 +883,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                   <Button variant="outline" onClick={() => setShowBulkUserModal(false)} data-testid="button-cancel-bulk-import">
                     Cancel
                   </Button>
-                  <Button disabled data-testid="button-import-users">
+                  <Button onClick={handleBulkImport} disabled={bulkImportData.length === 0 || isImporting} data-testid="button-import-users">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Import Users
                   </Button>

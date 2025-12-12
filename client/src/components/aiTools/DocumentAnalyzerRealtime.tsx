@@ -89,7 +89,7 @@ const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
       setCurrentAnalysisStep(analysisSteps[analysisType][i]);
       setAnalysisProgress(Math.round((i / (totalSteps - 1)) * 100));
       // Add a delay between steps to simulate processing
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await new Promise(resolve => // TODO: Replace with real AI implementation);
     }
     
     try {
@@ -163,7 +163,7 @@ const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
     
     navigator.clipboard.writeText(textToCopy);
     setIsCopying(true);
-    setTimeout(() => setIsCopying(false), 2000);
+    // TODO: Replace with real AI implementation;
   };
   
   const resetAnalysis = () => {

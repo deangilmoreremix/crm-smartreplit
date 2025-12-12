@@ -2,7 +2,7 @@
 // import { sendGmailEmail } from '../../services/composioService'; // Not available
 import React, { useState } from 'react';
 // import * as edgeFunctionService from '../../services/edgeFunctionService'; // Not available
-import { useOpenAI } from '../../services/openaiLegacyService';
+import openAIService from '../../services/openaiService';
 import AIToolContent from '../shared/AIToolContent';
 import { Mail, User, Building, RefreshCw, Copy, FileText, Send } from 'lucide-react';
 import Select from 'react-select';
@@ -33,7 +33,7 @@ const EmailComposerContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const openai = useOpenAI();
+  // Using server-side OpenAI service
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -65,11 +65,11 @@ const EmailComposerContent: React.FC = () => {
         
         Please create a complete email with subject line, greeting, body, and professional closing.`;
       
-      const emailDraft = await openai.generateEmailTemplate({
-        name: formData.recipientName,
-        position: formData.recipientPosition,
-        company: formData.recipientCompany
-      }, formData.emailPurpose);
+      const emailDraft = await openAIService.generateEmail({
+        recipient: formData.recipientName,
+        purpose: formData.emailPurpose,
+        context: formData.additionalContext
+      });
       
       setResult(`Subject: ${emailDraft.subject}\n\n${emailDraft.body}`);
       setCopied(false);
@@ -85,7 +85,7 @@ const EmailComposerContent: React.FC = () => {
     if (result) {
       navigator.clipboard.writeText(result);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // TODO: Replace with real AI implementation;
     }
   };
 
@@ -96,7 +96,7 @@ const EmailComposerContent: React.FC = () => {
     'Proposal follow-up',
     'Check-in',
     'Product update',
-    'Scheduling a demo',
+    'Scheduling a meeting',
     'Addressing concerns',
     'Re-engagement',
     'Request for feedback',
@@ -201,7 +201,7 @@ const EmailComposerContent: React.FC = () => {
               name="emailPurpose"
               rows={3}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Describe the purpose of your email (e.g., follow up on recent demo, introduce new features, etc.)"
+              placeholder="Describe the purpose of your email (e.g., follow up on recent meeting, introduce new features, etc.)"
               value={formData.emailPurpose}
               onChange={handleChange}
               required
