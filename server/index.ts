@@ -23,8 +23,18 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+
+      // Only log response data for non-sensitive endpoints and exclude sensitive fields
+      if (capturedJsonResponse && !path.includes('/auth') && !path.includes('/admin') && !path.includes('/users')) {
+        const sanitizedResponse = { ...capturedJsonResponse };
+        // Remove sensitive fields
+        delete sanitizedResponse.password;
+        delete sanitizedResponse.token;
+        delete sanitizedResponse.apiKey;
+        delete sanitizedResponse.secret;
+        delete sanitizedResponse.email; // Don't log emails in responses
+
+        logLine += ` :: ${JSON.stringify(sanitizedResponse)}`;
       }
 
       if (logLine.length > 80) {
