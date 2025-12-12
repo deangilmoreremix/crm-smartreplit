@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
+import { Deal } from '../../types/deal';
 import { useAITools } from '../../components/AIToolsProvider';
 import { useVideoCall } from '../../contexts/VideoCallContext';
 import Avatar from '../ui/Avatar';
@@ -18,17 +19,17 @@ const QuickActions = () => {
   const navigate = useNavigate();
   
   // Get active deals
-  const activeDeals = Object.values(deals).filter(deal => 
-String(deal.stage) !== 'closed-won' && String(deal.stage) !== 'closed-lost'
+  const activeDeals = deals.filter((deal: Deal) =>
+    deal.stage.id !== 'closed-won' && deal.stage.id !== 'closed-lost'
   );
-  
+
   // Get deals with contacts for avatar display
   const dealsWithContacts = activeDeals
-    .map(deal => ({
+    .map((deal: Deal) => ({
       ...deal,
       contact: contacts[deal.contactId]
     }))
-    .filter(deal => deal.contact); // Only include deals with valid contacts
+    .filter((deal) => deal.contact); // Only include deals with valid contacts
   
   // Get contacts for the contact button
   const activeContacts = Object.values(contacts);
@@ -77,27 +78,22 @@ className="shadow-sm"
     switch(action) {
       case 'newDeal':
         // Navigate to pipeline page where user can create deals
-        console.log('Navigating to pipeline for deal creation...');
         navigate('/pipeline');
         break;
       case 'addContact':
         // Navigate to contacts page where user can create contacts
-        console.log('Navigating to contacts for contact creation...');
         navigate('/contacts');
         break;
       case 'scheduleMeeting':
         // Open meeting scheduler
-        console.log('Scheduling meeting...');
         openTool('meeting-agenda');
         break;
       case 'sendEmail':
         // Open email composer
-        console.log('Composing email...');
         openTool('email-composer');
         break;
       case 'videoCall':
         // Start video call interface
-        console.log('Opening video call interface...');
         // For quick action, we'll open the video call interface
         // In a real app, you might show a contact picker first
         const dummyRecipient = {
@@ -108,7 +104,8 @@ className="shadow-sm"
         initiateCall(dummyRecipient, 'video');
         break;
       default:
-        console.log('Action not implemented yet');
+        // Action not implemented yet
+        break;
     }
   };
 

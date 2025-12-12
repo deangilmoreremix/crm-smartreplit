@@ -6,6 +6,7 @@ import { BarChart3, TrendingUp, Calendar, Search, Bell, User, Sparkles, Brain, Z
 import { gpt5Service } from '../../services/gpt5Service';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
+import { Deal } from '../../types/deal';
 import ClearDemoDataModal from '../ClearDemoDataModal';
 
 interface DashboardHeaderProps {
@@ -43,24 +44,24 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   // GPT-5 Smart Greeting Generation
   useEffect(() => {
     const generateSmartGreeting = async () => {
-      if (!deals || Object.keys(deals).length === 0) return;
-      
+      if (!deals || deals.length === 0) return;
+
       setIsLoadingAI(true);
       try {
         // Prepare metrics for GPT-5 analysis
         const userMetrics = {
-          totalDeals: Object.keys(deals).length,
-          totalValue: Object.values(deals).reduce((sum, deal) => sum + deal.value, 0),
-          activeDeals: Object.values(deals).filter(d => d.stage !== 'won' && d.stage !== 'lost').length,
-          wonDeals: Object.values(deals).filter(d => d.stage === 'won').length,
+          totalDeals: deals.length,
+          totalValue: deals.reduce((sum: number, deal: Deal) => sum + deal.value, 0),
+          activeDeals: deals.filter((d: Deal) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost').length,
+          wonDeals: deals.filter((d: Deal) => d.stage.id === 'closed-won').length,
           totalContacts: Object.keys(contacts).length
         };
 
         const recentActivity = {
-          recentDeals: Object.values(deals).slice(0, 3).map(d => ({
+          recentDeals: deals.slice(0, 3).map((d: Deal) => ({
             title: d.title,
             value: d.value,
-            stage: d.stage
+            stage: d.stage.id
           }))
         };
 
@@ -74,18 +75,17 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         if (greetingResult.greeting) {
           setSmartGreeting(greetingResult.greeting);
         }
-        
+
       } catch (error) {
         console.error('GPT-5 Smart Greeting Error:', error);
-        setSmartGreeting(`Good ${timeOfDay}! Your pipeline looks strong with ${Object.keys(deals).length} deals in progress.`);
+        setSmartGreeting(`Good ${timeOfDay}! Your pipeline looks strong with ${deals.length} deals in progress.`);
       } finally {
         setIsLoadingAI(false);
       }
     };
 
-    // Generate smart greeting with slight delay to allow data loading
-    const timer = setTimeout(generateSmartGreeting, 1000);
-    return () => clearTimeout(timer);
+    // Generate smart greeting immediately when data is available
+    generateSmartGreeting();
   }, [deals, contacts, timeOfDay]);
 
   return (
@@ -170,7 +170,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 Pipeline Value (GPT-5 Analyzed)
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                ${Object.values(deals).reduce((sum, deal) => sum + deal.value, 0).toLocaleString()}
+                ${deals.reduce((sum: number, deal: Deal) => sum + deal.value, 0).toLocaleString()}
               </div>
             </div>
           </div>
@@ -187,7 +187,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 AI Win Probability
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {Math.round((Object.values(deals).filter(d => d.stage === 'won').length / Object.values(deals).length) * 100) || 0}%
+                {deals.length > 0 ? Math.round((deals.filter((d: Deal) => d.stage.id === 'closed-won').length / deals.length) * 100) : 0}%
               </div>
             </div>
           </div>
@@ -203,7 +203,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 New Customers
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                34
+                {Object.keys(contacts).length || 34}
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Brain, TrendingUp, TrendingDown, DollarSign, Target, Award, BarChart3, Sparkles, Zap } from 'lucide-react';
 import { gpt5Service } from '../../services/gpt5Service';
@@ -27,22 +27,30 @@ const GPT5SmartKPICards: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
   // Calculate enhanced metrics with GPT-5 insights
-  const calculateSmartMetrics = async () => {
-    const dealsArray = Object.values(deals);
+  const baseMetrics = useMemo(() => {
+    const dealsArray = deals;
     const contactsArray = Object.values(contacts);
 
     // Base calculations
-    const totalPipelineValue = dealsArray.reduce((sum, deal) => sum + Number(deal.value || 0), 0);
-    const activeDeals = dealsArray.filter(d => {
-      const stageId = typeof d.stage === 'string' ? d.stage : d.stage?.id;
-      return stageId !== 'won' && stageId !== 'lost' && stageId !== 'closed-won' && stageId !== 'closed-lost';
-    });
-    const wonDeals = dealsArray.filter(d => {
-      const stageId = typeof d.stage === 'string' ? d.stage : d.stage?.id;
-      return stageId === 'won' || stageId === 'closed-won';
-    });
+    const totalPipelineValue = dealsArray.reduce((sum: number, deal) => sum + Number(deal.value || 0), 0);
+    const activeDeals = dealsArray.filter((d) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost');
+    const wonDeals = dealsArray.filter((d) => d.stage.id === 'closed-won');
     const winRate = dealsArray.length > 0 ? (wonDeals.length / dealsArray.length) * 100 : 0;
     const avgDealSize = activeDeals.length > 0 ? totalPipelineValue / activeDeals.length : 0;
+
+    return {
+      dealsArray,
+      contactsArray,
+      totalPipelineValue,
+      activeDeals,
+      wonDeals,
+      winRate,
+      avgDealSize
+    };
+  }, [deals, contacts]);
+
+  const calculateSmartMetrics = async () => {
+    const { dealsArray, contactsArray, totalPipelineValue, activeDeals, wonDeals, winRate, avgDealSize } = baseMetrics;
 
     setIsAnalyzing(true);
 
