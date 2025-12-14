@@ -853,7 +853,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Choose File
                 </Button>
-              </div>
+                </label>
               
               <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
                 <div className="flex items-start gap-3">

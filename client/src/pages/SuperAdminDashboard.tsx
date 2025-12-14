@@ -33,6 +33,16 @@ export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<Tenant>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [featureFlags, setFeatureFlags] = useState({
+    aiTools: true,
+    advancedAnalytics: true,
+    customIntegrations: false,
+    whitelabelBranding: true,
+    apiAccess: false,
+  });
+  const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     fetchAdminData();
@@ -84,11 +94,13 @@ export default function SuperAdminDashboard() {
       });
 
       if (response.ok) {
-        alert('Partner approved successfully!');
+        showToastMessage('Partner approved successfully!', 'success');
         fetchAdminData(); // Refresh data
+      } else {
+        showToastMessage('Failed to approve partner', 'error');
       }
     } catch (error) {
-      alert('Failed to approve partner');
+      showToastMessage('Failed to approve partner', 'error');
     }
   };
 
@@ -102,11 +114,13 @@ export default function SuperAdminDashboard() {
         });
 
         if (response.ok) {
-          alert('Tenant suspended successfully!');
+          showToastMessage('Tenant suspended successfully!', 'success');
           fetchAdminData();
+        } else {
+          showToastMessage('Failed to suspend tenant', 'error');
         }
       } catch (error) {
-        alert('Failed to suspend tenant');
+        showToastMessage('Failed to suspend tenant', 'error');
       }
     }
   };
@@ -119,13 +133,87 @@ export default function SuperAdminDashboard() {
         });
 
         if (response.ok) {
-          alert('Tenant deleted successfully!');
+          showToastMessage('Tenant deleted successfully!', 'success');
           fetchAdminData();
+        } else {
+          showToastMessage('Failed to delete tenant', 'error');
         }
       } catch (error) {
-        alert('Failed to delete tenant');
+        showToastMessage('Failed to delete tenant', 'error');
       }
     }
+  };
+
+  const showToastMessage = (message: string, type: 'success' | 'error') => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
+
+  const validateEditForm = (data: Partial<Tenant>): string[] => {
+    const errors: string[] = [];
+
+    if (!data.name?.trim()) {
+      errors.push('Tenant name is required');
+    }
+
+    if (!data.contactEmail?.trim()) {
+      errors.push('Contact email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.contactEmail)) {
+      errors.push('Contact email must be valid');
+    }
+
+    if (data.monthlyRevenue !== undefined && data.monthlyRevenue < 0) {
+      errors.push('Monthly revenue cannot be negative');
+    }
+
+    return errors;
+  };
+
+  const handleEditTenant = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setEditFormData({ ...tenant });
+    setShowEditModal(true);
+  };
+
+  const saveTenantChanges = async () => {
+    if (!selectedTenant) return;
+
+    const errors = validateEditForm(editFormData);
+    if (errors.length > 0) {
+      showToastMessage(errors[0], 'error');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/white-label/tenants/${selectedTenant.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (response.ok) {
+        showToastMessage('Tenant updated successfully!', 'success');
+        setShowEditModal(false);
+        fetchAdminData();
+      } else {
+        showToastMessage('Failed to update tenant', 'error');
+      }
+    } catch (error) {
+      showToastMessage('Failed to update tenant', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleFeatureFlag = (featureKey: keyof typeof featureFlags) => {
+    setFeatureFlags(prev => ({
+      ...prev,
+      [featureKey]: !prev[featureKey]
+    }));
+
+    // Here you would typically save to backend
+    showToastMessage(`${featureKey} ${!featureFlags[featureKey] ? 'enabled' : 'disabled'}`, 'success');
   };
 
   // Sample growth data
@@ -417,8 +505,8 @@ export default function SuperAdminDashboard() {
                               <Eye className="h-4 w-4" />
                               View
                             </button>
-                            <button 
-                              onClick={() => {setSelectedTenant(tenant); setShowEditModal(true);}}
+                            <button
+                              onClick={() => handleEditTenant(tenant)}
                               className="text-gray-600 hover:text-gray-900 flex items-center gap-1"
                             >
                               <Edit className="h-4 w-4" />
@@ -640,13 +728,14 @@ export default function SuperAdminDashboard() {
                       </p>
                     </div>
                     <button
+                      onClick={() => toggleFeatureFlag(feature.key as keyof typeof featureFlags)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        feature.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                        featureFlags[feature.key as keyof typeof featureFlags] ? 'bg-blue-600' : 'bg-gray-200'
                       }`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          feature.enabled ? 'translate-x-6' : 'translate-x-1'
+                          featureFlags[feature.key as keyof typeof featureFlags] ? 'translate-x-6' : 'translate-x-1'
                         }`}
                       />
                     </button>
@@ -658,6 +747,21 @@ export default function SuperAdminDashboard() {
         )}
       </div>
 
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className={`px-4 py-3 rounded-lg shadow-lg border ${
+            showToast.type === 'success'
+              ? 'bg-green-50 border-green-200 text-green-800'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center">
+              <span className="text-sm font-medium">{showToast.message}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Tenant Modal */}
       {showEditModal && selectedTenant && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -666,53 +770,60 @@ export default function SuperAdminDashboard() {
               Edit Tenant: {selectedTenant.name}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tenant Name
-                </label>
-                <input
-                  type="text"
-                  defaultValue={selectedTenant.name}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Plan
-                </label>
-                <select 
-                  defaultValue={selectedTenant.plan}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="basic">Basic</option>
-                  <option value="pro">Pro</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Status
-                </label>
-                <select 
-                  defaultValue={selectedTenant.status}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="pending">Pending</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Monthly Revenue
-                </label>
-                <input
-                  type="number"
-                  defaultValue={selectedTenant.monthlyRevenue}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Tenant Name
+                 </label>
+                 <input
+                   type="text"
+                   value={editFormData.name || ''}
+                   onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   placeholder="Enter tenant name"
+                 />
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Plan
+                 </label>
+                 <select
+                   value={editFormData.plan || selectedTenant.plan}
+                   onChange={(e) => setEditFormData(prev => ({ ...prev, plan: e.target.value as Tenant['plan'] }))}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 >
+                   <option value="basic">Basic</option>
+                   <option value="pro">Pro</option>
+                   <option value="enterprise">Enterprise</option>
+                 </select>
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Status
+                 </label>
+                 <select
+                   value={editFormData.status || selectedTenant.status}
+                   onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value as Tenant['status'] }))}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 >
+                   <option value="active">Active</option>
+                   <option value="suspended">Suspended</option>
+                   <option value="pending">Pending</option>
+                 </select>
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Monthly Revenue
+                 </label>
+                 <input
+                   type="number"
+                   value={editFormData.monthlyRevenue || selectedTenant.monthlyRevenue}
+                   onChange={(e) => setEditFormData(prev => ({ ...prev, monthlyRevenue: parseInt(e.target.value) || 0 }))}
+                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   min="0"
+                   placeholder="0"
+                 />
+               </div>
+             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowEditModal(false)}
@@ -721,14 +832,18 @@ export default function SuperAdminDashboard() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  // Save logic here
-                  setShowEditModal(false);
-                  alert('Tenant updated successfully!');
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                onClick={saveTenantChanges}
+                disabled={isSaving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Save Changes
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </button>
             </div>
           </div>
