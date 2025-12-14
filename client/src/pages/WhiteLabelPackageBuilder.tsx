@@ -91,8 +91,8 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         setSelectedFeatures(parsed.selectedFeatures || []);
-        setPackageName(parsed.packageName || ');
-        setPackageDescription(parsed.packageDescription || ');
+        setPackageName(parsed.packageName || '');
+        setPackageDescription(parsed.packageDescription || '');
         setPackageUsers(parsed.packageUsers || []);
         setUserRoles(parsed.userRoles || userRoles);
       } catch (error) {
