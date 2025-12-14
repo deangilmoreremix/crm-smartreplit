@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Video, Phone, MessageSquare } from 'lucide-react';
 import { useVideoCall } from '../contexts/VideoCallContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { voipService } from '../services/voip/VoIPService';
 import type { CallParticipant } from '../contexts/VideoCallContext';
 import { Contact } from '../types/contact';
 
@@ -22,17 +23,33 @@ const CallButton: React.FC<CallButtonProps> = ({
 
   const handleVideoCall = async () => {
     if (callStatus !== 'idle') return;
-    
+
     setIsLoading(true);
     try {
-      const participant: CallParticipant = {
-        id: contact.id,
-        name: contact.name,
-        email: contact.email,
-        avatar: contact.avatarSrc || contact.avatar
-      };
-      
-      await initiateCall(participant, 'video');
+      // Check if VoIP service is configured and enabled
+      if (voipService.isEnabled()) {
+        // Use configured VoIP provider
+        const call = await voipService.startCall([{
+          id: contact.id,
+          name: contact.name,
+          email: contact.email,
+          avatar: contact.avatarSrc || contact.avatar
+        }], { videoEnabled: true });
+
+        console.log('VoIP call started:', call);
+        // Here you would typically open a call interface or redirect to the call room
+        alert(`Call started with ${voipService.getCurrentProvider()?.displayName || 'VoIP provider'}`);
+      } else {
+        // Fall back to existing VideoCallContext
+        const participant: CallParticipant = {
+          id: contact.id,
+          name: contact.name,
+          email: contact.email,
+          avatar: contact.avatarSrc || contact.avatar
+        };
+
+        await initiateCall(participant, 'video');
+      }
     } catch (error) {
       console.error('Failed to start video call:', error);
       alert('Failed to start video call. Please check your camera and microphone permissions.');

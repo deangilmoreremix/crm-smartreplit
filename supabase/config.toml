@@ -41,10 +41,8 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
-# Use pre-defined map of claims
-[auth.jwt]
-default_group_name = "authenticated"
-admin_group_name = "service_role"
+[db]
+major_version = 15
 
 [functions]
 # Configuration for Supabase Edge Functions

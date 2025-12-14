@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { 
-  MessageSquare, 
-  Phone, 
-  Mail, 
-  Video, 
-  Calendar, 
-  Clock, 
+import React, { useState, useEffect } from 'react';
+import {
+  MessageSquare,
+  Phone,
+  Mail,
+  Video,
+  Calendar,
+  Clock,
   Search,
   Plus,
   User,
@@ -14,12 +14,26 @@ import {
   AlertCircle,
   Archive,
   Reply,
-  Forward
+  Forward,
+  Sparkles,
+  TrendingUp,
+  BarChart3,
+  FileText,
+  Send,
+  Bot,
+  Heart,
+  Meh,
+  Frown
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../store/contactStore';
 import EmailComposer from './EmailComposer';
 import { formatDistanceToNow } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { gpt5Service } from '../../services/gpt5Service';
 
 interface CommunicationActivity {
   id: string;
