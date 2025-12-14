@@ -89,7 +89,7 @@ const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
       setCurrentAnalysisStep(analysisSteps[analysisType][i]);
       setAnalysisProgress(Math.round((i / (totalSteps - 1)) * 100));
       // Add a delay between steps to simulate processing
-      await new Promise(resolve => // TODO: Replace with real AI implementation);
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
     
     try {

@@ -7,7 +7,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TenantProvider } from './contexts/TenantProvider';
-import { WhitelabelProvider } from './contexts/WhitelabelContext';
+import { WhitelabelProvider, useWhitelabel } from './contexts/WhitelabelContext';
 import { CompanyProvider } from './contexts/CompanyContext';
 import { AIToolsProvider } from './components/AIToolsProvider';
 import { ModalsProvider } from './components/ModalsProvider';

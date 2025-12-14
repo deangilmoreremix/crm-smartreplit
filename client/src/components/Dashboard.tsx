@@ -331,8 +331,8 @@ const Dashboard: React.FC = React.memo(() => {
     <main className={`w-full h-full overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Dashboard Header - Always visible */}
       <div className="mb-8">
-        <h1 className={}>Dashboard</h1>
-        <p className={}>Welcome to {config.companyName || 'SmartCRM'}</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400">Welcome to {config.companyName || 'SmartCRM'}</p>
       </div>
 
 

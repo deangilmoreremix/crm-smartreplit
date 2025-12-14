@@ -149,22 +149,6 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
     setProgress(100);
   }
 };
-      
-      setAnalysisResults(results);
-      if (onAnalysisComplete) {
-        onAnalysisComplete(results);
-      }
-    } catch (error) {
-      console.error("Error analyzing deal:", error);
-    } finally {
-      // Clear the interval if it's still running
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      setIsAnalyzing(false);
-      setProgress(100);
-    }
-  };
   
   // Clean up interval on unmount
   useEffect(() => {

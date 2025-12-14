@@ -210,18 +210,18 @@ const VoiceAnalysisRealtime: React.FC<VoiceAnalysisRealtimeProps> = ({
   const updateLiveAnalysisSimulation = () => {
     setLiveAnalysis(prev => {
       // Randomly adjust sentiment
-      const newSentiment = Math.min(1, Math.max(-1, prev.currentSentiment + (// TODO: Replace with real AI implementation * 0.4 - 0.2)));
-      
+      const newSentiment = Math.min(1, Math.max(-1, prev.currentSentiment + (Math.random() * 0.4 - 0.2)));
+
       // Randomly change pacing
       const paces: ('good' | 'too fast' | 'too slow')[] = ['good', 'too fast', 'too slow'];
-      const newPace = // TODO: Replace with real AI implementation > 0.9 ? paces[Math.floor(// TODO: Replace with real AI implementation * paces.length)] : prev.pacing;
-      
+      const newPace = Math.random() > 0.9 ? paces[Math.floor(Math.random() * paces.length)] : prev.pacing;
+
       // Detect keywords occasionally
       const keywords = ['pricing', 'implementation', 'timeline', 'support', 'features', null, null];
-      const newKeyword = // TODO: Replace with real AI implementation > 0.8 ? keywords[Math.floor(// TODO: Replace with real AI implementation * keywords.length)] : prev.keywordDetected;
-      
+      const newKeyword = Math.random() > 0.8 ? keywords[Math.floor(Math.random() * keywords.length)] : prev.keywordDetected;
+
       // Adjust talk ratio slightly
-      const newTalkRatio = Math.min(0.9, Math.max(0.1, prev.talkRatio + (// TODO: Replace with real AI implementation * 0.1 - 0.05)));
+      const newTalkRatio = Math.min(0.9, Math.max(0.1, prev.talkRatio + (Math.random() * 0.1 - 0.05)));
       
       return {
         currentSentiment: newSentiment,
@@ -245,7 +245,7 @@ const VoiceAnalysisRealtime: React.FC<VoiceAnalysisRealtimeProps> = ({
       "Consider transitioning to next steps soon"
     ];
     
-    const newFeedback = feedbackOptions[Math.floor(// TODO: Replace with real AI implementation * feedbackOptions.length)];
+    const newFeedback = feedbackOptions[Math.floor(Math.random() * feedbackOptions.length)];
     setRealTimeFeedback(prev => [...prev, newFeedback]);
   };
   

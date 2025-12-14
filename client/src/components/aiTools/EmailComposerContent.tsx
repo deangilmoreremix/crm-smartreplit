@@ -2,7 +2,7 @@
 // import { sendGmailEmail } from '../../services/composioService'; // Not available
 import React, { useState } from 'react';
 // import * as edgeFunctionService from '../../services/edgeFunctionService'; // Not available
-import openAIService from '../../services/openaiService';
+import openAIService from '../../services/openAIService';
 import AIToolContent from '../shared/AIToolContent';
 import { Mail, User, Building, RefreshCw, Copy, FileText, Send } from 'lucide-react';
 import Select from 'react-select';
