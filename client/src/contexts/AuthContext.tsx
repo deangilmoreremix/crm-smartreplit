@@ -40,9 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Check for dev session in localStorage
         const checkDevSession = () => {
-          // SECURITY: Only allow dev bypass on localhost and .replit.dev, NOT on .replit.app
-          const isDevelopmentEnvironment = (window.location.hostname.includes('localhost') || 
-                                           window.location.hostname.includes('replit.dev')) &&
+          // SECURITY: Only allow dev bypass on localhost, .replit.dev, and GitHub Codespace, NOT on .replit.app
+          const isDevelopmentEnvironment = (window.location.hostname.includes('localhost') ||
+                                           window.location.hostname.includes('replit.dev') ||
+                                           window.location.hostname.includes('github.dev') ||
+                                           window.location.hostname.includes('app.github.dev')) &&
                                           !window.location.hostname.includes('replit.app');
           
           // Clear dev sessions if on production domain
