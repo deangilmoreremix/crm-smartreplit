@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -215,13 +214,13 @@ export default function FormsSurveysDashboard() {
 
           {/* Forms List */}
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="flex items-center gap-2">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="flex items-center gap-2 text-lg font-semibold">
                 <FileText className="h-5 w-5" />
                 Forms ({filteredForms.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+              </h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="space-y-4">
                 {filteredForms.map(form => (
                   <GlassCard
@@ -271,19 +270,19 @@ export default function FormsSurveysDashboard() {
                   </GlassCard>
                 ))}
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-6">
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="flex items-center gap-2">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="flex items-center gap-2 text-lg font-semibold">
                 <FileText className="h-5 w-5" />
                 Form Templates
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+              </h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <GlassCard variant="elevated" className="p-4 cursor-pointer hover:bg-blue-50">
                   <div className="text-center">
@@ -309,20 +308,20 @@ export default function FormsSurveysDashboard() {
                   </div>
                 </GlassCard>
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <BarChart3 className="h-5 w-5" />
                   Form Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Response Rate</span>
@@ -342,17 +341,17 @@ export default function FormsSurveysDashboard() {
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <TrendingUp className="h-5 w-5" />
                   Response Trends
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">This Week</span>
@@ -371,7 +370,7 @@ export default function FormsSurveysDashboard() {
                     <span className="font-semibold">589 responses</span>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -379,13 +378,13 @@ export default function FormsSurveysDashboard() {
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <Sparkles className="h-5 w-5" />
                   Form Optimization
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="form-purpose">Form Purpose</Label>
@@ -414,17 +413,17 @@ export default function FormsSurveysDashboard() {
                     Optimize Form Structure
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <Target className="h-5 w-5" />
                   Completion Rate Predictor
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="form-length">Form Length</Label>
@@ -457,17 +456,17 @@ export default function FormsSurveysDashboard() {
                     Predict Completion Rate
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle>Form Builder Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+            <div className="border-b pb-4 mb-4">
+              <h3 className="text-lg font-semibold">Form Builder Settings</h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Default Theme</Label>
@@ -523,7 +522,7 @@ export default function FormsSurveysDashboard() {
                   </Select>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
       </Tabs>

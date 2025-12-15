@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -414,13 +413,13 @@ export default function VoiceProfilesDashboard() {
 
         <TabsContent value="create" className="space-y-6">
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="flex items-center gap-2">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="flex items-center gap-2 text-lg font-semibold">
                 <Plus className="h-5 w-5" />
                 Create New Voice Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+              </h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="profile-name">Profile Name</Label>
@@ -534,20 +533,20 @@ export default function VoiceProfilesDashboard() {
                 <Button variant="outline">Cancel</Button>
                 <Button>Create Voice Profile</Button>
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
 
         <TabsContent value="studio" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Mic className="h-5 w-5" />
                   Voice Recording Studio
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-6">
                   <div className="text-center">
                     <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center ${
@@ -594,17 +593,17 @@ export default function VoiceProfilesDashboard() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Radio className="h-5 w-5" />
                   Voice Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="h-32 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                     <Radio className="h-8 w-8 text-gray-400" />
@@ -629,7 +628,7 @@ export default function VoiceProfilesDashboard() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -637,13 +636,13 @@ export default function VoiceProfilesDashboard() {
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Voice Profile Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth</span>
@@ -669,17 +668,17 @@ export default function VoiceProfilesDashboard() {
                   </div>
                   <Progress value={(stats.languageSupport / 20) * 100} className="h-2" />
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Star className="h-5 w-5" />
                   Top Performing Profiles
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Professional Male</span>
@@ -694,7 +693,7 @@ export default function VoiceProfilesDashboard() {
                     <span className="font-semibold">67 uses</span>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -702,13 +701,13 @@ export default function VoiceProfilesDashboard() {
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Sparkles className="h-5 w-5" />
                   Voice Optimization
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="voice-text">Text to Optimize</Label>
@@ -737,17 +736,17 @@ export default function VoiceProfilesDashboard() {
                     Optimize Voice
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Brain className="h-5 w-5" />
                   Emotional Intelligence
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="emotion-text">Text for Emotional Analysis</Label>
@@ -778,17 +777,17 @@ export default function VoiceProfilesDashboard() {
                     Analyze Emotions
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle>Voice Profile Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold">Voice Profile Settings</h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Auto-training</Label>
@@ -845,7 +844,7 @@ export default function VoiceProfilesDashboard() {
                   </Select>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
       </Tabs>

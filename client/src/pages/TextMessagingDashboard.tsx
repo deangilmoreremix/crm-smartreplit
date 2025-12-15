@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import GlassCard from '../components/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -224,14 +224,14 @@ export default function TextMessagingDashboard() {
 
         <TabsContent value="messages" className="space-y-6">
           {/* Message List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <GlassCard className="p-6">
+            <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="flex items-center gap-2 text-lg font-semibold">
                 <MessageSquare className="h-5 w-5" />
                 Recent Messages
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+              </h3>
+            </div>
+            <div>
               <div className="space-y-4">
                 {messages.map(message => (
                   <div
@@ -268,27 +268,27 @@ export default function TextMessagingDashboard() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </GlassCard>
         </TabsContent>
 
         <TabsContent value="providers" className="space-y-6">
           {/* Provider Status Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {providers.map(provider => (
-              <Card key={provider.id} className="relative">
-                <CardHeader>
+              <GlassCard key={provider.id} className="relative p-6">
+                <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
+                    <h3 className="flex items-center gap-2 text-lg font-semibold">
                       <Phone className="h-5 w-5" />
                       {provider.name}
-                    </CardTitle>
+                    </h3>
                     <Badge className={getStatusColor(provider.status)}>
                       {provider.status}
                     </Badge>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                </div>
+                <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Cost/Message:</span>
@@ -324,22 +324,22 @@ export default function TextMessagingDashboard() {
                       Test
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </GlassCard>
             ))}
           </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
+            <GlassCard>
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
                   Performance Metrics
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total Messages Sent</span>
@@ -358,17 +358,17 @@ export default function TextMessagingDashboard() {
                     <span className="font-semibold">{stats.activeProviders}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
 
-            <Card>
-              <CardHeader>
+            <GlassCard>
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Cost Analysis
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Average Cost/Message</span>
@@ -383,21 +383,21 @@ export default function TextMessagingDashboard() {
                     <span className="font-semibold">$12.50</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </div>
         </TabsContent>
 
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
+            <GlassCard>
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5" />
                   Smart Reply Generator
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="message-context">Message Context</Label>
@@ -432,17 +432,17 @@ export default function TextMessagingDashboard() {
                     {isGenerating ? 'Generating...' : 'Generate Smart Reply'}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
 
-            <Card>
-              <CardHeader>
+            <GlassCard>
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
                 <CardTitle className="flex items-center gap-2">
                   <Target className="h-5 w-5" />
                   Message Optimizer
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              </div>
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="optimize-content">Message to Optimize</Label>
@@ -471,19 +471,18 @@ export default function TextMessagingDashboard() {
                     Optimize Message
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </div>
 
-          {gpt5Suggestions.length > 0 && (
-            <Card>
-              <CardHeader>
+            <GlassCard>
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5" />
                   AI-Generated Suggestions
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div>
                 <div className="space-y-3">
                   {gpt5Suggestions.map((suggestion, index) => (
                     <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -502,17 +501,16 @@ export default function TextMessagingDashboard() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </GlassCard>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
+          <GlassCard>
+            <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
               <CardTitle>Messaging Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            </div>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Default Provider</Label>
@@ -570,8 +568,8 @@ export default function TextMessagingDashboard() {
                   </Select>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 

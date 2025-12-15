@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -322,13 +321,13 @@ export default function LeadAutomationDashboard() {
 
           {/* Leads List */}
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="flex items-center gap-2">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Lead Pipeline ({filteredLeads.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+              </h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="space-y-4">
                 {filteredLeads.map(lead => (
                   <GlassCard
@@ -369,19 +368,19 @@ export default function LeadAutomationDashboard() {
                   </GlassCard>
                 ))}
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-6">
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="flex items-center gap-2">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Target className="h-5 w-5" />
                 Active Campaigns
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+              </h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="space-y-4">
                 {campaigns.map(campaign => (
                   <GlassCard key={campaign.id} className="p-4">
@@ -431,20 +430,20 @@ export default function LeadAutomationDashboard() {
                   </GlassCard>
                 ))}
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
                   Lead Performance
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Lead Quality Score</span>
@@ -464,17 +463,17 @@ export default function LeadAutomationDashboard() {
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle className="flex items-center gap-2">
+              <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Conversion Funnel
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+                </h3>
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">New Leads</span>
@@ -493,7 +492,7 @@ export default function LeadAutomationDashboard() {
                     <span className="font-semibold">275</span>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>

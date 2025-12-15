@@ -544,7 +544,7 @@ function AppContent() {
           <Route
             path="/video-email"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="video_email">
                 <Navbar />
                 <VideoEmailDashboard />
               </ProtectedRoute>
@@ -553,7 +553,7 @@ function AppContent() {
           <Route
             path="/text-messages"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="sms_automation">
                 <Navbar />
                 <TextMessagingDashboard />
               </ProtectedRoute>
@@ -562,7 +562,7 @@ function AppContent() {
           <Route
             path="/phone-system"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="voip_phone">
                 <Navbar />
                 <PhoneSystemDashboard />
               </ProtectedRoute>
@@ -571,7 +571,7 @@ function AppContent() {
           <Route
             path="/invoicing"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="invoicing">
                 <Navbar />
                 <InvoicingDashboard />
               </ProtectedRoute>
@@ -580,7 +580,7 @@ function AppContent() {
           <Route
             path="/lead-automation"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="lead_automation">
                 <Navbar />
                 <LeadAutomationDashboard />
               </ProtectedRoute>
@@ -589,7 +589,7 @@ function AppContent() {
           <Route
             path="/circle-prospecting"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="circle_prospecting">
                 <Navbar />
                 <CircleProspectingDashboard />
               </ProtectedRoute>
@@ -598,16 +598,16 @@ function AppContent() {
           <Route
             path="/forms"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="forms_surveys">
                 <Navbar />
                 <FormsSurveysDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/business-analyzer"
+            path="/business-analysis"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="business_analysis">
                 <Navbar />
                 <BusinessAnalyzerDashboard />
               </ProtectedRoute>
@@ -616,7 +616,7 @@ function AppContent() {
           <Route
             path="/content-library"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="content_library">
                 <Navbar />
                 <ContentLibraryDashboard />
               </ProtectedRoute>
@@ -625,7 +625,7 @@ function AppContent() {
           <Route
             path="/voice-profiles"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute featureKey="voice_profiles">
                 <Navbar />
                 <VoiceProfilesDashboard />
               </ProtectedRoute>

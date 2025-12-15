@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import GlassCard from '../components/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -259,7 +259,7 @@ export default function VideoEmailDashboard() {
           {/* Video Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {videos.map(video => (
-              <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+              <GlassCard key={video.id} className="overflow-hidden cursor-pointer">
                 <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
                   <img
                     src={video.thumbnail}
@@ -279,7 +279,7 @@ export default function VideoEmailDashboard() {
                   </div>
                 </div>
 
-                <CardContent className="p-4">
+                <div className="p-4">
                   <h3 className="font-semibold mb-2">{video.title}</h3>
 
                   <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -316,8 +316,8 @@ export default function VideoEmailDashboard() {
                       Share
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </GlassCard>
             ))}
           </div>
         </TabsContent>
@@ -332,8 +332,8 @@ export default function VideoEmailDashboard() {
               { name: 'Tutorial', description: 'Guide users through processes', duration: '3-5 min' },
               { name: 'Announcement', description: 'Share important updates', duration: '1 min' }
             ].map((template, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
+              <GlassCard key={index} className="cursor-pointer">
+                <div className="p-6">
                   <div className="aspect-video bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg mb-4 flex items-center justify-center">
                     <Video className="h-12 w-12 text-blue-600" />
                   </div>
@@ -347,8 +347,8 @@ export default function VideoEmailDashboard() {
                       Use Template
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </GlassCard>
             ))}
           </div>
         </TabsContent>
@@ -361,56 +361,52 @@ export default function VideoEmailDashboard() {
             </div>
           ) : stats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <GlassCard className="p-6">
+                <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold">
                     <BarChart3 className="h-5 w-5" />
                     Performance Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Views</span>
-                      <span className="font-semibold">{stats.totalViews.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Average Completion</span>
-                      <span className="font-semibold">{Math.round(stats.averageEngagement * 100)}%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Conversion Rate</span>
-                      <span className="font-semibold">{Math.round(stats.conversionRate * 100)}%</span>
-                    </div>
+                  </h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total Views</span>
+                    <span className="font-semibold">{stats.totalViews.toLocaleString()}</span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Average Completion</span>
+                    <span className="font-semibold">{Math.round(stats.averageEngagement * 100)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Conversion Rate</span>
+                    <span className="font-semibold">{Math.round(stats.conversionRate * 100)}%</span>
+                  </div>
+                </div>
+              </GlassCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <GlassCard className="p-6">
+                <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="flex items-center gap-2 text-lg font-semibold">
                     <TrendingUp className="h-5 w-5" />
                     Top Performing Video
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <h4 className="font-medium">{stats.topPerformingVideo}</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Views</span>
-                        <span>245</span>
-                      </div>
-                      <Progress value={85} className="h-2" />
-                      <div className="flex justify-between text-sm">
-                        <span>Engagement</span>
-                        <span>85%</span>
-                      </div>
-                      <Progress value={85} className="h-2" />
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <h4 className="font-medium">{stats.topPerformingVideo}</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Views</span>
+                      <span>245</span>
                     </div>
+                    <Progress value={85} className="h-2" />
+                    <div className="flex justify-between text-sm">
+                      <span>Engagement</span>
+                      <span>85%</span>
+                    </div>
+                    <Progress value={85} className="h-2" />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </GlassCard>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -423,14 +419,14 @@ export default function VideoEmailDashboard() {
 
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <GlassCard className="p-6">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <Sparkles className="h-5 w-5" />
                   Script Generator
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h3>
+              </div>
+              <div className="space-y-4">
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="recipient">Recipient</Label>
@@ -478,17 +474,17 @@ export default function VideoEmailDashboard() {
                     {isGeneratingScript ? 'Generating...' : 'Generate Script'}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <GlassCard className="p-6">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <Camera className="h-5 w-5" />
                   Content Optimizer
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </h3>
+              </div>
+              <div className="space-y-4">
                 <Textarea
                   placeholder="Paste your video script here for AI optimization..."
                   rows={6}
@@ -497,19 +493,19 @@ export default function VideoEmailDashboard() {
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Optimize Content
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </div>
 
           {generatedScript && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <GlassCard className="p-6">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
                   <FileText className="h-5 w-5" />
                   Generated Script
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div>
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                   <pre className="whitespace-pre-wrap text-sm">{generatedScript}</pre>
                 </div>
@@ -523,17 +519,17 @@ export default function VideoEmailDashboard() {
                     Create Video
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           )}
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Video Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <GlassCard className="p-6">
+            <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold">Video Settings</h3>
+            </div>
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label>Default Video Quality</Label>
@@ -592,8 +588,8 @@ export default function VideoEmailDashboard() {
                   </Select>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 

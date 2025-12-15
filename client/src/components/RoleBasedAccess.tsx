@@ -168,6 +168,10 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       'invoicing': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
       'lead_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
       'circle_prospecting': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+      'forms_surveys': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
+      'content_library': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
+      'voice_profiles': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
+      'business_analysis': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
 
       // AI Boost Unlimited - unlimited AI credits (platform-wide)
       'ai_credits_unlimited': ['super_admin', 'whitelabel', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],

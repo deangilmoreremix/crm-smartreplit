@@ -4,7 +4,7 @@
 
 SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 - **Frontend**: React 18 + TypeScript + Vite, Tailwind CSS, Zustand stores, React Query
-- **Backend**: Express server + Supabase Edge Functions (Deno runtime)
+- **Backend**: Express server + Supabase Edge Functions (Deno runtime, built to netlify/functions)
 - **Database**: PostgreSQL with Drizzle ORM, Row Level Security (RLS)
 - **AI**: OpenAI GPT-4o, Google Gemini 2.5 Pro integrations
 - **Deployment**: Netlify (functions + static hosting)
@@ -34,7 +34,7 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 - **UI Library**: Custom components in `components/ui/` (Radix UI based)
 - **Design**: Glassmorphism, dark-mode-first, Tailwind CSS
 - **Patterns**: Compound components, render props, custom hooks
-- **Remote apps**: Module federation for micro-frontends
+- **Remote apps**: Module federation for micro-frontends (`RemoteContactsLoader.tsx`)
 
 ### AI Integration
 - **Services**: Dedicated services in `services/` (OpenAI, Gemini, custom agents)
@@ -45,7 +45,7 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 ### Authentication & Security
 - **Auth**: Supabase Auth (JWT tokens)
 - **Sessions**: Express sessions for server-side routes
-- **Permissions**: Product tier checks, role-based access
+- **Permissions**: Product tier checks, role-based access (`RoleBasedAccess.tsx`)
 - **Data isolation**: Profile-based RLS policies
 
 ## Development Workflows
@@ -55,12 +55,12 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 npm run dev          # Start dev server (tsx)
 npm run build        # Full production build
 npm run build:client # Frontend only
-npm run build:functions  # Edge functions only
+npm run build:functions  # Edge functions only (esbuild to netlify/functions)
 ```
 
 ### Database Operations
 ```bash
-npm run db:push      # Apply migrations
+npm run db:push      # Apply migrations (Drizzle Kit)
 # Schema changes: Edit shared/schema.ts, run db:push
 ```
 
@@ -90,7 +90,7 @@ client/src/
 └── lib/           # Third-party library configurations
 
 server/            # Express backend
-supabase/functions/ # Edge Functions (Deno)
+netlify/functions/ # Built Edge Functions (Deno)
 shared/           # Shared types and schemas
 ```
 
@@ -113,19 +113,19 @@ shared/           # Shared types and schemas
 - **Payments**: Stripe webhooks for subscriptions
 - **VoIP**: Custom integration for voice calls
 - **Storage**: Supabase Storage for files/images
-- **Webhooks**: Multiple providers (JVZoo, PayPal, etc.)
+- **Webhooks**: Multiple providers (JVZoo, PayPal, Zaxaa, Stripe)
 
 ### Cross-Component Communication
-- **Events**: Custom event system for loose coupling
-- **BroadcastChannel**: Cross-tab communication
+- **Events**: Custom event system for loose coupling (`unifiedEventSystem.ts`)
+- **BroadcastChannel**: Cross-tab communication (`broadcastChannelManager.ts`)
 - **WebSockets**: Real-time features via Supabase
 - **Shared workers**: Background processing
 
 ### Multi-Tenancy Features
-- **White-labeling**: Dynamic branding and customization
-- **Product tiers**: Feature gating based on subscription
-- **Partner management**: Revenue sharing and attribution
-- **User roles**: Granular permissions system
+- **White-labeling**: Dynamic branding and customization (`white-label/` functions)
+- **Product tiers**: Feature gating based on subscription (`productTiers` enum)
+- **Partner management**: Revenue sharing and attribution (`partners/` functions)
+- **User roles**: Granular permissions system (`userRoles` enum)
 
 ## Performance Considerations
 
@@ -136,7 +136,7 @@ shared/           # Shared types and schemas
 - **Bundle**: Tree shaking, external dependencies
 
 ### Monitoring
-- **Health checks**: Dedicated endpoints and services
+- **Health checks**: Dedicated endpoints and services (`health/` function)
 - **Error tracking**: Comprehensive logging and alerting
 - **Performance**: Real-time metrics and analytics
 - **Usage**: AI credit tracking and quota management
@@ -189,6 +189,16 @@ const response = await openaiService.streamCompletion({
   prompt: userInput,
   onChunk: (chunk) => updateUI(chunk)
 });
+```
+
+### Admin Access Pattern
+```typescript
+// Check admin privileges
+if (response.status === 401 || response.status === 403) {
+  setError('Access denied. Admin privileges required.');
+  navigate('/dashboard');
+  return;
+}
 ```
 
 Remember: This codebase emphasizes AI-powered features, real-time collaboration, and scalable multi-tenant architecture. Always consider the user experience impact of changes, especially around AI features and data privacy.</content>

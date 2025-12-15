@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -443,13 +442,13 @@ export default function PhoneSystemDashboard() {
         <TabsContent value="calls" className="space-y-6">
           {/* Call History */}
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
-              <CardTitle className="flex items-center gap-2">
+            <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="flex items-center gap-2 text-lg font-semibold">
                 <Phone className="h-5 w-5" />
                 Recent Calls
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+              </h3>
+            </div>
+            <div className="px-0 pb-0">
               <div className="space-y-4">
                 {calls.map(call => (
                   <GlassCard
@@ -493,7 +492,7 @@ export default function PhoneSystemDashboard() {
                   </GlassCard>
                 ))}
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
 
@@ -501,13 +500,13 @@ export default function PhoneSystemDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Active Call Panel */}
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5" />
                   Active Call
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="text-center py-8">
                   <div className="text-6xl font-bold text-blue-600 mb-2">
                     {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, '0')}
@@ -536,18 +535,18 @@ export default function PhoneSystemDashboard() {
                     {isRecording ? 'Recording active' : 'Recording paused'}
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             {/* Real-time Transcript */}
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
                   Live Transcript
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="h-64 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 overflow-y-auto">
                   <div className="space-y-2 text-sm">
                     <div className="text-blue-600 font-medium">Caller:</div>
@@ -564,7 +563,7 @@ export default function PhoneSystemDashboard() {
                     Action Items
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -573,13 +572,13 @@ export default function PhoneSystemDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Quick Dial */}
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Phone className="h-5 w-5" />
                   Quick Dial
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="quick-dial">Phone Number</Label>
@@ -632,18 +631,18 @@ export default function PhoneSystemDashboard() {
                     Clear Number
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             {/* Recent Contacts */}
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
                   Recent Contacts
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   {[
                     { name: 'John Smith', number: '+1 (555) 123-4567', type: 'Client' },
@@ -677,7 +676,7 @@ export default function PhoneSystemDashboard() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -685,13 +684,13 @@ export default function PhoneSystemDashboard() {
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" />
                   Call Performance
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Call Quality Score</span>
@@ -711,17 +710,17 @@ export default function PhoneSystemDashboard() {
                   </div>
                   <Progress value={stats.customerSatisfaction * 100} className="h-2" />
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Call Trends
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Peak Call Hours</span>
@@ -740,7 +739,7 @@ export default function PhoneSystemDashboard() {
                     <span className="font-semibold">78%</span>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -748,13 +747,13 @@ export default function PhoneSystemDashboard() {
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5" />
                   Call Script Generator
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="call-purpose">Call Purpose</Label>
@@ -783,17 +782,17 @@ export default function PhoneSystemDashboard() {
                     Generate Call Script
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
                   Objection Handler
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="objection">Common Objection</Label>
@@ -822,7 +821,7 @@ export default function PhoneSystemDashboard() {
                     Generate Response
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -831,13 +830,13 @@ export default function PhoneSystemDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Audio/Video Devices */}
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
                   Audio & Video Devices
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
@@ -905,15 +904,15 @@ export default function PhoneSystemDashboard() {
                     Refresh Devices
                   </Button>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
 
             {/* Call Settings */}
             <GlassCard className="p-6">
-              <CardHeader className="px-0 pt-0">
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
                 <CardTitle>Call Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
+              </div>
+              <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Call Recording</Label>
@@ -970,19 +969,19 @@ export default function PhoneSystemDashboard() {
                     </Select>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </GlassCard>
           </div>
 
           {/* Permissions & Security */}
           <GlassCard className="p-6">
-            <CardHeader className="px-0 pt-0">
+            <div className="pb-4 border-b border-gray-200 dark:border-gray-700 px-0 pt-0">
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Permissions & Security
               </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
+            </div>
+            <div className="px-0 pb-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <Mic className="h-8 w-8 mx-auto mb-2 text-blue-600" />
@@ -1023,7 +1022,7 @@ export default function PhoneSystemDashboard() {
                   </div>
                 </div>
               </div>
-            </CardContent>
+            </div>
           </GlassCard>
         </TabsContent>
       </Tabs>

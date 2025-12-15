@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Shield, Mail, Calendar, Search, Filter, UserCheck, UserX, Settings, Lock, Send, Key } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Shield, Mail, Calendar, Search, Filter, UserCheck, UserX, Settings, Lock, Send, Key, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthStore } from '../store/authStore';
 import { useRole } from '../components/RoleBasedAccess';
 import { RoleMigrationPanel } from '../components/RoleMigrationPanel';
 import { useToast } from '../hooks/use-toast';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 
 interface User {
   id: string;
@@ -53,6 +55,109 @@ export default function UserManagement() {
   const [tierDropdownStates, setTierDropdownStates] = useState<{ [key: string]: string }>({});
   const [sendingPasswordEmail, setSendingPasswordEmail] = useState<string | null>(null);
 
+  // User templates for quick creation
+  const userTemplates = {
+    admin: {
+      role: 'super_admin',
+      productTier: 'super_admin',
+      description: 'Full system access'
+    },
+    sales: {
+      role: 'wl_user',
+      productTier: 'sales_maximizer',
+      description: 'Sales team member'
+    },
+    client: {
+      role: 'regular_user',
+      productTier: 'smartcrm',
+      description: 'Standard user'
+    }
+  };
+
+  // Advanced filters
+  const [advancedFilters, setAdvancedFilters] = useState({
+    role: 'all',
+    productTier: 'all',
+    status: 'all',
+    dateRange: 'all',
+    lastActive: 'all'
+  });
+
+  // Apply user template
+  const applyTemplate = (templateKey: keyof typeof userTemplates) => {
+    const template = userTemplates[templateKey];
+    setInviteData(prev => ({
+      ...prev,
+      role: template.role as any,
+      // Note: productTier would be set via separate API call
+    }));
+  };
+
+  // Bulk actions
+  const handleBulkSuspendInactive = async () => {
+    if (!confirm('Suspend all users inactive for 30+ days? This will affect user access.')) return;
+
+    try {
+      const response = await fetch('/api/admin/bulk-actions/suspend-inactive', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ daysInactive: 30 })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Bulk Action Completed',
+          description: data.message,
+        });
+        fetchUsers(); // Refresh the list
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleBulkUpgradeTrials = async () => {
+    if (!confirm('Upgrade all trial users to paid plans? This will change their billing.')) return;
+
+    try {
+      const response = await fetch('/api/admin/bulk-actions/upgrade-trials', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetTier: 'smartcrm_bundle' })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Bulk Action Completed',
+          description: data.message,
+        });
+        fetchUsers(); // Refresh the list
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
+  const [bulkActionConfirm, setBulkActionConfirm] = useState<{ action: string; count: number } | null>(null);
+
   // Check if user has admin access - only super admins can manage users
   const isAdmin = isSuperAdmin() || (currentUser?.email === 'dev@smartcrm.local');
 
@@ -95,18 +200,32 @@ export default function UserManagement() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(inviteData),
+        credentials: 'include'
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('User invitation sent successfully!');
+        toast({
+          title: "Success",
+          description: `Invitation sent to ${inviteData.email}`,
+        });
         setShowInviteModal(false);
         setInviteData({ email: '', role: 'regular_user', firstName: '', lastName: '', permissions: [] });
         fetchUsers();
       } else {
-        alert('Failed to send invitation');
+        toast({
+          title: "Failed to send invitation",
+          description: data.error || 'Unknown error occurred',
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      alert('Error sending invitation');
+    } catch (error: any) {
+      toast({
+        title: "Error sending invitation",
+        description: error.message || 'Network error occurred',
+        variant: "destructive"
+      });
     }
   };
 
@@ -116,14 +235,30 @@ export default function UserManagement() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
+        credentials: 'include'
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('User role updated successfully!');
+        toast({
+          title: "Success",
+          description: "User role updated successfully",
+        });
         fetchUsers();
+      } else {
+        toast({
+          title: "Failed to update role",
+          description: data.error || 'Unknown error occurred',
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      alert('Failed to update user role');
+    } catch (error: any) {
+      toast({
+        title: "Error updating role",
+        description: error.message || 'Network error occurred',
+        variant: "destructive"
+      });
     }
   };
 
@@ -133,14 +268,30 @@ export default function UserManagement() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
+        credentials: 'include'
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('User status updated successfully!');
+        toast({
+          title: "Success",
+          description: `User ${newStatus === 'active' ? 'activated' : newStatus === 'suspended' ? 'suspended' : 'updated'} successfully`,
+        });
         fetchUsers();
+      } else {
+        toast({
+          title: "Failed to update status",
+          description: data.error || 'Unknown error occurred',
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      alert('Failed to update user status');
+    } catch (error: any) {
+      toast({
+        title: "Error updating status",
+        description: error.message || 'Network error occurred',
+        variant: "destructive"
+      });
     }
   };
 
@@ -164,12 +315,19 @@ export default function UserManagement() {
 
       if (response.ok) {
         console.log(`✅ Product tier updated successfully!`);
-        alert('User product tier updated successfully!');
+        toast({
+          title: "Success",
+          description: "User product tier updated successfully",
+        });
         // Re-fetch to confirm changes from server
         setTimeout(() => fetchUsers(), 500);
       } else {
         console.error(`❌ Failed to update product tier:`, data);
-        alert(`Failed to update user product tier: ${data.error || 'Unknown error'}`);
+        toast({
+          title: "Failed to update product tier",
+          description: data.error || 'Unknown error occurred',
+          variant: "destructive"
+        });
         // Revert optimistic update on error
         setTierDropdownStates(prev => {
           const updated = { ...prev };
@@ -190,19 +348,44 @@ export default function UserManagement() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      try {
-        const response = await fetch(`/api/users/${userId}`, {
-          method: 'DELETE',
-        });
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
 
-        if (response.ok) {
-          alert('User deleted successfully!');
-          fetchUsers();
-        }
-      } catch (error) {
-        alert('Failed to delete user');
+    setDeleteConfirmUser(user);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteConfirmUser) return;
+
+    try {
+      const response = await fetch(`/api/users/${deleteConfirmUser.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `User ${deleteConfirmUser.email} deleted successfully`,
+        });
+        fetchUsers();
+      } else {
+        toast({
+          title: "Failed to delete user",
+          description: data.error || 'Unknown error occurred',
+          variant: "destructive"
+        });
       }
+    } catch (error: any) {
+      toast({
+        title: "Error deleting user",
+        description: error.message || 'Network error occurred',
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteConfirmUser(null);
     }
   };
 
@@ -253,8 +436,48 @@ export default function UserManagement() {
       return;
     }
 
-    if (!confirm(`Send password setup emails to ${emailsToSend.length} users?`)) {
-      return;
+    // Use confirmation dialog instead of confirm()
+    setBulkActionConfirm({
+      action: `Send password setup emails to ${emailsToSend.length} users?`,
+      count: emailsToSend.length
+    });
+  };
+
+  const executeBulkPasswordSetup = async () => {
+    if (!bulkActionConfirm) return;
+
+    const emailsToSend = filteredUsers.map(u => u.email).filter(Boolean);
+
+    try {
+      const response = await fetch('/api/admin/send-bulk-password-setup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails: emailsToSend }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Emails Sent',
+          description: `Sent: ${data.sent}, Failed: ${data.failed}`,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || 'Failed to send password setup emails',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to send password setup emails',
+        variant: 'destructive',
+      });
+    } finally {
+      setBulkActionConfirm(null);
     }
 
     try {
@@ -292,12 +515,50 @@ export default function UserManagement() {
     const email = user.email?.toLowerCase() || '';
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
     const searchLower = searchTerm.toLowerCase();
-    
+
     const matchesSearch = email.includes(searchLower) || fullName.includes(searchLower);
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    
-    return matchesSearch && matchesRole && matchesStatus;
+    const matchesRole = advancedFilters.role === 'all' || user.role === advancedFilters.role;
+    const matchesProductTier = advancedFilters.productTier === 'all' || user.productTier === advancedFilters.productTier;
+    const matchesStatus = advancedFilters.status === 'all' || user.status === advancedFilters.status;
+
+    // Date range filtering (simplified)
+    let matchesDateRange = true;
+    if (advancedFilters.dateRange !== 'all') {
+      const userDate = new Date(user.createdAt);
+      const now = new Date();
+      const daysDiff = (now.getTime() - userDate.getTime()) / (1000 * 60 * 60 * 24);
+
+      switch (advancedFilters.dateRange) {
+        case 'today':
+          matchesDateRange = daysDiff < 1;
+          break;
+        case 'week':
+          matchesDateRange = daysDiff < 7;
+          break;
+        case 'month':
+          matchesDateRange = daysDiff < 30;
+          break;
+      }
+    }
+
+    // Last active filtering
+    let matchesLastActive = true;
+    if (advancedFilters.lastActive !== 'all') {
+      const lastActive = new Date(user.lastActive);
+      const now = new Date();
+      const daysDiff = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24);
+
+      switch (advancedFilters.lastActive) {
+        case 'active':
+          matchesLastActive = daysDiff < 7;
+          break;
+        case 'inactive':
+          matchesLastActive = daysDiff >= 30;
+          break;
+      }
+    }
+
+    return matchesSearch && matchesRole && matchesProductTier && matchesStatus && matchesDateRange && matchesLastActive;
   });
 
   const availableRoles = [
@@ -355,7 +616,28 @@ export default function UserManagement() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {/* One-Click Admin Actions */}
+              <div className="flex gap-2 mr-4">
+                <button
+                  onClick={handleBulkSuspendInactive}
+                  className={`px-3 py-2 ${isDark ? 'bg-red-700 hover:bg-red-600' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg transition-colors flex items-center gap-2 text-sm`}
+                  title="Suspend users inactive for 30+ days"
+                >
+                  <UserX className="h-4 w-4" />
+                  Suspend Inactive
+                </button>
+                <button
+                  onClick={handleBulkUpgradeTrials}
+                  className={`px-3 py-2 ${isDark ? 'bg-green-700 hover:bg-green-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors flex items-center gap-2 text-sm`}
+                  title="Upgrade trial users to paid plans"
+                >
+                  <Shield className="h-4 w-4" />
+                  Upgrade Trials
+                </button>
+              </div>
+
+              {/* Existing buttons */}
               <button
                 onClick={sendBulkPasswordSetupEmails}
                 className={`px-4 py-2 ${isDark ? 'bg-purple-700 hover:bg-purple-600' : 'bg-purple-600 hover:bg-purple-700'} text-white rounded-lg transition-colors flex items-center gap-2`}
@@ -398,43 +680,100 @@ export default function UserManagement() {
         )}
 
         {/* Filters and Search */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
+                }`}
+              />
+            </div>
+            <select
+              value={advancedFilters.role}
+              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, role: e.target.value }))}
+              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
               }`}
-            />
+            >
+              <option value="all">All Roles</option>
+              <option value="super_admin">Super Admin</option>
+              <option value="wl_user">WL User</option>
+              <option value="regular_user">Regular User</option>
+            </select>
+            <select
+              value={advancedFilters.productTier}
+              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, productTier: e.target.value }))}
+              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
+              }`}
+            >
+              <option value="all">All Tiers</option>
+              <option value="super_admin">Super Admin</option>
+              <option value="whitelabel">Whitelabel</option>
+              <option value="smartcrm_bundle">SmartCRM Bundle</option>
+              <option value="smartcrm">SmartCRM</option>
+              <option value="sales_maximizer">Sales Maximizer</option>
+              <option value="ai_boost_unlimited">AI Boost Unlimited</option>
+              <option value="ai_communication">AI Communication</option>
+            </select>
+            <select
+              value={advancedFilters.status}
+              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, status: e.target.value }))}
+              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
+              }`}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+            </select>
           </div>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
-            }`}
-          >
-            <option value="all">All Roles</option>
-            <option value="super_admin">Super Admin</option>
-            <option value="wl_user">WL User</option>
-            <option value="regular_user">Regular User</option>
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
-            }`}
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-          </select>
+
+          {/* Advanced Filters Row */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <select
+              value={advancedFilters.dateRange}
+              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
+              }`}
+            >
+              <option value="all">All Dates</option>
+              <option value="today">Created Today</option>
+              <option value="week">Created This Week</option>
+              <option value="month">Created This Month</option>
+            </select>
+            <select
+              value={advancedFilters.lastActive}
+              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, lastActive: e.target.value }))}
+              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
+              }`}
+            >
+              <option value="all">All Activity</option>
+              <option value="active">Active (7 days)</option>
+              <option value="inactive">Inactive (30+ days)</option>
+            </select>
+            <button
+              onClick={() => setAdvancedFilters({
+                role: 'all',
+                productTier: 'all',
+                status: 'all',
+                dateRange: 'all',
+                lastActive: 'all'
+              })}
+              className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
         {/* Users Table */}
@@ -612,6 +951,32 @@ export default function UserManagement() {
             <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
               Invite New User
             </h3>
+
+            {/* User Templates */}
+            <div className="mb-6">
+              <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-3`}>
+                Quick Templates
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {Object.entries(userTemplates).map(([key, template]) => (
+                  <button
+                    key={key}
+                    onClick={() => applyTemplate(key as keyof typeof userTemplates)}
+                    className={`p-3 border rounded-lg text-left hover:bg-blue-50 hover:border-blue-300 transition-colors ${
+                      isDark ? 'border-gray-600 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 bg-gray-50'
+                    }`}
+                  >
+                    <div className={`font-medium capitalize ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {key}
+                    </div>
+                    <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {template.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -790,6 +1155,66 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmUser} onOpenChange={() => setDeleteConfirmUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete User
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteConfirmUser && (
+            <div className="py-4">
+              <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex-shrink-0">
+                  <Users className="h-8 w-8 text-gray-400" />
+                </div>
+                <div>
+                  <p className="font-medium">{deleteConfirmUser.firstName} {deleteConfirmUser.lastName}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{deleteConfirmUser.email}</p>
+                  <p className="text-xs text-gray-500">Role: {deleteConfirmUser.role}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmUser(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteUser}>
+              Delete User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Action Confirmation Dialog */}
+      <Dialog open={!!bulkActionConfirm} onOpenChange={() => setBulkActionConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-600" />
+              Confirm Bulk Action
+            </DialogTitle>
+            <DialogDescription>
+              {bulkActionConfirm?.action}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkActionConfirm(null)}>
+              Cancel
+            </Button>
+            <Button onClick={executeBulkPasswordSetup}>
+              Send Emails
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-}
+};
