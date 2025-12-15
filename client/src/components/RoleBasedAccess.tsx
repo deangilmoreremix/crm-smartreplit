@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTenant } from '../contexts/TenantProvider';
+import { supabase } from '../lib/supabase';
 
 interface User {
   id: string;
@@ -7,7 +8,7 @@ interface User {
   firstName?: string;
   lastName?: string;
   role: 'super_admin' | 'wl_user' | 'regular_user';
-  productTier?: 'super_admin' | 'whitelabel' | 'smartcrm' | 'sales_maximizer' | 'ai_boost_unlimited' | 'ai_communication' | 'smartcrm_bundle';
+  productTier?: 'super_admin' | 'whitelabel' | 'smartcrm' | 'sales_maximizer' | 'ai_boost_unlimited' | 'ai_communication' | 'smartcrm_bundle' | 'dev_all_access';
   tenantId: string;
   permissions: string[];
   lastActive: string;
@@ -53,31 +54,54 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
 
-      // Get current user with role information
-      const response = await fetch('/api/auth/user-role', {
-        credentials: 'include',  // Include session cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-          ...(tenant ? { 'X-Tenant-ID': tenant.id } : {})
-        }
-      });
+      // Get current user
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (!authUser) {
+        setIsLoading(false);
+        return;
+      }
 
-      if (response.ok) {
-        const userData = await response.json();
+      // Get profile from Supabase
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error) {
+        console.debug('Profile fetch error:', error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (profile) {
+        const userData: User = {
+          id: profile.id,
+          email: authUser.email || '',
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          role: profile.role || 'regular_user',
+          productTier: profile.product_tier,
+          tenantId: tenant?.id || 'default',
+          permissions: [], // TODO: implement permissions
+          lastActive: new Date().toISOString(),
+          status: 'active'
+        };
+
         console.log('✅ User role loaded:', {
-          email: userData.user?.email,
-          role: userData.user?.role,
-          productTier: userData.user?.productTier
+          email: userData.email,
+          role: userData.role,
+          productTier: userData.productTier
         });
-        setUser(userData.user);
-      } else {
-        // Silently handle non-200 responses during development
-        console.debug('User role not available:', response.status);
+        setUser(userData);
       }
     } catch (error) {
-      // Only log significant errors, not network failures during development
       console.debug('User role fetch skipped:', error instanceof Error ? error.message : 'Unknown error');
     } finally {
+      setIsLoading(false);
+    }
+  };
       setIsLoading(false);
     }
   };
@@ -131,29 +155,29 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       'communication': ['super_admin', 'wl_user', 'regular_user'],
     };
 
-    // Product tier-based access (7-tier system)
+    // Product tier-based access (7-tier system + dev access)
     const productTierAccess: Record<string, string[]> = {
       // Core CRM features - ALL paid tiers get baseline CRM access
-      'smartcrm_base': ['super_admin', 'whitelabel', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication', 'smartcrm_bundle'],
-      
+      'smartcrm_base': ['super_admin', 'whitelabel', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+
       // AI Goals & AI Tools - Sales Maximizer and higher tiers
-      'ai_goals': ['super_admin', 'whitelabel', 'sales_maximizer', 'ai_boost_unlimited', 'smartcrm_bundle'],
-      'ai_tools': ['super_admin', 'whitelabel', 'sales_maximizer', 'ai_boost_unlimited', 'smartcrm_bundle'],
-      
+      'ai_goals': ['super_admin', 'whitelabel', 'sales_maximizer', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],
+      'ai_tools': ['super_admin', 'whitelabel', 'sales_maximizer', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],
+
       // AI Communication features - AI Communication tier
-      'video_email': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle'],
-      'sms_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle'],
-      'voip_phone': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle'],
-      'invoicing': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle'],
-      'lead_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle'],
-      'circle_prospecting': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle'],
-      
+      'video_email': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+      'sms_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+      'voip_phone': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+      'invoicing': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+      'lead_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+      'circle_prospecting': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
+
       // AI Boost Unlimited - unlimited AI credits (platform-wide)
-      'ai_credits_unlimited': ['super_admin', 'whitelabel', 'ai_boost_unlimited', 'smartcrm_bundle'],
-      
+      'ai_credits_unlimited': ['super_admin', 'whitelabel', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],
+
       // Whitelabel features - Whitelabel tier only
-      'whitelabel_branding': ['super_admin', 'whitelabel'],
-      'whitelabel_settings': ['super_admin', 'whitelabel'],
+      'whitelabel_branding': ['super_admin', 'whitelabel', 'dev_all_access'],
+      'whitelabel_settings': ['super_admin', 'whitelabel', 'dev_all_access'],
     };
 
     // Check role-based access first
