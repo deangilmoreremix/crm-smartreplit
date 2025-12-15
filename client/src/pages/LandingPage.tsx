@@ -79,7 +79,11 @@ const LandingPage = () => {
 
     // Check dev environment and load dev mode state
     const hostname = window.location.hostname;
-    const isDevelopmentEnvironment = (hostname.includes('localhost') || hostname.includes('replit.dev')) && !hostname.includes('replit.app');
+    const isDevelopmentEnvironment = (hostname.includes('localhost') ||
+                                     hostname.includes('replit.dev') ||
+                                     hostname.includes('github.dev') ||
+                                     hostname.includes('app.github.dev')) &&
+                                    !hostname.includes('replit.app');
     console.log('🔧 Dev environment check:', { hostname, isDevelopmentEnvironment });
     setIsDev(isDevelopmentEnvironment);
     const devModeActive = localStorage.getItem('smartcrm-dev-mode') === 'true';
