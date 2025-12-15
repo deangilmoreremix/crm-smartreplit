@@ -102,9 +102,6 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
   };
-      setIsLoading(false);
-    }
-  };
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
