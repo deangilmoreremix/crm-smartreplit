@@ -11,8 +11,10 @@ export const DevBypassButton: React.FC = () => {
     console.log('🔧 DevBypassButton: Current hostname:', hostname);
     
     const isDevelopmentEnvironment = (
-      hostname.includes('localhost') || 
-      hostname.includes('replit.dev')
+      hostname.includes('localhost') ||
+      hostname.includes('replit.dev') ||
+      hostname.includes('github.dev') ||
+      hostname.includes('app.github.dev')
     ) && !hostname.includes('replit.app');
     
     console.log('🔧 DevBypassButton: Is dev environment?', isDevelopmentEnvironment);
