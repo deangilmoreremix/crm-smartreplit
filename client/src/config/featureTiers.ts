@@ -46,6 +46,11 @@ export function hasFeatureAccess(productTier: string | null | undefined, feature
     return false;
   }
 
+  // Special dev tier that has access to everything
+  if (productTier === 'dev_all_access') {
+    return true;
+  }
+
   const allowedTiers = featureTiers[featureKey] || [];
   return allowedTiers.includes(productTier as any);
 }

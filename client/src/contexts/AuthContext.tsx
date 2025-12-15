@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   firstName: 'Development',
                   lastName: 'User',
                   role: 'super_admin',
-                  productTier: 'super_admin',
+                  productTier: 'dev_all_access', // Special tier that bypasses all restrictions
                   app_context: 'smartcrm'
                 };
                 tokenData = {
