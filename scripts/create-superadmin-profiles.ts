@@ -40,13 +40,14 @@ async function createProfiles() {
       .from('profiles')
       .upsert({
         id: user.id,
-        username: email.split('@')[0],
+        username: email === 'dean@smartcrm.vip' ? 'dean_admin' : email.split('@')[0],
         first_name: firstName,
         last_name: '',
         role: 'super_admin',
-        product_tier: 'ai_boost_unlimited',
         app_context: 'smartcrm',
         email_template_set: 'smartcrm'
+      }, {
+        onConflict: 'id'
       });
 
     if (profileError) {
