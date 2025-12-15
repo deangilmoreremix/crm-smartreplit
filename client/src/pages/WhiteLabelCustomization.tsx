@@ -64,7 +64,7 @@ const { toast } = useToast();
     const newButtons = [...config.ctaButtons];
     newButtons[index] = { ...newButtons[index], ...updates };
     updateConfig({ ctaButtons: newButtons });
-  };
+  }, [config.ctaButtons, updateConfig]);
 
   const addButton = useCallback(() => {
     const newButton: WhitelabelButton = {
@@ -76,12 +76,12 @@ const { toast } = useToast();
       enabled: true
     };
     updateConfig({ ctaButtons: [...config.ctaButtons, newButton] });
-  };
+   }, [config.ctaButtons, updateConfig]);
 
   const removeButton = useCallback((index: number) => {
     const newButtons = config.ctaButtons.filter((_, i) => i !== index);
     updateConfig({ ctaButtons: newButtons });
-  };
+  }, [config.ctaButtons, updateConfig]);
 
   const handleExport = async () => {
     const configString = exportConfig();

@@ -849,12 +849,13 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                   id="bulk-import-file"
                 />
                 <label htmlFor="bulk-import-file">
-                  <Button variant="outline" asChild data-testid="button-choose-user-file">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Choose File
-                </Button>
+                  <Button variant="outline" data-testid="button-choose-user-file">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose File
+                  </Button>
                 </label>
-              
+              </div>
+
               <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5" />

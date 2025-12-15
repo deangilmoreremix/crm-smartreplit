@@ -66,8 +66,8 @@ export default function SocialMediaGenerator() {
         variations.push({
           content: variation,
           id: i + 1,
-          engagement: Math.floor(// TODO: Replace with real AI implementation * 100) + 50, // Mock engagement score
-          readability: Math.floor(// TODO: Replace with real AI implementation * 20) + 80,  // Mock readability score
+          engagement: Math.floor(Math.random() * 100) + 50, // Mock engagement score
+          readability: Math.floor(Math.random() * 20) + 80,  // Mock readability score
         });
       }
 
