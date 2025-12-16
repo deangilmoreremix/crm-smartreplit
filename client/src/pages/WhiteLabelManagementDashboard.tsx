@@ -1,4 +1,5 @@
 import React from 'react';
+import PageLayout from '../components/PageLayout';
 import RemoteWhiteLabelLoader from '../components/RemoteWhiteLabelLoader';
 
 const WhiteLabelManagementDashboard: React.FC = () => {

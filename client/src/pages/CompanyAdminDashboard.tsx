@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PageLayout from '../components/PageLayout';
 import { useCompany } from '../contexts/CompanyContext';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { Button } from '../components/ui/button';

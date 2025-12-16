@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { Package, Plus, Minus, Check, Star, Zap, Shield, Globe, Users, Upload, Save, Eye, Edit, Trash2, UserPlus, FileText, AlertCircle, CheckCircle, Settings, Palette, Sun, Moon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

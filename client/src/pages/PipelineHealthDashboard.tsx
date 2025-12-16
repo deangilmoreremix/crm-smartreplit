@@ -1,4 +1,5 @@
 import React from 'react';
+import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';

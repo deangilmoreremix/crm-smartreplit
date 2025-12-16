@@ -753,18 +753,18 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                       <div className={`absolute inset-4 ${isDark ? 'bg-gray-900/98' : 'bg-white/98'} backdrop-blur-2xl border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl overflow-hidden`} onClick={(e) => e.stopPropagation()}>
                         <div className="h-full flex flex-col">
                           <div className="flex items-center justify-between p-4 border-b border-gray-200/30">
-                            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Analytics Dashboard</h3>
+                            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Business Intelligence Dashboard</h3>
                             <div className="flex items-center space-x-2">
-                              <div className="flex items-center text-green-600 text-xs px-2 py-1 rounded-full bg-green-500/10">
+                              <div className="flex items-center text-blue-600 text-xs px-2 py-1 rounded-full bg-blue-500/10">
                                 <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                 </svg>
-                                Module Federation Active
+                                Local Analytics Active
                               </div>
                               <button
                                 onClick={() => window.open('https://ai-analytics.smartcrm.vip', '_blank')}
                                 className={`p-2 rounded-md ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
-                                title="Open in new tab"
+                                title="Open production analytics (external)"
                               >
                                 <ExternalLink size={16} className="block overflow-visible shrink-0" />
                               </button>
@@ -777,7 +777,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                               </button>
                             </div>
                           </div>
-                          <div className="flex-1 p-2">
+                          <div className="flex-1 overflow-hidden">
                             <ModuleFederationAnalytics />
                           </div>
                         </div>

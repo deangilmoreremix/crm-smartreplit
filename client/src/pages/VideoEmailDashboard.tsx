@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PageLayout from '../components/PageLayout';
 import GlassCard from '../components/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

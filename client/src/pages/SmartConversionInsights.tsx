@@ -6,10 +6,11 @@ import { useContactStore } from '../hooks/useContactStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Avatar from '../components/ui/Avatar';
-import { 
-  Zap, 
-  TrendingUp, 
-  Target, 
+import PageLayout from '../components/PageLayout';
+import {
+  Zap,
+  TrendingUp,
+  Target,
   Users,
   ArrowUpRight,
   ArrowDownRight,
@@ -69,25 +70,16 @@ const SmartConversionInsights: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 bg-white dark:bg-gray-900" style={{ backgroundColor: isDark ? '#111827' : '#ffffff' }}>
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Smart Conversion Insights
-            </h1>
-            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              AI-powered insights to maximize your conversion opportunities
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-              <Zap className="h-3 w-3 mr-1" />
-              AI Insights
-            </Badge>
-          </div>
-        </div>
+    <PageLayout
+      title="Smart Conversion Insights"
+      description="AI-powered insights to maximize your conversion opportunities"
+      actions={
+        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+          <Zap className="h-3 w-3 mr-1" />
+          AI Insights
+        </Badge>
+      }
+    >
 
         {/* Conversion Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -318,8 +310,7 @@ const SmartConversionInsights: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </PageLayout>
   );
 };
 

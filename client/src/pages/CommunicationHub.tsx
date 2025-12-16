@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Phone, Mail, Send, Users, Search, Filter, Plus, MoreVertical, Check, Clock, AlertCircle, Paperclip, Video, FileText, Network, ClipboardList } from 'lucide-react';
+import PageLayout from '../components/PageLayout';
 import VideoEmailDashboard from './VideoEmailDashboard';
 import PhoneSystemDashboard from './PhoneSystemDashboard';
 import TextMessagingDashboard from './TextMessagingDashboard';
@@ -225,7 +226,11 @@ const CommunicationHub: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col pt-16">
+    <PageLayout
+      title="Communication Hub"
+      description="Unified messaging and communication platform"
+    >
+      <div className="h-screen bg-gray-50 flex flex-col">
       {/* Top Tab Navigation Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm relative z-[60]">
         <div className="max-w-7xl mx-auto px-4">
@@ -479,9 +484,10 @@ const CommunicationHub: React.FC = () => {
         </div>
       </div>
 
-      {/* Persistent Video Call Button */}
-      <PersistentVideoCallButton />
-    </div>
+        {/* Persistent Video Call Button */}
+        <PersistentVideoCallButton />
+      </div>
+    </PageLayout>
   );
 };
 

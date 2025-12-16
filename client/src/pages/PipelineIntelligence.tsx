@@ -6,10 +6,11 @@ import { useContactStore } from '../hooks/useContactStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Avatar from '../components/ui/Avatar';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  DollarSign, 
+import PageLayout from '../components/PageLayout';
+import {
+  BarChart3,
+  TrendingUp,
+  DollarSign,
   Users,
   Target,
   Activity,
@@ -50,25 +51,16 @@ const PipelineIntelligence: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 bg-white dark:bg-gray-900" style={{ backgroundColor: isDark ? '#111827' : '#ffffff' }}>
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Pipeline Intelligence
-            </h1>
-            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Advanced analytics and insights for your sales pipeline
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              <Activity className="h-3 w-3 mr-1" />
-              Live Data
-            </Badge>
-          </div>
-        </div>
+    <PageLayout
+      title="Pipeline Intelligence"
+      description="Advanced analytics and insights for your sales pipeline"
+      actions={
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Activity className="h-3 w-3 mr-1" />
+          Live Data
+        </Badge>
+      }
+    >
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -270,8 +262,7 @@ const PipelineIntelligence: React.FC = () => {
             ))}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </PageLayout>
   );
 };
 
