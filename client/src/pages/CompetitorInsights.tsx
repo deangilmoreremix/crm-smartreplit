@@ -4,7 +4,6 @@ import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
-import DashboardHeader from '../components/dashboard/DashboardHeader';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import Avatar from '../components/ui/Avatar';
@@ -70,13 +69,11 @@ const CompetitorInsights: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 max-w-7xl mx-auto bg-white dark:bg-gray-900" style={{ backgroundColor: isDark ? '#111827' : '#ffffff' }}>
+    <PageLayout
+      title="Competitor Insights"
+      description="Market intelligence and competitive analysis for strategic advantage"
+    >
       <div className="space-y-8">
-        {/* Dashboard Header */}
-        <DashboardHeader 
-          title="Competitor Insights"
-          subtitle="Market intelligence and competitive analysis for strategic advantage"
-        />
 
         {/* Competitive KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -361,7 +358,7 @@ const CompetitorInsights: React.FC = () => {
           </GlassCard>
         </div>
       </div>
-    </main>
+    </PageLayout>
   );
 };
 

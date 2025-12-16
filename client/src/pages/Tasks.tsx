@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
+import PageLayout from '../components/PageLayout';
 import { useTaskStore } from '../store/taskStore';
 import { Task } from '../store/taskStore';
-import { 
-  CheckSquare, 
-  Plus, 
-  Calendar, 
-  CheckCircle, 
-  Clock, 
-  AlertCircle, 
+import {
+  CheckSquare,
+  Plus,
+  Calendar,
+  CheckCircle,
+  Clock,
+  AlertCircle,
   Search,
   X,
   User,
   Briefcase
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '../components/ui/button';
 
 const Tasks: React.FC = () => {
   const { 
@@ -316,13 +318,11 @@ const Tasks: React.FC = () => {
   };
   
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
-          <p className="text-gray-600 mt-1">Manage your tasks and follow-ups</p>
-        </div>
-        <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
+    <PageLayout
+      title="Tasks"
+      description="Manage your tasks and follow-ups"
+      actions={
+        <div className="flex flex-wrap gap-2">
           <Link
             to="/tasks/calendar"
             className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -330,15 +330,13 @@ const Tasks: React.FC = () => {
             <Calendar size={18} className="mr-1.5" />
             Calendar View
           </Link>
-          <button
-            onClick={openCreateForm}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-          >
+          <Button onClick={openCreateForm}>
             <Plus size={18} className="mr-1.5" />
             Add Task
-          </button>
+          </Button>
         </div>
-      </header>
+      }
+    >
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Task count summary cards */}
@@ -753,7 +751,7 @@ const Tasks: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 };
 

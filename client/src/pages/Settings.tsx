@@ -1,35 +1,54 @@
 import React, { useState } from 'react';
+import PageLayout from '../components/PageLayout';
 import { useApiStore } from '../store/apiStore';
-import { Eye, EyeOff, Key, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Key, AlertCircle, Save } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { useToast } from '../hooks/use-toast';
 
 const Settings: React.FC = () => {
-  const { apiKeys, setOpenAiKey, setGeminiKey } = useApiStore();
+  const { apiKeys, setApiKey } = useApiStore();
+  const { toast } = useToast();
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [openAiInput, setOpenAiInput] = useState(apiKeys.openai || '');
-  const [geminiInput, setGeminiInput] = useState(apiKeys.gemini || '');
+  const [geminiInput, setGeminiInput] = useState(apiKeys.google || '');
 
   const toggleOpenAiVisibility = () => setShowOpenAiKey(!showOpenAiKey);
   const toggleGeminiVisibility = () => setShowGeminiKey(!showGeminiKey);
 
   const handleOpenAiSave = () => {
-    setOpenAiKey(openAiInput);
-    alert('OpenAI API key saved successfully!');
+    setApiKey('openai', openAiInput);
+    toast({
+      title: "Success",
+      description: "OpenAI API key saved successfully!",
+    });
   };
 
   const handleGeminiSave = () => {
-    setGeminiKey(geminiInput);
-    alert('Gemini API key saved successfully!');
+    setApiKey('google', geminiInput);
+    toast({
+      title: "Success",
+      description: "Gemini API key saved successfully!",
+    });
   };
 
-  const hasValidKeys = apiKeys.openai || apiKeys.gemini;
+  const hasValidKeys = apiKeys.openai || apiKeys.google;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Configure your AI CRM platform</p>
-      </header>
+    <PageLayout
+      title="Settings"
+      description="Configure your AI CRM platform and API keys"
+      actions={
+        <Button onClick={() => {
+          if (openAiInput) handleOpenAiSave();
+          if (geminiInput) handleGeminiSave();
+        }}>
+          <Save className="h-4 w-4 mr-2" />
+          Save All Settings
+        </Button>
+      }
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
 
       {!hasValidKeys && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
@@ -149,7 +168,8 @@ const Settings: React.FC = () => {
           Built with React, Vite, and powered by OpenAI and Google Gemini.
         </p>
       </div>
-    </div>
+      </div>
+    </PageLayout>
   );
 };
 

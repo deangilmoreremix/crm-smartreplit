@@ -1,6 +1,7 @@
 // src/pages/Contacts.tsx (formerly ContactsEnhanced.tsx)
 
 import React, { useState, useMemo, useEffect } from 'react';
+import PageLayout from '../components/PageLayout';
 import {
   Plus,
   Search,
@@ -26,6 +27,7 @@ import ContactAutomation from '../components/communications/ContactAutomation';
 import CallLogging from '../components/communications/CallLogging';
 import MeetingScheduler from '../components/communications/MeetingScheduler';
 import { Contact } from '../types/contact';
+import { Button } from '../components/ui/button';
 
 interface FilterCriteria {
   status: string[];
@@ -274,38 +276,31 @@ const ContactsEnhanced: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* Header */}
-      <header className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Enhanced Contacts</h1>
-            <p className="text-gray-600 mt-1">
-              AI-powered contact management with advanced filtering and insights
-            </p>
-          </div>
-          <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
-            <button
-              onClick={handleAnalyzeAll}
-              disabled={isAnalyzing}
-              className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition-colors disabled:bg-purple-300"
-            >
-              <Brain size={18} className="mr-1" />
-              {isAnalyzing ? 'Analyzing...' : 'AI Analysis'}
-            </button>
-            <button
-              onClick={() => {
-                setSelectedContactForModal(null);
-                setContactModalMode('create');
-              }}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-            >
-              <Plus size={18} className="mr-1" />
-              Add Contact
-            </button>
-          </div>
+    <PageLayout
+      title="Enhanced Contacts"
+      description="AI-powered contact management with advanced filtering and insights"
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={handleAnalyzeAll}
+            disabled={isAnalyzing}
+            variant="secondary"
+          >
+            <Brain size={18} className="mr-1" />
+            {isAnalyzing ? 'Analyzing...' : 'AI Analysis'}
+          </Button>
+          <Button
+            onClick={() => {
+              setSelectedContactForModal(null);
+              setContactModalMode('create');
+            }}
+          >
+            <Plus size={18} className="mr-1" />
+            Add Contact
+          </Button>
         </div>
-      </header>
+      }
+    >
 
       {/* Stats Bar */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
@@ -630,7 +625,7 @@ const ContactsEnhanced: React.FC = () => {
         contact={selectedContactForModal || undefined}
         mode={contactModalMode}
       />
-    </div>
+    </PageLayout>
   );
 };
 

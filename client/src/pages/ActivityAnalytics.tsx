@@ -47,25 +47,17 @@ const ActivityAnalytics: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Activity Analytics
-            </h1>
-            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Communication frequency analysis and engagement insights
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              <Activity className="h-3 w-3 mr-1" />
-              Live Analytics
-            </Badge>
-          </div>
-        </div>
+    <PageLayout
+      title="Activity Analytics"
+      description="Communication frequency analysis and engagement insights"
+      actions={
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Activity className="h-3 w-3 mr-1" />
+          Live Analytics
+        </Badge>
+      }
+    >
+      <div className="space-y-8">
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -281,9 +273,9 @@ const ActivityAnalytics: React.FC = () => {
             ))}
           </CardContent>
         </Card>
-      </div>
-    </div>
-  );
-};
+        </div>
+      </PageLayout>
+    );
+  };
 
 export default ActivityAnalytics;
