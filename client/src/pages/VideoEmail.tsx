@@ -1,28 +1,29 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import PageLayout from '../components/PageLayout';
 // import { useOpenAI } from '../services/openaiService';
-import { 
-  Video, 
-  Download, 
-  Trash, 
-  Play, 
-  Pause, 
-  RefreshCw, 
-  Camera, 
-  X, 
-  Check, 
-  Clock, 
-  Scissors, 
-  FileVideo, 
-  Copy, 
-  Mail, 
-  Sliders, 
-  PenTool, 
-  List, 
-  Brain, 
-  Settings, 
-  ChevronRight, 
+import {
+  Video,
+  Download,
+  Trash,
+  Play,
+  Pause,
+  RefreshCw,
+  Camera,
+  X,
+  Check,
+  Clock,
+  Scissors,
+  FileVideo,
+  Copy,
+  Mail,
+  Sliders,
+  PenTool,
+  List,
+  Brain,
+  Settings,
+  ChevronRight,
   ChevronLeft,
-  Upload as UploadIcon, 
+  Upload as UploadIcon,
   Edit,
   Link,
   AlertCircle,
@@ -261,18 +262,16 @@ const VideoEmail: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Video Email</h1>
-          <p className="text-gray-600 mt-1">Create personalized video messages for your prospects</p>
-        </div>
-        <div className="mt-4 sm:mt-0 flex space-x-2">
+    <PageLayout
+      title="Video Email"
+      description="Create personalized video messages for your prospects"
+      actions={
+        <div className="flex space-x-2">
           <button
             onClick={() => setActiveTab('record')}
             className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              activeTab === 'record' 
-                ? 'bg-blue-600 text-white' 
+              activeTab === 'record'
+                ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -282,8 +281,8 @@ const VideoEmail: React.FC = () => {
           <button
             onClick={() => setActiveTab('library')}
             className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              activeTab === 'library' 
-                ? 'bg-blue-600 text-white' 
+              activeTab === 'library'
+                ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -291,7 +290,8 @@ const VideoEmail: React.FC = () => {
             Library
           </button>
         </div>
-      </header>
+      }
+    >
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
@@ -561,7 +561,7 @@ const VideoEmail: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

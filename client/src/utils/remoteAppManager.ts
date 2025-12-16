@@ -1,11 +1,18 @@
 
 class RemoteAppManager {
-  private refreshIntervals: Map<string, number> = new Map();
+  private refreshIntervals: Map<string, NodeJS.Timeout> = new Map();
   private lastUpdateChecks: Map<string, number> = new Map();
   private updateHashCache: Map<string, string> = new Map();
   private bridges: Map<string, any> = new Map();
   private crossAppData: Map<string, any> = new Map();
   private eventHandlers: Map<string, Function[]> = new Map();
+  private defaultTimeout: number = 10000; // 10 seconds default timeout
+  private allowedDomains: Set<string> = new Set([
+    'smartcrm.vip',
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0'
+  ]);
 
   // Check if remote app has updates
   async checkForUpdates(url: string): Promise<boolean> {

@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { PasswordStrengthIndicator } from '../components/ui/PasswordStrengthIndicator';
+import { validatePassword } from '../utils/passwordValidation';
 import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 const SignUpPage: React.FC = () => {
@@ -39,8 +41,10 @@ const SignUpPage: React.FC = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Enhanced password validation
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.errors[0] || 'Password does not meet requirements');
       setLoading(false);
       return;
     }
@@ -192,6 +196,10 @@ const SignUpPage: React.FC = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <PasswordStrengthIndicator
+                password={formData.password}
+                className="mt-2"
+              />
             </div>
             
             <div>

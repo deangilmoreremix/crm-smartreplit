@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // @ts-ignore
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import PageLayout from '../components/PageLayout';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import GeminiImageModal from '../components/GeminiImageModal';
@@ -362,38 +363,35 @@ const Appointments: React.FC = () => {
   };
   
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
-          <p className="text-gray-600 mt-1">Schedule and manage your meetings with contacts</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <ModernButton 
-            onClick={() => {
-              setIsEditing(false);
-              setFormData({
-                title: '',
-                contactName: '',
-                contactEmail: '',
-                contactPhone: '',
-                date: new Date(),
-                duration: 30,
-                type: 'video',
-                location: '',
-                notes: '',
-                status: 'scheduled'
-              });
-              setShowAppointmentForm(true);
-            }}
-            variant="primary"
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus size={18} className="mr-1" />
-            New Appointment
-          </ModernButton>
-        </div>
-      </header>
+    <PageLayout
+      title="Appointments"
+      description="Schedule and manage your meetings with contacts"
+      actions={
+        <ModernButton
+          onClick={() => {
+            setIsEditing(false);
+            setFormData({
+              title: '',
+              contactName: '',
+              contactEmail: '',
+              contactPhone: '',
+              date: new Date(),
+              duration: 30,
+              type: 'video',
+              location: '',
+              notes: '',
+              status: 'scheduled'
+            });
+            setShowAppointmentForm(true);
+          }}
+          variant="primary"
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus size={18} className="mr-1" />
+          New Appointment
+        </ModernButton>
+      }
+    >
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
@@ -1104,7 +1102,7 @@ const Appointments: React.FC = () => {
           onClose={() => setShowAvatarGenerator(false)}
         />
       )}
-    </div>
+    </PageLayout>
   );
 };
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PageLayout from '../components/PageLayout';
 import openAIService from '../services/openAIService';
 import { 
   MessageSquare, 
@@ -317,17 +318,20 @@ const TextMessages: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Contacts Sidebar */}
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-gray-900">Text Messages</h1>
-            <button className="p-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
-              <Plus size={16} />
-            </button>
-          </div>
-          
+    <PageLayout
+      title="Text Messages"
+      description="Send and receive text messages with your contacts"
+      actions={
+        <button className="p-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
+          <Plus size={16} />
+        </button>
+      }
+    >
+      <div className="flex h-[calc(100vh-200px)] bg-gray-50">
+        {/* Contacts Sidebar */}
+        <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+          <div className="p-4 border-b border-gray-200">
+
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -339,7 +343,7 @@ const TextMessages: React.FC = () => {
             />
           </div>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto">
           {filteredContacts.map((contact) => (
             <div
@@ -374,179 +378,180 @@ const TextMessages: React.FC = () => {
             </div>
           ))}
         </div>
-      </div>
+        </div>
 
-      {/* Message Area */}
-      <div className="flex-1 flex flex-col">
-        {selectedContact ? (
-          <>
-            {/* Header */}
-            <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <User size={16} className="text-gray-600" />
+        {/* Message Area */}
+        <div className="flex-1 flex flex-col">
+          {selectedContact ? (
+            <>
+              {/* Header */}
+              <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                    <User size={16} className="text-gray-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-medium text-gray-900">{selectedContact.name}</h2>
+                    <p className="text-sm text-gray-500">{selectedContact.phone}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-medium text-gray-900">{selectedContact.name}</h2>
-                  <p className="text-sm text-gray-500">{selectedContact.phone}</p>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setShowTemplates(!showTemplates)}
+                    className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
+                  >
+                    <MessageSquare size={16} />
+                  </button>
+                  <button className="p-2 rounded-md bg-gray-100 hover:bg-gray-200">
+                    <Phone size={16} />
+                  </button>
+                  <button className="p-2 rounded-md bg-gray-100 hover:bg-gray-200">
+                    <Settings size={16} />
+                  </button>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setShowTemplates(!showTemplates)}
-                  className="p-2 rounded-md bg-gray-100 hover:bg-gray-200"
-                >
-                  <MessageSquare size={16} />
-                </button>
-                <button className="p-2 rounded-md bg-gray-100 hover:bg-gray-200">
-                  <Phone size={16} />
-                </button>
-                <button className="p-2 rounded-md bg-gray-100 hover:bg-gray-200">
-                  <Settings size={16} />
-                </button>
-              </div>
-            </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {selectedContact.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {selectedContact.messages.map((message) => (
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.sender === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-900'
-                    }`}
+                    key={message.id}
+                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <p className="text-sm">{message.content}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-xs opacity-70">{formatDate(message.timestamp)}</p>
-                      {message.sender === 'user' && (
-                        <MessageStatus status={message.status} />
-                      )}
+                    <div
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        message.sender === 'user'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-200 text-gray-900'
+                      }`}
+                    >
+                      <p className="text-sm">{message.content}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs opacity-70">{formatDate(message.timestamp)}</p>
+                        {message.sender === 'user' && (
+                          <MessageStatus status={message.status} />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messageEndRef} />
+              </div>
+
+              {/* AI Suggestion */}
+              {generatedText && (
+                <div className="p-4 bg-blue-50 border-t border-blue-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center mb-2">
+                        <Brain size={16} className="text-blue-600 mr-2" />
+                        <span className="text-sm font-medium text-blue-900">AI Suggestion</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{generatedText}</p>
+                    </div>
+                    <div className="flex space-x-2 ml-4">
+                      <button
+                        onClick={() => setNewMessage(generatedText)}
+                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                      >
+                        Use
+                      </button>
+                      <button
+                        onClick={() => setGeneratedText(null)}
+                        className="p-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
-              <div ref={messageEndRef} />
-            </div>
+              )}
 
-            {/* AI Suggestion */}
-            {generatedText && (
-              <div className="p-4 bg-blue-50 border-t border-blue-200">
-                <div className="flex items-start justify-between">
+              {/* Templates Panel */}
+              {showTemplates && (
+                <div className="p-4 bg-gray-50 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">Message Templates</h3>
+                    <button
+                      onClick={() => setShowTemplates(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2">
+                    {messageTemplates.map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => useTemplate(template.content)}
+                        className="text-left p-2 bg-white rounded border border-gray-200 hover:border-blue-300 transition-colors"
+                      >
+                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{template.content}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Input Area */}
+              <div className="p-4 bg-white border-t border-gray-200">
+                <div className="flex items-end space-x-2">
                   <div className="flex-1">
-                    <div className="flex items-center mb-2">
-                      <Brain size={16} className="text-blue-600 mr-2" />
-                      <span className="text-sm font-medium text-blue-900">AI Suggestion</span>
-                    </div>
-                    <p className="text-sm text-gray-700">{generatedText}</p>
+                    <textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      rows={3}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
+                    />
                   </div>
-                  <div className="flex space-x-2 ml-4">
+                  <div className="flex flex-col space-y-2">
                     <button
-                      onClick={() => setNewMessage(generatedText)}
-                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                      onClick={generateTextSuggestion}
+                      disabled={isGenerating}
+                      className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
                     >
-                      Use
+                      {isGenerating ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : (
+                        <Brain size={16} />
+                      )}
                     </button>
                     <button
-                      onClick={() => setGeneratedText(null)}
-                      className="p-1 text-gray-400 hover:text-gray-600"
+                      onClick={sendMessage}
+                      disabled={isSending || !newMessage.trim()}
+                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50"
                     >
-                      <X size={12} />
+                      {isSending ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : (
+                        <Send size={16} />
+                      )}
                     </button>
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Templates Panel */}
-            {showTemplates && (
-              <div className="p-4 bg-gray-50 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-900">Message Templates</h3>
-                  <button
-                    onClick={() => setShowTemplates(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 gap-2">
-                  {messageTemplates.map((template) => (
-                    <button
-                      key={template.id}
-                      onClick={() => useTemplate(template.content)}
-                      className="text-left p-2 bg-white rounded border border-gray-200 hover:border-blue-300 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-gray-900">{template.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">{template.content}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-200">
-              <div className="flex items-end space-x-2">
-                <div className="flex-1">
-                  <textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none"
-                    rows={3}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col space-y-2">
-                  <button
-                    onClick={generateTextSuggestion}
-                    disabled={isGenerating}
-                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
-                  >
-                    {isGenerating ? (
-                      <RefreshCw size={16} className="animate-spin" />
-                    ) : (
-                      <Brain size={16} />
-                    )}
-                  </button>
-                  <button
-                    onClick={sendMessage}
-                    disabled={isSending || !newMessage.trim()}
-                    className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50"
-                  >
-                    {isSending ? (
-                      <RefreshCw size={16} className="animate-spin" />
-                    ) : (
-                      <Send size={16} />
-                    )}
-                  </button>
-                </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <MessageSquare size={48} className="text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
+                <p className="text-gray-500">Choose a contact from the sidebar to start messaging</p>
               </div>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <MessageSquare size={48} className="text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-              <p className="text-gray-500">Choose a contact from the sidebar to start messaging</p>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

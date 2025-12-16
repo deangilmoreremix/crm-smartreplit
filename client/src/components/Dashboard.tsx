@@ -17,6 +17,7 @@ import RemoteProductResearchLoader from './RemoteProductResearchLoader';
 import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import RemoteAIGoalsLoader from './RemoteAIGoalsLoader';
 import AssistantStatusWidget from './ui/AssistantStatusWidget';
+import { OnboardingWidget } from './OnboardingWidget';
 
 // Import section components
 import ExecutiveOverviewSection from './sections/ExecutiveOverviewSection';
@@ -335,7 +336,8 @@ const Dashboard: React.FC = React.memo(() => {
         <p className="text-lg text-gray-600 dark:text-gray-400">Welcome to {config.companyName || 'SmartCRM'}</p>
       </div>
 
-
+      {/* Onboarding Widget - Show for new users */}
+      <OnboardingWidget />
 
       {/* Dashboard Layout Controls - RESTORED */}
       <DashboardLayoutControls />

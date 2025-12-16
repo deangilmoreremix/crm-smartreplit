@@ -3,6 +3,141 @@ import OpenAI from "openai";
 var userOpenAIKey = process.env.OPENAI_API_KEY;
 var openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
 var openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+var AICircuitBreaker = class {
+  constructor() {
+    this.failures = 0;
+    this.lastFailureTime = 0;
+    this.failureThreshold = 5;
+    this.timeoutMs = 6e4;
+    // 1 minute
+    this.halfOpenMaxRequests = 3;
+    this.halfOpenRequests = 0;
+  }
+  get state() {
+    if (this.failures >= this.failureThreshold) {
+      if (Date.now() - this.lastFailureTime < this.timeoutMs) {
+        return "open";
+      } else {
+        return "half-open";
+      }
+    }
+    return "closed";
+  }
+  async execute(operation) {
+    if (this.state === "open") {
+      throw new Error("AI service temporarily unavailable due to repeated failures");
+    }
+    if (this.state === "half-open") {
+      if (this.halfOpenRequests >= this.halfOpenMaxRequests) {
+        throw new Error("AI service temporarily unavailable - testing recovery");
+      }
+      this.halfOpenRequests++;
+    }
+    try {
+      const result = await operation();
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure();
+      throw error;
+    }
+  }
+  onSuccess() {
+    this.failures = 0;
+    this.halfOpenRequests = 0;
+  }
+  onFailure() {
+    this.failures++;
+    this.lastFailureTime = Date.now();
+  }
+  getStatus() {
+    return {
+      state: this.state,
+      failures: this.failures,
+      lastFailureTime: this.lastFailureTime,
+      nextRetryTime: this.lastFailureTime + this.timeoutMs
+    };
+  }
+};
+var aiCircuitBreaker = new AICircuitBreaker();
+var AIUsageTracker = class {
+  constructor() {
+    this.usageRecords = [];
+    this.maxRecords = 1e4;
+  }
+  // Keep last 10k records in memory
+  trackUsage(record) {
+    this.usageRecords.push(record);
+    if (this.usageRecords.length > this.maxRecords) {
+      this.usageRecords = this.usageRecords.slice(-this.maxRecords);
+    }
+    if (record.cost > 0.1) {
+      console.warn(`High-cost AI request: $${record.cost.toFixed(4)} for ${record.endpoint}`);
+    }
+  }
+  getUserUsage(userId, timeWindowMs = 60 * 60 * 1e3) {
+    const cutoff = Date.now() - timeWindowMs;
+    return this.usageRecords.filter(
+      (record) => record.userId === userId && record.timestamp > cutoff
+    );
+  }
+  getTotalCost(userId) {
+    const records = userId ? this.usageRecords.filter((r) => r.userId === userId) : this.usageRecords;
+    return records.reduce((sum, record) => sum + record.cost, 0);
+  }
+  getUsageStats() {
+    const now = Date.now();
+    const lastHour = this.usageRecords.filter((r) => r.timestamp > now - 60 * 60 * 1e3);
+    const lastDay = this.usageRecords.filter((r) => r.timestamp > now - 24 * 60 * 60 * 1e3);
+    return {
+      totalRequests: this.usageRecords.length,
+      lastHourRequests: lastHour.length,
+      lastDayRequests: lastDay.length,
+      totalCost: this.getTotalCost(),
+      lastHourCost: lastHour.reduce((sum, r) => sum + r.cost, 0),
+      lastDayCost: lastDay.reduce((sum, r) => sum + r.cost, 0),
+      circuitBreakerStatus: aiCircuitBreaker.getStatus()
+    };
+  }
+};
+var aiUsageTracker = new AIUsageTracker();
+var AIResponseCache = class {
+  constructor() {
+    this.cache = /* @__PURE__ */ new Map();
+    this.defaultTTL = 5 * 60 * 1e3;
+  }
+  // 5 minutes
+  get(key) {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+    if (Date.now() - cached.timestamp > cached.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    return cached.response;
+  }
+  set(key, response, ttl = this.defaultTTL) {
+    this.cache.set(key, {
+      response,
+      timestamp: Date.now(),
+      ttl
+    });
+    if (this.cache.size > 1e3) {
+      const oldestKey = this.cache.keys().next().value;
+      this.cache.delete(oldestKey);
+    }
+  }
+  clear() {
+    this.cache.clear();
+  }
+  getStats() {
+    return {
+      size: this.cache.size,
+      keys: Array.from(this.cache.keys())
+    };
+  }
+};
+var aiResponseCache = new AIResponseCache();
 async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
   const googleAIKey = process.env.GOOGLE_AI_API_KEY;
   if (!googleAIKey) {
@@ -36,6 +171,36 @@ var handler = async (event, context) => {
   };
   if (httpMethod === "OPTIONS") {
     return { statusCode: 200, headers, body: "" };
+  }
+  if (pathParts.length >= 2 && pathParts[0] === "openai" && httpMethod === "POST") {
+    const clientIP = event.headers["x-forwarded-for"] || event.headers["x-real-ip"] || "unknown";
+    const userId = event.headers["x-user-id"] || clientIP;
+    const now = Date.now();
+    const windowMs = 60 * 1e3;
+    const maxRequests = 10;
+    const rateLimitKey = `ai_rate_limit_${userId}`;
+    if (!global.rateLimitStore) {
+      global.rateLimitStore = /* @__PURE__ */ new Map();
+    }
+    const store = global.rateLimitStore;
+    const current = store.get(rateLimitKey) || { count: 0, resetTime: now + windowMs };
+    if (now > current.resetTime) {
+      current.count = 1;
+      current.resetTime = now + windowMs;
+    } else if (current.count >= maxRequests) {
+      return {
+        statusCode: 429,
+        headers,
+        body: JSON.stringify({
+          error: "Too many requests",
+          message: "AI request limit exceeded. Please wait before making another request.",
+          retryAfter: Math.ceil((current.resetTime - now) / 1e3)
+        })
+      };
+    } else {
+      current.count++;
+    }
+    store.set(rateLimitKey, current);
   }
   try {
     if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "status" && httpMethod === "GET") {
@@ -156,8 +321,55 @@ var handler = async (event, context) => {
         })
       };
     }
+    if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "usage" && httpMethod === "GET") {
+      const userId = event.headers["x-user-id"];
+      const includeStats = event.queryStringParameters?.stats === "true";
+      if (includeStats && userId) {
+        const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1e3);
+        const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
+        const budgetLimit = 5;
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            userId,
+            dailyUsage: dailyCost,
+            budgetLimit,
+            budgetRemaining: Math.max(0, budgetLimit - dailyCost),
+            isOverBudget: dailyCost > budgetLimit,
+            recentRequests: dailyUsage.slice(-10),
+            circuitBreakerStatus: aiCircuitBreaker.getStatus()
+          })
+        };
+      }
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(aiUsageTracker.getUsageStats())
+      };
+    }
     if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "smart-greeting" && httpMethod === "POST") {
       const { userMetrics, timeOfDay, recentActivity } = JSON.parse(body);
+      const userId = event.headers["x-user-id"];
+      if (userId) {
+        const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1e3);
+        const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
+        const budgetLimit = 5;
+        if (dailyCost >= budgetLimit) {
+          return {
+            statusCode: 402,
+            headers,
+            body: JSON.stringify({
+              error: "AI budget exceeded",
+              message: `Daily AI budget of $${budgetLimit} exceeded. Current usage: $${dailyCost.toFixed(2)}`,
+              greeting: `Good ${timeOfDay}! Your pipeline looks strong.`,
+              insight: "AI insights temporarily unavailable due to budget limits.",
+              source: "budget_limit_fallback",
+              model: "fallback"
+            })
+          };
+        }
+      }
       if (!openai) {
         return {
           statusCode: 200,
@@ -170,29 +382,82 @@ var handler = async (event, context) => {
           })
         };
       }
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
-        }, {
-          role: "user",
-          content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
-        }],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
-        max_tokens: 200
-      });
-      const result = JSON.parse(response.choices[0].message.content || "{}");
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          ...result,
-          source: "gpt-4o-mini",
-          model: "gpt-4o-mini"
-        })
-      };
+      try {
+        const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
+        const cachedResult = aiResponseCache.get(cacheKey);
+        if (cachedResult) {
+          aiUsageTracker.trackUsage({
+            userId: event.headers["x-user-id"] || "anonymous",
+            endpoint: "smart-greeting",
+            tokensUsed: 0,
+            cost: 0,
+            timestamp: Date.now(),
+            model: "cache",
+            success: true
+          });
+          return cachedResult;
+        }
+        const result = await aiCircuitBreaker.execute(async () => {
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [{
+              role: "system",
+              content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
+            }, {
+              role: "user",
+              content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
+            }],
+            response_format: { type: "json_object" },
+            temperature: 0.7,
+            max_tokens: 200
+          });
+          const parsedResult = JSON.parse(response.choices[0].message.content || "{}");
+          aiResponseCache.set(cacheKey, parsedResult);
+          const tokensUsed = response.usage?.total_tokens || 200;
+          const estimatedCost = tokensUsed / 1e3 * 0.15;
+          aiUsageTracker.trackUsage({
+            userId: event.headers["x-user-id"] || "anonymous",
+            endpoint: "smart-greeting",
+            tokensUsed,
+            cost: estimatedCost,
+            timestamp: Date.now(),
+            model: "gpt-4o-mini",
+            success: true
+          });
+          return parsedResult;
+        });
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            ...result,
+            source: "gpt-4o-mini",
+            model: "gpt-4o-mini"
+          })
+        };
+      } catch (error) {
+        console.error("Smart greeting circuit breaker error:", error.message);
+        aiUsageTracker.trackUsage({
+          userId: event.headers["x-user-id"] || "anonymous",
+          endpoint: "smart-greeting",
+          tokensUsed: 0,
+          cost: 0,
+          timestamp: Date.now(),
+          model: "gpt-4o-mini",
+          success: false
+        });
+        return {
+          statusCode: 503,
+          headers,
+          body: JSON.stringify({
+            greeting: `Good ${timeOfDay}! Your pipeline is looking strong.`,
+            insight: "AI service temporarily unavailable. Using intelligent defaults.",
+            source: "circuit_breaker_fallback",
+            model: "fallback",
+            error: error.message
+          })
+        };
+      }
     }
     if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "kpi-analysis" && httpMethod === "POST") {
       if (!openai) {

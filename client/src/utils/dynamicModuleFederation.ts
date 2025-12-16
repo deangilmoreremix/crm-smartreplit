@@ -1,4 +1,8 @@
 // Dynamic Module Federation Loader - Works without Vite config changes
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+import * as ReactRouterDOM from 'react-router-dom';
+
 export interface RemoteModuleConfig {
   url: string;
   scope: string;

@@ -226,15 +226,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
 
-      // Clear dev session data
+      // Clear all auth-related data
       localStorage.removeItem('dev-user-session');
       localStorage.removeItem('sb-supabase-auth-token');
+      localStorage.removeItem('smartcrm-auth-token');
+      localStorage.removeItem('supabase.auth.token');
+
+      // Clear any onboarding data
+      if (user?.id) {
+        localStorage.removeItem(`onboarding-${user.id}`);
+      }
 
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      setAuthError(null);
     } catch (error) {
       console.error('Sign out error:', error);
+      // Still clear local state even if signOut fails
+      setUser(null);
+      setSession(null);
     } finally {
       setLoading(false);
     }

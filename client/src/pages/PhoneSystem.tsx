@@ -181,14 +181,10 @@ const PhoneSystem: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Phone System</h1>
-        <p className="text-gray-600">Make and receive calls directly from your CRM</p>
-      </header>
-
-      {/* Tab Navigation */}
-      <div className="mb-6">
+    <PageLayout
+      title="Phone System"
+      description="Make and receive calls directly from your CRM"
+      actions={
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {['dialer', 'logs', 'voicemail', 'settings'].map((tab) => (
@@ -206,7 +202,8 @@ const PhoneSystem: React.FC = () => {
             ))}
           </nav>
         </div>
-      </div>
+      }
+    >
 
       {/* Tab Content */}
       {activeTab === 'dialer' && (
@@ -467,7 +464,7 @@ const PhoneSystem: React.FC = () => {
           </div>
         </GlassCard>
       )}
-    </div>
+    </PageLayout>
   );
 };
 

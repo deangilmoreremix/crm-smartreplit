@@ -28,12 +28,13 @@ const RemoteIntelLoader: React.FC = () => {
         ref={iframeRef}
         src="https://ai-analytics.smartcrm.vip"
         className="w-full border-0"
-        style={{ 
+        style={{
           height: 'calc(100vh - 64px)',
           minHeight: 'calc(100vh - 64px)'
         }}
         title="Intel Dashboard"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-presentation"
         allowFullScreen
         data-testid="intel-iframe"
       />

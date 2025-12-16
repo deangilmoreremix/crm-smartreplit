@@ -56,6 +56,8 @@ __export(schema_exports, {
   insertTaskSchema: () => insertTaskSchema,
   insertTenantConfigSchema: () => insertTenantConfigSchema,
   insertTierFeatureSchema: () => insertTierFeatureSchema,
+  insertTokenTransactionSchema: () => insertTokenTransactionSchema,
+  insertUserAiTokensSchema: () => insertUserAiTokensSchema,
   insertUserFeatureSchema: () => insertUserFeatureSchema,
   insertUserGeneratedImageSchema: () => insertUserGeneratedImageSchema,
   insertUserWLSettingsSchema: () => insertUserWLSettingsSchema,
@@ -80,9 +82,11 @@ __export(schema_exports, {
   tasksRelations: () => tasksRelations,
   tenantConfigs: () => tenantConfigs,
   tierFeatures: () => tierFeatures,
+  tokenTransactions: () => tokenTransactions,
   updateAppointmentSchema: () => updateAppointmentSchema,
   updateNoteSchema: () => updateNoteSchema,
   updateTaskSchema: () => updateTaskSchema,
+  userAiTokens: () => userAiTokens,
   userFeatures: () => userFeatures,
   userGeneratedImages: () => userGeneratedImages,
   userGeneratedImagesRelations: () => userGeneratedImagesRelations,
@@ -100,16 +104,16 @@ var productTiers = [
   // All features including admin
   "whitelabel",
   // All features including whitelabel (excluding admin)
+  "smartcrm_bundle",
+  // All tools except whitelabel
   "smartcrm",
   // Dashboard, Contacts, Pipeline, Calendar
   "sales_maximizer",
   // AI Goals and AI Tools
   "ai_boost_unlimited",
   // Unlimited AI credits
-  "ai_communication",
+  "ai_communication"
   // Video Email, SMS, VoIP, Invoicing, Lead Automation, Circle Prospecting
-  "smartcrm_bundle"
-  // All tools except whitelabel
 ];
 var profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
@@ -117,8 +121,8 @@ var profiles = pgTable("profiles", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   role: text("role").default("regular_user"),
-  productTier: text("product_tier").default("smartcrm"),
-  // Product tier for access control
+  productTier: text("product_tier"),
+  // Product tier for access control - null until user purchases a tier
   avatar: text("avatar_url"),
   appContext: text("app_context").default("smartcrm"),
   // Track which app the user came from
@@ -251,6 +255,37 @@ var aiQueries = pgTable("ai_queries", {
   createdAt: timestamp("created_at").defaultNow(),
   profileId: uuid("profile_id").references(() => profiles.id)
 });
+var userAiTokens = pgTable("user_ai_tokens", {
+  id: serial("id").primaryKey(),
+  profileId: uuid("profile_id").notNull().references(() => profiles.id),
+  totalTokens: integer("total_tokens").default(0),
+  // Total tokens purchased
+  usedTokens: integer("used_tokens").default(0),
+  // Tokens used
+  availableTokens: integer("available_tokens").default(0),
+  // totalTokens - usedTokens
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  lastResetAt: timestamp("last_reset_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+  // Optional: tokens can expire
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var tokenTransactions = pgTable("token_transactions", {
+  id: serial("id").primaryKey(),
+  profileId: uuid("profile_id").notNull().references(() => profiles.id),
+  type: text("type").notNull(),
+  // purchase, usage, refund, admin_grant
+  amount: integer("amount").notNull(),
+  // Positive for purchases/grants, negative for usage
+  description: text("description"),
+  // "Purchased 1000 tokens", "GPT-5 query", etc.
+  balanceBefore: integer("balance_before"),
+  balanceAfter: integer("balance_after"),
+  stripeTransactionId: text("stripe_transaction_id"),
+  // Link to Stripe if purchased
+  createdAt: timestamp("created_at").defaultNow()
+});
 var entitlements = pgTable("entitlements", {
   id: serial("id").primaryKey(),
   userId: uuid("user_id").notNull().references(() => profiles.id),
@@ -286,6 +321,11 @@ var profilesRelations = relations(profiles, ({ many, one }) => ({
   aiQueries: many(aiQueries),
   generatedImages: many(userGeneratedImages),
   // Add generated images relation
+  aiTokens: one(userAiTokens, {
+    fields: [profiles.id],
+    references: [userAiTokens.profileId]
+  }),
+  tokenTransactions: many(tokenTransactions),
   entitlement: one(entitlements, {
     fields: [profiles.id],
     references: [entitlements.userId]
@@ -931,6 +971,15 @@ var insertTierFeatureSchema = createInsertSchema(tierFeatures).omit({
 var insertFeatureUsageSchema = createInsertSchema(featureUsage).omit({
   id: true,
   lastAccessed: true
+});
+var insertUserAiTokensSchema = createInsertSchema(userAiTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var insertTokenTransactionSchema = createInsertSchema(tokenTransactions).omit({
+  id: true,
+  createdAt: true
 });
 
 // server/storage.ts
