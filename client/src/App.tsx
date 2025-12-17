@@ -179,6 +179,9 @@ const EntitlementsPage = lazy(() => import('./pages/EntitlementsPage'));
 // Upgrade page for paywall
 import UpgradePage from './pages/UpgradePage';
 
+// Credit purchase page
+const CreditPurchasePage = lazy(() => import('./pages/CreditPurchasePage'));
+
 // Feature pages
 import AiAssistantFeaturePage from './pages/landing/FeaturePage/AiAssistantFeaturePage';
 import AiToolsFeaturePage from './pages/landing/FeaturePage/AiToolsFeaturePage';
@@ -341,6 +344,17 @@ function AppContent() {
           
           {/* Upgrade/Paywall Page */}
           <Route path="/upgrade" element={<UpgradePage />} />
+
+          {/* Credit Purchase Page */}
+          <Route
+            path="/buy-credits"
+            element={
+              <ProtectedRoute>
+                <Navbar />
+                <CreditPurchasePage />
+              </ProtectedRoute>
+            }
+          />
           
           {/* Demo Dashboard - Public access for sales page embedding */}
           <Route path="/demo-dashboard" element={<DemoDashboard />} />

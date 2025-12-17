@@ -1,17 +1,12 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 
-// Mock environment variables before importing the service
-vi.stubGlobal('import', {
-  meta: {
-    env: {
-      VITE_SUPABASE_URL: 'https://test.supabase.co',
-      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
-    },
-  },
-});
-
 import { contactAPIService } from './contact-api.service';
 import { Contact } from '../types/contact';
+
+// Override service properties for testing
+Object.defineProperty(contactAPIService, 'supabaseUrl', { value: 'https://test.supabase.co' });
+Object.defineProperty(contactAPIService, 'supabaseKey', { value: 'test-anon-key' });
+Object.defineProperty(contactAPIService, 'baseURL', { value: 'https://test.supabase.co/functions/v1/contacts' });
 
 // Mock dependencies
 vi.mock('./cache.service', () => ({
@@ -142,7 +137,7 @@ describe('ContactAPIService', () => {
       const result = await contactAPIService.createContact(contactData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts',
+        'https://test.supabase.co/functions/v1/contacts',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -269,7 +264,7 @@ describe('ContactAPIService', () => {
       const result = await contactAPIService.getContact('1');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts/1',
+        'https://test.supabase.co/functions/v1/contacts/1',
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -337,7 +332,7 @@ describe('ContactAPIService', () => {
       const result = await contactAPIService.updateContact('1', updates);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts/1',
+        'https://test.supabase.co/functions/v1/contacts/1',
         expect.objectContaining({
           method: 'PATCH',
           body: expect.stringContaining('"firstName":"Jane"'),
@@ -391,7 +386,7 @@ describe('ContactAPIService', () => {
       await contactAPIService.deleteContact('1');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts/1',
+        'https://test.supabase.co/functions/v1/contacts/1',
         expect.objectContaining({
           method: 'DELETE',
         })

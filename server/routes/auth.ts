@@ -9,6 +9,27 @@ const DEV_BYPASS_EMAILS = (
 
 // Authentication middleware - ensures user is logged in
 export const requireAuth = (req: any, res: any, next: any) => {
+  // Check for dev bypass token in Authorization header (for dev environment only)
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer dev-bypass-token-')) {
+    const hostname = req.headers.host || '';
+    const isProductionDomain = hostname.includes('smartcrm.vip');
+
+    // Allow dev bypass in non-production environments
+    if (!isProductionDomain) {
+      // In development/staging, allow dev bypass with full admin access
+      req.user = {
+        id: 'dev-user-12345',
+        email: 'dev@smartcrm.local',
+        username: 'dev@smartcrm.local',
+        role: 'super_admin',
+        productTier: 'super_admin'
+      };
+      console.log('✅ Dev bypass auth granted via token');
+      return next();
+    }
+  }
+
   const userId = req.session?.userId;
   if (!userId) {
     return res.status(401).json({ error: 'Not authenticated' });

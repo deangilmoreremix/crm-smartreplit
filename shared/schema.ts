@@ -870,13 +870,13 @@ export type Automation = typeof automations.$inferSelect;
 export type InsertAutomation = z.infer<typeof insertAutomationSchema>;
 
 // Features table - stores all available features in the system
-export const features = pgTable("features", {
+export const features: any = pgTable("features", {
   id: serial("id").primaryKey(),
   featureKey: text("feature_key").notNull().unique(), // e.g., 'ai_goals', 'phone_system', 'video_email'
   name: text("name").notNull(), // Display name
   description: text("description"),
   category: text("category").notNull(), // 'core_crm', 'communication', 'ai', 'business_tools', 'advanced', 'admin', 'remote_apps', 'white_label'
-  parentId: integer("parent_id").references(() => features.id), // For hierarchical features
+  parentId: integer("parent_id").references(() => (features as any).id), // For hierarchical features
   deliveryType: text("delivery_type"), // 'native', 'module_federation', 'iframe'
   isEnabled: boolean("is_enabled").default(true), // Global feature toggle
   dependsOn: text("depends_on").array(), // Array of feature keys this feature depends on
@@ -980,6 +980,230 @@ export type TierFeature = typeof tierFeatures.$inferSelect;
 export type InsertTierFeature = z.infer<typeof insertTierFeatureSchema>;
 export type FeatureUsage = typeof featureUsage.$inferSelect;
 export type InsertFeatureUsage = z.infer<typeof insertFeatureUsageSchema>;
+
+// Usage Billing System Tables
+
+// Usage Plans table - defines pricing plans for different features
+export const usagePlans = pgTable("usage_plans", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  planName: text("plan_name").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  billingType: text("billing_type").notNull(), // 'subscription', 'pay_per_use', 'hybrid'
+  basePriceCents: integer("base_price_cents").default(0),
+  currency: text("currency").default("USD"),
+  billingInterval: text("billing_interval"), // 'month', 'year', null
+  isActive: boolean("is_active").default(true),
+  stripeProductId: text("stripe_product_id"),
+  stripePriceId: text("stripe_price_id"),
+  features: json("features").default("{}"),
+  limits: json("limits").default("{}"),
+  pricingTiers: json("pricing_tiers").default("[]"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Usage Events table - tracks individual usage events
+export const usageEvents = pgTable("usage_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull(),
+  tenantId: uuid("tenant_id"),
+  eventType: text("event_type").notNull(), // 'api_call', 'ai_generation', 'storage', 'bandwidth', etc.
+  featureName: text("feature_name").notNull(), // 'openai_api', 'content_generation', 'storage_gb', etc.
+  quantity: decimal("quantity", { precision: 10, scale: 4 }).notNull().default("1"),
+  unit: text("unit").notNull(), // 'requests', 'tokens', 'gb', 'minutes', etc.
+  costCents: integer("cost_cents").default(0),
+  metadata: json("metadata").default("{}"),
+  billingCycleId: uuid("billing_cycle_id"),
+  stripeSubscriptionItemId: text("stripe_subscription_item_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Billing Cycles table - tracks billing periods
+export const billingCycles = pgTable("billing_cycles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull(),
+  tenantId: uuid("tenant_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  billingPlanId: uuid("billing_plan_id").references(() => usagePlans.id),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: text("status").notNull().default("active"), // 'active', 'completed', 'failed', 'cancelled'
+  totalUsage: json("total_usage").default("{}"),
+  totalCostCents: integer("total_cost_cents").default(0),
+  stripeInvoiceId: text("stripe_invoice_id"),
+  invoicePdfUrl: text("invoice_pdf_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User Usage Limits table - tracks user quotas and limits
+export const userUsageLimits = pgTable("user_usage_limits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull(),
+  tenantId: uuid("tenant_id"),
+  featureName: text("feature_name").notNull(),
+  limitValue: decimal("limit_value", { precision: 12, scale: 4 }),
+  usedValue: decimal("used_value", { precision: 12, scale: 4 }).default("0"),
+  resetDate: timestamp("reset_date"),
+  billingCycleId: uuid("billing_cycle_id").references(() => billingCycles.id),
+  isHardLimit: boolean("is_hard_limit").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueUserFeature: {
+    name: 'unique_user_feature_limit',
+    columns: [table.userId, table.featureName, table.billingCycleId]
+  }
+}));
+
+// Billing Notifications table - tracks billing alerts and notifications
+export const billingNotifications = pgTable("billing_notifications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull(),
+  tenantId: uuid("tenant_id"),
+  notificationType: text("notification_type").notNull(), // 'limit_warning', 'limit_exceeded', 'billing_cycle_end', 'payment_failed', 'subscription_cancelled'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  metadata: json("metadata").default("{}"),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for usage billing tables
+export const usagePlansRelations = relations(usagePlans, ({ many }) => ({
+  billingCycles: many(billingCycles),
+}));
+
+export const usageEventsRelations = relations(usageEvents, ({ one }) => ({
+  billingCycle: one(billingCycles, {
+    fields: [usageEvents.billingCycleId],
+    references: [billingCycles.id],
+  }),
+}));
+
+export const billingCyclesRelations = relations(billingCycles, ({ one, many }) => ({
+  usagePlan: one(usagePlans, {
+    fields: [billingCycles.billingPlanId],
+    references: [usagePlans.id],
+  }),
+  usageEvents: many(usageEvents),
+  userLimits: many(userUsageLimits),
+}));
+
+export const userUsageLimitsRelations = relations(userUsageLimits, ({ one }) => ({
+  billingCycle: one(billingCycles, {
+    fields: [userUsageLimits.billingCycleId],
+    references: [billingCycles.id],
+  }),
+}));
+
+// Insert schemas for usage billing tables
+export const insertUsagePlanSchema = createInsertSchema(usagePlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUsageEventSchema = createInsertSchema(usageEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBillingCycleSchema = createInsertSchema(billingCycles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserUsageLimitSchema = createInsertSchema(userUsageLimits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBillingNotificationSchema = createInsertSchema(billingNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+// User Credits table - tracks credit balances for credit-based billing
+export const userCredits = pgTable("user_credits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => profiles.id),
+  tenantId: uuid("tenant_id"),
+  totalCredits: decimal("total_credits", { precision: 12, scale: 4 }).default("0"),
+  usedCredits: decimal("used_credits", { precision: 12, scale: 4 }).default("0"),
+  availableCredits: decimal("available_credits", { precision: 12, scale: 4 }).default("0"),
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Credit Transactions table - tracks credit purchases and usage
+export const creditTransactions = pgTable("credit_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => profiles.id),
+  tenantId: uuid("tenant_id"),
+  type: text("type").notNull(), // 'purchase', 'usage', 'refund', 'admin_grant'
+  amount: decimal("amount", { precision: 12, scale: 4 }).notNull(), // Positive for purchases/grants, negative for usage
+  description: text("description"),
+  balanceBefore: decimal("balance_before", { precision: 12, scale: 4 }),
+  balanceAfter: decimal("balance_after", { precision: 12, scale: 4 }),
+  stripeTransactionId: text("stripe_transaction_id"), // Link to Stripe if purchased
+  usageEventId: uuid("usage_event_id"), // Link to usage event if deducted for usage
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for credit tables
+export const userCreditsRelations = relations(userCredits, ({ one, many }) => ({
+  user: one(profiles, {
+    fields: [userCredits.userId],
+    references: [profiles.id],
+  }),
+  transactions: many(creditTransactions),
+}));
+
+export const creditTransactionsRelations = relations(creditTransactions, ({ one }) => ({
+  user: one(profiles, {
+    fields: [creditTransactions.userId],
+    references: [profiles.id],
+  }),
+  usageEvent: one(usageEvents, {
+    fields: [creditTransactions.usageEventId],
+    references: [usageEvents.id],
+  }),
+}));
+
+// Insert schemas for credit tables
+export const insertUserCreditsSchema = createInsertSchema(userCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for credit tables
+export type UserCredits = typeof userCredits.$inferSelect;
+export type InsertUserCredits = z.infer<typeof insertUserCreditsSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+
+// Types for usage billing tables
+export type UsagePlan = typeof usagePlans.$inferSelect;
+export type InsertUsagePlan = z.infer<typeof insertUsagePlanSchema>;
+export type UsageEvent = typeof usageEvents.$inferSelect;
+export type InsertUsageEvent = z.infer<typeof insertUsageEventSchema>;
+export type BillingCycle = typeof billingCycles.$inferSelect;
+export type InsertBillingCycle = z.infer<typeof insertBillingCycleSchema>;
+export type UserUsageLimit = typeof userUsageLimits.$inferSelect;
+export type InsertUserUsageLimit = z.infer<typeof insertUserUsageLimitSchema>;
+export type BillingNotification = typeof billingNotifications.$inferSelect;
+export type InsertBillingNotification = z.infer<typeof insertBillingNotificationSchema>;
 
 // Export partner types
 export type Partner = typeof partners.$inferSelect;

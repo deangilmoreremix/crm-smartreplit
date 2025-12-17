@@ -97,9 +97,11 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return btoa(JSON.stringify(config));
   }, [config]);
 
-  const importConfig = useCallback((configJson: string) => {
+  const importConfig = useCallback((configString: string) => {
     try {
-      const parsed = JSON.parse(configJson);
+      // Decode base64 if needed
+      const jsonString = configString.startsWith('ey') ? atob(configString) : configString;
+      const parsed = JSON.parse(jsonString);
       // Validate the parsed config structure
       if (typeof parsed === 'object' && parsed !== null) {
         // Basic validation for required fields
