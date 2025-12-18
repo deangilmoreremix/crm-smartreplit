@@ -38,13 +38,12 @@ CREATE INDEX IF NOT EXISTS idx_credit_transactions_usage_event_id ON credit_tran
 
 -- Trigger will be created automatically by Drizzle
 
--- Insert generous credit packages with 50% profit margin and 2-3x more credits per dollar
--- These packages provide exceptional value with high credit-to-dollar ratios
+-- Insert credit packages with 50% profit margin optimized for GPT-5.2 pricing
+-- Packages provide excellent value while maintaining profitability
 INSERT INTO usage_plans (plan_name, display_name, description, billing_type, base_price_cents, features, limits, is_active) VALUES
-('credit_pack_small', '500 Credits Pack', 'Perfect for getting started with generous credits', 'pay_per_use', 1000, '{"credits": 500}', '{"credits": 500}', true),
-('credit_pack_medium', '2000 Credits Pack', 'Most popular choice with 2.5x more credits per dollar', 'pay_per_use', 3000, '{"credits": 2000}', '{"credits": 2000}', true),
-('credit_pack_large', '5000 Credits Pack', 'Heavy usage pack with maximum value', 'pay_per_use', 6000, '{"credits": 5000}', '{"credits": 5000}', true),
-('credit_pack_enterprise', '15000 Credits Pack', 'Enterprise solution with 3x more credits per dollar', 'pay_per_use', 15000, '{"credits": 15000}', '{"credits": 15000}', true)
+('credit_pack_starter', 'Starter Pack - $20', 'Perfect for trying out AI features with 760 credits', 'pay_per_use', 2000, '{"credits": 760}', '{"credits": 760}', true),
+('credit_pack_popular', 'Popular Pack - $100', 'Most popular choice with 3,800 credits for regular use', 'pay_per_use', 10000, '{"credits": 3800}', '{"credits": 3800}', true),
+('credit_pack_enterprise', 'Enterprise Pack - $200', 'Heavy usage pack with 7,600 credits for power users', 'pay_per_use', 20000, '{"credits": 7600}', '{"credits": 7600}', true)
 ON CONFLICT (plan_name) DO UPDATE SET
     display_name = EXCLUDED.display_name,
     description = EXCLUDED.description,

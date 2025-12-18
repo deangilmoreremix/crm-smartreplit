@@ -3,17 +3,17 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { HashLink } from 'react-router-hash-link';
-import { 
-  Brain, 
-  Mail, 
-  MessageSquare, 
-  FileText, 
-  Phone, 
-  Target, 
-  FileSearch, 
-  TrendingUp, 
-  BarChart3, 
-  PieChart, 
+import {
+  Brain,
+  Mail,
+  MessageSquare,
+  FileText,
+  Phone,
+  Target,
+  FileSearch,
+  TrendingUp,
+  BarChart3,
+  PieChart,
   ChevronRight,
   CheckCheck,
   ArrowRight,
@@ -30,9 +30,7 @@ import {
   Mic,
   Search,
   Zap,
-  Calendar,
-  Code2,
-  Power
+  Calendar
 } from 'lucide-react';
 
 import LandingHeader from './landing/components/LandingHeader';
@@ -56,10 +54,11 @@ import ParticleBackground from '../components/landing/ParticleBackground';
 import EmbeddedDashboardDemo from '../components/landing/EmbeddedDashboardDemo';
 import VideoCallDemo from '../components/landing/VideoCallDemo';
 
+// Import DevBypassButton
+import { DevBypassButton } from '../components/DevBypassButton';
+
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [isDev, setIsDev] = useState(false);
-  const [isDevMode, setIsDevMode] = useState(false);
 
   // Function to handle page initialization only once
   useEffect(() => {
@@ -68,7 +67,7 @@ const LandingPage = () => {
       const criticalImages = [
         'https://images.pexels.com/photos/6476582/pexels-photo-6476582.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
       ];
-      
+
       if (typeof window !== 'undefined') {
         criticalImages.forEach(url => {
           const img = new window.Image();
@@ -77,73 +76,14 @@ const LandingPage = () => {
       }
     };
 
-    // Check dev environment and load dev mode state
-    const hostname = window.location.hostname;
-    const isDevelopmentEnvironment = (hostname.includes('localhost') ||
-                                     hostname.includes('replit.dev') ||
-                                     hostname.includes('github.dev') ||
-                                     hostname.includes('app.github.dev')) &&
-                                    !hostname.includes('replit.app');
-    console.log('🔧 Dev environment check:', { hostname, isDevelopmentEnvironment });
-    setIsDev(isDevelopmentEnvironment);
-    const devModeActive = localStorage.getItem('smartcrm-dev-mode') === 'true';
-    console.log('🔧 Dev mode from localStorage:', devModeActive);
-    setIsDevMode(devModeActive);
-
     // Call the preload function
     preloadHighPriorityAssets();
   }, []);  // Empty dependency array ensures this only runs once
-
-  const toggleDevMode = () => {
-    if (!isDev) return;
-    if (isDevMode) {
-      localStorage.removeItem('smartcrm-dev-mode');
-      localStorage.removeItem('dev-user-session');
-      localStorage.removeItem('sb-supabase-auth-token');
-      setIsDevMode(false);
-      alert('Dev mode disabled. Refresh page to sign in normally.');
-    } else {
-      localStorage.setItem('smartcrm-dev-mode', 'true');
-      setIsDevMode(true);
-      alert('Dev mode enabled. Going to dashboard...');
-      navigate('/dashboard');
-    }
-  };
   
   return (
     <>
-      {/* TEMPORARY: Super visible dev bypass button for debugging */}
-      <button
-        onClick={() => {
-          console.log('🔴 DEV BUTTON CLICKED!', { isDev, isDevMode });
-          toggleDevMode();
-        }}
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '24px 48px',
-          borderRadius: '16px',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          backgroundColor: '#FF0000',
-          color: '#FFFFFF',
-          border: '4px solid #FFFFFF',
-          zIndex: 999999,
-          cursor: 'pointer',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-        }}
-        title="CLICK ME TO ENABLE DEV MODE"
-        data-testid="button-dev-bypass-landing"
-      >
-        <Code2 size={32} />
-        <span>DEV MODE BYPASS</span>
-        <Power size={32} />
-      </button>
+      {/* Dev Bypass Button for testing */}
+      <DevBypassButton />
       <div className="bg-white content-stable">
         <LandingHeader />
       

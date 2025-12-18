@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+simimport React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -40,11 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Check for dev session in localStorage
         const checkDevSession = () => {
-          // SECURITY: Only allow dev bypass on localhost, .replit.dev, and GitHub Codespace, NOT on .replit.app
+          // SECURITY: Only allow dev bypass on localhost, .replit.dev, GitHub Codespace, and Netlify, NOT on .replit.app
           const isDevelopmentEnvironment = (window.location.hostname.includes('localhost') ||
                                            window.location.hostname.includes('replit.dev') ||
                                            window.location.hostname.includes('github.dev') ||
-                                           window.location.hostname.includes('app.github.dev')) &&
+                                           window.location.hostname.includes('app.github.dev') ||
+                                           window.location.hostname.includes('netlify.app') ||
+                                           window.location.hostname.includes('vercel.app')) &&
                                           !window.location.hostname.includes('replit.app');
           
           // Clear dev sessions if on production domain
