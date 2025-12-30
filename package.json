@@ -18,7 +18,11 @@
     "build:entitlements": "esbuild server/entitlements/index.ts --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/entitlements --out-extension:.js=.mjs --loader:.ts=ts --alias:@shared=./shared",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "db:push": "drizzle-kit push",
+    "prepare": "husky"
   },
   "dependencies": {
     "@elevenlabs/react": "^0.6.1",
@@ -140,18 +144,34 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@types/ws": "^8.5.13",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
     "@vitejs/plugin-react": "^4.3.2",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.31.4",
     "esbuild": "^0.25.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.0.0",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.4.47",
+    "prettier": "^3.7.4",
     "tailwindcss": "^4.1.13",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.6.3",
     "vite": "^7.1.4",
     "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"

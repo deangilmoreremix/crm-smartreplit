@@ -1,6 +1,42 @@
-simimport React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { User, Session, AuthError, AuthChangeEvent, Subscription } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+
+// Constants
+const DEV_BYPASS_PASSWORD = 'dev-bypass-password'; // TODO: Move to environment variable
+const ALLOWED_DEV_DOMAINS = ['localhost', 'replit.dev', 'github.dev', 'app.github.dev', 'netlify.app', 'vercel.app'];
+const APP_CONTEXT = 'smartcrm';
+const EMAIL_TEMPLATE_SET = 'smartcrm';
+
+// Types
+type AuthSubscription = Subscription;
+
+interface DevUserData {
+  id: string;
+  email: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  productTier: string;
+  app_context: string;
+}
+
+interface DevTokenData {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+}
+
+// Utility functions
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const handleAuthError = (error: unknown, context: string) => {
+  console.error(`Auth error in ${context}:`, error);
+};
 
 interface AuthContextType {
   user: User | null;
@@ -34,20 +70,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (initialized.current) return;
     initialized.current = true;
 
-    let subscription: any = null;
+    let subscription: AuthSubscription | null = null;
 
     const initializeAuth = async () => {
       try {
         // Check for dev session in localStorage
         const checkDevSession = () => {
-          // SECURITY: Only allow dev bypass on localhost, .replit.dev, GitHub Codespace, and Netlify, NOT on .replit.app
-          const isDevelopmentEnvironment = (window.location.hostname.includes('localhost') ||
-                                           window.location.hostname.includes('replit.dev') ||
-                                           window.location.hostname.includes('github.dev') ||
-                                           window.location.hostname.includes('app.github.dev') ||
-                                           window.location.hostname.includes('netlify.app') ||
-                                           window.location.hostname.includes('vercel.app')) &&
-                                          !window.location.hostname.includes('replit.app');
+          // SECURITY: Only allow dev bypass on allowed domains, NOT on .replit.app
+          const isDevelopmentEnvironment = ALLOWED_DEV_DOMAINS.some(domain => window.location.hostname.includes(domain)) &&
+                                           !window.location.hostname.includes('replit.app');
           
           // Clear dev sessions if on production domain
           if (!isDevelopmentEnvironment) {
@@ -81,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   lastName: 'User',
                   role: 'super_admin',
                   productTier: 'dev_all_access', // Special tier that bypasses all restrictions
-                  app_context: 'smartcrm'
+                  app_context: APP_CONTEXT
                 };
                 tokenData = {
                   access_token: 'dev-bypass-token',
@@ -130,8 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // Set up auth state listener with error handling
-        const { data: authListener } = supabase.auth.onAuthStateChange(
-          async (event: any, session: any) => {
+        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+          async (event: AuthChangeEvent, session: Session | null) => {
             try {
               console.log('Auth state changed:', event, session?.user?.id);
               setSession(session);
@@ -150,9 +181,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         );
 
-        subscription = authListener;
+        subscription = authSubscription;
       } catch (error) {
-        console.warn('Auth initialization warning:', error);
+        handleAuthError(error, 'auth initialization');
         // Set fallback auth state instead of blocking
         setUser({ id: 'fallback-user', email: 'user@example.com' } as any);
         setAuthError(null);
@@ -176,8 +207,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
 
+      if (!validateEmail(email)) {
+        return { error: { message: 'Invalid email format' } as AuthError };
+      }
+
       // Handle dev bypass special case
-      if (password === 'dev-bypass-password') {
+      if (password === DEV_BYPASS_PASSWORD) {
         const devSession = localStorage.getItem('dev-user-session');
         if (devSession) {
           const devUser = JSON.parse(devSession);
@@ -193,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } catch (error) {
-      console.error('Sign in error:', error);
+      handleAuthError(error, 'signIn');
       return { error: error as AuthError };
     } finally {
       setLoading(false);
@@ -203,21 +238,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, options?: any) => {
     try {
       setLoading(true);
+
+      if (!validateEmail(email)) {
+        return { error: { message: 'Invalid email format' } as AuthError };
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
-            app_context: 'smartcrm',
-            email_template_set: 'smartcrm',
+            app_context: APP_CONTEXT,
+            email_template_set: EMAIL_TEMPLATE_SET,
             ...options?.data
           }
         }
       });
       return { error };
     } catch (error) {
-      console.error('Sign up error:', error);
+      handleAuthError(error, 'signUp');
       return { error: error as AuthError };
     } finally {
       setLoading(false);
@@ -244,7 +284,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
       setAuthError(null);
     } catch (error) {
-      console.error('Sign out error:', error);
+      handleAuthError(error, 'signOut');
       // Still clear local state even if signOut fails
       setUser(null);
       setSession(null);
@@ -272,7 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } catch (error) {
-      console.error('Reset password error:', error);
+      handleAuthError(error, 'resetPassword');
       return { error: error as AuthError };
     }
   };
