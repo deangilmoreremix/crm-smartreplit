@@ -454,7 +454,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
             {/* Logo */}
             <div className="flex items-center flex-none shrink-0">
               <h1 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                SmartCRM
+                {config.companyName || 'SmartCRM'}
               </h1>
             </div>
 

@@ -32,7 +32,12 @@ const LandingFooter = () => {
                   className="h-8 w-8 object-contain"
                 />
               )}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+                }}
+              >
                 {config.companyName || 'Smart'}<span className="text-white">{config.companyName ? 'CRM' : 'CRM'}</span>
               </span>
             </Link>
@@ -158,7 +163,12 @@ const LandingFooter = () => {
                 placeholder="Enter your email"
                 className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1 min-w-[280px]"
               />
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:shadow-md transition duration-300 flex items-center justify-center">
+              <button
+                className="px-6 py-3 text-white font-medium rounded-lg hover:shadow-md transition duration-300 flex items-center justify-center"
+                style={{
+                  backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+                }}
+              >
                 Subscribe
                 <ArrowRight className="h-4 w-4 ml-2" />
               </button>

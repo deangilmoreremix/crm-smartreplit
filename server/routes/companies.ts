@@ -65,9 +65,7 @@ router.post('/',  async (req, res) => {
 // Get user's companies
 router.get('/',  async (req, res) => {
   const userId = req.session?.userId;
-  const userId = req.session?.userId;
   try {
-
     const { data: companies, error } = await supabase
       .from('companies')
       .select(`
@@ -79,33 +77,6 @@ router.get('/',  async (req, res) => {
 
     if (error) throw error;
     res.json(companies);
-  // Persistence for package builder state
-  useEffect(() => {
-    const saved = localStorage.getItem('package-builder-state');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSelectedFeatures(parsed.selectedFeatures || []);
-        setPackageName(parsed.packageName || ');
-        setPackageDescription(parsed.packageDescription || ');
-        setPackageUsers(parsed.packageUsers || []);
-        setUserRoles(parsed.userRoles || userRoles);
-      } catch (error) {
-        console.error('Error loading package builder state:', error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    const state = {
-      selectedFeatures,
-      packageName,
-      packageDescription,
-      packageUsers,
-      userRoles
-    };
-    localStorage.setItem('package-builder-state', JSON.stringify(state));
-  }, [selectedFeatures, packageName, packageDescription, packageUsers, userRoles]);
   } catch (error) {
     console.error('Error fetching companies:', error);
     res.status(500).json({ error: 'Failed to fetch companies' });

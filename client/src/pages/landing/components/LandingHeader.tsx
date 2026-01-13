@@ -11,16 +11,9 @@ const LandingHeader = () => {
   
   // Debug logging
   console.log('LandingHeader component rendering');
-  
-  // Temporarily bypass the useWhitelabel hook to test if it's causing issues
-  let config: any;
-  try {
-    config = useWhitelabel().config;
-    console.log('WhitelabelContext working, config:', config);
-  } catch (error) {
-    console.error('WhitelabelContext error:', error);
-    config = { companyName: 'Smart', logoUrl: null };
-  }
+
+  const { config } = useWhitelabel();
+  console.log('WhitelabelContext config:', config);
   // Track scroll position to change header style
   useEffect(() => {
     const handleScroll = () => {
@@ -56,7 +49,12 @@ const LandingHeader = () => {
                 className="h-8 w-8 object-contain"
               />
             )}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+              }}
+            >
               {config.companyName || 'Smart'}<span className="text-gray-900">{config.companyName ? 'CRM' : 'CRM'}</span>
             </span>
           </Link>
@@ -118,7 +116,10 @@ const LandingHeader = () => {
             </Link>
             <Link
               to="/signup"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
+              className="text-white px-6 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+              style={{
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+              }}
             >
               Get Started
             </Link>
@@ -146,7 +147,12 @@ const LandingHeader = () => {
                 className="h-6 w-6 object-contain"
               />
             )}
-            <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            <span
+              className="text-lg font-bold bg-clip-text text-transparent"
+              style={{
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+              }}
+            >
               {config.companyName || 'Smart'}<span className="text-gray-900">{config.companyName ? 'CRM' : 'CRM'}</span>
             </span>
           </div>
@@ -166,7 +172,10 @@ const LandingHeader = () => {
             </Link>
             <Link
               to="/signup"
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg w-fit"
+              className="text-white px-6 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg w-fit"
+              style={{
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+              }}
             >
               Get Started
             </Link>

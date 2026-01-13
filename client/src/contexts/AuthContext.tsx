@@ -11,22 +11,6 @@ const EMAIL_TEMPLATE_SET = 'smartcrm';
 // Types
 type AuthSubscription = Subscription;
 
-interface DevUserData {
-  id: string;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  productTier: string;
-  app_context: string;
-}
-
-interface DevTokenData {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-}
 
 // Utility functions
 const validateEmail = (email: string): boolean => {

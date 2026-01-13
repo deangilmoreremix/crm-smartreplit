@@ -13,7 +13,7 @@ class SocialMediaAPIHelper {
 
   async makeGPT5Request(messages, options = {}) {
     const requestBody = {
-      model: 'gpt-5',
+      model: 'gpt-4o',
       messages,
       response_format: { type: "json_object" },
       temperature: options.temperature || 0.3,

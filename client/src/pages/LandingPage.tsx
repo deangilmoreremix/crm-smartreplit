@@ -529,13 +529,18 @@ const LandingPage = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
+      <section
+        className="py-20"
+        style={{
+          backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+        }}
+      >
         <div className="container mx-auto px-4 text-center">
           <ScrollAnimationWrapper animation="fade-up">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
               Ready to Transform Your Sales Process?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
               Join thousands of sales teams using Smart CRM to close more deals and grow their business faster.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
@@ -553,7 +558,7 @@ const LandingPage = () => {
                 Schedule Demo
               </button>
             </div>
-            <p className="text-blue-100 text-sm mt-4">
+            <p className="text-sm mt-4" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               No credit card required • 14-day free trial • Cancel anytime
             </p>
           </ScrollAnimationWrapper>

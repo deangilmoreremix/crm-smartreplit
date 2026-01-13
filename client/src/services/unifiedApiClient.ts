@@ -289,13 +289,30 @@ class UnifiedApiClient {
     // Add authentication headers automatically
     const originalRequest = this.request.bind(this);
     this.request = async <T = any>(request: ApiRequest): Promise<ApiResponse<T>> => {
-      // Add auth token if available
-      const authToken = localStorage.getItem('authToken');
-      if (authToken && !request.headers?.Authorization) {
-        request.headers = {
-          ...request.headers,
-          Authorization: `Bearer ${authToken}`
-        };
+      // Add auth token if available - check for dev bypass tokens first
+      if (!request.headers?.Authorization) {
+        // Check for dev bypass session
+        const devSession = localStorage.getItem('dev-user-session');
+        const devToken = localStorage.getItem('sb-supabase-auth-token');
+        const devMode = localStorage.getItem('smartcrm-dev-mode');
+
+        if ((devSession && devToken) || devMode === 'true') {
+          // Use dev bypass token format expected by server
+          const token = devToken ? JSON.parse(devToken).access_token : 'dev-bypass-token';
+          request.headers = {
+            ...request.headers,
+            Authorization: `Bearer ${token}`
+          };
+        } else {
+          // Check for regular auth token
+          const authToken = localStorage.getItem('authToken');
+          if (authToken) {
+            request.headers = {
+              ...request.headers,
+              Authorization: `Bearer ${authToken}`
+            };
+          }
+        }
       }
 
       return originalRequest(request);

@@ -312,7 +312,7 @@ export const handler = async (event: any, context: any) => {
         headers,
         body: JSON.stringify({
           configured: true,
-          model: gpt5Available ? 'gpt-5' : 'gpt-4o',
+          model: gpt5Available ? 'gpt-4o' : 'gpt-4o',
           status: 'ready',
           gpt5Available,
           capabilities: gpt5Available ? [

@@ -205,18 +205,17 @@ const WhiteLabelPackageBuilder: React.FC = () => {
     setPackageDescription(template.description);
   };
 
-  const addUser = (userData: typeof newUserForm) => {
   const createPackage = async () => {
     if (!packageName.trim()) {
       // Show validation error
       return;
     }
-    
+
     setIsCreatingPackage(true);
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Here you would make actual API call to create package
       console.log('Package created:', {
         name: packageName,
@@ -225,7 +224,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
         users: packageUsers,
         totalPrice: calculateTotalPrice()
       });
-      
+
       // Show success message
     } catch (error) {
       console.error('Error creating package:', error);
@@ -234,29 +233,30 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       setIsCreatingPackage(false);
     }
   };
+
   const parseCSV = (csvText: string): PackageUser[] => {
     const lines = csvText.split('\n').filter(line => line.trim());
     if (lines.length < 2) return [];
-    
+
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
     const nameIndex = headers.indexOf('name');
     const emailIndex = headers.indexOf('email');
     const roleIndex = headers.indexOf('role');
-    
+
     if (nameIndex === -1 || emailIndex === -1) {
       throw new Error('CSV must contain name and email columns');
     }
-    
+
     return lines.slice(1).map((line, index) => {
       const values = line.split(',').map(v => v.trim());
       const name = values[nameIndex];
       const email = values[emailIndex];
       const role = values[roleIndex] || 'user';
-      
+
       if (!name || !email) {
         throw new Error(`Row ${index + 2}: Missing name or email`);
       }
-      
+
       return {
         id: `bulk_${Date.now()}_${index}`,
         name,
@@ -288,17 +288,17 @@ const WhiteLabelPackageBuilder: React.FC = () => {
 
   const handleBulkImport = async () => {
     if (bulkImportData.length === 0) return;
-    
+
     setIsImporting(true);
     setImportProgress(0);
-    
+
     try {
       for (let i = 0; i < bulkImportData.length; i++) {
         setPackageUsers(prev => [...prev, bulkImportData[i]]);
         setImportProgress(((i + 1) / bulkImportData.length) * 100);
         await new Promise(resolve => setTimeout(resolve, 100)); // Simulate processing time
       }
-      
+
       setBulkImportData([]);
       setBulkImportFile(null);
       setShowBulkUserModal(false);
@@ -311,6 +311,8 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       setImportProgress(0);
     }
   };
+
+  const addUser = (userData: typeof newUserForm) => {
     const newUser: PackageUser = {
       id: Date.now().toString(),
       name: userData.name,
