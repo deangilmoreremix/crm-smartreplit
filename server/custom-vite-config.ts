@@ -17,9 +17,6 @@ export const customViteServerConfig = {
   ],
   host: "0.0.0.0",
   port: 5173,
-  hmr: {
-    port: 5173
-  }
 };
 
 // Export a function to merge this with existing config
