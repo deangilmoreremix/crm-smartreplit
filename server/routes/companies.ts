@@ -240,8 +240,51 @@ router.post('/:companyId/invitations',  async (req, res) => {
 
     if (error) throw error;
 
-    // TODO: Send invitation email
-    // await sendInvitationEmail(email, invitation);
+    // Send invitation email
+    try {
+      if (process.env.SENDGRID_API_KEY) {
+        const sgMail = (await import('@sendgrid/mail')).default;
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+        // Fetch company and inviter details
+        const { data: company } = await supabase
+          .from('companies')
+          .select('name')
+          .eq('id', companyId)
+          .single();
+
+        const { data: inviter } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', userId)
+          .single();
+
+        const inviteUrl = `${process.env.FRONTEND_URL || 'https://smart-crm.videoremix.io'}/accept-invitation?token=${invitation.token}`;
+
+        await sgMail.send({
+          to: email,
+          from: {
+            email: process.env.FROM_EMAIL || 'noreply@smartcrm.vip',
+            name: 'SmartCRM Team'
+          },
+          subject: `You're invited to join ${company?.name || 'the company'} on SmartCRM`,
+          templateId: process.env.SENDGRID_INVITE_TEMPLATE_ID || 'd-invite-template',
+          dynamicTemplateData: {
+            company_name: company?.name || 'the company',
+            inviter_name: inviter?.first_name || 'Team Member',
+            invite_url: inviteUrl,
+            expiry_days: 7
+          }
+        });
+
+        console.log(`✅ Invitation email sent to ${email} for company ${company?.name || 'unknown'}`);
+      } else {
+        console.warn('SendGrid not configured, invitation email not sent');
+      }
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError);
+      // Don't fail the invitation creation if email fails
+    }
 
     res.json(invitation);
   } catch (error) {

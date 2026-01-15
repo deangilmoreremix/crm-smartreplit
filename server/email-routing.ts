@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from './db';
 import { profiles } from '../shared/schema';
+import sgMail from '@sendgrid/mail';
 
 // User role configurations
 export const USER_ROLES = {
@@ -85,40 +86,78 @@ function getAccessLevel(role: UserRole): string {
   }
 }
 
+// Initialize SendGrid
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
+
 // Send welcome email based on user role
 export async function sendRoleBasedWelcomeEmail(
-  email: string, 
+  email: string,
   role: UserRole,
   userData?: any
 ): Promise<boolean> {
   try {
     const template = EMAIL_TEMPLATES[role];
-    
+
     console.log(`Sending ${template.templateType} welcome email to ${email}`);
-    
-    // This would integrate with your email service (SendGrid, etc.)
-    const emailData = {
+
+    if (!process.env.SENDGRID_API_KEY) {
+      console.warn('SendGrid API key not configured, logging email instead');
+      console.log('Email data to send:', {
+        to: email,
+        subject: template.subject,
+        template: template.templateType,
+        data: {
+          user_role: role,
+          access_level: getAccessLevel(role),
+          dashboard_url: template.dashboardUrl,
+          features: template.features,
+          app_context: 'smartcrm',
+          ...userData
+        }
+      });
+      return true;
+    }
+
+    const msg = {
       to: email,
+      from: {
+        email: process.env.FROM_EMAIL || 'noreply@smartcrm.vip',
+        name: 'SmartCRM Team'
+      },
       subject: template.subject,
-      template: template.templateType,
-      data: {
+      templateId: getTemplateId(role),
+      dynamicTemplateData: {
         user_role: role,
         access_level: getAccessLevel(role),
         dashboard_url: template.dashboardUrl,
         features: template.features,
         app_context: 'smartcrm',
+        first_name: userData?.firstName || userData?.first_name || 'there',
         ...userData
       }
     };
-    
-    // Log for now - replace with actual email service
-    console.log('Email data to send:', JSON.stringify(emailData, null, 2));
-    
+
+    await sgMail.send(msg);
+    console.log(`✅ Welcome email sent successfully to ${email}`);
     return true;
   } catch (error) {
     console.error('Failed to send role-based welcome email:', error);
     return false;
   }
+}
+
+// Get SendGrid template ID based on role
+function getTemplateId(role: UserRole): string {
+  // These would be your actual SendGrid template IDs
+  const templateIds = {
+    [USER_ROLES.SUPER_ADMIN]: process.env.SENDGRID_ADMIN_TEMPLATE_ID || 'd-admin-template',
+    [USER_ROLES.WL_USER]: process.env.SENDGRID_PREMIUM_TEMPLATE_ID || 'd-premium-template',
+    [USER_ROLES.REGULAR_USER]: process.env.SENDGRID_BASIC_TEMPLATE_ID || 'd-basic-template'
+  };
+
+  return templateIds[role];
 }
 
 // Map role to product tier

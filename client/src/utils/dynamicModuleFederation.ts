@@ -1,7 +1,4 @@
 // Dynamic Module Federation Loader - Works without Vite config changes
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import * as ReactRouterDOM from 'react-router-dom';
 
 export interface RemoteModuleConfig {
   url: string;
@@ -10,8 +7,8 @@ export interface RemoteModuleConfig {
 }
 
 interface ModuleContainer {
-  init(shared: any): Promise<void>;
-  get(module: string): Promise<() => any>;
+  init(shared: Record<string, unknown>): Promise<void>;
+  get(module: string): Promise<() => unknown>;
 }
 
 declare global {
@@ -24,7 +21,7 @@ class DynamicModuleFederation {
   private loadedScripts = new Set<string>();
   private loadedContainers = new Map<string, ModuleContainer>();
 
-  async loadRemoteModule<T = any>(config: RemoteModuleConfig): Promise<T> {
+  async loadRemoteModule<T = unknown>(config: RemoteModuleConfig): Promise<T> {
     const { url, scope, module } = config;
     
     // Load the remote script if not already loaded
@@ -41,9 +38,9 @@ class DynamicModuleFederation {
     
     // Get the module factory
     const factory = await container.get(module);
-    const Module = factory();
-    
-    return Module.default || Module;
+    const Module = factory() as { default?: T };
+
+    return (Module.default || Module) as T;
   }
 
   private async loadScript(url: string): Promise<void> {
@@ -82,12 +79,27 @@ class DynamicModuleFederation {
             };
             
             script.onerror = (error) => {
-              console.warn(`❌ Failed to load script from: ${scriptUrl}`, error);
-              scriptReject(error);
-            };
+                const errorMessage = (error as any)?.message || String(error);
+                const errorDetails = {
+                  error: errorMessage,
+                  scriptUrl,
+                  event: error,
+                  timestamp: new Date().toISOString(),
+                  userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+                  isDev: window.location.hostname.includes('github.dev') || window.location.hostname.includes('localhost')
+                };
+                console.warn(`❌ Failed to load script from: ${scriptUrl}`, errorDetails);
+ 
+                // Check if it's a certificate error
+                if (errorMessage.includes('ERR_CERT') || errorMessage.includes('certificate')) {
+                  console.warn(`🔒 Certificate error detected for ${scriptUrl}. This is common in development with self-signed certificates.`);
+                }
+ 
+                scriptReject(error);
+              };
             
             // Timeout fallback
-            const timeout = setTimeout(() => {
+            setTimeout(() => {
               scriptReject(new Error(`Script load timeout: ${scriptUrl}`));
             }, 5000);
             
@@ -177,7 +189,7 @@ class DynamicModuleFederation {
 export const moduleFederation = new DynamicModuleFederation();
 
 // Utility function for easy loading
-export async function loadRemoteComponent<T = any>(
+export async function loadRemoteComponent<T = unknown>(
   remoteUrl: string,
   scope: string,
   module: string
@@ -192,7 +204,7 @@ export async function loadRemoteComponent<T = any>(
 // React hook for loading remote components
 import { useState, useEffect } from 'react';
 
-export function useRemoteComponent<T = any>(
+export function useRemoteComponent<T = unknown>(
   remoteUrl: string | null,
   scope: string,
   module: string
