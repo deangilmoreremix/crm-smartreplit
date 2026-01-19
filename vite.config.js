@@ -22,4 +22,19 @@ export default defineConfig({
       external: ["@shared/schema"]
     }
   },
+  optimizeDeps: {
+    exclude: ['simple-peer']
+  },
+  define: {
+    global: 'globalThis',
+    'process.env': {},
+    'process.browser': true,
+    'process.version': '"12.0.0"',
+  },
+  resolve: {
+    alias: {
+      'stream': 'stream-browserify',
+      '@': path.resolve(__dirname, 'client/src'),
+    },
+  },
 });
