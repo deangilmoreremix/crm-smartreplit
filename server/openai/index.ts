@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
-import { aiLimiter } from '../middleware/security';
+import { aiResponseCache } from '../services/enhancedCache';
+import { getRedisRateLimiter } from '../services/redisRateLimiter';
 
 const userOpenAIKey = process.env.OPENAI_API_KEY;
 const openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
@@ -133,57 +134,6 @@ class AIUsageTracker {
 // Global usage tracker instance
 const aiUsageTracker = new AIUsageTracker();
 
-// AI Response Cache
-interface CachedResponse {
-  response: any;
-  timestamp: number;
-  ttl: number;
-}
-
-class AIResponseCache {
-  private cache = new Map<string, CachedResponse>();
-  private readonly defaultTTL = 5 * 60 * 1000; // 5 minutes
-
-  get(key: string): any | null {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-
-    if (Date.now() - cached.timestamp > cached.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return cached.response;
-  }
-
-  set(key: string, response: any, ttl: number = this.defaultTTL) {
-    this.cache.set(key, {
-      response,
-      timestamp: Date.now(),
-      ttl
-    });
-
-    // Limit cache size
-    if (this.cache.size > 1000) {
-      const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
-    }
-  }
-
-  clear() {
-    this.cache.clear();
-  }
-
-  getStats() {
-    return {
-      size: this.cache.size,
-      keys: Array.from(this.cache.keys())
-    };
-  }
-}
-
-// Global cache instance
-const aiResponseCache = new AIResponseCache();
 
 // Google AI integration
 interface GoogleAIResponse {
@@ -220,7 +170,7 @@ async function callGoogleAI(prompt: string, model: string = 'gemini-1.5-flash'):
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-export const handler = async (event: any, context: any) => {
+export const handler = async (event: { httpMethod: string; path: string; body: string; headers: Record<string, string>; queryStringParameters?: Record<string, string> }, _context: unknown) => {
   const { httpMethod, path, body } = event;
   const pathParts = path.split('/').filter(Boolean);
 
@@ -237,41 +187,27 @@ export const handler = async (event: any, context: any) => {
 
   // Apply AI rate limiting to all AI endpoints
   if (pathParts.length >= 2 && pathParts[0] === 'openai' && httpMethod === 'POST') {
-    // Simple in-memory rate limiting (for production, use Redis or similar)
     const clientIP = event.headers['x-forwarded-for'] || event.headers['x-real-ip'] || 'unknown';
     const userId = event.headers['x-user-id'] || clientIP; // Use user ID if available
-    const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
     const maxRequests = 10; // 10 requests per minute
 
-    // In production, this should be stored in Redis/database
-    const rateLimitKey = `ai_rate_limit_${userId}`;
-    if (!global.rateLimitStore) {
-      global.rateLimitStore = new Map();
-    }
+    const rateLimiter = getRedisRateLimiter();
+    const rateLimitResult = await rateLimiter.checkLimit(`ai_requests_${userId}`, maxRequests, windowMs, clientIP);
 
-    const store = global.rateLimitStore as Map<string, { count: number, resetTime: number }>;
-    const current = store.get(rateLimitKey) || { count: 0, resetTime: now + windowMs };
-
-    if (now > current.resetTime) {
-      // Reset window
-      current.count = 1;
-      current.resetTime = now + windowMs;
-    } else if (current.count >= maxRequests) {
+    if (!rateLimitResult.allowed) {
       return {
         statusCode: 429,
         headers,
         body: JSON.stringify({
           error: 'Too many requests',
           message: 'AI request limit exceeded. Please wait before making another request.',
-          retryAfter: Math.ceil((current.resetTime - now) / 1000)
+          retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
+          remaining: rateLimitResult.remaining,
+          resetTime: rateLimitResult.resetTime
         })
       };
-    } else {
-      current.count++;
     }
-
-    store.set(rateLimitKey, current);
   }
 
   try {
@@ -297,13 +233,13 @@ export const handler = async (event: any, context: any) => {
         if (!openai) {
           throw new Error('OpenAI client not initialized');
         }
-        const testResponse = await openai.chat.completions.create({
+        await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [{ role: "user", content: "test" }],
           max_tokens: 1
         });
         gpt5Available = true;
-      } catch (error: any) {
+      } catch (_error: unknown) {
         gpt5Available = false;
       }
 
@@ -390,11 +326,11 @@ export const handler = async (event: any, context: any) => {
       }
 
       const response = await openai.images.generate({
-        model: model as any,
+        model: model as 'dall-e-2' | 'dall-e-3',
         prompt: prompt,
-        size: size as any,
-        quality: quality as any,
-        style: style as any,
+        size: size as '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792',
+        quality: quality as 'standard' | 'hd',
+        style: style as 'vivid' | 'natural',
         n: n
       });
 
@@ -488,7 +424,7 @@ export const handler = async (event: any, context: any) => {
       try {
         // Check cache first
         const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
-        const cachedResult = aiResponseCache.get(cacheKey);
+        const cachedResult = await aiResponseCache.get(cacheKey);
 
         if (cachedResult) {
           // Track cache hit (no cost)
@@ -523,7 +459,7 @@ export const handler = async (event: any, context: any) => {
           const parsedResult = JSON.parse(response.choices[0].message.content || '{}');
 
           // Cache the result
-          aiResponseCache.set(cacheKey, parsedResult);
+          await aiResponseCache.set(cacheKey, parsedResult);
 
           // Track usage
           const tokensUsed = response.usage?.total_tokens || 200;
@@ -550,8 +486,8 @@ export const handler = async (event: any, context: any) => {
             model: 'gpt-4o-mini'
           })
         };
-      } catch (error: any) {
-        console.error('Smart greeting circuit breaker error:', error.message);
+      } catch (error: unknown) {
+        console.error('Smart greeting circuit breaker error:', error instanceof Error ? error.message : String(error));
 
         // Track failed usage
         aiUsageTracker.trackUsage({
@@ -572,7 +508,7 @@ export const handler = async (event: any, context: any) => {
             insight: 'AI service temporarily unavailable. Using intelligent defaults.',
             source: 'circuit_breaker_fallback',
             model: 'fallback',
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
           })
         };
       }
@@ -612,7 +548,7 @@ export const handler = async (event: any, context: any) => {
       try {
         const content = response.choices[0].message.content || '{}';
         result = JSON.parse(content);
-      } catch (parseError) {
+      } catch (_parseError: unknown) {
         result = {
           error: 'Failed to parse AI response',
           summary: 'Analysis completed but response parsing failed',
@@ -679,11 +615,8 @@ export const handler = async (event: any, context: any) => {
         imageUrl,
         schema,
         useThinking,
-        conversationId,
         temperature = 0.4,
-        top_p = 1,
         max_output_tokens = 2048,
-        metadata,
         forceToolName,
       } = JSON.parse(body);
 
@@ -698,7 +631,7 @@ export const handler = async (event: any, context: any) => {
         };
       }
 
-      const messages: any[] = [
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
         {
           role: "system",
           content: "You are a helpful sales + ops assistant for white-label CRM applications."
@@ -821,22 +754,23 @@ export const handler = async (event: any, context: any) => {
       body: JSON.stringify({ error: 'OpenAI endpoint not found' })
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('OpenAI function error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message })
+      body: JSON.stringify({ error: 'Internal server error', message: error instanceof Error ? error.message : String(error) })
     };
   }
 };
 
 // Tool execution function for WL apps
-async function executeWLTool(tc: any): Promise<string> {
+async function executeWLTool(tc: { function: { name: string; arguments: string } }): Promise<string> {
   const { name, arguments: args } = tc.function;
   try {
+    const parsedArgs = args ? JSON.parse(args) : {};
     if (name === "analyzeBusinessData") {
-      const { dataType, analysisType, timeRange } = args || {};
+      const { dataType, analysisType, timeRange } = parsedArgs;
       return JSON.stringify({
         ok: true,
         analysis: `Analysis of ${dataType} for ${timeRange}`,
@@ -845,7 +779,7 @@ async function executeWLTool(tc: any): Promise<string> {
       });
     }
     if (name === "generateRecommendations") {
-      const { context, goals, constraints } = args || {};
+      const { context, goals, constraints } = parsedArgs;
       return JSON.stringify({
         ok: true,
         recommendations: goals?.map((goal: string, i: number) =>
@@ -855,7 +789,7 @@ async function executeWLTool(tc: any): Promise<string> {
       });
     }
     return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
-  } catch (e: any) {
-    return JSON.stringify({ ok: false, error: e?.message || "Tool error" });
+  } catch (e: unknown) {
+    return JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Tool error" });
   }
 }
