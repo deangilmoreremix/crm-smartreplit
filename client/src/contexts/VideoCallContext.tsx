@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import SimplePeer from 'simple-peer';
+import * as SimplePeer from 'simple-peer';
 
 export interface CallParticipant {
   id: string;
@@ -43,7 +43,7 @@ interface VideoCallContextType {
   toggleScreenShare: () => Promise<void>;
   
   // Connection Management
-  peer: SimplePeer.Instance | null;
+  peer: SimplePeer | null;
   connectionQuality: 'excellent' | 'good' | 'poor' | 'disconnected';
   
   // Group Call Features
@@ -95,7 +95,7 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isRecording, setIsRecording] = useState(false);
   
   // Peer Connection
-  const [peer, setPeer] = useState<SimplePeer.Instance | null>(null);
+  const [peer, setPeer] = useState<SimplePeer | null>(null);
   const [connectionQuality, setConnectionQuality] = useState<'excellent' | 'good' | 'poor' | 'disconnected'>('disconnected');
   
   // Group Call State
@@ -112,7 +112,7 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }>>([]);
   
   // Refs
-  const peerRef = useRef<SimplePeer.Instance | null>(null);
+  const peerRef = useRef<SimplePeer | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const originalStreamRef = useRef<MediaStream | null>(null);
   const messageCallbackRef = useRef<((message: string) => void) | null>(null);
