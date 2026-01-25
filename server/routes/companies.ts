@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../supabase';
 import crypto from 'crypto';
 
 const router = Router();
 
 // Create a new company
-router.post('/',  async (req, res) => {
+router.post('/', async (req, res) => {
   const userId = req.session?.userId;
 
   try {
@@ -63,7 +63,7 @@ router.post('/',  async (req, res) => {
 });
 
 // Get user's companies
-router.get('/',  async (req, res) => {
+router.get('/', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { data: companies, error } = await supabase
@@ -83,7 +83,7 @@ router.get('/',  async (req, res) => {
 });
 
 // Get company details
-router.get('/:companyId',  async (req, res) => {
+router.get('/:companyId', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { companyId } = req.params;
@@ -115,7 +115,7 @@ router.get('/:companyId',  async (req, res) => {
 });
 
 // Update company
-router.put('/:companyId',  async (req, res) => {
+router.put('/:companyId', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { companyId } = req.params;
@@ -149,7 +149,7 @@ router.put('/:companyId',  async (req, res) => {
 });
 
 // Get company users
-router.get('/:companyId/users',  async (req, res) => {
+router.get('/:companyId/users', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { companyId } = req.params;
@@ -191,7 +191,7 @@ router.get('/:companyId/users',  async (req, res) => {
 });
 
 // Invite user to company
-router.post('/:companyId/invitations',  async (req, res) => {
+router.post('/:companyId/invitations', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { companyId } = req.params;
@@ -293,7 +293,7 @@ router.post('/:companyId/invitations',  async (req, res) => {
 });
 
 // Accept invitation
-router.post('/invitations/:token/accept',  async (req, res) => {
+router.post('/invitations/:token/accept', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { token } = req.params;
@@ -347,7 +347,7 @@ router.post('/invitations/:token/accept',  async (req, res) => {
 });
 
 // Get company whitelabel config
-router.get('/:companyId/whitelabel',  async (req, res) => {
+router.get('/:companyId/whitelabel', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { companyId } = req.params;
@@ -379,7 +379,7 @@ router.get('/:companyId/whitelabel',  async (req, res) => {
 });
 
 // Update company whitelabel config
-router.put('/:companyId/whitelabel',  async (req, res) => {
+router.put('/:companyId/whitelabel', async (req, res) => {
   const userId = req.session?.userId;
   try {
     const { companyId } = req.params;

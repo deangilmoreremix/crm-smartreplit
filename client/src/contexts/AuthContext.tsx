@@ -3,8 +3,8 @@ import { User, Session, AuthError, AuthChangeEvent, Subscription } from '@supaba
 import { supabase } from '../lib/supabase';
 
 // Constants
-const DEV_BYPASS_PASSWORD = 'dev-bypass-password'; // TODO: Move to environment variable
-const ALLOWED_DEV_DOMAINS = ['localhost', 'replit.dev', 'github.dev', 'app.github.dev', 'netlify.app', 'vercel.app'];
+const DEV_BYPASS_PASSWORD = import.meta.env.VITE_DEV_BYPASS_PASSWORD || 'dev-bypass-password-change-in-production';
+const ALLOWED_DEV_DOMAINS = ['localhost', '127.0.0.1', 'replit.dev', 'github.dev', 'app.github.dev'];
 const APP_CONTEXT = 'smartcrm';
 const EMAIL_TEMPLATE_SET = 'smartcrm';
 
@@ -60,9 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Check for dev session in localStorage
         const checkDevSession = () => {
-          // SECURITY: Only allow dev bypass on allowed domains, NOT on .replit.app
-          const isDevelopmentEnvironment = ALLOWED_DEV_DOMAINS.some(domain => window.location.hostname.includes(domain)) &&
-                                           !window.location.hostname.includes('replit.app');
+          // SECURITY: Only allow dev bypass on strictly allowed domains
+          const isDevelopmentEnvironment = ALLOWED_DEV_DOMAINS.some(domain =>
+            window.location.hostname === domain || window.location.hostname.endsWith('.' + domain)
+          ) && !window.location.hostname.includes('replit.app') && !window.location.hostname.includes('production');
           
           // Clear dev sessions if on production domain
           if (!isDevelopmentEnvironment) {

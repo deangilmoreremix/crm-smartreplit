@@ -29,6 +29,20 @@ export async function setupVite(app: Express, server: Server) {
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
+    plugins: [await import("@vitejs/plugin-react").then(m => m.default())],
+    root: path.resolve(import.meta.dirname, "..", "client"),
+    resolve: {
+      alias: {
+        '@': path.resolve(import.meta.dirname, "..", "client", "src"),
+        'stream': 'stream-browserify',
+      },
+    },
+    optimizeDeps: {
+      exclude: ['simple-peer']
+    },
+    define: {
+      global: 'globalThis',
+    },
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
@@ -67,9 +81,11 @@ export async function setupVite(app: Express, server: Server) {
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      // Use timestamp for aggressive cache busting
+      const cacheBuster = Date.now();
       template = template.replace(
         `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="/src/main.tsx?v=${cacheBuster}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);

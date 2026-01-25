@@ -38,7 +38,7 @@ class DynamicModuleFederation {
     
     // Get the module factory
     const factory = await container.get(module);
-    const Module = factory() as { default?: T };
+    const Module = factory() as { default?: unknown };
 
     return (Module.default || Module) as T;
   }
@@ -78,14 +78,14 @@ class DynamicModuleFederation {
               scriptResolve();
             };
             
-            script.onerror = (error) => {
+            script.onerror = (error: Event | string) => {
                 const errorMessage = (error as any)?.message || String(error);
                 const errorDetails = {
                   error: errorMessage,
                   scriptUrl,
                   event: error,
                   timestamp: new Date().toISOString(),
-                  userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+                  userAgent: typeof navigator !== 'undefined' ? (navigator as Navigator).userAgent : 'unknown',
                   isDev: window.location.hostname.includes('github.dev') || window.location.hostname.includes('localhost')
                 };
                 console.warn(`❌ Failed to load script from: ${scriptUrl}`, errorDetails);

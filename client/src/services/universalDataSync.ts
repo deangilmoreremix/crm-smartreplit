@@ -19,6 +19,8 @@ export class UniversalDataSyncService {
   private syncInterval: number | null = null;
   private lastSyncTimestamp: number = 0;
   private isDirty: Set<string> = new Set();
+  private isInitialized: boolean = false;
+  private isDestroyed: boolean = false;
 
   static getInstance(): UniversalDataSyncService {
     if (!UniversalDataSyncService.instance) {
@@ -29,16 +31,35 @@ export class UniversalDataSyncService {
 
   // Initialize the sync service
   initialize() {
-    console.log('🔄 Initializing Universal Data Sync Service');
-    
-    // Start periodic sync
-    this.startPeriodicSync();
-    
-    // Listen for data changes from stores
-    this.setupStoreListeners();
-    
-    // Listen for remote app events
-    this.setupRemoteAppListeners();
+    if (this.isInitialized) {
+      console.warn('Universal Data Sync Service already initialized');
+      return;
+    }
+
+    if (this.isDestroyed) {
+      console.error('Cannot initialize destroyed Universal Data Sync Service');
+      return;
+    }
+
+    try {
+      console.log('🔄 Initializing Universal Data Sync Service');
+
+      // Start periodic sync
+      this.startPeriodicSync();
+
+      // Listen for data changes from stores
+      this.setupStoreListeners();
+
+      // Listen for remote app events
+      this.setupRemoteAppListeners();
+
+      this.isInitialized = true;
+      console.log('✅ Universal Data Sync Service initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize Universal Data Sync Service:', error);
+      this.destroy();
+      throw error;
+    }
   }
 
   private setupStoreListeners() {
@@ -198,12 +219,26 @@ export class UniversalDataSyncService {
 
   // Destroy the service
   destroy() {
-    if (this.syncInterval) {
-      clearInterval(this.syncInterval);
-      this.syncInterval = null;
+    if (this.isDestroyed) {
+      console.warn('Universal Data Sync Service already destroyed');
+      return;
     }
-    this.isDirty.clear();
-    console.log('🔌 Universal Data Sync Service destroyed');
+
+    try {
+      if (this.syncInterval) {
+        clearInterval(this.syncInterval);
+        this.syncInterval = null;
+      }
+
+      // Clear state
+      this.isDirty.clear();
+      this.isInitialized = false;
+      this.isDestroyed = true;
+
+      console.log('🔌 Universal Data Sync Service destroyed');
+    } catch (error) {
+      console.error('❌ Error during Universal Data Sync Service destruction:', error);
+    }
   }
 }
 

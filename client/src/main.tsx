@@ -17,6 +17,7 @@ if (typeof process === 'undefined') {
 // Polyfill for Node.js modules that might be required by third-party scripts
 (window as any).Buffer = (window as any).Buffer || undefined;
 (window as any).require = (window as any).require || function() { return {}; };
+(window as any).module = (window as any).module || { exports: {} };
 
 // Enhanced error boundary for unhandled errors
 window.addEventListener('error', (event) => {

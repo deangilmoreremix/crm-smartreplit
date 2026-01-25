@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import OpenAI from 'openai';
 import { registerBulkImportRoutes } from './bulk-import';
-import companiesRouter from './companies';
+// import companiesRouter from './companies'; // Temporarily disabled due to import issues
 import { handleStripeWebhook } from './stripe-webhook';
 import { handleZaxaaWebhook } from './zaxaa-webhook';
 import { handleJVZooWebhook } from './jvzoo-webhook';
@@ -2165,7 +2165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register bulk import routes
   registerBulkImportRoutes(app);
-  app.use('/api/companies', companiesRouter);
+  // app.use('/api/companies', companiesRouter); // Temporarily disabled due to import issues
 
   // Admin Stats Endpoint - Get real-time admin statistics (protected by requireAdmin middleware)
   app.get('/api/admin/stats', async (req, res) => {

@@ -13,10 +13,12 @@ export const customViteServerConfig = {
     "*.app.github.dev",
     "friendly-capybara-97xppqw7rwqf7979-3000.app.github.dev",
     "localhost",
-    "0.0.0.0"
+    "0.0.0.0",
+    "36891",
+    "40315",
+    "40909"
   ],
-  host: "0.0.0.0",
-  port: 5173,
+  host: "0.0.0.0"
 };
 
 // Export a function to merge this with existing config

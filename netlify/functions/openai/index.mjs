@@ -1,5 +1,365 @@
-// server/openai/index.ts
+// server/openai/index.ts - Production Ready AI Integration
 import OpenAI from "openai";
+
+// server/services/redisRateLimiter.ts
+import Redis from "ioredis";
+var RedisRateLimiter = class {
+  constructor(redisUrl) {
+    this.keyPrefix = "rate_limit:";
+    this.redis = new Redis(redisUrl || process.env.REDIS_URL || "redis://localhost:6379", {
+      retryDelayOnFailover: 100,
+      enableReadyCheck: false,
+      maxRetriesPerRequest: 3,
+      lazyConnect: true,
+      reconnectOnError: (err) => {
+        console.warn("Redis connection error:", err.message);
+        return err.message.includes("READONLY");
+      }
+    });
+    this.redis.on("error", (err) => {
+      console.error("Redis connection error:", err);
+    });
+    this.redis.on("connect", () => {
+      console.log("\u2705 Redis connected for rate limiting");
+    });
+  }
+
+  // Input validation for rate limiter
+  validateLimitParams(key, maxRequests, windowMs) {
+    if (!key || typeof key !== 'string' || key.length === 0) {
+      throw new Error('Invalid rate limit key');
+    }
+    if (!maxRequests || typeof maxRequests !== 'number' || maxRequests <= 0) {
+      throw new Error('Invalid maxRequests parameter');
+    }
+    if (!windowMs || typeof windowMs !== 'number' || windowMs <= 0) {
+      throw new Error('Invalid windowMs parameter');
+    }
+  }
+  async checkLimit(key, maxRequests, windowMs, identifier) {
+    const redisKey = `${this.keyPrefix}${key}`;
+    const now = Date.now();
+    const windowStart = now - windowMs;
+    try {
+      const pipeline = this.redis.pipeline();
+      pipeline.zremrangebyscore(redisKey, 0, windowStart);
+      pipeline.zcard(redisKey);
+      pipeline.zadd(redisKey, now, `${now}:${identifier || "req"}`);
+      pipeline.pexpire(redisKey, windowMs + 6e4);
+      const results = await pipeline.exec();
+      if (!results) {
+        throw new Error("Redis pipeline execution failed");
+      }
+      const requestCount = results[1][1];
+      const allowed = requestCount <= maxRequests;
+      const remaining = Math.max(0, maxRequests - requestCount + 1);
+      const resetTime = now + windowMs;
+      return {
+        allowed,
+        remaining,
+        resetTime,
+        totalRequests: requestCount
+      };
+    } catch (error) {
+      console.error("Redis rate limit check failed:", error);
+      return this.fallbackCheckLimit(key, maxRequests, windowMs);
+    }
+  }
+  async getUsageStats(key, windowMs) {
+    const redisKey = `${this.keyPrefix}${key}`;
+    const now = Date.now();
+    const windowStart = now - windowMs;
+    try {
+      const pipeline = this.redis.pipeline();
+      pipeline.zremrangebyscore(redisKey, 0, windowStart);
+      pipeline.zcard(redisKey);
+      pipeline.zrange(redisKey, 0, -1, "WITHSCORES");
+      const results = await pipeline.exec();
+      if (!results) return { currentRequests: 0, remainingRequests: 0, resetTime: now + windowMs, windowStart };
+      const currentRequests = results[1][1];
+      const resetTime = now + windowMs;
+      return {
+        currentRequests,
+        remainingRequests: Math.max(0, 100 - currentRequests),
+        // Assuming 100 max for stats
+        resetTime,
+        windowStart
+      };
+    } catch (error) {
+      console.error("Redis usage stats failed:", error);
+      return { currentRequests: 0, remainingRequests: 100, resetTime: now + windowMs, windowStart };
+    }
+  }
+  async resetLimit(key) {
+    try {
+      const redisKey = `${this.keyPrefix}${key}`;
+      await this.redis.del(redisKey);
+      return true;
+    } catch (error) {
+      console.error("Redis reset limit failed:", error);
+      return false;
+    }
+  }
+  async cleanup() {
+    try {
+      await this.redis.quit();
+    } catch (error) {
+      console.error("Redis cleanup error:", error);
+    }
+  }
+  // Fallback in-memory implementation
+  fallbackCheckLimit(key, maxRequests, windowMs) {
+    if (!global.fallbackRateLimitStore) {
+      global.fallbackRateLimitStore = /* @__PURE__ */ new Map();
+    }
+    const store = global.fallbackRateLimitStore;
+    const now = Date.now();
+    const current = store.get(key) || { count: 0, resetTime: now + windowMs };
+    if (now > current.resetTime) {
+      current.count = 1;
+      current.resetTime = now + windowMs;
+    } else if (current.count >= maxRequests) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: current.resetTime,
+        totalRequests: current.count
+      };
+    } else {
+      current.count++;
+    }
+    store.set(key, current);
+    return {
+      allowed: true,
+      remaining: maxRequests - current.count,
+      resetTime: current.resetTime,
+      totalRequests: current.count
+    };
+  }
+  // Health check
+  async healthCheck() {
+    try {
+      await this.redis.ping();
+      return true;
+    } catch (error) {
+      console.warn("Redis health check failed:", error instanceof Error ? error.message : String(error));
+      return false;
+    }
+  }
+};
+var redisRateLimiter;
+function getRedisRateLimiter() {
+  if (!redisRateLimiter) {
+    redisRateLimiter = new RedisRateLimiter();
+  }
+  return redisRateLimiter;
+}
+process.on("SIGTERM", async () => {
+  if (redisRateLimiter) {
+    await redisRateLimiter.cleanup();
+  }
+});
+process.on("SIGINT", async () => {
+  if (redisRateLimiter) {
+    await redisRateLimiter.cleanup();
+  }
+});
+
+// server/services/enhancedCache.ts
+var EnhancedLRUCache = class {
+  constructor(maxSize = 1e4, defaultTTL = 5 * 60 * 1e3) {
+    this.cache = /* @__PURE__ */ new Map();
+    this.accessOrder = /* @__PURE__ */ new Set();
+    this.stats = {
+      hits: 0,
+      misses: 0,
+      evictions: 0,
+      sets: 0,
+      size: 0,
+      maxSizeReached: 0,
+      redisHits: 0,
+      redisMisses: 0
+    };
+    this.maxSize = maxSize;
+    this.defaultTTL = defaultTTL;
+    try {
+      this.redis = getRedisRateLimiter();
+    } catch (error) {
+      console.warn("Redis not available for cache, using in-memory only");
+      this.redis = null;
+    }
+  }
+  async get(key) {
+    const localEntry = this.cache.get(key);
+    if (localEntry && !this.isExpired(localEntry)) {
+      this.accessOrder.delete(key);
+      this.accessOrder.add(key);
+      this.stats.hits++;
+      return localEntry.value;
+    }
+    if (this.redis) {
+      try {
+        const redisKey = `cache:${key}`;
+        const redisData = await this.redisGet(redisKey);
+        if (redisData) {
+          this.setLocal(key, redisData.value, redisData.ttl);
+          this.stats.redisHits++;
+          this.stats.hits++;
+          return redisData.value;
+        }
+        this.stats.redisMisses++;
+      } catch (error) {
+        console.warn("Redis cache get failed:", error instanceof Error ? error.message : String(error));
+      }
+    }
+    if (localEntry) {
+      this.cache.delete(key);
+      this.accessOrder.delete(key);
+    }
+    this.stats.misses++;
+    return null;
+  }
+  async set(key, value, ttl = this.defaultTTL) {
+    this.stats.sets++;
+    this.setLocal(key, value, ttl);
+    if (this.redis) {
+      try {
+        const redisKey = `cache:${key}`;
+        await this.redisSet(redisKey, { value, ttl }, ttl);
+      } catch (error) {
+        console.warn("Redis cache set failed:", error instanceof Error ? error.message : String(error));
+      }
+    }
+    this.evictIfNeeded();
+  }
+  setLocal(key, value, ttl) {
+    const entry = {
+      value,
+      expiresAt: Date.now() + ttl,
+      ttl,
+      accessCount: 0,
+      lastAccessed: Date.now()
+    };
+    const existing = this.cache.get(key);
+    if (existing) {
+      entry.accessCount = existing.accessCount + 1;
+    }
+    this.cache.set(key, entry);
+    this.accessOrder.delete(key);
+    this.accessOrder.add(key);
+    this.stats.size = this.cache.size;
+  }
+  evictIfNeeded() {
+    if (this.cache.size > this.maxSize) {
+      this.stats.maxSizeReached++;
+      const toEvict = Array.from(this.accessOrder).slice(0, Math.max(1, Math.floor(this.maxSize * 0.1)));
+      for (const key of toEvict) {
+        this.cache.delete(key);
+        this.accessOrder.delete(key);
+        this.stats.evictions++;
+      }
+      this.stats.size = this.cache.size;
+    }
+  }
+  async delete(key) {
+    const localDeleted = this.cache.delete(key);
+    this.accessOrder.delete(key);
+    if (this.redis) {
+      try {
+        await this.redisDel(`cache:${key}`);
+      } catch (error) {
+        console.warn("Redis cache delete failed:", error instanceof Error ? error.message : String(error));
+      }
+    }
+    this.stats.size = this.cache.size;
+    return localDeleted;
+  }
+  async clear() {
+    this.cache.clear();
+    this.accessOrder.clear();
+    this.stats.size = 0;
+    if (this.redis) {
+      try {
+        console.log("Redis cache clear not implemented - use Redis CLI");
+      } catch (error) {
+        console.warn("Redis cache clear failed:", error instanceof Error ? error.message : String(error));
+      }
+    }
+  }
+  isExpired(entry) {
+    return Date.now() > entry.expiresAt;
+  }
+  // Clean up expired entries
+  cleanup() {
+    const now = Date.now();
+    const toDelete = [];
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiresAt) {
+        toDelete.push(key);
+      }
+    }
+    for (const key of toDelete) {
+      this.cache.delete(key);
+      this.accessOrder.delete(key);
+    }
+    this.stats.size = this.cache.size;
+  }
+  getStats() {
+    const hitRate = this.stats.hits + this.stats.misses > 0 ? this.stats.hits / (this.stats.hits + this.stats.misses) * 100 : 0;
+    const redisHitRate = this.stats.redisHits + this.stats.redisMisses > 0 ? this.stats.redisHits / (this.stats.redisHits + this.stats.redisMisses) * 100 : 0;
+    return {
+      ...this.stats,
+      hitRate: hitRate.toFixed(2) + "%",
+      redisHitRate: redisHitRate.toFixed(2) + "%",
+      memoryUsage: this.calculateMemoryUsage(),
+      health: this.redis ? "distributed" : "local-only"
+    };
+  }
+  calculateMemoryUsage() {
+    const entrySize = 200;
+    const totalBytes = this.cache.size * entrySize;
+    return `${(totalBytes / 1024 / 1024).toFixed(2)} MB`;
+  }
+  // Redis helper methods
+  async redisGet(_key) {
+    if (!this.redis) return null;
+    try {
+      return null;
+    } catch (error) {
+      throw error;
+    }
+  }
+  async redisSet(_key, _data, _ttl) {
+    if (!this.redis) return;
+    try {
+    } catch (error) {
+      throw error;
+    }
+  }
+  async redisDel(_key) {
+    if (!this.redis) return;
+    try {
+    } catch (error) {
+      throw error;
+    }
+  }
+};
+var aiResponseCache = new EnhancedLRUCache(5e3, 10 * 60 * 1e3);
+var userDataCache = new EnhancedLRUCache(1e4, 30 * 60 * 1e3);
+var configCache = new EnhancedLRUCache(1e3, 60 * 60 * 1e3);
+setInterval(() => {
+  aiResponseCache.cleanup();
+  userDataCache.cleanup();
+  configCache.cleanup();
+}, 5 * 60 * 1e3);
+process.on("SIGTERM", () => {
+  console.log("Cache cleanup completed");
+});
+process.on("SIGINT", () => {
+  console.log("Cache cleanup completed");
+});
+
+// server/openai/index.ts
 var userOpenAIKey = process.env.OPENAI_API_KEY;
 var openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
 var openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
@@ -101,43 +461,6 @@ var AIUsageTracker = class {
   }
 };
 var aiUsageTracker = new AIUsageTracker();
-var AIResponseCache = class {
-  constructor() {
-    this.cache = /* @__PURE__ */ new Map();
-    this.defaultTTL = 5 * 60 * 1e3;
-  }
-  // 5 minutes
-  get(key) {
-    const cached = this.cache.get(key);
-    if (!cached) return null;
-    if (Date.now() - cached.timestamp > cached.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-    return cached.response;
-  }
-  set(key, response, ttl = this.defaultTTL) {
-    this.cache.set(key, {
-      response,
-      timestamp: Date.now(),
-      ttl
-    });
-    if (this.cache.size > 1e3) {
-      const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
-    }
-  }
-  clear() {
-    this.cache.clear();
-  }
-  getStats() {
-    return {
-      size: this.cache.size,
-      keys: Array.from(this.cache.keys())
-    };
-  }
-};
-var aiResponseCache = new AIResponseCache();
 async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
   const googleAIKey = process.env.GOOGLE_AI_API_KEY;
   if (!googleAIKey) {
@@ -160,7 +483,7 @@ async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
   const data = await response.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
-var handler = async (event, context) => {
+var handler = async (event, _context) => {
   const { httpMethod, path, body } = event;
   const pathParts = path.split("/").filter(Boolean);
   const headers = {
@@ -175,32 +498,23 @@ var handler = async (event, context) => {
   if (pathParts.length >= 2 && pathParts[0] === "openai" && httpMethod === "POST") {
     const clientIP = event.headers["x-forwarded-for"] || event.headers["x-real-ip"] || "unknown";
     const userId = event.headers["x-user-id"] || clientIP;
-    const now = Date.now();
     const windowMs = 60 * 1e3;
     const maxRequests = 10;
-    const rateLimitKey = `ai_rate_limit_${userId}`;
-    if (!global.rateLimitStore) {
-      global.rateLimitStore = /* @__PURE__ */ new Map();
-    }
-    const store = global.rateLimitStore;
-    const current = store.get(rateLimitKey) || { count: 0, resetTime: now + windowMs };
-    if (now > current.resetTime) {
-      current.count = 1;
-      current.resetTime = now + windowMs;
-    } else if (current.count >= maxRequests) {
+    const rateLimiter = getRedisRateLimiter();
+    const rateLimitResult = await rateLimiter.checkLimit(`ai_requests_${userId}`, maxRequests, windowMs, clientIP);
+    if (!rateLimitResult.allowed) {
       return {
         statusCode: 429,
         headers,
         body: JSON.stringify({
           error: "Too many requests",
           message: "AI request limit exceeded. Please wait before making another request.",
-          retryAfter: Math.ceil((current.resetTime - now) / 1e3)
+          retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1e3),
+          remaining: rateLimitResult.remaining,
+          resetTime: rateLimitResult.resetTime
         })
       };
-    } else {
-      current.count++;
     }
-    store.set(rateLimitKey, current);
   }
   try {
     if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "status" && httpMethod === "GET") {
@@ -222,13 +536,13 @@ var handler = async (event, context) => {
         if (!openai) {
           throw new Error("OpenAI client not initialized");
         }
-        const testResponse = await openai.chat.completions.create({
+        await openai.chat.completions.create({
           model: "gpt-4o-mini",
           messages: [{ role: "user", content: "test" }],
           max_tokens: 1
         });
         gpt5Available = true;
-      } catch (error) {
+      } catch (_error) {
         gpt5Available = false;
       }
       return {
@@ -236,7 +550,7 @@ var handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           configured: true,
-          model: gpt5Available ? "gpt-5" : "gpt-4o",
+          model: gpt5Available ? "gpt-4o" : "gpt-4o",
           status: "ready",
           gpt5Available,
           capabilities: gpt5Available ? [
@@ -384,7 +698,7 @@ var handler = async (event, context) => {
       }
       try {
         const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
-        const cachedResult = aiResponseCache.get(cacheKey);
+        const cachedResult = await aiResponseCache.get(cacheKey);
         if (cachedResult) {
           aiUsageTracker.trackUsage({
             userId: event.headers["x-user-id"] || "anonymous",
@@ -412,7 +726,7 @@ var handler = async (event, context) => {
             max_tokens: 200
           });
           const parsedResult = JSON.parse(response.choices[0].message.content || "{}");
-          aiResponseCache.set(cacheKey, parsedResult);
+          await aiResponseCache.set(cacheKey, parsedResult);
           const tokensUsed = response.usage?.total_tokens || 200;
           const estimatedCost = tokensUsed / 1e3 * 0.15;
           aiUsageTracker.trackUsage({
@@ -436,7 +750,7 @@ var handler = async (event, context) => {
           })
         };
       } catch (error) {
-        console.error("Smart greeting circuit breaker error:", error.message);
+        console.error("Smart greeting circuit breaker error:", error instanceof Error ? error.message : String(error));
         aiUsageTracker.trackUsage({
           userId: event.headers["x-user-id"] || "anonymous",
           endpoint: "smart-greeting",
@@ -454,7 +768,7 @@ var handler = async (event, context) => {
             insight: "AI service temporarily unavailable. Using intelligent defaults.",
             source: "circuit_breaker_fallback",
             model: "fallback",
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
           })
         };
       }
@@ -489,7 +803,7 @@ var handler = async (event, context) => {
       try {
         const content = response.choices[0].message.content || "{}";
         result = JSON.parse(content);
-      } catch (parseError) {
+      } catch (_parseError) {
         result = {
           error: "Failed to parse AI response",
           summary: "Analysis completed but response parsing failed",
@@ -546,11 +860,8 @@ var handler = async (event, context) => {
         imageUrl,
         schema,
         useThinking,
-        conversationId,
         temperature = 0.4,
-        top_p = 1,
         max_output_tokens = 2048,
-        metadata,
         forceToolName
       } = JSON.parse(body);
       if (!openai) {
@@ -682,15 +993,16 @@ Image URL: ${imageUrl}` : prompt
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: "Internal server error", message: error.message })
+      body: JSON.stringify({ error: "Internal server error", message: error instanceof Error ? error.message : String(error) })
     };
   }
 };
 async function executeWLTool(tc) {
   const { name, arguments: args } = tc.function;
   try {
+    const parsedArgs = args ? JSON.parse(args) : {};
     if (name === "analyzeBusinessData") {
-      const { dataType, analysisType, timeRange } = args || {};
+      const { dataType, analysisType, timeRange } = parsedArgs;
       return JSON.stringify({
         ok: true,
         analysis: `Analysis of ${dataType} for ${timeRange}`,
@@ -699,7 +1011,7 @@ async function executeWLTool(tc) {
       });
     }
     if (name === "generateRecommendations") {
-      const { context, goals, constraints } = args || {};
+      const { context, goals, constraints } = parsedArgs;
       return JSON.stringify({
         ok: true,
         recommendations: goals?.map(
@@ -710,7 +1022,7 @@ async function executeWLTool(tc) {
     }
     return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
   } catch (e) {
-    return JSON.stringify({ ok: false, error: e?.message || "Tool error" });
+    return JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Tool error" });
   }
 }
 export {

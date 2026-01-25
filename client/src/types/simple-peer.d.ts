@@ -1,4 +1,6 @@
 declare module 'simple-peer' {
+  import { EventEmitter } from 'events';
+
   interface SimplePeerOptions {
     initiator?: boolean;
     trickle?: boolean;
@@ -25,6 +27,7 @@ declare module 'simple-peer' {
     constructor(options?: SimplePeerOptions);
     static WEBRTC_SUPPORT: boolean;
     destroyed: boolean;
+    connected: boolean;
     signal: (data: any) => void;
     send: (data: string | Buffer | ArrayBuffer) => void;
     destroy: () => void;
