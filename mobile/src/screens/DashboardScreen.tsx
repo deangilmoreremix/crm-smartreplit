@@ -2,11 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
+import { useChatbot } from '../contexts/ChatbotContext';
 import { Icon } from '../components/Icon';
 
 const DashboardScreen: React.FC = () => {
   const { theme } = useTheme();
   const { config } = useWhitelabel();
+  const { showChatbot } = useChatbot();
 
   const quickActions = config.screens.dashboard.showQuickActions
     ? config.screens.dashboard.quickActions
@@ -26,12 +28,39 @@ const DashboardScreen: React.FC = () => {
         </View>
       )}
 
+      {/* AI Assistant Section */}
+      <View style={styles.aiAssistantSection}>
+        <TouchableOpacity
+          style={[styles.aiAssistantCard, { backgroundColor: theme.colors.surface }]}
+          onPress={showChatbot}
+        >
+          <View style={styles.aiAssistantContent}>
+            <View style={styles.aiAssistantLeft}>
+              <View
+                style={[styles.aiIconContainer, { backgroundColor: config.branding.primaryColor }]}
+              >
+                <Icon name="bot" size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.aiAssistantText}>
+                <Text style={[styles.aiAssistantTitle, { color: theme.colors.text }]}>
+                  Need Help?
+                </Text>
+                <Text style={[styles.aiAssistantSubtitle, { color: theme.colors.textSecondary }]}>
+                  Ask our AI assistant about contacts, deals, dashboard, and features
+                </Text>
+              </View>
+            </View>
+            <View style={[styles.aiAssistantArrow, { borderLeftColor: theme.colors.border }]}>
+              <Icon name="chevron-right" size={20} color={theme.colors.textSecondary} />
+            </View>
+          </View>
+        </TouchableOpacity>
+      </View>
+
       {/* Quick Actions */}
       {quickActions.length > 0 && (
         <View style={styles.quickActionsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            Quick Actions
-          </Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Quick Actions</Text>
           <View style={styles.quickActionsGrid}>
             {quickActions.map((action, index) => (
               <TouchableOpacity
@@ -40,8 +69,8 @@ const DashboardScreen: React.FC = () => {
                   styles.quickActionButton,
                   {
                     backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.border
-                  }
+                    borderColor: theme.colors.border,
+                  },
                 ]}
               >
                 <Icon name={action.icon} size={24} color={config.branding.primaryColor} />
@@ -56,9 +85,7 @@ const DashboardScreen: React.FC = () => {
 
       {/* Stats Cards */}
       <View style={styles.statsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-          Overview
-        </Text>
+        <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Overview</Text>
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
             <Icon name="users" size={24} color={config.branding.primaryColor} />
@@ -101,6 +128,57 @@ const styles = StyleSheet.create({
   },
   welcomeSubtitle: {
     fontSize: 16,
+  },
+  // AI Assistant Section Styles
+  aiAssistantSection: {
+    marginBottom: 24,
+  },
+  aiAssistantCard: {
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  aiAssistantContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  aiAssistantLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  aiIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  aiAssistantText: {
+    flex: 1,
+  },
+  aiAssistantTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  aiAssistantSubtitle: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  aiAssistantArrow: {
+    borderLeftWidth: 1,
+    paddingLeft: 12,
+    marginLeft: 12,
   },
   quickActionsSection: {
     marginBottom: 24,
