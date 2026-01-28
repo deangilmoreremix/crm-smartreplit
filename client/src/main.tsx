@@ -1,4 +1,10 @@
 console.log('main.tsx starting...');
+
+// Debug polyfills
+console.log('Polyfills - module:', typeof (window as any).module);
+console.log('Polyfills - exports:', typeof (window as any).exports);
+console.log('Polyfills - require:', typeof (window as any).require);
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -7,18 +13,23 @@ import './index.css';
 
 // Fix for "global is not defined" error in browser
 if (typeof global === 'undefined') {
-  (window as any).global = globalThis;
+  (window as unknown as { global: typeof globalThis }).global = globalThis;
 }
 
 // Additional browser compatibility fixes
 if (typeof process === 'undefined') {
-  (window as any).process = { env: {} };
+  (window as unknown as { process: { env: Record<string, string> } }).process = { env: {} };
 }
 
 // Polyfill for Node.js modules that might be required by third-party scripts
-(window as any).Buffer = (window as any).Buffer || undefined;
-(window as any).require = (window as any).require || function() { return {}; };
-(window as any).module = (window as any).module || { exports: {} };
+(window as unknown as { Buffer?: unknown }).Buffer = (window as unknown as { Buffer?: unknown }).Buffer || undefined;
+(window as unknown as { require?: unknown }).require = (window as unknown as { require?: unknown }).require || function() { return {}; };
+
+// Comprehensive module polyfill for CommonJS compatibility
+if (typeof window !== 'undefined' && !(window as any).module) {
+  (window as any).module = { exports: {} };
+  (window as any).exports = (window as any).module.exports;
+}
 
 // Enhanced error boundary for unhandled errors
 window.addEventListener('error', (event) => {
@@ -26,6 +37,7 @@ window.addEventListener('error', (event) => {
   const error = event.error;
 
   console.log('Error event:', message, error);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
   // Suppress ALL development/third-party errors that cause runtime overlay
   if (message.includes('Script error') ||
@@ -61,7 +73,7 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 // Additional global error handler for non-error objects
-window.onerror = function(message, source, lineno, colno, error) {
+window.onerror = function(_message, _source, _lineno, _colno, _error) {
   return true; // Prevent default error handling
 };
 
@@ -97,7 +109,7 @@ if (typeof window !== 'undefined') {
   }, true);
 
   // Disable Vite's runtime error overlay specifically
-  if (import.meta.env.MODE === 'development') {
+  if (import.meta.env?.MODE === 'development') {
     // Override Vite's error overlay by preventing it from being created
     const style = document.createElement('style');
     style.textContent = `
