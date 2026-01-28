@@ -239,15 +239,26 @@ const AuthLoadingScreen = () => {
 // Removed conflicting useDarkMode - now using unified ThemeContext
 
 function App() {
+  console.log('App component rendering...');
+
   // Initialize universal data sync
   useEffect(() => {
+    console.log('App useEffect running...');
     // Starting Universal Data Sync System
     universalDataSync.initialize();
+    console.log('App loaded, checking for handleTouchStartEnhanced error');
 
     return () => {
       universalDataSync.destroy();
     };
   }, []);
+
+  // Temporary definition to prevent error
+  if (typeof window !== 'undefined') {
+    window.handleTouchStartEnhanced = () => {
+      console.log('handleTouchStartEnhanced called');
+    };
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -288,8 +299,10 @@ function App() {
 
 // AppContent component with all the routing logic
 function AppContent() {
+  console.log('AppContent component rendering...');
   const { user, loading } = useAuth();
   const { setPosition } = useNavbarPosition();
+  console.log('Auth state:', { user: !!user, loading });
 
   // Handle navbar drag end
   const handleNavbarDragEnd = (result: DropResult) => {

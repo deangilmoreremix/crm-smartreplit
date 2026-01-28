@@ -58,10 +58,12 @@ import VideoCallDemo from '../components/landing/VideoCallDemo';
 import { DevBypassButton } from '../components/DevBypassButton';
 
 const LandingPage = () => {
+  console.log('LandingPage component rendering...');
   const navigate = useNavigate();
 
   // Function to handle page initialization only once
   useEffect(() => {
+    console.log('LandingPage useEffect running...');
     const preloadHighPriorityAssets = () => {
       // Preload critical images
       const criticalImages = [

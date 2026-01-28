@@ -1,3 +1,4 @@
+console.log('main.tsx starting...');
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -23,9 +24,11 @@ if (typeof process === 'undefined') {
 window.addEventListener('error', (event) => {
   const message = event.message || '';
   const error = event.error;
-  
+
+  console.log('Error event:', message, error);
+
   // Suppress ALL development/third-party errors that cause runtime overlay
-  if (message.includes('Script error') || 
+  if (message.includes('Script error') ||
       message.includes('Module') ||
       message.includes('stream') ||
       message.includes('Loading') ||
