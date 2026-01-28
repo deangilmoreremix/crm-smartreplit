@@ -80,6 +80,7 @@
             case 'util':
               return {
                 inherits: function(ctor, superCtor) {
+                  if (!ctor || !superCtor || !superCtor.prototype) return;
                   ctor.super_ = superCtor;
                   ctor.prototype = Object.create(superCtor.prototype, {
                     constructor: { value: ctor, enumerable: false, writable: true, configurable: true }
@@ -97,6 +98,7 @@
               };
             case 'inherits':
               return function(ctor, superCtor) {
+                if (!ctor || !superCtor || !superCtor.prototype) return;
                 ctor.super_ = superCtor;
                 ctor.prototype = Object.create(superCtor.prototype, {
                   constructor: { value: ctor, enumerable: false, writable: true, configurable: true }
@@ -110,7 +112,7 @@
                 return function() {
                   if (called) return;
                   called = true;
-                  return fn.apply(this, arguments);
+                  return fn && typeof fn === 'function' ? fn.apply(this, arguments) : undefined;
                 };
               };
             case 'is-typedarray':
@@ -132,11 +134,14 @@
             case 'extend.js':
             case 'extend':
               return function(target) {
+                if (!target) return target;
                 for (var i = 1; i < arguments.length; i++) {
                   var source = arguments[i];
-                  for (var key in source) {
-                    if (source.hasOwnProperty(key)) {
-                      target[key] = source[key];
+                  if (source && typeof source === 'object') {
+                    for (var key in source) {
+                      if (source.hasOwnProperty(key)) {
+                        target[key] = source[key];
+                      }
                     }
                   }
                 }
