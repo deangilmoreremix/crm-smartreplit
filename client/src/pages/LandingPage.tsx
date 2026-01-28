@@ -1,36 +1,21 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { HashLink } from 'react-router-hash-link';
 import {
   Brain,
-  Mail,
   MessageSquare,
-  FileText,
-  Phone,
-  Target,
-  FileSearch,
   TrendingUp,
   BarChart3,
-  PieChart,
   ChevronRight,
-  CheckCheck,
   ArrowRight,
-  Play,
-  User,
   Clock,
-  Star,
-  ExternalLink,
   BarChart,
   Users,
   Briefcase,
   Eye,
   Image,
-  Mic,
   Search,
-  Zap,
-  Calendar
+  Zap
 } from 'lucide-react';
 
 import LandingHeader from './landing/components/LandingHeader';
@@ -39,7 +24,6 @@ import PricingCard from './landing/components/PricingCard';
 import FeatureCard from './landing/components/FeatureCard';
 import TestimonialCard from './landing/components/TestimonialCard';
 import AnimatedFeatureIcon from '../components/landing/AnimatedFeatureIcon';
-import FloatingIcons from '../components/landing/FloatingIcons';
 import ProductDemo from '../components/landing/ProductDemo';
 import ClientLogos from '../components/landing/ClientLogos';
 import StatCounter from '../components/landing/StatCounter';
@@ -58,12 +42,10 @@ import VideoCallDemo from '../components/landing/VideoCallDemo';
 import { DevBypassButton } from '../components/DevBypassButton';
 
 const LandingPage = () => {
-  console.log('LandingPage component rendering...');
   const navigate = useNavigate();
 
   // Function to handle page initialization only once
   useEffect(() => {
-    console.log('LandingPage useEffect running...');
     const preloadHighPriorityAssets = () => {
       // Preload critical images
       const criticalImages = [
