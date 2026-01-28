@@ -51,7 +51,109 @@
       if (typeof global === 'undefined') {
         window.global = globalThis;
       }
-      
+
+      // Polyfills for CommonJS modules in browser environment
+      (function() {
+        if (typeof window === 'undefined') return;
+
+        // CommonJS module system shim
+        var modules = {};
+        var module = { exports: {} };
+        var exports = module.exports;
+
+        window.module = module;
+        window.exports = exports;
+
+        window.require = function(id) {
+          if (modules[id]) return modules[id];
+
+          // Handle common Node.js modules
+          switch(id) {
+            case 'react':
+            case 'react-dom':
+            case 'react/jsx-runtime':
+              return {};
+            case 'process':
+              return { env: {}, browser: true, version: '12.0.0' };
+            case 'buffer':
+              return { Buffer: window.Buffer || function() {} };
+            case 'util':
+              return {
+                inherits: function(ctor, superCtor) {
+                  ctor.super_ = superCtor;
+                  ctor.prototype = Object.create(superCtor.prototype, {
+                    constructor: { value: ctor, enumerable: false, writable: true, configurable: true }
+                  });
+                }
+              };
+            case 'events':
+              return { EventEmitter: function() {} };
+            case 'stream':
+              return {};
+            case 'debug':
+              // Return a no-op debug function
+              return function(namespace) {
+                return function() {}; // no-op debug function
+              };
+            case 'inherits':
+              return function(ctor, superCtor) {
+                ctor.super_ = superCtor;
+                ctor.prototype = Object.create(superCtor.prototype, {
+                  constructor: { value: ctor, enumerable: false, writable: true, configurable: true }
+                });
+              };
+            case 'hat':
+              return function() { return Math.random().toString(36).substr(2, 9); };
+            case 'once':
+              return function(fn) {
+                var called = false;
+                return function() {
+                  if (called) return;
+                  called = true;
+                  return fn.apply(this, arguments);
+                };
+              };
+            case 'is-typedarray':
+              return function(obj) {
+                return obj instanceof Uint8Array ||
+                       obj instanceof Uint8ClampedArray ||
+                       obj instanceof Uint16Array ||
+                       obj instanceof Uint32Array ||
+                       obj instanceof Int8Array ||
+                       obj instanceof Int16Array ||
+                       obj instanceof Int32Array ||
+                       obj instanceof Float32Array ||
+                       obj instanceof Float64Array;
+              };
+            case 'typedarray-to-buffer':
+              return function(arr) {
+                return arr.buffer.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
+              };
+            case 'extend.js':
+            case 'extend':
+              return function(target) {
+                for (var i = 1; i < arguments.length; i++) {
+                  var source = arguments[i];
+                  for (var key in source) {
+                    if (source.hasOwnProperty(key)) {
+                      target[key] = source[key];
+                    }
+                  }
+                }
+                return target;
+              };
+            default:
+              console.warn('require() called for unknown module:', id);
+              return {};
+          }
+        };
+
+        // Additional Node.js globals
+        window.process = window.process || { env: {}, browser: true };
+        window.Buffer = window.Buffer || function() { return {}; };
+        window.global = window.global || window;
+      })();
+
       // Remove any replit banners on load
       document.addEventListener('DOMContentLoaded', function() {
         const removeReplitElements = () => {
@@ -61,7 +163,7 @@
             banner.remove();
           });
         };
-        
+
         removeReplitElements();
         // Run again after a short delay in case elements load later
         setTimeout(removeReplitElements, 100);
