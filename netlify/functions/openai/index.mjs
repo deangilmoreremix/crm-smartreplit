@@ -1,4 +1,4 @@
-// server/openai/index.ts - Production Ready AI Integration
+// server/openai/index.ts
 import OpenAI from "openai";
 
 // server/services/redisRateLimiter.ts
@@ -22,19 +22,6 @@ var RedisRateLimiter = class {
     this.redis.on("connect", () => {
       console.log("\u2705 Redis connected for rate limiting");
     });
-  }
-
-  // Input validation for rate limiter
-  validateLimitParams(key, maxRequests, windowMs) {
-    if (!key || typeof key !== 'string' || key.length === 0) {
-      throw new Error('Invalid rate limit key');
-    }
-    if (!maxRequests || typeof maxRequests !== 'number' || maxRequests <= 0) {
-      throw new Error('Invalid maxRequests parameter');
-    }
-    if (!windowMs || typeof windowMs !== 'number' || windowMs <= 0) {
-      throw new Error('Invalid windowMs parameter');
-    }
   }
   async checkLimit(key, maxRequests, windowMs, identifier) {
     const redisKey = `${this.keyPrefix}${key}`;

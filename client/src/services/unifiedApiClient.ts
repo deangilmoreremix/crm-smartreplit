@@ -296,9 +296,17 @@ class UnifiedApiClient {
         const devToken = localStorage.getItem('sb-supabase-auth-token');
         const devMode = localStorage.getItem('smartcrm-dev-mode');
 
+        console.log('🔍 API Client Auth Check:', {
+          devSession: !!devSession,
+          devToken: !!devToken,
+          devMode,
+          endpoint: request.endpoint
+        });
+
         if ((devSession && devToken) || devMode === 'true') {
           // Use dev bypass token format expected by server
           const token = devToken ? JSON.parse(devToken).access_token : 'dev-bypass-token';
+          console.log('🔑 Using dev bypass token for request');
           request.headers = {
             ...request.headers,
             Authorization: `Bearer ${token}`
@@ -307,10 +315,13 @@ class UnifiedApiClient {
           // Check for regular auth token
           const authToken = localStorage.getItem('authToken');
           if (authToken) {
+            console.log('🔑 Using regular auth token for request');
             request.headers = {
               ...request.headers,
               Authorization: `Bearer ${authToken}`
             };
+          } else {
+            console.log('⚠️ No auth token found for request');
           }
         }
       }

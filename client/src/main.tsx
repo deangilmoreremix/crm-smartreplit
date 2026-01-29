@@ -1,10 +1,5 @@
 console.log('main.tsx starting...');
 
-// Debug polyfills
-console.log('Polyfills - module:', typeof (window as any).module);
-console.log('Polyfills - exports:', typeof (window as any).exports);
-console.log('Polyfills - require:', typeof (window as any).require);
-
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -109,7 +104,7 @@ if (typeof window !== 'undefined') {
   }, true);
 
   // Disable Vite's runtime error overlay specifically
-  if (import.meta.env?.MODE === 'development') {
+  if ((import.meta as any).env?.MODE === 'development') {
     // Override Vite's error overlay by preventing it from being created
     const style = document.createElement('style');
     style.textContent = `

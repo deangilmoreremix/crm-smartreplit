@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { useTheme } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
@@ -106,15 +106,21 @@ export default function AppointmentsDashboard() {
   };
 
   // Fetch appointments data
-  const { data: appointments = mockAppointments, isLoading: appointmentsLoading } = useQuery<Appointment[]>({
+  const { data: appointments = mockAppointments, isLoading: appointmentsLoading, error: appointmentsError } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments'],
     refetchInterval: 30000,
+    retry: false
   });
 
-  const { data: stats = mockStats, isLoading: statsLoading } = useQuery<MeetingStats>({
+  const { data: stats = mockStats, isLoading: statsLoading, error: statsError } = useQuery<MeetingStats>({
     queryKey: ['/api/appointments/stats'],
     refetchInterval: 30000,
+    retry: false
   });
+
+  // Use mock data if API fails
+  const displayAppointments = appointmentsError ? mockAppointments : appointments;
+  const displayStats = statsError ? mockStats : stats;
 
   const generateMeetingInsights = async (appointment: Partial<Appointment>) => {
     setIsGenerating(true);
@@ -182,19 +188,19 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
   const headerStats = (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
-        <div className="text-2xl font-bold text-blue-600">{stats.totalMeetings}</div>
+        <div className="text-2xl font-bold text-blue-600">{displayStats.totalMeetings}</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Meetings</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-green-600">{stats.completedToday}</div>
+        <div className="text-2xl font-bold text-green-600">{displayStats.completedToday}</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Completed Today</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{stats.upcomingToday}</div>
+        <div className="text-2xl font-bold text-purple-600">{displayStats.upcomingToday}</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Upcoming Today</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(stats.successRate * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">{Math.round(displayStats.successRate * 100)}%</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
       </div>
     </div>
@@ -226,9 +232,9 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {appointments
-                  .filter(apt => apt.date === new Date().toISOString().split('T')[0])
-                  .map(appointment => (
+                {displayAppointments
+                  .filter((apt: Appointment) => apt.date === new Date().toISOString().split('T')[0])
+                  .map((appointment: Appointment) => (
                     <div
                       key={appointment.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
@@ -333,7 +339,7 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Average Duration</span>
-                    <span className="font-medium">{stats.averageDuration}min</span>
+                    <span className="font-medium">{displayStats.averageDuration}min</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">On-Time Rate</span>
