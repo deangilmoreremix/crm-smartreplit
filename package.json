@@ -166,6 +166,7 @@
     "lint-staged": "^16.2.7",
     "postcss": "^8.4.47",
     "prettier": "^3.7.4",
+    "rollup-plugin-visualizer": "^6.0.5",
     "stream-browserify": "^3.0.0",
     "tailwindcss": "^4.1.13",
     "ts-node": "^10.9.2",
