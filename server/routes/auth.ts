@@ -7,6 +7,50 @@ const DEV_BYPASS_EMAILS = (
   process.env.DEV_BYPASS_EMAILS || 'dev@smartcrm.local,dean@smartcrm.vip,dean@videoremix.io,samuel@videoremix.io,victor@videoremix.io'
 ).split(',');
 
+// Simple in-memory rate limiter for auth endpoints
+const authRateLimits = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX = 5; // 5 attempts per window
+
+const checkRateLimit = (identifier: string): { allowed: boolean; remaining: number; resetTime: number } => {
+  const now = Date.now();
+  const record = authRateLimits.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    // Create new rate limit window
+    authRateLimits.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return { allowed: true, remaining: RATE_LIMIT_MAX - 1, resetTime: now + RATE_LIMIT_WINDOW };
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return { allowed: false, remaining: 0, resetTime: record.resetTime };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: RATE_LIMIT_MAX - record.count, resetTime: record.resetTime };
+};
+
+// Rate limiting middleware for auth endpoints
+const authRateLimiter = (req: any, res: any, next: any) => {
+  const identifier = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  const result = checkRateLimit(identifier);
+  
+  // Add rate limit headers
+  res.setHeader('X-RateLimit-Limit', RATE_LIMIT_MAX);
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, result.remaining));
+  res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000));
+  
+  if (!result.allowed) {
+    return res.status(429).json({
+      error: 'Too many authentication attempts',
+      message: 'Please try again later.',
+      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000)
+    });
+  }
+  
+  next();
+};
+
 // Authentication middleware - ensures user is logged in
 export const requireAuth = (req: any, res: any, next: any) => {
   // Check for dev bypass token in Authorization header (for dev environment only)
@@ -231,6 +275,9 @@ export const requireTier = (requiredTier: typeof TIER_HIERARCHY[number]) => {
 };
 
 export function registerAuthRoutes(app: Express): void {
+  // Apply rate limiting to auth endpoints
+  app.use('/api/auth', authRateLimiter);
+  
   // Health check endpoint
   app.get('/api/health', (req, res) => {
     res.json({

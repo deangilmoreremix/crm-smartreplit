@@ -60,6 +60,7 @@ import MeetingSummaryContent from '../components/aiTools/MeetingSummaryContent';
 import SocialMediaGenerator from '../components/aiTools/SocialMediaGenerator';
 import AgentWorkflowChat from '../components/aiTools/AgentWorkflowChat';
 import ImageGallery from '../components/ImageGallery';
+import AIAssistantChat from '../components/aiTools/AIAssistantChat';
 
 const AITools: React.FC = () => {
   const { openTool } = useAITools();
@@ -406,8 +407,8 @@ const AITools: React.FC = () => {
       case 'email-composer-content':
       case 'email-composer':
         return <EmailResponseContent />;
-      case 'ai-assistant-chat':
-        return <StreamingChat />;
+      case 'ai-assistant':
+        return <AIAssistantChat />;
       case 'agent-workflow':
         return <AgentWorkflowChat />;
       case 'live-deal-analysis':

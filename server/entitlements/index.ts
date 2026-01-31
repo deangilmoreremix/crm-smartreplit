@@ -46,10 +46,31 @@ export const handler = async (event: any, context: any) => {
   try {
     // GET /api/entitlements/check - Check user entitlement
     if (pathParts.length >= 2 && pathParts[0] === 'entitlements' && pathParts[1] === 'check' && httpMethod === 'GET') {
-      const userId = 'dev-user-12345'; // In real implementation, get from auth
+      // Extract user ID from Authorization header (JWT token)
+      const authHeader = event.headers?.authorization || event.headers?.Authorization || '';
+      let userId = null;
+      
+      if (authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        // For Supabase JWT tokens, extract the sub claim (user ID)
+        try {
+          const tokenParts = token.split('.');
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+            userId = payload.sub;
+          }
+        } catch (e) {
+          console.error('Failed to parse JWT token:', e);
+        }
+      }
+      
+      // Fallback for development only
+      if (!userId && process.env.NODE_ENV === 'development') {
+        userId = 'dev-user-12345';
+      }
 
       if (!userId) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized - Valid JWT token required' }) };
       }
 
       const entitlement = await getUserEntitlement(userId);

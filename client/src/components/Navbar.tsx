@@ -219,6 +219,18 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     { name: 'Insights AI Module', url: '/analytics-remote', icon: Brain }
   ];
 
+  // Business Intelligence Tools - Dropdown Items
+  const businessIntelligenceTools = [
+    { name: 'KPI Analysis', tool: 'business-kpi', icon: BarChart3 },
+    { name: 'Deal Intelligence', tool: 'business-deals', icon: Briefcase },
+    { name: 'Contact Analytics', tool: 'business-contacts', icon: Users },
+    { name: 'Task Intelligence', tool: 'business-tasks', icon: CheckSquare },
+    { name: 'Revenue Forecast', tool: 'business-revenue', icon: TrendingUp },
+    { name: 'Productivity Metrics', tool: 'business-productivity', icon: Activity },
+    { name: 'AI Business Insights', tool: 'business-insights', icon: Brain },
+    { name: 'External Analytics', url: '/business-analytics', icon: Globe, isExternal: false },
+  ];
+
 
 
   // ===== All AI tool entries organized by categories =====
@@ -748,45 +760,6 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                     </div>
                   )}
 
-                  {menu.id === 'intel' && activeDropdown === 'intel' && (
-                    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setActiveDropdown(null)}>
-                      <div className={`absolute inset-4 ${isDark ? 'bg-gray-900/98' : 'bg-white/98'} backdrop-blur-2xl border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl overflow-hidden`} onClick={(e) => e.stopPropagation()}>
-                        <div className="h-full flex flex-col">
-                          <div className="flex items-center justify-between p-4 border-b border-gray-200/30">
-                            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Business Intelligence Dashboard</h3>
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center text-blue-600 text-xs px-2 py-1 rounded-full bg-blue-500/10">
-                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                                Local Analytics Active
-                              </div>
-                              <button
-                                onClick={() => window.open('https://ai-analytics.smartcrm.vip', '_blank')}
-                                className={`p-2 rounded-md ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
-                                title="Open production analytics (external)"
-                              >
-                                <ExternalLink size={16} className="block overflow-visible shrink-0" />
-                              </button>
-                              <button
-                                onClick={() => setActiveDropdown(null)}
-                                className={`p-2 rounded-md ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
-                                title="Close"
-                              >
-                                <X size={16} className="block overflow-visible shrink-0" />
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex-1 overflow-hidden">
-                            <ModuleFederationAnalytics />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-
-
                   {menu.id === 'apps' && activeDropdown === 'apps' && (
                     <div className={`absolute top-full mt-2 right-0 w-72 ${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl z-[9999] overflow-hidden`}>
                       <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
@@ -1168,6 +1141,57 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
             </button>
           )
         )}
+      </div>
+    </DropdownPortal>
+
+    {/* Business Intelligence Dropdown Portal */}
+    <DropdownPortal
+      isOpen={activeDropdown === 'intel'}
+      anchor={dropdownAnchor}
+      onClose={closeDropdown}
+      isDark={isDark}
+    >
+      <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        {businessIntelligenceTools.map((tool, index) => (
+          tool.isExternal ? (
+            <button
+              key={index}
+              onClick={() => {
+                navigate(tool.url!);
+                closeDropdown();
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+            >
+              <tool.icon size={16} className="block overflow-visible shrink-0 text-amber-500" />
+              <span className="text-sm font-medium">{tool.name}</span>
+            </button>
+          ) : (
+            <button
+              key={index}
+              onClick={() => {
+                // Navigate to business intelligence tools
+                const routeMap: { [key: string]: string } = {
+                  'business-kpi': '/business-analytics/kpi',
+                  'business-deals': '/business-analytics/deals',
+                  'business-contacts': '/business-analytics/contacts',
+                  'business-tasks': '/business-analytics/tasks',
+                  'business-revenue': '/business-analytics/revenue',
+                  'business-productivity': '/business-analytics/productivity',
+                  'business-insights': '/business-analytics/insights',
+                };
+                const route = routeMap[tool.tool] || `/business-analytics/${tool.tool}`;
+                navigate(route);
+                closeDropdown();
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+            >
+              <tool.icon size={16} className="block overflow-visible shrink-0 text-amber-500" />
+              <span className="text-sm font-medium">{tool.name}</span>
+            </button>
+          )
+        ))}
       </div>
     </DropdownPortal>
     </>
