@@ -48,7 +48,7 @@ const PipelineFeaturePage: React.FC = () => {
               </div>
               <div className="mt-8 flex items-center text-sm text-gray-500">
                 <CheckCheck size={18} className="text-green-500 mr-2" />
-                No credit card required • 14-day free trial
+                No credit card required
               </div>
             </div>
             <div className="w-full lg:w-1/2">
@@ -473,7 +473,7 @@ const PipelineFeaturePage: React.FC = () => {
             <Link to="/register" className="px-8 py-4 bg-white text-blue-700 font-medium rounded-lg hover:shadow-lg transition duration-300 inline-block">
               Start Your Free Trial
             </Link>
-            <p className="mt-4 opacity-80">No credit card required • Free for 14 days</p>
+            <p className="mt-4 opacity-80">No credit card required</p>
           </div>
         </div>
       </section>

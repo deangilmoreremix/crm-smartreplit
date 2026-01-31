@@ -544,7 +544,6 @@ const LandingPage = () => {
           </div>
           
           <div className="mt-12 text-center">
-            <p className="text-gray-600 mb-6">All plans include a 14-day free trial. No credit card required.</p>
             <Link to="/pricing" className="text-blue-600 hover:text-blue-800 font-medium">
               View full pricing details
             </Link>
@@ -565,14 +564,13 @@ const LandingPage = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/dashboard" className="px-8 py-4 bg-white text-blue-700 font-medium rounded-lg hover:shadow-lg transition duration-300 transform hover:scale-105">
-                Start Your Free Trial
+                Get Started Now
               </Link>
               <Link to="/dashboard" className="px-8 py-4 bg-green-500 bg-opacity-90 hover:bg-opacity-100 text-white font-medium rounded-lg hover:shadow-lg transition duration-300 flex items-center">
                 <ExternalLink size={18} className="mr-1.5" />
                 Go to Dashboard
               </Link>
             </div>
-            <p className="mt-4 opacity-80">No credit card required • Free for 14 days</p>
           </div>
           
           {/* Background floating elements */}
@@ -597,16 +595,6 @@ const LandingPage = () => {
           </ScrollAnimationWrapper>
           
           <div className="max-w-3xl mx-auto space-y-6">
-            <ScrollAnimationWrapper animation="fade-up" delay={100}>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-300 hover:shadow-md">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  How does the 14-day free trial work?
-                </h3>
-                <p className="text-gray-700">
-                  Our free trial gives you full access to all features in the Professional plan for 14 days. No credit card is required to start, and you can cancel anytime before the trial ends with no obligation.
-                </p>
-              </div>
-            </ScrollAnimationWrapper>
             
             <ScrollAnimationWrapper animation="fade-up" delay={200}>
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-300 hover:shadow-md">

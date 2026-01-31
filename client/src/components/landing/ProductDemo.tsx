@@ -98,10 +98,6 @@ const ProductDemo: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="flex items-center">
             <CheckCircle size={16} className="text-green-600 mr-2 flex-shrink-0" />
-            <span className="text-xs">14-day free trial</span>
-          </div>
-          <div className="flex items-center">
-            <CheckCircle size={16} className="text-green-600 mr-2 flex-shrink-0" />
             <span className="text-xs">No credit card required</span>
           </div>
           <div className="flex items-center">

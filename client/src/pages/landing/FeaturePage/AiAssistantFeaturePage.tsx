@@ -243,7 +243,6 @@ const AiAssistantFeaturePage: React.FC = () => {
               Explore All Features
             </Link>
           </div>
-          <p className="mt-4 opacity-80">No credit card required • Free for 14 days</p>
         </div>
       </section>
       

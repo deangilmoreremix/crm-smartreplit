@@ -245,7 +245,7 @@ const AiToolsFeaturePage: React.FC = () => {
             Ready to Supercharge Your Sales with AI?
           </h2>
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Get access to 20+ AI tools designed specifically for sales professionals. Start your free trial today.
+            Get access to 20+ AI tools designed specifically for sales professionals. Start today.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/register" className="px-8 py-4 bg-white text-blue-700 font-medium rounded-lg hover:shadow-lg transition duration-300">
@@ -255,7 +255,7 @@ const AiToolsFeaturePage: React.FC = () => {
               Explore All Features
             </Link>
           </div>
-          <p className="mt-4 opacity-80">No credit card required • Free for 14 days</p>
+          <p className="mt-4 opacity-80">No credit card required</p>
         </div>
       </section>
       

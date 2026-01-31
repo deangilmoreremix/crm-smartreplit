@@ -109,6 +109,10 @@ export interface WhitelabelConfig {
   faviconUrl?: string;
   customCss?: string;
   fontFamily?: string;
+
+  // SEO & Meta
+  metaTitle?: string;
+  metaDescription?: string;
 }
 
 export interface WhitelabelContextType {

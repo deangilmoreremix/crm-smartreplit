@@ -7,6 +7,13 @@ import { registerPhoneRoutes } from './routes/phone';
 import { registerVideoRoutes } from './routes/videos';
 import { registerMessagingRoutes } from './routes/messaging';
 // import companiesRouter from './companies'; // Temporarily disabled due to import issues
+
+// White-label routes (previously not registered - bug fix)
+import themesRouter from './routes/themes';
+import provisioningRouter from './routes/provisioning';
+import analyticsRouter from './routes/analytics';
+import assetsRouter from './routes/assets';
+import domainsRouter from './routes/domains';
 import { handleStripeWebhook } from './stripe-webhook';
 import { handleZaxaaWebhook } from './zaxaa-webhook';
 import { handleJVZooWebhook } from './jvzoo-webhook';
@@ -38,6 +45,9 @@ import { createClient } from '@supabase/supabase-js';
 import { handleAuthWebhook, createUserMetadata, determineUserRole } from './email-routing';
 import { supabase, isSupabaseConfigured } from './supabase';
 
+// Import centralized auth middleware (fixing code drift between server/routes.ts and server/routes/auth.ts)
+import { requireAuth, requireAdmin, requireProductTier, requireTier } from './routes/auth';
+
 // Extend Express session to include userId
 declare module 'express-session' {
   interface SessionData {
@@ -54,113 +64,7 @@ interface GoogleAIResponse {
   }>;
 }
 
-// Authentication middleware - ensures user is logged in
-const requireAuth = (req: any, res: any, next: any) => {
-  const userId = req.session?.userId;
-  const authHeader = req.headers.authorization;
-  console.log('🔐 Auth Check:', {
-    endpoint: req.path,
-    method: req.method,
-    sessionUserId: userId,
-    authHeader: authHeader ? `${authHeader.substring(0, 20)}...` : null,
-    sessionId: req.session?.id
-  });
-
-  // Check for session first
-  if (userId) {
-    return next();
-  }
-
-  // In development, also check for Bearer tokens
-  if (process.env.NODE_ENV === 'development' && authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    if (token === 'dev-bypass-token') {
-      // Set up dev user for this request
-      req.user = {
-        id: 'dev-user-12345',
-        email: 'dev@smartcrm.local',
-        username: 'dev@smartcrm.local',
-        role: 'super_admin',
-        productTier: 'super_admin'
-      };
-      console.log('✅ Dev bypass auth granted via Bearer token');
-      return next();
-    }
-  }
-
-  console.log('❌ Auth failed: no session userId and no valid dev token');
-  return res.status(401).json({ error: 'Not authenticated' });
-};
-
-// Authorization middleware - checks if user is admin
-const requireAdmin = async (req: any, res: any, next: any) => {
-  const userId = req.session?.userId;
-  
-  // Check for dev bypass token in Authorization header (for dev environment only)
-  const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith('Bearer dev-bypass-token-')) {
-    const hostname = req.headers.host || '';
-    const isProductionDomain = hostname.includes('smartcrm.vip');
-    
-    // Allow dev bypass in non-production environments
-    if (!isProductionDomain) {
-      // In development/staging, allow dev bypass with full admin access
-      req.user = {
-        id: 'dev-user-12345',
-        email: 'dev@smartcrm.local',
-        username: 'dev@smartcrm.local',
-        role: 'super_admin',
-        productTier: 'super_admin'
-      };
-      console.log('✅ Dev bypass admin access granted via token');
-      return next();
-    }
-  }
-  
-  if (!userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
-  try {
-    const user = await db.query.profiles.findFirst({
-      where: (profiles, { eq }) => eq(profiles.id, userId),
-    });
-    
-    // DEV BYPASS: Allow full admin access for dev/admin accounts
-    const userEmail = user?.username || '';
-    if (user && (DEV_BYPASS_EMAILS.includes(userEmail) || user.role === 'super_admin')) {
-      req.user = user;
-      return next();
-    }
-    
-    if (!user || (user.role !== 'super_admin' && user.role !== 'wl_user')) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    res.status(500).json({ error: 'Authorization check failed' });
-  }
-};
-
-// Product tier hierarchy - higher index = more access
-const TIER_HIERARCHY = [
-  'ai_communication',      // Level 0 - Video Email, SMS, VoIP, Invoicing
-  'ai_boost_unlimited',    // Level 1 - Unlimited AI credits
-  'sales_maximizer',       // Level 2 - AI Goals and AI Tools
-  'smartcrm',              // Level 3 - Dashboard, Contacts, Pipeline, Calendar
-  'smartcrm_bundle',       // Level 4 - All tools except whitelabel
-  'whitelabel',            // Level 5 - All features including whitelabel
-  'super_admin'            // Level 6 - All features including admin
-] as const;
-
-// Get tier level (returns -1 if no tier/null)
-const getTierLevel = (tier: string | null | undefined): number => {
-  if (!tier) return -1;
-  return TIER_HIERARCHY.indexOf(tier as any);
-};
-
-// Dev bypass emails that always have full access
+// DEV BYPASS EMAILS constant - kept local as it's used in some route handlers within this file
 const DEV_BYPASS_EMAILS = [
   'dev@smartcrm.local',
   'dean@smartcrm.vip',
@@ -169,163 +73,9 @@ const DEV_BYPASS_EMAILS = [
   'victor@videoremix.io'
 ];
 
-// Product tier middleware - ensures user has ANY valid product tier (not null)
-const requireProductTier = async (req: any, res: any, next: any) => {
-  const userId = req.session?.userId;
-  const authHeader = req.headers.authorization;
-
-  // Check for dev bypass token first
-  if (process.env.NODE_ENV === 'development' && authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    if (token === 'dev-bypass-token') {
-      req.user = {
-        id: 'dev-user-12345',
-        email: 'dev@smartcrm.local',
-        username: 'dev@smartcrm.local',
-        role: 'super_admin',
-        productTier: 'super_admin'
-      };
-      req.userTier = 'super_admin';
-      console.log('✅ Dev bypass product tier granted via Bearer token');
-      return next();
-    }
-  }
-
-  if (!userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
-  try {
-    const user = await db.query.profiles.findFirst({
-      where: (profiles, { eq }) => eq(profiles.id, userId),
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
-    }
-
-    // DEV BYPASS: Allow full access for dev/admin accounts
-    const userEmail = user.username?.toLowerCase() || '';
-    if (DEV_BYPASS_EMAILS.includes(userEmail) || user.role === 'super_admin') {
-      req.user = user;
-      req.userTier = 'super_admin'; // Grant highest tier access
-      return next();
-    }
-
-    // Check if user has a valid product tier
-    if (!user.productTier) {
-      return res.status(403).json({
-        error: 'Subscription required',
-        message: 'Please purchase a subscription to access this feature',
-        code: 'NO_PRODUCT_TIER'
-      });
-    }
-
-    // Also check entitlement status if available
-    const entitlement = await getUserEntitlement(userId);
-    if (entitlement && !isUserActive(entitlement)) {
-      return res.status(403).json({
-        error: 'Subscription inactive',
-        message: 'Your subscription has expired or been revoked',
-        code: 'SUBSCRIPTION_INACTIVE'
-      });
-    }
-
-    req.user = user;
-    req.userTier = user.productTier;
-    next();
-  } catch (error) {
-    console.error('Product tier check failed:', error);
-    res.status(500).json({ error: 'Authorization check failed' });
-  }
-};
-
-// Tier-specific middleware factory - checks if user has required tier level or higher
-const requireTier = (requiredTier: typeof TIER_HIERARCHY[number]) => {
-  return async (req: any, res: any, next: any) => {
-    const userId = req.session?.userId;
-    const authHeader = req.headers.authorization;
-
-    // Check for dev bypass token first
-    if (process.env.NODE_ENV === 'development' && authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      if (token === 'dev-bypass-token') {
-        req.user = {
-          id: 'dev-user-12345',
-          email: 'dev@smartcrm.local',
-          username: 'dev@smartcrm.local',
-          role: 'super_admin',
-          productTier: 'super_admin'
-        };
-        req.userTier = 'super_admin';
-        console.log('✅ Dev bypass tier granted via Bearer token');
-        return next();
-      }
-    }
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-    
-    try {
-      const user = await db.query.profiles.findFirst({
-        where: (profiles, { eq }) => eq(profiles.id, userId),
-      });
-      
-      if (!user) {
-        return res.status(401).json({ error: 'User not found' });
-      }
-      
-      // DEV BYPASS: Allow full access for dev/admin accounts
-      const userEmail = user.username?.toLowerCase() || '';
-      if (DEV_BYPASS_EMAILS.includes(userEmail) || user.role === 'super_admin') {
-        req.user = user;
-        req.userTier = 'super_admin'; // Grant highest tier access
-        return next();
-      }
-      
-      const userTierLevel = getTierLevel(user.productTier);
-      const requiredTierLevel = getTierLevel(requiredTier);
-      
-      // No tier = no access
-      if (userTierLevel === -1) {
-        return res.status(403).json({ 
-          error: 'Subscription required',
-          message: 'Please purchase a subscription to access this feature',
-          code: 'NO_PRODUCT_TIER'
-        });
-      }
-      
-      // User tier must be >= required tier level
-      if (userTierLevel < requiredTierLevel) {
-        return res.status(403).json({ 
-          error: 'Upgrade required',
-          message: `This feature requires ${requiredTier} tier or higher`,
-          requiredTier,
-          currentTier: user.productTier,
-          code: 'INSUFFICIENT_TIER'
-        });
-      }
-      
-      // Also check entitlement status
-      const entitlement = await getUserEntitlement(userId);
-      if (entitlement && !isUserActive(entitlement)) {
-        return res.status(403).json({ 
-          error: 'Subscription inactive',
-          message: 'Your subscription has expired or been revoked',
-          code: 'SUBSCRIPTION_INACTIVE'
-        });
-      }
-      
-      req.user = user;
-      req.userTier = user.productTier;
-      next();
-    } catch (error) {
-      console.error('Tier check failed:', error);
-      res.status(500).json({ error: 'Authorization check failed' });
-    }
-  };
-};
+// IMPORTANT: Auth middleware (requireAuth, requireAdmin, requireProductTier, requireTier)
+// are now imported from './routes/auth' at the top of this file.
+// This fixes the code drift issue where middleware was duplicated between files.
 
 export async function registerRoutes(app: Express): Promise<Server> {
   let openai: OpenAI | null = null;
@@ -2242,6 +1992,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register messaging routes
   registerMessagingRoutes(app);
   // app.use('/api/companies', companiesRouter); // Temporarily disabled due to import issues
+
+  // Register white-label routes (bug fix: these were previously NOT registered)
+  app.use('/api/themes', themesRouter);
+  app.use('/api/provisioning', provisioningRouter);
+  app.use('/api/analytics', analyticsRouter);
+  app.use('/api/assets', assetsRouter);
+  app.use('/api/domains', domainsRouter);
 
   // Admin Stats Endpoint - Get real-time admin statistics (protected by requireAdmin middleware)
   app.get('/api/admin/stats', async (req, res) => {

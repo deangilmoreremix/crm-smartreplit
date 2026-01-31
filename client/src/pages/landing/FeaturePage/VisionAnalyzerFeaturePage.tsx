@@ -51,7 +51,7 @@ const VisionAnalyzerFeaturePage: React.FC = () => {
               </div>
               <div className="mt-8 flex items-center text-sm text-gray-500">
                 <CheckCheck size={18} className="text-green-500 mr-2" />
-                No credit card required • 14-day free trial
+                No credit card required
               </div>
             </div>
             <div className="w-full lg:w-1/2">
@@ -907,7 +907,7 @@ const VisionAnalyzerFeaturePage: React.FC = () => {
               Explore All Features
             </Link>
           </div>
-          <p className="mt-4 opacity-80">No credit card required • Free for 14 days</p>
+          <p className="mt-4 opacity-80">No credit card required</p>
         </div>
       </section>
       

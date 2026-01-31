@@ -38,7 +38,7 @@ const LandingFooter = () => {
                   backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
                 }}
               >
-                {config.companyName || 'Smart'}<span className="text-white">{config.companyName ? 'CRM' : 'CRM'}</span>
+                {config.companyName || 'SmartCRM'}
               </span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">

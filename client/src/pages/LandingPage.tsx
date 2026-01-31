@@ -36,7 +36,6 @@ import ParticleBackground from '../components/landing/ParticleBackground';
 
 // Import the embedded dashboard demo
 import EmbeddedDashboardDemo from '../components/landing/EmbeddedDashboardDemo';
-import VideoCallDemo from '../components/landing/VideoCallDemo';
 
 // Import DevBypassButton
 import { DevBypassButton } from '../components/DevBypassButton';
@@ -101,9 +100,9 @@ const LandingPage = () => {
         <div className="container mx-auto px-4">
           <ScrollAnimationWrapper animation="fade-in">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">The Impact of Smart CRM</h2>
+              <h2 className="text-3xl font-bold mb-4">The Impact of SmartCRM</h2>
               <p className="text-lg text-gray-700 max-w-2xl mx-auto">
-                Real results from businesses using our AI-powered CRM platform
+                Real results from businesses using our SmartCRM platform
               </p>
             </div>
           </ScrollAnimationWrapper>
@@ -184,24 +183,6 @@ const LandingPage = () => {
         </div>
       </section>
       
-      {/* Video Call Demo Section */}
-      <section className="landing-section py-16 bg-white overflow-hidden">
-        <div className="container mx-auto px-4">
-          <ScrollAnimationWrapper animation="fade-up">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Integrated Video Calling</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Connect with clients and team members through built-in HD video calls with AI-powered features
-              </p>
-            </div>
-            
-            <div className="max-w-4xl mx-auto">
-              <VideoCallDemo />
-            </div>
-          </ScrollAnimationWrapper>
-        </div>
-      </section>
-      
       {/* Additional Product Demo Section */}
         <section className="landing-section py-16 bg-gray-50 overflow-hidden">
         <div className="container mx-auto px-4">
@@ -232,7 +213,7 @@ const LandingPage = () => {
                 All the Features You Need to Succeed
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Smart CRM combines powerful sales tools with advanced AI capabilities to streamline your workflow and boost your results.
+                SmartCRM combines powerful sales tools with advanced AI capabilities to streamline your workflow and boost your results.
               </p>
             </div>
           </ScrollAnimationWrapper>
@@ -397,7 +378,7 @@ const LandingPage = () => {
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Hear from sales teams who've transformed their results with Smart CRM
+                Hear from sales teams who've transformed their results with SmartCRM
               </p>
             </div>
           </ScrollAnimationWrapper>
@@ -405,7 +386,7 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <ScrollAnimationWrapper animation="fade-up" delay={100}>
               <TestimonialCard
-                quote="Smart CRM has completely transformed our sales process. The AI insights help us prioritize the right leads and close 40% more deals."
+                quote="SmartCRM has completely transformed our sales process. The AI insights help us prioritize the right leads and close 40% more deals."
                 name="Sarah Johnson"
                 position="VP of Sales"
                 company="TechCorp"
@@ -457,7 +438,7 @@ const LandingPage = () => {
                 tier="Starter"
                 price={29}
                 description="Perfect for small teams getting started"
-                buttonText="Start Free Trial"
+                buttonText="Get Started Now"
                 features={[
                   "Up to 3 users",
                   "1,000 contacts",
@@ -474,7 +455,7 @@ const LandingPage = () => {
                 tier="Professional"
                 price={79}
                 description="Best for growing sales teams"
-                buttonText="Start Free Trial"
+                buttonText="Get Started Now"
                 features={[
                   "Up to 10 users",
                   "10,000 contacts",
@@ -525,14 +506,14 @@ const LandingPage = () => {
               Ready to Transform Your Sales Process?
             </h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
-              Join thousands of sales teams using Smart CRM to close more deals and grow their business faster.
+              Join thousands of sales teams using SmartCRM to close more deals and grow their business faster.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <Link 
+              <Link
                 to="/signup"
                 className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-all duration-200 flex items-center"
               >
-                Start Free Trial
+                Get Started Now
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
               <button 
@@ -542,9 +523,6 @@ const LandingPage = () => {
                 Schedule Demo
               </button>
             </div>
-            <p className="text-sm mt-4" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-              No credit card required • 14-day free trial • Cancel anytime
-            </p>
           </ScrollAnimationWrapper>
         </div>
       </section>

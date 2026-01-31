@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useWhitelabel } from '../../contexts/WhitelabelContext';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { GlassCard } from '../ui/GlassCard';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -19,8 +19,7 @@ import {
   Trash2,
   Edit,
   Check,
-  X,
-  Palette
+  LayoutDashboard
 } from 'lucide-react';
 import { DashboardSectionConfig, CustomKPIConfig } from '../../types/whitelabel';
 
@@ -47,12 +46,6 @@ export const DashboardCustomization: React.FC = () => {
   const { config, updateConfig } = useWhitelabel();
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editingKPI, setEditingKPI] = useState<string | null>(null);
-  const [newSectionForm, setNewSectionForm] = useState<Partial<DashboardSectionConfig>>({
-    title: '',
-    description: '',
-    icon: 'Settings',
-    enabled: true
-  });
   const [newKPIForm, setNewKPIForm] = useState<Partial<CustomKPIConfig>>({
     label: '',
     description: '',
@@ -110,11 +103,11 @@ export const DashboardCustomization: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Dashboard Sections Customization */}
-      <Card className={`transition-colors duration-300 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <Settings className="h-5 w-5 mr-2" />
-            Dashboard Sections
+      <GlassCard>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <LayoutDashboard className="h-5 w-5 mr-2 text-blue-500" />
+            <h3 className="text-lg font-semibold">Dashboard Sections</h3>
             <FeatureTooltip
               feature="Dashboard Sections"
               description="Customize the appearance and content of dashboard sections to match your brand and business needs."
@@ -130,9 +123,9 @@ export const DashboardCustomization: React.FC = () => {
                 "Hide advanced features for basic users"
               ]}
             />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </div>
+        </div>
+        <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {PREDEFINED_SECTIONS.map((section) => {
               const customConfig = config.dashboardSections[section.id];
@@ -220,8 +213,10 @@ export const DashboardCustomization: React.FC = () => {
                         <div className="flex-1">
                           <Label className="text-xs">Custom Color</Label>
                           <ColorInput
+                            id={`section-color-${section.id}`}
                             value={customConfig?.customColor || '#3B82F6'}
                             onChange={(color) => updateDashboardSection(section.id, { customColor: color })}
+                            label=""
                           />
                         </div>
                       </div>
@@ -250,15 +245,15 @@ export const DashboardCustomization: React.FC = () => {
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </GlassCard>
 
       {/* Custom KPIs */}
-      <Card className={`transition-colors duration-300 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <BarChart3 className="h-5 w-5 mr-2" />
-            Custom KPI Cards
+      <GlassCard>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <BarChart3 className="h-5 w-5 mr-2 text-green-500" />
+            <h3 className="text-lg font-semibold">Custom KPI Cards</h3>
             <FeatureTooltip
               feature="Custom KPI Cards"
               description="Create branded KPI cards that display your most important business metrics with custom colors and icons."
@@ -274,9 +269,9 @@ export const DashboardCustomization: React.FC = () => {
                 "Track 'Lead Conversion Rate' with custom styling"
               ]}
             />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </div>
+        </div>
+        <div className="p-6 space-y-6">
           {/* Add New KPI Form */}
           <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-700/50">
             <h4 className={`font-medium mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -318,13 +313,15 @@ export const DashboardCustomization: React.FC = () => {
               <div>
                 <Label>Color</Label>
                 <ColorInput
+                  id="new-kpi-color"
                   value={newKPIForm.color || '#3B82F6'}
                   onChange={(color) => setNewKPIForm({...newKPIForm, color})}
+                  label=""
                 />
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button onClick={addCustomKPI} disabled={!newKPIForm.label || !newKPIForm.description}>
+              <Button onClick={addCustomKPI} disabled={!newKPIForm.label || !newKPIForm.description} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Add KPI
               </Button>
@@ -428,8 +425,10 @@ export const DashboardCustomization: React.FC = () => {
                           <div className="flex-1">
                             <Label className="text-xs">Color</Label>
                             <ColorInput
+                              id={`kpi-color-${kpi.id}`}
                               value={kpi.color}
                               onChange={(color) => updateCustomKPI(kpi.id, { color })}
+                              label=""
                             />
                           </div>
                         </div>
@@ -459,8 +458,8 @@ export const DashboardCustomization: React.FC = () => {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </GlassCard>
     </div>
   );
 };

@@ -108,12 +108,7 @@ const FAQ: React.FC = () => {
       answer: 'We offer flexible pricing plans to suit businesses of all sizes. Our Starter plan is $25/user/month, Professional is $65/user/month, and Enterprise is $125/user/month. All plans include core CRM features, with more advanced AI capabilities available in the higher-tier plans. Annual billing gives you a 20% discount.',
       category: 'pricing'
     },
-    {
-      id: 'free-trial',
-      question: 'Is there a free trial?',
-      answer: 'Yes, we offer a 14-day free trial with full access to all features in our Professional plan. No credit card is required to start your trial.',
-      category: 'pricing'
-    },
+
     {
       id: 'usage-limits',
       question: 'Are there usage limits for AI features?',

@@ -118,7 +118,7 @@ export const requireAdmin = async (req: any, res: any, next: any) => {
 
     // DEV BYPASS: Allow full admin access for dev/admin accounts
     const userEmail = user?.username || '';
-    if (user && DEV_BYPASS_EMAILS.includes(userEmail) || user.role === 'super_admin') {
+    if (user && (DEV_BYPASS_EMAILS.includes(userEmail) || user.role === 'super_admin')) {
       req.user = user;
       return next();
     }

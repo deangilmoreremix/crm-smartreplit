@@ -180,7 +180,7 @@ const SalesLandingPage: React.FC = () => {
             onClick={() => navigate('/dashboard')}
             className="px-8 py-4 bg-white text-blue-600 rounded-lg text-lg font-semibold hover:bg-gray-100 inline-flex items-center"
           >
-            Start Your Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+            Get Started <ArrowRight className="ml-2 w-5 h-5" />
           </button>
         </div>
       </section>

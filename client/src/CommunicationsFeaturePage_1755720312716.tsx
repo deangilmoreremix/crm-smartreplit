@@ -43,7 +43,7 @@ const CommunicationsFeaturePage: React.FC = () => {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/register" className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:shadow-lg transition duration-300">
-                  Start Free Trial
+                  Get Started
                 </Link>
                 <HashLink to="#communication-tools" className="px-8 py-4 bg-white text-blue-600 font-medium rounded-lg border border-blue-200 hover:border-blue-300 hover:shadow-md transition duration-300 flex items-center">
                   Explore Tools <ChevronRight size={18} className="ml-1" />
@@ -417,7 +417,7 @@ const CommunicationsFeaturePage: React.FC = () => {
             Ready to Transform Your Communication?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Start connecting with prospects and customers more effectively today. Try all communication features free for 14 days.
+            Start connecting with prospects and customers more effectively today. Try all communication features now.
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">

@@ -55,7 +55,7 @@ const LandingHeader = () => {
                 backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
               }}
             >
-              {config.companyName || 'Smart'}<span className="text-gray-900">{config.companyName ? 'CRM' : 'CRM'}</span>
+              {config.companyName || 'SmartCRM'}
             </span>
           </Link>
 
@@ -153,7 +153,7 @@ const LandingHeader = () => {
                 backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
               }}
             >
-              {config.companyName || 'Smart'}<span className="text-gray-900">{config.companyName ? 'CRM' : 'CRM'}</span>
+              {config.companyName || 'SmartCRM'}
             </span>
           </div>
 
