@@ -5,7 +5,7 @@ import React from 'react';
 
 const AgencyApp: React.FC = () => (
   <iframe
-    src="https://tubular-choux-2a9b3c.netlify.app"
+    src="https://agency.smartcrm.vip/"
     className="w-full h-full border-0"
     title="AI Agency Suite"
     allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"

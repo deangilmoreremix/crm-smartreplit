@@ -16,7 +16,7 @@ const AIGoalsApp: React.FC = () => {
         });
         
         const modulePromise = loadRemoteComponent(
-          'https://tubular-choux-2a9b3c.netlify.app',
+          'https://agency.smartcrm.vip/',
           'AIGoalsApp',
           './AIGoalsApp'
         );
@@ -37,7 +37,7 @@ const AIGoalsApp: React.FC = () => {
     // Fallback to iframe
     return (
       <iframe
-        src="https://tubular-choux-2a9b3c.netlify.app"
+        src="https://agency.smartcrm.vip/"
         className="w-full h-full border-0"
         title="Remote AI Goals System"
         allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"

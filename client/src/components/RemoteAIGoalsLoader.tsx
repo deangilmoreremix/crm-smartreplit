@@ -17,7 +17,7 @@ const RemoteAIGoalsLoader: React.FC<RemoteAIGoalsLoaderProps> = ({ showHeader = 
       )}
       
       <iframe
-        src="https://tubular-choux-2a9b3c.netlify.app"
+        src="https://agency.smartcrm.vip/"
         style={{
           width: '100%',
           height: showHeader ? 'calc(100% - 50px)' : '100%',
