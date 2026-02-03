@@ -3,7 +3,7 @@
  * Defines which product tiers have access to which features
  */
 
-export const featureTiers = {
+export const featureTiers: Record<string, string[]> = {
   // Dashboard & Core
   dashboard: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
   contacts: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],

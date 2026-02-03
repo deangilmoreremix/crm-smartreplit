@@ -1220,3 +1220,168 @@ export type FeaturePackage = typeof featurePackages.$inferSelect;
 export type InsertFeaturePackage = z.infer<typeof insertFeaturePackageSchema>;
 export type PartnerMetrics = typeof partnerMetrics.$inferSelect;
 export type InsertPartnerMetrics = z.infer<typeof insertPartnerMetricsSchema>;
+
+// ============================================================================
+// AI Feature Pricing System Tables
+// ============================================================================
+
+// AI Feature Definitions (set by Super Admin)
+export const aiFeatureDefinitions = pgTable("ai_feature_definitions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  featureKey: text("feature_key").unique().notNull(),
+  featureName: text("feature_name").notNull(),
+  description: text("description"),
+  category: text("category"),
+  baseCreditCost: integer("base_credit_cost").default(10),
+  minCreditCost: integer("min_credit_cost").default(1),
+  maxCreditCost: integer("max_credit_cost").default(1000),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// White-Label Reseller Pricing (resellers set prices for their customers)
+export const aiResellerPricing = pgTable("ai_reseller_pricing", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+  featureKey: text("feature_key").notNull(),
+  retailCreditCost: integer("retail_credit_cost").notNull(),
+  wholesaleCreditCost: integer("wholesale_credit_cost").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  uniqueResellerFeature: {
+    name: 'unique_reseller_feature',
+    columns: [table.resellerId, table.featureKey]
+  }
+}));
+
+// AI Feature Usage Tracking
+export const aiFeatureUsage = pgTable("ai_feature_usage", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  resellerId: uuid("reseller_id").references(() => profiles.id),
+  featureKey: text("feature_key").notNull(),
+  creditsCharged: integer("credits_charged").notNull(),
+  creditsPaidToPlatform: integer("credits_paid_to_platform").notNull(),
+  resellerProfitCredits: integer("reseller_profit_credits").default(0),
+  context: json("context").default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Reseller Credit Balances
+export const resellerCredits = pgTable("reseller_credits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull().unique(),
+  wholesaleCreditsPurchased: integer("wholesale_credits_purchased").default(0),
+  wholesaleCreditsUsed: integer("wholesale_credits_used").default(0),
+  wholesaleCreditsAvailable: integer("wholesale_credits_available").default(0),
+  totalRevenueCents: integer("total_revenue_cents").default(0),
+  totalProfitCents: integer("total_profit_cents").default(0),
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reseller Credit Transactions
+export const resellerCreditTransactions = pgTable("reseller_credit_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+  type: text("type").notNull(), // 'wholesale_purchase', 'retail_sale', 'payout'
+  creditsAmount: integer("credits_amount").notNull(),
+  amountCents: integer("amount_cents"),
+  endUserId: uuid("end_user_id").references(() => profiles.id),
+  featureKey: text("feature_key"),
+  description: text("description"),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for AI pricing tables
+export const aiFeatureDefinitionsRelations = relations(aiFeatureDefinitions, ({ many }) => ({
+  resellerPricing: many(aiResellerPricing),
+  usage: many(aiFeatureUsage),
+}));
+
+export const aiResellerPricingRelations = relations(aiResellerPricing, ({ one }) => ({
+  reseller: one(profiles, {
+    fields: [aiResellerPricing.resellerId],
+    references: [profiles.id],
+  }),
+  feature: one(aiFeatureDefinitions, {
+    fields: [aiResellerPricing.featureKey],
+    references: [aiFeatureDefinitions.featureKey],
+  }),
+}));
+
+export const aiFeatureUsageRelations = relations(aiFeatureUsage, ({ one }) => ({
+  user: one(profiles, {
+    fields: [aiFeatureUsage.userId],
+    references: [profiles.id],
+  }),
+  reseller: one(profiles, {
+    fields: [aiFeatureUsage.resellerId],
+    references: [profiles.id],
+  }),
+}));
+
+export const resellerCreditsRelations = relations(resellerCredits, ({ one, many }) => ({
+  reseller: one(profiles, {
+    fields: [resellerCredits.resellerId],
+    references: [profiles.id],
+  }),
+  transactions: many(resellerCreditTransactions),
+}));
+
+export const resellerCreditTransactionsRelations = relations(resellerCreditTransactions, ({ one }) => ({
+  reseller: one(profiles, {
+    fields: [resellerCreditTransactions.resellerId],
+    references: [profiles.id],
+  }),
+  endUser: one(profiles, {
+    fields: [resellerCreditTransactions.endUserId],
+    references: [profiles.id],
+  }),
+}));
+
+// Insert schemas for AI pricing tables
+export const insertAIFeatureDefinitionSchema = createInsertSchema(aiFeatureDefinitions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAIResellerPricingSchema = createInsertSchema(aiResellerPricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAIFeatureUsageSchema = createInsertSchema(aiFeatureUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertResellerCreditsSchema = createInsertSchema(resellerCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertResellerCreditTransactionSchema = createInsertSchema(resellerCreditTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for AI pricing tables
+export type AIFeatureDefinition = typeof aiFeatureDefinitions.$inferSelect;
+export type InsertAIFeatureDefinition = z.infer<typeof insertAIFeatureDefinitionSchema>;
+export type AIResellerPricing = typeof aiResellerPricing.$inferSelect;
+export type InsertAIResellerPricing = z.infer<typeof insertAIResellerPricingSchema>;
+export type AIFeatureUsage = typeof aiFeatureUsage.$inferSelect;
+export type InsertAIFeatureUsage = z.infer<typeof insertAIFeatureUsageSchema>;
+export type ResellerCredits = typeof resellerCredits.$inferSelect;
+export type InsertResellerCredits = z.infer<typeof insertResellerCreditsSchema>;
+export type ResellerCreditTransaction = typeof resellerCreditTransactions.$inferSelect;
+export type InsertResellerCreditTransaction = z.infer<typeof insertResellerCreditTransactionSchema>;

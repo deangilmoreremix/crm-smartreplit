@@ -582,6 +582,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/invoicing"
             element={
@@ -591,6 +593,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/lead-automation"
             element={
@@ -600,6 +605,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/circle-prospecting"
             element={
@@ -609,6 +617,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/forms"
             element={
@@ -618,6 +629,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/business-analysis"
             element={
@@ -627,6 +641,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/content-library"
             element={
@@ -636,6 +653,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
           <Route
             path="/voice-profiles"
             element={
@@ -705,6 +723,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/invoicing"
             element={
@@ -714,6 +734,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/lead-automation"
             element={
@@ -723,6 +746,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/circle-prospecting"
             element={
@@ -732,6 +758,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/forms"
             element={
@@ -741,6 +770,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/business-analysis"
             element={
@@ -750,6 +782,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
+          {/* Business Tools - Hidden from UI */}
+          {/*
           <Route
             path="/content-library"
             element={
@@ -759,6 +794,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          */}
           <Route
             path="/voice-profiles"
             element={

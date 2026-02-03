@@ -179,21 +179,23 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     { name: 'Video Email', tool: 'video-email', icon: Video },
     { name: 'Text Messages', tool: 'text-messages', icon: MessageSquare },
     { name: 'Phone System', tool: 'phone-system', icon: Phone },
-    { name: 'Invoicing', tool: 'invoicing', icon: FileText },
-    { name: 'Lead Automation', tool: 'lead-automation', icon: Bot },
-    { name: 'Circle Prospecting', tool: 'circle-prospecting', icon: MapPin },
-    { name: 'Forms & Surveys', tool: 'forms', icon: FileCheck },
-    { name: 'Business Analyzer', tool: 'business-analysis', icon: BarChart3 },
-    { name: 'Content Library', tool: 'content-library', icon: BookOpen },
+    // Business Tools - Hidden from UI
+    // { name: 'Invoicing', tool: 'invoicing', icon: FileText },
+    // { name: 'Lead Automation', tool: 'lead-automation', icon: Bot },
+    // { name: 'Circle Prospecting', tool: 'circle-prospecting', icon: MapPin },
+    // { name: 'Forms & Surveys', tool: 'forms', icon: FileCheck },
+    // { name: 'Business Analyzer', tool: 'business-analysis', icon: BarChart3 },
+    // { name: 'Content Library', tool: 'content-library', icon: BookOpen },
     { name: 'Voice Profiles', tool: 'voice-profiles', icon: Mic }
   ];
 
   const contentTools = [
-    { name: 'Content Library', tool: 'content-library', icon: BookOpen },
-    { name: 'Voice Profiles', tool: 'voice-profiles', icon: Mic },
-    { name: 'Business Analysis', tool: 'business-analysis', icon: BarChart3 },
+    // Business Tools - Hidden from UI
+    // { name: 'Content Library', tool: 'content-library', icon: BookOpen },
+    // { name: 'Voice Profiles', tool: 'voice-profiles', icon: Mic },
+    // { name: 'Business Analysis', tool: 'business-analysis', icon: BarChart3 },
     { name: 'Image Generator', tool: 'image-generator', icon: Camera },
-    { name: 'Forms', tool: 'forms', icon: FileText },
+    // { name: 'Forms', tool: 'forms', icon: FileText },
     { name: 'AI Model Demo', tool: 'ai-model-demo', icon: Brain }
   ];
 
@@ -433,10 +435,11 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   }
 
 
+  // Dropdown menus - Sales and Business Intel hidden from UI
   const allDropdownMenus = [
     { id: 'communications', label: 'Communication', icon: MessageSquare, badge: communicationTools.length, color: 'from-blue-500 to-sky-500', badgeColor: 'bg-blue-500' },
-    { id: 'sales', label: 'Sales', icon: DollarSign, badge: salesTools.length, color: 'from-green-500 to-teal-500', badgeColor: 'bg-green-500', requiresAccess: 'ai_tools' },
-    { id: 'intel', label: 'Business Intel', icon: BarChart3, badge: 35, color: 'from-amber-500 to-orange-500', badgeColor: 'bg-amber-500', requiresAccess: 'ai_tools' },
+    // { id: 'sales', label: 'Sales', icon: DollarSign, badge: salesTools.length, color: 'from-green-500 to-teal-500', badgeColor: 'bg-green-500', requiresAccess: 'ai_tools' },
+    // { id: 'intel', label: 'Business Intel', icon: BarChart3, badge: 35, color: 'from-amber-500 to-orange-500', badgeColor: 'bg-amber-500', requiresAccess: 'ai_tools' },
     { id: 'wl', label: 'WL', icon: Globe, badge: wlApps.length, color: 'from-indigo-500 to-purple-500', badgeColor: 'bg-indigo-500', requiresAccess: 'ai_tools' },
     { id: 'apps', label: 'Apps', icon: Grid3X3, badge: connectedApps.length, color: 'from-purple-500 to-violet-500', badgeColor: 'bg-purple-500', requiresAccess: 'ai_tools' }
   ];
@@ -623,7 +626,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                                 'revenue-intelligence': '/revenue-intelligence'
                               };
 
-                              const route = routeMap[tool.tool] || `/${tool.tool}`;
+                              const route = tool.tool ? (routeMap[tool.tool] || `/${tool.tool}`) : '#';
                               navigate(route);
                               closeDropdown();
                               setIsMobileMenuOpen(false);
@@ -660,7 +663,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                                 'business-analysis': '/business-analysis'
                               };
                               
-                              const route = routeMap[tool.tool] || `/${tool.tool}`;
+                              const route = tool.tool ? (routeMap[tool.tool] || `/${tool.tool}`) : '#';
                               navigate(route);
                               closeDropdown();
                               setIsMobileMenuOpen(false);
@@ -1003,7 +1006,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                 'competitor-insights': '/competitor-insights',
                 'revenue-intelligence': '/revenue-intelligence'
               };
-              const route = routeMap[tool.tool] || `/${tool.tool}`;
+              const route = tool.tool ? (routeMap[tool.tool] || `/${tool.tool}`) : '#';
               navigate(route);
               closeDropdown();
               setIsMobileMenuOpen(false);
@@ -1043,7 +1046,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                 'circle-prospecting': '/circle-prospecting'
               };
               
-              const route = routeMap[tool.tool] || `/${tool.tool}`;
+              const route = tool.tool ? (routeMap[tool.tool] || `/${tool.tool}`) : '#';
               navigate(route);
               closeDropdown();
               setIsMobileMenuOpen(false);
@@ -1180,7 +1183,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                   'business-productivity': '/business-analytics/productivity',
                   'business-insights': '/business-analytics/insights',
                 };
-                const route = routeMap[tool.tool] || `/business-analytics/${tool.tool}`;
+                const route = tool.tool ? (routeMap[tool.tool] || `/business-analytics/${tool.tool}`) : '#';
                 navigate(route);
                 closeDropdown();
                 setIsMobileMenuOpen(false);
