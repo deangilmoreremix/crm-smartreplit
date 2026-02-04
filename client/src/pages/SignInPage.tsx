@@ -1,15 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { useAuth } from '../contexts/AuthContext';
+import { signInWithEmail } from '../services/authService';
 import { AlertCircle, Eye, EyeOff, Code2, Power } from 'lucide-react';
 
 const SignInPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark } = useTheme();
-  const { signIn } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -18,28 +16,24 @@ const SignInPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isDev, setIsDev] = useState(false);
   const [isDevMode, setIsDevMode] = useState(false);
 
   useEffect(() => {
-    console.log('🔴 SIGNIN PAGE LOADED - DEV BUTTON SHOULD BE VISIBLE');
-    setIsDev(true);
+    console.log('🔴 SIGNIN PAGE LOADED');
     setIsDevMode(localStorage.getItem('smartcrm-dev-mode') === 'true');
   }, []);
 
   const from = location.state?.from?.pathname || '/dashboard';
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await signIn(formData.email, formData.password);
+    const { data, error: authError } = await signInWithEmail(formData.email, formData.password);
     
-    if (error) {
-      // Show standard error message since email verification is disabled
-      setError(error.message);
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
     } else {
       navigate(from, { replace: true });
@@ -54,22 +48,18 @@ const SignInPage: React.FC = () => {
   };
 
   const toggleDevMode = () => {
-    console.log('🔴 DEV BUTTON CLICKED - isDevMode was:', isDevMode);
     if (isDevMode) {
       localStorage.removeItem('smartcrm-dev-mode');
       localStorage.removeItem('dev-user-session');
       localStorage.removeItem('sb-supabase-auth-token');
       setIsDevMode(false);
-      console.log('🔴 Dev mode DISABLED');
       window.location.reload();
     } else {
       localStorage.setItem('smartcrm-dev-mode', 'true');
       setIsDevMode(true);
-      console.log('🔴 Dev mode ENABLED');
       window.location.reload();
     }
   };
-
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4 relative`}>
@@ -93,12 +83,12 @@ const SignInPage: React.FC = () => {
           cursor: 'pointer'
         }}
         title={isDevMode ? 'Dev mode enabled - click to disable' : 'Click to enable dev mode'}
-        data-testid="button-dev-bypass"
       >
         <Code2 size={14} />
         <span>Dev</span>
         <Power size={12} />
       </button>
+      
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>

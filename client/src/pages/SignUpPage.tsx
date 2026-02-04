@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
-import { useAuth } from '../contexts/AuthContext';
+import { signUpWithEmail } from '../services/authService';
 import { PasswordStrengthIndicator } from '../components/ui/PasswordStrengthIndicator';
 import { validatePassword } from '../utils/passwordValidation';
 import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
@@ -10,7 +9,6 @@ import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { signUp } = useAuth();
   
   // Get app context from URL parameters for multi-tenant email routing
   const urlParams = new URLSearchParams(window.location.search);
@@ -49,7 +47,7 @@ const SignUpPage: React.FC = () => {
       return;
     }
 
-    const { error } = await signUp(formData.email, formData.password, {
+    const { data, error: signUpError } = await signUpWithEmail(formData.email, formData.password, {
       data: {
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -59,8 +57,8 @@ const SignUpPage: React.FC = () => {
       }
     });
     
-    if (error) {
-      setError(error.message);
+    if (signUpError) {
+      setError(signUpError.message);
       setLoading(false);
     } else {
       setSuccess('Account created successfully! Redirecting to your dashboard...');
