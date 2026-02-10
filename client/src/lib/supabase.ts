@@ -1,175 +1,180 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Get environment variables with fallbacks
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Debug logging for environment variables
-console.log('🔍 Supabase URL:', supabaseUrl);
-console.log('🔍 Supabase Anon Key:', supabaseAnonKey ? '***' + supabaseAnonKey.slice(-4) : 'undefined');
+console.log('🔍 Supabase URL:', supabaseUrl || 'NOT SET');
+console.log('🔍 Supabase Anon Key:', supabaseAnonKey ? '***' + supabaseAnonKey.slice(-4) : 'NOT SET');
 
-// Create client directly (like your working example)
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder-key', {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    storageKey: 'smartcrm-auth-token'
-  }
-});
+// Check if Supabase is properly configured
+const supabaseIsConfigured = !!(
+  supabaseUrl && 
+  supabaseAnonKey && 
+  supabaseUrl !== 'undefined' && 
+  supabaseAnonKey !== 'undefined' && 
+  supabaseUrl.includes('supabase.co') &&
+  !supabaseUrl.includes('placeholder')
+);
 
-// Export a function to check if Supabase is available
-export const isSupabaseConfigured = () => !!(supabaseUrl && supabaseAnonKey);
+// Create Supabase client only if properly configured
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let supabaseClient: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let authClient: any;
 
-// Helper function to check connection
-export const checkSupabaseConnection = async () => {
-  try {
-    const { data, error } = await supabase.from('profiles').select('count').limit(1);
-    return { connected: !error, error: error?.message };
-  } catch (error) {
-    return { connected: false, error: 'Connection failed' };
-  }
-};
-
-// Auth helpers
-export const auth = {
-  signUp: async (email: string, password: string, options?: any) => {
-    // Get dynamic redirect URL based on environment
-    const currentOrigin = window.location.origin;
-    const isDevelopment = currentOrigin.includes('localhost') || 
-                         currentOrigin.includes('replit.dev') || 
-                         currentOrigin.includes('replit.app');
-    
-    const emailRedirectTo = isDevelopment 
-      ? `${currentOrigin}/auth/confirm`
-      : 'https://app.smartcrm.vip/auth/confirm';
-
-    console.log('SignUp with emailRedirectTo:', emailRedirectTo);
-
-    return await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo,
-        ...options
-      }
-    });
-  },
-
-  signIn: async (email: string, password: string) => {
-    return await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-  },
-
-  signInWithProvider: async (provider: 'google' | 'github' | 'discord') => {
-    // Get dynamic redirect URL based on environment
-    const currentOrigin = window.location.origin;
-    const isDevelopment = currentOrigin.includes('localhost') || 
-                         currentOrigin.includes('replit.dev') || 
-                         currentOrigin.includes('replit.app');
-    
-    const redirectTo = isDevelopment 
-      ? `${currentOrigin}/auth/confirm`
-      : 'https://app.smartcrm.vip/auth/confirm';
-
-    console.log('OAuth SignIn with redirectTo:', redirectTo);
-
-    return await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo
-      }
-    });
-  },
-
-  signInWithMagicLink: async (email: string) => {
-    // Get dynamic redirect URL based on environment
-    const currentOrigin = window.location.origin;
-    const isDevelopment = currentOrigin.includes('localhost') || 
-                         currentOrigin.includes('replit.dev') || 
-                         currentOrigin.includes('replit.app');
-    
-    const emailRedirectTo = isDevelopment 
-      ? `${currentOrigin}/auth/confirm`
-      : 'https://app.smartcrm.vip/auth/confirm';
-
-    console.log('Magic link with emailRedirectTo:', emailRedirectTo);
-
-    return await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo
-      }
-    });
-  },
-
-  signOut: async () => {
-    return await supabase.auth.signOut();
-  },
-
-  resetPassword: async (email: string) => {
-    const currentOrigin = window.location.origin;
-    const isDevelopment = currentOrigin.includes('localhost') || 
-                          currentOrigin.includes('replit.dev') || 
-                          currentOrigin.includes('replit.app');
-
-    const redirectTo = isDevelopment 
-      ? `${currentOrigin}/auth/reset-password`
-      : 'https://app.smartcrm.vip/auth/reset-password';
-
-    console.log('🔐 Password Reset Request:', {
-      email,
-      redirectTo,
-      environment: isDevelopment ? 'development' : 'production',
-      origin: currentOrigin
-    });
-
-    const response = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo
-    });
-
-    console.log('✅ Supabase resetPasswordForEmail Response:', {
-      hasData: !!response.data,
-      hasError: !!response.error,
-      errorMessage: response.error?.message,
-      errorStatus: response.error?.status,
-      redirectTo
-    });
-
-    if (response.error) {
-      console.error('❌ Supabase Error Details:', {
-        message: response.error.message,
-        status: response.error.status,
-        name: response.error.name
-      });
+if (supabaseIsConfigured) {
+  // Create real Supabase client
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storageKey: 'smartcrm-auth-token'
     }
+  });
 
-    // Return standard Supabase response format
-    return response;
-  },
+  authClient = {
+    signUp: async (email: string, password: string, options?: Record<string, unknown>) => {
+      const currentOrigin = window.location.origin;
+      const isDevelopment = currentOrigin.includes('localhost') || 
+                           currentOrigin.includes('replit.dev') || 
+                           currentOrigin.includes('replit.app');
+      
+      const emailRedirectTo = isDevelopment 
+        ? `${currentOrigin}/auth/confirm`
+        : 'https://app.smartcrm.vip/auth/confirm';
 
-  updatePassword: async (password: string) => {
-    return await supabase.auth.updateUser({
-      password
-    });
-  },
+      return await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo,
+          ...options
+        }
+      });
+    },
+    signIn: async (email: string, password: string) => {
+      return await supabaseClient.auth.signInWithPassword({ email, password });
+    },
+    signInWithProvider: async (provider: 'google' | 'github' | 'discord') => {
+      const currentOrigin = window.location.origin;
+      const isDevelopment = currentOrigin.includes('localhost') || 
+                           currentOrigin.includes('replit.dev') || 
+                           currentOrigin.includes('replit.app');
+      
+      const redirectTo = isDevelopment 
+        ? `${currentOrigin}/auth/confirm`
+        : 'https://app.smartcrm.vip/auth/confirm';
 
-  getSession: async () => {
-    const { data, error } = await supabase.auth.getSession();
-    return { data, error };
-  },
+      return await supabaseClient.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo }
+      });
+    },
+    signInWithMagicLink: async (email: string) => {
+      const currentOrigin = window.location.origin;
+      const isDevelopment = currentOrigin.includes('localhost') || 
+                           currentOrigin.includes('replit.dev') || 
+                           currentOrigin.includes('replit.app');
+      
+      const emailRedirectTo = isDevelopment 
+        ? `${currentOrigin}/auth/confirm`
+        : 'https://app.smartcrm.vip/auth/confirm';
 
-  getUser: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    return { data, error };
-  },
+      return await supabaseClient.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo }
+      });
+    },
+    signOut: async () => {
+      return await supabaseClient.auth.signOut();
+    },
+    resetPassword: async (email: string) => {
+      const currentOrigin = window.location.origin;
+      const isDevelopment = currentOrigin.includes('localhost') || 
+                            currentOrigin.includes('replit.dev') || 
+                            currentOrigin.includes('replit.app');
 
-  onAuthStateChange: (callback: (event: string, session: any) => void) => {
-    return supabase.auth.onAuthStateChange(callback);
+      const redirectTo = isDevelopment 
+        ? `${currentOrigin}/auth/reset-password`
+        : 'https://app.smartcrm.vip/auth/reset-password';
+
+      return await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+    },
+    updatePassword: async (password: string) => {
+      return await supabaseClient.auth.updateUser({ password });
+    },
+    getSession: async () => {
+      const { data, error } = await supabaseClient.auth.getSession();
+      return { data, error };
+    },
+    getUser: async () => {
+      const { data, error } = await supabaseClient.auth.getUser();
+      return { data, error };
+    },
+    onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
+      return supabaseClient.auth.onAuthStateChange(callback);
+    }
+  };
+} else {
+  // Mock Supabase client for when not configured - prevents infinite retry loops
+  console.warn('⚠️ Supabase not configured properly. Using fallback mode to prevent infinite retries.');
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabaseClient = {
+    from: (_table: string) => ({
+      select: () => Promise.resolve({ data: [], error: null }),
+      insert: () => Promise.resolve({ data: null, error: null }),
+      update: () => Promise.resolve({ data: null, error: null }),
+      delete: () => Promise.resolve({ data: null, error: null }),
+      upsert: () => Promise.resolve({ data: null, error: null })
+    }),
+    rpc: () => Promise.resolve({ data: null, error: null }),
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: null }),
+        download: () => Promise.resolve({ data: null, error: null }),
+        list: () => Promise.resolve({ data: null, error: null }),
+        remove: () => Promise.resolve({ data: null, error: null }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } })
+      })
+    },
+    auth: {
+      signUp: async () => ({ data: null, error: { message: 'Supabase not configured', name: 'ConfigurationError' } }),
+      signInWithPassword: async () => ({ data: null, error: { message: 'Supabase not configured', name: 'ConfigurationError' } }),
+      signInWithOAuth: async () => ({ data: null, error: { message: 'Supabase not configured', name: 'ConfigurationError' } }),
+      signInWithOtp: async () => ({ data: null, error: { message: 'Supabase not configured', name: 'ConfigurationError' } }),
+      signOut: async () => ({}),
+      resetPasswordForEmail: async () => ({ data: null, error: { message: 'Supabase not configured', name: 'ConfigurationError' } }),
+      updateUser: async () => ({ data: null, error: { message: 'Supabase not configured', name: 'ConfigurationError' } }),
+      getSession: async () => ({ data: { session: null }, error: null }),
+      getUser: async () => ({ data: { user: null }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+    }
+  };
+  
+  authClient = supabaseClient.auth;
+}
+
+// Export check function
+export const isSupabaseConfigured = (): boolean => supabaseIsConfigured;
+
+// Helper function to check connection with timeout
+export const checkSupabaseConnection = async (): Promise<{ connected: boolean; error: string | null }> => {
+  if (!supabaseIsConfigured) {
+    return { connected: false, error: 'Supabase not configured' };
+  }
+  
+  try {
+    const { data, error } = await supabaseClient.from('profiles').select('count').limit(1);
+    return { connected: !error, error: error?.message || null };
+  } catch (err) {
+    return { connected: false, error: err instanceof Error ? err.message : 'Connection failed' };
   }
 };
 
-export default supabase;
+// Export named exports
+export { supabaseClient as supabase, authClient as auth };

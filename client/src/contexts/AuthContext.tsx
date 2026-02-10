@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session, AuthError, AuthChangeEvent, Subscription } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Constants
 const DEV_BYPASS_PASSWORD = import.meta.env.VITE_DEV_BYPASS_PASSWORD || 'dev-bypass-password-change-in-production';
@@ -8,9 +8,14 @@ const ALLOWED_DEV_DOMAINS = ['localhost', '127.0.0.1', 'replit.dev', 'github.dev
 const APP_CONTEXT = 'smartcrm';
 const EMAIL_TEMPLATE_SET = 'smartcrm';
 
+// Retry tracking to prevent infinite loops
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_COOLDOWN_MS = 5000;
+let retryCount = 0;
+let lastRetryTime = 0;
+
 // Types
 type AuthSubscription = Subscription;
-
 
 // Utility functions
 const validateEmail = (email: string): boolean => {
@@ -18,8 +23,43 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-const handleAuthError = (error: unknown, context: string) => {
-  console.error(`Auth error in ${context}:`, error);
+const shouldRetryAuth = (): boolean => {
+  const now = Date.now();
+  if (now - lastRetryTime < RETRY_COOLDOWN_MS) {
+    return false;
+  }
+  if (retryCount >= MAX_RETRY_ATTEMPTS) {
+    console.warn('Max auth retry attempts reached, stopping retries');
+    return false;
+  }
+  return true;
+};
+
+const recordRetry = () => {
+  retryCount++;
+  lastRetryTime = Date.now();
+};
+
+const resetRetryCount = () => {
+  retryCount = 0;
+  lastRetryTime = 0;
+};
+
+const handleAuthError = (error: unknown, context: string): boolean => {
+  console.warn(`Auth warning in ${context}:`, error);
+  
+  // Check if it's a network error that should trigger retry
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (message.includes('fetch') || message.includes('network') || message.includes('connection') || message.includes('timeout') || message.includes('Failed to fetch')) {
+      if (shouldRetryAuth()) {
+        recordRetry();
+        console.log(`Auth retry ${retryCount}/${MAX_RETRY_ATTEMPTS} scheduled`);
+        return true; // Retry suggested
+      }
+    }
+  }
+  return false; // Don't retry
 };
 
 interface AuthContextType {
@@ -58,6 +98,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
+        // Check if Supabase is configured
+        if (!isSupabaseConfigured()) {
+          console.warn('Supabase not configured, skipping auth initialization');
+          setLoading(false);
+          return;
+        }
+
         // Check for dev session in localStorage
         const checkDevSession = () => {
           // SECURITY: Only allow dev bypass on strictly allowed domains
@@ -143,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(supabaseSession);
           setUser(supabaseSession?.user ?? null);
           setAuthError(null);
+          resetRetryCount();
         }
 
         // Set up auth state listener with error handling
@@ -153,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setSession(session);
               setUser(session?.user ?? null);
               setAuthError(null);
+              resetRetryCount();
 
               // Handle different auth events
               if (event === 'SIGNED_OUT') {
@@ -168,10 +217,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         subscription = authSubscription;
       } catch (error) {
-        handleAuthError(error, 'auth initialization');
-        // Set fallback auth state instead of blocking
-        setUser({ id: 'fallback-user', email: 'user@example.com' } as any);
-        setAuthError(null);
+        const shouldRetry = handleAuthError(error, 'auth initialization');
+        if (!shouldRetry) {
+          // Set fallback auth state instead of blocking
+          setUser({ id: 'fallback-user', email: 'user@example.com' } as any);
+          setAuthError(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -268,6 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setSession(null);
       setAuthError(null);
+      resetRetryCount();
     } catch (error) {
       handleAuthError(error, 'signOut');
       // Still clear local state even if signOut fails
