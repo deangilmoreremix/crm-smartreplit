@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+
+declare const URLSearchParams: new (url: string) => URLSearchParams;
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase, auth, isSupabaseConfigured } from '../../lib/supabase';
@@ -29,13 +31,16 @@ const ResetPassword = () => {
         const queryParams = new URLSearchParams(window.location.search);
         const tokenHash = queryParams.get('token_hash');
         const type = queryParams.get('type');
+        const email = queryParams.get('email'); // Get email from URL params
         
-        console.log('🔐 Password reset validation:', { tokenHash: !!tokenHash, type });
+        console.log('🔐 Password reset validation:', { tokenHash: !!tokenHash, type, email });
         
         // Verify this is a recovery token
         if (tokenHash && type === 'recovery') {
           // Exchange token_hash for session using verifyOtp
+          // Note: email is required for OTP verification
           const { data, error } = await supabase.auth.verifyOtp({
+            email: email || undefined, // Include email if present
             token_hash: tokenHash,
             type: 'recovery'
           });
@@ -115,7 +120,7 @@ const ResetPassword = () => {
 
         console.log('✅ Valid password reset session detected');
         setValidating(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error validating reset token:', error);
         setError('Invalid or expired reset link. Please request a new password reset.');
         setValidating(false);
@@ -171,7 +176,7 @@ const ResetPassword = () => {
       setTimeout(() => {
         navigate('/auth/login');
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error resetting password:', error);
       setError(error.message || 'An error occurred while resetting your password');
     } finally {

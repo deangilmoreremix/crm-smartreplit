@@ -4,7 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>Reset your SmartCRM password</title>
+    <title>Confirm your new email - VideoRemix</title>
+
+    <!--[if mso]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG/>
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+
     <style>
       html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
       * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
@@ -24,11 +34,11 @@
       }
       .header { text-align:center; padding:32px 20px 16px 20px; }
       .logo { font-size:26px; font-weight:800; color:#111; }
-      .logo span { color:#16a34a; }
+      .logo span { color:#6366f1; }
       h1 { font-size:22px; text-align:center; color:#111; margin:0 0 16px 0; }
       p { font-size:15px; color:#333; margin:0 0 20px 0; text-align:center; }
       a.button {
-        display:inline-block; padding:14px 28px; background:#16a34a; color:#ffffff !important;
+        display:inline-block; padding:14px 28px; background:#6366f1; color:#ffffff !important;
         font-size:16px; font-weight:700; border-radius:10px; text-decoration:none; text-align:center;
       }
       .alt-box {
@@ -39,56 +49,69 @@
         border-top:1px solid #e4e8ee; background:#f9fafb; padding:18px 16px; text-align:center;
         font-size:13px; color:#555; border-radius:0 0 16px 16px;
       }
-      .footer a { color:#16a34a; text-decoration:none; }
+      .footer a { color:#6366f1; text-decoration:none; }
+      .link { color:#0b57d0; text-decoration:underline; }
     </style>
   </head>
+
   <body>
     <!-- Hidden preheader -->
     <div style="display:none !important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; mso-hide:all;">
-      Use this link to reset your SmartCRM password. The link expires soon for your security.
+      Confirm your new email address for your VideoRemix account.
     </div>
 
     <div class="container">
       <div class="header">
-        <div class="logo">Smart<span>CRM</span></div>
+        <div class="logo">Video<span>Remix</span></div>
       </div>
 
       <div style="padding:0 24px 24px 24px;">
-        <h1>Reset your password</h1>
+        <h1>Confirm your new email</h1>
         <p>
-          You requested to reset the password for your <strong>SmartCRM</strong> account.<br>
-          Click the button below to set a new password.
+          You requested to change the email address for your <strong>VideoRemix</strong> account.<br>
+          Click the button below to confirm your new email.
         </p>
 
+        <!-- BUTTON -->
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:auto;">
           <tr>
-            <td align="center" bgcolor="#16a34a" style="border-radius:10px;">
+            <td align="center" bgcolor="#6366f1" style="border-radius:10px;">
               <!--[if mso]>
-                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}" style="height:44px;v-text-anchor:middle;width:260px;" arcsize="12%" stroke="f" fillcolor="#16a34a">
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
+                  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&email={{ .Email }}"
+                  style="height:44px;v-text-anchor:middle;width:260px;"
+                  arcsize="12%" stroke="f" fillcolor="#6366f1">
                   <w:anchorlock/>
-                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:700;">Set New Password</center>
+                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:700;">
+                    Confirm New Email
+                  </center>
                 </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
-              <a class="button" href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}" target="_blank" rel="noopener noreferrer">Set New Password</a>
+              <a class="button"
+                 href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&email={{ .Email }}"
+                 target="_blank" rel="noopener noreferrer">Confirm New Email</a>
               <!--<![endif]-->
             </td>
           </tr>
         </table>
 
+        <!-- ALT LINK -->
         <div class="alt-box">
           If the button doesn't work, copy and paste this link into your browser:<br>
-          <a href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}" style="color:#0b57d0; text-decoration:underline;">{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}</a>
+          <a class="link" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&email={{ .Email }}" target="_blank" rel="noopener noreferrer">
+            {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&email={{ .Email }}
+          </a>
         </div>
 
         <p style="font-size:13px; color:#666; margin-top:20px;">
-          🔐 This link will expire soon and can be used only once. If you didn't request a password reset, you can safely ignore this email.
+          If you didn't request this change, we recommend updating your password and contacting support immediately.
         </p>
       </div>
 
       <div class="footer">
-        Need help? <a href="mailto:support@smartcrm.vip">Contact Support</a><br />
-        SmartCRM · Smart Solutions for Your Business
+        Need help? <a href="mailto:support@videoremix.vip">Contact Support</a><br />
+        VideoRemix · Personalized Video & AI Tools for Your Business
       </div>
     </div>
   </body>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>Reset your SmartCRM password</title>
+    <title>Your SmartCRM login link</title>
     <style>
       html, body { margin:0 !important; padding:0 !important; height:100% !important; width:100% !important; }
       * { -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
@@ -45,7 +45,7 @@
   <body>
     <!-- Hidden preheader -->
     <div style="display:none !important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; mso-hide:all;">
-      Use this link to reset your SmartCRM password. The link expires soon for your security.
+      Your secure login link for SmartCRM. Click to sign in instantly.
     </div>
 
     <div class="container">
@@ -54,23 +54,23 @@
       </div>
 
       <div style="padding:0 24px 24px 24px;">
-        <h1>Reset your password</h1>
+        <h1>Sign in to SmartCRM</h1>
         <p>
-          You requested to reset the password for your <strong>SmartCRM</strong> account.<br>
-          Click the button below to set a new password.
+          Here's your secure login link for <strong>SmartCRM</strong>.<br>
+          Click the button below to sign in instantly—no password needed!
         </p>
 
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:auto;">
           <tr>
             <td align="center" bgcolor="#16a34a" style="border-radius:10px;">
               <!--[if mso]>
-                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}" style="height:44px;v-text-anchor:middle;width:260px;" arcsize="12%" stroke="f" fillcolor="#16a34a">
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&email={{ .Email }}" style="height:44px;v-text-anchor:middle;width:260px;" arcsize="12%" stroke="f" fillcolor="#16a34a">
                   <w:anchorlock/>
-                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:700;">Set New Password</center>
+                  <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:700;">Sign In to SmartCRM</center>
                 </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
-              <a class="button" href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}" target="_blank" rel="noopener noreferrer">Set New Password</a>
+              <a class="button" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&email={{ .Email }}" target="_blank" rel="noopener noreferrer">Sign In to SmartCRM</a>
               <!--<![endif]-->
             </td>
           </tr>
@@ -78,11 +78,11 @@
 
         <div class="alt-box">
           If the button doesn't work, copy and paste this link into your browser:<br>
-          <a href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}" style="color:#0b57d0; text-decoration:underline;">{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery&email={{ .Email }}</a>
+          <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&email={{ .Email }}" style="color:#0b57d0; text-decoration:underline;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&email={{ .Email }}</a>
         </div>
 
         <p style="font-size:13px; color:#666; margin-top:20px;">
-          🔐 This link will expire soon and can be used only once. If you didn't request a password reset, you can safely ignore this email.
+          🔐 This link will expire in 1 hour and can be used only once. If you didn't request this login link, you can safely ignore this email.
         </p>
       </div>
 

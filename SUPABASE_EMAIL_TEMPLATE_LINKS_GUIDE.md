@@ -8,10 +8,8 @@ Supabase provides several built-in template variables that automatically populat
 
 | Variable | Description | Example Value |
 |----------|-------------|---------------|
-| `{{ .ConfirmationURL }}` | Link to confirm email/signup | `https://yourapp.com/auth/confirm?token=xyz` |
+| `{{ .ConfirmationURL }}` | Link to confirm email/signup OR reset password | `https://yourapp.com/auth/confirm?token=xyz` |
 | `{{ .InviteURL }}` | Link to accept invitation | `https://yourapp.com/auth/invite?token=xyz` |
-| `{{ .RecoveryURL }}` | Link to reset password | `https://yourapp.com/auth/recovery?token=xyz` |
-| `{{ .EmailChangeURL }}` | Link to confirm email change | `https://yourapp.com/auth/email-change?token=xyz` |
 | `{{ .SiteURL }}` | Your application's base URL | `https://yourapp.com` |
 | `{{ .Email }}` | User's email address | `user@example.com` |
 | `{{ .Token }}` | Authentication token | `abc123xyz...` |
@@ -51,7 +49,7 @@ Supabase provides several built-in template variables that automatically populat
 ### 3. **Password Recovery Template**
 ```html
 <!-- Main CTA Button -->
-<a href="{{ .RecoveryURL }}" class="cta-button">
+<a href="{{ .ConfirmationURL }}" class="cta-button">
     Reset Your Password
 </a>
 
@@ -129,7 +127,7 @@ For each template type:
    ```
    https://your-domain.com/auth/callback
    https://your-domain.com/auth/confirm
-   https://your-domain.com/auth/recovery
+   https://your-domain.com/auth/reset-password
    https://your-domain.com/dashboard
    ```
 
@@ -167,8 +165,9 @@ const { data, error } = await supabase.auth.signInWithOtp({
 ### **Test Password Recovery:**
 ```javascript
 // Test password recovery
+// Note: Supabase automatically includes token_hash and type=recovery in ConfirmationURL
 const { data, error } = await supabase.auth.resetPasswordForEmail('test@smartcrm.com', {
-  redirectTo: 'https://your-app.com/auth/recovery',
+  redirectTo: 'https://your-app.com/auth/reset-password',
 })
 ```
 

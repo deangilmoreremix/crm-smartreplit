@@ -1,10 +1,16 @@
-import { useEffect, useState } from 'react';
+import React, { type ReactNode, useEffect, useState } from 'react';
+
+declare const URLSearchParams: new (url: string) => URLSearchParams;
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
-const AuthConfirm = () => {
+interface AuthConfirmProps {
+  children?: ReactNode;
+}
+
+const AuthConfirm: React.FC<AuthConfirmProps> = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
@@ -19,7 +25,7 @@ const AuthConfirm = () => {
         const typeParam = searchParams.get('type') as 'signup' | 'email' | 'recovery' | 'invite' | 'email_change' | 'magiclink' | 'reauthentication' | null;
 
         // Check for implicit flow (URL hash)
-        const urlHash = window.location.hash.substring(1); // Remove leading #
+        const urlHash = window.location.hash.substring(1);
         const hashParams = new URLSearchParams(urlHash);
         const accessToken = hashParams.get('access_token');
         const hashType = hashParams.get('type');
@@ -63,10 +69,15 @@ const AuthConfirm = () => {
           return;
         }
 
+        // Get email from URL params (needed for OTP verification)
+        const email = searchParams.get('email');
+        
         // Verify the OTP token for PKCE flow
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: typeParam as any
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { data: _verifyData, error } = await supabase.auth.verifyOtp({
+          email: email || undefined,
+          token_hash: token_hash || '',
+          type: (typeParam as 'recovery') || 'recovery'
         });
 
         if (error) {
@@ -126,10 +137,11 @@ const AuthConfirm = () => {
             setTimeout(() => navigate('/dashboard'), 2000);
         }
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Auth confirmation error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
         setStatus('error');
-        setMessage('An unexpected error occurred. Please try again.');
+        setMessage(errorMessage);
       }
     };
 
