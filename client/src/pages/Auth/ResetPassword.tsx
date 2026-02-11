@@ -25,22 +25,63 @@ const ResetPassword = () => {
       }
 
       try {
-        // Accept both hash tokens and code param
+        // Supabase password recovery uses token_hash in query params
+        const queryParams = new URLSearchParams(window.location.search);
+        const tokenHash = queryParams.get('token_hash');
+        const type = queryParams.get('type');
+        
+        console.log('🔐 Password reset validation:', { tokenHash: !!tokenHash, type });
+        
+        // Verify this is a recovery token
+        if (tokenHash && type === 'recovery') {
+          // Exchange token_hash for session using verifyOtp
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: 'recovery'
+          });
+          
+          if (error) {
+            console.error('OTP verification error:', error);
+            setError('Invalid or expired reset link. Please request a new password reset.');
+            setValidating(false);
+            return;
+          }
+          
+          if (data.session) {
+            console.log('✅ Valid password reset session established');
+            setValidating(false);
+            return;
+          }
+        }
+
+        // Fallback: Check for access_token and refresh_token in hash (legacy format)
         const hash = window.location.hash.slice(1);
         const hashParams = new URLSearchParams(hash);
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-
-        const queryParams = new URLSearchParams(window.location.search);
-        const code = queryParams.get('code');
-
-        if (code) {
-          await supabase.auth.exchangeCodeForSession(code);
-        } else if (accessToken && refreshToken) {
-          await supabase.auth.setSession({ 
-            access_token: accessToken, 
-            refresh_token: refreshToken 
+        
+        if (accessToken && refreshToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
           });
+          console.log('✅ Session established from hash tokens');
+          setValidating(false);
+          return;
+        }
+        
+        // Also check query params for tokens (some Supabase configurations)
+        const queryAccessToken = queryParams.get('access_token');
+        const queryRefreshToken = queryParams.get('refresh_token');
+        
+        if (queryAccessToken && queryRefreshToken) {
+          await supabase.auth.setSession({
+            access_token: queryAccessToken,
+            refresh_token: queryRefreshToken
+          });
+          console.log('✅ Session established from query tokens');
+          setValidating(false);
+          return;
         }
 
         // Wait for session to be established (retry with delay for race conditions)
