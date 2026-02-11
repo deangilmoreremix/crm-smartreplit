@@ -101,7 +101,7 @@ class AITestRunner {
     console.log('🧪 Executing AI test suite...');
 
     return new Promise((resolve, reject) => {
-      const testProcess = spawn('node', ['ai-production-readiness.test.js'], {
+      const testProcess = spawn('node', ['ai-production-readiness.test.cjs'], {
         stdio: ['inherit', 'pipe', 'pipe'],
         env: { ...process.env, NODE_ENV: 'test' }
       });
@@ -150,7 +150,7 @@ class AITestRunner {
       if (hasCoverage) {
         // Run tests with coverage
         console.log('   Running tests with coverage...');
-        execSync('nyc --reporter=lcov --reporter=text node ai-production-readiness.test.js', {
+        execSync('nyc --reporter=lcov --reporter=text node ai-production-readiness.test.cjs', {
           stdio: 'inherit',
           timeout: 300000 // 5 minutes
         });

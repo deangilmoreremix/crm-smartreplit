@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-02-11T13:29:23.458Z",
+  "environment": {
+    "nodeVersion": "v24.11.1",
+    "platform": "linux",
+    "arch": "x64",
+    "cwd": "/workspaces/crm-smartreplit",
+    "testUrl": "http://localhost:5000",
+    "skipExpensive": false
+  },
+  "tests": [],
+  "summary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 0
+  },
+  "coverage": null,
+  "recommendations": [],
+  "exitCode": 1,
+  "output": "",
+  "errorOutput": "node:internal/modules/cjs/loader:1424\n  throw err;\n  ^\n\nError: Cannot find module '/workspaces/crm-smartreplit/ai-production-readiness.test.js'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1421:15)\n    at defaultResolveImpl (node:internal/modules/cjs/loader:1059:19)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1064:22)\n    at Module._load (node:internal/modules/cjs/loader:1227:37)\n    at TracingChannel.traceSync (node:diagnostics_channel:328:14)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v24.11.1\n",
+  "generatedAt": "2026-02-11T13:29:23.675Z",
+  "success": true
+}

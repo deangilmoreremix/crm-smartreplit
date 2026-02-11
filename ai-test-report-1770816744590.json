@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-02-11T13:30:49.248Z",
+  "environment": {
+    "nodeVersion": "v24.11.1",
+    "platform": "linux",
+    "arch": "x64",
+    "cwd": "/workspaces/crm-smartreplit",
+    "testUrl": "http://localhost:5000",
+    "skipExpensive": false
+  },
+  "tests": [],
+  "summary": {
+    "total": 26,
+    "passed": 13,
+    "failed": 11,
+    "skipped": 2,
+    "duration": 0
+  },
+  "coverage": null,
+  "recommendations": [
+    {
+      "type": "critical",
+      "message": "11 tests failed. Review error logs and fix issues before production deployment.",
+      "action": "Fix failing tests and re-run test suite"
+    },
+    {
+      "type": "warning",
+      "message": "Test success rate is below 80%. Current rate: 50.0%",
+      "action": "Improve test reliability and coverage"
+    }
+  ],
+  "exitCode": 1,
+  "output": "🤖 AI Production Readiness Test Suite\n=====================================\n\nTesting against: http://localhost:5000\nVerbose mode: false\nSkip expensive tests: false\n\n🚀 Starting AI Production Readiness Tests\n\n\n🔍 Testing OpenAI Status Endpoint\n✅ PASS: OpenAI Status - Basic Response\n✅ PASS: OpenAI Status - Capabilities Array\n✅ PASS: OpenAI Status - Model Info\n\n🔍 Testing OpenAI Embeddings\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Embeddings - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing OpenAI Image Generation\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Image Generation - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Smart Greeting Generation\n✅ PASS: Smart Greeting - Successful Generation\n✅ PASS: Smart Greeting - Source Tracking\n✅ PASS: Smart Greeting - Model Tracking\n\n🔍 Testing KPI Analysis\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: KPI Analysis - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Deal Intelligence\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Deal Intelligence - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Business Intelligence\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Business Intelligence - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Multimodal Analysis\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Multimodal Analysis - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Predictive Analytics\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Predictive Analytics - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Strategic Planning\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Strategic Planning - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Performance Optimization\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Performance Optimization - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Advanced Content Generation\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Advanced Content - Request Failed\n   Error: Request failed with status code 500\n\n🔍 Testing Social Media Research\n✅ PASS: Social Media Research - API Endpoint Available\n⏭️  SKIP: Social Media Research - Service Not Loaded (Service script not available in test environment)\n\n🔍 Testing Error Handling\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n✅ PASS: Error Handling - Invalid Input Rejected\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n✅ PASS: Error Handling - Malformed JSON Rejected\n\n🔍 Testing Rate Limiting\n⏭️  SKIP: Rate Limiting - Not Triggered (Rate limit not reached in test)\n\n🔍 Testing Circuit Breaker\n\n🔍 Testing Fallback Mechanisms\n✅ PASS: Fallback Mechanisms - Intelligent Fallback Working\n\n🔍 Testing Batch Processing\n✅ PASS: Batch Processing - Contact Enrichment Working\n\n🔍 Testing Usage Monitoring\n\n🔍 Testing Authentication & Security\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n✅ PASS: Authentication - /api/openai/embeddings Input Validation\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n✅ PASS: Authentication - /api/openai/images/generate Input Validation\nRequest failed, retrying in 2000ms... (1/3)\nRequest failed, retrying in 4000ms... (2/3)\n❌ FAIL: Authentication - /api/openai/assistants/threads Unexpected Response\n   Error: Request failed with status code 500\n\n============================================================\nTEST SUMMARY\n============================================================\nTotal Tests: 26\nPassed: 13\nFailed: 11\nSkipped: 2\nDuration: 95176ms\nSuccess Rate: 50.0%\n\nFAILED TESTS:\n1. Embeddings - Request Failed: Request failed with status code 500\n2. Image Generation - Request Failed: Request failed with status code 500\n3. KPI Analysis - Request Failed: Request failed with status code 500\n4. Deal Intelligence - Request Failed: Request failed with status code 500\n5. Business Intelligence - Request Failed: Request failed with status code 500\n6. Multimodal Analysis - Request Failed: Request failed with status code 500\n7. Predictive Analytics - Request Failed: Request failed with status code 500\n8. Strategic Planning - Request Failed: Request failed with status code 500\n9. Performance Optimization - Request Failed: Request failed with status code 500\n10. Advanced Content - Request Failed: Request failed with status code 500\n11. Authentication - /api/openai/assistants/threads Unexpected Response: Request failed with status code 500\n",
+  "errorOutput": "",
+  "generatedAt": "2026-02-11T13:32:24.590Z",
+  "success": false
+}
