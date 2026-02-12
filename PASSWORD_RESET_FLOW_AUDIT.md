@@ -1,149 +1,166 @@
 # Password Reset Flow Audit - SmartCRM
 
-## Error: "Authentication service is not configured. Please contact support."
+## Root Cause Identified ✅
+
+**Error Source:** [`client/src/pages/Auth/ResetPassword.tsx:24`](client/src/pages/Auth/ResetPassword.tsx:24)
+
+```javascript
+if (!isSupabaseConfigured()) {
+  setError('Authentication service is not configured. Please contact support.');
+  // ...
+}
+```
+
+**Root Cause:** `isSupabaseConfigured()` returns `false` because `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are not properly loaded in the browser.
 
 ---
 
-## DEBUG PACKET (Please fill in):
+## Supabase Dashboard Settings - VERIFIED ✅
 
-1. **App URL (production):** ____________________
+| Setting | Value | Status |
+|---------|-------|--------|
+| Site URL | `https://app.smartcrm.vip` | ✅ Correct |
+| Redirect URL | `https://app.smartcrm.vip/auth/callback` | ✅ Present |
+| Redirect URL | `https://app.smartcrm.vip/auth/reset-password` | ✅ Present |
+| Redirect URL | `https://app.smartcrm.vip/auth/recovery` | ✅ Present |
+| Redirect URL | `https://app.smartcrm.vip/**` | ✅ Present |
+| Redirect URL | `http://localhost:5173` | ✅ Present |
 
-2. **Supabase Project Ref:** `gadedbrnqzpfqtsdfzcg` (confirmed linked)
+---
 
-3. **Supabase Auth settings:**
-   - Site URL: ____________________
-   - Redirect URLs list: ____________________
+## Code Analysis - ResetPassword.tsx
 
-4. **Netlify env vars (names only):**
-   - VITE_SUPABASE_URL = (present? yes/no)
-   - VITE_SUPABASE_ANON_KEY = (present? yes/no)
-   - Any others: ____________________
+### Current Flow (Correct Implementation)
 
-5. **Password reset email link format:**
+```javascript
+// Line 21-131: Token validation logic
+useEffect(() => {
+  const queryParams = new URLSearchParams(window.location.search);
+  const tokenHash = queryParams.get('token_hash');
+  const type = queryParams.get('type');
+
+  // Attempts multiple validation methods:
+  // 1. verifyOtp with token_hash (line 42-59)
+  // 2. setSession from hash tokens (line 63-76)
+  // 3. setSession from query tokens (line 79-90)
+  // 4. Retry getSession up to 5 times (line 93-119)
+}, []);
+```
+
+**The frontend code is correct!** The issue is the `isSupabaseConfigured()` check failing.
+
+---
+
+## Diagnosis: Environment Variables Not Loaded
+
+### Check Function (from [`client/src/lib/supabase.ts`](client/src/lib/supabase.ts))
+
+```javascript
+const supabaseIsConfigured = !!(
+  supabaseUrl &&                                    // VITE_SUPABASE_URL
+  supabaseAnonKey &&                                // VITE_SUPABASE_ANON_KEY
+  supabaseUrl !== 'undefined' &&
+  supabaseAnonKey !== 'undefined' &&
+  supabaseUrl.includes('supabase.co') &&            // Must contain 'supabase.co'
+  !supabaseUrl.includes('placeholder')              // Must NOT contain 'placeholder'
+);
+```
+
+### This returns `false` if ANY of these fail:
+- [ ] `VITE_SUPABASE_URL` is empty/undefined
+- [ ] `VITE_SUPABASE_ANON_KEY` is empty/undefined
+- [ ] URL doesn't contain `supabase.co`
+- [ ] URL contains `placeholder`
+
+---
+
+## Fix Required
+
+### Step 1: Verify Netlify Environment Variables
+
+Go to **Netlify Dashboard → Site Settings → Environment Variables** and verify:
+
+| Variable | Value | Check |
+|----------|-------|-------|
+| `VITE_SUPABASE_URL` | `https://gadedbrnqzpfqtsdfzcg.supabase.co` | ✅ Present |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOi...` (anon key) | ✅ Present |
+
+**Important:**
+1. Click each variable to edit
+2. Verify the value is correct (not blank, not "placeholder")
+3. **Save changes**
+4. **Trigger a new deploy** (Site Deploys → Trigger deploy)
+
+### Step 2: Verify in Browser
+
+Open browser DevTools → Console on the reset page and run:
+
+```javascript
+console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '***SET***' : 'NOT SET');
+console.log('Is Configured:', import.meta.env.VITE_SUPABASE_URL?.includes('supabase.co'));
+```
+
+**Expected Output:**
+```
+VITE_SUPABASE_URL: https://gadedbrnqzpfqtsdfzcg.supabase.co
+VITE_SUPABASE_ANON_KEY: ***SET***
+Is Configured: true
+```
+
+### Step 3: If Still Failing After Deploy
+
+If variables are set but still getting the error:
+
+1. **Check Netlify deploy log** - Ensure no errors during build
+2. **Hard refresh browser** - Cmd+Shift+R (Mac) or Ctrl+Shift+R (Windows)
+3. **Clear browser cache** - Or use incognito mode
+
+---
+
+## Alternative: Check Current Build
+
+The error might be from an old build that hasn't been replaced. Verify:
+
+1. Check Netlify deploy timestamp (should be < 5 minutes ago)
+2. Check browser network tab for `/_next/static/` or similar - compare build timestamp
+
+---
+
+## Email Template Verification Needed
+
+**Please confirm:**
+
+1. Go to Supabase Dashboard → Authentication → Email Templates
+2. Click "Password recovery" template
+3. Verify the URL format is:
    ```
    {{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery
    ```
 
-6. **Frontend routes:**
-   - /auth/reset-password exists? yes/no
-   - /auth/callback exists? yes/no
-
-7. **Browser console error:** ____________________
-
-8. **Network response for failing request:** ____________________
-
----
-
-## Expected Password Reset Flow (Correct Implementation)
-
-```
-1. User enters email on /forgot-password
-2. Supabase sends email with link:
-   https://app.smartcrm.vip/auth/reset-password?token_hash=XXX&type=recovery
-3. User clicks link → /auth/reset-password?token_hash=XXX&type=recovery
-4. Frontend extracts token_hash from URL
-5. Frontend calls supabase.auth.resetPasswordForEmail(newPassword, options)
-   - Must include: { email, token_hash, type: 'recovery' }
-6. Supabase verifies token
-7. Password updated, session established
-8. User redirected to /dashboard
-```
-
----
-
-## 5 Most Likely Root Causes
-
-| # | Root Cause | Why |
-|---|------------|-----|
-| 1 | **Site URL mismatch** | Supabase checks that redirect URLs match Site URL exactly |
-| 2 | **Redirect URLs missing** | Reset URL not in allowed redirect list |
-| 3 | **Token hash not extracted** | Frontend fails to get token_hash from URL params |
-| 4 | **VITE_ env vars missing** | Client can't reach Supabase API |
-| 5 | **Email template wrong** | Reset link points to wrong URL |
-
----
-
-## 10-Minute Diagnostic Plan
-
-### Step 1: Verify Netlify Env Vars (2 min)
-```bash
-# Check if VITE_ vars are present in deployed app
-# Open browser DevTools → Network tab
-# Look for requests to supabase.co
-```
-
-**Expected:** Requests succeed, 200 OK  
-**Fix if fail:** Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to Netlify
-
-### Step 2: Check Supabase Site URL (2 min)
-- Go to Supabase Dashboard → Authentication → URL Configuration
-- Verify Site URL matches your app URL exactly
-
-**Expected:** Site URL = `https://app.smartcrm.vip`  
-**Fix:** Update Site URL if different
-
-### Step 3: Check Redirect URLs (2 min)
-- Supabase Dashboard → Authentication → URL Configuration
-- Verify these URLs are in "Redirect URLs":
-  - `https://app.smartcrm.vip/auth/reset-password`
-  - `https://app.smartcrm.vip/auth/callback`
-  - `https://app.smartcrm.vip/auth/recovery`
-
-**Expected:** All 3 URLs present  
-**Fix:** Add missing URLs
-
-### Step 4: Check Reset Email Template (2 min)
-- Supabase Dashboard → Authentication → Email Templates
-- Verify reset template has correct URL:
-  ```
-  {{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery
-  ```
-
-**Expected:** URL matches your reset route exactly  
-**Fix:** Update template if URL format is wrong
-
-### Step 5: Check Frontend Route Handler (2 min)
-- Open `/auth/reset-password` page in browser
-- Check console for errors when page loads
-- Check Network tab for API calls
-
-**Expected:** No errors, token_hash extracted from URL  
-**Fix:** Update page code if token not being parsed
-
----
-
-## Supabase Dashboard Checklist
-
-### Authentication → URL Configuration
-- [ ] Site URL: `https://app.smartcrm.vip`
-- [ ] Redirect URLs:
-  - [ ] `https://app.smartcrm.vip/auth/reset-password`
-  - [ ] `https://app.smartcrm.vip/auth/callback`
-  - [ ] `https://app.smartcrm.vip/auth/recovery`
-  - [ ] `https://app.smartcrm.vip`
-  - [ ] `http://localhost:5173` (for local dev)
-
-### Authentication → Email Templates
-- [ ] Reset password template URL:
-  ```
-  {{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery
-  ```
-
-### Authentication → Users
-- [ ] Keith's account exists and is confirmed
-
----
-
-## Netlify Checklist
-
-### Site Settings → Environment Variables
-- [ ] `VITE_SUPABASE_URL` = `https://gadedbrnqzpfqtsdfzcg.supabase.co`
-- [ ] `VITE_SUPABASE_ANON_KEY` = (anon key value)
+**Does the email template have this exact URL format?** (Yes/No)
 
 ---
 
 ## Next 3 Checks
 
-1. **Verify Netlify deployment** - Check that VITE_ variables are actually deployed
-2. **Check Supabase Site URL** - Confirm it matches your app URL exactly
-3. **Test the reset flow** - Trigger a reset and capture browser console logs
+1. **Browser console output** - Run the console check above
+2. **Netlify deployment timestamp** - Verify new build is live
+3. **Email template URL format** - Confirm it matches expected format
+
+---
+
+## DEBUG PACKET - Filled
+
+1. **App URL:** `https://app.smartcrm.vip`
+2. **Supabase Project Ref:** `gadedbrnqzpfqtsdfzcg`
+3. **Supabase Auth Settings:**
+   - Site URL: `https://app.smartcrm.vip` ✅
+   - Redirect URLs: All present ✅
+4. **Netlify Env Vars:**
+   - VITE_SUPABASE_URL = (pending verification)
+   - VITE_SUPABASE_ANON_KEY = (pending verification)
+5. **Reset email template:** (needs verification)
+6. **Frontend routes:** `/auth/reset-password` exists ✅
+7. **Browser console error:** "Authentication service is not configured" ✅
+8. **Root cause:** `isSupabaseConfigured()` returning false
