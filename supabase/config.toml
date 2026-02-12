@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "crm-smartreplit"
+project_id = "gadedbrnqzpfqtsdfzcg"
 
 [api]
 enabled = true
@@ -96,9 +96,9 @@ enabled = true
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+site_url = "https://app.smartcrm.vip"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = ["https://app.smartcrm.vip/auth/callback", "https://app.smartcrm.vip/auth/reset-password", "https://app.smartcrm.vip/auth/recovery", "https://app.smartcrm.vip/**", "http://localhost:5173", "https://app.smartcrm.vip", "https://smartcrm.videoremix.io"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
@@ -123,7 +123,7 @@ password_requirements = ""
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
+double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
@@ -189,8 +189,8 @@ max_enrolled_factors = 10
 
 # Control use of MFA via App Authenticator (TOTP)
 [auth.mfa.totp]
-enroll_enabled = true
-verify_enabled = true
+enroll_enabled = false
+verify_enabled = false
 
 # Configure Multi-factor-authentication via Phone Messaging
 [auth.mfa.phone]
