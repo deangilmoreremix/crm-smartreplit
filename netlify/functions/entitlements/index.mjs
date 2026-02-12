@@ -18,8 +18,14 @@ import ws from "ws";
 // shared/schema.ts
 var schema_exports = {};
 __export(schema_exports, {
+  aiFeatureDefinitions: () => aiFeatureDefinitions,
+  aiFeatureDefinitionsRelations: () => aiFeatureDefinitionsRelations,
+  aiFeatureUsage: () => aiFeatureUsage,
+  aiFeatureUsageRelations: () => aiFeatureUsageRelations,
   aiQueries: () => aiQueries,
   aiQueriesRelations: () => aiQueriesRelations,
+  aiResellerPricing: () => aiResellerPricing,
+  aiResellerPricingRelations: () => aiResellerPricingRelations,
   appointments: () => appointments,
   appointmentsRelations: () => appointmentsRelations,
   automationRules: () => automationRules,
@@ -45,6 +51,9 @@ __export(schema_exports, {
   featurePackages: () => featurePackages,
   featureUsage: () => featureUsage,
   features: () => features,
+  insertAIFeatureDefinitionSchema: () => insertAIFeatureDefinitionSchema,
+  insertAIFeatureUsageSchema: () => insertAIFeatureUsageSchema,
+  insertAIResellerPricingSchema: () => insertAIResellerPricingSchema,
   insertAiQuerySchema: () => insertAiQuerySchema,
   insertAppointmentSchema: () => insertAppointmentSchema,
   insertAutomationRuleSchema: () => insertAutomationRuleSchema,
@@ -69,6 +78,8 @@ __export(schema_exports, {
   insertPartnerWLConfigSchema: () => insertPartnerWLConfigSchema,
   insertPayoutSchema: () => insertPayoutSchema,
   insertProfileSchema: () => insertProfileSchema,
+  insertResellerCreditTransactionSchema: () => insertResellerCreditTransactionSchema,
+  insertResellerCreditsSchema: () => insertResellerCreditsSchema,
   insertTaskSchema: () => insertTaskSchema,
   insertTenantConfigSchema: () => insertTenantConfigSchema,
   insertTierFeatureSchema: () => insertTierFeatureSchema,
@@ -98,6 +109,10 @@ __export(schema_exports, {
   productTiers: () => productTiers,
   profiles: () => profiles,
   profilesRelations: () => profilesRelations,
+  resellerCreditTransactions: () => resellerCreditTransactions,
+  resellerCreditTransactionsRelations: () => resellerCreditTransactionsRelations,
+  resellerCredits: () => resellerCredits,
+  resellerCreditsRelations: () => resellerCreditsRelations,
   tasks: () => tasks,
   tasksRelations: () => tasksRelations,
   tenantConfigs: () => tenantConfigs,
@@ -1193,6 +1208,134 @@ var insertCreditTransactionSchema = createInsertSchema(creditTransactions).omit(
   id: true,
   createdAt: true
 });
+var aiFeatureDefinitions = pgTable("ai_feature_definitions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  featureKey: text("feature_key").unique().notNull(),
+  featureName: text("feature_name").notNull(),
+  description: text("description"),
+  category: text("category"),
+  baseCreditCost: integer("base_credit_cost").default(10),
+  minCreditCost: integer("min_credit_cost").default(1),
+  maxCreditCost: integer("max_credit_cost").default(1e3),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var aiResellerPricing = pgTable("ai_reseller_pricing", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+  featureKey: text("feature_key").notNull(),
+  retailCreditCost: integer("retail_credit_cost").notNull(),
+  wholesaleCreditCost: integer("wholesale_credit_cost").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+}, (table) => ({
+  uniqueResellerFeature: {
+    name: "unique_reseller_feature",
+    columns: [table.resellerId, table.featureKey]
+  }
+}));
+var aiFeatureUsage = pgTable("ai_feature_usage", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  resellerId: uuid("reseller_id").references(() => profiles.id),
+  featureKey: text("feature_key").notNull(),
+  creditsCharged: integer("credits_charged").notNull(),
+  creditsPaidToPlatform: integer("credits_paid_to_platform").notNull(),
+  resellerProfitCredits: integer("reseller_profit_credits").default(0),
+  context: json("context").default("{}"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var resellerCredits = pgTable("reseller_credits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull().unique(),
+  wholesaleCreditsPurchased: integer("wholesale_credits_purchased").default(0),
+  wholesaleCreditsUsed: integer("wholesale_credits_used").default(0),
+  wholesaleCreditsAvailable: integer("wholesale_credits_available").default(0),
+  totalRevenueCents: integer("total_revenue_cents").default(0),
+  totalProfitCents: integer("total_profit_cents").default(0),
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var resellerCreditTransactions = pgTable("reseller_credit_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+  type: text("type").notNull(),
+  // 'wholesale_purchase', 'retail_sale', 'payout'
+  creditsAmount: integer("credits_amount").notNull(),
+  amountCents: integer("amount_cents"),
+  endUserId: uuid("end_user_id").references(() => profiles.id),
+  featureKey: text("feature_key"),
+  description: text("description"),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var aiFeatureDefinitionsRelations = relations(aiFeatureDefinitions, ({ many }) => ({
+  resellerPricing: many(aiResellerPricing),
+  usage: many(aiFeatureUsage)
+}));
+var aiResellerPricingRelations = relations(aiResellerPricing, ({ one }) => ({
+  reseller: one(profiles, {
+    fields: [aiResellerPricing.resellerId],
+    references: [profiles.id]
+  }),
+  feature: one(aiFeatureDefinitions, {
+    fields: [aiResellerPricing.featureKey],
+    references: [aiFeatureDefinitions.featureKey]
+  })
+}));
+var aiFeatureUsageRelations = relations(aiFeatureUsage, ({ one }) => ({
+  user: one(profiles, {
+    fields: [aiFeatureUsage.userId],
+    references: [profiles.id]
+  }),
+  reseller: one(profiles, {
+    fields: [aiFeatureUsage.resellerId],
+    references: [profiles.id]
+  })
+}));
+var resellerCreditsRelations = relations(resellerCredits, ({ one, many }) => ({
+  reseller: one(profiles, {
+    fields: [resellerCredits.resellerId],
+    references: [profiles.id]
+  }),
+  transactions: many(resellerCreditTransactions)
+}));
+var resellerCreditTransactionsRelations = relations(resellerCreditTransactions, ({ one }) => ({
+  reseller: one(profiles, {
+    fields: [resellerCreditTransactions.resellerId],
+    references: [profiles.id]
+  }),
+  endUser: one(profiles, {
+    fields: [resellerCreditTransactions.endUserId],
+    references: [profiles.id]
+  })
+}));
+var insertAIFeatureDefinitionSchema = createInsertSchema(aiFeatureDefinitions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var insertAIResellerPricingSchema = createInsertSchema(aiResellerPricing).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var insertAIFeatureUsageSchema = createInsertSchema(aiFeatureUsage).omit({
+  id: true,
+  createdAt: true
+});
+var insertResellerCreditsSchema = createInsertSchema(resellerCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var insertResellerCreditTransactionSchema = createInsertSchema(resellerCreditTransactions).omit({
+  id: true,
+  createdAt: true
+});
 
 // server/db.ts
 neonConfig.webSocketConstructor = ws;
@@ -1330,9 +1473,25 @@ var handler = async (event, context) => {
   }
   try {
     if (pathParts.length >= 2 && pathParts[0] === "entitlements" && pathParts[1] === "check" && httpMethod === "GET") {
-      const userId = "dev-user-12345";
+      const authHeader = event.headers?.authorization || event.headers?.Authorization || "";
+      let userId = null;
+      if (authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        try {
+          const tokenParts = token.split(".");
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], "base64").toString());
+            userId = payload.sub;
+          }
+        } catch (e) {
+          console.error("Failed to parse JWT token:", e);
+        }
+      }
+      if (!userId && process.env.NODE_ENV === "development") {
+        userId = "dev-user-12345";
+      }
       if (!userId) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: "Unauthorized" }) };
+        return { statusCode: 401, headers, body: JSON.stringify({ error: "Unauthorized - Valid JWT token required" }) };
       }
       const entitlement = await getUserEntitlement(userId);
       const isActive = isUserActive(entitlement);

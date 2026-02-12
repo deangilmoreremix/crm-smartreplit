@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'client/src'),
+      'stream': 'stream-browserify',
     },
   },
   build: {
@@ -30,11 +31,5 @@ export default defineConfig({
     'process.env': {},
     'process.browser': true,
     'process.version': '"12.0.0"',
-  },
-  resolve: {
-    alias: {
-      'stream': 'stream-browserify',
-      '@': path.resolve(__dirname, 'client/src'),
-    },
   },
 });
