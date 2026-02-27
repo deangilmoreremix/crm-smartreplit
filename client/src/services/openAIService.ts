@@ -66,13 +66,13 @@ class OpenAIService {
   private stripMarkdownCodeBlocks(content: string): string {
     // Remove markdown code blocks (```json...``` or ```...```)
     let cleaned = content.trim();
-    
+
     // Remove opening code block markers
     cleaned = cleaned.replace(/^```(?:json|javascript|js)?\s*/i, '');
-    
+
     // Remove closing code block markers
     cleaned = cleaned.replace(/\s*```\s*$/i, '');
-    
+
     // Remove any remaining leading/trailing whitespace
     return cleaned.trim();
   }
@@ -81,7 +81,12 @@ class OpenAIService {
    * Validate and clean customer ID for UUID compatibility
    */
   private validateCustomerId(customerId?: string): string | undefined {
-    if (!customerId || customerId === 'demo-customer-id' || customerId.includes('demo') || customerId.includes('placeholder')) {
+    if (
+      !customerId ||
+      customerId === 'demo-customer-id' ||
+      customerId.includes('demo') ||
+      customerId.includes('placeholder')
+    ) {
       return undefined;
     }
     return customerId;
@@ -103,23 +108,25 @@ class OpenAIService {
     );
 
     if (!rateLimitCheck.allowed) {
-      throw new Error(`Rate limit exceeded. Try again in ${Math.ceil((rateLimitCheck.resetTime - Date.now()) / 1000)} seconds.`);
+      throw new Error(
+        `Rate limit exceeded. Try again in ${Math.ceil((rateLimitCheck.resetTime - Date.now()) / 1000)} seconds.`
+      );
     }
 
     try {
       const response = await fetch('/api/respond', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: request.messages.map(m => m.content).join('\n'),
+          prompt: request.messages.map((m) => m.content).join('\n'),
           model,
           temperature: request.temperature ?? 0.7,
           maxTokens: request.maxTokens ?? 1000,
           ...(request.functions ? { functions: request.functions } : {}),
-          ...(request.functionCall ? { function_call: request.functionCall } : {})
-        })
+          ...(request.functionCall ? { function_call: request.functionCall } : {}),
+        }),
       });
 
       if (!response.ok) {
@@ -145,7 +152,7 @@ class OpenAIService {
         },
         finishReason: 'stop', // Server doesn't provide finish reason
         responseTime,
-        ...(data.tool_calls ? { functionCalls: data.tool_calls } : {})
+        ...(data.tool_calls ? { functionCalls: data.tool_calls } : {}),
       };
 
       // Log usage to Supabase (gracefully handle failures)
@@ -154,7 +161,7 @@ class OpenAIService {
         try {
           const modelConfig = await supabaseAIService.getModelById(model);
           const cost = this.calculateCost(model, result.usage.totalTokens, modelConfig);
-          
+
           await supabaseAIService.logUsage({
             customer_id: validCustomerId,
             model_id: model,
@@ -162,7 +169,7 @@ class OpenAIService {
             tokens_used: result.usage.totalTokens,
             cost,
             response_time_ms: responseTime,
-            success: true
+            success: true,
           });
         } catch (logError) {
           console.warn('Failed to log OpenAI usage (non-critical):', logError);
@@ -183,7 +190,7 @@ class OpenAIService {
             cost: 0,
             response_time_ms: Date.now() - startTime,
             success: false,
-            error_message: error instanceof Error ? error.message : 'Unknown error'
+            error_message: error instanceof Error ? error.message : 'Unknown error',
           });
         } catch (logError) {
           console.warn('Failed to log OpenAI error usage (non-critical):', logError);
@@ -203,10 +210,10 @@ class OpenAIService {
       // Use pricing from database if available
       const inputTokens = Math.floor(tokens * 0.7);
       const outputTokens = tokens - inputTokens;
-      
+
       const inputCost = (inputTokens / 1_000_000) * modelConfig.pricing.input_per_1m_tokens;
       const outputCost = (outputTokens / 1_000_000) * modelConfig.pricing.output_per_1m_tokens;
-      
+
       return inputCost + outputCost;
     }
 
@@ -216,7 +223,7 @@ class OpenAIService {
       'gpt-4o-mini': 0.15,
       'gpt-3.5-turbo': 0.0015,
       'gpt-4': 10.0,
-      'gpt-4-turbo': 10.0
+      'gpt-4-turbo': 10.0,
     };
 
     const costPer1kTokens = pricing[model] || 0.0015;
@@ -226,27 +233,33 @@ class OpenAIService {
   /**
    * Generate email content
    */
-  async generateEmail(context: {
-    recipient: string;
-    purpose: string;
-    tone?: 'formal' | 'casual' | 'friendly';
-    context?: string;
-  }, customerId?: string, model?: string): Promise<{ subject: string; body: string }> {
+  async generateEmail(
+    context: {
+      recipient: string;
+      purpose: string;
+      tone?: 'formal' | 'casual' | 'friendly';
+      context?: string;
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<{ subject: string; body: string }> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
       console.warn('AI service not available, returning fallback email');
       return {
         subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI service temporarily unavailable - please try again later]\n\nBest regards`
+        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI service temporarily unavailable - please try again later]\n\nBest regards`,
       };
     }
-    
+
     const tone = context.tone || 'professional';
     const systemPrompt = `You are a professional email writing assistant. Write clear, engaging emails that drive action. Always format your response as JSON with subject and body fields. Do not wrap the JSON in markdown code blocks.`;
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Generate a ${tone} email for the following context:
+      {
+        role: 'user',
+        content: `Generate a ${tone} email for the following context:
       
       Recipient: ${context.recipient}
       Purpose: ${context.purpose}
@@ -256,7 +269,8 @@ class OpenAIService {
       {
         "subject": "string",
         "body": "string"
-      }` }
+      }`,
+      },
     ];
 
     try {
@@ -265,7 +279,7 @@ class OpenAIService {
         model: model || 'gpt-4o-mini',
         customerId,
         featureUsed: 'email-generation',
-        temperature: 0.7
+        temperature: 0.7,
       });
 
       // Content is already stripped in generateContent, but parse safely
@@ -283,7 +297,7 @@ class OpenAIService {
       console.error('Error generating email with OpenAI:', error);
       return {
         subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Generated content unavailable - please try again]\n\nBest regards`
+        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Generated content unavailable - please try again]\n\nBest regards`,
       };
     }
   }
@@ -296,19 +310,21 @@ class OpenAIService {
     if (!serverAvailable) {
       console.warn('AI service not available, returning fallback insights');
       return {
-        riskLevel: "unknown",
-        keyInsights: ["AI service temporarily unavailable"],
-        recommendedActions: ["Please try again later"],
+        riskLevel: 'unknown',
+        keyInsights: ['AI service temporarily unavailable'],
+        recommendedActions: ['Please try again later'],
         winProbability: 0,
-        potentialBlockers: ["AI analysis unavailable"]
+        potentialBlockers: ['AI analysis unavailable'],
       };
     }
-    
+
     const systemPrompt = `You are an AI specialized in sales analytics. Analyze the provided deal data and return insightful observations in JSON format only. Do not wrap the JSON in markdown code blocks.`;
-    
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Analyze this deal data and provide actionable insights:
+      {
+        role: 'user',
+        content: `Analyze this deal data and provide actionable insights:
       
       ${JSON.stringify(dealData)}
       
@@ -319,7 +335,8 @@ class OpenAIService {
         "recommendedActions": ["string"],
         "winProbability": number,
         "potentialBlockers": ["string"]
-      }` }
+      }`,
+      },
     ];
 
     try {
@@ -328,7 +345,7 @@ class OpenAIService {
         model: model || 'gpt-4o-mini',
         customerId,
         featureUsed: 'deal-insights',
-        temperature: 0.3
+        temperature: 0.3,
       });
 
       // Content is already stripped in generateContent, but parse safely
@@ -345,11 +362,11 @@ class OpenAIService {
     } catch (error) {
       console.error('Error generating deal insights with OpenAI:', error);
       return {
-        riskLevel: "unknown",
-        keyInsights: ["Unable to generate insights. Please try again later."],
-        recommendedActions: ["Review deal data manually"],
+        riskLevel: 'unknown',
+        keyInsights: ['Unable to generate insights. Please try again later.'],
+        recommendedActions: ['Review deal data manually'],
         winProbability: 0,
-        potentialBlockers: ["AI analysis unavailable"]
+        potentialBlockers: ['AI analysis unavailable'],
       };
     }
   }
@@ -357,24 +374,30 @@ class OpenAIService {
   /**
    * Generate pipeline health analysis
    */
-  async analyzePipelineHealth(pipelineData: any, customerId?: string, model?: string): Promise<any> {
+  async analyzePipelineHealth(
+    pipelineData: any,
+    customerId?: string,
+    model?: string
+  ): Promise<any> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
       console.warn('AI service not available, returning fallback analysis');
       return {
         healthScore: 0,
-        keyInsights: ["AI service temporarily unavailable"],
-        bottlenecks: ["Please try again later"],
-        opportunities: ["AI analysis unavailable"],
-        forecastAccuracy: 0
+        keyInsights: ['AI service temporarily unavailable'],
+        bottlenecks: ['Please try again later'],
+        opportunities: ['AI analysis unavailable'],
+        forecastAccuracy: 0,
       };
     }
-    
+
     const systemPrompt = `You are an AI specialized in sales pipeline analysis. Examine the provided pipeline data and identify patterns, bottlenecks, and opportunities. Return only valid JSON without markdown formatting.`;
-    
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Analyze this pipeline data and provide actionable insights:
+      {
+        role: 'user',
+        content: `Analyze this pipeline data and provide actionable insights:
       
       ${JSON.stringify(pipelineData)}
       
@@ -385,7 +408,8 @@ class OpenAIService {
         "bottlenecks": ["string"],
         "opportunities": ["string"],
         "forecastAccuracy": number
-      }` }
+      }`,
+      },
     ];
 
     try {
@@ -394,7 +418,7 @@ class OpenAIService {
         model: model || 'gpt-4o-mini',
         customerId,
         featureUsed: 'pipeline-health',
-        temperature: 0.3
+        temperature: 0.3,
       });
 
       // Content is already stripped in generateContent, but parse safely
@@ -412,10 +436,10 @@ class OpenAIService {
       console.error('Error analyzing pipeline health with OpenAI:', error);
       return {
         healthScore: 0,
-        keyInsights: ["Unable to analyze pipeline health. Please try again later."],
-        bottlenecks: ["Analysis unavailable"],
-        opportunities: ["Analysis unavailable"],
-        forecastAccuracy: 0
+        keyInsights: ['Unable to analyze pipeline health. Please try again later.'],
+        bottlenecks: ['Analysis unavailable'],
+        opportunities: ['Analysis unavailable'],
+        forecastAccuracy: 0,
       };
     }
   }
@@ -423,13 +447,17 @@ class OpenAIService {
   /**
    * Generate meeting agenda
    */
-  async generateMeetingAgenda(context: {
-    meetingTitle: string;
-    attendees: string[];
-    purpose: string;
-    duration: number;
-    previousNotes?: string;
-  }, customerId?: string, model?: string): Promise<any> {
+  async generateMeetingAgenda(
+    context: {
+      meetingTitle: string;
+      attendees: string[];
+      purpose: string;
+      duration: number;
+      previousNotes?: string;
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<any> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
       console.warn('AI service not available, returning fallback agenda');
@@ -438,21 +466,23 @@ class OpenAIService {
         objective: context.purpose,
         agendaItems: [
           {
-            topic: "Introduction",
+            topic: 'Introduction',
             duration: 5,
-            owner: "All",
-            description: "Welcome and meeting objectives"
-          }
+            owner: 'All',
+            description: 'Welcome and meeting objectives',
+          },
         ],
-        notes: "AI service temporarily unavailable - please try again later."
+        notes: 'AI service temporarily unavailable - please try again later.',
       };
     }
-    
+
     const systemPrompt = `You are an AI specialized in meeting planning and facilitation. Create clear, focused meeting agendas that make excellent use of time. Return only valid JSON without markdown formatting.`;
-    
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Create a meeting agenda for the following context:
+      {
+        role: 'user',
+        content: `Create a meeting agenda for the following context:
       
       Meeting Title: ${context.meetingTitle}
       Attendees: ${context.attendees.join(', ')}
@@ -473,7 +503,8 @@ class OpenAIService {
           }
         ],
         "notes": "string"
-      }` }
+      }`,
+      },
     ];
 
     try {
@@ -482,7 +513,7 @@ class OpenAIService {
         model: model || 'gpt-4o-mini',
         customerId,
         featureUsed: 'meeting-agenda',
-        temperature: 0.7
+        temperature: 0.7,
       });
 
       // Content is already stripped in generateContent, but parse safely
@@ -503,13 +534,13 @@ class OpenAIService {
         objective: context.purpose,
         agendaItems: [
           {
-            topic: "Introduction",
+            topic: 'Introduction',
             duration: 5,
-            owner: "All",
-            description: "Welcome and meeting objectives"
-          }
+            owner: 'All',
+            description: 'Welcome and meeting objectives',
+          },
         ],
-        notes: "Failed to generate complete agenda. Please try again."
+        notes: 'Failed to generate complete agenda. Please try again.',
       };
     }
   }

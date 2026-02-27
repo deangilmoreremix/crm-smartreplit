@@ -1,12 +1,15 @@
 # Module Federation Setup Checklist for Bolt App
 
 ## Issue Identified
+
 Your remoteEntry.js loads successfully but doesn't create a global `ContactsApp` container. This means the Module Federation configuration isn't working properly.
 
 ## Required Files in Your Bolt App
 
 ### 1. package.json
+
 Add this dependency:
+
 ```json
 {
   "devDependencies": {
@@ -16,6 +19,7 @@ Add this dependency:
 ```
 
 ### 2. vite.config.js (CRITICAL - Replace completely)
+
 ```js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -55,6 +59,7 @@ export default defineConfig({
 ```
 
 ### 3. src/ContactsApp.tsx (Create this exact file)
+
 ```tsx
 import React from 'react';
 
@@ -80,12 +85,15 @@ export default ContactsApp;
 5. **Test**: The connection should work
 
 ## Verification
+
 After deploying, check that:
+
 - `yourapp.com/assets/remoteEntry.js` loads without errors
 - The browser console shows `window.ContactsApp` exists
 - No "Script error" messages appear
 
 ## Common Issues
+
 - Missing @originjs/vite-plugin-federation dependency
 - Wrong vite.config.js syntax
 - Missing or wrong export in ContactsApp.tsx

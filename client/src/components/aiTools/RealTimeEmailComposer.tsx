@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGemini } from '../../services/geminiService';
-import { Send, RefreshCw, CheckCircle, AlertCircle, Sparkles, Copy, Check, Mail, Hash } from 'lucide-react';
+import {
+  Send,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Sparkles,
+  Copy,
+  Check,
+  Mail,
+  Hash,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface EmailSuggestion {
@@ -16,31 +26,32 @@ const RealTimeEmailComposer: React.FC = () => {
   const [suggestions, setSuggestions] = useState<EmailSuggestion[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [emailContext, setEmailContext] = useState('sales follow-up');
-  const [sentiment, setSentiment] = useState<{score: number; emotions: string[]}>(
-    {score: 0, emotions: []}
-  );
+  const [sentiment, setSentiment] = useState<{ score: number; emotions: string[] }>({
+    score: 0,
+    emotions: [],
+  });
   const [copied, setCopied] = useState(false);
-  
+
   // Refs to track typing and implement debounce
   const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastAnalysisRef = useRef('');
-  
+
   // Context options for different email types
   const contextOptions = [
     { value: 'sales follow-up', label: 'Sales Follow-up' },
     { value: 'meeting request', label: 'Meeting Request' },
     { value: 'proposal', label: 'Proposal' },
     { value: 'cold outreach', label: 'Cold Outreach' },
-    { value: 'thank you', label: 'Thank You' }
+    { value: 'thank you', label: 'Thank You' },
   ];
 
   // Analyze email content and provide real-time suggestions
   const analyzeEmailContent = async (emailContent: string) => {
     if (emailContent.trim() === lastAnalysisRef.current || emailContent.length < 5) return;
-    
+
     setIsAnalyzing(true);
     lastAnalysisRef.current = emailContent.trim();
-    
+
     try {
       // Get suggestions based on email content
       const analysisPrompt = `
@@ -60,36 +71,36 @@ const RealTimeEmailComposer: React.FC = () => {
       const result = await model.generateContent(analysisPrompt);
       const response = await result.response;
       const responseText = response.text();
-      
+
       // Try to parse the response as JSON
       try {
         // Extract the JSON part if needed
-        const jsonText = responseText.includes('[') 
+        const jsonText = responseText.includes('[')
           ? responseText.substring(responseText.indexOf('['), responseText.lastIndexOf(']') + 1)
           : responseText;
-        
+
         const parsedSuggestions = JSON.parse(jsonText);
         if (Array.isArray(parsedSuggestions)) {
           setSuggestions(parsedSuggestions);
         }
       } catch (e) {
-        console.error("Failed to parse suggestions:", e);
+        console.error('Failed to parse suggestions:', e);
       }
-      
+
       // Analyze sentiment (separate call for better results)
       if (emailContent.length > 20) {
         try {
           const sentimentResult = await gemini.analyzeSentimentRealTime(emailContent);
           setSentiment({
             score: sentimentResult.sentiment,
-            emotions: sentimentResult.emotions.slice(0, 2) // Limit to top 2 emotions
+            emotions: sentimentResult.emotions.slice(0, 2), // Limit to top 2 emotions
           });
         } catch (e) {
-          console.error("Error analyzing sentiment:", e);
+          console.error('Error analyzing sentiment:', e);
         }
       }
     } catch (error) {
-      console.error("Error analyzing email:", error);
+      console.error('Error analyzing email:', error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -100,13 +111,13 @@ const RealTimeEmailComposer: React.FC = () => {
     if (typingTimerRef.current) {
       clearTimeout(typingTimerRef.current);
     }
-    
+
     if (emailBody.length > 5) {
       typingTimerRef.current = setTimeout(() => {
         analyzeEmailContent(emailBody);
       }, 800);
     }
-    
+
     return () => {
       if (typingTimerRef.current) {
         clearTimeout(typingTimerRef.current);
@@ -122,7 +133,7 @@ const RealTimeEmailComposer: React.FC = () => {
         break;
       case 'greeting':
         // Insert greeting at the beginning
-        setEmailBody(prevBody => {
+        setEmailBody((prevBody) => {
           const lines = prevBody.split('\n');
           lines[0] = suggestion.text;
           return lines.join('\n');
@@ -130,21 +141,23 @@ const RealTimeEmailComposer: React.FC = () => {
         break;
       case 'body':
         // Replace a portion of the body or append
-        setEmailBody(prevBody => {
+        setEmailBody((prevBody) => {
           return suggestion.text;
         });
         break;
       case 'closing':
         // Append closing to the end
-        setEmailBody(prevBody => {
-          const bodyWithoutClosing = prevBody.replace(/(?:Regards|Sincerely|Best|Thanks|Thank you)[\s\S]*$/, '').trim();
+        setEmailBody((prevBody) => {
+          const bodyWithoutClosing = prevBody
+            .replace(/(?:Regards|Sincerely|Best|Thanks|Thank you)[\s\S]*$/, '')
+            .trim();
           return `${bodyWithoutClosing}\n\n${suggestion.text}`;
         });
         break;
     }
-    
+
     // Remove the used suggestion
-    setSuggestions(prev => prev.filter(s => s.text !== suggestion.text));
+    setSuggestions((prev) => prev.filter((s) => s.text !== suggestion.text));
   };
 
   // Format sentiment score as a color and descriptor
@@ -180,19 +193,21 @@ const RealTimeEmailComposer: React.FC = () => {
             Real-time Email Composer
           </h3>
           <div>
-            <select 
+            <select
               value={emailContext}
               onChange={(e) => setEmailContext(e.target.value)}
               className="text-sm border border-gray-300 rounded-md py-1 px-2 bg-white"
             >
-              {contextOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+              {contextOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </div>
         </div>
       </div>
-      
+
       <div className="p-6 space-y-4">
         <div className="space-y-4">
           <div>
@@ -205,7 +220,7 @@ const RealTimeEmailComposer: React.FC = () => {
               className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
+
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
             <div className="flex items-center">
@@ -216,14 +231,14 @@ const RealTimeEmailComposer: React.FC = () => {
                 placeholder="Enter subject line"
                 className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <Hash 
-                size={16} 
-                className={`absolute right-3 ${subject.length > 5 ? 'text-green-500' : 'text-gray-400'}`} 
-                title={subject.length > 5 ? "Good subject length" : "Subject line too short"}
+              <Hash
+                size={16}
+                className={`absolute right-3 ${subject.length > 5 ? 'text-green-500' : 'text-gray-400'}`}
+                title={subject.length > 5 ? 'Good subject length' : 'Subject line too short'}
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Body</label>
             <div className="relative">
@@ -242,7 +257,7 @@ const RealTimeEmailComposer: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Real-time Suggestions */}
         {suggestions.length > 0 && (
           <AnimatePresence>
@@ -258,7 +273,7 @@ const RealTimeEmailComposer: React.FC = () => {
               </div>
               <div className="space-y-2">
                 {suggestions.map((suggestion, idx) => (
-                  <motion.div 
+                  <motion.div
                     key={`${suggestion.type}-${idx}`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -274,9 +289,13 @@ const RealTimeEmailComposer: React.FC = () => {
                     </button>
                     <div>
                       <div className="text-xs text-blue-700 font-medium">
-                        {suggestion.type === 'subject' ? 'Subject Line' : 
-                         suggestion.type === 'greeting' ? 'Greeting' :
-                         suggestion.type === 'closing' ? 'Closing' : 'Content'}
+                        {suggestion.type === 'subject'
+                          ? 'Subject Line'
+                          : suggestion.type === 'greeting'
+                            ? 'Greeting'
+                            : suggestion.type === 'closing'
+                              ? 'Closing'
+                              : 'Content'}
                       </div>
                       <p className="text-sm text-gray-800">{suggestion.text}</p>
                     </div>
@@ -286,7 +305,7 @@ const RealTimeEmailComposer: React.FC = () => {
             </motion.div>
           </AnimatePresence>
         )}
-        
+
         {/* Sentiment Analysis */}
         {(sentiment.score !== 0 || sentiment.emotions.length > 0) && emailBody.length > 20 && (
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -294,17 +313,18 @@ const RealTimeEmailComposer: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               <div className="flex items-center">
                 <div className="text-sm font-medium mr-2">Tone:</div>
-                <div className={`text-sm ${getSentimentColor()}`}>
-                  {getSentimentDescription()}
-                </div>
+                <div className={`text-sm ${getSentimentColor()}`}>{getSentimentDescription()}</div>
               </div>
-              
+
               {sentiment.emotions.length > 0 && (
                 <div className="flex items-center">
                   <div className="text-sm font-medium mr-2">Emotions:</div>
                   <div className="flex space-x-1">
                     {sentiment.emotions.map((emotion, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs"
+                      >
                         {emotion}
                       </span>
                     ))}
@@ -314,14 +334,12 @@ const RealTimeEmailComposer: React.FC = () => {
             </div>
           </div>
         )}
-        
+
         <div className="flex justify-end space-x-2 pt-2">
           <button
             onClick={copyToClipboard}
             className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-              copied 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             {copied ? (
@@ -336,7 +354,7 @@ const RealTimeEmailComposer: React.FC = () => {
               </>
             )}
           </button>
-          
+
           <button
             disabled={!to || !subject || !emailBody.trim()}
             className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed"

@@ -10,13 +10,14 @@ const RemoteFunnelCraftLoader: React.FC = () => {
     const handleLoad = () => {
       // Try to communicate with the iframe to set light mode
       try {
-        iframe.contentWindow?.postMessage({ 
-          type: 'SET_THEME', 
-          theme: 'light' 
-        }, '*');
-      } catch (error) {
-        console.log('Unable to communicate with iframe for theme setting');
-      }
+        iframe.contentWindow?.postMessage(
+          {
+            type: 'SET_THEME',
+            theme: 'light',
+          },
+          '*'
+        );
+      } catch (error) {}
     };
 
     iframe.addEventListener('load', handleLoad);

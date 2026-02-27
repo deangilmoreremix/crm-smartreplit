@@ -28,7 +28,7 @@ const RemoteContactsIframe: React.FC<RemoteContactsIframeProps> = ({
   initialContacts,
   theme = 'light',
   height = '600px',
-  className = ''
+  className = '',
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isReady, setIsReady] = useState(false);
@@ -57,22 +57,22 @@ const RemoteContactsIframe: React.FC<RemoteContactsIframeProps> = ({
           sendMessageToIframe({
             type: 'INIT',
             contacts: initialContacts,
-            theme
+            theme,
           });
           break;
-          
+
         case 'CONTACT_SELECTED':
           onContactSelect?.(data.contact);
           break;
-          
+
         case 'CONTACT_CREATED':
           onContactCreate?.(data.contact);
           break;
-          
+
         case 'CONTACT_UPDATED':
           onContactUpdate?.(data.contact);
           break;
-          
+
         case 'CONTACT_DELETED':
           onContactDelete?.(data.contactId);
           break;
@@ -81,7 +81,15 @@ const RemoteContactsIframe: React.FC<RemoteContactsIframeProps> = ({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [remoteUrl, onContactSelect, onContactCreate, onContactUpdate, onContactDelete, initialContacts, theme]);
+  }, [
+    remoteUrl,
+    onContactSelect,
+    onContactCreate,
+    onContactUpdate,
+    onContactDelete,
+    initialContacts,
+    theme,
+  ]);
 
   const sendMessageToIframe = (message: any) => {
     if (iframeRef.current?.contentWindow) {
@@ -113,7 +121,7 @@ const RemoteContactsIframe: React.FC<RemoteContactsIframeProps> = ({
       sendMessageToIframe({
         type: 'UPDATE_PROPS',
         contacts: initialContacts,
-        theme
+        theme,
       });
     }
   }, [initialContacts, theme, isReady]);
@@ -128,7 +136,7 @@ const RemoteContactsIframe: React.FC<RemoteContactsIframeProps> = ({
           </div>
         </div>
       )}
-      
+
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h3 className="text-red-800 font-medium">Remote Contacts Error</h3>
@@ -145,7 +153,7 @@ const RemoteContactsIframe: React.FC<RemoteContactsIframeProps> = ({
           </button>
         </div>
       )}
-      
+
       <iframe
         ref={iframeRef}
         src={remoteUrl}

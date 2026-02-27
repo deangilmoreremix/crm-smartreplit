@@ -16,6 +16,7 @@ The CRM system can now communicate bidirectionally with your remote contacts mod
 ### 1. CRM Side (Already Implemented)
 
 The CRM automatically:
+
 - Sends initial contact data when the remote module loads
 - Listens for contact changes from the remote module
 - Updates local CRM data when remote contacts change
@@ -29,7 +30,8 @@ Add this JavaScript code to your remote contacts module:
 // CRM Integration Bridge for Remote Contacts Module
 class CRMBridge {
   constructor() {
-    this.parentOrigin = window.location.ancestorOrigins?.[0] || 'https://your-crm-domain.replit.app';
+    this.parentOrigin =
+      window.location.ancestorOrigins?.[0] || 'https://your-crm-domain.replit.app';
     this.isConnected = false;
     this.setupMessageListener();
     this.notifyReady();
@@ -75,19 +77,19 @@ class CRMBridge {
   }
 
   notifyReady() {
-    this.sendToCRM('REMOTE_READY', { 
+    this.sendToCRM('REMOTE_READY', {
       moduleInfo: {
         name: 'Remote Contacts',
         version: '1.0.0',
-        capabilities: ['create', 'read', 'update', 'delete']
-      }
+        capabilities: ['create', 'read', 'update', 'delete'],
+      },
     });
   }
 
   handleCRMInit(data) {
     console.log('🚀 CRM initialized:', data);
     this.isConnected = true;
-    
+
     // Load CRM contacts into your remote module
     if (data.contacts) {
       this.loadContactsFromCRM(data.contacts);
@@ -164,13 +166,14 @@ const contact = {
   tags: ['lead', 'potential'],
   notes: 'Met at conference',
   createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z'
+  updatedAt: '2024-01-01T00:00:00Z',
 };
 ```
 
 ## Available Message Types
 
 ### From CRM to Remote Module
+
 - `CRM_INIT` - Initial connection with contact data
 - `CONTACTS_SYNC` - Full contact synchronization
 - `LOCAL_CONTACT_CREATED` - A contact was created in CRM
@@ -179,6 +182,7 @@ const contact = {
 - `NAVIGATION_AVAILABLE` - Available CRM routes for navigation
 
 ### From Remote Module to CRM
+
 - `REMOTE_READY` - Remote module is loaded and ready
 - `CONTACT_CREATED` - A contact was created in remote module
 - `CONTACT_UPDATED` - A contact was updated in remote module

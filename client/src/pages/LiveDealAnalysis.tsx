@@ -1,4 +1,3 @@
-
 import React from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
@@ -8,10 +7,10 @@ import DashboardHeader from '../components/dashboard/DashboardHeader';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import Avatar from '../components/ui/Avatar';
-import { 
-  Activity, 
-  Eye, 
-  Zap, 
+import {
+  Activity,
+  Eye,
+  Zap,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -20,7 +19,7 @@ import {
   Users,
   Target,
   ArrowUpRight,
-  Circle
+  Circle,
 } from 'lucide-react';
 
 const LiveDealAnalysis: React.FC = () => {
@@ -30,10 +29,12 @@ const LiveDealAnalysis: React.FC = () => {
 
   // Calculate live deal metrics
   const dealsArray = Object.values(deals);
-  const activeDeals = dealsArray.filter(d => !['closed-won', 'closed-lost'].includes(String(d.stage)));
-  const hotDeals = activeDeals.filter(d => d.probability > 70);
-  const warmDeals = activeDeals.filter(d => d.probability >= 40 && d.probability <= 70);
-  const coldDeals = activeDeals.filter(d => d.probability < 40);
+  const activeDeals = dealsArray.filter(
+    (d) => !['closed-won', 'closed-lost'].includes(String(d.stage))
+  );
+  const hotDeals = activeDeals.filter((d) => d.probability > 70);
+  const warmDeals = activeDeals.filter((d) => d.probability >= 40 && d.probability <= 70);
+  const coldDeals = activeDeals.filter((d) => d.probability < 40);
 
   // Get top contacts by deal value
   const topContacts = Object.values(contacts).slice(0, 6);
@@ -44,20 +45,27 @@ const LiveDealAnalysis: React.FC = () => {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
   // Get initials for avatar
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
-    <main className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 max-w-7xl mx-auto bg-white dark:bg-gray-900" style={{ backgroundColor: isDark ? '#111827' : '#ffffff' }}>
+    <main
+      className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 max-w-7xl mx-auto bg-white dark:bg-gray-900"
+      style={{ backgroundColor: isDark ? '#111827' : '#ffffff' }}
+    >
       <div className="space-y-8">
         {/* Dashboard Header */}
-        <DashboardHeader 
+        <DashboardHeader
           title="Live Deal Analysis"
           subtitle="Real-time deal intelligence and opportunity insights"
         />
@@ -78,7 +86,9 @@ const LiveDealAnalysis: React.FC = () => {
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {activeDeals.length}
               </h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Active Deals</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                Active Deals
+              </p>
             </div>
           </GlassCard>
 
@@ -132,7 +142,9 @@ const LiveDealAnalysis: React.FC = () => {
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {coldDeals.length}
               </h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Needs Attention</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                Needs Attention
+              </p>
             </div>
           </GlassCard>
         </div>
@@ -140,7 +152,9 @@ const LiveDealAnalysis: React.FC = () => {
         {/* Live Deal Temperature Analysis */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <Activity className="h-5 w-5 mr-2 text-red-500" />
               Deal Temperature Analysis
             </h2>
@@ -151,9 +165,13 @@ const LiveDealAnalysis: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>🔥 Hot Deals</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  🔥 Hot Deals
+                </h3>
                 <CheckCircle className="h-5 w-5 text-green-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -164,9 +182,13 @@ const LiveDealAnalysis: React.FC = () => {
               </p>
             </div>
 
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>🌡️ Warm Deals</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  🌡️ Warm Deals
+                </h3>
                 <Eye className="h-5 w-5 text-yellow-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -177,9 +199,13 @@ const LiveDealAnalysis: React.FC = () => {
               </p>
             </div>
 
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>❄️ Cold Deals</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  ❄️ Cold Deals
+                </h3>
                 <AlertTriangle className="h-5 w-5 text-blue-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -195,7 +221,9 @@ const LiveDealAnalysis: React.FC = () => {
         {/* Live Deal Activity Feed */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <Circle className="h-5 w-5 mr-2 text-green-500" />
               Live Deal Activity Feed
             </h2>
@@ -206,29 +234,32 @@ const LiveDealAnalysis: React.FC = () => {
 
           <div className="space-y-4">
             {activeDeals.slice(0, 6).map((deal) => (
-              <div 
-                key={deal.id} 
+              <div
+                key={deal.id}
                 className={`flex items-center justify-between p-4 rounded-xl ${
-                  isDark 
-                    ? 'bg-white/5 hover:bg-white/10 border border-white/10' 
+                  isDark
+                    ? 'bg-white/5 hover:bg-white/10 border border-white/10'
                     : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                 } transition-all duration-200 cursor-pointer`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    deal.probability > 70 ? 'bg-green-500 animate-pulse' :
-                    deal.probability >= 40 ? 'bg-yellow-500' : 'bg-blue-500'
-                  }`} />
-                  <Avatar
-                    size="sm"
-                    fallback={getInitials((deal as any).contactName || 'UN')}
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      deal.probability > 70
+                        ? 'bg-green-500 animate-pulse'
+                        : deal.probability >= 40
+                          ? 'bg-yellow-500'
+                          : 'bg-blue-500'
+                    }`}
                   />
+                  <Avatar size="sm" fallback={getInitials((deal as any).contactName || 'UN')} />
                   <div>
                     <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {deal.title}
                     </p>
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {(deal as any).contactName || 'Unknown'} • Last activity: {Math.floor(Math.random() * 5) + 1}h ago
+                      {(deal as any).contactName || 'Unknown'} • Last activity:{' '}
+                      {Math.floor(Math.random() * 5) + 1}h ago
                     </p>
                   </div>
                 </div>
@@ -237,11 +268,15 @@ const LiveDealAnalysis: React.FC = () => {
                     {formatCurrency(deal.value)}
                   </p>
                   <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      deal.probability > 70 ? 'bg-green-100 text-green-800' :
-                      deal.probability >= 40 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        deal.probability > 70
+                          ? 'bg-green-100 text-green-800'
+                          : deal.probability >= 40
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-blue-100 text-blue-800'
+                      }`}
+                    >
                       {deal.probability}% prob
                     </span>
                   </div>
@@ -254,7 +289,9 @@ const LiveDealAnalysis: React.FC = () => {
         {/* Deal Engagement Insights */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <BarChart3 className="h-5 w-5 mr-2 text-purple-500" />
               Real-time Engagement Insights
             </h2>
@@ -265,11 +302,14 @@ const LiveDealAnalysis: React.FC = () => {
               { metric: 'Email Opens', value: '89%', change: '+12%', icon: '📧' },
               { metric: 'Response Rate', value: '34%', change: '+8%', icon: '💬' },
               { metric: 'Meeting Acceptance', value: '76%', change: '+15%', icon: '📅' },
-              { metric: 'Proposal Views', value: '92%', change: '+5%', icon: '📄' }
+              { metric: 'Proposal Views', value: '92%', change: '+5%', icon: '📄' },
             ].map((item, index) => (
-              <div key={index} className={`p-4 rounded-lg ${
-                isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
-              }`}>
+              <div
+                key={index}
+                className={`p-4 rounded-lg ${
+                  isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
+                }`}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl">{item.icon}</span>
                   <span className="text-xs text-green-500">{item.change}</span>
@@ -288,7 +328,9 @@ const LiveDealAnalysis: React.FC = () => {
         {/* Action Items */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <Target className="h-5 w-5 mr-2 text-orange-500" />
               Immediate Action Items
             </h2>
@@ -296,19 +338,47 @@ const LiveDealAnalysis: React.FC = () => {
 
           <div className="space-y-4">
             {[
-              { priority: 'High', action: 'Follow up on Enterprise Software License deal', contact: 'Jane Doe', urgency: 'Overdue by 2 days' },
-              { priority: 'Medium', action: 'Send proposal for CRM Integration Services', contact: 'Wade Warren', urgency: 'Due today' },
-              { priority: 'High', action: 'Schedule demo for Marketing Automation Platform', contact: 'Darlene Robertson', urgency: 'Due tomorrow' },
-              { priority: 'Low', action: 'Research competitor pricing for Cloud Infrastructure', contact: 'Sarah Johnson', urgency: 'Due in 3 days' }
+              {
+                priority: 'High',
+                action: 'Follow up on Enterprise Software License deal',
+                contact: 'Jane Doe',
+                urgency: 'Overdue by 2 days',
+              },
+              {
+                priority: 'Medium',
+                action: 'Send proposal for CRM Integration Services',
+                contact: 'Wade Warren',
+                urgency: 'Due today',
+              },
+              {
+                priority: 'High',
+                action: 'Schedule demo for Marketing Automation Platform',
+                contact: 'Darlene Robertson',
+                urgency: 'Due tomorrow',
+              },
+              {
+                priority: 'Low',
+                action: 'Research competitor pricing for Cloud Infrastructure',
+                contact: 'Sarah Johnson',
+                urgency: 'Due in 3 days',
+              },
             ].map((item, index) => (
-              <div key={index} className={`flex items-center justify-between p-4 rounded-xl ${
-                isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
-              }`}>
+              <div
+                key={index}
+                className={`flex items-center justify-between p-4 rounded-xl ${
+                  isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
+                }`}
+              >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-8 rounded-full ${
-                    item.priority === 'High' ? 'bg-red-500' :
-                    item.priority === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'
-                  }`} />
+                  <div
+                    className={`w-2 h-8 rounded-full ${
+                      item.priority === 'High'
+                        ? 'bg-red-500'
+                        : item.priority === 'Medium'
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                    }`}
+                  />
                   <div>
                     <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {item.action}
@@ -319,11 +389,15 @@ const LiveDealAnalysis: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    item.priority === 'High' ? 'bg-red-100 text-red-800' :
-                    item.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      item.priority === 'High'
+                        ? 'bg-red-100 text-red-800'
+                        : item.priority === 'Medium'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-green-100 text-green-800'
+                    }`}
+                  >
                     {item.urgency}
                   </span>
                 </div>

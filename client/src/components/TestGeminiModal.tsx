@@ -1,5 +1,5 @@
-import { useState } from "react";
-import GeminiImageModal from "./GeminiImageModal";
+import { useState } from 'react';
+import GeminiImageModal from './GeminiImageModal';
 
 export default function TestGeminiModal() {
   const [open, setOpen] = useState(false);

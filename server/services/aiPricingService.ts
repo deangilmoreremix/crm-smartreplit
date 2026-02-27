@@ -1,14 +1,14 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { 
-  aiFeatureDefinitions, 
-  aiResellerPricing, 
+import {
+  aiFeatureDefinitions,
+  aiResellerPricing,
   aiFeatureUsage,
   resellerCredits,
   resellerCreditTransactions,
   profiles,
   type InsertAIFeatureUsage,
-  type InsertResellerCreditTransaction
+  type InsertResellerCreditTransaction,
 } from '../../shared/schema';
 import { CreditService } from './creditService';
 
@@ -68,11 +68,13 @@ export class AIPricingService {
         const resellerPricing = await db
           .select()
           .from(aiResellerPricing)
-          .where(and(
-            eq(aiResellerPricing.resellerId, userId),
-            eq(aiResellerPricing.featureKey, feature.featureKey),
-            eq(aiResellerPricing.isActive, true)
-          ))
+          .where(
+            and(
+              eq(aiResellerPricing.resellerId, userId),
+              eq(aiResellerPricing.featureKey, feature.featureKey),
+              eq(aiResellerPricing.isActive, true)
+            )
+          )
           .limit(1);
 
         if (resellerPricing.length > 0) {
@@ -85,11 +87,13 @@ export class AIPricingService {
         const resellerPricing = await db
           .select()
           .from(aiResellerPricing)
-          .where(and(
-            eq(aiResellerPricing.resellerId, resellerId),
-            eq(aiResellerPricing.featureKey, feature.featureKey),
-            eq(aiResellerPricing.isActive, true)
-          ))
+          .where(
+            and(
+              eq(aiResellerPricing.resellerId, resellerId),
+              eq(aiResellerPricing.featureKey, feature.featureKey),
+              eq(aiResellerPricing.isActive, true)
+            )
+          )
           .limit(1);
 
         if (resellerPricing.length > 0) {
@@ -199,11 +203,13 @@ export class AIPricingService {
         const resellerPricing = await db
           .select()
           .from(aiResellerPricing)
-          .where(and(
-            eq(aiResellerPricing.resellerId, options.resellerId),
-            eq(aiResellerPricing.featureKey, featureKey),
-            eq(aiResellerPricing.isActive, true)
-          ))
+          .where(
+            and(
+              eq(aiResellerPricing.resellerId, options.resellerId),
+              eq(aiResellerPricing.featureKey, featureKey),
+              eq(aiResellerPricing.isActive, true)
+            )
+          )
           .limit(1);
 
         if (resellerPricing.length > 0) {
@@ -443,14 +449,16 @@ export class AIPricingService {
         totalProfit: sql<number>`sum(${aiFeatureUsage.resellerProfitCredits})`,
       })
       .from(aiFeatureUsage)
-      .where(and(
-        eq(aiFeatureUsage.resellerId, resellerId),
-        sql`${aiFeatureUsage.createdAt} >= ${startDate}`,
-        sql`${aiFeatureUsage.createdAt} <= ${endDate}`
-      ))
+      .where(
+        and(
+          eq(aiFeatureUsage.resellerId, resellerId),
+          sql`${aiFeatureUsage.createdAt} >= ${startDate}`,
+          sql`${aiFeatureUsage.createdAt} <= ${endDate}`
+        )
+      )
       .groupBy(aiFeatureUsage.featureKey);
 
-    const featureBreakdown = usage.map(u => ({
+    const featureBreakdown = usage.map((u) => ({
       featureKey: u.featureKey,
       usageCount: Number(u.count),
       creditsCharged: Number(u.totalCharged),

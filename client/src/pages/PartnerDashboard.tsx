@@ -18,7 +18,7 @@ import {
   CheckCircle,
   Clock,
   Sun,
-  Moon
+  Moon,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -79,22 +79,35 @@ export default function PartnerDashboard() {
 
   const getTierBadgeColor = (tier: string) => {
     const colors = {
-      bronze: 'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-800',
-      silver: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
+      bronze:
+        'bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-800',
+      silver:
+        'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
       gold: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800',
-      platinum: 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800',
+      platinum:
+        'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-800',
     };
-    return colors[tier as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
+    return (
+      colors[tier as keyof typeof colors] ||
+      'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+    );
   };
 
   const getStatusBadgeColor = (status: string) => {
     const colors = {
-      active: 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800',
-      pending: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800',
-      suspended: 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800',
-      terminated: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
+      active:
+        'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800',
+      pending:
+        'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800',
+      suspended:
+        'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800',
+      terminated:
+        'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
     };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
+    return (
+      colors[status as keyof typeof colors] ||
+      'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+    );
   };
 
   if (statsLoading) {
@@ -118,12 +131,19 @@ export default function PartnerDashboard() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'} p-6 space-y-6`} data-testid="partner-dashboard">
+    <div
+      className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'} p-6 space-y-6`}
+      data-testid="partner-dashboard"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Partner Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">Monitor your performance and earnings</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Partner Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
+            Monitor your performance and earnings
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -133,9 +153,7 @@ export default function PartnerDashboard() {
             data-testid="button-theme-toggle"
           >
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            <span className="text-sm font-medium">
-              {isDark ? 'Light' : 'Dark'}
-            </span>
+            <span className="text-sm font-medium">{isDark ? 'Light' : 'Dark'}</span>
           </button>
           {partnerStats && (
             <div className="flex items-center gap-2">
@@ -178,7 +196,8 @@ export default function PartnerDashboard() {
               {formatCurrency(partnerStats?.totalCommissions || '0')}
             </div>
             <div className="text-xs text-muted-foreground">
-              {formatPercentage(parseFloat(partnerStats?.commissionRate || '0') / 100)} commission rate
+              {formatPercentage(parseFloat(partnerStats?.commissionRate || '0') / 100)} commission
+              rate
             </div>
           </CardContent>
         </Card>
@@ -204,22 +223,34 @@ export default function PartnerDashboard() {
           <CardContent>
             <div className="space-y-2">
               <div className="text-sm font-medium">
-                {partnerStats?.tier === 'bronze' ? 'Silver Tier' : 
-                 partnerStats?.tier === 'silver' ? 'Gold Tier' : 
-                 partnerStats?.tier === 'gold' ? 'Platinum Tier' : 'Max Tier'}
+                {partnerStats?.tier === 'bronze'
+                  ? 'Silver Tier'
+                  : partnerStats?.tier === 'silver'
+                    ? 'Gold Tier'
+                    : partnerStats?.tier === 'gold'
+                      ? 'Platinum Tier'
+                      : 'Max Tier'}
               </div>
-              <Progress 
+              <Progress
                 value={
-                  partnerStats?.tier === 'bronze' ? 60 : 
-                  partnerStats?.tier === 'silver' ? 40 : 
-                  partnerStats?.tier === 'gold' ? 80 : 100
-                } 
-                className="h-2" 
+                  partnerStats?.tier === 'bronze'
+                    ? 60
+                    : partnerStats?.tier === 'silver'
+                      ? 40
+                      : partnerStats?.tier === 'gold'
+                        ? 80
+                        : 100
+                }
+                className="h-2"
               />
               <div className="text-xs text-muted-foreground">
-                {partnerStats?.tier === 'bronze' ? '$3,500 more needed' : 
-                 partnerStats?.tier === 'silver' ? '$7,500 more needed' : 
-                 partnerStats?.tier === 'gold' ? '$35,000 more needed' : 'Achieved!'}
+                {partnerStats?.tier === 'bronze'
+                  ? '$3,500 more needed'
+                  : partnerStats?.tier === 'silver'
+                    ? '$7,500 more needed'
+                    : partnerStats?.tier === 'gold'
+                      ? '$35,000 more needed'
+                      : 'Achieved!'}
               </div>
             </div>
           </CardContent>
@@ -269,7 +300,8 @@ export default function PartnerDashboard() {
                         {formatCurrency(partnerStats?.totalCommissions || '0')}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {formatPercentage(parseFloat(partnerStats?.commissionRate || '0') / 100)} rate
+                        {formatPercentage(parseFloat(partnerStats?.commissionRate || '0') / 100)}{' '}
+                        rate
                       </div>
                     </div>
                   </div>
@@ -280,12 +312,8 @@ export default function PartnerDashboard() {
                       <div className="text-sm text-gray-500">Active Customers</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold">
-                        {partnerStats?.customerCount || 0}
-                      </div>
-                      <div className="text-sm text-green-600">
-                        +15% growth
-                      </div>
+                      <div className="text-2xl font-bold">{partnerStats?.customerCount || 0}</div>
+                      <div className="text-sm text-green-600">+15% growth</div>
                     </div>
                   </div>
                 </div>
@@ -364,7 +392,10 @@ export default function PartnerDashboard() {
               ) : commissions && commissions.length > 0 ? (
                 <div className="space-y-4">
                   {commissions.map((commission) => (
-                    <div key={commission.id} className="flex justify-between items-center p-4 border rounded-lg">
+                    <div
+                      key={commission.id}
+                      className="flex justify-between items-center p-4 border rounded-lg"
+                    >
                       <div>
                         <div className="font-medium">{commission.description}</div>
                         <div className="text-sm text-gray-500">
@@ -375,8 +406,12 @@ export default function PartnerDashboard() {
                         <div className="font-semibold text-green-600">
                           +{formatCurrency(commission.amount)}
                         </div>
-                        <Badge 
-                          className={commission.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                        <Badge
+                          className={
+                            commission.status === 'paid'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }
                         >
                           {commission.status}
                         </Badge>
@@ -388,7 +423,9 @@ export default function PartnerDashboard() {
                 <div className="text-center py-8">
                   <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Commissions Yet</h3>
-                  <p className="text-gray-600">Your commission history will appear here once you start earning.</p>
+                  <p className="text-gray-600">
+                    Your commission history will appear here once you start earning.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -428,9 +465,7 @@ export default function PartnerDashboard() {
                           <td className="p-4 font-medium">{customer.name}</td>
                           <td className="p-4 text-gray-600">{customer.email}</td>
                           <td className="p-4">
-                            <Badge className="bg-green-100 text-green-800">
-                              {customer.status}
-                            </Badge>
+                            <Badge className="bg-green-100 text-green-800">{customer.status}</Badge>
                           </td>
                           <td className="text-right p-4 font-semibold">
                             {formatCurrency(customer.value)}
@@ -447,7 +482,9 @@ export default function PartnerDashboard() {
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Customers Yet</h3>
-                  <p className="text-gray-600">Start referring customers to build your revenue stream.</p>
+                  <p className="text-gray-600">
+                    Start referring customers to build your revenue stream.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -461,13 +498,25 @@ export default function PartnerDashboard() {
                 <CardTitle>Marketing Materials</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start" data-testid="download-brochures-button">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="download-brochures-button"
+                >
                   Download Brochures
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="get-referral-links-button">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="get-referral-links-button"
+                >
                   Get Referral Links
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="access-logos-button">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="access-logos-button"
+                >
                   Access Brand Assets
                 </Button>
               </CardContent>
@@ -478,13 +527,25 @@ export default function PartnerDashboard() {
                 <CardTitle>Partner Support</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start" data-testid="contact-support-button">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="contact-support-button"
+                >
                   Contact Support
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="view-training-button">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="view-training-button"
+                >
                   Training Resources
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="partner-community-button">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  data-testid="partner-community-button"
+                >
                   Partner Community
                 </Button>
               </CardContent>

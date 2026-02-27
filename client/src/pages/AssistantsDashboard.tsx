@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
-import { 
-  Bot, 
-  Brain, 
-  MessageSquare, 
-  Activity, 
-  Clock, 
-  TrendingUp, 
-  Users, 
-  Briefcase, 
-  CheckCircle, 
+import {
+  Bot,
+  Brain,
+  MessageSquare,
+  Activity,
+  Clock,
+  TrendingUp,
+  Users,
+  Briefcase,
+  CheckCircle,
   AlertCircle,
   Eye,
   BarChart3,
@@ -21,9 +20,12 @@ import {
   MessageCircle,
   Star,
   ArrowRight,
-  X
+  X,
 } from 'lucide-react';
-import { persistentAssistantService, PersistentAssistant } from '../services/persistentAssistantService';
+import {
+  persistentAssistantService,
+  PersistentAssistant,
+} from '../services/persistentAssistantService';
 import { assistantThreadManager } from '../services/assistantThreadManager';
 
 const AssistantsDashboard: React.FC = () => {
@@ -46,7 +48,7 @@ const AssistantsDashboard: React.FC = () => {
       await persistentAssistantService.initialize();
       const assistantsList = persistentAssistantService.getAssistantStats();
       setAssistants(assistantsList);
-      
+
       // Load active threads for each assistant
       const threadsMap = new Map();
       for (const assistant of assistantsList) {
@@ -54,7 +56,7 @@ const AssistantsDashboard: React.FC = () => {
         threadsMap.set(assistant.id, threads);
       }
       setActiveThreads(threadsMap);
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Failed to load assistant data:', error);
@@ -66,9 +68,16 @@ const AssistantsDashboard: React.FC = () => {
     // Calculate system-wide statistics
     const stats = {
       totalInteractions: assistants.reduce((sum, a) => sum + a.totalInteractions, 0),
-      avgResponseTime: assistants.reduce((sum, a) => sum + a.performance.averageResponseTime, 0) / Math.max(assistants.length, 1),
-      totalActiveThreads: Array.from(activeThreads.values()).reduce((sum, threads) => sum + threads.length, 0),
-      overallSuccessRate: assistants.reduce((sum, a) => sum + a.performance.successRate, 0) / Math.max(assistants.length, 1)
+      avgResponseTime:
+        assistants.reduce((sum, a) => sum + a.performance.averageResponseTime, 0) /
+        Math.max(assistants.length, 1),
+      totalActiveThreads: Array.from(activeThreads.values()).reduce(
+        (sum, threads) => sum + threads.length,
+        0
+      ),
+      overallSuccessRate:
+        assistants.reduce((sum, a) => sum + a.performance.successRate, 0) /
+        Math.max(assistants.length, 1),
     };
     setSystemStats(stats);
   };
@@ -88,11 +97,16 @@ const AssistantsDashboard: React.FC = () => {
 
   const getAssistantIcon = (type: string) => {
     switch (type) {
-      case 'contact': return <Users className="h-5 w-5" />;
-      case 'deal': return <Briefcase className="h-5 w-5" />;
-      case 'task': return <CheckCircle className="h-5 w-5" />;
-      case 'pipeline': return <BarChart3 className="h-5 w-5" />;
-      default: return <Bot className="h-5 w-5" />;
+      case 'contact':
+        return <Users className="h-5 w-5" />;
+      case 'deal':
+        return <Briefcase className="h-5 w-5" />;
+      case 'task':
+        return <CheckCircle className="h-5 w-5" />;
+      case 'pipeline':
+        return <BarChart3 className="h-5 w-5" />;
+      default:
+        return <Bot className="h-5 w-5" />;
     }
   };
 
@@ -162,7 +176,9 @@ const AssistantsDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total Interactions</p>
-                <p className="text-2xl font-bold text-gray-900">{systemStats.totalInteractions?.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {systemStats.totalInteractions?.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -174,7 +190,9 @@ const AssistantsDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Avg Response Time</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.round(systemStats.avgResponseTime || 0)}ms</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {Math.round(systemStats.avgResponseTime || 0)}ms
+                </p>
               </div>
             </div>
           </div>
@@ -186,7 +204,9 @@ const AssistantsDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Success Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{Math.round((systemStats.overallSuccessRate || 0) * 100)}%</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {Math.round((systemStats.overallSuccessRate || 0) * 100)}%
+                </p>
               </div>
             </div>
           </div>
@@ -210,7 +230,9 @@ const AssistantsDashboard: React.FC = () => {
                     <p className="text-sm text-gray-600 capitalize">{assistant.type} Assistant</p>
                   </div>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assistant.lastUsed)}`}>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(assistant.lastUsed)}`}
+                >
                   {getStatusText(assistant.lastUsed)}
                 </span>
               </div>
@@ -218,7 +240,9 @@ const AssistantsDashboard: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Interactions</span>
-                  <span className="text-sm font-medium">{assistant.totalInteractions.toLocaleString()}</span>
+                  <span className="text-sm font-medium">
+                    {assistant.totalInteractions.toLocaleString()}
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -228,12 +252,16 @@ const AssistantsDashboard: React.FC = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Success Rate</span>
-                  <span className="text-sm font-medium">{Math.round(assistant.performance.successRate * 100)}%</span>
+                  <span className="text-sm font-medium">
+                    {Math.round(assistant.performance.successRate * 100)}%
+                  </span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Avg Response</span>
-                  <span className="text-sm font-medium">{Math.round(assistant.performance.averageResponseTime)}ms</span>
+                  <span className="text-sm font-medium">
+                    {Math.round(assistant.performance.averageResponseTime)}ms
+                  </span>
                 </div>
 
                 <div className="pt-2 border-t border-gray-100">
@@ -241,7 +269,9 @@ const AssistantsDashboard: React.FC = () => {
                     <span className="text-sm text-gray-600">Satisfaction</span>
                     <div className="flex items-center">
                       <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                      <span className="text-sm font-medium">{assistant.performance.userSatisfaction.toFixed(1)}</span>
+                      <span className="text-sm font-medium">
+                        {assistant.performance.userSatisfaction.toFixed(1)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -288,21 +318,29 @@ const AssistantsDashboard: React.FC = () => {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <span className="text-gray-600">Total Interactions</span>
-                        <span className="font-medium">{selectedAssistant.totalInteractions.toLocaleString()}</span>
+                        <span className="font-medium">
+                          {selectedAssistant.totalInteractions.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <span className="text-gray-600">Success Rate</span>
-                        <span className="font-medium">{Math.round(selectedAssistant.performance.successRate * 100)}%</span>
+                        <span className="font-medium">
+                          {Math.round(selectedAssistant.performance.successRate * 100)}%
+                        </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <span className="text-gray-600">Average Response Time</span>
-                        <span className="font-medium">{Math.round(selectedAssistant.performance.averageResponseTime)}ms</span>
+                        <span className="font-medium">
+                          {Math.round(selectedAssistant.performance.averageResponseTime)}ms
+                        </span>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <span className="text-gray-600">User Satisfaction</span>
                         <div className="flex items-center">
                           <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                          <span className="font-medium">{selectedAssistant.performance.userSatisfaction.toFixed(1)}</span>
+                          <span className="font-medium">
+                            {selectedAssistant.performance.userSatisfaction.toFixed(1)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -312,19 +350,23 @@ const AssistantsDashboard: React.FC = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-gray-900">Active Conversations</h3>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {Array.from(selectedAssistant.activeThreads.entries()).map(([entityId, threadId]) => (
-                        <div
-                          key={entityId}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100"
-                          onClick={() => loadConversationHistory(selectedAssistant, entityId)}
-                        >
-                          <div className="flex items-center">
-                            <MessageCircle className="h-4 w-4 text-blue-600 mr-2" />
-                            <span className="text-sm font-medium">Entity {entityId.slice(0, 8)}...</span>
+                      {Array.from(selectedAssistant.activeThreads.entries()).map(
+                        ([entityId, threadId]) => (
+                          <div
+                            key={entityId}
+                            className="flex items-center justify-between p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100"
+                            onClick={() => loadConversationHistory(selectedAssistant, entityId)}
+                          >
+                            <div className="flex items-center">
+                              <MessageCircle className="h-4 w-4 text-blue-600 mr-2" />
+                              <span className="text-sm font-medium">
+                                Entity {entityId.slice(0, 8)}...
+                              </span>
+                            </div>
+                            <span className="text-xs text-blue-600">View Chat</span>
                           </div>
-                          <span className="text-xs text-blue-600">View Chat</span>
-                        </div>
-                      ))}
+                        )
+                      )}
                       {selectedAssistant.activeThreads.size === 0 && (
                         <p className="text-gray-500 text-center py-4">No active conversations</p>
                       )}
@@ -336,7 +378,9 @@ const AssistantsDashboard: React.FC = () => {
                 <div className="space-y-4">
                   <h3 className="font-semibold text-gray-900">Assistant Instructions</h3>
                   <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-700">{selectedAssistant.instructions || 'No specific instructions configured.'}</p>
+                    <p className="text-sm text-gray-700">
+                      {selectedAssistant.instructions || 'No specific instructions configured.'}
+                    </p>
                   </div>
                 </div>
 
@@ -346,10 +390,17 @@ const AssistantsDashboard: React.FC = () => {
                     <h3 className="font-semibold text-gray-900">Recent Conversation</h3>
                     <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-4">
                       {conversationHistory.slice(0, 10).map((message, index) => (
-                        <div key={index} className={`p-2 rounded ${message.role === 'user' ? 'bg-blue-50 ml-8' : 'bg-gray-50 mr-8'}`}>
+                        <div
+                          key={index}
+                          className={`p-2 rounded ${message.role === 'user' ? 'bg-blue-50 ml-8' : 'bg-gray-50 mr-8'}`}
+                        >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-gray-600 capitalize">{message.role}</span>
-                            <span className="text-xs text-gray-500">{message.timestamp.toLocaleTimeString()}</span>
+                            <span className="text-xs font-medium text-gray-600 capitalize">
+                              {message.role}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
                           </div>
                           <p className="text-sm text-gray-700">{message.content}</p>
                         </div>
@@ -367,7 +418,9 @@ const AssistantsDashboard: React.FC = () => {
           <div className="text-center py-16">
             <Bot className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-700 mb-2">No AI Assistants Found</h3>
-            <p className="text-gray-500 mb-6">Your AI assistants will appear here once they're initialized.</p>
+            <p className="text-gray-500 mb-6">
+              Your AI assistants will appear here once they're initialized.
+            </p>
             <button
               onClick={() => persistentAssistantService.initialize()}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

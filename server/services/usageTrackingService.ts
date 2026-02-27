@@ -1,5 +1,5 @@
-import { eq, and, gte, lte, sql } from "drizzle-orm";
-import { db } from "../db";
+import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { db } from '../db';
 import {
   usageEvents,
   billingCycles,
@@ -11,9 +11,9 @@ import {
   type InsertUserUsageLimit,
   type InsertBillingNotification,
   type UsagePlan,
-  type BillingCycle
-} from "../../shared/schema";
-import { CreditService } from "./creditService";
+  type BillingCycle,
+} from '../../shared/schema';
+import { CreditService } from './creditService';
 
 export interface UsageEventData {
   userId: string;
@@ -38,81 +38,84 @@ export interface UsageLimitData {
 
 export class UsageTrackingService {
   /**
-    * Record a usage event
-    */
-   static async recordUsage(data: UsageEventData): Promise<string> {
-     try {
-       // Check if user has sufficient credits before recording usage
-       const creditCost = await this.calculateCreditCost(data);
-       if (creditCost > 0) {
-         const hasCredits = await CreditService.hasSufficientCredits(data.userId, creditCost);
-         if (!hasCredits) {
-           throw new Error(`Insufficient credits for usage. Required: ${creditCost}`);
-         }
-       }
+   * Record a usage event
+   */
+  static async recordUsage(data: UsageEventData): Promise<string> {
+    try {
+      // Check if user has sufficient credits before recording usage
+      const creditCost = await this.calculateCreditCost(data);
+      if (creditCost > 0) {
+        const hasCredits = await CreditService.hasSufficientCredits(data.userId, creditCost);
+        if (!hasCredits) {
+          throw new Error(`Insufficient credits for usage. Required: ${creditCost}`);
+        }
+      }
 
-       const usageEvent: InsertUsageEvent = {
-         userId: data.userId,
-         tenantId: data.tenantId,
-         eventType: data.eventType,
-         featureName: data.featureName,
-         quantity: data.quantity.toString(),
-         unit: data.unit,
-         costCents: 0, // Credits are deducted separately
-         metadata: data.metadata || {},
-         billingCycleId: data.billingCycleId,
-         stripeSubscriptionItemId: data.stripeSubscriptionItemId,
-       };
+      const usageEvent: InsertUsageEvent = {
+        userId: data.userId,
+        tenantId: data.tenantId,
+        eventType: data.eventType,
+        featureName: data.featureName,
+        quantity: data.quantity.toString(),
+        unit: data.unit,
+        costCents: 0, // Credits are deducted separately
+        metadata: data.metadata || {},
+        billingCycleId: data.billingCycleId,
+        stripeSubscriptionItemId: data.stripeSubscriptionItemId,
+      };
 
-       const result = await db.insert(usageEvents).values(usageEvent).returning({ id: usageEvents.id });
-       const eventId = result[0].id;
+      const result = await db
+        .insert(usageEvents)
+        .values(usageEvent)
+        .returning({ id: usageEvents.id });
+      const eventId = result[0].id;
 
-       // Deduct credits for usage
-       if (creditCost > 0) {
-         await CreditService.deductCredits({
-           userId: data.userId,
-           amount: creditCost,
-           description: `${data.featureName} usage: ${data.quantity} ${data.unit}`,
-           usageEventId: eventId,
-           metadata: data.metadata,
-         });
-       }
+      // Deduct credits for usage
+      if (creditCost > 0) {
+        await CreditService.deductCredits({
+          userId: data.userId,
+          amount: creditCost,
+          description: `${data.featureName} usage: ${data.quantity} ${data.unit}`,
+          usageEventId: eventId,
+          metadata: data.metadata,
+        });
+      }
 
-       return eventId;
-     } catch (error) {
-       console.error('Error recording usage event:', error);
-       throw error;
-     }
-   }
+      return eventId;
+    } catch (error) {
+      console.error('Error recording usage event:', error);
+      throw error;
+    }
+  }
 
   /**
-    * Calculate credit cost for usage
-    */
-   private static async calculateCreditCost(data: UsageEventData): Promise<number> {
-     try {
-       // Define credit costs per feature/unit
-       // This could be configurable in the future, but for now using fixed rates
-       const creditRates: Record<string, number> = {
-         'api_call': 0.1,      // 1 credit per 10 API calls
-         'token': 0.0002,      // 1 credit per 5000 tokens
-         'gb': 10,             // 10 credits per GB
-         'minute': 0.5,        // 2 credits per minute
-         'request': 0.1,       // 1 credit per 10 requests
-       };
+   * Calculate credit cost for usage
+   */
+  private static async calculateCreditCost(data: UsageEventData): Promise<number> {
+    try {
+      // Define credit costs per feature/unit
+      // This could be configurable in the future, but for now using fixed rates
+      const creditRates: Record<string, number> = {
+        api_call: 0.1, // 1 credit per 10 API calls
+        token: 0.0002, // 1 credit per 5000 tokens
+        gb: 10, // 10 credits per GB
+        minute: 0.5, // 2 credits per minute
+        request: 0.1, // 1 credit per 10 requests
+      };
 
-       const rate = creditRates[data.unit] || 1; // Default to 1 credit per unit if not defined
-       return data.quantity * rate;
-     } catch (error) {
-       console.error('Error calculating credit cost:', error);
-       return 0;
-     }
-   }
+      const rate = creditRates[data.unit] || 1; // Default to 1 credit per unit if not defined
+      return data.quantity * rate;
+    } catch (error) {
+      console.error('Error calculating credit cost:', error);
+      return 0;
+    }
+  }
 
   /**
    * Calculate pay-per-use cost based on pricing tiers
    */
   private static calculatePayPerUseCost(plan: UsagePlan, data: UsageEventData): number {
-    const pricingTiers = plan.pricingTiers as any[] || [];
+    const pricingTiers = (plan.pricingTiers as any[]) || [];
     let remainingQuantity = data.quantity;
     let totalCost = 0;
 
@@ -142,10 +145,7 @@ export class UsageTrackingService {
       const activeCycle = await db
         .select()
         .from(billingCycles)
-        .where(and(
-          eq(billingCycles.userId, userId),
-          eq(billingCycles.status, 'active')
-        ))
+        .where(and(eq(billingCycles.userId, userId), eq(billingCycles.status, 'active')))
         .limit(1);
 
       if (activeCycle.length > 0 && activeCycle[0].billingPlanId) {
@@ -175,16 +175,19 @@ export class UsageTrackingService {
   /**
    * Update usage limits for a user
    */
-  private static async updateUsageLimits(userId: string, featureName: string, quantity: number): Promise<void> {
+  private static async updateUsageLimits(
+    userId: string,
+    featureName: string,
+    quantity: number
+  ): Promise<void> {
     try {
       // Find the current usage limit for this feature
       const limits = await db
         .select()
         .from(userUsageLimits)
-        .where(and(
-          eq(userUsageLimits.userId, userId),
-          eq(userUsageLimits.featureName, featureName)
-        ));
+        .where(
+          and(eq(userUsageLimits.userId, userId), eq(userUsageLimits.featureName, featureName))
+        );
 
       if (limits.length > 0) {
         const limit = limits[0];
@@ -194,7 +197,7 @@ export class UsageTrackingService {
           .update(userUsageLimits)
           .set({
             usedValue: newUsedValue.toString(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(userUsageLimits.id, limit.id));
       }
@@ -211,10 +214,9 @@ export class UsageTrackingService {
       const limits = await db
         .select()
         .from(userUsageLimits)
-        .where(and(
-          eq(userUsageLimits.userId, userId),
-          eq(userUsageLimits.featureName, featureName)
-        ));
+        .where(
+          and(eq(userUsageLimits.userId, userId), eq(userUsageLimits.featureName, featureName))
+        );
 
       if (limits.length === 0) return;
 
@@ -228,12 +230,24 @@ export class UsageTrackingService {
 
       // Create warning at 80% usage
       if (usagePercentage >= 80 && usagePercentage < 100) {
-        await this.createUsageNotification(userId, 'limit_warning', featureName, usedValue, limitValue);
+        await this.createUsageNotification(
+          userId,
+          'limit_warning',
+          featureName,
+          usedValue,
+          limitValue
+        );
       }
 
       // Create exceeded notification at 100%
       if (usagePercentage >= 100 && !limit.isHardLimit) {
-        await this.createUsageNotification(userId, 'limit_exceeded', featureName, usedValue, limitValue);
+        await this.createUsageNotification(
+          userId,
+          'limit_exceeded',
+          featureName,
+          usedValue,
+          limitValue
+        );
       }
     } catch (error) {
       console.error('Error checking usage limits:', error);
@@ -255,11 +269,13 @@ export class UsageTrackingService {
       const existing = await db
         .select()
         .from(billingNotifications)
-        .where(and(
-          eq(billingNotifications.userId, userId),
-          eq(billingNotifications.notificationType, type),
-          gte(billingNotifications.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) // Last 24 hours
-        ));
+        .where(
+          and(
+            eq(billingNotifications.userId, userId),
+            eq(billingNotifications.notificationType, type),
+            gte(billingNotifications.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) // Last 24 hours
+          )
+        );
 
       if (existing.length > 0) return; // Don't spam notifications
 
@@ -272,8 +288,8 @@ export class UsageTrackingService {
           featureName,
           usedValue,
           limitValue,
-          usagePercentage: (usedValue / limitValue) * 100
-        }
+          usagePercentage: (usedValue / limitValue) * 100,
+        },
       };
 
       await db.insert(billingNotifications).values(notification);
@@ -338,10 +354,13 @@ export class UsageTrackingService {
         stripeSubscriptionId: data.stripeSubscriptionId,
         status: 'active',
         totalUsage: {},
-        totalCostCents: 0
+        totalCostCents: 0,
       };
 
-      const result = await db.insert(billingCycles).values(billingCycle).returning({ id: billingCycles.id });
+      const result = await db
+        .insert(billingCycles)
+        .values(billingCycle)
+        .returning({ id: billingCycles.id });
       return result[0].id;
     } catch (error) {
       console.error('Error creating billing cycle:', error);
@@ -362,17 +381,23 @@ export class UsageTrackingService {
           limitValue: limit.limitValue.toString(),
           usedValue: '0',
           billingCycleId: limit.billingCycleId,
-          isHardLimit: limit.isHardLimit || false
+          isHardLimit: limit.isHardLimit || false,
         };
 
-        await db.insert(userUsageLimits).values(limitData)
+        await db
+          .insert(userUsageLimits)
+          .values(limitData)
           .onConflictDoUpdate({
-            target: [userUsageLimits.userId, userUsageLimits.featureName, userUsageLimits.billingCycleId],
+            target: [
+              userUsageLimits.userId,
+              userUsageLimits.featureName,
+              userUsageLimits.billingCycleId,
+            ],
             set: {
               limitValue: limitData.limitValue,
               isHardLimit: limitData.isHardLimit,
-              updatedAt: new Date()
-            }
+              updatedAt: new Date(),
+            },
           });
       }
     } catch (error) {
@@ -393,28 +418,33 @@ export class UsageTrackingService {
       const events = await db
         .select()
         .from(usageEvents)
-        .where(and(
-          eq(usageEvents.userId, userId),
-          gte(usageEvents.createdAt, start),
-          lte(usageEvents.createdAt, end)
-        ));
+        .where(
+          and(
+            eq(usageEvents.userId, userId),
+            gte(usageEvents.createdAt, start),
+            lte(usageEvents.createdAt, end)
+          )
+        );
 
       // Aggregate by feature
-      const featureUsage = events.reduce((acc, event) => {
-        const feature = event.featureName;
-        if (!acc[feature]) {
-          acc[feature] = {
-            totalQuantity: 0,
-            totalCost: 0,
-            eventCount: 0,
-            unit: event.unit
-          };
-        }
-        acc[feature].totalQuantity += parseFloat(event.quantity);
-        acc[feature].totalCost += event.costCents;
-        acc[feature].eventCount += 1;
-        return acc;
-      }, {} as Record<string, any>);
+      const featureUsage = events.reduce(
+        (acc, event) => {
+          const feature = event.featureName;
+          if (!acc[feature]) {
+            acc[feature] = {
+              totalQuantity: 0,
+              totalCost: 0,
+              eventCount: 0,
+              unit: event.unit,
+            };
+          }
+          acc[feature].totalQuantity += parseFloat(event.quantity);
+          acc[feature].totalCost += event.costCents;
+          acc[feature].eventCount += 1;
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
       // Get current limits
       const limits = await db
@@ -422,21 +452,27 @@ export class UsageTrackingService {
         .from(userUsageLimits)
         .where(eq(userUsageLimits.userId, userId));
 
-      const currentLimits = limits.reduce((acc, limit) => {
-        acc[limit.featureName] = {
-          limit: parseFloat(limit.limitValue),
-          used: parseFloat(limit.usedValue),
-          isHardLimit: limit.isHardLimit
-        };
-        return acc;
-      }, {} as Record<string, any>);
+      const currentLimits = limits.reduce(
+        (acc, limit) => {
+          acc[limit.featureName] = {
+            limit: parseFloat(limit.limitValue),
+            used: parseFloat(limit.usedValue),
+            isHardLimit: limit.isHardLimit,
+          };
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
       return {
         period: { start, end },
         featureUsage,
         currentLimits,
         totalEvents: events.length,
-        totalCost: Object.values(featureUsage).reduce((sum: number, feature: any) => sum + feature.totalCost, 0)
+        totalCost: Object.values(featureUsage).reduce(
+          (sum: number, feature: any) => sum + feature.totalCost,
+          0
+        ),
       };
     } catch (error) {
       console.error('Error getting usage stats:', error);
@@ -452,10 +488,7 @@ export class UsageTrackingService {
       const notifications = await db
         .select()
         .from(billingNotifications)
-        .where(and(
-          eq(billingNotifications.userId, userId),
-          eq(billingNotifications.isRead, false)
-        ))
+        .where(and(eq(billingNotifications.userId, userId), eq(billingNotifications.isRead, false)))
         .orderBy(sql`${billingNotifications.createdAt} DESC`);
 
       return notifications;
@@ -473,10 +506,12 @@ export class UsageTrackingService {
       await db
         .update(billingNotifications)
         .set({ isRead: true })
-        .where(and(
-          eq(billingNotifications.userId, userId),
-          sql`${billingNotifications.id} IN (${notificationIds.map(id => `'${id}'`).join(',')})`
-        ));
+        .where(
+          and(
+            eq(billingNotifications.userId, userId),
+            sql`${billingNotifications.id} IN (${notificationIds.map((id) => `'${id}'`).join(',')})`
+          )
+        );
     } catch (error) {
       console.error('Error marking notifications as read:', error);
     }

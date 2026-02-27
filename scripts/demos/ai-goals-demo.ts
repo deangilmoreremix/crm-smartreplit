@@ -11,7 +11,7 @@ async function recordAIGoalsDemo() {
 
   try {
     const baseUrl = process.env.APP_URL || 'http://localhost:5000';
-    
+
     // Navigate to AI Goals page
     await recorder.navigate(`${baseUrl}/ai-goals`);
     await recorder.wait(2000);
@@ -20,7 +20,7 @@ async function recordAIGoalsDemo() {
     await recorder.startRecording('ai-goals-feature');
 
     console.log('📸 Capturing AI Goals overview...');
-    
+
     // Hover over different goal categories
     await recorder.hover('[data-testid="category-sales"]', 1000);
     await recorder.hover('[data-testid="category-marketing"]', 1000);
@@ -47,7 +47,7 @@ async function recordAIGoalsDemo() {
 
     // Stop recording
     await recorder.stopRecording();
-    
+
     console.log('✅ AI Goals demo recorded successfully!');
   } catch (error) {
     console.error('❌ Error recording AI Goals demo:', error);

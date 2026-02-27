@@ -19,12 +19,14 @@ const PricingCard: React.FC<PricingCardProps> = ({
   buttonText,
   features,
   popular = false,
-  color = 'bg-white'
+  color = 'bg-white',
 }) => {
   return (
-    <div className={`rounded-xl ${color} p-8 border relative h-full ${
-      popular ? 'transform scale-105 shadow-xl z-10' : 'shadow-lg'
-    }`}>
+    <div
+      className={`rounded-xl ${color} p-8 border relative h-full ${
+        popular ? 'transform scale-105 shadow-xl z-10' : 'shadow-lg'
+      }`}
+    >
       {popular && (
         <div className="absolute -top-4 left-0 right-0 flex justify-center">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-1 px-4 rounded-full text-sm font-medium flex items-center">
@@ -33,7 +35,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className="text-center mb-6">
         <h3 className="text-xl font-bold mb-2">{tier}</h3>
         <div className="flex justify-center items-start mb-2">
@@ -43,7 +45,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
         </div>
         <p className="text-gray-600 text-sm">{description}</p>
       </div>
-      
+
       <div className="space-y-3 mb-8">
         {features.map((feature, index) => (
           <div key={index} className="flex items-start">
@@ -52,7 +54,7 @@ const PricingCard: React.FC<PricingCardProps> = ({
           </div>
         ))}
       </div>
-      
+
       <div className="text-center mt-auto">
         <Link
           to="/dashboard"

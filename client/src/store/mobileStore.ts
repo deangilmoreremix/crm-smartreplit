@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { 
-  MobileLayoutConfig, 
-  DeviceInfo, 
-  ViewportConfig, 
-  OfflineData, 
+import {
+  MobileLayoutConfig,
+  DeviceInfo,
+  ViewportConfig,
+  OfflineData,
   SyncStatus,
   MobileNotification,
-  TouchEvent
+  TouchEvent,
 } from '../types/mobile';
 
 interface MobileState {
@@ -18,63 +18,63 @@ interface MobileState {
   isMobile: boolean;
   isTablet: boolean;
   orientation: 'portrait' | 'landscape';
-  
+
   // Layout and UI
   layoutConfig: MobileLayoutConfig | null;
   sidebarOpen: boolean;
   bottomNavVisible: boolean;
   keyboardVisible: boolean;
-  
+
   // Offline and Sync
   isOnline: boolean;
   offlineData: OfflineData[];
   syncStatus: SyncStatus;
-  
+
   // Notifications
   notifications: MobileNotification[];
-  
+
   // Touch and Gestures
   touchEvents: TouchEvent[];
   gesturesEnabled: boolean;
-  
+
   // Performance
   performanceMode: 'auto' | 'power_save' | 'performance';
   lazyLoadingEnabled: boolean;
-  
+
   // Actions
   // Device Detection
   detectDevice: () => void;
   updateViewport: (viewport: Partial<ViewportConfig>) => void;
   setOrientation: (orientation: 'portrait' | 'landscape') => void;
-  
+
   // Layout Management
   setLayoutConfig: (config: MobileLayoutConfig) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setBottomNavVisible: (visible: boolean) => void;
   setKeyboardVisible: (visible: boolean) => void;
-  
+
   // Offline Management
   setOnlineStatus: (online: boolean) => void;
   addOfflineData: (data: Omit<OfflineData, 'id' | 'timestamp' | 'synced' | 'retryCount'>) => void;
   removeOfflineData: (id: string) => void;
   syncOfflineData: () => Promise<void>;
   clearSyncedData: () => void;
-  
+
   // Notifications
   addNotification: (notification: Omit<MobileNotification, 'id' | 'timestamp'>) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
-  
+
   // Touch and Gestures
   addTouchEvent: (event: Omit<TouchEvent, 'id' | 'timestamp'>) => void;
   clearTouchEvents: () => void;
   setGesturesEnabled: (enabled: boolean) => void;
-  
+
   // Performance
   setPerformanceMode: (mode: 'auto' | 'power_save' | 'performance') => void;
   setLazyLoading: (enabled: boolean) => void;
-  
+
   // Responsive Helpers
   getBreakpoint: () => 'sm' | 'md' | 'lg' | 'xl';
   isBreakpoint: (breakpoint: 'sm' | 'md' | 'lg' | 'xl') => boolean;
@@ -93,7 +93,7 @@ export const useMobileStore = create<MobileState>()(
         height: typeof window !== 'undefined' ? window.innerHeight : 768,
         orientation: 'portrait',
         scale: 1,
-        safeArea: { top: 0, bottom: 0, left: 0, right: 0 }
+        safeArea: { top: 0, bottom: 0, left: 0, right: 0 },
       },
       isTouch: false,
       isMobile: false,
@@ -110,7 +110,7 @@ export const useMobileStore = create<MobileState>()(
         lastSync: new Date(),
         pendingChanges: 0,
         syncInProgress: false,
-        errors: []
+        errors: [],
       },
       notifications: [],
       touchEvents: [],
@@ -126,7 +126,7 @@ export const useMobileStore = create<MobileState>()(
         const platform = navigator.platform;
         const width = window.innerWidth;
         const height = window.innerHeight;
-        
+
         // Detect platform
         let detectedPlatform: 'ios' | 'android' | 'web' = 'web';
         if (/iPad|iPhone|iPod/.test(userAgent)) {
@@ -150,7 +150,7 @@ export const useMobileStore = create<MobileState>()(
           location: !!navigator.geolocation,
           push: 'PushManager' in window,
           biometric: 'credentials' in navigator,
-          nfc: 'nfc' in navigator
+          nfc: 'nfc' in navigator,
         };
 
         const deviceInfo: DeviceInfo = {
@@ -159,14 +159,14 @@ export const useMobileStore = create<MobileState>()(
           screenSize: {
             width,
             height,
-            density: window.devicePixelRatio || 1
+            density: window.devicePixelRatio || 1,
           },
           capabilities,
           browser: {
             name: getBrowserName(),
             version: getBrowserVersion(),
-            mobile: /Mobi|Android/i.test(userAgent)
-          }
+            mobile: /Mobi|Android/i.test(userAgent),
+          },
         };
 
         set({
@@ -174,13 +174,13 @@ export const useMobileStore = create<MobileState>()(
           isTouch: capabilities.touch,
           isMobile: deviceType === 'phone',
           isTablet: deviceType === 'tablet',
-          orientation: width > height ? 'landscape' : 'portrait'
+          orientation: width > height ? 'landscape' : 'portrait',
         });
       },
 
       updateViewport: (viewport) => {
         set((state) => ({
-          viewport: { ...state.viewport, ...viewport }
+          viewport: { ...state.viewport, ...viewport },
         }));
       },
 
@@ -215,8 +215,8 @@ export const useMobileStore = create<MobileState>()(
           isOnline: online,
           syncStatus: {
             ...state.syncStatus,
-            isOnline: online
-          }
+            isOnline: online,
+          },
         }));
       },
 
@@ -226,35 +226,35 @@ export const useMobileStore = create<MobileState>()(
           id: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           timestamp: new Date(),
           synced: false,
-          retryCount: 0
+          retryCount: 0,
         };
 
         set((state) => ({
           offlineData: [...state.offlineData, offlineItem],
           syncStatus: {
             ...state.syncStatus,
-            pendingChanges: state.syncStatus.pendingChanges + 1
-          }
+            pendingChanges: state.syncStatus.pendingChanges + 1,
+          },
         }));
       },
 
       removeOfflineData: (id) => {
         set((state) => ({
-          offlineData: state.offlineData.filter(item => item.id !== id),
+          offlineData: state.offlineData.filter((item) => item.id !== id),
           syncStatus: {
             ...state.syncStatus,
-            pendingChanges: Math.max(0, state.syncStatus.pendingChanges - 1)
-          }
+            pendingChanges: Math.max(0, state.syncStatus.pendingChanges - 1),
+          },
         }));
       },
 
       syncOfflineData: async () => {
         const { offlineData, isOnline } = get();
-        
+
         if (!isOnline || offlineData.length === 0) return;
 
         set((state) => ({
-          syncStatus: { ...state.syncStatus, syncInProgress: true }
+          syncStatus: { ...state.syncStatus, syncInProgress: true },
         }));
 
         try {
@@ -262,13 +262,13 @@ export const useMobileStore = create<MobileState>()(
           for (const item of offlineData) {
             if (!item.synced) {
               // Simulate API call
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
+              await new Promise((resolve) => setTimeout(resolve, 500));
+
               // Mark as synced
               set((state) => ({
-                offlineData: state.offlineData.map(data =>
+                offlineData: state.offlineData.map((data) =>
                   data.id === item.id ? { ...data, synced: true } : data
-                )
+                ),
               }));
             }
           }
@@ -278,8 +278,8 @@ export const useMobileStore = create<MobileState>()(
               ...state.syncStatus,
               syncInProgress: false,
               lastSync: new Date(),
-              pendingChanges: 0
-            }
+              pendingChanges: 0,
+            },
           }));
 
           // Clear synced data after successful sync
@@ -290,22 +290,25 @@ export const useMobileStore = create<MobileState>()(
             syncStatus: {
               ...state.syncStatus,
               syncInProgress: false,
-              errors: [...state.syncStatus.errors, {
-                id: `error_${Date.now()}`,
-                type: 'network',
-                message: 'Failed to sync offline data',
-                data: offlineData,
-                timestamp: new Date(),
-                resolved: false
-              }]
-            }
+              errors: [
+                ...state.syncStatus.errors,
+                {
+                  id: `error_${Date.now()}`,
+                  type: 'network',
+                  message: 'Failed to sync offline data',
+                  data: offlineData,
+                  timestamp: new Date(),
+                  resolved: false,
+                },
+              ],
+            },
           }));
         }
       },
 
       clearSyncedData: () => {
         set((state) => ({
-          offlineData: state.offlineData.filter(item => !item.synced)
+          offlineData: state.offlineData.filter((item) => !item.synced),
         }));
       },
 
@@ -314,11 +317,11 @@ export const useMobileStore = create<MobileState>()(
         const newNotification: MobileNotification = {
           ...notification,
           id: `notification_${Date.now()}`,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
 
         set((state) => ({
-          notifications: [...state.notifications, newNotification]
+          notifications: [...state.notifications, newNotification],
         }));
 
         // Auto-remove non-persistent notifications
@@ -331,7 +334,7 @@ export const useMobileStore = create<MobileState>()(
 
       removeNotification: (id) => {
         set((state) => ({
-          notifications: state.notifications.filter(n => n.id !== id)
+          notifications: state.notifications.filter((n) => n.id !== id),
         }));
       },
 
@@ -344,11 +347,11 @@ export const useMobileStore = create<MobileState>()(
         const touchEvent: TouchEvent = {
           ...event,
           id: `touch_${Date.now()}`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
 
         set((state) => ({
-          touchEvents: [...state.touchEvents.slice(-9), touchEvent] // Keep last 10 events
+          touchEvents: [...state.touchEvents.slice(-9), touchEvent], // Keep last 10 events
         }));
       },
 
@@ -362,9 +365,9 @@ export const useMobileStore = create<MobileState>()(
 
       // Performance
       setPerformanceMode: (mode) => {
-        set({ 
+        set({
           performanceMode: mode,
-          lazyLoadingEnabled: mode !== 'performance'
+          lazyLoadingEnabled: mode !== 'performance',
         });
       },
 
@@ -376,7 +379,7 @@ export const useMobileStore = create<MobileState>()(
       getBreakpoint: () => {
         const { viewport } = get();
         const width = viewport.width;
-        
+
         if (width < 640) return 'sm';
         if (width < 768) return 'md';
         if (width < 1024) return 'lg';
@@ -398,7 +401,7 @@ export const useMobileStore = create<MobileState>()(
 
       isDesktopSize: () => {
         return get().viewport.width >= 1024;
-      }
+      },
     }),
     {
       name: 'mobile-store',
@@ -409,13 +412,13 @@ export const useMobileStore = create<MobileState>()(
 // Helper functions
 function getBrowserName(): string {
   const userAgent = navigator.userAgent;
-  
+
   if (userAgent.includes('Firefox')) return 'Firefox';
   if (userAgent.includes('Chrome')) return 'Chrome';
   if (userAgent.includes('Safari')) return 'Safari';
   if (userAgent.includes('Edge')) return 'Edge';
   if (userAgent.includes('Opera')) return 'Opera';
-  
+
   return 'Unknown';
 }
 
@@ -428,40 +431,40 @@ function getBrowserVersion(): string {
 // Auto-initialize device detection and event listeners
 if (typeof window !== 'undefined') {
   const store = useMobileStore.getState();
-  
+
   // Initial device detection
   store.detectDevice();
-  
+
   // Listen for online/offline events
   window.addEventListener('online', () => {
     store.setOnlineStatus(true);
     store.syncOfflineData();
   });
-  
+
   window.addEventListener('offline', () => {
     store.setOnlineStatus(false);
   });
-  
+
   // Listen for viewport changes
   window.addEventListener('resize', () => {
     store.updateViewport({
       width: window.innerWidth,
-      height: window.innerHeight
+      height: window.innerHeight,
     });
     store.setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
   });
-  
+
   // Listen for orientation changes
   window.addEventListener('orientationchange', () => {
     setTimeout(() => {
       store.updateViewport({
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
       });
       store.setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
     }, 100);
   });
-  
+
   // Listen for keyboard events on mobile
   if ('visualViewport' in window) {
     window.visualViewport?.addEventListener('resize', () => {

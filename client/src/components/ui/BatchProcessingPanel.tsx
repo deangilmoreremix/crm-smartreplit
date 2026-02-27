@@ -1,19 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { batchAPIService } from '../../services/openai-batch-api.service';
-import { 
-  Users, 
-  Mail, 
-  TrendingUp, 
-  Share2, 
-  Clock, 
-  CheckCircle, 
+import {
+  Users,
+  Mail,
+  TrendingUp,
+  Share2,
+  Clock,
+  CheckCircle,
   AlertCircle,
   DollarSign,
   Play,
   Pause,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 interface BatchProcessingPanelProps {
@@ -25,7 +24,7 @@ interface BatchProcessingPanelProps {
 const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
   selectedContactIds = [],
   selectedDealIds = [],
-  onJobCreated
+  onJobCreated,
 }) => {
   const { isDark } = useTheme();
   const [activeJobs, setActiveJobs] = useState<any[]>([]);
@@ -41,13 +40,14 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
 
   const handleBatchEnrichment = async () => {
     if (selectedContactIds.length === 0) return;
-    
+
     setIsProcessing(true);
     try {
-      const job = await batchAPIService.enrichContactsBulk(
-        selectedContactIds, 
-        ['scoring', 'social', 'personality']
-      );
+      const job = await batchAPIService.enrichContactsBulk(selectedContactIds, [
+        'scoring',
+        'social',
+        'personality',
+      ]);
       onJobCreated?.(job.id);
     } catch (error) {
       console.error('Batch enrichment failed:', error);
@@ -57,14 +57,14 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
 
   const handleBulkEmailGeneration = async () => {
     if (selectedContactIds.length === 0) return;
-    
+
     setIsProcessing(true);
     try {
       const job = await batchAPIService.generateCampaignEmailsBulk(selectedContactIds, {
-        subject: "Strategic Partnership Opportunity",
-        tone: "professional",
-        purpose: "introduce new product features",
-        callToAction: "schedule a demo"
+        subject: 'Strategic Partnership Opportunity',
+        tone: 'professional',
+        purpose: 'introduce new product features',
+        callToAction: 'schedule a demo',
       });
       onJobCreated?.(job.id);
     } catch (error) {
@@ -75,7 +75,7 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
 
   const handlePipelineAnalysis = async () => {
     if (selectedDealIds.length === 0) return;
-    
+
     setIsProcessing(true);
     try {
       const job = await batchAPIService.analyzePipelineBulk(selectedDealIds);
@@ -88,7 +88,7 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
 
   const handleSocialResearch = async () => {
     if (selectedContactIds.length === 0) return;
-    
+
     setIsProcessing(true);
     try {
       const job = await batchAPIService.researchSocialProfilesBulk(selectedContactIds);
@@ -101,10 +101,14 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'processing': return <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />;
-      case 'failed': return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default: return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'completed':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'processing':
+        return <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />;
+      case 'failed':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-yellow-500" />;
     }
   };
 
@@ -113,7 +117,9 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
   };
 
   return (
-    <div className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6`}>
+    <div
+      className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6`}
+    >
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -123,9 +129,11 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
             Process thousands of items at 50% cost - runs overnight for maximum savings
           </p>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-          isDark ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-800'
-        }`}>
+        <div
+          className={`px-3 py-1 rounded-full text-xs font-medium ${
+            isDark ? 'bg-green-400/20 text-green-400' : 'bg-green-100 text-green-800'
+          }`}
+        >
           50% Cost Savings
         </div>
       </div>
@@ -240,7 +248,7 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
             Active Batch Jobs
           </h4>
           <div className="space-y-3">
-            {activeJobs.slice(0, 5).map(job => (
+            {activeJobs.slice(0, 5).map((job) => (
               <div
                 key={job.id}
                 className={`flex items-center justify-between p-3 rounded-lg ${
@@ -259,11 +267,17 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-sm capitalize ${
-                    job.status === 'completed' ? 'text-green-500' :
-                    job.status === 'processing' ? 'text-blue-500' :
-                    job.status === 'failed' ? 'text-red-500' : 'text-yellow-500'
-                  }`}>
+                  <p
+                    className={`text-sm capitalize ${
+                      job.status === 'completed'
+                        ? 'text-green-500'
+                        : job.status === 'processing'
+                          ? 'text-blue-500'
+                          : job.status === 'failed'
+                            ? 'text-red-500'
+                            : 'text-yellow-500'
+                    }`}
+                  >
                     {job.status}
                   </p>
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -277,9 +291,13 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
       )}
 
       {/* Cost Savings Information */}
-      <div className={`mt-6 p-4 rounded-lg ${
-        isDark ? 'bg-green-400/10 border border-green-400/20' : 'bg-green-50 border border-green-200'
-      }`}>
+      <div
+        className={`mt-6 p-4 rounded-lg ${
+          isDark
+            ? 'bg-green-400/10 border border-green-400/20'
+            : 'bg-green-50 border border-green-200'
+        }`}
+      >
         <div className="flex items-center space-x-2 mb-2">
           <DollarSign className={`w-4 h-4 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
           <h5 className={`font-semibold ${isDark ? 'text-green-400' : 'text-green-800'}`}>

@@ -34,7 +34,7 @@ export const NavbarPositionProvider: React.FC<NavbarPositionProviderProps> = ({ 
     if (savedPosition && ['top', 'left', 'right', 'bottom'].includes(savedPosition)) {
       setPositionState(savedPosition);
     }
-    
+
     const savedMinimized = localStorage.getItem('navbar-minimized');
     if (savedMinimized === 'true') {
       setIsMinimized(true);
@@ -49,7 +49,7 @@ export const NavbarPositionProvider: React.FC<NavbarPositionProviderProps> = ({ 
 
   // Toggle minimized state
   const toggleMinimized = () => {
-    setIsMinimized(prev => {
+    setIsMinimized((prev) => {
       const newValue = !prev;
       localStorage.setItem('navbar-minimized', String(newValue));
       return newValue;
@@ -65,11 +65,7 @@ export const NavbarPositionProvider: React.FC<NavbarPositionProviderProps> = ({ 
     toggleMinimized,
   };
 
-  return (
-    <NavbarPositionContext.Provider value={value}>
-      {children}
-    </NavbarPositionContext.Provider>
-  );
+  return <NavbarPositionContext.Provider value={value}>{children}</NavbarPositionContext.Provider>;
 };
 
 export const useNavbarPosition = (): NavbarPositionContextType => {

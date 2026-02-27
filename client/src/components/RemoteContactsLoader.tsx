@@ -23,11 +23,11 @@ const RemoteContactsLoader: React.FC<RemoteContactsProps> = ({
   fallbackComponent: FallbackComponent,
   ...contactProps
 }) => {
-  const { component: RemoteComponent, loading, error } = useRemoteComponent(
-    remoteUrl,
-    scope,
-    module
-  );
+  const {
+    component: RemoteComponent,
+    loading,
+    error,
+  } = useRemoteComponent(remoteUrl, scope, module);
 
   if (loading) {
     return (
@@ -39,11 +39,11 @@ const RemoteContactsLoader: React.FC<RemoteContactsProps> = ({
 
   if (error) {
     console.warn('Remote contacts failed to load:', error);
-    
+
     if (FallbackComponent) {
       return <FallbackComponent {...contactProps} />;
     }
-    
+
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 m-4">
         <h3 className="text-yellow-800 font-medium">Remote Contacts Unavailable</h3>

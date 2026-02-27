@@ -2,53 +2,56 @@ import React, { useState } from 'react';
 import { AvatarWithStatus } from '../ui/AvatarWithStatus';
 import { ModernButton } from '../ui/ModernButton';
 import { Contact } from '../../types/contact';
-import { 
-  X, 
-  Edit, 
-  Mail, 
-  Phone, 
-  Plus, 
-  MessageSquare, 
-  FileText, 
-  Calendar, 
-  MoreHorizontal, 
-  User, 
-  Globe, 
-  Clock, 
-  Building, 
-  Tag, 
-  Star, 
-  ExternalLink, 
-  Brain, 
-  TrendingUp, 
-  BarChart3, 
-  Zap, 
-  Users, 
-  Activity, 
-  Settings, 
-  Database, 
-  Shield, 
-  Target, 
-  Smartphone, 
-  Video, 
-  Save, 
-  Heart, 
-  HeartOff, 
-  MapPin, 
-  Briefcase, 
-  Award, 
-  CheckCircle, 
-  AlertCircle, 
-  Wifi, 
-  WifiOff, 
-  Search, 
-  DollarSign, 
+import {
+  X,
+  Edit,
+  Mail,
+  Phone,
+  Plus,
+  MessageSquare,
+  FileText,
+  Calendar,
+  MoreHorizontal,
+  User,
+  Globe,
+  Clock,
+  Building,
+  Tag,
+  Star,
+  ExternalLink,
+  Brain,
+  TrendingUp,
+  BarChart3,
+  Zap,
+  Users,
+  Activity,
+  Settings,
+  Database,
+  Shield,
+  Target,
+  Smartphone,
+  Video,
+  Save,
+  Heart,
+  HeartOff,
+  MapPin,
+  Briefcase,
+  Award,
+  CheckCircle,
+  AlertCircle,
+  Wifi,
+  WifiOff,
+  Search,
+  DollarSign,
   RefreshCw,
-  Sparkles, 
-  Camera, 
-  Wand2
+  Sparkles,
+  Camera,
+  Wand2,
 } from 'lucide-react';
-import { gpt5SocialResearchService, SocialResearchResult } from '../../services/gpt5SocialResearchService';
+import {
+  gpt5SocialResearchService,
+  SocialResearchResult,
+} from '../../services/gpt5SocialResearchService';
 
 interface ContactDetailViewProps {
   contact: Contact;
@@ -61,31 +64,31 @@ const interestColors = {
   hot: 'bg-red-500',
   medium: 'bg-yellow-500',
   low: 'bg-blue-500',
-  cold: 'bg-gray-400'
+  cold: 'bg-gray-400',
 };
 
 const interestLabels = {
   hot: 'Hot Client',
   medium: 'Medium Interest',
   low: 'Low Interest',
-  cold: 'Non Interest'
+  cold: 'Non Interest',
 };
 
 const sourceColors: { [key: string]: string } = {
-  'LinkedIn': 'bg-blue-600',
-  'Facebook': 'bg-blue-500',
-  'Email': 'bg-green-500',
-  'Website': 'bg-purple-500',
-  'Referral': 'bg-orange-500',
-  'Typeform': 'bg-pink-500',
-  'Cold Call': 'bg-gray-600'
+  LinkedIn: 'bg-blue-600',
+  Facebook: 'bg-blue-500',
+  Email: 'bg-green-500',
+  Website: 'bg-purple-500',
+  Referral: 'bg-orange-500',
+  Typeform: 'bg-pink-500',
+  'Cold Call': 'bg-gray-600',
 };
 
-export const ContactDetailView: React.FC<ContactDetailViewProps> = ({ 
-  contact, 
-  isOpen, 
-  onClose, 
-  onUpdate 
+export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
+  contact,
+  isOpen,
+  onClose,
+  onUpdate,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
@@ -115,7 +118,7 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
     try {
       const contactForResearch = {
         ...contact,
-        lastContact: contact.lastContact ? new Date(contact.lastContact) : new Date()
+        lastContact: contact.lastContact ? new Date(contact.lastContact) : new Date(),
       };
       const research = await gpt5SocialResearchService.researchContactSocialMedia(
         contactForResearch,
@@ -139,22 +142,21 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center space-x-4">
-            <AvatarWithStatus 
-              src={contact.avatarSrc || contact.avatar} 
+            <AvatarWithStatus
+              src={contact.avatarSrc || contact.avatar}
               name={contact.name}
               size="lg"
             />
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{contact.name}</h2>
               <p className="text-sm text-gray-600">
-                {contact.position && contact.company 
+                {contact.position && contact.company
                   ? `${contact.position} at ${contact.company}`
-                  : contact.email
-                }
+                  : contact.email}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <ModernButton
               onClick={handleSocialResearch}
@@ -165,17 +167,13 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
               <Search className="w-4 h-4 mr-2" />
               {isLoadingSocial ? 'Researching...' : 'Social Research'}
             </ModernButton>
-            <ModernButton
-              onClick={() => setIsEditing(!isEditing)}
-              variant="outline"
-              size="sm"
-            >
+            <ModernButton onClick={() => setIsEditing(!isEditing)} variant="outline" size="sm">
               <Edit className="w-4 h-4 mr-2" />
               {isEditing ? 'Cancel' : 'Edit'}
             </ModernButton>
-            <ModernButton 
+            <ModernButton
               onClick={onClose}
-              variant="ghost" 
+              variant="ghost"
               size="sm"
               className="text-gray-500 hover:text-gray-700"
             >
@@ -192,7 +190,7 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
               { id: 'activity', label: 'Activity', icon: Activity },
               { id: 'communications', label: 'Communications', icon: MessageSquare },
               { id: 'insights', label: 'AI Insights', icon: Brain },
-              { id: 'social', label: 'Social Media', icon: Globe }
+              { id: 'social', label: 'Social Media', icon: Globe },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -229,21 +227,25 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       <input
                         type="text"
                         value={editedContact.name}
-                        onChange={(e) => setEditedContact({...editedContact, name: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, name: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
                       <p className="text-gray-900">{contact.name}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     {isEditing ? (
                       <input
                         type="email"
                         value={editedContact.email}
-                        onChange={(e) => setEditedContact({...editedContact, email: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, email: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
@@ -257,7 +259,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       <input
                         type="tel"
                         value={editedContact.phone || ''}
-                        onChange={(e) => setEditedContact({...editedContact, phone: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, phone: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
@@ -271,7 +275,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       <input
                         type="text"
                         value={editedContact.company || ''}
-                        onChange={(e) => setEditedContact({...editedContact, company: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, company: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
@@ -285,7 +291,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       <input
                         type="text"
                         value={editedContact.position || ''}
-                        onChange={(e) => setEditedContact({...editedContact, position: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, position: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
@@ -299,7 +307,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       <input
                         type="text"
                         value={editedContact.industry || ''}
-                        onChange={(e) => setEditedContact({...editedContact, industry: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, industry: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
@@ -318,7 +328,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                     {isEditing ? (
                       <select
                         value={editedContact.status}
-                        onChange={(e) => setEditedContact({...editedContact, status: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, status: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="lead">Lead</option>
@@ -334,11 +346,15 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Interest Level</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Interest Level
+                    </label>
                     {isEditing ? (
                       <select
                         value={editedContact.interestLevel || ''}
-                        onChange={(e) => setEditedContact({...editedContact, interestLevel: e.target.value})}
+                        onChange={(e) =>
+                          setEditedContact({ ...editedContact, interestLevel: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Select level</option>
@@ -349,7 +365,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       </select>
                     ) : (
                       contact.interestLevel && (
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white ${interestColors[contact.interestLevel as keyof typeof interestColors]}`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium text-white ${interestColors[contact.interestLevel as keyof typeof interestColors]}`}
+                        >
                           {interestLabels[contact.interestLevel as keyof typeof interestLabels]}
                         </span>
                       )
@@ -362,11 +380,17 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                       <span className="text-2xl font-bold text-gray-900">
                         {contact.aiScore || contact.score || 0}
                       </span>
-                      <div className={`w-3 h-3 rounded-full ${
-                        (contact.aiScore || contact.score || 0) >= 80 ? 'bg-green-500' :
-                        (contact.aiScore || contact.score || 0) >= 60 ? 'bg-blue-500' :
-                        (contact.aiScore || contact.score || 0) >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`} />
+                      <div
+                        className={`w-3 h-3 rounded-full ${
+                          (contact.aiScore || contact.score || 0) >= 80
+                            ? 'bg-green-500'
+                            : (contact.aiScore || contact.score || 0) >= 60
+                              ? 'bg-blue-500'
+                              : (contact.aiScore || contact.score || 0) >= 40
+                                ? 'bg-yellow-500'
+                                : 'bg-red-500'
+                        }`}
+                      />
                     </div>
                   </div>
                 </div>
@@ -396,7 +420,7 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
                 {isEditing ? (
                   <textarea
                     value={editedContact.notes || ''}
-                    onChange={(e) => setEditedContact({...editedContact, notes: e.target.value})}
+                    onChange={(e) => setEditedContact({ ...editedContact, notes: e.target.value })}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Add notes about this contact..."
@@ -408,16 +432,10 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
 
               {isEditing && (
                 <div className="flex justify-end space-x-2">
-                  <ModernButton
-                    onClick={handleCancel}
-                    variant="outline"
-                  >
+                  <ModernButton onClick={handleCancel} variant="outline">
                     Cancel
                   </ModernButton>
-                  <ModernButton
-                    onClick={handleSave}
-                    variant="primary"
-                  >
+                  <ModernButton onClick={handleSave} variant="primary">
                     <Save className="w-4 h-4 mr-2" />
                     Save Changes
                   </ModernButton>
@@ -446,7 +464,9 @@ export const ContactDetailView: React.FC<ContactDetailViewProps> = ({
             <div className="text-center py-12">
               <Brain className="w-16 h-16 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Insights Coming Soon</h3>
-              <p className="text-gray-600">AI-powered insights and recommendations will appear here</p>
+              <p className="text-gray-600">
+                AI-powered insights and recommendations will appear here
+              </p>
             </div>
           )}
         </div>

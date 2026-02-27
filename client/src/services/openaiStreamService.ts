@@ -2,7 +2,7 @@ import { useApiStore } from '../store/apiStore';
 
 export const useOpenAIStream = () => {
   const { apiKeys } = useApiStore();
-  
+
   const streamChat = async (
     messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
     onChunk: (chunk: string) => void,
@@ -20,7 +20,7 @@ export const useOpenAIStream = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKeys.openai}`,
+          Authorization: `Bearer ${apiKeys.openai}`,
         },
         body: JSON.stringify({
           model,

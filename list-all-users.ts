@@ -2,21 +2,22 @@ import pg from 'pg';
 const { Pool } = pg;
 
 const pool = new Pool({
-  connectionString: 'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
+  connectionString:
+    'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres',
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 async function listAllUsers() {
   try {
     const client = await pool.connect();
-    
+
     console.log('='.repeat(120));
     console.log('ALL USERS IN SMARTCRM DATABASE');
     console.log('='.repeat(120));
     console.log();
-    
+
     const result = await client.query(`
       SELECT 
         p.id,
@@ -35,10 +36,10 @@ async function listAllUsers() {
       LEFT JOIN auth.users u ON p.id = u.id
       ORDER BY p.created_at DESC
     `);
-    
+
     console.log(`Total Users: ${result.rows.length}\n`);
     console.log('-'.repeat(120));
-    
+
     result.rows.forEach((user, index) => {
       console.log(`\n#${index + 1}`);
       console.log(`ID:              ${user.id}`);
@@ -48,19 +49,23 @@ async function listAllUsers() {
       console.log(`Role:            ${user.role}`);
       console.log(`App Context:     ${user.app_context}`);
       console.log(`Email Template:  ${user.email_template_set}`);
-      console.log(`Email Confirmed: ${user.email_confirmed_at ? new Date(user.email_confirmed_at).toLocaleString() : 'Not confirmed'}`);
-      console.log(`Last Sign In:    ${user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}`);
+      console.log(
+        `Email Confirmed: ${user.email_confirmed_at ? new Date(user.email_confirmed_at).toLocaleString() : 'Not confirmed'}`
+      );
+      console.log(
+        `Last Sign In:    ${user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}`
+      );
       console.log(`Created:         ${new Date(user.created_at).toLocaleString()}`);
       console.log(`Updated:         ${new Date(user.updated_at).toLocaleString()}`);
       console.log('-'.repeat(120));
     });
-    
+
     // Summary by app context
     console.log('\n\n');
     console.log('='.repeat(120));
     console.log('SUMMARY BY APP CONTEXT');
     console.log('='.repeat(120));
-    
+
     const contextSummary = await client.query(`
       SELECT 
         COALESCE(app_context, 'Not Assigned') as context,
@@ -69,17 +74,17 @@ async function listAllUsers() {
       GROUP BY app_context
       ORDER BY count DESC
     `);
-    
-    contextSummary.rows.forEach(row => {
+
+    contextSummary.rows.forEach((row) => {
       console.log(`${row.context}: ${row.count} users`);
     });
-    
+
     // Summary by role
     console.log('\n');
     console.log('='.repeat(120));
     console.log('SUMMARY BY ROLE');
     console.log('='.repeat(120));
-    
+
     const roleSummary = await client.query(`
       SELECT 
         role,
@@ -88,14 +93,13 @@ async function listAllUsers() {
       GROUP BY role
       ORDER BY count DESC
     `);
-    
-    roleSummary.rows.forEach(row => {
+
+    roleSummary.rows.forEach((row) => {
       console.log(`${row.role}: ${row.count} users`);
     });
-    
+
     client.release();
     await pool.end();
-    
   } catch (error: any) {
     console.error('❌ Error:', error.message);
     process.exit(1);

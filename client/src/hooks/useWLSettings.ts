@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import type { UserWLSettings, InsertUserWLSettings, TenantConfig, InsertTenantConfig, PartnerWLConfig, InsertPartnerWLConfig } from '@shared/schema';
+import type {
+  UserWLSettings,
+  InsertUserWLSettings,
+  TenantConfig,
+  InsertTenantConfig,
+  PartnerWLConfig,
+  InsertPartnerWLConfig,
+} from '@shared/schema';
 
 // User White Label Settings Hook
 export function useUserWLSettings(userId: string) {
-  const { data: settings, isLoading, error } = useQuery({
+  const {
+    data: settings,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['/api/user/wl-settings', userId],
     queryFn: () => apiRequest(`/api/user/wl-settings/${userId}`),
     enabled: !!userId,
@@ -19,7 +30,7 @@ export function useCreateUserWLSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: InsertUserWLSettings) => 
+    mutationFn: (data: InsertUserWLSettings) =>
       apiRequest('/api/user/wl-settings', { method: 'POST', body: data }),
     onSuccess: (data, variables) => {
       // Invalidate and refetch user settings
@@ -34,7 +45,7 @@ export function useUpdateUserWLSettings(userId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<UserWLSettings>) => 
+    mutationFn: (data: Partial<UserWLSettings>) =>
       apiRequest(`/api/user/wl-settings/${userId}`, { method: 'PATCH', body: data }),
     onSuccess: () => {
       // Invalidate and refetch user settings
@@ -46,7 +57,11 @@ export function useUpdateUserWLSettings(userId: string) {
 
 // Tenant Configuration Hooks
 export function useTenantConfig(tenantId: string) {
-  const { data: config, isLoading, error } = useQuery({
+  const {
+    data: config,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['/api/tenant/config', tenantId],
     queryFn: () => apiRequest(`/api/tenant/config/${tenantId}`),
     enabled: !!tenantId,
@@ -59,7 +74,7 @@ export function useCreateTenantConfig() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: InsertTenantConfig) => 
+    mutationFn: (data: InsertTenantConfig) =>
       apiRequest('/api/tenant/config', { method: 'POST', body: data }),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tenant/config', variables.tenantId] });
@@ -72,7 +87,7 @@ export function useUpdateTenantConfig(tenantId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<TenantConfig>) => 
+    mutationFn: (data: Partial<TenantConfig>) =>
       apiRequest(`/api/tenant/config/${tenantId}`, { method: 'PATCH', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tenant/config', tenantId] });
@@ -83,7 +98,11 @@ export function useUpdateTenantConfig(tenantId: string) {
 
 // Partner White Label Configuration Hooks
 export function usePartnerWLConfig(partnerId: string) {
-  const { data: config, isLoading, error } = useQuery({
+  const {
+    data: config,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['/api/partner/wl-config', partnerId],
     queryFn: () => apiRequest(`/api/partner/wl-config/${partnerId}`),
     enabled: !!partnerId,
@@ -96,7 +115,7 @@ export function useCreatePartnerWLConfig() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: InsertPartnerWLConfig) => 
+    mutationFn: (data: InsertPartnerWLConfig) =>
       apiRequest('/api/partner/wl-config', { method: 'POST', body: data }),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/partner/wl-config', variables.partnerId] });
@@ -109,7 +128,7 @@ export function useUpdatePartnerWLConfig(partnerId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<PartnerWLConfig>) => 
+    mutationFn: (data: Partial<PartnerWLConfig>) =>
       apiRequest(`/api/partner/wl-config/${partnerId}`, { method: 'PATCH', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/partner/wl-config', partnerId] });
@@ -120,7 +139,11 @@ export function useUpdatePartnerWLConfig(partnerId: string) {
 
 // White Label Packages Hook
 export function useWhiteLabelPackages() {
-  const { data: packages, isLoading, error } = useQuery({
+  const {
+    data: packages,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['/api/white-label-packages'],
     queryFn: () => apiRequest('/api/white-label-packages'),
   });
@@ -172,6 +195,6 @@ export function useWLState() {
     updateLocalConfig,
     resetModifications,
     setCurrentSettings,
-    setCurrentConfig
+    setCurrentConfig,
   };
 }

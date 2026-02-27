@@ -3,6 +3,7 @@
 ## 🐛 Problem
 
 The deployment was failing with the error:
+
 ```
 Missing 'puppeteer' package causing module not found error during startup in dist/index.js
 Application is crash looping because the run command exits immediately after starting
@@ -19,6 +20,7 @@ Application is crash looping because the run command exits immediately after sta
 ## ✅ Solution Applied
 
 ### 1. Moved Screenshot Files to Scripts Directory
+
 ```bash
 # Files moved from root to scripts/screenshots/
 screenshot.runner.ts → scripts/screenshots/screenshot.runner.ts
@@ -28,28 +30,31 @@ test-screenshot.cjs → scripts/screenshots/test-screenshot.cjs
 ```
 
 ### 2. Updated tsconfig.json
+
 ```json
 {
   "include": [
-    "*.ts"  // Only root-level TS (like drizzle.config.ts)
+    "*.ts" // Only root-level TS (like drizzle.config.ts)
   ],
   "exclude": [
     "node_modules",
     "dist",
     "client",
     "server",
-    "scripts"  // ← Added to prevent dev tools from being compiled
+    "scripts" // ← Added to prevent dev tools from being compiled
   ]
 }
 ```
 
 ### 3. Cleaned Build Output
+
 ```bash
 # Removed screenshot files from dist/
 rm -f dist/screenshot.runner.js dist/test-screenshot.js
 ```
 
 ### 4. Verified Build
+
 ```bash
 npm run build
 # ✅ Build successful
@@ -60,6 +65,7 @@ npm run build
 ## 🎯 Why This Works
 
 ### Before:
+
 ```
 project-root/
 ├── screenshot.runner.ts       ← Vite bundled this
@@ -73,6 +79,7 @@ project-root/
 **Result**: Production build includes Playwright code → tries to import puppeteer → crashes
 
 ### After:
+
 ```
 project-root/
 ├── scripts/
@@ -89,12 +96,15 @@ project-root/
 ## 🚀 Deployment Readiness
 
 ### ✅ Build Configuration
+
 - Vite configured to only build client code (`root: "client"`)
 - TypeScript excludes dev tools (`scripts/` excluded)
 - No dev dependencies in production bundle
 
 ### ✅ System Dependencies
+
 `.replit` already has chromium for development:
+
 ```toml
 [nix]
 channel = "stable-25_05"
@@ -102,7 +112,9 @@ packages = ["ffmpeg", "chromium"]  # ← For local Playwright testing
 ```
 
 ### ✅ Production Dependencies
+
 `package.json` only includes production dependencies:
+
 - No `@playwright/test` in dependencies
 - No `puppeteer` in dependencies
 - All dev tools properly in devDependencies
@@ -112,16 +124,19 @@ packages = ["ffmpeg", "chromium"]  # ← For local Playwright testing
 These tools are for **development/marketing only**, not production:
 
 ### Run Screenshot Test
+
 ```bash
 npx tsx scripts/screenshots/test-screenshot.ts
 ```
 
 ### Run Full Screenshot Suite
+
 ```bash
 npx tsx scripts/screenshots/screenshot.runner.ts
 ```
 
 ### Important Notes
+
 - These scripts are **never bundled** into production
 - They use `@playwright/test` which is a `devDependency`
 - Chromium is installed via Nix for local development

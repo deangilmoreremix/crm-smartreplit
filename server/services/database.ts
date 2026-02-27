@@ -28,7 +28,7 @@ class DatabaseManager {
       idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
       connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '2000'),
       retryAttempts: parseInt(process.env.DB_RETRY_ATTEMPTS || '3'),
-      retryDelay: parseInt(process.env.DB_RETRY_DELAY || '1000')
+      retryDelay: parseInt(process.env.DB_RETRY_DELAY || '1000'),
     };
 
     if (!this.config.connectionString) {
@@ -122,7 +122,7 @@ class DatabaseManager {
         await errorLogger.logError('Database query failed', error, {
           query: text.substring(0, 200),
           attempt,
-          retries
+          retries,
         });
 
         throw error;
@@ -165,7 +165,7 @@ class DatabaseManager {
 
         await errorLogger.logError('Database transaction failed', error, {
           attempt,
-          retries
+          retries,
         });
 
         throw error;
@@ -203,12 +203,14 @@ class DatabaseManager {
       '57P03', // cannot_connect_now
       '53300', // too_many_connections
       '40001', // serialization_failure
-      '40P01'  // deadlock_detected
+      '40P01', // deadlock_detected
     ];
 
-    return retryableCodes.includes(error.code) ||
-           error.message?.includes('connection') ||
-           error.message?.includes('timeout');
+    return (
+      retryableCodes.includes(error.code) ||
+      error.message?.includes('connection') ||
+      error.message?.includes('timeout')
+    );
   }
 
   /**
@@ -222,7 +224,7 @@ class DatabaseManager {
     return {
       totalCount: this.pool.totalCount,
       idleCount: this.pool.idleCount,
-      waitingCount: this.pool.waitingCount
+      waitingCount: this.pool.waitingCount,
     };
   }
 
@@ -240,13 +242,13 @@ class DatabaseManager {
       await this.query('SELECT 1');
       return {
         isHealthy: true,
-        poolStats
+        poolStats,
       };
     } catch (error: any) {
       return {
         isHealthy: false,
         poolStats,
-        lastError: error.message
+        lastError: error.message,
       };
     }
   }
@@ -265,7 +267,7 @@ class DatabaseManager {
    * Utility delay function
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

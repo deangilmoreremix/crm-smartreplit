@@ -11,9 +11,16 @@ import { Contact } from '../types/contact';
 
 export interface AIRequest {
   id: string;
-  type: 'contact_scoring' | 'contact_enrichment' | 'email_generation' | 'email_analysis' | 
-        'insights_generation' | 'communication_analysis' | 'automation_suggestions' | 
-        'predictive_analytics' | 'relationship_mapping';
+  type:
+    | 'contact_scoring'
+    | 'contact_enrichment'
+    | 'email_generation'
+    | 'email_analysis'
+    | 'insights_generation'
+    | 'communication_analysis'
+    | 'automation_suggestions'
+    | 'predictive_analytics'
+    | 'relationship_mapping';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   data: any;
   context?: {
@@ -68,9 +75,9 @@ class AIOrchestrator {
   private processing = false;
   private providers: Map<string, AIProvider> = new Map();
   private requestHistory: AIResponse[] = [];
-  
+
   constructor() {
-    this.initializeProviders().catch(error => {
+    this.initializeProviders().catch((error) => {
       console.warn('Failed to initialize AI providers:', error);
     });
     this.startQueueProcessor();
@@ -90,14 +97,14 @@ class AIOrchestrator {
       name: 'openai',
       available: true, // Server-side check will determine actual availability
       rateLimit: { remaining: 50, resetTime: Date.now() + 60000 },
-      performance: { avgResponseTime: 2000, successRate: 0.95, costPer1kTokens: 0.002 }
+      performance: { avgResponseTime: 2000, successRate: 0.95, costPer1kTokens: 0.002 },
     });
 
     this.providers.set('gemini', {
       name: 'gemini',
       available: true, // Server-side check will determine actual availability
       rateLimit: { remaining: 60, resetTime: Date.now() + 60000 },
-      performance: { avgResponseTime: 1500, successRate: 0.92, costPer1kTokens: 0.0005 }
+      performance: { avgResponseTime: 1500, successRate: 0.92, costPer1kTokens: 0.0005 },
     });
   }
 
@@ -117,19 +124,19 @@ class AIOrchestrator {
 
     try {
       const response = await this.executeRequest(request);
-      logger.info('AI request completed successfully', { 
-        requestId: request.id, 
+      logger.info('AI request completed successfully', {
+        requestId: request.id,
         type: request.type,
-        processingTime: response.metadata.processingTime 
+        processingTime: response.metadata.processingTime,
       });
     } catch (error) {
       // Enhanced error handling to prevent uncaught exceptions
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('AI request failed', error as Error, { 
-        requestId: request.id, 
-        type: request.type
+      logger.error('AI request failed', error as Error, {
+        requestId: request.id,
+        type: request.type,
       });
-      
+
       // Silently handle "No AI providers available" to prevent runtime errors
       if (errorMsg.includes('No AI providers available')) {
         console.warn('⚠️ Skipping AI request due to no providers:', request.type);
@@ -150,14 +157,14 @@ class AIOrchestrator {
         logger.debug('AI response served from cache', { requestId: request.id });
         return {
           ...cached,
-          metadata: { ...cached.metadata, cached: true }
+          metadata: { ...cached.metadata, cached: true },
         };
       }
     }
 
     // Select optimal provider
     const provider = await this.selectProvider(request);
-    
+
     // Execute request
     let result: any;
     let metadata: AIResponse['metadata'];
@@ -172,7 +179,7 @@ class AIOrchestrator {
         confidence: response.confidence || 85,
         cached: false,
         timestamp: new Date().toISOString(),
-        cost: response.cost
+        cost: response.cost,
       };
     } catch (error) {
       throw new Error(`AI provider ${provider.name} failed: ${error}`);
@@ -182,7 +189,7 @@ class AIOrchestrator {
       id: request.id,
       type: request.type,
       result,
-      metadata
+      metadata,
     };
 
     // Cache successful responses
@@ -204,8 +211,9 @@ class AIOrchestrator {
   }
 
   private async selectProvider(request: AIRequest): Promise<AIProvider> {
-    const availableProviders = Array.from(this.providers.values())
-      .filter(p => p.available && p.rateLimit.remaining > 0);
+    const availableProviders = Array.from(this.providers.values()).filter(
+      (p) => p.available && p.rateLimit.remaining > 0
+    );
 
     if (availableProviders.length === 0) {
       // Silently skip requests when no providers are available instead of throwing
@@ -219,7 +227,7 @@ class AIOrchestrator {
     }
 
     // Use specified provider if available
-    const requestedProvider = availableProviders.find(p => p.name === request.options?.provider);
+    const requestedProvider = availableProviders.find((p) => p.name === request.options?.provider);
     if (requestedProvider) {
       return requestedProvider;
     }
@@ -230,13 +238,13 @@ class AIOrchestrator {
 
   private selectOptimalProvider(request: AIRequest, providers: AIProvider[]): AIProvider {
     // Score providers based on request characteristics
-    const scoredProviders = providers.map(provider => {
+    const scoredProviders = providers.map((provider) => {
       let score = 0;
 
       // Performance factors
       score += provider.performance.successRate * 40;
       score += (3000 - provider.performance.avgResponseTime) / 100; // Prefer faster responses
-      
+
       // Cost factors (lower cost = higher score)
       if (request.priority === 'low') {
         score += (0.01 - provider.performance.costPer1kTokens) * 1000;
@@ -290,22 +298,27 @@ class AIOrchestrator {
     }
 
     // Check if request type should use persistent assistant
-    const persistentTypes = ['contact_scoring', 'contact_enrichment', 'insights_generation', 'predictive_analytics'];
+    const persistentTypes = [
+      'contact_scoring',
+      'contact_enrichment',
+      'insights_generation',
+      'predictive_analytics',
+    ];
     if (persistentTypes.includes(request.type) && request.context?.entityId) {
       return this.callPersistentAssistant(request);
     }
 
     // Map request types to edge function endpoints
     const endpointMap: Record<string, string> = {
-      'contact_scoring': 'smart-score',
-      'contact_enrichment': 'smart-enrichment',
-      'email_generation': 'email-composer',
-      'email_analysis': 'email-analyzer',
-      'insights_generation': 'ai-insights',
-      'communication_analysis': 'communication-logs',
-      'automation_suggestions': 'smart-categorize',
-      'predictive_analytics': 'smart-qualify',
-      'relationship_mapping': 'smart-enrichment'
+      contact_scoring: 'smart-score',
+      contact_enrichment: 'smart-enrichment',
+      email_generation: 'email-composer',
+      email_analysis: 'email-analyzer',
+      insights_generation: 'ai-insights',
+      communication_analysis: 'communication-logs',
+      automation_suggestions: 'smart-categorize',
+      predictive_analytics: 'smart-qualify',
+      relationship_mapping: 'smart-enrichment',
     };
 
     const endpoint = endpointMap[request.type];
@@ -318,11 +331,11 @@ class AIOrchestrator {
       {
         ...request.data,
         aiProvider: provider.name,
-        options: request.options
+        options: request.options,
       },
       {
-        headers: { 'Authorization': `Bearer ${supabaseKey}` },
-        timeout: request.options?.timeout || 30000
+        headers: { Authorization: `Bearer ${supabaseKey}` },
+        timeout: request.options?.timeout || 30000,
       }
     );
 
@@ -331,19 +344,19 @@ class AIOrchestrator {
 
   private async callPersistentAssistant(request: AIRequest): Promise<any> {
     const { persistentAssistantService } = await import('./persistentAssistantService');
-    
+
     await persistentAssistantService.initialize();
-    
+
     const assistantTypeMap: Record<string, 'contact' | 'deal' | 'task' | 'pipeline'> = {
-      'contact_scoring': 'contact',
-      'contact_enrichment': 'contact', 
-      'insights_generation': 'deal',
-      'predictive_analytics': 'pipeline'
+      contact_scoring: 'contact',
+      contact_enrichment: 'contact',
+      insights_generation: 'deal',
+      predictive_analytics: 'pipeline',
     };
-    
+
     const assistantType = assistantTypeMap[request.type] || 'contact';
     const entityId = request.context?.entityId || 'default';
-    
+
     try {
       const result = await persistentAssistantService.chatWithPersistentAssistant(
         assistantType,
@@ -359,7 +372,7 @@ class AIOrchestrator {
         cost: 0.003, // Slightly higher cost for persistent memory
         threadId: result.threadId,
         assistantId: result.assistantId,
-        persistentMemory: result.persistentMemory
+        persistentMemory: result.persistentMemory,
       };
     } catch (error) {
       console.error('Persistent assistant call failed:', error);
@@ -383,11 +396,11 @@ class AIOrchestrator {
         ...request.data,
         threadId: request.context?.assistantThreadId,
         aiProvider: provider.name,
-        options: request.options
+        options: request.options,
       },
       {
-        headers: { 'Authorization': `Bearer ${supabaseKey}` },
-        timeout: request.options?.timeout || 30000
+        headers: { Authorization: `Bearer ${supabaseKey}` },
+        timeout: request.options?.timeout || 30000,
       }
     );
 
@@ -400,9 +413,9 @@ class AIOrchestrator {
 
     // Update running averages
     const alpha = 0.1; // Smoothing factor
-    provider.performance.avgResponseTime = 
+    provider.performance.avgResponseTime =
       provider.performance.avgResponseTime * (1 - alpha) + metadata.processingTime * alpha;
-    
+
     // Update rate limit info (simplified)
     provider.rateLimit.remaining = Math.max(0, provider.rateLimit.remaining - 1);
     if (Date.now() > provider.rateLimit.resetTime) {
@@ -417,15 +430,15 @@ class AIOrchestrator {
 
   private getCacheTTL(requestType: string): number {
     const ttlMap: Record<string, number> = {
-      'contact_scoring': 3600000, // 1 hour
-      'contact_enrichment': 86400000, // 24 hours
-      'email_generation': 1800000, // 30 minutes
-      'email_analysis': 1800000, // 30 minutes
-      'insights_generation': 3600000, // 1 hour
-      'communication_analysis': 1800000, // 30 minutes
-      'automation_suggestions': 7200000, // 2 hours
-      'predictive_analytics': 3600000, // 1 hour
-      'relationship_mapping': 86400000 // 24 hours
+      contact_scoring: 3600000, // 1 hour
+      contact_enrichment: 86400000, // 24 hours
+      email_generation: 1800000, // 30 minutes
+      email_analysis: 1800000, // 30 minutes
+      insights_generation: 3600000, // 1 hour
+      communication_analysis: 1800000, // 30 minutes
+      automation_suggestions: 7200000, // 2 hours
+      predictive_analytics: 3600000, // 1 hour
+      relationship_mapping: 86400000, // 24 hours
     };
 
     return ttlMap[requestType] || 1800000; // Default 30 minutes
@@ -440,22 +453,22 @@ class AIOrchestrator {
         useCache: true,
         provider: 'auto',
         timeout: 30000,
-        ...request.options
-      }
+        ...request.options,
+      },
     };
 
     this.requestQueue.push(fullRequest);
-    
+
     // Sort queue by priority
     this.requestQueue.sort((a, b) => {
       const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
 
-    logger.info('AI request queued', { 
-      requestId: fullRequest.id, 
-      type: fullRequest.type, 
-      priority: fullRequest.priority 
+    logger.info('AI request queued', {
+      requestId: fullRequest.id,
+      type: fullRequest.type,
+      priority: fullRequest.priority,
     });
 
     return fullRequest.id;
@@ -469,8 +482,8 @@ class AIOrchestrator {
         useCache: true,
         provider: 'auto',
         timeout: 30000,
-        ...request.options
-      }
+        ...request.options,
+      },
     };
 
     return this.executeRequest(fullRequest);
@@ -486,19 +499,20 @@ class AIOrchestrator {
 
   getPerformanceMetrics(): any {
     const recent = this.requestHistory.slice(-100);
-    
+
     return {
       totalRequests: this.requestHistory.length,
-      successRate: recent.filter(r => !r.error).length / recent.length,
-      avgResponseTime: recent.reduce((sum, r) => sum + r.metadata.processingTime, 0) / recent.length,
-      cacheHitRate: recent.filter(r => r.metadata.cached).length / recent.length,
-      providerBreakdown: this.getProviderBreakdown(recent)
+      successRate: recent.filter((r) => !r.error).length / recent.length,
+      avgResponseTime:
+        recent.reduce((sum, r) => sum + r.metadata.processingTime, 0) / recent.length,
+      cacheHitRate: recent.filter((r) => r.metadata.cached).length / recent.length,
+      providerBreakdown: this.getProviderBreakdown(recent),
     };
   }
 
   private getProviderBreakdown(responses: AIResponse[]): Record<string, number> {
     const breakdown: Record<string, number> = {};
-    responses.forEach(r => {
+    responses.forEach((r) => {
       breakdown[r.metadata.provider] = (breakdown[r.metadata.provider] || 0) + 1;
     });
     return breakdown;

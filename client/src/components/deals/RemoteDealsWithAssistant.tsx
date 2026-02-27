@@ -41,7 +41,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       window.addEventListener('message', handleRemoteMessage);
 
       // Initialize with deal data
-      const dealsData = Object.values(deals).map(deal => ({
+      const dealsData = Object.values(deals).map((deal) => ({
         id: deal.id,
         title: deal.title,
         value: deal.value,
@@ -51,7 +51,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
         probability: deal.probability,
         notes: deal.notes,
         createdAt: deal.createdAt,
-        updatedAt: deal.updatedAt
+        updatedAt: deal.updatedAt,
       }));
 
       // Send initialization message to remote app
@@ -62,16 +62,16 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
           crmInfo: {
             appName: 'SmartCRM',
             version: '1.0.0',
-            features: ['ai-assistant', 'deal-intelligence', 'probability-scoring']
+            features: ['ai-assistant', 'deal-intelligence', 'probability-scoring'],
           },
           assistantCapabilities: {
             canAnalyzeDeals: true,
             canPredictOutcomes: true,
             canSuggestActions: true,
-            canOptimizeValue: true
-          }
+            canOptimizeValue: true,
+          },
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       if (iframeRef.current.contentWindow) {
@@ -127,7 +127,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
 
     try {
       setIsAssistantLoading(true);
-      
+
       // Initialize assistant for this deal
       const initMessage = {
         type: 'ASSISTANT_START_CONVERSATION',
@@ -140,30 +140,32 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
             value: deal.value,
             stage: deal.stage,
             probability: deal.probability,
-            notes: deal.notes
-          }
-        }
+            notes: deal.notes,
+          },
+        },
       };
 
       window.postMessage(initMessage, '*');
-      
+
       // Send assistant ready message to remote app
       if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage({
-          type: 'ASSISTANT_READY',
-          data: {
-            dealId,
-            assistantType: 'deal',
-            capabilities: {
-              canChat: true,
-              canAnalyze: true,
-              canPredict: true,
-              canOptimize: true
-            }
-          }
-        }, '*');
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: 'ASSISTANT_READY',
+            data: {
+              dealId,
+              assistantType: 'deal',
+              capabilities: {
+                canChat: true,
+                canAnalyze: true,
+                canPredict: true,
+                canOptimize: true,
+              },
+            },
+          },
+          '*'
+        );
       }
-      
     } catch (error) {
       console.error('Failed to initialize deal assistant:', error);
     } finally {
@@ -177,7 +179,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
 
     try {
       let response;
-      
+
       switch (action) {
         case 'analyze_deal':
           response = await analyzeDeal(dealId, requestData);
@@ -197,16 +199,18 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
 
       // Send response back to remote app
       if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage({
-          type: 'ASSISTANT_RESPONSE',
-          data: {
-            dealId,
-            action,
-            response
-          }
-        }, '*');
+        iframeRef.current.contentWindow.postMessage(
+          {
+            type: 'ASSISTANT_RESPONSE',
+            data: {
+              dealId,
+              action,
+              response,
+            },
+          },
+          '*'
+        );
       }
-      
     } catch (error) {
       console.error('Assistant request failed:', error);
     } finally {
@@ -216,12 +220,12 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
 
   const handleDealChat = async (data: any) => {
     const { dealId, message } = data;
-    
+
     const chatMessage = {
       type: 'ASSISTANT_SEND_MESSAGE',
       assistantType: 'deal',
       entityId: dealId,
-      data: { message }
+      data: { message },
     };
 
     window.postMessage(chatMessage, '*');
@@ -230,7 +234,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
   const handleDealAnalysis = async (data: any) => {
     const { dealId } = data;
     const deal = deals[dealId];
-    
+
     if (!deal) return;
 
     const analysis = {
@@ -238,40 +242,46 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       riskFactors: identifyRiskFactors(deal),
       opportunities: identifyOpportunities(deal),
       nextActions: suggestNextActions(deal),
-      valueOptimization: suggestValueOptimization(deal)
+      valueOptimization: suggestValueOptimization(deal),
     };
 
     setAssistantInsights(analysis);
 
     // Send analysis to remote app
     if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        type: 'DEAL_ANALYSIS_RESPONSE',
-        data: {
-          dealId,
-          analysis
-        }
-      }, '*');
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: 'DEAL_ANALYSIS_RESPONSE',
+          data: {
+            dealId,
+            analysis,
+          },
+        },
+        '*'
+      );
     }
   };
 
   const handleDealSuggestions = async (data: any) => {
     const { dealId, context } = data;
     const deal = deals[dealId];
-    
+
     if (!deal) return;
 
     const suggestions = generateDealSuggestions(deal, context);
 
     // Send suggestions to remote app
     if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        type: 'DEAL_SUGGESTIONS_RESPONSE',
-        data: {
-          dealId,
-          suggestions
-        }
-      }, '*');
+      iframeRef.current.contentWindow.postMessage(
+        {
+          type: 'DEAL_SUGGESTIONS_RESPONSE',
+          data: {
+            dealId,
+            suggestions,
+          },
+        },
+        '*'
+      );
     }
   };
 
@@ -284,8 +294,8 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       insights: [
         'Strong engagement from decision maker',
         'Budget confirmed and approved',
-        'Timeline aligns with quarterly goals'
-      ]
+        'Timeline aligns with quarterly goals',
+      ],
     };
   };
 
@@ -295,7 +305,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       winProbability: Math.round((deal.probability || 50) + Math.random() * 30),
       estimatedCloseDate: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000),
       riskLevel: deal.value > 50000 ? 'Medium' : 'Low',
-      confidenceScore: Math.round(Math.random() * 40 + 60)
+      confidenceScore: Math.round(Math.random() * 40 + 60),
     };
   };
 
@@ -305,14 +315,10 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       immediate: [
         'Schedule decision-maker meeting',
         'Send ROI proposal',
-        'Confirm budget timeline'
+        'Confirm budget timeline',
       ],
-      shortTerm: [
-        'Introduce implementation team',
-        'Provide case studies',
-        'Set up pilot program'
-      ],
-      priority: 'high'
+      shortTerm: ['Introduce implementation team', 'Provide case studies', 'Set up pilot program'],
+      priority: 'high',
     };
   };
 
@@ -324,9 +330,9 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       recommendations: [
         'Add premium support package',
         'Include training services',
-        'Offer multi-year discount'
+        'Offer multi-year discount',
       ],
-      upliftPotential: '15-30%'
+      upliftPotential: '15-30%',
     };
   };
 
@@ -348,26 +354,18 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
   };
 
   const identifyOpportunities = (deal: any) => {
-    return [
-      'Upsell additional services',
-      'Extend contract term',
-      'Add implementation support'
-    ];
+    return ['Upsell additional services', 'Extend contract term', 'Add implementation support'];
   };
 
   const suggestNextActions = (deal: any) => {
-    return [
-      'Schedule follow-up call',
-      'Send proposal details',
-      'Confirm decision timeline'
-    ];
+    return ['Schedule follow-up call', 'Send proposal details', 'Confirm decision timeline'];
   };
 
   const suggestValueOptimization = (deal: any) => {
     return [
       'Bundle services for discount',
       'Offer payment plan options',
-      'Include training and support'
+      'Include training and support',
     ];
   };
 
@@ -376,18 +374,18 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
       communication: [
         'Send personalized follow-up email',
         'Schedule stakeholder presentation',
-        'Provide relevant case studies'
+        'Provide relevant case studies',
       ],
       strategy: [
         'Focus on ROI demonstration',
         'Address budget concerns',
-        'Expedite decision timeline'
+        'Expedite decision timeline',
       ],
       nextSteps: [
         'Prepare contract terms',
         'Set up implementation plan',
-        'Schedule kickoff meeting'
-      ]
+        'Schedule kickoff meeting',
+      ],
     };
   };
 
@@ -407,7 +405,9 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
         <div className="absolute top-4 right-4 z-10">
           <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4">
             <div className="flex items-center space-x-3">
-              <div className={`p-2 rounded-full ${isAssistantLoading ? 'bg-blue-100' : 'bg-green-100'}`}>
+              <div
+                className={`p-2 rounded-full ${isAssistantLoading ? 'bg-blue-100' : 'bg-green-100'}`}
+              >
                 {isAssistantLoading ? (
                   <Brain className="h-5 w-5 text-blue-600 animate-pulse" />
                 ) : (
@@ -421,7 +421,7 @@ const RemoteDealsWithAssistant: React.FC<RemoteDealsWithAssistantProps> = ({
                 </div>
               </div>
             </div>
-            
+
             {assistantInsights && (
               <div className="mt-3 space-y-2">
                 <div className="flex items-center justify-between">

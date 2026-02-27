@@ -16,25 +16,32 @@ export const schemas = {
   email: z.string().email().max(254),
 
   // Password validation
-  password: z.string()
+  password: z
+    .string()
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password must be at most 128 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'Password must contain at least one lowercase letter, one uppercase letter, and one number'
+    ),
 
   // Name validation
-  name: z.string()
+  name: z
+    .string()
     .min(1, 'Name is required')
     .max(100, 'Name must be at most 100 characters')
     .regex(/^[a-zA-Z\s\-']+$/, 'Name contains invalid characters'),
 
   // Domain validation
-  domain: z.string()
+  domain: z
+    .string()
     .min(1, 'Domain is required')
     .max(253, 'Domain is too long')
     .regex(/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i, 'Invalid domain format'),
 
   // Subdomain validation
-  subdomain: z.string()
+  subdomain: z
+    .string()
     .regex(/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/, 'Invalid subdomain format')
     .max(63, 'Subdomain is too long'),
 
@@ -48,7 +55,8 @@ export const schemas = {
   color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Invalid color format'),
 
   // Phone validation
-  phone: z.string()
+  phone: z
+    .string()
     .regex(/^[\+]?[1-9][\d]{0,15}$/, 'Invalid phone number format')
     .max(20),
 
@@ -69,59 +77,72 @@ export const schemas = {
       text: z.object({
         primary: z.string().regex(/^#[0-9A-F]{6}$/i),
         secondary: z.string().regex(/^#[0-9A-F]{6}$/i),
-        disabled: z.string().regex(/^#[0-9A-F]{6}$/i)
+        disabled: z.string().regex(/^#[0-9A-F]{6}$/i),
       }),
       success: z.string().regex(/^#[0-9A-F]{6}$/i),
       warning: z.string().regex(/^#[0-9A-F]{6}$/i),
       error: z.string().regex(/^#[0-9A-F]{6}$/i),
-      info: z.string().regex(/^#[0-9A-F]{6}$/i)
+      info: z.string().regex(/^#[0-9A-F]{6}$/i),
     }),
     typography: z.object({
       fontFamily: z.object({
         primary: z.string().max(100),
         secondary: z.string().max(100),
-        monospace: z.string().max(100)
+        monospace: z.string().max(100),
       }),
       fontSize: z.record(z.string().regex(/^\d+(\.\d+)?(rem|px|em)$/)),
       fontWeight: z.record(z.number().min(100).max(900)),
-      lineHeight: z.record(z.union([z.number(), z.string()]))
+      lineHeight: z.record(z.union([z.number(), z.string()])),
     }),
     spacing: z.record(z.string().regex(/^\d+(\.\d+)?(rem|px|em)$/)),
     borderRadius: z.record(z.string().regex(/^\d+(\.\d+)?(rem|px|em|%)$/)),
     shadows: z.record(z.string()),
     animations: z.object({
       duration: z.record(z.string().regex(/^\d+ms$/)),
-      easing: z.record(z.string())
-    })
+      easing: z.record(z.string()),
+    }),
   }),
 
   // Asset category validation
   assetCategory: z.enum(['logo', 'icon', 'image', 'document', 'video']),
 
   // Search query validation
-  searchQuery: z.string()
+  searchQuery: z
+    .string()
     .max(100, 'Search query too long')
     .regex(/^[^<>\"'%;()&+]*$/, 'Search query contains invalid characters'),
 
   // Pagination validation
   pagination: z.object({
     page: z.number().int().min(1).max(1000).default(1),
-    limit: z.number().int().min(1).max(100).default(50)
+    limit: z.number().int().min(1).max(100).default(50),
   }),
 
   // Date range validation
-  dateRange: z.object({
-    start: z.string().datetime(),
-    end: z.string().datetime()
-  }).refine((data) => new Date(data.start) < new Date(data.end), {
-    message: 'Start date must be before end date'
-  }),
+  dateRange: z
+    .object({
+      start: z.string().datetime(),
+      end: z.string().datetime(),
+    })
+    .refine((data) => new Date(data.start) < new Date(data.end), {
+      message: 'Start date must be before end date',
+    }),
 
   // Metric type validation
   metricType: z.enum([
-    'user_signup', 'user_login', 'contact_created', 'deal_created', 'deal_won',
-    'deal_lost', 'task_completed', 'email_sent', 'ai_request', 'file_upload',
-    'page_view', 'api_call', 'error_occurred'
+    'user_signup',
+    'user_login',
+    'contact_created',
+    'deal_created',
+    'deal_won',
+    'deal_lost',
+    'task_completed',
+    'email_sent',
+    'ai_request',
+    'file_upload',
+    'page_view',
+    'api_call',
+    'error_occurred',
   ]),
 
   // Report config validation
@@ -129,28 +150,41 @@ export const schemas = {
     metrics: z.array(z.string()).min(1).max(20),
     dateRange: z.object({
       start: z.string().datetime(),
-      end: z.string().datetime()
+      end: z.string().datetime(),
     }),
     groupBy: z.enum(['day', 'week', 'month']).optional(),
     filters: z.record(z.any()).optional(),
-    charts: z.array(z.object({
-      type: z.enum(['line', 'bar', 'pie', 'area']),
-      metric: z.string(),
-      title: z.string().max(100)
-    })).max(10).optional()
+    charts: z
+      .array(
+        z.object({
+          type: z.enum(['line', 'bar', 'pie', 'area']),
+          metric: z.string(),
+          title: z.string().max(100),
+        })
+      )
+      .max(10)
+      .optional(),
   }),
 
   // Security policy validation
   securityPolicy: z.object({
-    policyType: z.enum(['ip_whitelist', 'password_policy', 'session_policy', 'mfa_policy', 'api_access']),
-    config: z.record(z.any())
+    policyType: z.enum([
+      'ip_whitelist',
+      'password_policy',
+      'session_policy',
+      'mfa_policy',
+      'api_access',
+    ]),
+    config: z.record(z.any()),
   }),
 
   // IP whitelist validation
   ipWhitelist: z.object({
     allowedIPs: z.array(z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)).max(100),
-    allowedRanges: z.array(z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/(?:[0-9]|[1-2][0-9]|3[0-2])$/)).max(50),
-    blockByDefault: z.boolean()
+    allowedRanges: z
+      .array(z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}\/(?:[0-9]|[1-2][0-9]|3[0-2])$/))
+      .max(50),
+    blockByDefault: z.boolean(),
   }),
 
   // Password policy validation
@@ -161,7 +195,7 @@ export const schemas = {
     requireNumbers: z.boolean(),
     requireSpecialChars: z.boolean(),
     expiryDays: z.number().int().min(30).max(365).optional(),
-    preventReuse: z.number().int().min(1).max(10).optional()
+    preventReuse: z.number().int().min(1).max(10).optional(),
   }),
 
   // Session policy validation
@@ -169,23 +203,29 @@ export const schemas = {
     maxDuration: z.number().int().min(5).max(480), // 5 minutes to 8 hours
     idleTimeout: z.number().int().min(5).max(240), // 5 minutes to 4 hours
     requireReauth: z.boolean(),
-    singleSessionOnly: z.boolean()
+    singleSessionOnly: z.boolean(),
   }),
 
   // MFA policy validation
   mfaPolicy: z.object({
     required: z.boolean(),
-    methods: z.array(z.enum(['totp', 'sms', 'email'])).min(1).max(3),
-    gracePeriod: z.number().int().min(1).max(30).optional() // days
+    methods: z
+      .array(z.enum(['totp', 'sms', 'email']))
+      .min(1)
+      .max(3),
+    gracePeriod: z.number().int().min(1).max(30).optional(), // days
   }),
 
   // API access policy validation
   apiAccessPolicy: z.object({
     enabled: z.boolean(),
     rateLimit: z.number().int().min(1).max(10000),
-    allowedIPs: z.array(z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/)).max(100).optional(),
-    requireAPIKey: z.boolean()
-  })
+    allowedIPs: z
+      .array(z.string().regex(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/))
+      .max(100)
+      .optional(),
+    requireAPIKey: z.boolean(),
+  }),
 };
 
 // Validation middleware factory
@@ -212,17 +252,17 @@ export const validate = (schema: z.ZodSchema) => {
           endpoint: req.path,
           method: req.method,
           ip: req.ip,
-          errors: error.errors
+          errors: error.errors,
         });
 
         return res.status(400).json({
           error: 'Validation failed',
           message: 'Request data does not match expected format',
-          details: error.errors.map(err => ({
+          details: error.errors.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
-            code: err.code
-          }))
+            code: err.code,
+          })),
         });
       }
 
@@ -230,79 +270,95 @@ export const validate = (schema: z.ZodSchema) => {
       await errorLogger.logError('Unknown validation error', error as Error, {
         endpoint: req.path,
         method: req.method,
-        ip: req.ip
+        ip: req.ip,
       });
 
       return res.status(400).json({
         error: 'Validation error',
-        message: 'Request validation failed'
+        message: 'Request validation failed',
       });
     }
   };
 };
 
 // Specific validation middleware for common use cases
-export const validateTenantCreation = validate(z.object({
-  name: schemas.name,
-  subdomain: schemas.subdomain,
-  contactEmail: schemas.email,
-  contactName: schemas.name.optional(),
-  plan: schemas.tenantPlan,
-  type: schemas.tenantType,
-  parentPartnerId: schemas.uuid.optional(),
-  templateId: schemas.uuid.optional()
-}));
+export const validateTenantCreation = validate(
+  z.object({
+    name: schemas.name,
+    subdomain: schemas.subdomain,
+    contactEmail: schemas.email,
+    contactName: schemas.name.optional(),
+    plan: schemas.tenantPlan,
+    type: schemas.tenantType,
+    parentPartnerId: schemas.uuid.optional(),
+    templateId: schemas.uuid.optional(),
+  })
+);
 
-export const validateDomainVerification = validate(z.object({
-  tenantId: schemas.uuid,
-  domain: schemas.domain,
-  subdomain: schemas.subdomain.optional(),
-  verificationMethod: z.enum(['txt', 'cname', 'http']).default('txt')
-}));
+export const validateDomainVerification = validate(
+  z.object({
+    tenantId: schemas.uuid,
+    domain: schemas.domain,
+    subdomain: schemas.subdomain.optional(),
+    verificationMethod: z.enum(['txt', 'cname', 'http']).default('txt'),
+  })
+);
 
-export const validateAssetUpload = validate(z.object({
-  tenantId: schemas.uuid,
-  category: schemas.assetCategory,
-  optimize: z.boolean().optional(),
-  generateThumbnail: z.boolean().optional(),
-  metadata: z.record(z.any()).optional()
-}));
+export const validateAssetUpload = validate(
+  z.object({
+    tenantId: schemas.uuid,
+    category: schemas.assetCategory,
+    optimize: z.boolean().optional(),
+    generateThumbnail: z.boolean().optional(),
+    metadata: z.record(z.any()).optional(),
+  })
+);
 
-export const validateThemeCreation = validate(z.object({
-  tenantId: schemas.uuid,
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  config: schemas.themeConfig
-}));
+export const validateThemeCreation = validate(
+  z.object({
+    tenantId: schemas.uuid,
+    name: z.string().min(1).max(100),
+    description: z.string().max(500).optional(),
+    config: schemas.themeConfig,
+  })
+);
 
-export const validateReportCreation = validate(z.object({
-  tenantId: schemas.uuid,
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  config: schemas.reportConfig,
-  schedule: z.enum(['daily', 'weekly', 'monthly', 'custom', 'manual']),
-  recipients: z.array(schemas.email).max(10),
-  format: z.enum(['pdf', 'csv', 'excel', 'json'])
-}));
+export const validateReportCreation = validate(
+  z.object({
+    tenantId: schemas.uuid,
+    name: z.string().min(1).max(100),
+    description: z.string().max(500).optional(),
+    config: schemas.reportConfig,
+    schedule: z.enum(['daily', 'weekly', 'monthly', 'custom', 'manual']),
+    recipients: z.array(schemas.email).max(10),
+    format: z.enum(['pdf', 'csv', 'excel', 'json']),
+  })
+);
 
-export const validateMetricRecording = validate(z.object({
-  tenantId: schemas.uuid,
-  metricType: schemas.metricType,
-  metricValue: z.number().min(0),
-  metadata: z.record(z.any()).optional()
-}));
+export const validateMetricRecording = validate(
+  z.object({
+    tenantId: schemas.uuid,
+    metricType: schemas.metricType,
+    metricValue: z.number().min(0),
+    metadata: z.record(z.any()).optional(),
+  })
+);
 
-export const validateSecurityPolicy = validate(z.object({
-  tenantId: schemas.uuid,
-  policyType: schemas.securityPolicy.shape.policyType,
-  config: z.record(z.any())
-}));
+export const validateSecurityPolicy = validate(
+  z.object({
+    tenantId: schemas.uuid,
+    policyType: schemas.securityPolicy.shape.policyType,
+    config: z.record(z.any()),
+  })
+);
 
-export const validateSearchQuery = validate(z.object({
-  q: schemas.searchQuery,
-  page: z.number().int().min(1).max(1000).optional(),
-  limit: z.number().int().min(1).max(100).optional()
-}));
+export const validateSearchQuery = validate(
+  z.object({
+    q: schemas.searchQuery,
+    page: z.number().int().min(1).max(1000).optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+);
 
 // Sanitization middleware
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
@@ -356,7 +412,7 @@ export const validateFileUpload = (options: {
   const {
     maxSize = 10 * 1024 * 1024, // 10MB
     allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    maxFiles = 10
+    maxFiles = 10,
   } = options;
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -364,13 +420,13 @@ export const validateFileUpload = (options: {
 
     if (!files || files.length === 0) {
       return res.status(400).json({
-        error: 'No files provided'
+        error: 'No files provided',
       });
     }
 
     if (files.length > maxFiles) {
       return res.status(400).json({
-        error: `Too many files. Maximum ${maxFiles} files allowed.`
+        error: `Too many files. Maximum ${maxFiles} files allowed.`,
       });
     }
 
@@ -378,21 +434,21 @@ export const validateFileUpload = (options: {
       // Check file size
       if (file.size > maxSize) {
         return res.status(400).json({
-          error: `File ${file.originalname} is too large. Maximum size is ${maxSize} bytes.`
+          error: `File ${file.originalname} is too large. Maximum size is ${maxSize} bytes.`,
         });
       }
 
       // Check file type
       if (!allowedTypes.includes(file.mimetype)) {
         return res.status(400).json({
-          error: `File type ${file.mimetype} not allowed for ${file.originalname}. Allowed types: ${allowedTypes.join(', ')}`
+          error: `File type ${file.mimetype} not allowed for ${file.originalname}. Allowed types: ${allowedTypes.join(', ')}`,
         });
       }
 
       // Additional security checks
       if (file.originalname.includes('..') || file.originalname.includes('/')) {
         return res.status(400).json({
-          error: `Invalid filename: ${file.originalname}`
+          error: `Invalid filename: ${file.originalname}`,
         });
       }
     }

@@ -5,24 +5,24 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Calendar,
-  CreditCard, 
-  Shield, 
+  CreditCard,
+  Shield,
   Clock,
   DollarSign,
   AlertTriangle,
   CheckCircle,
   Users,
-  Zap
+  Zap,
 } from 'lucide-react';
 
 interface Entitlement {
@@ -63,7 +63,7 @@ export default function EntitlementsPage() {
     productType: 'monthly',
     planName: '',
     planAmount: '',
-    currency: 'USD'
+    currency: 'USD',
   });
 
   useEffect(() => {
@@ -73,9 +73,9 @@ export default function EntitlementsPage() {
   async function loadEntitlements() {
     try {
       const response = await fetch('/api/entitlements/list', {
-        credentials: 'include'
+        credentials: 'include',
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setEntitlements(data.entitlements || []);
@@ -87,7 +87,7 @@ export default function EntitlementsPage() {
       toast({
         title: 'Error',
         description: 'Failed to load entitlements',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -99,7 +99,7 @@ export default function EntitlementsPage() {
       toast({
         title: 'Validation Error',
         description: 'User ID and Plan Name are required',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -109,27 +109,27 @@ export default function EntitlementsPage() {
       const response = await fetch('/api/entitlements/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
 
       if (response.ok) {
         toast({
           title: 'Success',
-          description: 'Entitlement created successfully'
+          description: 'Entitlement created successfully',
         });
-        
+
         setShowCreateForm(false);
         setForm({
           userId: '',
           productType: 'monthly',
           planName: '',
           planAmount: '',
-          currency: 'USD'
+          currency: 'USD',
         });
-        
+
         await loadEntitlements();
       } else {
         throw new Error('Failed to create entitlement');
@@ -139,7 +139,7 @@ export default function EntitlementsPage() {
       toast({
         title: 'Error',
         description: 'Failed to create entitlement',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setCreating(false);
@@ -168,7 +168,7 @@ export default function EntitlementsPage() {
 
   const getProductTypeBadge = (productType: string | null) => {
     if (!productType) return <Badge variant="outline">Unknown</Badge>;
-    
+
     const typeConfig = {
       lifetime: { variant: 'default', icon: Zap, label: 'Lifetime' },
       yearly: { variant: 'secondary', icon: Calendar, label: 'Yearly' },
@@ -176,7 +176,11 @@ export default function EntitlementsPage() {
       payment_plan: { variant: 'secondary', icon: CreditCard, label: 'Payment Plan' },
     } as const;
 
-    const config = typeConfig[productType as keyof typeof typeConfig] || { variant: 'outline', icon: Shield, label: productType };
+    const config = typeConfig[productType as keyof typeof typeConfig] || {
+      variant: 'outline',
+      icon: Shield,
+      label: productType,
+    };
     const IconComponent = config.icon;
 
     return (
@@ -202,7 +206,7 @@ export default function EntitlementsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Entitlements Management</h1>
           <p className="text-gray-600">Manage user subscriptions and access control</p>
         </div>
-        
+
         <Button onClick={() => setShowCreateForm(true)}>
           <Users className="h-4 w-4 mr-2" />
           Create Entitlement
@@ -219,36 +223,36 @@ export default function EntitlementsPage() {
             <div className="text-2xl font-bold">{entitlements.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {entitlements.filter(e => e.status === 'active').length}
+              {entitlements.filter((e) => e.status === 'active').length}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Past Due</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {entitlements.filter(e => e.status === 'past_due').length}
+              {entitlements.filter((e) => e.status === 'past_due').length}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Lifetime Plans</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {entitlements.filter(e => e.productType === 'lifetime').length}
+              {entitlements.filter((e) => e.productType === 'lifetime').length}
             </div>
           </CardContent>
         </Card>
@@ -272,11 +276,11 @@ export default function EntitlementsPage() {
                   placeholder="Enter Supabase user UUID"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="productType">Product Type</Label>
-                <Select 
-                  value={form.productType} 
+                <Select
+                  value={form.productType}
                   onValueChange={(value: any) => setForm({ ...form, productType: value })}
                 >
                   <SelectTrigger>
@@ -290,7 +294,7 @@ export default function EntitlementsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div>
                 <Label htmlFor="planName">Plan Name</Label>
                 <Input
@@ -300,7 +304,7 @@ export default function EntitlementsPage() {
                   placeholder="e.g., SmartCRM Pro"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="planAmount">Plan Amount</Label>
                 <Input
@@ -313,19 +317,16 @@ export default function EntitlementsPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end space-x-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowCreateForm(false)}
                 disabled={creating}
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={createEntitlement}
-                disabled={creating}
-              >
+              <Button onClick={createEntitlement} disabled={creating}>
                 {creating ? 'Creating...' : 'Create Entitlement'}
               </Button>
             </div>
@@ -338,10 +339,9 @@ export default function EntitlementsPage() {
         <CardHeader>
           <CardTitle>User Entitlements</CardTitle>
           <CardDescription>
-            {entitlements.length === 0 
-              ? 'No entitlements found. Create one to get started.' 
-              : `Showing ${entitlements.length} entitlement${entitlements.length === 1 ? '' : 's'}`
-            }
+            {entitlements.length === 0
+              ? 'No entitlements found. Create one to get started.'
+              : `Showing ${entitlements.length} entitlement${entitlements.length === 1 ? '' : 's'}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -353,7 +353,7 @@ export default function EntitlementsPage() {
           ) : (
             <div className="space-y-4">
               {entitlements.map((entitlement) => (
-                <div 
+                <div
                   key={entitlement.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                 >
@@ -372,11 +372,11 @@ export default function EntitlementsPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {getStatusBadge(entitlement.status)}
                     {getProductTypeBadge(entitlement.productType)}
-                    
+
                     {entitlement.planAmount && (
                       <Badge variant="outline">
                         ${entitlement.planAmount} {entitlement.currency}

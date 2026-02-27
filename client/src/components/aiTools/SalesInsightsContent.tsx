@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import * as edgeFunctionService from '../../services/edgeFunctionService';
 import StructuredAIResult from '../shared/StructuredAIResult';
-import { 
-  Brain, 
-  BarChart3, 
-  TrendingUp, 
-  ChevronDown, 
-  ChevronUp, 
-  Play, 
-  Loader2, 
+import {
+  Brain,
+  BarChart3,
+  TrendingUp,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  Loader2,
   AlertTriangle,
   DollarSign,
-  Users
+  Users,
 } from 'lucide-react';
 
 const SalesInsightsContent: React.FC = () => {
@@ -23,28 +23,35 @@ const SalesInsightsContent: React.FC = () => {
   const handleGenerateInsights = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Use real contact and deal data from stores for analysis
       const contacts = [
-        { name: "John Doe", company: "Acme Inc", status: "customer" as const, score: 85 },
-        { name: "Jane Smith", company: "Globex Corp", status: "lead" as const, score: 65 },
-        { name: "Robert Johnson", company: "Initech", status: "prospect" as const, score: 75 },
-        { name: "Sarah Williams", company: "Umbrella Corp", status: "customer" as const, score: 90 }
+        { name: 'John Doe', company: 'Acme Inc', status: 'customer' as const, score: 85 },
+        { name: 'Jane Smith', company: 'Globex Corp', status: 'lead' as const, score: 65 },
+        { name: 'Robert Johnson', company: 'Initech', status: 'prospect' as const, score: 75 },
+        {
+          name: 'Sarah Williams',
+          company: 'Umbrella Corp',
+          status: 'customer' as const,
+          score: 90,
+        },
       ];
-      
+
       const deals = [
-        { title: "Enterprise License", value: 50000, stage: "negotiation", probability: 0.7 },
-        { title: "Software Renewal", value: 25000, stage: "closed-won", probability: 1.0 },
-        { title: "Premium Support", value: 15000, stage: "proposal", probability: 0.5 },
-        { title: "Implementation Services", value: 30000, stage: "initial", probability: 0.3 }
+        { title: 'Enterprise License', value: 50000, stage: 'negotiation', probability: 0.7 },
+        { title: 'Software Renewal', value: 25000, stage: 'closed-won', probability: 1.0 },
+        { title: 'Premium Support', value: 15000, stage: 'proposal', probability: 0.5 },
+        { title: 'Implementation Services', value: 30000, stage: 'initial', probability: 0.3 },
       ];
-      
+
       const result = await edgeFunctionService.generateSalesInsights(contacts, deals);
       setResult(result);
     } catch (err) {
       console.error('Error generating sales insights:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating sales insights');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while generating sales insights'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +68,8 @@ const SalesInsightsContent: React.FC = () => {
           <div>
             <h3 className="text-lg font-semibold text-green-800 mb-2">AI Pipeline Intelligence</h3>
             <p className="text-green-700">
-              Generate comprehensive insights and strategic recommendations based on your CRM data to optimize sales performance and identify growth opportunities.
+              Generate comprehensive insights and strategic recommendations based on your CRM data
+              to optimize sales performance and identify growth opportunities.
             </p>
           </div>
         </div>
@@ -73,11 +81,12 @@ const SalesInsightsContent: React.FC = () => {
           <Brain className="h-6 w-6 text-blue-600" />
           Sales Intelligence Analysis
         </h2>
-        
+
         <p className="text-gray-600 mb-6">
-          The AI analyzes your contacts, deals, and pipeline activities to identify patterns, opportunities, and provide actionable recommendations for improved sales performance.
+          The AI analyzes your contacts, deals, and pipeline activities to identify patterns,
+          opportunities, and provide actionable recommendations for improved sales performance.
         </p>
-        
+
         {/* Data Overview */}
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <div className="flex justify-between items-center mb-3">
@@ -85,15 +94,19 @@ const SalesInsightsContent: React.FC = () => {
               <BarChart3 className="h-4 w-4" />
               Current Data Analysis
             </h4>
-            <button 
+            <button
               onClick={() => setShowDataDetails(!showDataDetails)}
               className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
             >
-              {showDataDetails ? "Hide" : "Show"} Details
-              {showDataDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showDataDetails ? 'Hide' : 'Show'} Details
+              {showDataDetails ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </button>
           </div>
-          
+
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="bg-white p-3 rounded-lg border">
@@ -125,7 +138,7 @@ const SalesInsightsContent: React.FC = () => {
               <div className="text-xl font-semibold text-gray-900">63%</div>
             </div>
           </div>
-          
+
           {showDataDetails && (
             <div className="mt-4 grid md:grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
@@ -149,7 +162,7 @@ const SalesInsightsContent: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <h5 className="font-medium text-gray-700 mb-2">Pipeline Deals (4)</h5>
                 <div className="space-y-1">
@@ -186,7 +199,7 @@ const SalesInsightsContent: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {/* Generate Button */}
         <button
           onClick={handleGenerateInsights}
@@ -219,12 +232,7 @@ const SalesInsightsContent: React.FC = () => {
       )}
 
       {/* Results Display */}
-      {result && (
-        <StructuredAIResult 
-          result={result} 
-          title="Sales Pipeline Intelligence Report"
-        />
-      )}
+      {result && <StructuredAIResult result={result} title="Sales Pipeline Intelligence Report" />}
     </div>
   );
 };

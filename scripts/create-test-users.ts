@@ -21,37 +21,37 @@ async function createTestUsers() {
       email: 'test-smartcrm@example.com',
       password: 'Test123!',
       name: 'SmartCRM User',
-      tier: 'smartcrm'
+      tier: 'smartcrm',
     },
     {
       email: 'test-sales-maximizer@example.com',
       password: 'Test123!',
       name: 'Sales Maximizer User',
-      tier: 'sales_maximizer'
+      tier: 'sales_maximizer',
     },
     {
       email: 'test-ai-boost@example.com',
       password: 'Test123!',
       name: 'AI Boost User',
-      tier: 'ai_boost_unlimited'
-    }
+      tier: 'ai_boost_unlimited',
+    },
   ];
 
   for (const user of testUsers) {
     console.log(`\n📧 Creating user: ${user.email}`);
-    
+
     // Check if user already exists
     const { data: existingUser } = await supabase.auth.admin.getUserByEmail(user.email);
-    
+
     if (existingUser) {
       console.log(`⚠️  User already exists, updating product tier...`);
-      
+
       // Update product tier in profiles table
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           product_tier: user.tier,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', existingUser.id);
 
@@ -64,8 +64,8 @@ async function createTestUsers() {
             full_name: user.name,
             product_tier: user.tier,
             app_context: 'smartcrm',
-            email_template_set: 'smartcrm'
-          }
+            email_template_set: 'smartcrm',
+          },
         });
         console.log(`✅ Updated to ${user.tier} tier`);
       }
@@ -79,8 +79,8 @@ async function createTestUsers() {
           full_name: user.name,
           product_tier: user.tier,
           app_context: 'smartcrm',
-          email_template_set: 'smartcrm'
-        }
+          email_template_set: 'smartcrm',
+        },
       });
 
       if (signUpError) {
@@ -91,19 +91,17 @@ async function createTestUsers() {
       console.log(`✅ User created with ID: ${newUser.user.id}`);
 
       // Create/update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: newUser.user.id,
-          first_name: user.name.split(' ')[0],
-          last_name: user.name.split(' ')[1] || '',
-          role: 'regular_user',
-          product_tier: user.tier,
-          app_context: 'smartcrm',
-          email_template_set: 'smartcrm',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: newUser.user.id,
+        first_name: user.name.split(' ')[0],
+        last_name: user.name.split(' ')[1] || '',
+        role: 'regular_user',
+        product_tier: user.tier,
+        app_context: 'smartcrm',
+        email_template_set: 'smartcrm',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
       if (profileError) {
         console.error('❌ Error creating profile:', profileError);
@@ -130,7 +128,9 @@ async function createTestUsers() {
   console.log('3. AI Boost Unlimited (All Features)');
   console.log('   Email: test-ai-boost@example.com');
   console.log('   Password: Test123!');
-  console.log('   Access: ✅ All Features (Dashboard, Contacts, Pipeline, Calendar, AI Goals, AI Tools)');
+  console.log(
+    '   Access: ✅ All Features (Dashboard, Contacts, Pipeline, Calendar, AI Goals, AI Tools)'
+  );
   console.log('══════════════════════════════════════════════════════════════\n');
 }
 

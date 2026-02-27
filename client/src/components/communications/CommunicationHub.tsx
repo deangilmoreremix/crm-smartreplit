@@ -23,7 +23,7 @@ import {
   Bot,
   Heart,
   Meh,
-  Frown
+  Frown,
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../store/contactStore';
@@ -57,13 +57,15 @@ interface CommunicationHubProps {
 
 const CommunicationHub: React.FC<CommunicationHubProps> = ({
   selectedContact,
-  onContactSelect
+  onContactSelect,
 }) => {
   const { contacts } = useContactStore();
-  
+
   const [showEmailComposer, setShowEmailComposer] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'email' | 'call' | 'meeting' | 'note'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'email' | 'call' | 'meeting' | 'note'>(
+    'all'
+  );
   const [viewMode, setViewMode] = useState<'timeline' | 'grouped'>('timeline');
 
   // Sample communication activities
@@ -73,11 +75,12 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
       type: 'email',
       contactId: '1',
       subject: 'Re: Enterprise Solutions Discussion',
-      content: 'Thank you for your interest in our enterprise solutions. I\'ve attached the detailed proposal for your review.',
+      content:
+        "Thank you for your interest in our enterprise solutions. I've attached the detailed proposal for your review.",
       timestamp: new Date('2024-01-20T10:30:00'),
       direction: 'outgoing',
       status: 'read',
-      priority: 'high'
+      priority: 'high',
     },
     {
       id: '2',
@@ -87,7 +90,7 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
       timestamp: new Date('2024-01-19T14:15:00'),
       direction: 'outgoing',
       status: 'delivered',
-      duration: 25
+      duration: 25,
     },
     {
       id: '3',
@@ -98,86 +101,108 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
       timestamp: new Date('2024-01-18T09:00:00'),
       direction: 'outgoing',
       status: 'delivered',
-      duration: 60
+      duration: 60,
     },
     {
       id: '4',
       type: 'email',
       contactId: '4',
       subject: 'Welcome to our CRM platform',
-      content: 'Welcome! We\'re excited to have you on board. Here\'s everything you need to get started.',
+      content:
+        "Welcome! We're excited to have you on board. Here's everything you need to get started.",
       timestamp: new Date('2024-01-17T16:45:00'),
       direction: 'outgoing',
-      status: 'delivered'
+      status: 'delivered',
     },
     {
       id: '5',
       type: 'note',
       contactId: '3',
-      content: 'Contact expressed interest in upgrading to premium plan. Needs approval from finance team.',
+      content:
+        'Contact expressed interest in upgrading to premium plan. Needs approval from finance team.',
       timestamp: new Date('2024-01-16T11:20:00'),
       direction: 'outgoing',
-      status: 'delivered'
-    }
+      status: 'delivered',
+    },
   ]);
 
   const contactsArray = Object.values(contacts);
 
   // Filter activities based on selected contact and filters
-  const filteredActivities = activities.filter(activity => {
+  const filteredActivities = activities.filter((activity) => {
     const matchesContact = !selectedContact || activity.contactId === selectedContact.id;
     const matchesType = filterType === 'all' || activity.type === filterType;
-    const matchesSearch = !searchTerm || 
+    const matchesSearch =
+      !searchTerm ||
       activity.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.subject?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesContact && matchesType && matchesSearch;
   });
 
   // Group activities by contact for grouped view
-  const groupedActivities = filteredActivities.reduce((groups, activity) => {
-    const contact = contactsArray.find(c => c.id === activity.contactId);
-    if (!contact) return groups;
-    
-    if (!groups[contact.id]) {
-      groups[contact.id] = {
-        contact,
-        activities: []
-      };
-    }
-    groups[contact.id].activities.push(activity);
-    return groups;
-  }, {} as Record<string, { contact: Contact; activities: CommunicationActivity[] }>);
+  const groupedActivities = filteredActivities.reduce(
+    (groups, activity) => {
+      const contact = contactsArray.find((c) => c.id === activity.contactId);
+      if (!contact) return groups;
+
+      if (!groups[contact.id]) {
+        groups[contact.id] = {
+          contact,
+          activities: [],
+        };
+      }
+      groups[contact.id].activities.push(activity);
+      return groups;
+    },
+    {} as Record<string, { contact: Contact; activities: CommunicationActivity[] }>
+  );
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'email': return <Mail size={16} className="text-blue-600" />;
-      case 'call': return <Phone size={16} className="text-green-600" />;
-      case 'video_call': return <Video size={16} className="text-purple-600" />;
-      case 'meeting': return <Calendar size={16} className="text-orange-600" />;
-      case 'note': return <MessageSquare size={16} className="text-gray-600" />;
-      case 'sms': return <MessageSquare size={16} className="text-indigo-600" />;
-      default: return <MessageSquare size={16} className="text-gray-600" />;
+      case 'email':
+        return <Mail size={16} className="text-blue-600" />;
+      case 'call':
+        return <Phone size={16} className="text-green-600" />;
+      case 'video_call':
+        return <Video size={16} className="text-purple-600" />;
+      case 'meeting':
+        return <Calendar size={16} className="text-orange-600" />;
+      case 'note':
+        return <MessageSquare size={16} className="text-gray-600" />;
+      case 'sms':
+        return <MessageSquare size={16} className="text-indigo-600" />;
+      default:
+        return <MessageSquare size={16} className="text-gray-600" />;
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'sent':
-      case 'delivered': return <CheckCircle size={14} className="text-green-500" />;
-      case 'read': return <CheckCircle size={14} className="text-blue-500" />;
-      case 'failed': return <AlertCircle size={14} className="text-red-500" />;
-      case 'scheduled': return <Clock size={14} className="text-yellow-500" />;
-      default: return null;
+      case 'delivered':
+        return <CheckCircle size={14} className="text-green-500" />;
+      case 'read':
+        return <CheckCircle size={14} className="text-blue-500" />;
+      case 'failed':
+        return <AlertCircle size={14} className="text-red-500" />;
+      case 'scheduled':
+        return <Clock size={14} className="text-yellow-500" />;
+      default:
+        return null;
     }
   };
 
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
-      case 'high': return 'border-l-red-500';
-      case 'normal': return 'border-l-blue-500';
-      case 'low': return 'border-l-gray-500';
-      default: return 'border-l-gray-300';
+      case 'high':
+        return 'border-l-red-500';
+      case 'normal':
+        return 'border-l-blue-500';
+      case 'low':
+        return 'border-l-gray-500';
+      default:
+        return 'border-l-gray-300';
     }
   };
 
@@ -193,12 +218,14 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
         break;
       case 'meeting':
         // This would integrate with calendar system
-        console.log('Schedule meeting with', selectedContact?.name);
         break;
     }
   };
 
-  const handleActivityAction = (activity: CommunicationActivity, action: 'reply' | 'forward' | 'archive') => {
+  const handleActivityAction = (
+    activity: CommunicationActivity,
+    action: 'reply' | 'forward' | 'archive'
+  ) => {
     switch (action) {
       case 'reply':
         if (activity.type === 'email') {
@@ -211,7 +238,6 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
         }
         break;
       case 'archive':
-        console.log('Archive activity:', activity.id);
         break;
     }
   };
@@ -227,10 +253,9 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Communication Hub</h2>
             <p className="text-sm text-gray-600">
-              {selectedContact 
+              {selectedContact
                 ? `Communications with ${selectedContact.name}`
-                : `${filteredActivities.length} total communications`
-              }
+                : `${filteredActivities.length} total communications`}
             </p>
           </div>
         </div>
@@ -326,10 +351,9 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
             <MessageSquare className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No communications found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {selectedContact 
+              {selectedContact
                 ? `Start a conversation with ${selectedContact.name}`
-                : 'No communications match your current filters'
-              }
+                : 'No communications match your current filters'}
             </p>
             {selectedContact && (
               <div className="mt-6">
@@ -346,21 +370,18 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
         ) : viewMode === 'timeline' ? (
           <div className="divide-y divide-gray-200">
             {filteredActivities.map((activity) => {
-              const contact = contactsArray.find(c => c.id === activity.contactId);
+              const contact = contactsArray.find((c) => c.id === activity.contactId);
               if (!contact) return null;
 
               return (
                 <div
                   key={activity.id}
                   className={`p-4 hover:bg-gray-50 cursor-pointer border-l-4 ${getPriorityColor(activity.priority)}`}
-                  onClick={() => console.log('View activity:', activity.id)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-3 flex-1">
-                      <div className="flex-shrink-0 mt-1">
-                        {getActivityIcon(activity.type)}
-                      </div>
-                      
+                      <div className="flex-shrink-0 mt-1">{getActivityIcon(activity.type)}</div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
@@ -378,15 +399,17 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="flex items-center space-x-2">
                             {getStatusIcon(activity.status)}
                             <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                              {formatDistanceToNow(new Date(activity.timestamp), {
+                                addSuffix: true,
+                              })}
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="mt-1">
                           <div className="flex items-center text-sm text-gray-600">
                             <User size={14} className="mr-1" />
@@ -406,7 +429,7 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
                             {activity.subject}
                           </div>
                         )}
-                        
+
                         <div className="mt-1 text-sm text-gray-600 line-clamp-2">
                           {activity.content}
                         </div>
@@ -465,7 +488,7 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
           <div className="divide-y divide-gray-200">
             {Object.values(groupedActivities).map(({ contact, activities }) => (
               <div key={contact.id} className="p-4">
-                <div 
+                <div
                   className="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
                   onClick={() => onContactSelect?.(contact)}
                 >
@@ -479,7 +502,11 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
                     ) : (
                       <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                         <span className="text-white text-sm font-semibold">
-                          {contact.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          {contact.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .toUpperCase()}
                         </span>
                       </div>
                     )}
@@ -494,17 +521,18 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
                     {activities.length} communication{activities.length !== 1 ? 's' : ''}
                   </div>
                 </div>
-                
+
                 <div className="ml-11 space-y-2">
                   {activities.slice(0, 3).map((activity) => (
                     <div
                       key={activity.id}
                       className="flex items-center justify-between p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                      onClick={() => console.log('View activity:', activity.id)}
                     >
                       <div className="flex items-center space-x-2">
                         {getActivityIcon(activity.type)}
-                        <span className="text-sm text-gray-900">{activity.subject || activity.content}</span>
+                        <span className="text-sm text-gray-900">
+                          {activity.subject || activity.content}
+                        </span>
                       </div>
                       <span className="text-xs text-gray-500">
                         {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}

@@ -18,12 +18,13 @@ export default function PageLayout({
   children,
   actions,
   variant = 'glass',
-  className = ''
+  className = '',
 }: PageLayoutProps) {
   const { isDark, toggleTheme } = useTheme();
 
   const getContainerClasses = () => {
-    const baseClasses = 'w-full h-full overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8';
+    const baseClasses =
+      'w-full h-full overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8';
 
     switch (variant) {
       case 'glass':
@@ -34,8 +35,6 @@ export default function PageLayout({
         return `${baseClasses} bg-gray-50 dark:bg-gray-900`;
     }
   };
-
-  console.log('🎨 PageLayout rendering:', { title, isDark, hasActions: !!actions });
 
   return (
     <main className={`${getContainerClasses()} ${className}`}>
@@ -57,7 +56,6 @@ export default function PageLayout({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  console.log('🌙 Theme toggle clicked, current isDark:', isDark);
                   toggleTheme();
                 }}
                 className="flex items-center gap-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
@@ -79,9 +77,7 @@ export default function PageLayout({
             </div>
           </div>
         </div>
-        <div className="space-y-6">
-          {children}
-        </div>
+        <div className="space-y-6">{children}</div>
       </div>
     </main>
   );

@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGemini } from '../../services/geminiService';
-import { CheckCircle, AlertCircle, FileText, RefreshCw, Sparkles, User, Building, Mail, Phone } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertCircle,
+  FileText,
+  RefreshCw,
+  Sparkles,
+  User,
+  Building,
+  Mail,
+  Phone,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FormField {
@@ -21,10 +31,7 @@ interface AutoFormCompleterProps {
   formType?: 'contact' | 'deal' | 'lead';
 }
 
-const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
-  onSubmit,
-  formType = 'lead'
-}) => {
+const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({ onSubmit, formType = 'lead' }) => {
   const gemini = useGemini();
   const [fields, setFields] = useState<FormField[]>([]);
   const [partialData, setPartialData] = useState<string>('');
@@ -36,124 +43,240 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
   const [completionScore, setCompletionScore] = useState(0);
   const [showSuggestionPopup, setShowSuggestionPopup] = useState(false);
   const [currentFieldWithSuggestion, setCurrentFieldWithSuggestion] = useState<string | null>(null);
-  
+
   const autocompleteTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Initialize form fields based on form type
   useEffect(() => {
     // Define form fields based on the form type
     if (formType === 'contact') {
       setFields([
-        { id: '1', name: 'name', label: 'Full Name', type: 'text', value: '', required: true, icon: <User size={16} className="text-gray-400" /> },
-        { id: '2', name: 'email', label: 'Email', type: 'email', value: '', required: true, icon: <Mail size={16} className="text-gray-400" /> },
-        { id: '3', name: 'phone', label: 'Phone Number', type: 'tel', value: '', icon: <Phone size={16} className="text-gray-400" /> },
-        { id: '4', name: 'company', label: 'Company', type: 'text', value: '', icon: <Building size={16} className="text-gray-400" /> },
-        { id: '5', name: 'position', label: 'Position', type: 'text', value: '', placeholder: 'e.g., CTO, Marketing Director', icon: <User size={16} className="text-gray-400" /> },
-        { id: '6', name: 'industry', label: 'Industry', type: 'select', value: '', options: ['Technology', 'Healthcare', 'Finance', 'Manufacturing', 'Retail', 'Education', 'Other'] },
-        { id: '7', name: 'notes', label: 'Notes', type: 'textarea', value: '', placeholder: 'Add any additional information...' }
+        {
+          id: '1',
+          name: 'name',
+          label: 'Full Name',
+          type: 'text',
+          value: '',
+          required: true,
+          icon: <User size={16} className="text-gray-400" />,
+        },
+        {
+          id: '2',
+          name: 'email',
+          label: 'Email',
+          type: 'email',
+          value: '',
+          required: true,
+          icon: <Mail size={16} className="text-gray-400" />,
+        },
+        {
+          id: '3',
+          name: 'phone',
+          label: 'Phone Number',
+          type: 'tel',
+          value: '',
+          icon: <Phone size={16} className="text-gray-400" />,
+        },
+        {
+          id: '4',
+          name: 'company',
+          label: 'Company',
+          type: 'text',
+          value: '',
+          icon: <Building size={16} className="text-gray-400" />,
+        },
+        {
+          id: '5',
+          name: 'position',
+          label: 'Position',
+          type: 'text',
+          value: '',
+          placeholder: 'e.g., CTO, Marketing Director',
+          icon: <User size={16} className="text-gray-400" />,
+        },
+        {
+          id: '6',
+          name: 'industry',
+          label: 'Industry',
+          type: 'select',
+          value: '',
+          options: [
+            'Technology',
+            'Healthcare',
+            'Finance',
+            'Manufacturing',
+            'Retail',
+            'Education',
+            'Other',
+          ],
+        },
+        {
+          id: '7',
+          name: 'notes',
+          label: 'Notes',
+          type: 'textarea',
+          value: '',
+          placeholder: 'Add any additional information...',
+        },
       ]);
     } else if (formType === 'deal') {
       setFields([
         { id: '1', name: 'title', label: 'Deal Title', type: 'text', value: '', required: true },
         { id: '2', name: 'company', label: 'Company', type: 'text', value: '', required: true },
-        { id: '3', name: 'value', label: 'Deal Value ($)', type: 'text', value: '', required: true },
+        {
+          id: '3',
+          name: 'value',
+          label: 'Deal Value ($)',
+          type: 'text',
+          value: '',
+          required: true,
+        },
         { id: '4', name: 'contact', label: 'Contact Person', type: 'text', value: '' },
-        { id: '5', name: 'stage', label: 'Deal Stage', type: 'select', value: '', options: ['qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'] },
+        {
+          id: '5',
+          name: 'stage',
+          label: 'Deal Stage',
+          type: 'select',
+          value: '',
+          options: ['qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'],
+        },
         { id: '6', name: 'probability', label: 'Win Probability (%)', type: 'text', value: '' },
-        { id: '7', name: 'notes', label: 'Notes', type: 'textarea', value: '' }
+        { id: '7', name: 'notes', label: 'Notes', type: 'textarea', value: '' },
       ]);
     } else {
       // Lead form
       setFields([
-        { id: '1', name: 'name', label: 'Full Name', type: 'text', value: '', required: true, icon: <User size={16} className="text-gray-400" /> },
-        { id: '2', name: 'email', label: 'Email', type: 'email', value: '', required: true, icon: <Mail size={16} className="text-gray-400" /> },
-        { id: '3', name: 'phone', label: 'Phone Number', type: 'tel', value: '', icon: <Phone size={16} className="text-gray-400" /> },
-        { id: '4', name: 'company', label: 'Company', type: 'text', value: '', icon: <Building size={16} className="text-gray-400" /> },
-        { id: '5', name: 'source', label: 'Lead Source', type: 'select', value: '', options: ['Website', 'Referral', 'Event', 'Social Media', 'Email Campaign', 'Other'] },
-        { id: '6', name: 'interest', label: 'Interest Level', type: 'select', value: '', options: ['High', 'Medium', 'Low', 'Unknown'] },
-        { id: '7', name: 'notes', label: 'Notes', type: 'textarea', value: '' }
+        {
+          id: '1',
+          name: 'name',
+          label: 'Full Name',
+          type: 'text',
+          value: '',
+          required: true,
+          icon: <User size={16} className="text-gray-400" />,
+        },
+        {
+          id: '2',
+          name: 'email',
+          label: 'Email',
+          type: 'email',
+          value: '',
+          required: true,
+          icon: <Mail size={16} className="text-gray-400" />,
+        },
+        {
+          id: '3',
+          name: 'phone',
+          label: 'Phone Number',
+          type: 'tel',
+          value: '',
+          icon: <Phone size={16} className="text-gray-400" />,
+        },
+        {
+          id: '4',
+          name: 'company',
+          label: 'Company',
+          type: 'text',
+          value: '',
+          icon: <Building size={16} className="text-gray-400" />,
+        },
+        {
+          id: '5',
+          name: 'source',
+          label: 'Lead Source',
+          type: 'select',
+          value: '',
+          options: ['Website', 'Referral', 'Event', 'Social Media', 'Email Campaign', 'Other'],
+        },
+        {
+          id: '6',
+          name: 'interest',
+          label: 'Interest Level',
+          type: 'select',
+          value: '',
+          options: ['High', 'Medium', 'Low', 'Unknown'],
+        },
+        { id: '7', name: 'notes', label: 'Notes', type: 'textarea', value: '' },
       ]);
     }
   }, [formType]);
-  
+
   useEffect(() => {
     // Initialize formData from fields
     const initialData: Record<string, string> = {};
-    fields.forEach(field => {
+    fields.forEach((field) => {
       initialData[field.name] = field.value;
     });
     setFormData(initialData);
   }, [fields]);
-  
+
   // Update completion score when form data changes
   useEffect(() => {
     if (Object.keys(formData).length === 0) return;
-    
-    const requiredFields = fields.filter(field => field.required).map(field => field.name);
-    const filledRequiredFields = requiredFields.filter(fieldName => formData[fieldName]?.trim());
-    
-    const allFields = fields.map(field => field.name);
-    const filledFields = allFields.filter(fieldName => formData[fieldName]?.trim());
-    
+
+    const requiredFields = fields.filter((field) => field.required).map((field) => field.name);
+    const filledRequiredFields = requiredFields.filter((fieldName) => formData[fieldName]?.trim());
+
+    const allFields = fields.map((field) => field.name);
+    const filledFields = allFields.filter((fieldName) => formData[fieldName]?.trim());
+
     // Calculate completion score
-    const requiredScore = requiredFields.length > 0 
-      ? (filledRequiredFields.length / requiredFields.length) * 0.7 
-      : 0;
-    
-    const optionalScore = allFields.length - requiredFields.length > 0 
-      ? ((filledFields.length - filledRequiredFields.length) / (allFields.length - requiredFields.length)) * 0.3 
-      : 0;
-    
+    const requiredScore =
+      requiredFields.length > 0 ? (filledRequiredFields.length / requiredFields.length) * 0.7 : 0;
+
+    const optionalScore =
+      allFields.length - requiredFields.length > 0
+        ? ((filledFields.length - filledRequiredFields.length) /
+            (allFields.length - requiredFields.length)) *
+          0.3
+        : 0;
+
     setCompletionScore(requiredScore + optionalScore);
   }, [formData, fields]);
-  
+
   const handleFieldChange = (name: string, value: string) => {
     // Update form data
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Update fields state
-    setFields(prev => 
-      prev.map(field => 
-        field.name === name 
-          ? { ...field, value, autoCompleted: false }
-          : field
-      )
+    setFields((prev) =>
+      prev.map((field) => (field.name === name ? { ...field, value, autoCompleted: false } : field))
     );
-    
+
     // Track the current field for suggestions
     setCurrentFieldWithSuggestion(name);
-    
+
     // Debounce autocomplete
     if (autocompleteTimerRef.current) {
       clearTimeout(autocompleteTimerRef.current);
     }
-    
+
     if (isAutocompleteEnabled && value.trim().length > 0) {
       autocompleteTimerRef.current = setTimeout(() => {
         autocompleteForm(name, value);
       }, 500);
     }
   };
-  
+
   // Parse partial data and try to complete the form
   const parseAndComplete = async () => {
     if (!partialData.trim()) {
-      setError("Please enter some data to auto-complete the form");
+      setError('Please enter some data to auto-complete the form');
       return;
     }
-    
+
     setIsAnalyzing(true);
     setError(null);
-    
+
     try {
       const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
-      
+
       // Format field names for the AI to recognize
-      const fieldNames = fields.map(field => field.name).join(', ');
-      
+      const fieldNames = fields.map((field) => field.name).join(', ');
+
       const prompt = `
         Parse the following text and extract ${formType} information for these fields: ${fieldNames}
         
@@ -168,78 +291,76 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
           "email": "john@example.com"
         }
       `;
-      
+
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const responseText = response.text();
-      
+
       // Try to parse the JSON response
       try {
         // Find JSON part (if the AI wrapped it in markdown code blocks)
         const jsonRegex = /{[\s\S]*}/;
         const match = responseText.match(jsonRegex);
-        
+
         if (match) {
           const extractedData = JSON.parse(match[0]);
-          
+
           // Update form data with extracted values
           const updatedFormData = { ...formData };
           const updatedFields = [...fields];
-          
+
           Object.entries(extractedData).forEach(([field, value]) => {
             if (value && typeof value === 'string') {
               updatedFormData[field] = value;
-              
+
               // Mark fields as auto-completed
-              const fieldIndex = updatedFields.findIndex(f => f.name === field);
+              const fieldIndex = updatedFields.findIndex((f) => f.name === field);
               if (fieldIndex >= 0) {
                 updatedFields[fieldIndex] = {
                   ...updatedFields[fieldIndex],
                   value: value as string,
-                  autoCompleted: true
+                  autoCompleted: true,
                 };
               }
             }
           });
-          
+
           setFormData(updatedFormData);
           setFields(updatedFields);
         } else {
           setError("Couldn't extract structured data from the input");
         }
       } catch (e) {
-        console.error("Failed to parse extracted data:", e);
-        setError("Failed to extract data from the input");
+        console.error('Failed to parse extracted data:', e);
+        setError('Failed to extract data from the input');
       }
     } catch (error) {
-      console.error("Error extracting data:", error);
-      setError("An error occurred while processing the input");
+      console.error('Error extracting data:', error);
+      setError('An error occurred while processing the input');
     } finally {
       setIsAnalyzing(false);
     }
   };
-  
+
   // Auto-complete remaining fields based on partial data
   const autocompleteForm = async (changedField: string, value: string) => {
     // Don't autocomplete if there's not enough data yet
     const filledFields = Object.entries(formData).filter(([_, val]) => val.trim().length > 0);
     if (filledFields.length < 2) return;
-    
+
     try {
       const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
-      
+
       // Collect the filled fields to use as context
-      const filledFieldsContext = filledFields
-        .map(([field, val]) => `${field}: ${val}`)
-        .join('\n');
-      
+      const filledFieldsContext = filledFields.map(([field, val]) => `${field}: ${val}`).join('\n');
+
       // Get the remaining empty fields
       const emptyFields = fields
-        .filter(field => !formData[field.name]?.trim() && field.name !== changedField)
-        .map(field => field.name);
-      
+        .filter((field) => !formData[field.name]?.trim() && field.name !== changedField)
+        .map((field) => field.name);
+
       if (emptyFields.length === 0) return;
-      
+
       // Request suggestions for empty fields
       const prompt = `
         Based on the following ${formType} information:
@@ -251,20 +372,20 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
         Format response as strict JSON where keys are field names and values are suggested data.
         Only include fields that can be confidently inferred.
       `;
-      
+
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const responseText = response.text();
-      
+
       // Parse and set suggestions
       try {
         // Find JSON part
         const jsonRegex = /{[\s\S]*}/;
         const match = responseText.match(jsonRegex);
-        
+
         if (match) {
           const suggestions = JSON.parse(match[0]);
-          
+
           // Only show suggestions if we have at least one
           if (Object.keys(suggestions).length > 0) {
             setSuggestions(suggestions);
@@ -272,71 +393,70 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
           }
         }
       } catch (e) {
-        console.error("Failed to parse suggestions:", e);
+        console.error('Failed to parse suggestions:', e);
       }
     } catch (error) {
-      console.error("Error generating suggestions:", error);
+      console.error('Error generating suggestions:', error);
     }
   };
-  
+
   // Apply a suggestion to a field
   const applySuggestion = (fieldName: string, value: string) => {
     // Update form data
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [fieldName]: value
+      [fieldName]: value,
     }));
-    
+
     // Update fields state
-    setFields(prev => 
-      prev.map(field => 
-        field.name === fieldName 
-          ? { ...field, value, autoCompleted: true }
-          : field
+    setFields((prev) =>
+      prev.map((field) =>
+        field.name === fieldName ? { ...field, value, autoCompleted: true } : field
       )
     );
-    
+
     // Remove the applied suggestion
-    setSuggestions(prev => {
+    setSuggestions((prev) => {
       const { [fieldName]: _, ...rest } = prev;
       return rest;
     });
-    
+
     // If no suggestions left, hide the popup
     if (Object.keys(suggestions).length <= 1) {
       setShowSuggestionPopup(false);
     }
   };
-  
+
   // Dismiss all suggestions
   const dismissSuggestions = () => {
     setSuggestions({});
     setShowSuggestionPopup(false);
   };
-  
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Check required fields
-    const requiredFields = fields.filter(field => field.required);
-    const missingFields = requiredFields.filter(field => !formData[field.name]?.trim());
-    
+    const requiredFields = fields.filter((field) => field.required);
+    const missingFields = requiredFields.filter((field) => !formData[field.name]?.trim());
+
     if (missingFields.length > 0) {
-      setError(`Please fill in the required fields: ${missingFields.map(f => f.label).join(', ')}`);
+      setError(
+        `Please fill in the required fields: ${missingFields.map((f) => f.label).join(', ')}`
+      );
       return;
     }
-    
+
     // Clear any errors
     setError(null);
-    
+
     // Call onSubmit with form data
     if (onSubmit) {
       onSubmit(formData);
     }
-    
+
     // In a real app, you'd submit the form data here
-    console.log('Form submitted:', formData);
   };
 
   return (
@@ -345,46 +465,59 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold flex items-center">
             <FileText size={20} className="text-emerald-600 mr-2" />
-            AI-Powered {formType === 'contact' ? 'Contact' : formType === 'deal' ? 'Deal' : 'Lead'} Form
+            AI-Powered {formType === 'contact'
+              ? 'Contact'
+              : formType === 'deal'
+                ? 'Deal'
+                : 'Lead'}{' '}
+            Form
           </h3>
           <div className="flex items-center">
             <label className="flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={isAutocompleteEnabled}
                 onChange={() => setIsAutocompleteEnabled(!isAutocompleteEnabled)}
                 className="sr-only"
               />
-              <div className={`relative h-6 w-11 ${isAutocompleteEnabled ? 'bg-emerald-500' : 'bg-gray-200'} rounded-full transition-colors`}>
-                <div className={`absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transform transition-transform ${isAutocompleteEnabled ? 'translate-x-5' : ''}`} />
+              <div
+                className={`relative h-6 w-11 ${isAutocompleteEnabled ? 'bg-emerald-500' : 'bg-gray-200'} rounded-full transition-colors`}
+              >
+                <div
+                  className={`absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transform transition-transform ${isAutocompleteEnabled ? 'translate-x-5' : ''}`}
+                />
               </div>
-              <span className="ml-2 text-sm text-gray-700">
-                AI Autocomplete
-              </span>
+              <span className="ml-2 text-sm text-gray-700">AI Autocomplete</span>
             </label>
           </div>
         </div>
       </div>
-      
+
       <div className="p-6">
         {/* Form completion progress */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-1">
             <div className="text-sm font-medium text-gray-700">Form Completion</div>
-            <div className="text-sm font-medium text-gray-700">{Math.round(completionScore * 100)}%</div>
+            <div className="text-sm font-medium text-gray-700">
+              {Math.round(completionScore * 100)}%
+            </div>
           </div>
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
+            <div
               className={`h-full rounded-full ${
-                completionScore > 0.8 ? 'bg-emerald-500' :
-                completionScore > 0.5 ? 'bg-blue-500' :
-                completionScore > 0.2 ? 'bg-amber-500' : 'bg-red-500'
+                completionScore > 0.8
+                  ? 'bg-emerald-500'
+                  : completionScore > 0.5
+                    ? 'bg-blue-500'
+                    : completionScore > 0.2
+                      ? 'bg-amber-500'
+                      : 'bg-red-500'
               }`}
               style={{ width: `${completionScore * 100}%` }}
             ></div>
           </div>
         </div>
-        
+
         {/* Partial data parser for auto-completion */}
         <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
           <div className="flex justify-between items-center mb-2">
@@ -393,7 +526,7 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
               Quick Auto-Fill
             </h4>
           </div>
-          
+
           <div className="mb-4">
             <textarea
               value={partialData}
@@ -403,7 +536,7 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
               placeholder={`Paste text containing ${formType} information (e.g., email, notes, business card) and we'll auto-fill the form...`}
             ></textarea>
           </div>
-          
+
           <div className="flex justify-end">
             <button
               onClick={parseAndComplete}
@@ -428,20 +561,23 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
             </button>
           </div>
         </div>
-        
+
         {error && (
           <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md flex items-center">
             <AlertCircle size={18} className="mr-2 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
-        
+
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             {fields.map((field) => (
               <div key={field.id}>
-                <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor={field.name}
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   {field.label} {field.required && <span className="text-red-500">*</span>}
                 </label>
                 <div className="relative">
@@ -453,8 +589,8 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
                       placeholder={field.placeholder}
                       rows={4}
                       className={`w-full p-2 pr-8 border rounded-md ${
-                        field.autoCompleted 
-                          ? 'bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500' 
+                        field.autoCompleted
+                          ? 'bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500'
                           : 'focus:ring-blue-500 focus:border-blue-500'
                       }`}
                     />
@@ -464,14 +600,16 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
                       value={field.value}
                       onChange={(e) => handleFieldChange(field.name, e.target.value)}
                       className={`w-full p-2 pr-8 border rounded-md ${
-                        field.autoCompleted 
-                          ? 'bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500' 
+                        field.autoCompleted
+                          ? 'bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500'
                           : 'focus:ring-blue-500 focus:border-blue-500'
                       }`}
                     >
                       <option value="">Select {field.label}</option>
-                      {field.options?.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {field.options?.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   ) : (
@@ -488,14 +626,14 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
                         onChange={(e) => handleFieldChange(field.name, e.target.value)}
                         placeholder={field.placeholder}
                         className={`w-full ${field.icon ? 'pl-10' : 'pl-3'} p-2 pr-8 border rounded-md ${
-                          field.autoCompleted 
-                            ? 'bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500' 
+                          field.autoCompleted
+                            ? 'bg-emerald-50 border-emerald-200 focus:ring-emerald-500 focus:border-emerald-500'
                             : 'focus:ring-blue-500 focus:border-blue-500'
                         }`}
                       />
                     </div>
                   )}
-                  
+
                   {field.autoCompleted && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       <Sparkles size={16} className="text-emerald-500" />
@@ -505,7 +643,7 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
               </div>
             ))}
           </div>
-          
+
           <div className="mt-6">
             <button
               type="submit"
@@ -516,7 +654,7 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
           </div>
         </form>
       </div>
-      
+
       {/* Suggestion popup */}
       <AnimatePresence>
         {showSuggestionPopup && Object.keys(suggestions).length > 0 && (
@@ -532,21 +670,21 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
                   <Sparkles size={18} className="text-emerald-600 mr-2" />
                   AI Suggestions
                 </h4>
-                <button
-                  onClick={dismissSuggestions}
-                  className="text-gray-400 hover:text-gray-600"
-                >
+                <button onClick={dismissSuggestions} className="text-gray-400 hover:text-gray-600">
                   <AlertCircle size={18} />
                 </button>
               </div>
-              
+
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {Object.entries(suggestions).map(([fieldName, value]) => {
-                  const field = fields.find(f => f.name === fieldName);
+                  const field = fields.find((f) => f.name === fieldName);
                   if (!field) return null;
-                  
+
                   return (
-                    <div key={fieldName} className="flex justify-between items-center bg-gray-50 p-3 rounded-md">
+                    <div
+                      key={fieldName}
+                      className="flex justify-between items-center bg-gray-50 p-3 rounded-md"
+                    >
                       <div>
                         <p className="text-sm font-medium text-gray-700">{field.label}</p>
                         <p className="text-sm text-emerald-600">{value}</p>
@@ -561,7 +699,7 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({
                   );
                 })}
               </div>
-              
+
               <div className="mt-3 flex justify-between">
                 <button
                   onClick={dismissSuggestions}

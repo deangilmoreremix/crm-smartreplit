@@ -28,21 +28,21 @@ class ValidationService {
   private phoneRegex = /^\+?[1-9]\d{1,14}$/;
   private emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   private urlRegex = /^https?:\/\/.+/;
-  
+
   private validateField(value: any, rule: ValidationRule, fieldPath: string): string[] {
     const errors: string[] = [];
-    
+
     // Required check
     if (rule.required && (value === null || value === undefined || value === '')) {
       errors.push(`${fieldPath} is required`);
       return errors; // If required and missing, don't check other rules
     }
-    
+
     // Skip other validations if value is empty and not required
     if (value === null || value === undefined || value === '') {
       return errors;
     }
-    
+
     // Type validation
     if (rule.type) {
       switch (rule.type) {
@@ -88,38 +88,38 @@ class ValidationService {
           break;
       }
     }
-    
+
     // String-specific validations
     if (typeof value === 'string') {
       if (rule.minLength !== undefined && value.length < rule.minLength) {
         errors.push(`${fieldPath} must be at least ${rule.minLength} characters long`);
       }
-      
+
       if (rule.maxLength !== undefined && value.length > rule.maxLength) {
         errors.push(`${fieldPath} must be no more than ${rule.maxLength} characters long`);
       }
-      
+
       if (rule.pattern && !rule.pattern.test(value)) {
         errors.push(`${fieldPath} format is invalid`);
       }
     }
-    
+
     // Number-specific validations
     if (typeof value === 'number') {
       if (rule.min !== undefined && value < rule.min) {
         errors.push(`${fieldPath} must be at least ${rule.min}`);
       }
-      
+
       if (rule.max !== undefined && value > rule.max) {
         errors.push(`${fieldPath} must be no more than ${rule.max}`);
       }
     }
-    
+
     // Enum validation
     if (rule.enum && !rule.enum.includes(value)) {
       errors.push(`${fieldPath} must be one of: ${rule.enum.join(', ')}`);
     }
-    
+
     // Custom validation
     if (rule.custom) {
       const customResult = rule.custom(value);
@@ -127,18 +127,18 @@ class ValidationService {
         errors.push(typeof customResult === 'string' ? customResult : `${fieldPath} is invalid`);
       }
     }
-    
+
     return errors;
   }
-  
+
   private validateObject(obj: any, schema: ValidationSchema, basePath = ''): ValidationResult {
     const errors: { [field: string]: string[] } = {};
-    
+
     // Validate each field in the schema
     for (const [field, rule] of Object.entries(schema)) {
       const fieldPath = basePath ? `${basePath}.${field}` : field;
       const value = obj?.[field];
-      
+
       if (typeof rule === 'object' && !Array.isArray(rule) && !rule.type) {
         // Nested object validation
         const nestedResult = this.validateObject(value, rule as ValidationSchema, fieldPath);
@@ -151,17 +151,17 @@ class ValidationService {
         }
       }
     }
-    
+
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
     };
   }
-  
+
   validate(data: any, schema: ValidationSchema): ValidationResult {
     return this.validateObject(data, schema);
   }
-  
+
   // Pre-defined schemas for common use cases
   contactSchema: ValidationSchema = {
     firstName: { required: true, type: 'string', minLength: 1, maxLength: 50 },
@@ -171,15 +171,15 @@ class ValidationService {
     title: { required: true, type: 'string', minLength: 1, maxLength: 100 },
     company: { required: true, type: 'string', minLength: 1, maxLength: 100 },
     industry: { type: 'string', maxLength: 50 },
-    interestLevel: { 
-      required: true, 
-      type: 'string', 
-      enum: ['hot', 'medium', 'low', 'cold'] 
+    interestLevel: {
+      required: true,
+      type: 'string',
+      enum: ['hot', 'medium', 'low', 'cold'],
     },
-    status: { 
-      required: true, 
-      type: 'string', 
-      enum: ['active', 'pending', 'inactive', 'lead', 'prospect', 'customer', 'churned'] 
+    status: {
+      required: true,
+      type: 'string',
+      enum: ['active', 'pending', 'inactive', 'lead', 'prospect', 'customer', 'churned'],
     },
     notes: { type: 'string', maxLength: 1000 },
     tags: { type: 'array' },
@@ -189,7 +189,7 @@ class ValidationService {
       website: { type: 'url' },
     },
   };
-  
+
   aiAnalysisSchema: ValidationSchema = {
     contactId: { required: true, type: 'string' },
     score: { required: true, type: 'number', min: 0, max: 100 },
@@ -197,7 +197,7 @@ class ValidationService {
     recommendations: { required: true, type: 'array' },
     confidence: { type: 'number', min: 0, max: 100 },
   };
-  
+
   enrichmentRequestSchema: ValidationSchema = {
     email: { type: 'email' },
     firstName: { type: 'string', minLength: 1 },
@@ -205,35 +205,35 @@ class ValidationService {
     company: { type: 'string', minLength: 1 },
     linkedinUrl: { type: 'url' },
   };
-  
+
   // Utility methods
   validateContact(contact: any): ValidationResult {
     return this.validate(contact, this.contactSchema);
   }
-  
+
   validateAIAnalysis(analysis: any): ValidationResult {
     return this.validate(analysis, this.aiAnalysisSchema);
   }
-  
+
   validateEnrichmentRequest(request: any): ValidationResult {
     return this.validate(request, this.enrichmentRequestSchema);
   }
-  
+
   // Sanitization methods
   sanitizeString(value: any): string {
     if (typeof value !== 'string') return '';
     return value.trim().replace(/[<>]/g, ''); // Basic XSS prevention
   }
-  
+
   sanitizeEmail(email: any): string {
     return this.sanitizeString(email).toLowerCase();
   }
-  
+
   sanitizePhone(phone: any): string {
     const cleaned = this.sanitizeString(phone).replace(/[^\d+]/g, '');
     return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
   }
-  
+
   sanitizeContact(contact: any): any {
     return {
       ...contact,
@@ -257,16 +257,20 @@ class ValidationService {
       company: deal.company ? this.sanitizeString(deal.company) : '',
       assigneeName: deal.assigneeName ? this.sanitizeString(deal.assigneeName) : '',
       value: typeof deal.value === 'number' ? deal.value : 0,
-      probability: typeof deal.probability === 'number' ? Math.max(0, Math.min(100, deal.probability)) : 0,
+      probability:
+        typeof deal.probability === 'number' ? Math.max(0, Math.min(100, deal.probability)) : 0,
       stage: deal.stage ? this.sanitizeString(deal.stage) : 'discovery',
       status: deal.status ? this.sanitizeString(deal.status) : 'active',
       priority: deal.priority ? this.sanitizeString(deal.priority) : 'medium',
-      tags: Array.isArray(deal.tags) ? deal.tags.map((tag: any) => this.sanitizeString(tag)).filter(Boolean) : [],
+      tags: Array.isArray(deal.tags)
+        ? deal.tags.map((tag: any) => this.sanitizeString(tag)).filter(Boolean)
+        : [],
       contactId: deal.contactId ? this.sanitizeString(deal.contactId) : '',
       assigneeId: deal.assigneeId ? this.sanitizeString(deal.assigneeId) : '',
       expectedCloseDate: deal.expectedCloseDate,
-      aiScore: typeof deal.aiScore === 'number' ? Math.max(0, Math.min(100, deal.aiScore)) : undefined,
-      activities: Array.isArray(deal.activities) ? deal.activities : []
+      aiScore:
+        typeof deal.aiScore === 'number' ? Math.max(0, Math.min(100, deal.aiScore)) : undefined,
+      activities: Array.isArray(deal.activities) ? deal.activities : [],
     };
   }
 }

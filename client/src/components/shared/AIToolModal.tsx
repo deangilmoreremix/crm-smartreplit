@@ -16,7 +16,7 @@ const AIToolModal: React.FC<AIToolModalProps> = ({
   title,
   icon,
   children,
-  maxWidth = 'max-w-4xl'
+  maxWidth = 'max-w-4xl',
 }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -42,22 +42,22 @@ const AIToolModal: React.FC<AIToolModalProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 overflow-y-auto bg-gray-800 bg-opacity-75 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300"
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
     >
-      <div 
+      <div
         ref={modalRef}
         className={`${
-          isFullScreen 
-            ? 'fixed inset-4 md:inset-8' 
+          isFullScreen
+            ? 'fixed inset-4 md:inset-8'
             : `relative ${maxWidth} w-full max-h-[85vh] md:max-h-[90vh]`
         } bg-white rounded-xl shadow-xl flex flex-col overflow-hidden transition-all duration-200 transform scale-100 opacity-100 border border-gray-200`}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         style={{
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 40px 0 rgba(0, 0, 0, 0.1)',
-          backdropFilter: 'blur(8px)'
+          backdropFilter: 'blur(8px)',
         }}
       >
         {/* Header with gradient background */}
@@ -72,7 +72,7 @@ const AIToolModal: React.FC<AIToolModalProps> = ({
             <button
               onClick={toggleFullScreen}
               className="p-1.5 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-              aria-label={isFullScreen ? "Exit fullscreen" : "Enter fullscreen"}
+              aria-label={isFullScreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             >
               {isFullScreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
             </button>

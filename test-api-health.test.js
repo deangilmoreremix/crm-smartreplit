@@ -20,40 +20,44 @@ let testResults = {
   passed: 0,
   failed: 0,
   warnings: 0,
-  tests: []
+  tests: [],
 };
 
 // Helper function to make HTTP requests
 function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https:') ? https : http;
-    const req = protocol.request(url, {
-      method: options.method || 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'SmartCRM-API-Test/1.0',
-        ...options.headers
+    const req = protocol.request(
+      url,
+      {
+        method: options.method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SmartCRM-API-Test/1.0',
+          ...options.headers,
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const jsonData = data ? JSON.parse(data) : {};
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: jsonData,
+            });
+          } catch (e) {
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: data,
+            });
+          }
+        });
       }
-    }, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const jsonData = data ? JSON.parse(data) : {};
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: jsonData
-          });
-        } catch (e) {
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: data
-          });
-        }
-      });
-    });
+    );
 
     req.on('error', reject);
     req.setTimeout(30000, () => {
@@ -119,7 +123,10 @@ async function testSupabaseConnection() {
     const response = await makeRequest(`${BASE_URL}/api/supabase/test`);
     if (response.data.status === 'success') {
       return { passed: true, message: 'Supabase connection successful' };
-    } else if (response.data.status === 'error' && response.data.message.includes('not configured')) {
+    } else if (
+      response.data.status === 'error' &&
+      response.data.message.includes('not configured')
+    ) {
       return { passed: false, message: 'Supabase credentials not configured' };
     } else {
       return { passed: false, message: `Supabase test failed: ${response.data.message}` };
@@ -146,7 +153,10 @@ async function testGoogleAIStatus() {
   try {
     const response = await makeRequest(`${BASE_URL}/api/openai/status`);
     if (response.data.googleai?.available) {
-      return { passed: true, message: `Google AI available with model: ${response.data.googleai.model}` };
+      return {
+        passed: true,
+        message: `Google AI available with model: ${response.data.googleai.model}`,
+      };
     } else {
       return { warning: true, message: 'Google AI not available - limited fallback' };
     }
@@ -164,7 +174,7 @@ async function testSupabaseEdgeFunctions() {
     'generate-sales-pitch',
     'natural-language-query',
     'prioritize-tasks',
-    'summarize-customer-notes'
+    'summarize-customer-notes',
   ];
 
   let passed = 0;
@@ -176,10 +186,10 @@ async function testSupabaseEdgeFunctions() {
       const response = await makeRequest(`${SUPABASE_URL}/functions/v1/${func}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
         },
-        body: { test: true }
+        body: { test: true },
       });
 
       if (response.status === 200) {
@@ -198,7 +208,10 @@ async function testSupabaseEdgeFunctions() {
   if (failed === 0) {
     return { passed: true, message: `All ${passed} edge functions working` };
   } else {
-    return { passed: false, message: `${failed}/${passed + failed} functions failed: ${results.join(', ')}` };
+    return {
+      passed: false,
+      message: `${failed}/${passed + failed} functions failed: ${results.join(', ')}`,
+    };
   }
 }
 
@@ -210,8 +223,8 @@ async function testFallbackMechanisms() {
       body: {
         userMetrics: { totalDeals: 5, totalValue: 25000 },
         timeOfDay: 'morning',
-        recentActivity: ['Created new deal', 'Updated contact']
-      }
+        recentActivity: ['Created new deal', 'Updated contact'],
+      },
     });
 
     if (response.status === 200 && response.data.source === 'intelligent_fallback') {
@@ -230,7 +243,7 @@ async function testDatabaseEndpoints() {
   const endpoints = [
     { path: '/api/partners', method: 'GET', description: 'Partners list' },
     { path: '/api/white-label/tenants', method: 'GET', description: 'Tenants list' },
-    { path: '/api/users', method: 'GET', description: 'Users list' }
+    { path: '/api/users', method: 'GET', description: 'Users list' },
   ];
 
   let passed = 0;
@@ -240,7 +253,7 @@ async function testDatabaseEndpoints() {
   for (const endpoint of endpoints) {
     try {
       const response = await makeRequest(`${BASE_URL}${endpoint.path}`, {
-        method: endpoint.method
+        method: endpoint.method,
       });
 
       if (response.status === 200) {
@@ -259,7 +272,10 @@ async function testDatabaseEndpoints() {
   if (failed === 0) {
     return { passed: true, message: `All ${passed} database endpoints working` };
   } else {
-    return { passed: false, message: `${failed}/${passed + failed} endpoints failed: ${results.join(', ')}` };
+    return {
+      passed: false,
+      message: `${failed}/${passed + failed} endpoints failed: ${results.join(', ')}`,
+    };
   }
 }
 
@@ -281,7 +297,7 @@ async function testAuthentication() {
     // Test dev bypass in development
     if (process.env.NODE_ENV === 'development') {
       const response = await makeRequest(`${BASE_URL}/api/auth/dev-bypass`, {
-        method: 'POST'
+        method: 'POST',
       });
 
       if (response.status === 200 && response.data.hasAccess) {
@@ -341,7 +357,7 @@ async function runAllTests() {
 
   // Detailed results
   console.log('\n📋 Detailed Results:');
-  testResults.tests.forEach(test => {
+  testResults.tests.forEach((test) => {
     const icon = test.passed ? '✅' : test.warning ? '⚠️' : '❌';
     console.log(`${icon} ${test.name}: ${test.message}`);
   });
@@ -367,7 +383,7 @@ async function runAllTests() {
 
 // Run tests if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runAllTests().catch(error => {
+  runAllTests().catch((error) => {
     console.error('Test suite failed:', error);
     process.exit(1);
   });
@@ -383,5 +399,5 @@ export {
   testFallbackMechanisms,
   testDatabaseEndpoints,
   testMessagingAPI,
-  testAuthentication
+  testAuthentication,
 };

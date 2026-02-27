@@ -1,6 +1,7 @@
 # GDPR Compliance Guide for SmartCRM White Label Platform
 
 ## Overview
+
 This document outlines the GDPR (General Data Protection Regulation) compliance measures implemented in the SmartCRM platform and provides guidance for white label partners.
 
 **Last Updated**: January 25, 2026  
@@ -11,6 +12,7 @@ This document outlines the GDPR (General Data Protection Regulation) compliance 
 ## 1. Legal Basis for Data Processing
 
 ### 1.1 Lawful Bases
+
 SmartCRM processes personal data under the following lawful bases:
 
 - **Contract Performance** (Art. 6(1)(b)): Processing necessary for service delivery
@@ -19,7 +21,9 @@ SmartCRM processes personal data under the following lawful bases:
 - **Legal Obligation** (Art. 6(1)(c)): Tax, accounting, and legal requirements
 
 ### 1.2 Special Category Data
+
 The platform does NOT process special category data (Art. 9) by default. If white label partners enable features that collect sensitive data, they must:
+
 - Obtain explicit consent
 - Implement additional security measures
 - Update their privacy policy accordingly
@@ -29,6 +33,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ## 2. Data Subject Rights Implementation
 
 ### 2.1 Right to Access (Art. 15)
+
 **Implementation**: User profile page with data export functionality
 
 ```typescript
@@ -46,6 +51,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Location**: [`client/src/pages/Settings.tsx`](client/src/pages/Settings.tsx)
 
 ### 2.2 Right to Rectification (Art. 16)
+
 **Implementation**: User profile editing and data correction
 
 - Users can update their profile information
@@ -55,6 +61,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Location**: [`client/src/pages/Settings.tsx`](client/src/pages/Settings.tsx)
 
 ### 2.3 Right to Erasure (Art. 17)
+
 **Implementation**: Account deletion with data purge
 
 ```typescript
@@ -67,6 +74,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ```
 
 **Retention Policy**:
+
 - Active data: Retained while account is active
 - Deleted accounts: 30-day grace period for recovery
 - Backup data: Purged within 90 days
@@ -75,6 +83,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Location**: [`server/routes/auth.ts`](server/routes/auth.ts)
 
 ### 2.4 Right to Data Portability (Art. 20)
+
 **Implementation**: Data export in machine-readable format
 
 - JSON export of all user data
@@ -84,6 +93,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Location**: [`client/src/pages/Settings.tsx`](client/src/pages/Settings.tsx)
 
 ### 2.5 Right to Object (Art. 21)
+
 **Implementation**: Opt-out mechanisms
 
 - Marketing email unsubscribe
@@ -93,6 +103,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Location**: [`client/src/pages/Settings.tsx`](client/src/pages/Settings.tsx)
 
 ### 2.6 Right to Restrict Processing (Art. 18)
+
 **Implementation**: Account suspension without deletion
 
 - Users can temporarily suspend their account
@@ -106,16 +117,19 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ### 3.1 Privacy by Design Principles
 
 #### Minimization
+
 - Only collect data necessary for service delivery
 - No excessive data collection
 - Regular data audits to remove unused fields
 
 #### Purpose Limitation
+
 - Data used only for stated purposes
 - No secondary use without consent
 - Clear purpose documentation
 
 #### Storage Limitation
+
 - Automatic data retention policies
 - Scheduled deletion of old data
 - Configurable retention periods
@@ -123,6 +137,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ### 3.2 Technical Measures
 
 #### Encryption
+
 - **In Transit**: TLS 1.3 for all connections
 - **At Rest**: AES-256 encryption for database
 - **Backups**: Encrypted backup storage
@@ -130,6 +145,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Implementation**: Supabase provides encryption by default
 
 #### Access Control
+
 - **Row Level Security (RLS)**: Database-level access control
 - **Role-Based Access Control (RBAC)**: Application-level permissions
 - **Multi-Factor Authentication (MFA)**: Optional for enhanced security
@@ -137,6 +153,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 **Location**: [`supabase/migrations/`](supabase/migrations/)
 
 #### Pseudonymization
+
 - User IDs are UUIDs (not sequential)
 - Email addresses hashed for analytics
 - IP addresses anonymized in logs
@@ -149,24 +166,24 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 
 ### 4.1 Processing Activities Register
 
-| Activity | Purpose | Legal Basis | Data Categories | Recipients | Retention |
-|----------|---------|-------------|-----------------|------------|-----------|
-| User Registration | Account creation | Contract | Name, email, password | Internal only | Account lifetime |
-| Contact Management | CRM functionality | Contract | Contact details | User only | User-defined |
-| Deal Tracking | Sales pipeline | Contract | Deal data | User + team | User-defined |
-| Analytics | Service improvement | Legitimate interest | Usage data | Internal only | 24 months |
-| Email Communications | Service notifications | Contract | Email, name | Email provider | 12 months |
-| Payment Processing | Billing | Contract | Payment details | Payment processor | 7 years |
+| Activity             | Purpose               | Legal Basis         | Data Categories       | Recipients        | Retention        |
+| -------------------- | --------------------- | ------------------- | --------------------- | ----------------- | ---------------- |
+| User Registration    | Account creation      | Contract            | Name, email, password | Internal only     | Account lifetime |
+| Contact Management   | CRM functionality     | Contract            | Contact details       | User only         | User-defined     |
+| Deal Tracking        | Sales pipeline        | Contract            | Deal data             | User + team       | User-defined     |
+| Analytics            | Service improvement   | Legitimate interest | Usage data            | Internal only     | 24 months        |
+| Email Communications | Service notifications | Contract            | Email, name           | Email provider    | 12 months        |
+| Payment Processing   | Billing               | Contract            | Payment details       | Payment processor | 7 years          |
 
 ### 4.2 Third-Party Processors
 
-| Processor | Service | Data Shared | Location | DPA Status |
-|-----------|---------|-------------|----------|------------|
-| Supabase | Database & Auth | All user data | US (SOC 2) | ✅ Signed |
-| Netlify | Hosting | Access logs | US (SOC 2) | ✅ Signed |
-| OpenAI | AI Features | User prompts | US | ✅ Signed |
-| Stripe | Payments | Payment data | US (PCI DSS) | ✅ Signed |
-| SendGrid | Email | Email addresses | US | ✅ Signed |
+| Processor | Service         | Data Shared     | Location     | DPA Status |
+| --------- | --------------- | --------------- | ------------ | ---------- |
+| Supabase  | Database & Auth | All user data   | US (SOC 2)   | ✅ Signed  |
+| Netlify   | Hosting         | Access logs     | US (SOC 2)   | ✅ Signed  |
+| OpenAI    | AI Features     | User prompts    | US           | ✅ Signed  |
+| Stripe    | Payments        | Payment data    | US (PCI DSS) | ✅ Signed  |
+| SendGrid  | Email           | Email addresses | US           | ✅ Signed  |
 
 **Note**: All processors have signed Data Processing Agreements (DPAs) and are GDPR-compliant.
 
@@ -175,6 +192,7 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ## 5. Data Breach Response Plan
 
 ### 5.1 Detection and Assessment
+
 **Timeline**: Within 24 hours of discovery
 
 1. **Identify**: Detect potential breach through monitoring
@@ -185,17 +203,20 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ### 5.2 Notification Requirements
 
 #### Supervisory Authority (Art. 33)
+
 - **Timeline**: Within 72 hours of awareness
 - **Method**: Online form to relevant DPA
 - **Content**: Nature, categories, approximate numbers, consequences, measures
 
 #### Data Subjects (Art. 34)
+
 - **Trigger**: High risk to rights and freedoms
 - **Timeline**: Without undue delay
 - **Method**: Email notification
 - **Content**: Clear description, contact point, likely consequences, measures
 
 ### 5.3 Breach Response Contacts
+
 - **Data Protection Officer**: dpo@smartcrm.vip
 - **Security Team**: security@smartcrm.vip
 - **Emergency Hotline**: +1-XXX-XXX-XXXX (24/7)
@@ -205,12 +226,15 @@ The platform does NOT process special category data (Art. 9) by default. If whit
 ## 6. International Data Transfers
 
 ### 6.1 Transfer Mechanisms
+
 - **Standard Contractual Clauses (SCCs)**: For US-based processors
 - **Adequacy Decisions**: For UK and Switzerland
 - **Binding Corporate Rules**: For internal transfers (if applicable)
 
 ### 6.2 Data Localization Options
+
 White label partners can choose data residency:
+
 - **EU Region**: Frankfurt, Germany (Supabase EU)
 - **US Region**: Oregon, USA (Supabase US)
 - **UK Region**: London, UK (Supabase UK)
@@ -223,6 +247,7 @@ White label partners can choose data residency:
 ## 7. Privacy Policy Requirements
 
 ### 7.1 Mandatory Disclosures
+
 White label partners must include in their privacy policy:
 
 1. **Identity and Contact Details**
@@ -254,6 +279,7 @@ White label partners must include in their privacy policy:
    - Complaint procedure
 
 ### 7.2 Privacy Policy Template
+
 A GDPR-compliant privacy policy template is available at:
 [`docs/PRIVACY_POLICY_TEMPLATE.md`](docs/PRIVACY_POLICY_TEMPLATE.md)
 
@@ -262,6 +288,7 @@ A GDPR-compliant privacy policy template is available at:
 ## 8. Consent Management
 
 ### 8.1 Consent Requirements (Art. 7)
+
 - **Freely Given**: No forced consent
 - **Specific**: Separate consent for different purposes
 - **Informed**: Clear explanation of processing
@@ -284,6 +311,7 @@ interface UserConsent {
 **Location**: [`shared/schema.ts`](shared/schema.ts)
 
 ### 8.3 Cookie Consent
+
 - **Essential Cookies**: No consent required
 - **Analytics Cookies**: Opt-in required
 - **Marketing Cookies**: Opt-in required
@@ -295,12 +323,14 @@ interface UserConsent {
 ## 9. Data Protection Impact Assessment (DPIA)
 
 ### 9.1 When DPIA is Required
+
 - Systematic monitoring of public areas
 - Large-scale processing of special category data
 - Automated decision-making with legal effects
 - Processing of vulnerable individuals' data
 
 ### 9.2 DPIA Process
+
 1. **Describe Processing**: Document data flows
 2. **Assess Necessity**: Justify processing
 3. **Identify Risks**: Privacy and security risks
@@ -315,6 +345,7 @@ interface UserConsent {
 ## 10. White Label Partner Responsibilities
 
 ### 10.1 As Data Controller
+
 White label partners are data controllers and must:
 
 1. **Appoint DPO** (if required)
@@ -343,6 +374,7 @@ White label partners are data controllers and must:
    - Notify affected users if high risk
 
 ### 10.2 Data Processing Agreement
+
 SmartCRM provides a standard DPA for white label partners:
 [`docs/DATA_PROCESSING_AGREEMENT.md`](docs/DATA_PROCESSING_AGREEMENT.md)
 
@@ -351,6 +383,7 @@ SmartCRM provides a standard DPA for white label partners:
 ## 11. Compliance Checklist
 
 ### For SmartCRM Platform
+
 - [x] Privacy by design implemented
 - [x] Data subject rights tools available
 - [x] Encryption in transit and at rest
@@ -363,6 +396,7 @@ SmartCRM provides a standard DPA for white label partners:
 - [x] DPIA template provided
 
 ### For White Label Partners
+
 - [ ] Privacy policy published
 - [ ] Cookie consent banner implemented
 - [ ] DPO appointed (if required)
@@ -379,11 +413,13 @@ SmartCRM provides a standard DPA for white label partners:
 ## 12. Audit and Monitoring
 
 ### 12.1 Regular Audits
+
 - **Quarterly**: Internal compliance review
 - **Annually**: External GDPR audit
 - **Ad-hoc**: After significant changes
 
 ### 12.2 Monitoring Tools
+
 - **Access Logs**: Track data access patterns
 - **Audit Trail**: Record all data modifications
 - **Consent Dashboard**: Monitor consent rates
@@ -396,13 +432,16 @@ SmartCRM provides a standard DPA for white label partners:
 ## 13. Training and Awareness
 
 ### 13.1 Staff Training
+
 All staff with access to personal data must complete:
+
 - GDPR fundamentals training (annually)
 - Role-specific data protection training
 - Security awareness training
 - Incident response training
 
 ### 13.2 Training Resources
+
 - **GDPR Overview**: [`docs/training/GDPR_OVERVIEW.md`](docs/training/GDPR_OVERVIEW.md)
 - **Data Handling**: [`docs/training/DATA_HANDLING.md`](docs/training/DATA_HANDLING.md)
 - **Security Best Practices**: [`docs/training/SECURITY_PRACTICES.md`](docs/training/SECURITY_PRACTICES.md)
@@ -412,18 +451,23 @@ All staff with access to personal data must complete:
 ## 14. Contact Information
 
 ### Data Protection Officer (DPO)
+
 - **Email**: dpo@smartcrm.vip
 - **Phone**: +1-XXX-XXX-XXXX
 - **Address**: [Company Address]
 
 ### Supervisory Authority
+
 For EU users, the lead supervisory authority is:
+
 - **Name**: [Relevant Data Protection Authority]
 - **Website**: [DPA Website]
 - **Email**: [DPA Email]
 
 ### Support
+
 For GDPR-related questions:
+
 - **Email**: privacy@smartcrm.vip
 - **Documentation**: https://docs.smartcrm.vip/gdpr
 - **Support Portal**: https://support.smartcrm.vip
@@ -433,11 +477,13 @@ For GDPR-related questions:
 ## 15. Updates and Amendments
 
 This compliance guide is reviewed and updated:
+
 - **Quarterly**: Routine review
 - **As Needed**: When regulations change
 - **After Audits**: Based on findings
 
 **Version History**:
+
 - v1.0 (2026-01-25): Initial GDPR compliance guide
 
 ---
@@ -445,15 +491,19 @@ This compliance guide is reviewed and updated:
 ## Appendices
 
 ### Appendix A: Data Flow Diagrams
+
 [`docs/appendices/DATA_FLOW_DIAGRAMS.md`](docs/appendices/DATA_FLOW_DIAGRAMS.md)
 
 ### Appendix B: Security Measures
+
 [`docs/appendices/SECURITY_MEASURES.md`](docs/appendices/SECURITY_MEASURES.md)
 
 ### Appendix C: Retention Schedules
+
 [`docs/appendices/RETENTION_SCHEDULES.md`](docs/appendices/RETENTION_SCHEDULES.md)
 
 ### Appendix D: Processor List
+
 [`docs/appendices/PROCESSOR_LIST.md`](docs/appendices/PROCESSOR_LIST.md)
 
 ---

@@ -88,11 +88,14 @@ class HttpClientService {
     }
 
     try {
-      const response = await this.makeRequest({
-        method: 'POST',
-        url: `${apiConfig.auth.endpoint.baseURL}/refresh`,
-        data: { refreshToken: this.refreshToken },
-      }, false); // Don't use auth for refresh request
+      const response = await this.makeRequest(
+        {
+          method: 'POST',
+          url: `${apiConfig.auth.endpoint.baseURL}/refresh`,
+          data: { refreshToken: this.refreshToken },
+        },
+        false
+      ); // Don't use auth for refresh request
 
       const { accessToken, refreshToken } = response.data;
       this.saveTokens(accessToken, refreshToken);
@@ -179,7 +182,7 @@ class HttpClientService {
 
   private async makeRequest<T>(
     config: RequestConfig,
-    useAuth = true, 
+    useAuth = true,
     attempt = 1
   ): Promise<ApiResponse<T>> {
     // Development mode: skip auth for certain endpoints
@@ -243,7 +246,11 @@ class HttpClientService {
       const response = await fetch(fetchUrl, {
         method: config.method,
         headers: { ...headers },
-        body: ['GET', 'HEAD'].includes(config.method) ? undefined : config.data ? JSON.stringify(config.data) : undefined,
+        body: ['GET', 'HEAD'].includes(config.method)
+          ? undefined
+          : config.data
+            ? JSON.stringify(config.data)
+            : undefined,
         signal: controller.signal,
       });
 
@@ -335,16 +342,16 @@ class HttpClientService {
       }
 
       return apiResponse;
-
     } catch (error) {
       // Properly handle and transform the error
       let apiError: ApiError;
 
       if (error instanceof Error) {
         apiError = error as ApiError;
-        apiError.isRetryable = error.message.includes('Failed to fetch') || 
-                              error.message.includes('Network error') ||
-                              error.message.includes('timeout');
+        apiError.isRetryable =
+          error.message.includes('Failed to fetch') ||
+          error.message.includes('Network error') ||
+          error.message.includes('timeout');
       } else {
         apiError = new Error('Unknown error') as ApiError;
         apiError.isRetryable = true;
@@ -358,7 +365,7 @@ class HttpClientService {
         const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff
         logger.info(`Retrying request in ${delay}ms`, { requestId, attempt });
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return this.makeRequest(config, useAuth, attempt + 1);
       }
 
@@ -419,10 +426,7 @@ class HttpClientService {
     });
   }
 
-  async delete<T>(
-    endpoint: string,
-    options?: Partial<RequestConfig>
-  ): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string, options?: Partial<RequestConfig>): Promise<ApiResponse<T>> {
     return this.makeRequest({
       method: 'DELETE',
       url: endpoint,

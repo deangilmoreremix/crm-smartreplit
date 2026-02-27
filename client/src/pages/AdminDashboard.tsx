@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, Database, Activity, AlertTriangle, RefreshCw, Wifi, WifiOff, FileText, Settings, Zap } from 'lucide-react';
+import {
+  Shield,
+  Users,
+  Database,
+  Activity,
+  AlertTriangle,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  FileText,
+  Settings,
+  Zap,
+} from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthStore } from '../store/authStore';
 import AdminNavigation from '../components/AdminNavigation';
@@ -28,7 +40,7 @@ const AdminDashboard: React.FC = () => {
     totalUsers: 0,
     activeSessions: 0,
     systemHealth: 0,
-    alerts: 0
+    alerts: 0,
   });
   const [previousStats, setPreviousStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +58,7 @@ const AdminDashboard: React.FC = () => {
   }>({
     isSynced: true,
     lastSync: new Date().toISOString(),
-    isChecking: false
+    isChecking: false,
   });
 
   // Activity stats state
@@ -60,25 +72,25 @@ const AdminDashboard: React.FC = () => {
 
   // Check database sync status
   const checkSyncStatus = useCallback(async () => {
-    setSyncStatus(prev => ({ ...prev, isChecking: true }));
+    setSyncStatus((prev) => ({ ...prev, isChecking: true }));
     try {
       // Simple health check - in real implementation, this would check actual sync status
       const response = await fetch('/api/admin/stats', {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       const isSynced = response.ok;
       setSyncStatus({
         isSynced,
         lastSync: new Date().toISOString(),
-        isChecking: false
+        isChecking: false,
       });
     } catch (error) {
       setSyncStatus({
         isSynced: false,
         lastSync: syncStatus.lastSync,
-        isChecking: false
+        isChecking: false,
       });
     }
   }, [syncStatus.lastSync]);
@@ -87,11 +99,11 @@ const AdminDashboard: React.FC = () => {
   const triggerSync = useCallback(async () => {
     await checkSyncStatus();
     toast({
-      title: syncStatus.isSynced ? "Sync Successful" : "Sync Failed",
+      title: syncStatus.isSynced ? 'Sync Successful' : 'Sync Failed',
       description: syncStatus.isSynced
-        ? "Database synchronization completed successfully"
-        : "Database synchronization failed. Please check system status.",
-      variant: syncStatus.isSynced ? "default" : "destructive"
+        ? 'Database synchronization completed successfully'
+        : 'Database synchronization failed. Please check system status.',
+      variant: syncStatus.isSynced ? 'default' : 'destructive',
     });
   }, [checkSyncStatus, syncStatus.isSynced, toast]);
 
@@ -100,7 +112,7 @@ const AdminDashboard: React.FC = () => {
     try {
       const response = await fetch('/api/admin/activity-stats', {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
@@ -127,92 +139,95 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   // Efficient polling with visibility API
-  const fetchAdminStats = useCallback(async (isRetry = false) => {
-    if (!isOnline && !isRetry) return;
+  const fetchAdminStats = useCallback(
+    async (isRetry = false) => {
+      if (!isOnline && !isRetry) return;
 
-    try {
-      setIsLoading(true);
-      setError(null);
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-      const response = await fetch('/api/admin/stats', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.status === 401 || response.status === 403) {
-        setError('Access denied. Admin privileges required.');
-        toast({
-          title: "Access Denied",
-          description: "You don't have permission to view admin statistics.",
-          variant: "destructive"
+        const response = await fetch('/api/admin/stats', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
         });
-        navigate('/dashboard');
-        return;
+
+        clearTimeout(timeoutId);
+
+        if (response.status === 401 || response.status === 403) {
+          setError('Access denied. Admin privileges required.');
+          toast({
+            title: 'Access Denied',
+            description: "You don't have permission to view admin statistics.",
+            variant: 'destructive',
+          });
+          navigate('/dashboard');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Validate data structure
+        if (typeof data !== 'object' || data === null) {
+          throw new Error('Invalid response format');
+        }
+
+        setPreviousStats(stats);
+        setStats(data);
+        setRetryCount(0);
+
+        if (isRetry) {
+          toast({
+            title: 'Connection Restored',
+            description: 'Admin statistics loaded successfully.',
+          });
+        }
+      } catch (error: any) {
+        console.error('Failed to fetch admin stats:', error);
+
+        let errorMessage = 'Failed to load admin statistics';
+
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timed out. Please check your connection.';
+        } else if (!isOnline) {
+          errorMessage =
+            'You are currently offline. Statistics will update when connection is restored.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        setError(errorMessage);
+
+        // Retry logic with exponential backoff
+        if (retryCount < maxRetries && isOnline) {
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
+          setTimeout(() => {
+            setRetryCount((prev) => prev + 1);
+            fetchAdminStats(true);
+          }, delay);
+        } else if (retryCount >= maxRetries) {
+          toast({
+            title: 'Connection Failed',
+            description: 'Unable to load admin statistics after multiple attempts.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setIsLoading(false);
       }
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      // Validate data structure
-      if (typeof data !== 'object' || data === null) {
-        throw new Error('Invalid response format');
-      }
-
-      setPreviousStats(stats);
-      setStats(data);
-      setRetryCount(0);
-
-      if (isRetry) {
-        toast({
-          title: "Connection Restored",
-          description: "Admin statistics loaded successfully.",
-        });
-      }
-
-    } catch (error: any) {
-      console.error('Failed to fetch admin stats:', error);
-
-      let errorMessage = 'Failed to load admin statistics';
-
-      if (error.name === 'AbortError') {
-        errorMessage = 'Request timed out. Please check your connection.';
-      } else if (!isOnline) {
-        errorMessage = 'You are currently offline. Statistics will update when connection is restored.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      setError(errorMessage);
-
-      // Retry logic with exponential backoff
-      if (retryCount < maxRetries && isOnline) {
-        const delay = Math.min(1000 * Math.pow(2, retryCount), 30000);
-        setTimeout(() => {
-          setRetryCount(prev => prev + 1);
-          fetchAdminStats(true);
-        }, delay);
-      } else if (retryCount >= maxRetries) {
-        toast({
-          title: "Connection Failed",
-          description: "Unable to load admin statistics after multiple attempts.",
-          variant: "destructive"
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isOnline, navigate, retryCount, stats, toast]);
+    },
+    [isOnline, navigate, retryCount, stats, toast]
+  );
 
   // Auto-fetch with efficient polling
   useEffect(() => {
@@ -286,37 +301,46 @@ const AdminDashboard: React.FC = () => {
   const adminStatsDisplay = [
     {
       title: 'Total Users',
-      value: error ? 'Error' : (isLoading ? 'Loading...' : stats.totalUsers.toLocaleString()),
-      change: error || isLoading ? '...' : calculateChange(stats.totalUsers, previousStats?.totalUsers),
+      value: error ? 'Error' : isLoading ? 'Loading...' : stats.totalUsers.toLocaleString(),
+      change:
+        error || isLoading ? '...' : calculateChange(stats.totalUsers, previousStats?.totalUsers),
       icon: Users,
-      color: 'blue'
+      color: 'blue',
     },
     {
       title: 'Active Sessions',
-      value: error ? 'Error' : (isLoading ? 'Loading...' : stats.activeSessions.toLocaleString()),
-      change: error || isLoading ? '...' : calculateChange(stats.activeSessions, previousStats?.activeSessions),
+      value: error ? 'Error' : isLoading ? 'Loading...' : stats.activeSessions.toLocaleString(),
+      change:
+        error || isLoading
+          ? '...'
+          : calculateChange(stats.activeSessions, previousStats?.activeSessions),
       icon: Activity,
-      color: 'green'
+      color: 'green',
     },
     {
       title: 'System Health',
-      value: error ? 'Error' : (isLoading ? 'Loading...' : `${stats.systemHealth}%`),
-      change: error || isLoading ? '...' : calculateChange(stats.systemHealth, previousStats?.systemHealth),
+      value: error ? 'Error' : isLoading ? 'Loading...' : `${stats.systemHealth}%`,
+      change:
+        error || isLoading
+          ? '...'
+          : calculateChange(stats.systemHealth, previousStats?.systemHealth),
       icon: Database,
-      color: stats.systemHealth >= 95 ? 'green' : stats.systemHealth >= 80 ? 'yellow' : 'red'
+      color: stats.systemHealth >= 95 ? 'green' : stats.systemHealth >= 80 ? 'yellow' : 'red',
     },
     {
       title: 'Alerts',
-      value: error ? 'Error' : (isLoading ? 'Loading...' : stats.alerts.toLocaleString()),
+      value: error ? 'Error' : isLoading ? 'Loading...' : stats.alerts.toLocaleString(),
       change: error || isLoading ? '...' : calculateChange(stats.alerts, previousStats?.alerts),
       icon: AlertTriangle,
-      color: stats.alerts === 0 ? 'green' : stats.alerts <= 5 ? 'yellow' : 'red'
-    }
+      color: stats.alerts === 0 ? 'green' : stats.alerts <= 5 ? 'yellow' : 'red',
+    },
   ];
 
   // Loading skeleton component
   const StatSkeleton = () => (
-    <div className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 animate-pulse`}>
+    <div
+      className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 animate-pulse`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="h-4 bg-gray-300 rounded w-24 mb-2"></div>
@@ -354,9 +378,7 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              {isLoading && (
-                <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
-              )}
+              {isLoading && <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />}
               {!isOnline ? (
                 <WifiOff className="w-4 h-4 text-yellow-600" />
               ) : (
@@ -401,110 +423,138 @@ const AdminDashboard: React.FC = () => {
 
         {/* Admin Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {isLoading && !stats.totalUsers ? (
-            // Show skeletons on initial load
-            Array.from({ length: 4 }).map((_, index) => (
-              <StatSkeleton key={index} />
-            ))
-          ) : (
-            adminStatsDisplay.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={index}
-                  className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 transition-all duration-200 hover:scale-[1.02]`}
-                  data-testid={`stat-card-${stat.title.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {stat.title}
-                      </p>
-                      <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {stat.value}
-                      </p>
-                      <p className={`text-sm ${
-                        stat.change.startsWith('+') && stat.change !== '+0.0%' ? 'text-green-600' :
-                        stat.change.startsWith('-') ? 'text-red-600' :
-                        stat.change === 'N/A' ? 'text-gray-500' : 'text-gray-600'
-                      }`}>
-                        {stat.change === 'N/A' ? 'No previous data' : `${stat.change} from last update`}
-                      </p>
+          {isLoading && !stats.totalUsers
+            ? // Show skeletons on initial load
+              Array.from({ length: 4 }).map((_, index) => <StatSkeleton key={index} />)
+            : adminStatsDisplay.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={index}
+                    className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 transition-all duration-200 hover:scale-[1.02]`}
+                    data-testid={`stat-card-${stat.title.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p
+                          className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                        >
+                          {stat.title}
+                        </p>
+                        <p
+                          className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                        >
+                          {stat.value}
+                        </p>
+                        <p
+                          className={`text-sm ${
+                            stat.change.startsWith('+') && stat.change !== '+0.0%'
+                              ? 'text-green-600'
+                              : stat.change.startsWith('-')
+                                ? 'text-red-600'
+                                : stat.change === 'N/A'
+                                  ? 'text-gray-500'
+                                  : 'text-gray-600'
+                          }`}
+                        >
+                          {stat.change === 'N/A'
+                            ? 'No previous data'
+                            : `${stat.change} from last update`}
+                        </p>
+                      </div>
+                      <Icon
+                        className={`w-8 h-8 ${
+                          stat.color === 'blue'
+                            ? 'text-blue-600'
+                            : stat.color === 'green'
+                              ? 'text-green-600'
+                              : stat.color === 'yellow'
+                                ? 'text-yellow-600'
+                                : stat.color === 'red'
+                                  ? 'text-red-600'
+                                  : 'text-gray-600'
+                        }`}
+                      />
                     </div>
-                    <Icon className={`w-8 h-8 ${
-                      stat.color === 'blue' ? 'text-blue-600' :
-                      stat.color === 'green' ? 'text-green-600' :
-                      stat.color === 'yellow' ? 'text-yellow-600' :
-                      stat.color === 'red' ? 'text-red-600' :
-                      'text-gray-600'
-                    }`} />
                   </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })}
         </div>
 
         {/* Admin Navigation */}
         <AdminNavigation />
 
-      {/* Admin Tools */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Admin Tools</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => navigate('/admin/bulk-import')}
-            className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-            data-testid="button-bulk-import"
-          >
-            <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <div className="text-left">
-              <h4 className="font-medium text-gray-900 dark:text-white">Bulk Import Users</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Import multiple users via CSV</p>
-            </div>
-          </button>
+        {/* Admin Tools */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Admin Tools</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => navigate('/admin/bulk-import')}
+              className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              data-testid="button-bulk-import"
+            >
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="text-left">
+                <h4 className="font-medium text-gray-900 dark:text-white">Bulk Import Users</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Import multiple users via CSV
+                </p>
+              </div>
+            </button>
 
-          <button
-            onClick={() => navigate('/admin/users')}
-            className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
-            data-testid="button-user-management"
-          >
-            <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
-            <div className="text-left">
-              <h4 className="font-medium text-gray-900 dark:text-white">User Management</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Manage user accounts</p>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* Recent Admin Activity */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Admin Activity</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
-            <div>
-              <p className="font-medium text-gray-900 dark:text-white">Admin Dashboard loaded</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Stats are fetching from database in real-time</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
-            <div>
-              <p className="font-medium text-gray-900 dark:text-white">User Management - Real database sync</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">All user data fetched from Supabase profiles table</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
-            <div>
-              <p className="font-medium text-gray-900 dark:text-white">Product tier updates working</p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Changes saved to database and auth metadata</p>
-            </div>
+            <button
+              onClick={() => navigate('/admin/users')}
+              className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+              data-testid="button-user-management"
+            >
+              <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="text-left">
+                <h4 className="font-medium text-gray-900 dark:text-white">User Management</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Manage user accounts</p>
+              </div>
+            </button>
           </div>
         </div>
+
+        {/* Recent Admin Activity */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Recent Admin Activity
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Admin Dashboard loaded</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Stats are fetching from database in real-time
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  User Management - Real database sync
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  All user data fetched from Supabase profiles table
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  Product tier updates working
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Changes saved to database and auth metadata
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </ErrorBoundary>
-);
+    </ErrorBoundary>
+  );
 };
 
 export default AdminDashboard;

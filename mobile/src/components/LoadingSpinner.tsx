@@ -13,7 +13,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'large',
   color,
   message,
-  fullScreen = false
+  fullScreen = false,
 }) => {
   const { theme } = useTheme();
 
@@ -25,14 +25,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <View style={containerStyle}>
-      <ActivityIndicator
-        size={size}
-        color={spinnerColor}
-      />
+      <ActivityIndicator size={size} color={spinnerColor} />
       {message && (
-        <Text style={[styles.message, { color: theme.colors.textSecondary }]}>
-          {message}
-        </Text>
+        <Text style={[styles.message, { color: theme.colors.textSecondary }]}>{message}</Text>
       )}
     </View>
   );

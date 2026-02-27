@@ -37,13 +37,13 @@ class ContactAPIService {
   private supabaseKey: string;
   private isBackendAvailable = true;
   private isMockMode = false; // Use Supabase Edge Functions by default for remote app compatibility
-  
+
   constructor() {
     // Configure to use Supabase Edge Functions as required by remote apps
     this.supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
     this.supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     this.baseURL = `${this.supabaseUrl}/functions/v1/contacts`;
-    
+
     // Only fall back to mock mode if Supabase is not configured
     if (!this.supabaseUrl || !this.supabaseKey) {
       this.isMockMode = true;
@@ -54,22 +54,22 @@ class ContactAPIService {
       console.log('Using Supabase Edge Functions for contact management (required by remote apps)');
     }
   }
-  
+
   // Get headers for Supabase Edge Function requests
   private getSupabaseHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.supabaseKey}`
+      Authorization: `Bearer ${this.supabaseKey}`,
     };
-    
+
     return headers;
   }
-  
+
   // Check if we should use fallback mode
   private shouldUseFallback(): boolean {
     return this.isMockMode || !this.supabaseUrl || !this.supabaseKey;
   }
-  
+
   // Initialize local storage with sample data if needed
   private initializeLocalStorage(): Contact[] {
     try {
@@ -80,7 +80,7 @@ class ContactAPIService {
     } catch (e) {
       // If localStorage is corrupted, reset it
     }
-    
+
     // Default sample data
     const sampleContacts: Contact[] = [
       {
@@ -101,14 +101,14 @@ class ContactAPIService {
         aiScore: 85,
         tags: ['enterprise', 'decision-maker'],
         createdAt: '2024-01-10T10:00:00Z',
-        updatedAt: '2024-01-20T15:30:00Z'
-      }
+        updatedAt: '2024-01-20T15:30:00Z',
+      },
     ];
-    
+
     localStorage.setItem('contacts', JSON.stringify(sampleContacts));
     return sampleContacts;
   }
-  
+
   // Get contacts from local storage
   private getLocalContacts(): Contact[] {
     try {
@@ -118,7 +118,7 @@ class ContactAPIService {
       return this.initializeLocalStorage();
     }
   }
-  
+
   // Save contacts to local storage
   private saveLocalContacts(contacts: Contact[]): void {
     try {
@@ -131,12 +131,12 @@ class ContactAPIService {
   // CRUD Operations
   async createContact(contactData: Partial<Contact>): Promise<Contact> {
     const sanitized = validationService.sanitizeContact(contactData);
-    
+
     if (this.shouldUseFallback()) {
       // Local storage fallback
       logger.info('Using local storage for contact creation');
       const contacts = this.getLocalContacts();
-      
+
       const newContact: Contact = {
         id: crypto.randomUUID(),
         firstName: sanitized.firstName || '',
@@ -155,19 +155,19 @@ class ContactAPIService {
         aiScore: sanitized.aiScore,
         tags: sanitized.tags || [],
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      
+
       contacts.push(newContact);
       this.saveLocalContacts(contacts);
       cacheService.set('contact', newContact.id, newContact, 300, ['contact']);
       return newContact;
     }
-    
+
     try {
       // Try Edge Function with clean payload for remote app compatibility
       logger.info('Creating contact via Supabase Edge Function');
-      
+
       const edgeFunctionPayload = {
         firstName: sanitized.firstName,
         lastName: sanitized.lastName,
@@ -178,21 +178,21 @@ class ContactAPIService {
         status: sanitized.status,
         sources: sanitized.sources || ['Website'],
         aiScore: sanitized.aiScore || null,
-        tags: sanitized.tags || []
+        tags: sanitized.tags || [],
       };
-      
+
       const response = await fetch(this.baseURL, {
         method: 'POST',
         headers: this.getSupabaseHeaders(),
-        body: JSON.stringify(edgeFunctionPayload)
+        body: JSON.stringify(edgeFunctionPayload),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Edge Function error: ${response.status} ${response.statusText}`);
       }
-      
+
       const result = await response.json();
-      
+
       // Handle different response formats from Edge Functions
       let contactData;
       if (result.contact) {
@@ -204,7 +204,7 @@ class ContactAPIService {
       } else {
         throw new Error('Unexpected Edge Function response format');
       }
-      
+
       const newContact: Contact = {
         id: contactData.id || crypto.randomUUID(),
         firstName: contactData.firstName || contactData.first_name || '',
@@ -223,20 +223,23 @@ class ContactAPIService {
         aiScore: contactData.aiScore || contactData.ai_score || contactData.lead_score,
         tags: contactData.tags || [],
         createdAt: contactData.createdAt || contactData.created_at || new Date().toISOString(),
-        updatedAt: contactData.updatedAt || contactData.updated_at || new Date().toISOString()
+        updatedAt: contactData.updatedAt || contactData.updated_at || new Date().toISOString(),
       };
-      
+
       // Cache the contact
       cacheService.set('contact', newContact.id, newContact, 300, ['contact']);
-      
+
       logger.info('Contact created successfully via Edge Function', { contactId: newContact.id });
       return newContact;
     } catch (error) {
-      logger.error('Edge Function unavailable, using localStorage fallback for remote app compatibility', error as Error);
-      
+      logger.error(
+        'Edge Function unavailable, using localStorage fallback for remote app compatibility',
+        error as Error
+      );
+
       // Critical: Use localStorage fallback but maintain Edge Function compatibility for remote apps
       const contacts = this.getLocalContacts();
-      
+
       const newContact: Contact = {
         id: crypto.randomUUID(),
         firstName: sanitized.firstName || '',
@@ -255,14 +258,16 @@ class ContactAPIService {
         aiScore: sanitized.aiScore,
         tags: sanitized.tags || [],
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      
+
       contacts.push(newContact);
       this.saveLocalContacts(contacts);
       cacheService.set('contact', newContact.id, newContact, 300, ['contact']);
-      
-      logger.info('Contact created via localStorage fallback (Edge Function compatibility maintained)');
+
+      logger.info(
+        'Contact created via localStorage fallback (Edge Function compatibility maintained)'
+      );
       return newContact;
     }
   }
@@ -278,34 +283,34 @@ class ContactAPIService {
       // Local storage fallback
       logger.info('Using local storage for contact retrieval');
       const contacts = this.getLocalContacts();
-      const contact = contacts.find(c => c.id === contactId);
-      
+      const contact = contacts.find((c) => c.id === contactId);
+
       if (!contact) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       cacheService.set('contact', contactId, contact, 300, ['contact']);
       return contact;
     }
-    
+
     try {
       // Use Edge Function for contact retrieval (required by remote apps)
       const response = await fetch(`${this.baseURL}/${contactId}`, {
         method: 'GET',
-        headers: this.getSupabaseHeaders()
+        headers: this.getSupabaseHeaders(),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Edge Function error: ${response.status} ${response.statusText}`);
       }
-      
+
       const result = await response.json();
       const contactData = result.contact || result.data || result;
-      
+
       if (!contactData) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       const contact: Contact = {
         id: contactData.id,
         firstName: contactData.firstName || contactData.first_name || '',
@@ -324,24 +329,24 @@ class ContactAPIService {
         aiScore: contactData.aiScore || contactData.ai_score || contactData.lead_score,
         tags: contactData.tags || [],
         createdAt: contactData.createdAt || contactData.created_at,
-        updatedAt: contactData.updatedAt || contactData.updated_at
+        updatedAt: contactData.updatedAt || contactData.updated_at,
       };
-      
+
       // Cache the contact
       cacheService.set('contact', contactId, contact, 300, ['contact']);
-      
+
       return contact;
     } catch (error) {
       logger.error('Edge Function unavailable, using localStorage fallback', error as Error);
-      
+
       // Fallback to local storage
       const contacts = this.getLocalContacts();
-      const contact = contacts.find(c => c.id === contactId);
-      
+      const contact = contacts.find((c) => c.id === contactId);
+
       if (!contact) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       cacheService.set('contact', contactId, contact, 300, ['contact']);
       return contact;
     }
@@ -352,52 +357,52 @@ class ContactAPIService {
     if (Object.keys(updates).length === 0) {
       throw new Error('No updates provided');
     }
-    
+
     const sanitized = validationService.sanitizeContact(updates);
-    
+
     if (this.shouldUseFallback()) {
       // Local storage fallback
       logger.info('Using local storage for contact update');
       const contacts = this.getLocalContacts();
-      const contactIndex = contacts.findIndex(c => c.id === contactId);
-      
+      const contactIndex = contacts.findIndex((c) => c.id === contactId);
+
       if (contactIndex === -1) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       const updatedContact: Contact = {
         ...contacts[contactIndex],
-        ...sanitized as any,
-        updatedAt: new Date().toISOString()
+        ...(sanitized as any),
+        updatedAt: new Date().toISOString(),
       };
-      
+
       contacts[contactIndex] = updatedContact;
       this.saveLocalContacts(contacts);
       cacheService.set('contact', contactId, updatedContact, 300, ['contact']);
       cacheService.set('contactList', 'invalidate', null, 0, ['list']);
-      
+
       return updatedContact;
     }
-    
+
     try {
       // Use Edge Function for contact update (required by remote apps)
       const response = await fetch(`${this.baseURL}/${contactId}`, {
         method: 'PATCH',
         headers: this.getSupabaseHeaders(),
-        body: JSON.stringify(sanitized)
+        body: JSON.stringify(sanitized),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Edge Function error: ${response.status} ${response.statusText}`);
       }
-      
+
       const result = await response.json();
       const contactData = result.contact || result.data || result;
-      
+
       if (!contactData) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       const updatedContact: Contact = {
         id: contactData.id,
         firstName: contactData.firstName || contactData.first_name || '',
@@ -416,36 +421,36 @@ class ContactAPIService {
         aiScore: contactData.aiScore || contactData.ai_score || contactData.lead_score,
         tags: contactData.tags || [],
         createdAt: contactData.createdAt || contactData.created_at,
-        updatedAt: contactData.updatedAt || contactData.updated_at || new Date().toISOString()
+        updatedAt: contactData.updatedAt || contactData.updated_at || new Date().toISOString(),
       };
-      
+
       // Update cache
       cacheService.set('contact', contactId, updatedContact, 300, ['contact']);
       cacheService.set('contactList', 'invalidate', null, 0, ['list']);
-      
+
       return updatedContact;
     } catch (error) {
       logger.error('Edge Function unavailable, using localStorage fallback', error as Error);
-      
+
       // Fallback to local storage
       const contacts = this.getLocalContacts();
-      const contactIndex = contacts.findIndex(c => c.id === contactId);
-      
+      const contactIndex = contacts.findIndex((c) => c.id === contactId);
+
       if (contactIndex === -1) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       const updatedContact: Contact = {
         ...contacts[contactIndex],
-        ...sanitized as any,
-        updatedAt: new Date().toISOString()
+        ...(sanitized as any),
+        updatedAt: new Date().toISOString(),
       };
-      
+
       contacts[contactIndex] = updatedContact;
       this.saveLocalContacts(contacts);
       cacheService.set('contact', contactId, updatedContact, 300, ['contact']);
       cacheService.set('contactList', 'invalidate', null, 0, ['list']);
-      
+
       return updatedContact;
     }
   }
@@ -455,44 +460,44 @@ class ContactAPIService {
       // Local storage fallback
       logger.info('Using local storage for contact deletion');
       const contacts = this.getLocalContacts();
-      const filteredContacts = contacts.filter(c => c.id !== contactId);
-      
+      const filteredContacts = contacts.filter((c) => c.id !== contactId);
+
       if (filteredContacts.length === contacts.length) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       this.saveLocalContacts(filteredContacts);
       cacheService.set('contactDelete', contactId, null, 0, ['contact']);
       return;
     }
-    
+
     try {
       // Use Edge Function for contact deletion (required by remote apps)
       const response = await fetch(`${this.baseURL}/${contactId}`, {
         method: 'DELETE',
-        headers: this.getSupabaseHeaders()
+        headers: this.getSupabaseHeaders(),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Edge Function error: ${response.status} ${response.statusText}`);
       }
-      
+
       // Remove from cache
       cacheService.set('contactDelete', contactId, null, 0, ['contact']);
       cacheService.set('contactList', 'invalidate', null, 0, ['list']);
-      
+
       logger.info('Contact deleted successfully via Edge Function', { contactId });
     } catch (error) {
       logger.error('Edge Function unavailable, using localStorage fallback', error as Error);
-      
+
       // Fallback to local storage
       const contacts = this.getLocalContacts();
-      const filteredContacts = contacts.filter(c => c.id !== contactId);
-      
+      const filteredContacts = contacts.filter((c) => c.id !== contactId);
+
       if (filteredContacts.length === contacts.length) {
         throw new Error(`Contact with ID ${contactId} not found`);
       }
-      
+
       this.saveLocalContacts(filteredContacts);
       cacheService.set('contactDelete', contactId, null, 0, ['contact']);
     }
@@ -501,71 +506,68 @@ class ContactAPIService {
   // List and Search Operations
   async getContacts(filters: ContactFilters = {}): Promise<ContactListResponse> {
     const cacheKey = JSON.stringify(filters);
-    
+
     // Check cache
     const cached = cacheService.get('contactList', cacheKey);
     if (cached) {
       return cached as ContactListResponse;
     }
-    
+
     // Use local storage for list operations (Edge Functions for individual CRUD)
     let contacts = this.getLocalContacts();
-    
+
     // Apply filters
     if (filters.search) {
       const search = filters.search.toLowerCase();
-      contacts = contacts.filter(c => 
-        c.name.toLowerCase().includes(search) ||
-        c.email.toLowerCase().includes(search) ||
-        c.company.toLowerCase().includes(search)
+      contacts = contacts.filter(
+        (c) =>
+          c.name.toLowerCase().includes(search) ||
+          c.email.toLowerCase().includes(search) ||
+          c.company.toLowerCase().includes(search)
       );
     }
-    
+
     if (filters.status && filters.status !== 'all') {
-      contacts = contacts.filter(c => c.status === filters.status);
+      contacts = contacts.filter((c) => c.status === filters.status);
     }
-    
+
     if (filters.tags && filters.tags.length > 0) {
-      contacts = contacts.filter(c => 
-        filters.tags!.some(tag => c.tags.includes(tag))
-      );
+      contacts = contacts.filter((c) => filters.tags!.some((tag) => c.tags.includes(tag)));
     }
-    
+
     if (filters.hasAIScore !== undefined) {
-      contacts = contacts.filter(c => 
-        filters.hasAIScore ? !!c.aiScore : !c.aiScore
-      );
+      contacts = contacts.filter((c) => (filters.hasAIScore ? !!c.aiScore : !c.aiScore));
     }
-    
+
     // Apply sorting
     if (filters.sortBy) {
       contacts.sort((a: any, b: any) => {
         const aValue = a[filters.sortBy!];
         const bValue = b[filters.sortBy!];
-        
+
         if (aValue < bValue) return filters.sortOrder === 'asc' ? -1 : 1;
         if (aValue > bValue) return filters.sortOrder === 'asc' ? 1 : -1;
         return 0;
       });
     }
-    
+
     // Apply pagination
     const limit = filters.limit || 50;
     const offset = filters.offset || 0;
-    
+
     const paginatedContacts = contacts.slice(offset, offset + limit);
-    
+
     const result: ContactListResponse = {
       contacts: paginatedContacts,
       total: contacts.length,
       limit,
       offset,
-      hasMore: offset + paginatedContacts.length < contacts.length
+      hasMore: offset + paginatedContacts.length < contacts.length,
     };
-    
+
     // Cache the result
     cacheService.set('contactList', cacheKey, result, 300, ['list']);
-    
+
     return result;
   }
 
@@ -577,36 +579,36 @@ class ContactAPIService {
     }
 
     const contacts = this.getLocalContacts();
-    
+
     const stats: ContactStats = {
       total: contacts.length,
       byStatus: {},
       byTags: {},
       withAIScore: 0,
       avgAIScore: 0,
-      recentlyUpdated: 0
+      recentlyUpdated: 0,
     };
 
     let totalAIScore = 0;
     let aiScoreCount = 0;
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    contacts.forEach(contact => {
+    contacts.forEach((contact) => {
       // Count by status
       stats.byStatus[contact.status] = (stats.byStatus[contact.status] || 0) + 1;
-      
+
       // Count by tags
-      contact.tags.forEach(tag => {
+      contact.tags.forEach((tag) => {
         stats.byTags[tag] = (stats.byTags[tag] || 0) + 1;
       });
-      
+
       // AI Score stats
       if (contact.aiScore) {
         stats.withAIScore++;
         totalAIScore += contact.aiScore;
         aiScoreCount++;
       }
-      
+
       // Recently updated
       if (new Date(contact.updatedAt) > oneWeekAgo) {
         stats.recentlyUpdated++;
@@ -624,7 +626,7 @@ class ContactAPIService {
   // AI and Enhancement Methods (placeholder for Edge Functions integration)
   async enrichContact(contactId: string): Promise<Contact> {
     const contact = await this.getContact(contactId);
-    
+
     // This would call ai-enrichment Edge Function
     // For now, return the contact as-is
     logger.info('Contact enrichment not implemented yet');
@@ -633,7 +635,7 @@ class ContactAPIService {
 
   async scoreContact(contactId: string): Promise<Contact> {
     const contact = await this.getContact(contactId);
-    
+
     // This would call smart-score Edge Function
     // For now, return the contact as-is
     logger.info('Contact scoring not implemented yet');

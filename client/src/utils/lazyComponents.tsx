@@ -19,8 +19,12 @@ export const SignUpPage = lazy(() => import('../pages/SignUpPage'));
 
 // Lazy load feature components
 export const AiToolsFeaturePage = lazy(() => import('../src/AiToolsFeaturePage_1755720356980'));
-export const CommunicationsFeaturePage = lazy(() => import('../src/CommunicationsFeaturePage_1755720312716'));
-export const FunctionAssistantFeaturePage = lazy(() => import('../src/FunctionAssistantFeaturePage_1755720356986'));
+export const CommunicationsFeaturePage = lazy(
+  () => import('../src/CommunicationsFeaturePage_1755720312716')
+);
+export const FunctionAssistantFeaturePage = lazy(
+  () => import('../src/FunctionAssistantFeaturePage_1755720356986')
+);
 
 // Lazy load remote components (with error boundaries)
 export const RemotePipeline = lazy(() => import('../pages/RemotePipeline'));

@@ -8,9 +8,9 @@ const ObjectionHandlerContent: React.FC = () => {
     objection: '',
     productInfo: '',
     industry: '',
-    dealStage: 'prospecting'
+    dealStage: 'prospecting',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,11 +18,13 @@ const ObjectionHandlerContent: React.FC = () => {
 
   const gemini = useGemini();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -32,7 +34,7 @@ const ObjectionHandlerContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Enhance product info with industry and deal stage context
       const enhancedProductInfo = `
@@ -45,12 +47,16 @@ const ObjectionHandlerContent: React.FC = () => {
         formData.objection,
         enhancedProductInfo
       );
-      
+
       setResult(objectionHandler);
       setCopied(false);
     } catch (err) {
       console.error('Error generating objection handler:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the objection handler');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while generating the objection handler'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -66,16 +72,16 @@ const ObjectionHandlerContent: React.FC = () => {
 
   // Common objections for quick selection
   const commonObjections = [
-    "Your product is too expensive",
+    'Your product is too expensive',
     "We're already using a competitor",
     "We don't have budget right now",
-    "I need to think about it",
-    "I need to discuss with my team",
+    'I need to think about it',
+    'I need to discuss with my team',
     "We're not ready to make a change",
     "I don't see the value",
-    "We're happy with our current solution"
+    "We're happy with our current solution",
   ];
-  
+
   // Deal stages
   const dealStages = [
     { value: 'prospecting', label: 'Prospecting' },
@@ -83,7 +89,7 @@ const ObjectionHandlerContent: React.FC = () => {
     { value: 'needs_analysis', label: 'Needs Analysis' },
     { value: 'proposal', label: 'Proposal' },
     { value: 'negotiation', label: 'Negotiation' },
-    { value: 'closing', label: 'Closing' }
+    { value: 'closing', label: 'Closing' },
   ];
 
   return (
@@ -94,7 +100,8 @@ const ObjectionHandlerContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-indigo-800">Objection Handler</h3>
             <p className="text-sm text-indigo-700 mt-1">
-              Get expert strategies for handling common sales objections. Turn obstacles into opportunities with personalized objection responses.
+              Get expert strategies for handling common sales objections. Turn obstacles into
+              opportunities with personalized objection responses.
             </p>
           </div>
         </div>
@@ -121,7 +128,7 @@ const ObjectionHandlerContent: React.FC = () => {
               onChange={handleChange}
               required
             ></textarea>
-            
+
             <div className="mt-2">
               <p className="text-sm text-gray-600 mb-2">Common objections:</p>
               <div className="flex flex-wrap gap-2">
@@ -130,7 +137,7 @@ const ObjectionHandlerContent: React.FC = () => {
                     key={index}
                     type="button"
                     className="text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded hover:bg-indigo-100 transition-colors"
-                    onClick={() => setFormData({...formData, objection})}
+                    onClick={() => setFormData({ ...formData, objection })}
                   >
                     {objection}
                   </button>
@@ -138,7 +145,7 @@ const ObjectionHandlerContent: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -153,24 +160,24 @@ const ObjectionHandlerContent: React.FC = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Deal Stage
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Deal Stage</label>
               <select
                 name="dealStage"
                 value={formData.dealStage}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               >
-                {dealStages.map(stage => (
-                  <option key={stage.value} value={stage.value}>{stage.label}</option>
+                {dealStages.map((stage) => (
+                  <option key={stage.value} value={stage.value}>
+                    {stage.label}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Product/Service Information
@@ -185,7 +192,7 @@ const ObjectionHandlerContent: React.FC = () => {
               required
             ></textarea>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -211,11 +218,11 @@ const ObjectionHandlerContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

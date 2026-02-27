@@ -993,9 +993,9 @@ async function seedComprehensiveFeatures() {
 
   try {
     // First pass: Insert all parent features (no parentKey)
-    const parents = ALL_FEATURES.filter(f => !f.parentKey);
+    const parents = ALL_FEATURES.filter((f) => !f.parentKey);
     console.log(`\n👨 Inserting ${parents.length} parent features...`);
-    
+
     for (const feature of parents) {
       const { parentKey, ...featureData } = feature;
       await db.insert(features).values(featureData).onConflictDoNothing();
@@ -1004,35 +1004,50 @@ async function seedComprehensiveFeatures() {
 
     // Get all features to build parentId map
     const allFeatures = await db.select().from(features);
-    const featureMap = new Map(allFeatures.map(f => [f.featureKey, f.id]));
+    const featureMap = new Map(allFeatures.map((f) => [f.featureKey, f.id]));
 
     // Second pass: Insert child features with parentId
-    const children = ALL_FEATURES.filter(f => f.parentKey);
+    const children = ALL_FEATURES.filter((f) => f.parentKey);
     console.log(`\n👶 Inserting ${children.length} child features with parentId...`);
-    
+
     for (const feature of children) {
       const { parentKey, ...featureData } = feature;
       const parentId = parentKey ? featureMap.get(parentKey) : null;
-      
-      await db.insert(features).values({
-        ...featureData,
-        parentId,
-      }).onConflictDoNothing();
-      
+
+      await db
+        .insert(features)
+        .values({
+          ...featureData,
+          parentId,
+        })
+        .onConflictDoNothing();
+
       console.log(`  ✓ ${feature.name} (parent: ${parentKey})`);
     }
 
     console.log(`\n✅ Successfully seeded ${ALL_FEATURES.length} features!`);
     console.log('\n📈 Feature Breakdown:');
-    console.log(`   Core CRM: ${ALL_FEATURES.filter(f => f.category === 'core_crm').length}`);
-    console.log(`   Sales Intelligence: ${ALL_FEATURES.filter(f => f.category === 'sales_intelligence').length}`);
-    console.log(`   AI Features: ${ALL_FEATURES.filter(f => f.category === 'ai_features').length}`);
-    console.log(`   Communication: ${ALL_FEATURES.filter(f => f.category === 'communication').length}`);
-    console.log(`   Remote Apps: ${ALL_FEATURES.filter(f => f.category === 'remote_apps').length}`);
-    console.log(`   White Label: ${ALL_FEATURES.filter(f => f.category === 'white_label').length}`);
-    console.log(`   Admin: ${ALL_FEATURES.filter(f => f.category === 'admin').length}`);
-    console.log(`   Business Tools: ${ALL_FEATURES.filter(f => f.category === 'business_tools').length}`);
-    console.log(`   Advanced: ${ALL_FEATURES.filter(f => f.category === 'advanced').length}`);
+    console.log(`   Core CRM: ${ALL_FEATURES.filter((f) => f.category === 'core_crm').length}`);
+    console.log(
+      `   Sales Intelligence: ${ALL_FEATURES.filter((f) => f.category === 'sales_intelligence').length}`
+    );
+    console.log(
+      `   AI Features: ${ALL_FEATURES.filter((f) => f.category === 'ai_features').length}`
+    );
+    console.log(
+      `   Communication: ${ALL_FEATURES.filter((f) => f.category === 'communication').length}`
+    );
+    console.log(
+      `   Remote Apps: ${ALL_FEATURES.filter((f) => f.category === 'remote_apps').length}`
+    );
+    console.log(
+      `   White Label: ${ALL_FEATURES.filter((f) => f.category === 'white_label').length}`
+    );
+    console.log(`   Admin: ${ALL_FEATURES.filter((f) => f.category === 'admin').length}`);
+    console.log(
+      `   Business Tools: ${ALL_FEATURES.filter((f) => f.category === 'business_tools').length}`
+    );
+    console.log(`   Advanced: ${ALL_FEATURES.filter((f) => f.category === 'advanced').length}`);
   } catch (error) {
     console.error('❌ Error seeding features:', error);
     throw error;

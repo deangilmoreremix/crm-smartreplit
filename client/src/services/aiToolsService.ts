@@ -1,4 +1,3 @@
-
 import { openaiService } from './openaiService';
 import { geminiService } from './geminiService';
 
@@ -25,21 +24,21 @@ export interface AIToolResponse {
 class AIToolsService {
   async processAIRequest(request: AIToolRequest): Promise<AIToolResponse> {
     const { toolType, prompt, context, options = {} } = request;
-    
+
     try {
       const enhancedPrompt = this.buildEnhancedPrompt(toolType, prompt, context);
-      
+
       let response;
       if (options.provider === 'gemini') {
         response = await geminiService.generateContent(enhancedPrompt, {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 1000
+          maxOutputTokens: options.maxTokens || 1000,
         });
       } else {
         response = await openaiService.generateCompletion(enhancedPrompt, {
           model: options.model || 'gpt-4',
           temperature: options.temperature || 0.7,
-          maxTokens: options.maxTokens || 1000
+          maxTokens: options.maxTokens || 1000,
         });
       }
 
@@ -59,17 +58,17 @@ class AIToolsService {
       'competitor-analysis': `Analyze the competitive landscape for: ${prompt}\n\nProvide market insights, positioning strategies, and competitive advantages.`,
       'market-trend': `Analyze market trends related to: ${prompt}\n\nInclude trend analysis, predictions, and strategic recommendations.`,
       'customer-persona': `Create a detailed customer persona for: ${prompt}\n\nInclude demographics, pain points, motivations, and engagement strategies.`,
-      'sentiment-analysis': `Analyze the sentiment and emotional tone of: ${prompt}\n\nProvide sentiment scores, emotional indicators, and communication recommendations.`
+      'sentiment-analysis': `Analyze the sentiment and emotional tone of: ${prompt}\n\nProvide sentiment scores, emotional indicators, and communication recommendations.`,
     };
 
     let enhancedPrompt = basePrompts[toolType] || `Process this request for ${toolType}: ${prompt}`;
-    
+
     if (context) {
       enhancedPrompt += `\n\nContext: ${JSON.stringify(context)}`;
     }
 
     enhancedPrompt += `\n\nPlease format your response as JSON with appropriate fields for the tool type.`;
-    
+
     return enhancedPrompt;
   }
 
@@ -81,13 +80,13 @@ class AIToolsService {
         reasoning: parsed.reasoning,
         analytics: parsed.analytics,
         suggestions: parsed.suggestions || parsed.improvements,
-        confidence: parsed.confidence || 85
+        confidence: parsed.confidence || 85,
       };
     } catch (error) {
       // Fallback for non-JSON responses
       return {
         content: content,
-        confidence: 75
+        confidence: 75,
       };
     }
   }
@@ -97,7 +96,7 @@ class AIToolsService {
       'email-composer': `Subject: Regarding ${prompt}\n\nI wanted to reach out to discuss ${prompt}. I believe this could be valuable for your business.\n\nWould you like to schedule a call to explore this further?\n\nBest regards`,
       'call-script': `Opening: Hi [Name], this is [Your Name] from [Company]. I'm calling about ${prompt}.\n\nValue Prop: We help companies like yours improve their ${prompt} results.\n\nQuestion: What's your biggest challenge with ${prompt} right now?\n\nClose: Based on what you've shared, I'd love to show you how we can help. Are you available for a 15-minute demo this week?`,
       'objection-handler': `I understand your concern about ${prompt}. Many of our clients had similar reservations initially.\n\nWhat I've found is that [specific benefit]. Would it help if I shared a case study of how we helped a similar company overcome this exact challenge?\n\nAlternatively, we could start with a small pilot to demonstrate value before any major commitment.`,
-      'default': `I've generated a response for ${prompt}. While this is a simplified version, our AI tools can provide more detailed and personalized content when fully configured.`
+      default: `I've generated a response for ${prompt}. While this is a simplified version, our AI tools can provide more detailed and personalized content when fully configured.`,
     };
 
     return {
@@ -106,8 +105,8 @@ class AIToolsService {
       suggestions: [
         'Configure AI providers for enhanced results',
         'Add more context for better personalization',
-        'Review and customize the generated content'
-      ]
+        'Review and customize the generated content',
+      ],
     };
   }
 
@@ -126,7 +125,7 @@ Format as JSON with keys: content, reasoning, alternatives, psychology, suggesti
     return this.processAIRequest({
       toolType: `reasoning-${type}`,
       prompt,
-      options
+      options,
     });
   }
 
@@ -141,7 +140,7 @@ Provide immediate, actionable content optimized for speed and relevance.`;
       toolType: `realtime-${type}`,
       prompt,
       context,
-      options: { temperature: 0.8, maxTokens: 500 }
+      options: { temperature: 0.8, maxTokens: 500 },
     });
   }
 }

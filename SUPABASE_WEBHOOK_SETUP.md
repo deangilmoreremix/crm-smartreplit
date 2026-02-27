@@ -3,20 +3,24 @@
 ## Step-by-Step Webhook Setup
 
 ### 1. Access Supabase Dashboard
+
 1. Go to https://supabase.com/dashboard
 2. Select your project
 3. Navigate to **Database** → **Webhooks**
 
 ### 2. Create New Webhook
+
 Click **"Create a new hook"** and configure:
 
 **Basic Configuration:**
+
 - **Name**: `SmartCRM Email Router`
 - **Table**: `auth.users`
 - **Events**: Select **INSERT** (user creation)
 - **Type**: `HTTP Request`
 
 **HTTP Configuration:**
+
 - **URL**: `https://your-replit-app.replit.dev/api/auth-webhook`
 - **Method**: `POST`
 - **HTTP Headers**:
@@ -26,6 +30,7 @@ Click **"Create a new hook"** and configure:
   ```
 
 **Request Body Template:**
+
 ```json
 {
   "type": "INSERT",
@@ -44,10 +49,11 @@ Click **"Create a new hook"** and configure:
 ### 3. Test Webhook Configuration
 
 **Test Payload:**
+
 ```json
 {
   "type": "INSERT",
-  "table": "auth.users", 
+  "table": "auth.users",
   "record": {
     "id": "test-user-123",
     "email": "test@smartcrm.com",
@@ -62,10 +68,11 @@ Click **"Create a new hook"** and configure:
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
-  "appContext": "smartcrm", 
+  "appContext": "smartcrm",
   "message": "User routed to smartcrm email templates"
 }
 ```
@@ -81,34 +88,33 @@ app.post('/api/auth-webhook', (req, res) => {
     // Verify webhook signature (optional but recommended)
     const signature = req.headers['x-webhook-signature'];
     const expectedSignature = process.env.SUPABASE_WEBHOOK_SECRET;
-    
+
     if (expectedSignature && signature !== expectedSignature) {
       return res.status(401).json({ error: 'Invalid signature' });
     }
-    
+
     const { type, record } = req.body;
-    
+
     if (type === 'INSERT' && record) {
-      const appContext = record.raw_user_meta_data?.app_context || 
-                        record.user_metadata?.app_context || 
-                        'smartcrm';
-      
+      const appContext =
+        record.raw_user_meta_data?.app_context || record.user_metadata?.app_context || 'smartcrm';
+
       // Log for monitoring
       console.log(`🎯 Email routing: ${record.email} → ${appContext} templates`);
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         appContext,
-        message: `User routed to ${appContext} email templates`
+        message: `User routed to ${appContext} email templates`,
       });
     } else {
       res.json({ success: true, message: 'Event processed' });
     }
   } catch (error) {
     console.error('❌ Auth webhook error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to process auth webhook' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process auth webhook',
     });
   }
 });
@@ -126,7 +132,7 @@ BEGIN
   -- Log the new user signup with app context
   INSERT INTO public.user_activity_log (
     user_id,
-    email, 
+    email,
     app_context,
     template_set,
     created_at
@@ -137,13 +143,13 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'email_template_set', 'smartcrm'),
     NOW()
   );
-  
+
   -- You could also call external API here if needed
   -- PERFORM net.http_post(
   --   url := 'https://your-app.com/api/user-created',
   --   body := jsonb_build_object('user_id', NEW.id, 'app_context', NEW.raw_user_meta_data->>'app_context')
   -- );
-  
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -158,10 +164,12 @@ CREATE TRIGGER trigger_handle_new_user
 ### 6. Monitoring & Debugging
 
 **Check Webhook Logs:**
+
 - Supabase Dashboard → Database → Webhooks → Your webhook → Logs
 - Your Replit console logs for webhook calls
 
 **Test Different App Contexts:**
+
 ```bash
 # SmartCRM signup test
 curl -X POST https://your-app.com/api/auth-webhook \
@@ -170,16 +178,16 @@ curl -X POST https://your-app.com/api/auth-webhook \
     "type": "INSERT",
     "record": {
       "id": "test-123",
-      "email": "test@smartcrm.com", 
+      "email": "test@smartcrm.com",
       "raw_user_meta_data": {"app_context": "smartcrm"}
     }
   }'
 
-# Other app signup test  
+# Other app signup test
 curl -X POST https://your-app.com/api/auth-webhook \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "INSERT", 
+    "type": "INSERT",
     "record": {
       "id": "test-456",
       "email": "test@otherapp.com",
@@ -191,6 +199,7 @@ curl -X POST https://your-app.com/api/auth-webhook \
 ### 7. Webhook URL for Your Replit
 
 Your webhook URL will be:
+
 ```
 https://9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev/api/auth-webhook
 ```

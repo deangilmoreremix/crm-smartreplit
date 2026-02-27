@@ -21,7 +21,7 @@ router.post('/create', async (req: Request, res: Response) => {
     if (!config.name || !config.subdomain || !config.contactEmail) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['name', 'subdomain', 'contactEmail']
+        required: ['name', 'subdomain', 'contactEmail'],
       });
     }
 
@@ -30,7 +30,7 @@ router.post('/create', async (req: Request, res: Response) => {
     if (!subdomainRegex.test(config.subdomain)) {
       return res.status(400).json({
         error: 'Invalid subdomain format',
-        message: 'Subdomain must be lowercase alphanumeric with hyphens, 1-63 characters'
+        message: 'Subdomain must be lowercase alphanumeric with hyphens, 1-63 characters',
       });
     }
 
@@ -38,7 +38,7 @@ router.post('/create', async (req: Request, res: Response) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(config.contactEmail)) {
       return res.status(400).json({
-        error: 'Invalid email format'
+        error: 'Invalid email format',
       });
     }
 
@@ -56,20 +56,19 @@ router.post('/create', async (req: Request, res: Response) => {
         'Configure branding and theme',
         'Set up custom domain',
         'Invite team members',
-        'Import initial data'
+        'Import initial data',
       ],
-      accessUrl: `https://${tenant.subdomain}.smartcrm.vip`
+      accessUrl: `https://${tenant.subdomain}.smartcrm.vip`,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Tenant creation failed', error, {
       endpoint: '/api/provisioning/create',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to create tenant',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -84,18 +83,17 @@ router.get('/templates', async (req: Request, res: Response) => {
 
     res.json({
       templates,
-      count: templates.length
+      count: templates.length,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to list templates', error, {
       endpoint: '/api/provisioning/templates',
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to list templates',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -111,14 +109,14 @@ router.post('/apply-template', async (req: Request, res: Response) => {
     if (!tenantId || !templateId) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'templateId']
+        required: ['tenantId', 'templateId'],
       });
     }
 
     const template = await tenantProvisioner.getTemplate(templateId);
     if (!template) {
       return res.status(404).json({
-        error: 'Template not found'
+        error: 'Template not found',
       });
     }
 
@@ -128,19 +126,18 @@ router.post('/apply-template', async (req: Request, res: Response) => {
       message: 'Template applied successfully',
       template: {
         id: template.id,
-        name: template.name
-      }
+        name: template.name,
+      },
     });
-
   } catch (error: any) {
     await errorLogger.logError('Template application failed', error, {
       endpoint: '/api/provisioning/apply-template',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to apply template',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -159,22 +156,25 @@ router.get('/status/:tenantId', async (req: Request, res: Response) => {
     res.json({
       tenant,
       onboarding,
-      progress: onboarding ? {
-        percentage: Math.round((onboarding.completedSteps.length / onboarding.totalSteps) * 100),
-        currentStep: onboarding.currentStep,
-        totalSteps: onboarding.totalSteps
-      } : null
+      progress: onboarding
+        ? {
+            percentage: Math.round(
+              (onboarding.completedSteps.length / onboarding.totalSteps) * 100
+            ),
+            currentStep: onboarding.currentStep,
+            totalSteps: onboarding.totalSteps,
+          }
+        : null,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get provisioning status', error, {
       endpoint: `/api/provisioning/status/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(404).json({
       error: 'Tenant not found',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -190,7 +190,7 @@ router.post('/onboarding/step', async (req: Request, res: Response) => {
     if (!tenantId || !stepId || completed === undefined) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'stepId', 'completed']
+        required: ['tenantId', 'stepId', 'completed'],
       });
     }
 
@@ -205,19 +205,18 @@ router.post('/onboarding/step', async (req: Request, res: Response) => {
       onboarding,
       progress: {
         percentage: Math.round((onboarding.completedSteps.length / onboarding.totalSteps) * 100),
-        remaining: onboarding.totalSteps - onboarding.completedSteps.length
-      }
+        remaining: onboarding.totalSteps - onboarding.completedSteps.length,
+      },
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to update onboarding step', error, {
       endpoint: '/api/provisioning/onboarding/step',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to update onboarding step',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -232,7 +231,7 @@ router.post('/complete', async (req: Request, res: Response) => {
 
     if (!tenantId) {
       return res.status(400).json({
-        error: 'tenantId is required'
+        error: 'tenantId is required',
       });
     }
 
@@ -240,7 +239,7 @@ router.post('/complete', async (req: Request, res: Response) => {
     const onboarding = await tenantProvisioner.getOnboardingStatus(tenantId);
     if (!onboarding) {
       return res.status(404).json({
-        error: 'Onboarding not found'
+        error: 'Onboarding not found',
       });
     }
 
@@ -260,18 +259,17 @@ router.post('/complete', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Onboarding completed successfully',
-      onboarding: updatedOnboarding
+      onboarding: updatedOnboarding,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to complete onboarding', error, {
       endpoint: '/api/provisioning/complete',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to complete onboarding',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -289,20 +287,19 @@ router.get('/tenants', async (req: Request, res: Response) => {
       type: type as string,
       parentPartnerId: parentPartnerId as string,
       page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 50
+      limit: limit ? parseInt(limit as string) : 50,
     });
 
     res.json(result);
-
   } catch (error: any) {
     await errorLogger.logError('Failed to list tenants', error, {
       endpoint: '/api/provisioning/tenants',
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to list tenants',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -318,16 +315,15 @@ router.get('/tenants/:tenantId', async (req: Request, res: Response) => {
     const tenant = await tenantProvisioner.getTenant(tenantId);
 
     res.json({ tenant });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get tenant', error, {
       endpoint: `/api/provisioning/tenants/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(404).json({
       error: 'Tenant not found',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -345,18 +341,17 @@ router.put('/tenants/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Tenant updated successfully',
-      tenant
+      tenant,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to update tenant', error, {
       endpoint: `/api/provisioning/tenants/${req.params.tenantId}`,
-      method: 'PUT'
+      method: 'PUT',
     });
 
     res.status(500).json({
       error: 'Failed to update tenant',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -374,18 +369,17 @@ router.post('/tenants/:tenantId/suspend', async (req: Request, res: Response) =>
 
     res.json({
       message: 'Tenant suspended successfully',
-      tenantId
+      tenantId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to suspend tenant', error, {
       endpoint: `/api/provisioning/tenants/${req.params.tenantId}/suspend`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to suspend tenant',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -402,18 +396,17 @@ router.post('/tenants/:tenantId/activate', async (req: Request, res: Response) =
 
     res.json({
       message: 'Tenant activated successfully',
-      tenantId
+      tenantId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to activate tenant', error, {
       endpoint: `/api/provisioning/tenants/${req.params.tenantId}/activate`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to activate tenant',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -430,18 +423,17 @@ router.delete('/tenants/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Tenant deleted successfully',
-      tenantId
+      tenantId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to delete tenant', error, {
       endpoint: `/api/provisioning/tenants/${req.params.tenantId}`,
-      method: 'DELETE'
+      method: 'DELETE',
     });
 
     res.status(500).json({
       error: 'Failed to delete tenant',
-      message: error.message
+      message: error.message,
     });
   }
 });

@@ -15,7 +15,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 10 // Max 10 files per request
+    files: 10, // Max 10 files per request
   },
   fileFilter: (req, file, cb) => {
     // Allowed file types
@@ -28,7 +28,7 @@ const upload = multer({
       'image/x-icon',
       'application/pdf',
       'video/mp4',
-      'video/webm'
+      'video/webm',
     ];
 
     if (allowedTypes.includes(file.mimetype)) {
@@ -36,7 +36,7 @@ const upload = multer({
     } else {
       cb(new Error(`File type not allowed: ${file.mimetype}`));
     }
-  }
+  },
 });
 
 /**
@@ -53,19 +53,19 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
     if (!tenantId || !category) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'category']
+        required: ['tenantId', 'category'],
       });
     }
 
     if (!files || files.length === 0) {
       return res.status(400).json({
-        error: 'No files provided'
+        error: 'No files provided',
       });
     }
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Authentication required'
+        error: 'Authentication required',
       });
     }
 
@@ -74,7 +74,7 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
     if (!validCategories.includes(category)) {
       return res.status(400).json({
         error: 'Invalid category',
-        validCategories
+        validCategories,
       });
     }
 
@@ -85,7 +85,7 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
       optimize: optimize === 'true' || optimize === true,
       generateThumbnail: generateThumbnail === 'true' || generateThumbnail === true,
       metadata: metadata ? JSON.parse(metadata) : {},
-      createdBy: userId
+      createdBy: userId,
     };
 
     if (files.length === 1) {
@@ -98,13 +98,13 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
 
       res.status(201).json({
         message: 'Asset uploaded successfully',
-        asset
+        asset,
       });
     } else {
       // Bulk upload
-      const fileData = files.map(f => ({
+      const fileData = files.map((f) => ({
         buffer: f.buffer,
-        fileName: f.originalname
+        fileName: f.originalname,
       }));
 
       const result = await assetManager.bulkUpload(fileData, uploadOptions);
@@ -116,20 +116,19 @@ router.post('/upload', upload.array('files', 10), async (req: Request, res: Resp
         summary: {
           successful: result.assets.length,
           failed: result.errors.length,
-          total: files.length
-        }
+          total: files.length,
+        },
       });
     }
-
   } catch (error: any) {
     await errorLogger.logError('Asset upload failed', error, {
       endpoint: '/api/assets/upload',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to upload asset',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -144,7 +143,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (!tenantId) {
       return res.status(400).json({
-        error: 'tenantId is required'
+        error: 'tenantId is required',
       });
     }
 
@@ -153,20 +152,19 @@ router.get('/', async (req: Request, res: Response) => {
       category: category as Asset['category'],
       page: page ? parseInt(page as string) : 1,
       limit: limit ? parseInt(limit as string) : 50,
-      search: search as string
+      search: search as string,
     });
 
     res.json(result);
-
   } catch (error: any) {
     await errorLogger.logError('Failed to list assets', error, {
       endpoint: '/api/assets',
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to list assets',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -182,16 +180,15 @@ router.get('/:assetId', async (req: Request, res: Response) => {
     const asset = await assetManager.getAsset(assetId);
 
     res.json({ asset });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get asset', error, {
       endpoint: `/api/assets/${req.params.assetId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(404).json({
       error: 'Asset not found',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -209,18 +206,17 @@ router.put('/:assetId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Asset updated successfully',
-      asset
+      asset,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to update asset', error, {
       endpoint: `/api/assets/${req.params.assetId}`,
-      method: 'PUT'
+      method: 'PUT',
     });
 
     res.status(500).json({
       error: 'Failed to update asset',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -237,18 +233,17 @@ router.delete('/:assetId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Asset deleted successfully',
-      assetId
+      assetId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to delete asset', error, {
       endpoint: `/api/assets/${req.params.assetId}`,
-      method: 'DELETE'
+      method: 'DELETE',
     });
 
     res.status(500).json({
       error: 'Failed to delete asset',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -266,18 +261,17 @@ router.get('/:assetId/versions', async (req: Request, res: Response) => {
     res.json({
       versions,
       count: versions.length,
-      latest: versions[0]
+      latest: versions[0],
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get asset versions', error, {
       endpoint: `/api/assets/${req.params.assetId}/versions`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to get asset versions',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -293,7 +287,7 @@ router.post('/:assetId/version', upload.single('file'), async (req: Request, res
 
     if (!file) {
       return res.status(400).json({
-        error: 'No file provided'
+        error: 'No file provided',
       });
     }
 
@@ -305,18 +299,17 @@ router.post('/:assetId/version', upload.single('file'), async (req: Request, res
 
     res.status(201).json({
       message: 'New asset version created',
-      asset: newVersion
+      asset: newVersion,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to create asset version', error, {
       endpoint: `/api/assets/${req.params.assetId}/version`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to create asset version',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -336,19 +329,18 @@ router.get('/stats/:tenantId', async (req: Request, res: Response) => {
       summary: {
         totalAssets: stats.totalAssets,
         totalSizeMB: (stats.totalSize / (1024 * 1024)).toFixed(2),
-        categories: Object.keys(stats.byCategory).length
-      }
+        categories: Object.keys(stats.byCategory).length,
+      },
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get asset stats', error, {
       endpoint: `/api/assets/stats/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to get asset statistics',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -364,7 +356,7 @@ router.get('/search/:tenantId', async (req: Request, res: Response) => {
 
     if (!q) {
       return res.status(400).json({
-        error: 'Search query (q) is required'
+        error: 'Search query (q) is required',
       });
     }
 
@@ -373,18 +365,17 @@ router.get('/search/:tenantId', async (req: Request, res: Response) => {
     res.json({
       assets,
       count: assets.length,
-      query: q
+      query: q,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Asset search failed', error, {
       endpoint: `/api/assets/search/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Asset search failed',
-      message: error.message
+      message: error.message,
     });
   }
 });

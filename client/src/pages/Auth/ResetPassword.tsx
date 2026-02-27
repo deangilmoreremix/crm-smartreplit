@@ -9,7 +9,7 @@ import { Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 const ResetPassword = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,9 +32,7 @@ const ResetPassword = () => {
         const tokenHash = queryParams.get('token_hash');
         const type = queryParams.get('type');
         const email = queryParams.get('email'); // Get email from URL params
-        
-        console.log('🔐 Password reset validation:', { tokenHash: !!tokenHash, type, email });
-        
+
         // Verify this is a recovery token
         if (tokenHash && type === 'recovery') {
           // Exchange token_hash for session using verifyOtp
@@ -42,18 +40,17 @@ const ResetPassword = () => {
           const { data, error } = await supabase.auth.verifyOtp({
             email: email || undefined, // Include email if present
             token_hash: tokenHash,
-            type: 'recovery'
+            type: 'recovery',
           });
-          
+
           if (error) {
             console.error('OTP verification error:', error);
             setError('Invalid or expired reset link. Please request a new password reset.');
             setValidating(false);
             return;
           }
-          
+
           if (data.session) {
-            console.log('✅ Valid password reset session established');
             setValidating(false);
             return;
           }
@@ -64,27 +61,25 @@ const ResetPassword = () => {
         const hashParams = new URLSearchParams(hash);
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-        
+
         if (accessToken && refreshToken) {
           await supabase.auth.setSession({
             access_token: accessToken,
-            refresh_token: refreshToken
+            refresh_token: refreshToken,
           });
-          console.log('✅ Session established from hash tokens');
           setValidating(false);
           return;
         }
-        
+
         // Also check query params for tokens (some Supabase configurations)
         const queryAccessToken = queryParams.get('access_token');
         const queryRefreshToken = queryParams.get('refresh_token');
-        
+
         if (queryAccessToken && queryRefreshToken) {
           await supabase.auth.setSession({
             access_token: queryAccessToken,
-            refresh_token: queryRefreshToken
+            refresh_token: queryRefreshToken,
           });
-          console.log('✅ Session established from query tokens');
           setValidating(false);
           return;
         }
@@ -93,32 +88,34 @@ const ResetPassword = () => {
         let session = null;
         let attempts = 0;
         const maxAttempts = 5;
-        
+
         while (!session && attempts < maxAttempts) {
-          const { data: { session: currentSession }, error: sessionError } = await auth.getSession();
-          
+          const {
+            data: { session: currentSession },
+            error: sessionError,
+          } = await auth.getSession();
+
           if (sessionError) {
             console.error('Session error:', sessionError);
             break;
           }
-          
+
           if (currentSession) {
             session = currentSession;
             break;
           }
-          
+
           // Wait 200ms before retrying
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise((resolve) => setTimeout(resolve, 200));
           attempts++;
         }
-        
+
         if (!session) {
           setError('Invalid or expired reset link. Please request a new password reset.');
           setValidating(false);
           return;
         }
 
-        console.log('✅ Valid password reset session detected');
         setValidating(false);
       } catch (error: unknown) {
         console.error('Error validating reset token:', error);
@@ -155,9 +152,11 @@ const ResetPassword = () => {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
-    
+
     if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      setError('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+      setError(
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      );
       return;
     }
 
@@ -165,7 +164,7 @@ const ResetPassword = () => {
 
     try {
       const { error: updateError } = await auth.updatePassword(password);
-      
+
       if (updateError) {
         console.error('Error resetting password:', updateError);
         setError(updateError.message || 'An error occurred while resetting your password');
@@ -186,49 +185,59 @@ const ResetPassword = () => {
 
   if (validating) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}>
-        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg max-w-md w-full text-center`}>
+      <div
+        className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}
+      >
+        <div
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg max-w-md w-full text-center`}
+        >
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
-            Verifying reset link...
-          </p>
+          <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Verifying reset link...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}>
+    <div
+      className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
             Smart<span className="text-green-400">CRM</span>
           </h1>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Reset your password
-          </p>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Reset your password</p>
         </div>
-        
-        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}>
+
+        <div
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}
+        >
           {error && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}
+            >
               <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
               <span className={`text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border flex items-center space-x-2`}
+            >
               <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
               <span className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                 Password updated successfully! Redirecting to sign-in...
               </span>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 New Password
               </label>
               <div className="relative">
@@ -240,7 +249,7 @@ const ResetPassword = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`w-full px-3 py-2 pl-10 pr-10 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -253,7 +262,9 @@ const ResetPassword = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
-                    isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'
+                    isDark
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-700'
                   }`}
                   disabled={loading || success}
                 >
@@ -264,9 +275,11 @@ const ResetPassword = () => {
                 Must be at least 8 characters with uppercase, lowercase, and a number
               </p>
             </div>
-            
+
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Confirm New Password
               </label>
               <div className="relative">
@@ -278,7 +291,7 @@ const ResetPassword = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`w-full px-3 py-2 pl-10 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -289,7 +302,7 @@ const ResetPassword = () => {
                 />
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading || success}
@@ -303,10 +316,7 @@ const ResetPassword = () => {
           <div className="mt-6 text-center">
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Remember your password?{' '}
-              <Link
-                to="/auth/login"
-                className="text-blue-600 hover:text-blue-500"
-              >
+              <Link to="/auth/login" className="text-blue-600 hover:text-blue-500">
                 Sign In
               </Link>
             </p>

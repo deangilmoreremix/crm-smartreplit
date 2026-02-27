@@ -77,7 +77,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
       // Only update if user hasn't set a preference
-      AsyncStorage.getItem(THEME_STORAGE_KEY).then(stored => {
+      AsyncStorage.getItem(THEME_STORAGE_KEY).then((stored) => {
         if (stored === null) {
           setIsDark(colorScheme === 'dark');
         }
@@ -133,9 +133,5 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     setTheme,
   };
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };

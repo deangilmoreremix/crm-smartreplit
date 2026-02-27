@@ -63,11 +63,7 @@ class AssetManager {
   /**
    * Upload asset to storage
    */
-  async uploadAsset(
-    file: Buffer,
-    fileName: string,
-    options: AssetUploadOptions
-  ): Promise<Asset> {
+  async uploadAsset(file: Buffer, fileName: string, options: AssetUploadOptions): Promise<Asset> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
@@ -83,7 +79,7 @@ class AssetManager {
         .upload(uniqueName, file, {
           contentType: this.getMimeType(fileName),
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
         });
 
       if (uploadError) {
@@ -91,9 +87,7 @@ class AssetManager {
       }
 
       // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(this.storageBucket)
-        .getPublicUrl(uniqueName);
+      const { data: urlData } = supabase.storage.from(this.storageBucket).getPublicUrl(uniqueName);
 
       const url = urlData.publicUrl;
       const cdnUrl = this.cdnUrl ? `${this.cdnUrl}/${uniqueName}` : url;
@@ -121,7 +115,7 @@ class AssetManager {
           usage_count: 0,
           created_by: options.createdBy,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -137,24 +131,23 @@ class AssetManager {
       // Optimize if requested and is an image
       if (options.optimize && this.isImage(mimeType)) {
         // Queue optimization (would be done async in production)
-        this.optimizeAssetAsync(asset.id).catch(error => {
+        this.optimizeAssetAsync(asset.id).catch((error) => {
           errorLogger.logError('Asset optimization failed', error, { assetId: asset.id });
         });
       }
 
       // Generate thumbnail if requested
       if (options.generateThumbnail && this.isImage(mimeType)) {
-        this.generateThumbnailAsync(asset.id).catch(error => {
+        this.generateThumbnailAsync(asset.id).catch((error) => {
           errorLogger.logError('Thumbnail generation failed', error, { assetId: asset.id });
         });
       }
 
       return asset;
-
     } catch (error: any) {
       await errorLogger.logError('Asset upload failed', error, {
         tenantId: options.tenantId,
-        fileName
+        fileName,
       });
       throw error;
     }
@@ -168,11 +161,7 @@ class AssetManager {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
-      .from('assets')
-      .select('*')
-      .eq('id', assetId)
-      .single();
+    const { data, error } = await supabase.from('assets').select('*').eq('id', assetId).single();
 
     if (error || !data) {
       throw new Error('Asset not found');
@@ -190,7 +179,9 @@ class AssetManager {
   /**
    * List assets
    */
-  async listAssets(options: AssetListOptions): Promise<{ assets: Asset[]; total: number; page: number; pages: number }> {
+  async listAssets(
+    options: AssetListOptions
+  ): Promise<{ assets: Asset[]; total: number; page: number; pages: number }> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
@@ -220,7 +211,7 @@ class AssetManager {
       throw new Error(`Failed to list assets: ${error.message}`);
     }
 
-    const assets = (data || []).map(d => this.mapDatabaseToAsset(d));
+    const assets = (data || []).map((d) => this.mapDatabaseToAsset(d));
     const total = count || 0;
     const pages = Math.ceil(total / limit);
 
@@ -236,7 +227,7 @@ class AssetManager {
     }
 
     const dbUpdates: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (updates.name) dbUpdates.name = updates.name;
@@ -291,10 +282,7 @@ class AssetManager {
     }
 
     // Delete from database
-    const { error: dbError } = await supabase
-      .from('assets')
-      .delete()
-      .eq('id', assetId);
+    const { error: dbError } = await supabase.from('assets').delete().eq('id', assetId);
 
     if (dbError) {
       throw new Error(`Failed to delete asset: ${dbError.message}`);
@@ -314,10 +302,9 @@ class AssetManager {
         .from('assets')
         .update({
           optimized: true,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', assetId);
-
     } catch (error: any) {
       console.error(`Asset optimization failed for ${assetId}:`, error.message);
     }
@@ -331,7 +318,6 @@ class AssetManager {
       // In production, this would generate actual thumbnails
       // For now, just log the operation
       console.log(`Thumbnail generation queued for asset ${assetId}`);
-
     } catch (error: any) {
       console.error(`Thumbnail generation failed for ${assetId}:`, error.message);
     }
@@ -358,7 +344,7 @@ class AssetManager {
 
     // Get all versions (including this one and its children)
     const parentId = asset.parent_asset_id || assetId;
-    
+
     const { data, error } = await supabase
       .from('assets')
       .select('*')
@@ -369,7 +355,7 @@ class AssetManager {
       throw new Error(`Failed to get asset versions: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToAsset(d));
+    return (data || []).map((d) => this.mapDatabaseToAsset(d));
   }
 
   /**
@@ -393,14 +379,14 @@ class AssetManager {
 
     // Get latest version number
     const versions = await this.getAssetVersions(assetId);
-    const latestVersion = Math.max(...versions.map(v => v.version));
+    const latestVersion = Math.max(...versions.map((v) => v.version));
 
     // Upload new version
     const newAsset = await this.uploadAsset(file, fileName, {
       tenantId: originalAsset.tenant_id,
       category: originalAsset.category,
       createdBy: originalAsset.created_by,
-      metadata: originalAsset.metadata
+      metadata: originalAsset.metadata,
     });
 
     // Update to link to parent and set version
@@ -408,11 +394,15 @@ class AssetManager {
       .from('assets')
       .update({
         parent_asset_id: originalAsset.parent_asset_id || assetId,
-        version: latestVersion + 1
+        version: latestVersion + 1,
       })
       .eq('id', newAsset.id);
 
-    return { ...newAsset, version: latestVersion + 1, parentAssetId: originalAsset.parent_asset_id || assetId };
+    return {
+      ...newAsset,
+      version: latestVersion + 1,
+      parentAssetId: originalAsset.parent_asset_id || assetId,
+    };
   }
 
   /**
@@ -432,7 +422,7 @@ class AssetManager {
       } catch (error: any) {
         errors.push({
           fileName: file.fileName,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -463,14 +453,14 @@ class AssetManager {
       throw new Error(`Failed to get asset stats: ${error.message}`);
     }
 
-    const assetList = (assets || []).map(d => this.mapDatabaseToAsset(d));
+    const assetList = (assets || []).map((d) => this.mapDatabaseToAsset(d));
 
     // Calculate statistics
     const totalAssets = assetList.length;
     const totalSize = assetList.reduce((sum, asset) => sum + asset.fileSize, 0);
-    
+
     const byCategory: Record<string, number> = {};
-    assetList.forEach(asset => {
+    assetList.forEach((asset) => {
       byCategory[asset.category] = (byCategory[asset.category] || 0) + 1;
     });
 
@@ -482,7 +472,7 @@ class AssetManager {
       totalAssets,
       totalSize,
       byCategory,
-      recentUploads
+      recentUploads,
     };
   }
 
@@ -506,7 +496,7 @@ class AssetManager {
       throw new Error(`Asset search failed: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToAsset(d));
+    return (data || []).map((d) => this.mapDatabaseToAsset(d));
   }
 
   /**
@@ -516,33 +506,33 @@ class AssetManager {
     const ext = fileName.split('.').pop()?.toLowerCase();
     const mimeTypes: Record<string, string> = {
       // Images
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'ico': 'image/x-icon',
-      
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      ico: 'image/x-icon',
+
       // Documents
-      'pdf': 'application/pdf',
-      'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'xls': 'application/vnd.ms-excel',
-      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'ppt': 'application/vnd.ms-powerpoint',
-      'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      
+      pdf: 'application/pdf',
+      doc: 'application/msword',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xls: 'application/vnd.ms-excel',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ppt: 'application/vnd.ms-powerpoint',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+
       // Videos
-      'mp4': 'video/mp4',
-      'webm': 'video/webm',
-      'mov': 'video/quicktime',
-      
+      mp4: 'video/mp4',
+      webm: 'video/webm',
+      mov: 'video/quicktime',
+
       // Other
-      'json': 'application/json',
-      'txt': 'text/plain',
-      'css': 'text/css',
-      'js': 'application/javascript'
+      json: 'application/json',
+      txt: 'text/plain',
+      css: 'text/css',
+      js: 'application/javascript',
     };
 
     return mimeTypes[ext || ''] || 'application/octet-stream';
@@ -580,7 +570,7 @@ class AssetManager {
       usageCount: data.usage_count,
       createdBy: data.created_by,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 
@@ -595,7 +585,7 @@ class AssetManager {
    * Validate file type
    */
   validateFileType(mimeType: string, allowedTypes: string[]): boolean {
-    return allowedTypes.some(type => {
+    return allowedTypes.some((type) => {
       if (type.endsWith('/*')) {
         return mimeType.startsWith(type.replace('/*', '/'));
       }

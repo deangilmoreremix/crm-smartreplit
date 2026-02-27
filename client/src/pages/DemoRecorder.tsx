@@ -57,7 +57,7 @@ const DemoRecorder: React.FC = () => {
       description: newFeatureDescription,
       recordingId: recordingSession?.id || '',
       autoTrigger: false,
-      duration: 0
+      duration: 0,
     });
 
     setFeatures([...features, feature]);
@@ -67,7 +67,7 @@ const DemoRecorder: React.FC = () => {
 
   const handleDeleteFeature = (featureId: string) => {
     demoRecorder.deleteFeature(featureId);
-    setFeatures(features.filter(f => f.id !== featureId));
+    setFeatures(features.filter((f) => f.id !== featureId));
   };
 
   return (
@@ -85,7 +85,9 @@ const DemoRecorder: React.FC = () => {
       </div>
 
       {/* Recording Controls */}
-      <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-6 mb-6`}>
+      <div
+        className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-6 mb-6`}
+      >
         <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Recording Session
         </h2>
@@ -93,7 +95,9 @@ const DemoRecorder: React.FC = () => {
         {!isRecording && !recordingSession ? (
           <div className="space-y-4">
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+              >
                 Session Name
               </label>
               <input
@@ -107,7 +111,9 @@ const DemoRecorder: React.FC = () => {
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+              >
                 Output Format
               </label>
               <select
@@ -133,7 +139,9 @@ const DemoRecorder: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className={`p-4 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border`}>
+            <div
+              className={`p-4 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border`}
+            >
               <p className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                 {isRecording ? '🔴 Recording in progress...' : '⏸️ Recording paused'}
               </p>
@@ -190,7 +198,9 @@ const DemoRecorder: React.FC = () => {
       </div>
 
       {/* Feature Management */}
-      <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-6 mb-6`}>
+      <div
+        className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-6 mb-6`}
+      >
         <h2 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Registered Features
         </h2>
@@ -268,7 +278,9 @@ const DemoRecorder: React.FC = () => {
       </div>
 
       {/* Info Box */}
-      <div className={`${isDark ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'} border rounded-lg p-4`}>
+      <div
+        className={`${isDark ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'} border rounded-lg p-4`}
+      >
         <h3 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-900'}`}>
           💡 How to use
         </h3>

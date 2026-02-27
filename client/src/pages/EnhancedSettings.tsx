@@ -7,13 +7,21 @@ import { Eye, EyeOff, Key, User, Upload, Trash2, Edit, Save, X, RefreshCw } from
 const Settings: React.FC = () => {
   const { apiKeys, setOpenAiKey, setGeminiKey } = useApiStore();
   const { user } = useAuthStore();
-  const { profile, isLoading: profileLoading, error: profileError, fetchProfile, updateProfile, uploadAvatar, deleteAvatar } = useProfileStore();
-  
+  const {
+    profile,
+    isLoading: profileLoading,
+    error: profileError,
+    fetchProfile,
+    updateProfile,
+    uploadAvatar,
+    deleteAvatar,
+  } = useProfileStore();
+
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [openAiInput, setOpenAiInput] = useState(apiKeys.openai || '');
   const [geminiInput, setGeminiInput] = useState(apiKeys.gemini || '');
-  
+
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     fullName: '',
@@ -23,9 +31,9 @@ const Settings: React.FC = () => {
     timezone: '',
     linkedin: '',
     twitter: '',
-    website: ''
+    website: '',
   });
-  
+
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -42,12 +50,12 @@ const Settings: React.FC = () => {
     setGeminiKey(geminiInput);
     alert('Gemini API key saved successfully!');
   };
-  
+
   // Load profile data
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
-  
+
   // Initialize form with profile data
   useEffect(() => {
     if (profile) {
@@ -59,16 +67,16 @@ const Settings: React.FC = () => {
         timezone: profile.timezone || '',
         linkedin: profile.socialLinks?.linkedin || '',
         twitter: profile.socialLinks?.twitter || '',
-        website: profile.socialLinks?.website || ''
+        website: profile.socialLinks?.website || '',
       });
     }
   }, [profile]);
-  
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setAvatarFile(file);
-      
+
       // Create a preview
       const reader = new FileReader();
       reader.onload = () => {
@@ -77,10 +85,10 @@ const Settings: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   const handleAvatarUpload = async () => {
     if (!avatarFile) return;
-    
+
     setIsUploadingAvatar(true);
     try {
       await uploadAvatar(avatarFile);
@@ -91,16 +99,16 @@ const Settings: React.FC = () => {
       setIsUploadingAvatar(false);
     }
   };
-  
+
   const handleAvatarDelete = async () => {
     if (window.confirm('Are you sure you want to remove your avatar?')) {
       await deleteAvatar();
     }
   };
-  
+
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       await updateProfile({
         fullName: profileForm.fullName,
@@ -111,16 +119,16 @@ const Settings: React.FC = () => {
         socialLinks: {
           linkedin: profileForm.linkedin,
           twitter: profileForm.twitter,
-          website: profileForm.website
-        }
+          website: profileForm.website,
+        },
       });
-      
+
       setIsEditingProfile(false);
     } catch (error) {
       console.error('Error updating profile:', error);
     }
   };
-  
+
   // List of timezone options
   const timezoneOptions = [
     { value: '', label: 'Select timezone' },
@@ -133,7 +141,7 @@ const Settings: React.FC = () => {
     { value: 'Europe/London', label: 'Greenwich Mean Time (GMT)' },
     { value: 'Europe/Berlin', label: 'Central European Time (CET)' },
     { value: 'Asia/Tokyo', label: 'Japan Standard Time (JST)' },
-    { value: 'Australia/Sydney', label: 'Australian Eastern Time (AET)' }
+    { value: 'Australia/Sydney', label: 'Australian Eastern Time (AET)' },
   ];
 
   return (
@@ -149,15 +157,13 @@ const Settings: React.FC = () => {
           <User size={20} className="mr-2 text-gray-500" />
           Profile Settings
         </h2>
-        
+
         {profileLoading ? (
           <div className="flex justify-center py-8">
             <RefreshCw size={24} className="animate-spin text-blue-500" />
           </div>
         ) : profileError ? (
-          <div className="bg-red-50 p-4 rounded-lg text-red-700 mb-4">
-            {profileError}
-          </div>
+          <div className="bg-red-50 p-4 rounded-lg text-red-700 mb-4">{profileError}</div>
         ) : (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-6">
@@ -166,15 +172,15 @@ const Settings: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div className="relative w-32 h-32 mb-4">
                     {avatarPreview ? (
-                      <img 
-                        src={avatarPreview} 
-                        alt="Avatar preview" 
+                      <img
+                        src={avatarPreview}
+                        alt="Avatar preview"
                         className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : profile?.avatarUrl ? (
-                      <img 
-                        src={profile.avatarUrl} 
-                        alt={profile.fullName || 'User avatar'} 
+                      <img
+                        src={profile.avatarUrl}
+                        alt={profile.fullName || 'User avatar'}
                         className="w-32 h-32 rounded-full object-cover border-2 border-gray-200"
                       />
                     ) : (
@@ -183,7 +189,7 @@ const Settings: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {isEditingProfile && (
                     <div className="space-y-2 w-full max-w-xs">
                       <input
@@ -200,7 +206,7 @@ const Settings: React.FC = () => {
                         <Upload size={16} className="inline-block mr-1" />
                         Select Image
                       </label>
-                      
+
                       {avatarFile && (
                         <button
                           onClick={handleAvatarUpload}
@@ -220,7 +226,7 @@ const Settings: React.FC = () => {
                           )}
                         </button>
                       )}
-                      
+
                       {profile?.avatarUrl && (
                         <button
                           onClick={handleAvatarDelete}
@@ -234,7 +240,7 @@ const Settings: React.FC = () => {
                   )}
                 </div>
               </div>
-              
+
               {/* Profile info section */}
               <div className="md:w-2/3">
                 {isEditingProfile ? (
@@ -247,11 +253,13 @@ const Settings: React.FC = () => {
                         <input
                           type="text"
                           value={profileForm.fullName}
-                          onChange={(e) => setProfileForm({...profileForm, fullName: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, fullName: e.target.value })
+                          }
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Job Title
@@ -259,11 +267,13 @@ const Settings: React.FC = () => {
                         <input
                           type="text"
                           value={profileForm.jobTitle}
-                          onChange={(e) => setProfileForm({...profileForm, jobTitle: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, jobTitle: e.target.value })
+                          }
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Company
@@ -271,11 +281,13 @@ const Settings: React.FC = () => {
                         <input
                           type="text"
                           value={profileForm.company}
-                          onChange={(e) => setProfileForm({...profileForm, company: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, company: e.target.value })
+                          }
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Phone
@@ -283,27 +295,33 @@ const Settings: React.FC = () => {
                         <input
                           type="tel"
                           value={profileForm.phone}
-                          onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, phone: e.target.value })
+                          }
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Timezone
                         </label>
                         <select
                           value={profileForm.timezone}
-                          onChange={(e) => setProfileForm({...profileForm, timezone: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, timezone: e.target.value })
+                          }
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
-                          {timezoneOptions.map(option => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
+                          {timezoneOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
                           ))}
                         </select>
                       </div>
                     </div>
-                    
+
                     <h3 className="font-medium text-gray-700 mt-6 mb-3">Social Links</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -313,12 +331,14 @@ const Settings: React.FC = () => {
                         <input
                           type="url"
                           value={profileForm.linkedin}
-                          onChange={(e) => setProfileForm({...profileForm, linkedin: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, linkedin: e.target.value })
+                          }
                           placeholder="https://linkedin.com/in/username"
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Twitter
@@ -326,12 +346,14 @@ const Settings: React.FC = () => {
                         <input
                           type="url"
                           value={profileForm.twitter}
-                          onChange={(e) => setProfileForm({...profileForm, twitter: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, twitter: e.target.value })
+                          }
                           placeholder="https://twitter.com/username"
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Website
@@ -339,13 +361,15 @@ const Settings: React.FC = () => {
                         <input
                           type="url"
                           value={profileForm.website}
-                          onChange={(e) => setProfileForm({...profileForm, website: e.target.value})}
+                          onChange={(e) =>
+                            setProfileForm({ ...profileForm, website: e.target.value })
+                          }
                           placeholder="https://example.com"
                           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="mt-6 flex justify-end space-x-3">
                       <button
                         type="button"
@@ -367,8 +391,10 @@ const Settings: React.FC = () => {
                 ) : (
                   <div>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-medium text-lg text-gray-900">{profile?.fullName || 'User'}</h3>
-                      <button 
+                      <h3 className="font-medium text-lg text-gray-900">
+                        {profile?.fullName || 'User'}
+                      </h3>
+                      <button
                         onClick={() => setIsEditingProfile(true)}
                         className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md flex items-center"
                       >
@@ -376,79 +402,101 @@ const Settings: React.FC = () => {
                         Edit Profile
                       </button>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">Email</p>
                         <p className="font-medium">{profile?.email || user?.email || 'No email'}</p>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm text-gray-500">Job Title</p>
                         <p className="font-medium">{profile?.jobTitle || 'Not specified'}</p>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm text-gray-500">Company</p>
                         <p className="font-medium">{profile?.company || 'Not specified'}</p>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm text-gray-500">Phone</p>
                         <p className="font-medium">{profile?.phone || 'Not specified'}</p>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm text-gray-500">Timezone</p>
                         <p className="font-medium">
-                          {profile?.timezone ? 
-                            timezoneOptions.find(tz => tz.value === profile.timezone)?.label || profile.timezone :
-                            'Not specified'}
+                          {profile?.timezone
+                            ? timezoneOptions.find((tz) => tz.value === profile.timezone)?.label ||
+                              profile.timezone
+                            : 'Not specified'}
                         </p>
                       </div>
                     </div>
-                    
-                    {(profile?.socialLinks?.linkedin || profile?.socialLinks?.twitter || profile?.socialLinks?.website) && (
+
+                    {(profile?.socialLinks?.linkedin ||
+                      profile?.socialLinks?.twitter ||
+                      profile?.socialLinks?.website) && (
                       <div className="mt-6">
                         <h3 className="font-medium text-gray-700 mb-3">Social Links</h3>
                         <div className="space-y-2">
                           {profile.socialLinks?.linkedin && (
-                            <a 
-                              href={profile.socialLinks.linkedin} 
-                              target="_blank" 
+                            <a
+                              href={profile.socialLinks.linkedin}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 flex items-center"
                             >
-                              <svg className="h-4 w-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="h-4 w-4 mr-1.5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.454C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z" />
                               </svg>
                               LinkedIn
                             </a>
                           )}
-                          
+
                           {profile.socialLinks?.twitter && (
-                            <a 
-                              href={profile.socialLinks.twitter} 
-                              target="_blank" 
+                            <a
+                              href={profile.socialLinks.twitter}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 flex items-center"
                             >
-                              <svg className="h-4 w-4 mr-1.5" fill="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="h-4 w-4 mr-1.5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 10.054 10.054 0 01-3.127 1.195 4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
                               </svg>
                               Twitter
                             </a>
                           )}
-                          
+
                           {profile.socialLinks?.website && (
-                            <a 
-                              href={profile.socialLinks.website} 
-                              target="_blank" 
+                            <a
+                              href={profile.socialLinks.website}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 flex items-center"
                             >
-                              <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              <svg
+                                className="h-4 w-4 mr-1.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                />
                               </svg>
                               Website
                             </a>
@@ -467,7 +515,7 @@ const Settings: React.FC = () => {
       {/* API Configuration */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <h2 className="text-xl font-semibold mb-6">API Configuration</h2>
-        
+
         <div className="mb-6">
           <div className="flex items-center mb-2">
             <Key size={18} className="mr-2 text-gray-500" />
@@ -475,16 +523,17 @@ const Settings: React.FC = () => {
           </div>
           <p className="text-gray-600 mb-4">
             Used for email drafting and sentiment analysis. Get your API key from the{' '}
-            <a 
-              href="https://platform.openai.com/account/api-keys" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://platform.openai.com/account/api-keys"
+              target="_blank"
+              rel="noreferrer"
               className="text-blue-600 hover:underline"
             >
               OpenAI dashboard
-            </a>.
+            </a>
+            .
           </p>
-          
+
           <div className="flex">
             <div className="relative flex-1">
               <input
@@ -510,7 +559,7 @@ const Settings: React.FC = () => {
             </button>
           </div>
         </div>
-        
+
         <div>
           <div className="flex items-center mb-2">
             <Key size={18} className="mr-2 text-gray-500" />
@@ -518,16 +567,17 @@ const Settings: React.FC = () => {
           </div>
           <p className="text-gray-600 mb-4">
             Used for follow-up suggestions and task prioritization. Get your API key from the{' '}
-            <a 
-              href="https://makersuite.google.com/app/apikey" 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href="https://makersuite.google.com/app/apikey"
+              target="_blank"
+              rel="noreferrer"
               className="text-blue-600 hover:underline"
             >
               Google AI Studio
-            </a>.
+            </a>
+            .
           </p>
-          
+
           <div className="flex">
             <div className="relative flex-1">
               <input
@@ -554,7 +604,7 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Account Information */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-xl font-semibold mb-4">Account Information</h2>
@@ -562,10 +612,15 @@ const Settings: React.FC = () => {
           <span className="font-medium">Email:</span> {user?.email}
         </p>
         <p className="text-gray-600 mb-2">
-          <span className="font-medium">Account Status:</span> {profile?.accountStatus?.charAt(0).toUpperCase() + profile?.accountStatus?.slice(1) || 'Active'}
+          <span className="font-medium">Account Status:</span>{' '}
+          {profile?.accountStatus?.charAt(0).toUpperCase() + profile?.accountStatus?.slice(1) ||
+            'Active'}
         </p>
         <p className="text-gray-600">
-          <span className="font-medium">Member Since:</span> {profile?.createdAt ? profile.createdAt.toLocaleDateString() : new Date().toLocaleDateString()}
+          <span className="font-medium">Member Since:</span>{' '}
+          {profile?.createdAt
+            ? profile.createdAt.toLocaleDateString()
+            : new Date().toLocaleDateString()}
         </p>
       </div>
     </div>

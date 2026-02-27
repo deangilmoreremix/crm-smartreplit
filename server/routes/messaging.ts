@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express } from 'express';
 
 // In-memory storage for messaging (temporary until database schema is added)
 interface MessageProvider {
@@ -44,7 +44,7 @@ const messageProviders: MessageProvider[] = [
     supportedFeatures: ['SMS', 'MMS', 'Voice'],
     status: 'active',
     deliveryRate: 0.98,
-    responseTime: 2
+    responseTime: 2,
   },
   {
     id: 'aws-sns',
@@ -54,8 +54,8 @@ const messageProviders: MessageProvider[] = [
     supportedFeatures: ['SMS'],
     status: 'active',
     deliveryRate: 0.95,
-    responseTime: 3
-  }
+    responseTime: 3,
+  },
 ];
 
 const messages: Message[] = [
@@ -68,7 +68,7 @@ const messages: Message[] = [
     sentAt: new Date().toISOString(),
     gpt5Suggestions: ['Consider adding a specific time suggestion', 'Include a call-to-action'],
     sentiment: 'positive',
-    priority: 'high'
+    priority: 'high',
   },
   {
     id: '2',
@@ -78,8 +78,8 @@ const messages: Message[] = [
     status: 'sent',
     sentAt: new Date(Date.now() - 3600000).toISOString(),
     sentiment: 'neutral',
-    priority: 'medium'
-  }
+    priority: 'medium',
+  },
 ];
 
 const messagingStats: MessagingStats = {
@@ -89,7 +89,7 @@ const messagingStats: MessagingStats = {
   averageResponseTime: 2.3,
   totalCost: 1.85,
   costPerMessage: 0.0076,
-  activeProviders: 2
+  activeProviders: 2,
 };
 
 export function registerMessagingRoutes(app: Express): void {
@@ -153,7 +153,9 @@ export function registerMessagingRoutes(app: Express): void {
       }
 
       // Validate provider exists
-      const providerExists = messageProviders.find(p => p.id === provider && p.status === 'active');
+      const providerExists = messageProviders.find(
+        (p) => p.id === provider && p.status === 'active'
+      );
       if (!providerExists) {
         return res.status(400).json({ error: 'Invalid or inactive provider' });
       }
@@ -165,7 +167,7 @@ export function registerMessagingRoutes(app: Express): void {
         provider,
         status: 'sent',
         sentAt: new Date().toISOString(),
-        priority: 'medium'
+        priority: 'medium',
       };
 
       messages.push(newMessage);
@@ -190,7 +192,7 @@ export function registerMessagingRoutes(app: Express): void {
       }
 
       const messageId = req.params.id;
-      const message = messages.find(m => m.id === messageId);
+      const message = messages.find((m) => m.id === messageId);
 
       if (!message) {
         return res.status(404).json({ error: 'Message not found' });
@@ -214,7 +216,7 @@ export function registerMessagingRoutes(app: Express): void {
       const messageId = req.params.id;
       const { status } = req.body;
 
-      const messageIndex = messages.findIndex(m => m.id === messageId);
+      const messageIndex = messages.findIndex((m) => m.id === messageId);
 
       if (messageIndex === -1) {
         return res.status(404).json({ error: 'Message not found' });
@@ -225,7 +227,8 @@ export function registerMessagingRoutes(app: Express): void {
       // Update stats if message was delivered
       if (status === 'delivered') {
         messagingStats.deliveredMessages += 1;
-        messagingStats.deliveryRate = messagingStats.deliveredMessages / messagingStats.totalMessages;
+        messagingStats.deliveryRate =
+          messagingStats.deliveredMessages / messagingStats.totalMessages;
       }
 
       res.json(messages[messageIndex]);

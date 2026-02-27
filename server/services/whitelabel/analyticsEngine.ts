@@ -99,7 +99,7 @@ class AnalyticsEngine {
           metric_type: metricType,
           metric_value: metricValue,
           metadata: metadata || {},
-          recorded_at: new Date().toISOString()
+          recorded_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -109,11 +109,10 @@ class AnalyticsEngine {
       }
 
       return this.mapDatabaseToMetric(data);
-
     } catch (error: any) {
       await errorLogger.logError('Metric recording failed', error, {
         tenantId,
-        metricType
+        metricType,
       });
       throw error;
     }
@@ -132,10 +131,7 @@ class AnalyticsEngine {
       throw new Error('Supabase not configured');
     }
 
-    let query = supabase
-      .from('analytics_metrics')
-      .select('*')
-      .eq('tenant_id', tenantId);
+    let query = supabase.from('analytics_metrics').select('*').eq('tenant_id', tenantId);
 
     if (metricType) {
       query = query.eq('metric_type', metricType);
@@ -155,7 +151,7 @@ class AnalyticsEngine {
       throw new Error(`Failed to get metrics: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToMetric(d));
+    return (data || []).map((d) => this.mapDatabaseToMetric(d));
   }
 
   /**
@@ -193,8 +189,8 @@ class AnalyticsEngine {
       const totalUsers = users?.length || 0;
       const totalContacts = contacts?.length || 0;
       const totalDeals = deals?.length || 0;
-      
-      const wonDeals = deals?.filter(d => d.status === 'won') || [];
+
+      const wonDeals = deals?.filter((d) => d.status === 'won') || [];
       const totalRevenue = wonDeals.reduce((sum, deal) => sum + parseFloat(deal.value || '0'), 0);
       const avgDealValue = wonDeals.length > 0 ? totalRevenue / wonDeals.length : 0;
       const conversionRate = totalDeals > 0 ? (wonDeals.length / totalDeals) * 100 : 0;
@@ -204,45 +200,47 @@ class AnalyticsEngine {
       const previousStart = new Date(startDate.getTime() - periodDuration);
       const previousEnd = startDate;
 
-      const previousContacts = contacts?.filter(c => 
-        new Date(c.created_at) >= previousStart && new Date(c.created_at) < previousEnd
-      ).length || 0;
+      const previousContacts =
+        contacts?.filter(
+          (c) => new Date(c.created_at) >= previousStart && new Date(c.created_at) < previousEnd
+        ).length || 0;
 
-      const previousDeals = deals?.filter(d => 
-        new Date(d.created_at) >= previousStart && new Date(d.created_at) < previousEnd
-      ).length || 0;
+      const previousDeals =
+        deals?.filter(
+          (d) => new Date(d.created_at) >= previousStart && new Date(d.created_at) < previousEnd
+        ).length || 0;
 
-      const currentContacts = contacts?.filter(c => 
-        new Date(c.created_at) >= startDate && new Date(c.created_at) <= endDate
-      ).length || 0;
+      const currentContacts =
+        contacts?.filter(
+          (c) => new Date(c.created_at) >= startDate && new Date(c.created_at) <= endDate
+        ).length || 0;
 
-      const currentDeals = deals?.filter(d => 
-        new Date(d.created_at) >= startDate && new Date(d.created_at) <= endDate
-      ).length || 0;
+      const currentDeals =
+        deals?.filter(
+          (d) => new Date(d.created_at) >= startDate && new Date(d.created_at) <= endDate
+        ).length || 0;
 
-      const usersGrowth = previousContacts > 0 
-        ? ((currentContacts - previousContacts) / previousContacts) * 100 
-        : 0;
+      const usersGrowth =
+        previousContacts > 0 ? ((currentContacts - previousContacts) / previousContacts) * 100 : 0;
 
-      const dealsGrowth = previousDeals > 0 
-        ? ((currentDeals - previousDeals) / previousDeals) * 100 
-        : 0;
+      const dealsGrowth =
+        previousDeals > 0 ? ((currentDeals - previousDeals) / previousDeals) * 100 : 0;
 
       // Top performers
       const topDeals = (deals || [])
         .sort((a, b) => parseFloat(b.value || '0') - parseFloat(a.value || '0'))
         .slice(0, 5)
-        .map(d => ({
+        .map((d) => ({
           id: d.id.toString(),
           title: d.title,
-          value: parseFloat(d.value || '0')
+          value: parseFloat(d.value || '0'),
         }));
 
       return {
         tenantId,
         period: {
           start: startDate,
-          end: endDate
+          end: endDate,
         },
         metrics: {
           totalUsers,
@@ -252,22 +250,21 @@ class AnalyticsEngine {
           totalRevenue,
           conversionRate,
           avgDealValue,
-          avgResponseTime: 0 // Would need response time tracking
+          avgResponseTime: 0, // Would need response time tracking
         },
         trends: {
           usersGrowth,
           revenueGrowth: 0, // Would need previous revenue data
-          dealsGrowth
+          dealsGrowth,
         },
         topPerformers: {
           users: [], // Would need user performance metrics
-          deals: topDeals
-        }
+          deals: topDeals,
+        },
       };
-
     } catch (error: any) {
       await errorLogger.logError('Analytics summary generation failed', error, {
-        tenantId
+        tenantId,
       });
       throw error;
     }
@@ -307,7 +304,7 @@ class AnalyticsEngine {
           next_generation_at: nextGenerationAt?.toISOString(),
           created_by: createdBy,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -317,11 +314,10 @@ class AnalyticsEngine {
       }
 
       return this.mapDatabaseToReport(data);
-
     } catch (error: any) {
       await errorLogger.logError('Report creation failed', error, {
         tenantId,
-        reportName: name
+        reportName: name,
       });
       throw error;
     }
@@ -373,10 +369,10 @@ class AnalyticsEngine {
             report: {
               id: report.id,
               name: report.name,
-              generatedAt: new Date().toISOString()
+              generatedAt: new Date().toISOString(),
             },
             summary,
-            metrics
+            metrics,
           };
           break;
 
@@ -390,7 +386,7 @@ class AnalyticsEngine {
           formattedData = {
             message: `${report.format.toUpperCase()} generation not yet implemented`,
             summary,
-            metrics
+            metrics,
           };
           break;
 
@@ -403,18 +399,17 @@ class AnalyticsEngine {
         .from('analytics_reports')
         .update({
           last_generated_at: new Date().toISOString(),
-          next_generation_at: this.calculateNextGeneration(report.schedule)?.toISOString()
+          next_generation_at: this.calculateNextGeneration(report.schedule)?.toISOString(),
         })
         .eq('id', reportId);
 
       return {
         data: formattedData,
-        format: report.format
+        format: report.format,
       };
-
     } catch (error: any) {
       await errorLogger.logError('Report generation failed', error, {
-        reportId
+        reportId,
       });
       throw error;
     }
@@ -438,7 +433,7 @@ class AnalyticsEngine {
       throw new Error(`Failed to list reports: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToReport(d));
+    return (data || []).map((d) => this.mapDatabaseToReport(d));
   }
 
   /**
@@ -450,7 +445,7 @@ class AnalyticsEngine {
     }
 
     const dbUpdates: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (updates.name) dbUpdates.name = updates.name;
@@ -485,10 +480,7 @@ class AnalyticsEngine {
       throw new Error('Supabase not configured');
     }
 
-    const { error } = await supabase
-      .from('analytics_reports')
-      .delete()
-      .eq('id', reportId);
+    const { error } = await supabase.from('analytics_reports').delete().eq('id', reportId);
 
     if (error) {
       throw new Error(`Failed to delete report: ${error.message}`);
@@ -548,7 +540,7 @@ class AnalyticsEngine {
     csv += `Avg Deal Value,${summary.metrics.avgDealValue},${new Date().toISOString()}\n`;
 
     // Add detailed metrics
-    metrics.forEach(metric => {
+    metrics.forEach((metric) => {
       csv += `${metric.metricType},${metric.metricValue},${metric.recordedAt.toISOString()}\n`;
     });
 
@@ -583,17 +575,15 @@ class AnalyticsEngine {
       for (const reportData of reports) {
         try {
           await this.generateReport(reportData.id);
-          
+
           // In production, send report to recipients
           console.log(`Report generated: ${reportData.name} for tenant ${reportData.tenant_id}`);
-
         } catch (error: any) {
           await errorLogger.logError('Scheduled report generation failed', error, {
-            reportId: reportData.id
+            reportId: reportData.id,
           });
         }
       }
-
     } catch (error: any) {
       await errorLogger.logError('Scheduled report processing failed', error);
     }
@@ -624,18 +614,12 @@ class AnalyticsEngine {
       }
 
       if (dataType === 'deals' || dataType === 'all') {
-        const { data: deals } = await supabase
-          .from('deals')
-          .select('*')
-          .eq('profile_id', tenantId);
+        const { data: deals } = await supabase.from('deals').select('*').eq('profile_id', tenantId);
         exportData.deals = deals || [];
       }
 
       if (dataType === 'tasks' || dataType === 'all') {
-        const { data: tasks } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('profile_id', tenantId);
+        const { data: tasks } = await supabase.from('tasks').select('*').eq('profile_id', tenantId);
         exportData.tasks = tasks || [];
       }
 
@@ -668,14 +652,13 @@ class AnalyticsEngine {
       return {
         data: formattedData,
         format,
-        filename
+        filename,
       };
-
     } catch (error: any) {
       await errorLogger.logError('Data export failed', error, {
         tenantId,
         dataType,
-        format
+        format,
       });
       throw error;
     }
@@ -691,14 +674,14 @@ class AnalyticsEngine {
       if (records.length === 0) continue;
 
       csv += `\n${tableName.toUpperCase()}\n`;
-      
+
       // Headers
       const headers = Object.keys(records[0]);
       csv += headers.join(',') + '\n';
 
       // Rows
-      records.forEach(record => {
-        const values = headers.map(header => {
+      records.forEach((record) => {
+        const values = headers.map((header) => {
           const value = record[header];
           if (value === null || value === undefined) return '';
           if (typeof value === 'string' && value.includes(',')) {
@@ -723,7 +706,7 @@ class AnalyticsEngine {
       metricType: data.metric_type,
       metricValue: parseFloat(data.metric_value),
       metadata: data.metadata || {},
-      recordedAt: new Date(data.recorded_at)
+      recordedAt: new Date(data.recorded_at),
     };
   }
 
@@ -744,7 +727,7 @@ class AnalyticsEngine {
       format: data.format,
       createdBy: data.created_by,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 }

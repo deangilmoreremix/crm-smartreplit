@@ -9,11 +9,11 @@ import { Contact } from '../../types/contact';
 import { AIEnhancedContactCard } from '../contacts/AIEnhancedContactCard';
 import { DarkModeToggle } from '../ui/DarkModeToggle';
 import Fuse from 'fuse.js';
-import { 
-  X, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
+import {
+  X,
+  Search,
+  Filter,
+  MoreHorizontal,
   Edit,
   Plus,
   Users,
@@ -38,7 +38,7 @@ import {
   Info,
   Mail,
   Share2,
-  Layers // Import Layers icon
+  Layers, // Import Layers icon
 } from 'lucide-react';
 
 interface ContactsModalProps {
@@ -50,24 +50,24 @@ const interestColors = {
   hot: 'bg-red-500',
   medium: 'bg-yellow-500',
   low: 'bg-blue-500',
-  cold: 'bg-gray-400'
+  cold: 'bg-gray-400',
 };
 
 const interestLabels = {
   hot: 'Hot Client',
   medium: 'Medium Interest',
   low: 'Low Interest',
-  cold: 'Non Interest'
+  cold: 'Non Interest',
 };
 
 const sourceColors: { [key: string]: string } = {
-  'LinkedIn': 'bg-blue-600',
-  'Facebook': 'bg-blue-500',
-  'Email': 'bg-green-500',
-  'Website': 'bg-purple-500',
-  'Referral': 'bg-orange-500',
-  'Typeform': 'bg-pink-500',
-  'Cold Call': 'bg-gray-600'
+  LinkedIn: 'bg-blue-600',
+  Facebook: 'bg-blue-500',
+  Email: 'bg-green-500',
+  Website: 'bg-purple-500',
+  Referral: 'bg-orange-500',
+  Typeform: 'bg-pink-500',
+  'Cold Call': 'bg-gray-600',
 };
 
 const filterOptions = [
@@ -75,7 +75,7 @@ const filterOptions = [
   { label: 'Hot Client', value: 'hot' },
   { label: 'Medium Interest', value: 'medium' },
   { label: 'Low Interest', value: 'low' },
-  { label: 'Non Interest', value: 'cold' }
+  { label: 'Non Interest', value: 'cold' },
 ];
 
 const statusOptions = [
@@ -83,11 +83,12 @@ const statusOptions = [
   { label: 'Lead', value: 'lead' },
   { label: 'Prospect', value: 'prospect' },
   { label: 'Customer', value: 'customer' },
-  { label: 'Churned', value: 'churned' }
+  { label: 'Churned', value: 'churned' },
 ];
 
 export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose }) => {
-  const { contacts, isLoading, updateContact, addContact, analyzeContact, enrichContact } = useContactStore();
+  const { contacts, isLoading, updateContact, addContact, analyzeContact, enrichContact } =
+    useContactStore();
 
   // UI State
   const [activeFilter, setActiveFilter] = useState('all');
@@ -102,8 +103,11 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
   const [bulkActionDropdown, setBulkActionDropdown] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'company' | 'score' | 'updated'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [analysisProgress, setAnalysisProgress] = useState<{current: number, total: number} | null>(null);
-  const [aiResults, setAiResults] = useState<{success: number, failed: number} | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
+  const [aiResults, setAiResults] = useState<{ success: number; failed: number } | null>(null);
   const [analyzingContactIds, setAnalyzingContactIds] = useState<string[]>([]);
 
   // Modal States
@@ -150,17 +154,17 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
     // Apply search filter
     if (searchTerm.trim()) {
       const results = fuse.search(searchTerm);
-      filtered = results.map(result => result.item);
+      filtered = results.map((result) => result.item);
     }
 
     // Apply interest filter
     if (activeFilter !== 'all') {
-      filtered = filtered.filter(contact => contact.interestLevel === activeFilter);
+      filtered = filtered.filter((contact) => contact.interestLevel === activeFilter);
     }
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(contact => contact.status === statusFilter);
+      filtered = filtered.filter((contact) => contact.status === statusFilter);
     }
 
     // Apply sorting
@@ -191,15 +195,16 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
 
   // Handle bulk AI analysis
   const handleBulkAnalysis = async () => {
-    const contactsToAnalyze = selectedContacts.length > 0 
-      ? selectedContacts.map(id => contacts[id]).filter(Boolean)
-      : filteredContacts.slice(0, 10);
+    const contactsToAnalyze =
+      selectedContacts.length > 0
+        ? selectedContacts.map((id) => contacts[id]).filter(Boolean)
+        : filteredContacts.slice(0, 10);
 
     if (contactsToAnalyze.length === 0) return;
 
     setIsAnalyzing(true);
     setAnalysisProgress({ current: 0, total: contactsToAnalyze.length });
-    setAnalyzingContactIds(contactsToAnalyze.map(c => c.id));
+    setAnalyzingContactIds(contactsToAnalyze.map((c) => c.id));
 
     let successCount = 0;
     let failedCount = 0;
@@ -229,10 +234,8 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
 
   // Toggle contact selection
   const toggleContactSelection = (contactId: string) => {
-    setSelectedContacts(prev => 
-      prev.includes(contactId) 
-        ? prev.filter(id => id !== contactId)
-        : [...prev, contactId]
+    setSelectedContacts((prev) =>
+      prev.includes(contactId) ? prev.filter((id) => id !== contactId) : [...prev, contactId]
     );
   };
 
@@ -241,26 +244,31 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
     if (selectedContacts.length === filteredContacts.length) {
       setSelectedContacts([]);
     } else {
-      setSelectedContacts(filteredContacts.map(c => c.id));
+      setSelectedContacts(filteredContacts.map((c) => c.id));
     }
   };
 
   // Export contacts
   const handleExport = () => {
-    const contactsToExport = selectedContacts.length > 0 
-      ? selectedContacts.map(id => contacts[id]).filter(Boolean)
-      : filteredContacts;
+    const contactsToExport =
+      selectedContacts.length > 0
+        ? selectedContacts.map((id) => contacts[id]).filter(Boolean)
+        : filteredContacts;
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "Name,Email,Company,Position,Industry,Status,Interest Level,Score\n"
-      + contactsToExport.map(contact => 
-          `"${contact.name}","${contact.email}","${contact.company || ''}","${contact.position || ''}","${contact.industry || ''}","${contact.status}","${contact.interestLevel || ''}","${contact.aiScore || contact.score || 0}"`
-        ).join("\n");
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'Name,Email,Company,Position,Industry,Status,Interest Level,Score\n' +
+      contactsToExport
+        .map(
+          (contact) =>
+            `"${contact.name}","${contact.email}","${contact.company || ''}","${contact.position || ''}","${contact.industry || ''}","${contact.status}","${contact.interestLevel || ''}","${contact.aiScore || contact.score || 0}"`
+        )
+        .join('\n');
 
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "contacts_export.csv");
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'contacts_export.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -288,9 +296,9 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
 
           <div className="flex items-center space-x-2">
             <DarkModeToggle />
-            <ModernButton 
+            <ModernButton
               onClick={onClose}
-              variant="ghost" 
+              variant="ghost"
               size="sm"
               className="text-gray-500 hover:text-gray-700"
             >
@@ -327,7 +335,7 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
                   className="flex items-center space-x-1"
                 >
                   <Filter className="w-4 h-4" />
-                  <span>{filterOptions.find(f => f.value === activeFilter)?.label}</span>
+                  <span>{filterOptions.find((f) => f.value === activeFilter)?.label}</span>
                   <ChevronDown className="w-4 h-4" />
                 </ModernButton>
 
@@ -359,7 +367,7 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
                   size="sm"
                   className="flex items-center space-x-1"
                 >
-                  <span>{statusOptions.find(s => s.value === statusFilter)?.label}</span>
+                  <span>{statusOptions.find((s) => s.value === statusFilter)?.label}</span>
                   <ChevronDown className="w-4 h-4" />
                 </ModernButton>
 
@@ -400,7 +408,11 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
                   variant="outline"
                   size="sm"
                 >
-                  {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                  {sortOrder === 'asc' ? (
+                    <ArrowUp className="w-4 h-4" />
+                  ) : (
+                    <ArrowDown className="w-4 h-4" />
+                  )}
                 </ModernButton>
               </div>
 
@@ -429,13 +441,11 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
           {/* Action Bar */}
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <ModernButton
-                onClick={selectAllContacts}
-                variant="outline"
-                size="sm"
-              >
+              <ModernButton onClick={selectAllContacts} variant="outline" size="sm">
                 <CheckCheck className="w-4 h-4 mr-1" />
-                {selectedContacts.length === filteredContacts.length ? 'Deselect All' : 'Select All'}
+                {selectedContacts.length === filteredContacts.length
+                  ? 'Deselect All'
+                  : 'Select All'}
               </ModernButton>
 
               {selectedContacts.length > 0 && (
@@ -481,20 +491,12 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
             </div>
 
             <div className="flex items-center space-x-2">
-              <ModernButton
-                onClick={() => setIsImportModalOpen(true)}
-                variant="outline"
-                size="sm"
-              >
+              <ModernButton onClick={() => setIsImportModalOpen(true)} variant="outline" size="sm">
                 <Upload className="w-4 h-4 mr-1" />
                 Import
               </ModernButton>
 
-              <ModernButton
-                onClick={handleExport}
-                variant="outline"
-                size="sm"
-              >
+              <ModernButton onClick={handleExport} variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-1" />
                 Export
               </ModernButton>
@@ -518,9 +520,7 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
               <div className="flex items-center space-x-3">
                 <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900">
-                    AI Analysis in Progress
-                  </p>
+                  <p className="text-sm font-medium text-blue-900">AI Analysis in Progress</p>
                   {analysisProgress && (
                     <p className="text-xs text-blue-700">
                       Processing {analysisProgress.current} of {analysisProgress.total} contacts
@@ -530,9 +530,11 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
               </div>
               {analysisProgress && (
                 <div className="w-32 bg-blue-200 rounded-full h-2">
-                  <div 
+                  <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(analysisProgress.current / analysisProgress.total) * 100}%` }}
+                    style={{
+                      width: `${(analysisProgress.current / analysisProgress.total) * 100}%`,
+                    }}
                   />
                 </div>
               )}
@@ -547,9 +549,7 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
               <div className="flex items-center space-x-3">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <div>
-                  <p className="text-sm font-medium text-green-900">
-                    Analysis Complete
-                  </p>
+                  <p className="text-sm font-medium text-green-900">Analysis Complete</p>
                   <p className="text-xs text-green-700">
                     {aiResults.success} contacts analyzed successfully
                     {aiResults.failed > 0 && `, ${aiResults.failed} failed`}
@@ -582,21 +582,16 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
               <div className="text-center">
                 <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {searchTerm || activeFilter !== 'all' || statusFilter !== 'all' 
+                  {searchTerm || activeFilter !== 'all' || statusFilter !== 'all'
                     ? 'No contacts match your filters'
-                    : 'No contacts yet'
-                  }
+                    : 'No contacts yet'}
                 </h3>
                 <p className="text-gray-600 mb-4">
                   {searchTerm || activeFilter !== 'all' || statusFilter !== 'all'
                     ? 'Try adjusting your search or filters'
-                    : 'Get started by adding your first contact'
-                  }
+                    : 'Get started by adding your first contact'}
                 </p>
-                <ModernButton
-                  onClick={() => setIsNewContactModalOpen(true)}
-                  variant="primary"
-                >
+                <ModernButton onClick={() => setIsNewContactModalOpen(true)} variant="primary">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Contact
                 </ModernButton>
@@ -638,12 +633,24 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
                             className="rounded border-gray-300"
                           />
                         </th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Contact</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Company</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Interest</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Score</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                          Contact
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                          Company
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                          Status
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                          Interest
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                          Score
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -659,8 +666,8 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center space-x-3">
-                              <AvatarWithStatus 
-                                src={contact.avatarSrc || contact.avatar} 
+                              <AvatarWithStatus
+                                src={contact.avatarSrc || contact.avatar}
                                 name={contact.name}
                                 size="sm"
                                 className="flex-shrink-0"
@@ -684,19 +691,33 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
                           </td>
                           <td className="px-4 py-3">
                             {contact.interestLevel && (
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${interestColors[contact.interestLevel as keyof typeof interestColors]}`}>
-                                {interestLabels[contact.interestLevel as keyof typeof interestLabels]}
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${interestColors[contact.interestLevel as keyof typeof interestColors]}`}
+                              >
+                                {
+                                  interestLabels[
+                                    contact.interestLevel as keyof typeof interestLabels
+                                  ]
+                                }
                               </span>
                             )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center space-x-2">
-                              <span className="font-medium">{contact.aiScore || contact.score || 0}</span>
-                              <div className={`w-2 h-2 rounded-full ${
-                                (contact.aiScore || contact.score || 0) >= 80 ? 'bg-green-500' :
-                                (contact.aiScore || contact.score || 0) >= 60 ? 'bg-blue-500' :
-                                (contact.aiScore || contact.score || 0) >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                              }`} />
+                              <span className="font-medium">
+                                {contact.aiScore || contact.score || 0}
+                              </span>
+                              <div
+                                className={`w-2 h-2 rounded-full ${
+                                  (contact.aiScore || contact.score || 0) >= 80
+                                    ? 'bg-green-500'
+                                    : (contact.aiScore || contact.score || 0) >= 60
+                                      ? 'bg-blue-500'
+                                      : (contact.aiScore || contact.score || 0) >= 40
+                                        ? 'bg-yellow-500'
+                                        : 'bg-red-500'
+                                }`}
+                              />
                             </div>
                           </td>
                           <td className="px-4 py-3">
@@ -737,7 +758,7 @@ export const ContactsModal: React.FC<ContactsModalProps> = ({ isOpen, onClose })
           isOpen={isImportModalOpen}
           onClose={() => setIsImportModalOpen(false)}
           onImport={(importedContacts) => {
-            importedContacts.forEach(contact => {
+            importedContacts.forEach((contact) => {
               addContact(contact);
             });
             setIsImportModalOpen(false);

@@ -40,7 +40,7 @@ export class AssistantThreadManager {
     // Add message to OpenAI Assistant thread
     // This maintains persistent conversation context
 
-    const thread = Array.from(this.threads.values()).find(t => t.id === threadId);
+    const thread = Array.from(this.threads.values()).find((t) => t.id === threadId);
     if (thread) {
       thread.lastInteraction = new Date();
       thread.messageCount++;
@@ -59,13 +59,13 @@ export class AssistantThreadManager {
     const response = await fetch('/api/openai/assistants/threads', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         entityType,
         entityId,
-        context
-      })
+        context,
+      }),
     });
 
     if (!response.ok) {
@@ -84,7 +84,7 @@ export class AssistantThreadManager {
       assistantId: this.getAssistantIdForEntity(entityType),
       lastInteraction: new Date(),
       messageCount: 0,
-      context: context || {}
+      context: context || {},
     };
   }
 
@@ -94,7 +94,7 @@ export class AssistantThreadManager {
       'pipeline-intelligence',
       'contact-analytics',
       'deal-insights',
-      'task-automation'
+      'task-automation',
     ];
 
     for (const app of remoteApps) {
@@ -102,7 +102,7 @@ export class AssistantThreadManager {
         await fetch(`/api/remote-sync/${app}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ thread })
+          body: JSON.stringify({ thread }),
         });
       } catch (error) {
         console.warn(`Failed to sync thread to ${app}:`, error);
@@ -112,28 +112,33 @@ export class AssistantThreadManager {
 
   private getAssistantIdForEntity(entityType: string): string {
     const assistantMap = {
-      'contact': process.env.VITE_CONTACT_ASSISTANT_ID,
-      'deal': process.env.VITE_DEAL_ASSISTANT_ID,
-      'task': process.env.VITE_TASK_ASSISTANT_ID,
-      'pipeline': process.env.VITE_PIPELINE_ASSISTANT_ID
+      contact: process.env.VITE_CONTACT_ASSISTANT_ID,
+      deal: process.env.VITE_DEAL_ASSISTANT_ID,
+      task: process.env.VITE_TASK_ASSISTANT_ID,
+      pipeline: process.env.VITE_PIPELINE_ASSISTANT_ID,
     };
 
     return assistantMap[entityType as keyof typeof assistantMap] || 'default_assistant';
   }
 
-  private async callAssistantThread(message: string, assistantId: string, threadId?: string, context?: any): Promise<any> {
+  private async callAssistantThread(
+    message: string,
+    assistantId: string,
+    threadId?: string,
+    context?: any
+  ): Promise<any> {
     try {
       const response = await fetch('/api/openai/assistants/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message,
           assistantId,
           threadId,
-          context
-        })
+          context,
+        }),
       });
 
       if (!response.ok) {
@@ -150,7 +155,7 @@ export class AssistantThreadManager {
         model: 'gpt-4o-assistant',
         confidence: 90,
         threadId: data.threadId,
-        runId: data.runId
+        runId: data.runId,
       };
     } catch (error) {
       console.error('Assistant thread call failed:', error);

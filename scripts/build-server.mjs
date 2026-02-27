@@ -8,7 +8,7 @@ await build({
   target: 'node20',
   format: 'esm',
   outfile: 'dist/index.js',
-  packages: 'external'
+  packages: 'external',
 });
 
 // Copy static files to dist/public for production

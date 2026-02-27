@@ -48,7 +48,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   fetchAppointments: async () => {
     set({ isLoading: true, error: null });
-    
+
     try {
       // Mock data - in a real app, this would be an API call
       const mockAppointments: Appointment[] = [
@@ -66,7 +66,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
           status: 'scheduled',
           notes: 'Discuss Q4 strategy and upcoming product launches',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: '2',
@@ -83,7 +83,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
           location: '',
           notes: 'Demo the new features to potential client',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: '3',
@@ -100,15 +100,18 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
           location: '123 Business Ave, Suite 400',
           notes: 'Tour of their facilities and team meeting',
           createdAt: new Date(),
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       ];
-      
-      const appointmentsMap = mockAppointments.reduce((acc, appointment) => {
-        acc[appointment.id] = appointment;
-        return acc;
-      }, {} as Record<string, Appointment>);
-      
+
+      const appointmentsMap = mockAppointments.reduce(
+        (acc, appointment) => {
+          acc[appointment.id] = appointment;
+          return acc;
+        },
+        {} as Record<string, Appointment>
+      );
+
       set({ appointments: appointmentsMap, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch appointments', isLoading: false });
@@ -117,7 +120,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   createAppointment: async (appointmentData) => {
     set({ isLoading: true, error: null });
-    
+
     try {
       const newAppointment: Appointment = {
         id: Date.now().toString(),
@@ -134,17 +137,17 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         location: appointmentData.location,
         notes: appointmentData.notes,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
       const { appointments } = get();
       set({
         appointments: {
           ...appointments,
-          [newAppointment.id]: newAppointment
+          [newAppointment.id]: newAppointment,
         },
         isLoading: false,
-        selectedSlot: null
+        selectedSlot: null,
       });
     } catch (error) {
       set({ error: 'Failed to create appointment', isLoading: false });
@@ -153,27 +156,27 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   updateAppointment: async (id, updates) => {
     set({ isLoading: true, error: null });
-    
+
     try {
       const { appointments } = get();
       const existingAppointment = appointments[id];
-      
+
       if (!existingAppointment) {
         throw new Error('Appointment not found');
       }
-      
+
       const updatedAppointment: Appointment = {
         ...existingAppointment,
         ...updates,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
+
       set({
         appointments: {
           ...appointments,
-          [id]: updatedAppointment
+          [id]: updatedAppointment,
         },
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ error: 'Failed to update appointment', isLoading: false });
@@ -182,15 +185,15 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   deleteAppointment: async (id) => {
     set({ isLoading: true, error: null });
-    
+
     try {
       const { appointments } = get();
       const { [id]: deleted, ...remainingAppointments } = appointments;
-      
+
       set({
         appointments: remainingAppointments,
         selectedAppointment: null,
-        isLoading: false
+        isLoading: false,
       });
     } catch (error) {
       set({ error: 'Failed to delete appointment', isLoading: false });
@@ -208,11 +211,11 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   isTimeSlotAvailable: (date, duration) => {
     const { appointments } = get();
     const endTime = new Date(date.getTime() + duration * 60000);
-    
-    return !Object.values(appointments).some(appointment => {
+
+    return !Object.values(appointments).some((appointment) => {
       const appointmentStart = appointment.date;
       const appointmentEnd = appointment.endDate;
-      
+
       // Check if the requested time slot overlaps with any existing appointment
       return (
         (date >= appointmentStart && date < appointmentEnd) ||
@@ -224,14 +227,16 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
   getAppointmentsForDate: (date) => {
     const { appointments } = get();
-    
-    return Object.values(appointments).filter(appointment => {
-      const appointmentDate = appointment.date;
-      return (
-        appointmentDate.getFullYear() === date.getFullYear() &&
-        appointmentDate.getMonth() === date.getMonth() &&
-        appointmentDate.getDate() === date.getDate()
-      );
-    }).sort((a, b) => a.date.getTime() - b.date.getTime());
-  }
+
+    return Object.values(appointments)
+      .filter((appointment) => {
+        const appointmentDate = appointment.date;
+        return (
+          appointmentDate.getFullYear() === date.getFullYear() &&
+          appointmentDate.getMonth() === date.getMonth() &&
+          appointmentDate.getDate() === date.getDate()
+        );
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  },
 }));

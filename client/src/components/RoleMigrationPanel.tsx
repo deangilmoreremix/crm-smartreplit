@@ -19,20 +19,20 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
   const runMigration = async () => {
     setIsRunningMigration(true);
     setMigrationResult(null);
-    
+
     try {
       const response = await fetch('/api/admin/migrate-roles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setMigrationResult('✅ Migration completed successfully');
         toast({
-          title: "Migration Complete",
-          description: "All user roles have been updated to the new system",
+          title: 'Migration Complete',
+          description: 'All user roles have been updated to the new system',
         });
       } else {
         throw new Error(data.error || 'Migration failed');
@@ -40,9 +40,9 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
     } catch (error: any) {
       setMigrationResult(`❌ Migration failed: ${error.message}`);
       toast({
-        title: "Migration Failed",
+        title: 'Migration Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsRunningMigration(false);
@@ -52,20 +52,20 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
   const runSync = async () => {
     setIsRunningSync(true);
     setSyncResult(null);
-    
+
     try {
       const response = await fetch('/api/admin/sync-metadata', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setSyncResult('✅ Metadata sync completed successfully');
         toast({
-          title: "Sync Complete",
-          description: "Supabase Auth metadata has been synchronized",
+          title: 'Sync Complete',
+          description: 'Supabase Auth metadata has been synchronized',
         });
         if (onComplete) onComplete();
       } else {
@@ -74,9 +74,9 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
     } catch (error: any) {
       setSyncResult(`❌ Sync failed: ${error.message}`);
       toast({
-        title: "Sync Failed",
+        title: 'Sync Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsRunningSync(false);
@@ -93,17 +93,13 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
               <Users className="h-5 w-5" />
               Role Migration
             </CardTitle>
-            <CardDescription>
-              Update existing users to the new 3-tier role system
-            </CardDescription>
+            <CardDescription>Update existing users to the new 3-tier role system</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Badge variant="outline">Super Admin</Badge>
-                <span className="text-sm text-muted-foreground">
-                  dean@, victor@, samuel@
-                </span>
+                <span className="text-sm text-muted-foreground">dean@, victor@, samuel@</span>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">WL User</Badge>
@@ -113,13 +109,11 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="default">Regular User</Badge>
-                <span className="text-sm text-muted-foreground">
-                  New users (core CRM only)
-                </span>
+                <span className="text-sm text-muted-foreground">New users (core CRM only)</span>
               </div>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={runMigration}
               disabled={isRunningMigration}
               className="w-full"
@@ -137,13 +131,15 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
                 </>
               )}
             </Button>
-            
+
             {migrationResult && (
-              <div className={`p-3 rounded-lg text-sm ${
-                migrationResult.startsWith('✅') 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
+              <div
+                className={`p-3 rounded-lg text-sm ${
+                  migrationResult.startsWith('✅')
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
                 {migrationResult}
               </div>
             )}
@@ -157,9 +153,7 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
               <Settings className="h-5 w-5" />
               Metadata Sync
             </CardTitle>
-            <CardDescription>
-              Synchronize role data with Supabase Auth metadata
-            </CardDescription>
+            <CardDescription>Synchronize role data with Supabase Auth metadata</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm text-muted-foreground space-y-1">
@@ -167,8 +161,8 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
               <p>• Ensures email template routing</p>
               <p>• Syncs role information for consistency</p>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={runSync}
               disabled={isRunningSync}
               className="w-full"
@@ -187,13 +181,15 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
                 </>
               )}
             </Button>
-            
+
             {syncResult && (
-              <div className={`p-3 rounded-lg text-sm ${
-                syncResult.startsWith('✅') 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
+              <div
+                className={`p-3 rounded-lg text-sm ${
+                  syncResult.startsWith('✅')
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
                 {syncResult}
               </div>
             )}
@@ -214,19 +210,23 @@ export const RoleMigrationPanel: React.FC<RoleMigrationPanelProps> = ({ onComple
             <div className="flex items-start gap-2">
               <span className="font-semibold text-blue-600 mt-0.5">1.</span>
               <p>
-                <strong>Run Role Migration first:</strong> Updates all existing users in your database to the correct roles (Super Admin for dean@, victor@, samuel@ and WL User for everyone else).
+                <strong>Run Role Migration first:</strong> Updates all existing users in your
+                database to the correct roles (Super Admin for dean@, victor@, samuel@ and WL User
+                for everyone else).
               </p>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-semibold text-blue-600 mt-0.5">2.</span>
               <p>
-                <strong>Run Metadata Sync:</strong> Synchronizes the role information with Supabase Auth to ensure proper email template routing and consistent data.
+                <strong>Run Metadata Sync:</strong> Synchronizes the role information with Supabase
+                Auth to ensure proper email template routing and consistent data.
               </p>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-semibold text-blue-600 mt-0.5">3.</span>
               <p>
-                <strong>Future invites:</strong> When inviting new users, they'll be assigned roles properly and get the correct email templates automatically.
+                <strong>Future invites:</strong> When inviting new users, they'll be assigned roles
+                properly and get the correct email templates automatically.
               </p>
             </div>
           </div>

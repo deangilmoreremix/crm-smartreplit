@@ -8,6 +8,7 @@
 **Author:** Dean Gilmore
 
 **Changes:**
+
 - Added detailed debug logging to `client/src/lib/supabase.ts`
 - Logs now show each validation condition separately:
   - `hasUrl` - VITE_SUPABASE_URL is present
@@ -21,6 +22,7 @@
 Diagnose why `isSupabaseConfigured()` returns `false` in production, causing "Authentication service is not configured" error.
 
 **Console Output Expected:**
+
 ```
 🔍 Supabase Config Debug:
   - VITE_SUPABASE_URL present: true https://gadedbrnqzpfqtsdfzcg.supabase.co...
@@ -42,11 +44,13 @@ Diagnose why `isSupabaseConfigured()` returns `false` in production, causing "Au
 **Author:** Dean Gilmore
 
 **Changes:**
+
 - Created `.supabase` file with project reference
 - Updated `supabase/config.toml` with correct project ID
 - Updated auth URLs for production (`https://app.smartcrm.vip`)
 
 **Files Changed:**
+
 - `.supabase` (new)
 - `supabase/config.toml` (modified)
 
@@ -61,6 +65,7 @@ Link local Supabase CLI to remote project `gadedbrnqzpfqtsdfzcg` (SmartCRM)
 **Author:** Dean Gilmore
 
 **Changes:**
+
 - Created `PASSWORD_RESET_FLOW_AUDIT.md`
 - Documented expected reset flow
 - Listed 5 most likely root causes
@@ -89,7 +94,7 @@ Debug password reset flow that shows "Authentication service is not configured" 
 
 1. **Deploy latest commit** (`49dea9d`) to Netlify
 2. **Check browser console** for debug output
-3. **Verify VITE_ environment variables** in Netlify:
+3. **Verify VITE\_ environment variables** in Netlify:
    - `VITE_SUPABASE_URL` = `https://gadedbrnqzpfqtsdfzcg.supabase.co`
    - `VITE_SUPABASE_ANON_KEY` = (anon key)
 

@@ -29,16 +29,22 @@ const CustomerLeadManagement: React.FC = () => {
             <Users className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Customer & Lead Management</h2>
+            <h2 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Customer & Lead Management
+            </h2>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Manage and nurture your prospect relationships
             </p>
           </div>
         </div>
-        
-        <button className={`flex items-center space-x-2 px-4 py-2 ${
-          isDark ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-        } rounded-lg transition-colors`}>
+
+        <button
+          className={`flex items-center space-x-2 px-4 py-2 ${
+            isDark
+              ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+          } rounded-lg transition-colors`}
+        >
           <UserPlus size={16} />
           <span>Add Contact</span>
         </button>
@@ -49,13 +55,13 @@ const CustomerLeadManagement: React.FC = () => {
         <div className="lg:col-span-2">
           <NewLeadsSection onContactClick={handleContactClick} />
         </div>
-        
+
         {/* Customer Profile */}
         <div className="lg:col-span-1">
           <CustomerProfile />
         </div>
       </div>
-      
+
       {/* Full Leads Section as fallback/alternative */}
       <div className="mb-8 hidden">
         <LeadsSection onContactClick={handleContactClick} />

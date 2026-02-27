@@ -17,7 +17,7 @@ import {
   Pause,
   RotateCcw,
   Save,
-  X
+  X,
 } from 'lucide-react';
 
 interface VideoRecorderModalProps {
@@ -33,9 +33,13 @@ interface VideoRecorderModalProps {
   }) => void;
 }
 
-export default function VideoRecorderModal({ open, onOpenChange, onSave }: VideoRecorderModalProps) {
+export default function VideoRecorderModal({
+  open,
+  onOpenChange,
+  onSave,
+}: VideoRecorderModalProps) {
   const { isDark } = useTheme();
-  const { 
+  const {
     localStream,
     isVideoEnabled,
     isAudioEnabled,
@@ -43,14 +47,16 @@ export default function VideoRecorderModal({ open, onOpenChange, onSave }: Video
     toggleAudio,
     startRecording,
     stopRecording,
-    isRecording
+    isRecording,
   } = useVideoCall();
 
-  const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'paused' | 'stopped'>('idle');
+  const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'paused' | 'stopped'>(
+    'idle'
+  );
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   // Form fields
   const [title, setTitle] = useState('');
   const [recipientName, setRecipientName] = useState('');
@@ -86,7 +92,7 @@ export default function VideoRecorderModal({ open, onOpenChange, onSave }: Video
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 1280, height: 720 },
-        audio: true
+        audio: true,
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -102,7 +108,7 @@ export default function VideoRecorderModal({ open, onOpenChange, onSave }: Video
       clearInterval(timerRef.current);
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
     }
     setRecordingState('idle');
     setRecordingDuration(0);
@@ -111,12 +117,12 @@ export default function VideoRecorderModal({ open, onOpenChange, onSave }: Video
 
   const handleStartRecording = async () => {
     try {
-      const stream = streamRef.current || videoRef.current?.srcObject as MediaStream;
+      const stream = streamRef.current || (videoRef.current?.srcObject as MediaStream);
       if (!stream) return;
 
       chunksRef.current = [];
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp8,opus'
+        mimeType: 'video/webm;codecs=vp8,opus',
       });
 
       mediaRecorder.ondataavailable = (event) => {
@@ -137,7 +143,7 @@ export default function VideoRecorderModal({ open, onOpenChange, onSave }: Video
 
       // Start timer
       timerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration((prev) => prev + 1);
       }, 1000);
     } catch (error) {
       console.error('Failed to start recording:', error);
@@ -185,7 +191,7 @@ export default function VideoRecorderModal({ open, onOpenChange, onSave }: Video
         recipientEmail,
         company,
         script,
-        videoBlob: recordedBlob
+        videoBlob: recordedBlob,
       });
       onOpenChange(false);
       // Reset form

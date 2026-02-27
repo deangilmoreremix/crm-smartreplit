@@ -19,13 +19,15 @@ import {
   Legend,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts';
 
 const ChartsSection: React.FC = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'performance' | 'pipeline' | 'breakdown'>('performance');
+  const [activeTab, setActiveTab] = useState<'performance' | 'pipeline' | 'breakdown'>(
+    'performance'
+  );
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter'>('month');
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
@@ -33,39 +35,46 @@ const ChartsSection: React.FC = () => {
   // Get contacts related to won deals
   const wonDealsContacts = React.useMemo(() => {
     return Object.values(deals)
-      .filter(deal => deal.stage === 'closed-won')
-      .map(deal => {
+      .filter((deal) => deal.stage === 'closed-won')
+      .map((deal) => {
         const contact = contacts[deal.contactId];
-        return contact ? {
-          id: contact.id,
-          name: contact.name,
-          avatar: contact.avatar
-        } : null;
+        return contact
+          ? {
+              id: contact.id,
+              name: contact.name,
+              avatar: contact.avatar,
+            }
+          : null;
       })
-      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string; }>;
+      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
   }, [deals, contacts]);
 
   // Get contacts for average deal size calculation
   const dealsForAvgSizeContacts = React.useMemo(() => {
-    const activeDeals = Object.values(deals).filter(deal => 
-      deal.stage !== 'closed-lost'
-    );
-    
-    return activeDeals.map(deal => {
-      const contact = contacts[deal.contactId];
-      return contact ? {
-        id: contact.id,
-        name: contact.name,
-        avatar: contact.avatar
-      } : null;
-    }).filter(Boolean) as Array<{ id: string; name: string; avatar?: string; }>;
+    const activeDeals = Object.values(deals).filter((deal) => deal.stage !== 'closed-lost');
+
+    return activeDeals
+      .map((deal) => {
+        const contact = contacts[deal.contactId];
+        return contact
+          ? {
+              id: contact.id,
+              name: contact.name,
+              avatar: contact.avatar,
+            }
+          : null;
+      })
+      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
   }, [deals, contacts]);
 
   // Render avatar stack
-  const renderAvatarStack = (contacts: Array<{ id: string; name: string; avatar?: string }>, maxVisible: number = 3) => {
+  const renderAvatarStack = (
+    contacts: Array<{ id: string; name: string; avatar?: string }>,
+    maxVisible: number = 3
+  ) => {
     const visibleContacts = contacts.slice(0, maxVisible);
     const remainingCount = Math.max(0, contacts.length - maxVisible);
-    
+
     return (
       <div className="flex items-center mt-2">
         <div className="flex -space-x-2">
@@ -76,14 +85,16 @@ const ChartsSection: React.FC = () => {
                 alt={contact.name}
                 size="sm"
                 fallback={getInitials(contact.name)}
-className=""
+                className=""
               />
             </div>
           ))}
           {remainingCount > 0 && (
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
-              isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
-            }`}>
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
+                isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
               +{remainingCount}
             </div>
           )}
@@ -130,7 +141,7 @@ className=""
         <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Sales Analytics
         </h2>
-        
+
         <div className="flex items-center space-x-4">
           {/* Chart Type Tabs */}
           <div className="flex rounded-lg overflow-hidden">
@@ -138,43 +149,43 @@ className=""
               onClick={() => setActiveTab('performance')}
               className={`flex items-center px-3 py-1.5 text-sm ${
                 activeTab === 'performance'
-                  ? isDark 
-                    ? 'bg-blue-500 text-white' 
+                  ? isDark
+                    ? 'bg-blue-500 text-white'
                     : 'bg-blue-500 text-white'
-                  : isDark 
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                  : isDark
+                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               <LineChart size={16} className="mr-1.5" />
               <span>Performance</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('pipeline')}
               className={`flex items-center px-3 py-1.5 text-sm ${
                 activeTab === 'pipeline'
-                  ? isDark 
-                    ? 'bg-blue-500 text-white' 
+                  ? isDark
+                    ? 'bg-blue-500 text-white'
                     : 'bg-blue-500 text-white'
-                  : isDark 
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                  : isDark
+                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               <BarChart3 size={16} className="mr-1.5" />
               <span>Pipeline</span>
             </button>
-            
+
             <button
               onClick={() => setActiveTab('breakdown')}
               className={`flex items-center px-3 py-1.5 text-sm ${
                 activeTab === 'breakdown'
-                  ? isDark 
-                    ? 'bg-blue-500 text-white' 
+                  ? isDark
+                    ? 'bg-blue-500 text-white'
                     : 'bg-blue-500 text-white'
-                  : isDark 
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                  : isDark
+                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -182,7 +193,7 @@ className=""
               <span>Breakdown</span>
             </button>
           </div>
-          
+
           {/* Time Frame Selector */}
           <div className="flex">
             {['week', 'month', 'quarter'].map((period) => (
@@ -190,12 +201,12 @@ className=""
                 key={period}
                 onClick={() => setTimeframe(period as any)}
                 className={`px-3 py-1.5 text-sm ${
-                  timeframe === period 
-                    ? isDark 
-                      ? 'text-blue-400 border-b-2 border-blue-400' 
+                  timeframe === period
+                    ? isDark
+                      ? 'text-blue-400 border-b-2 border-blue-400'
                       : 'text-blue-600 border-b-2 border-blue-600'
-                    : isDark 
-                      ? 'text-gray-400 hover:text-gray-300' 
+                    : isDark
+                      ? 'text-gray-400 hover:text-gray-300'
                       : 'text-gray-600 hover:text-gray-700'
                 }`}
               >
@@ -214,80 +225,93 @@ className=""
               data={performanceData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"} />
-              <XAxis 
-                dataKey="name" 
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={isDark ? 'rgba(255,255,255,0.1)' : '#f0f0f0'}
+              />
+              <XAxis
+                dataKey="name"
                 tick={{ fontSize: 12, fill: isDark ? '#9CA3AF' : '#6B7280' }}
                 axisLine={{ stroke: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0' }}
               />
-              <YAxis 
+              <YAxis
                 yAxisId="left"
                 tick={{ fontSize: 12, fill: isDark ? '#9CA3AF' : '#6B7280' }}
                 axisLine={{ stroke: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0' }}
                 tickFormatter={(value) => `$${value / 1000}k`}
               />
-              <YAxis 
+              <YAxis
                 yAxisId="right"
                 orientation="right"
                 tick={{ fontSize: 12, fill: isDark ? '#9CA3AF' : '#6B7280' }}
                 axisLine={{ stroke: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0' }}
               />
-              <Tooltip 
-                contentStyle={{ 
+              <Tooltip
+                contentStyle={{
                   backgroundColor: isDark ? 'rgba(17, 24, 39, 0.9)' : '#ffffff',
                   borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
                 }}
                 labelStyle={{ color: isDark ? '#F3F4F6' : '#374151' }}
                 formatter={(value: any, name: string) => [
                   name === 'revenue' ? `$${value.toLocaleString()}` : value,
-                  name === 'revenue' ? 'Revenue' : 'Deals Closed'
+                  name === 'revenue' ? 'Revenue' : 'Deals Closed',
                 ]}
               />
               <Legend />
-              <Line 
+              <Line
                 yAxisId="left"
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="#3B82F6" 
+                type="monotone"
+                dataKey="revenue"
+                stroke="#3B82F6"
                 strokeWidth={2}
                 dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2, fill: isDark ? '#1F2937' : '#ffffff' }}
+                activeDot={{
+                  r: 6,
+                  stroke: '#3B82F6',
+                  strokeWidth: 2,
+                  fill: isDark ? '#1F2937' : '#ffffff',
+                }}
               />
-              <Line 
+              <Line
                 yAxisId="right"
-                type="monotone" 
-                dataKey="deals" 
-                stroke="#8B5CF6" 
+                type="monotone"
+                dataKey="deals"
+                stroke="#8B5CF6"
                 strokeWidth={2}
                 dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: '#8B5CF6', strokeWidth: 2, fill: isDark ? '#1F2937' : '#ffffff' }}
+                activeDot={{
+                  r: 6,
+                  stroke: '#8B5CF6',
+                  strokeWidth: 2,
+                  fill: isDark ? '#1F2937' : '#ffffff',
+                }}
               />
             </RechartsLineChart>
           </ResponsiveContainer>
         )}
-        
+
         {activeTab === 'pipeline' && (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={pipelineData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.1)" : "#f0f0f0"} />
-              <XAxis 
-                dataKey="name" 
+            <BarChart data={pipelineData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={isDark ? 'rgba(255,255,255,0.1)' : '#f0f0f0'}
+              />
+              <XAxis
+                dataKey="name"
                 tick={{ fontSize: 12, fill: isDark ? '#9CA3AF' : '#6B7280' }}
                 axisLine={{ stroke: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0' }}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 12, fill: isDark ? '#9CA3AF' : '#6B7280' }}
                 axisLine={{ stroke: isDark ? 'rgba(255,255,255,0.2)' : '#e0e0e0' }}
               />
-              <Tooltip 
-                contentStyle={{ 
+              <Tooltip
+                contentStyle={{
                   backgroundColor: isDark ? 'rgba(17, 24, 39, 0.9)' : '#ffffff',
                   borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
                 }}
                 formatter={(value: any) => [`${value} deals`, 'Count']}
               />
@@ -295,7 +319,7 @@ className=""
             </BarChart>
           </ResponsiveContainer>
         )}
-        
+
         {activeTab === 'breakdown' && (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -313,12 +337,12 @@ className=""
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 formatter={(value: any) => [`${value} deals`, 'Count']}
-                contentStyle={{ 
+                contentStyle={{
                   backgroundColor: isDark ? 'rgba(17, 24, 39, 0.9)' : '#ffffff',
                   borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
                 }}
               />
               <Legend />
@@ -326,23 +350,23 @@ className=""
           </ResponsiveContainer>
         )}
       </div>
-      
+
       {/* Key Metrics */}
       <div className="grid grid-cols-4 gap-4 mt-6">
         <div className={`p-3 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
           <div className="flex items-center">
-            <TrendingUp className={`w-4 h-4 mr-2 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+            <TrendingUp
+              className={`w-4 h-4 mr-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}
+            />
             <div>
               <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 Conversion Rate
               </div>
-              <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                23.5%
-              </div>
+              <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>23.5%</div>
             </div>
           </div>
         </div>
-        
+
         <div className={`p-3 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
           <div className="flex items-center">
             <TrendingUp className={`w-4 h-4 mr-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -358,10 +382,12 @@ className=""
           {/* Add avatar stack for deals */}
           {dealsForAvgSizeContacts.length > 0 && renderAvatarStack(dealsForAvgSizeContacts)}
         </div>
-        
+
         <div className={`p-3 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
           <div className="flex items-center">
-            <TrendingUp className={`w-4 h-4 mr-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+            <TrendingUp
+              className={`w-4 h-4 mr-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
+            />
             <div>
               <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 Sales Cycle
@@ -372,17 +398,17 @@ className=""
             </div>
           </div>
         </div>
-        
+
         <div className={`p-3 rounded-lg ${isDark ? 'bg-white/5' : 'bg-gray-50'}`}>
           <div className="flex items-center">
-            <TrendingUp className={`w-4 h-4 mr-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
+            <TrendingUp
+              className={`w-4 h-4 mr-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}
+            />
             <div>
               <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                 Win Rate
               </div>
-              <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                64%
-              </div>
+              <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>64%</div>
             </div>
           </div>
           {/* Add avatar stack for won deals */}

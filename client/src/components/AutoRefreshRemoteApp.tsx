@@ -20,8 +20,8 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
   onClose,
   defaultRefreshInterval = 300, // 5 minutes default
   allowFullscreen = true,
-  sandbox = "allow-same-origin allow-scripts allow-forms allow-popups allow-navigation allow-top-navigation",
-  allow = "clipboard-read; clipboard-write; fullscreen; microphone; camera"
+  sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups allow-navigation allow-top-navigation',
+  allow = 'clipboard-read; clipboard-write; fullscreen; microphone; camera',
 }) => {
   const { isDark } = useTheme();
   const [refreshInterval, setRefreshInterval] = useState(defaultRefreshInterval);
@@ -68,7 +68,7 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
 
       // Countdown timer
       countdownRef.current = setInterval(() => {
-        setTimeUntilRefresh(prev => {
+        setTimeUntilRefresh((prev) => {
           if (prev <= 1) {
             return refreshInterval;
           }
@@ -111,7 +111,9 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Control Header */}
-      <div className={`flex items-center justify-between p-3 border-b ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+      <div
+        className={`flex items-center justify-between p-3 border-b ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}
+      >
         <div className="flex items-center space-x-4">
           <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
 
@@ -120,8 +122,8 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
             <button
               onClick={toggleAutoRefresh}
               className={`flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
-                isAutoRefreshEnabled 
-                  ? 'bg-green-500 text-white' 
+                isAutoRefreshEnabled
+                  ? 'bg-green-500 text-white'
                   : `${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`
               }`}
               title={isAutoRefreshEnabled ? 'Disable auto-refresh' : 'Enable auto-refresh'}
@@ -147,7 +149,9 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
 
             {/* Countdown display */}
             {isAutoRefreshEnabled && (
-              <div className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${isDark ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>
+              <div
+                className={`flex items-center space-x-1 px-2 py-1 rounded text-xs ${isDark ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'}`}
+              >
                 <Clock size={12} />
                 <span>{formatTime(timeUntilRefresh)}</span>
               </div>
@@ -162,7 +166,7 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
 
         {/* Action buttons */}
         <div className="flex items-center space-x-2">
-          <button 
+          <button
             onClick={refreshApp}
             className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-600'}`}
             title="Refresh now"
@@ -170,7 +174,7 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
             <RefreshCw size={16} />
           </button>
 
-          <button 
+          <button
             onClick={() => window.open(src, '_blank')}
             className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-600'}`}
             title="Open in new tab"
@@ -179,7 +183,7 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
           </button>
 
           {onClose && (
-            <button 
+            <button
               onClick={onClose}
               className={`p-2 rounded-md transition-colors ${isDark ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-200 text-gray-600'}`}
               title="Close"
@@ -203,20 +207,21 @@ const AutoRefreshRemoteApp: React.FC<AutoRefreshRemoteAppProps> = ({
           allowFullScreen={allowFullscreen}
           style={{
             height: 'calc(100vh - 140px)',
-            minHeight: '600px'
+            minHeight: '600px',
           }}
           onLoad={() => {
             setLastRefreshed(Date.now());
             try {
               if (iframeRef.current?.contentWindow) {
-                iframeRef.current.contentWindow.postMessage({
-                  type: 'FULLSCREEN_MODE',
-                  fullscreen: true
-                }, '*');
+                iframeRef.current.contentWindow.postMessage(
+                  {
+                    type: 'FULLSCREEN_MODE',
+                    fullscreen: true,
+                  },
+                  '*'
+                );
               }
-            } catch (error) {
-              console.log('Could not communicate with iframe');
-            }
+            } catch (error) {}
           }}
         />
       </div>

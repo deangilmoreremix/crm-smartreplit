@@ -8,9 +8,12 @@ const CompetitorAnalysisContent: React.FC = () => {
   const [formData, setFormData] = useState({
     competitorName: '',
     industry: 'SaaS CRM',
-    strengths: ['AI-powered lead scoring and insights', 'Seamless integration with marketing tools']
+    strengths: [
+      'AI-powered lead scoring and insights',
+      'Seamless integration with marketing tools',
+    ],
   });
-  
+
   const [competitorWebsite, setCompetitorWebsite] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -20,14 +23,14 @@ const CompetitorAnalysisContent: React.FC = () => {
   const addStrength = () => {
     setFormData({
       ...formData,
-      strengths: [...formData.strengths, '']
+      strengths: [...formData.strengths, ''],
     });
   };
 
   const removeStrength = (index: number) => {
     setFormData({
       ...formData,
-      strengths: formData.strengths.filter((_, i) => i !== index)
+      strengths: formData.strengths.filter((_, i) => i !== index),
     });
   };
 
@@ -36,15 +39,17 @@ const CompetitorAnalysisContent: React.FC = () => {
     newStrengths[index] = value;
     setFormData({
       ...formData,
-      strengths: newStrengths
+      strengths: newStrengths,
     });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -54,11 +59,11 @@ const CompetitorAnalysisContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Filter out empty strengths
-      const strengths = formData.strengths.filter(item => item.trim() !== '');
-      
+      const strengths = formData.strengths.filter((item) => item.trim() !== '');
+
       const analysisResult = await edgeFunctionService.analyzeCompetitor(
         formData.competitorName,
         formData.industry,
@@ -67,7 +72,9 @@ const CompetitorAnalysisContent: React.FC = () => {
       setResult(analysisResult);
     } catch (err) {
       console.error('Error analyzing competitor:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while analyzing the competitor');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while analyzing the competitor'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -75,12 +82,12 @@ const CompetitorAnalysisContent: React.FC = () => {
 
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles(newFiles);
-    
+
     // In a real app, we would extract info from the file
     // For analysis purposes, just acknowledge
     if (newFiles.length > 0) {
       setTimeout(() => {
-        setError("Document analysis would be processed on the server in a production environment.");
+        setError('Document analysis would be processed on the server in a production environment.');
       }, 1000);
     }
   };
@@ -96,7 +103,7 @@ const CompetitorAnalysisContent: React.FC = () => {
     'EdTech',
     'Real Estate Software',
     'Productivity Tools',
-    'Other'
+    'Other',
   ];
 
   return (
@@ -107,7 +114,8 @@ const CompetitorAnalysisContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-amber-800">Competitor Analysis</h3>
             <p className="text-sm text-amber-700 mt-1">
-              Analyze competitors and develop effective differentiation strategies. Get insights on their strengths, weaknesses, and how to position against them.
+              Analyze competitors and develop effective differentiation strategies. Get insights on
+              their strengths, weaknesses, and how to position against them.
             </p>
           </div>
         </div>
@@ -123,7 +131,10 @@ const CompetitorAnalysisContent: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="competitorName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="competitorName"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Competitor Name
               </label>
               <input
@@ -137,18 +148,16 @@ const CompetitorAnalysisContent: React.FC = () => {
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Industry
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
               <select
                 name="industry"
                 value={formData.industry}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
               >
-                {industryOptions.map(option => (
+                {industryOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -156,9 +165,12 @@ const CompetitorAnalysisContent: React.FC = () => {
               </select>
             </div>
           </div>
-          
+
           <div>
-            <label htmlFor="competitorWebsite" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="competitorWebsite"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Competitor Website (Optional)
             </label>
             <div className="flex">
@@ -181,7 +193,9 @@ const CompetitorAnalysisContent: React.FC = () => {
                 onClick={() => {
                   if (competitorWebsite) {
                     // In a real app, we would analyze the website
-                    setError("Website analysis would be processed on the server in a production environment.");
+                    setError(
+                      'Website analysis would be processed on the server in a production environment.'
+                    );
                   }
                 }}
               >
@@ -194,7 +208,7 @@ const CompetitorAnalysisContent: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Your Key Strengths/Differentiators
             </label>
-            
+
             <div className="space-y-3">
               {formData.strengths.map((strength, index) => (
                 <div key={index} className="flex gap-2">
@@ -215,7 +229,7 @@ const CompetitorAnalysisContent: React.FC = () => {
                   </button>
                 </div>
               ))}
-              
+
               <button
                 type="button"
                 onClick={addStrength}
@@ -226,25 +240,26 @@ const CompetitorAnalysisContent: React.FC = () => {
               </button>
             </div>
           </div>
-            
+
           <div>
             <p className="block text-sm font-medium text-gray-700 mb-2">
               Upload Competitor Materials (Optional)
             </p>
-            <FileUpload 
-              fileType="document"
-              onFilesAdded={handleFilesAdded}
-              maxFiles={2}
-            />
+            <FileUpload fileType="document" onFilesAdded={handleFilesAdded} maxFiles={2} />
             <p className="text-xs text-gray-500 mt-1">
-              Add competitor marketing materials, pricing sheets, or product documentation for enhanced analysis.
+              Add competitor marketing materials, pricing sheets, or product documentation for
+              enhanced analysis.
             </p>
           </div>
-          
+
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isLoading || !formData.competitorName.trim() || formData.strengths.filter(s => s.trim()).length === 0}
+              disabled={
+                isLoading ||
+                !formData.competitorName.trim() ||
+                formData.strengths.filter((s) => s.trim()).length === 0
+              }
               className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-amber-300 disabled:cursor-not-allowed transition-colors"
             >
               Analyze Competitor

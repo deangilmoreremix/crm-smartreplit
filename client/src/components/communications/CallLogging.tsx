@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Phone, 
-  PhoneCall, 
-  PhoneIncoming, 
-  PhoneOutgoing, 
-  Clock, 
-  User, 
+import {
+  Phone,
+  PhoneCall,
+  PhoneIncoming,
+  PhoneOutgoing,
+  Clock,
+  User,
   Calendar,
   Play,
   Square,
@@ -20,7 +20,7 @@ import {
   Plus,
   FileAudio,
   Timer,
-  Target
+  Target,
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 
@@ -75,15 +75,17 @@ const CallLogging: React.FC = () => {
         url: '/recordings/call-1.mp3',
         duration: 600,
         size: 5242880, // 5MB
-        transcription: 'Discussed project requirements and next steps. Client is interested in our proposal.'
+        transcription:
+          'Discussed project requirements and next steps. Client is interested in our proposal.',
       },
-      notes: 'Very positive call. Client excited about our proposal. Scheduled follow-up for next week.',
+      notes:
+        'Very positive call. Client excited about our proposal. Scheduled follow-up for next week.',
       outcome: 'successful',
       tags: ['hot-lead', 'proposal-discussed'],
       mood: 'positive',
       followUpDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
       createdBy: 'John Doe',
-      isStarred: true
+      isStarred: true,
     },
     {
       id: '2',
@@ -99,7 +101,7 @@ const CallLogging: React.FC = () => {
       tags: ['callback-needed'],
       mood: 'neutral',
       createdBy: 'System',
-      isStarred: false
+      isStarred: false,
     },
     {
       id: '3',
@@ -116,8 +118,8 @@ const CallLogging: React.FC = () => {
       tags: ['demo-interest'],
       mood: 'neutral',
       createdBy: 'John Doe',
-      isStarred: false
-    }
+      isStarred: false,
+    },
   ]);
 
   const [isInCall, setIsInCall] = useState(false);
@@ -136,16 +138,18 @@ const CallLogging: React.FC = () => {
     totalCalls: callRecords.length,
     totalDuration: callRecords.reduce((sum, call) => sum + call.duration, 0),
     averageDuration: callRecords.reduce((sum, call) => sum + call.duration, 0) / callRecords.length,
-    successRate: (callRecords.filter(call => call.outcome === 'successful').length / callRecords.length) * 100,
-    todaysCalls: callRecords.filter(call => 
-      call.startTime.toDateString() === new Date().toDateString()
+    successRate:
+      (callRecords.filter((call) => call.outcome === 'successful').length / callRecords.length) *
+      100,
+    todaysCalls: callRecords.filter(
+      (call) => call.startTime.toDateString() === new Date().toDateString()
     ).length,
-    weekCalls: callRecords.filter(call => 
-      call.startTime >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    weekCalls: callRecords.filter(
+      (call) => call.startTime >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     ).length,
-    monthCalls: callRecords.filter(call => 
-      call.startTime >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    ).length
+    monthCalls: callRecords.filter(
+      (call) => call.startTime >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    ).length,
   });
 
   // Placeholder function for starting calls
@@ -168,7 +172,7 @@ const CallLogging: React.FC = () => {
   //   setCurrentCall(newCall);
   //   setIsInCall(true);
   //   setCallTimer(0);
-    
+
   //   // Start timer
   //   timerRef.current = setInterval(() => {
   //     setCallTimer(prev => prev + 1);
@@ -188,7 +192,7 @@ const CallLogging: React.FC = () => {
         duration: callTimer,
       } as CallRecord;
 
-      setCallRecords(prev => [completedCall, ...prev]);
+      setCallRecords((prev) => [completedCall, ...prev]);
     }
 
     setIsInCall(false);
@@ -216,7 +220,7 @@ const CallLogging: React.FC = () => {
     if (status === 'missed') {
       return <PhoneCall className="h-4 w-4 text-red-500" />;
     }
-    
+
     switch (type) {
       case 'incoming':
         return <PhoneIncoming className="h-4 w-4 text-green-600" />;
@@ -244,14 +248,15 @@ const CallLogging: React.FC = () => {
     }
   };
 
-  const filteredCalls = callRecords.filter(call => {
-    const matchesSearch = call.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         call.contactPhone.includes(searchTerm) ||
-                         call.notes.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredCalls = callRecords.filter((call) => {
+    const matchesSearch =
+      call.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      call.contactPhone.includes(searchTerm) ||
+      call.notes.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesType = filterType === 'all' || call.type === filterType;
     const matchesOutcome = filterOutcome === 'all' || call.outcome === filterOutcome;
-    
+
     return matchesSearch && matchesType && matchesOutcome;
   });
 
@@ -263,10 +268,7 @@ const CallLogging: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Call Logging</h2>
           <p className="text-gray-600 mt-1">Track and manage all your phone communications</p>
         </div>
-        <button
-          onClick={() => console.log('Log Call modal would open')}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-        >
+        <button className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors">
           <Plus size={18} className="mr-1" />
           Log Call
         </button>
@@ -293,7 +295,9 @@ const CallLogging: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Time</p>
-              <p className="text-2xl font-bold text-gray-900">{formatDuration(stats.totalDuration)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatDuration(stats.totalDuration)}
+              </p>
             </div>
           </div>
         </div>
@@ -345,7 +349,9 @@ const CallLogging: React.FC = () => {
               <button
                 onClick={toggleMute}
                 className={`p-3 rounded-full transition-colors ${
-                  isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+                  isMuted
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : 'bg-white bg-opacity-20 hover:bg-opacity-30'
                 }`}
               >
                 {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
@@ -354,7 +360,9 @@ const CallLogging: React.FC = () => {
               <button
                 onClick={toggleRecording}
                 className={`p-3 rounded-full transition-colors ${
-                  isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-white bg-opacity-20 hover:bg-opacity-30'
+                  isRecording
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : 'bg-white bg-opacity-20 hover:bg-opacity-30'
                 }`}
               >
                 {isRecording ? <Square className="h-5 w-5" /> : <FileAudio className="h-5 w-5" />}
@@ -440,20 +448,22 @@ const CallLogging: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
                       <h4 className="text-lg font-medium text-gray-900">{call.contactName}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOutcomeColor(call.outcome)}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getOutcomeColor(call.outcome)}`}
+                      >
                         {call.outcome.replace('_', ' ')}
                       </span>
                     </div>
-                    
+
                     <p className="text-gray-600 mt-1">{call.contactPhone}</p>
-                    
+
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-4 w-4" />
                         <span>{call.startTime.toLocaleDateString()}</span>
                         <span>{call.startTime.toLocaleTimeString()}</span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
                         <span>{formatDuration(call.duration)}</span>
@@ -467,9 +477,7 @@ const CallLogging: React.FC = () => {
                       )}
                     </div>
 
-                    {call.notes && (
-                      <p className="text-gray-700 mt-3">{call.notes}</p>
-                    )}
+                    {call.notes && <p className="text-gray-700 mt-3">{call.notes}</p>}
 
                     {call.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">
@@ -493,18 +501,18 @@ const CallLogging: React.FC = () => {
                       <Play size={16} />
                     </button>
                   )}
-                  
-                  <button 
+
+                  <button
                     onClick={() => setShowCallDetails(call)}
                     className="p-2 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
                   >
                     <Eye size={16} />
                   </button>
-                  
+
                   <button className="p-2 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50">
                     <Edit size={16} />
                   </button>
-                  
+
                   <button className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50">
                     <Trash2 size={16} />
                   </button>
@@ -521,8 +529,7 @@ const CallLogging: React.FC = () => {
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm || filterType !== 'all' || filterOutcome !== 'all'
                 ? 'Try adjusting your filters'
-                : 'Start making calls to see records here'
-              }
+                : 'Start making calls to see records here'}
             </p>
           </div>
         )}
@@ -541,14 +548,14 @@ const CallLogging: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Contact</label>
                 <p className="mt-1 text-sm text-gray-900">{showCallDetails.contactName}</p>
                 <p className="text-sm text-gray-600">{showCallDetails.contactPhone}</p>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Type</label>
@@ -556,15 +563,17 @@ const CallLogging: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Duration</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatDuration(showCallDetails.duration)}</p>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {formatDuration(showCallDetails.duration)}
+                  </p>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Notes</label>
                 <p className="mt-1 text-sm text-gray-900">{showCallDetails.notes || 'No notes'}</p>
               </div>
-              
+
               {showCallDetails.recording && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Recording</label>
@@ -583,7 +592,9 @@ const CallLogging: React.FC = () => {
                     {showCallDetails.recording.transcription && (
                       <div className="mt-3">
                         <p className="text-sm font-medium text-gray-700">Transcription:</p>
-                        <p className="text-sm text-gray-600 mt-1">{showCallDetails.recording.transcription}</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {showCallDetails.recording.transcription}
+                        </p>
                       </div>
                     )}
                   </div>

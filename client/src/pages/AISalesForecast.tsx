@@ -1,4 +1,3 @@
-
 import React from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
@@ -7,10 +6,10 @@ import { useContactStore } from '../hooks/useContactStore';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import Avatar from '../components/ui/Avatar';
-import { 
-  TrendingUp, 
-  Brain, 
-  DollarSign, 
+import {
+  TrendingUp,
+  Brain,
+  DollarSign,
   Calendar,
   BarChart3,
   PieChart,
@@ -18,7 +17,7 @@ import {
   Zap,
   ArrowUpRight,
   ArrowDownRight,
-  Bot
+  Bot,
 } from 'lucide-react';
 
 const AISalesForecast: React.FC = () => {
@@ -28,9 +27,14 @@ const AISalesForecast: React.FC = () => {
 
   // Calculate forecast metrics
   const dealsArray = Object.values(deals);
-  const activeDeals = dealsArray.filter(d => !['closed-won', 'closed-lost'].includes(String(d.stage)));
+  const activeDeals = dealsArray.filter(
+    (d) => !['closed-won', 'closed-lost'].includes(String(d.stage))
+  );
   const totalPipelineValue = activeDeals.reduce((sum, deal) => sum + deal.value, 0);
-  const weightedForecast = activeDeals.reduce((sum, deal) => sum + (deal.value * (deal.probability / 100)), 0);
+  const weightedForecast = activeDeals.reduce(
+    (sum, deal) => sum + deal.value * (deal.probability / 100),
+    0
+  );
   const bestCase = totalPipelineValue * 0.8;
   const worstCase = totalPipelineValue * 0.3;
 
@@ -43,13 +47,17 @@ const AISalesForecast: React.FC = () => {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
   // Get initials for avatar
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -58,7 +66,6 @@ const AISalesForecast: React.FC = () => {
       description="AI-powered revenue predictions and deal closure probability analysis"
     >
       <div className="space-y-8">
-
         {/* Forecast KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <GlassCard className="p-6">
@@ -93,7 +100,9 @@ const AISalesForecast: React.FC = () => {
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {formatCurrency(bestCase)}
               </h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Optimistic Scenario</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                Optimistic Scenario
+              </p>
             </div>
           </GlassCard>
 
@@ -129,7 +138,9 @@ const AISalesForecast: React.FC = () => {
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 A+
               </h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>AI Confidence</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                AI Confidence
+              </p>
             </div>
           </GlassCard>
         </div>
@@ -137,7 +148,9 @@ const AISalesForecast: React.FC = () => {
         {/* AI Forecast Analysis */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <Bot className="h-5 w-5 mr-2 text-blue-500" />
               AI Revenue Prediction Model
             </h2>
@@ -148,9 +161,13 @@ const AISalesForecast: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Q1 Forecast</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Q1 Forecast
+                </h3>
                 <PieChart className="h-5 w-5 text-blue-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -161,9 +178,13 @@ const AISalesForecast: React.FC = () => {
               </p>
             </div>
 
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Trend Analysis</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Trend Analysis
+                </h3>
                 <TrendingUp className="h-5 w-5 text-green-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -174,9 +195,13 @@ const AISalesForecast: React.FC = () => {
               </p>
             </div>
 
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Risk Factor</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Risk Factor
+                </h3>
                 <Target className="h-5 w-5 text-purple-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
@@ -192,7 +217,9 @@ const AISalesForecast: React.FC = () => {
         {/* Top Forecast Contributors */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <DollarSign className="h-5 w-5 mr-2 text-green-500" />
               Top Forecast Contributors
             </h2>
@@ -203,19 +230,16 @@ const AISalesForecast: React.FC = () => {
 
           <div className="space-y-4">
             {activeDeals.slice(0, 5).map((deal) => (
-              <div 
-                key={deal.id} 
+              <div
+                key={deal.id}
                 className={`flex items-center justify-between p-4 rounded-xl ${
-                  isDark 
-                    ? 'bg-white/5 hover:bg-white/10 border border-white/10' 
+                  isDark
+                    ? 'bg-white/5 hover:bg-white/10 border border-white/10'
                     : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
                 } transition-all duration-200 cursor-pointer`}
               >
                 <div className="flex items-center space-x-3">
-                  <Avatar
-                    size="sm"
-                    fallback={getInitials(deal.title || 'UN')}
-                  />
+                  <Avatar size="sm" fallback={getInitials(deal.title || 'UN')} />
                   <div>
                     <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {deal.title}
@@ -241,14 +265,18 @@ const AISalesForecast: React.FC = () => {
         {/* AI Insights */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <Brain className="h-5 w-5 mr-2 text-purple-500" />
               AI-Powered Insights & Recommendations
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}
+            >
               <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
                 🎯 Key Opportunities
               </h3>
@@ -259,7 +287,9 @@ const AISalesForecast: React.FC = () => {
               </ul>
             </div>
 
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}>
+            <div
+              className={`p-6 rounded-xl ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}
+            >
               <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
                 ⚠️ Risk Mitigation
               </h3>
@@ -275,7 +305,9 @@ const AISalesForecast: React.FC = () => {
         {/* Forecast Accuracy */}
         <GlassCard className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+            <h2
+              className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+            >
               <BarChart3 className="h-5 w-5 mr-2 text-orange-500" />
               Model Performance & Accuracy
             </h2>
@@ -286,11 +318,14 @@ const AISalesForecast: React.FC = () => {
               { metric: 'Accuracy', value: '94.2%', trend: '+2.1%' },
               { metric: 'Precision', value: '91.8%', trend: '+1.5%' },
               { metric: 'Recall', value: '89.3%', trend: '+0.8%' },
-              { metric: 'F1 Score', value: '90.5%', trend: '+1.2%' }
+              { metric: 'F1 Score', value: '90.5%', trend: '+1.2%' },
             ].map((item, index) => (
-              <div key={index} className={`p-4 rounded-lg text-center ${
-                isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
-              }`}>
+              <div
+                key={index}
+                className={`p-4 rounded-lg text-center ${
+                  isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
+                }`}
+              >
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   {item.value}
                 </p>

@@ -55,17 +55,9 @@ import VideoCallOverlay from './VideoCallOverlay';
 
 // Memo Dashboard component to prevent unnecessary re-renders
 const Dashboard: React.FC = React.memo(() => {
-  const { 
-    deals, 
-    fetchDeals, 
-    isLoading 
-  } = useDealStore();
+  const { deals, fetchDeals, isLoading } = useDealStore();
 
-  const { 
-    contacts, 
-    fetchContacts, 
-    isLoading: contactsLoading 
-  } = useContactStore();
+  const { contacts, fetchContacts, isLoading: contactsLoading } = useContactStore();
 
   const { tasks } = useTaskStore();
   const { appointments, fetchAppointments } = useAppointmentStore();
@@ -73,8 +65,6 @@ const Dashboard: React.FC = React.memo(() => {
   const { isDark } = useTheme();
   const { config } = useWhitelabel();
   const { sectionOrder } = useDashboardLayout();
-
-
 
   const gemini = useGemini();
 
@@ -90,8 +80,6 @@ const Dashboard: React.FC = React.memo(() => {
 
     const initializeDashboard = async () => {
       try {
-        console.log('Initializing dashboard...');
-
         // Fetch deals immediately - they're fast
         await fetchDeals();
 
@@ -114,8 +102,6 @@ const Dashboard: React.FC = React.memo(() => {
         }, 200);
 
         setIsInitialized(true);
-        console.log('Dashboard initialized successfully');
-
       } catch (error) {
         console.error('Dashboard initialization error:', error);
         setDashboardError('Failed to load dashboard data');
@@ -167,23 +153,33 @@ const Dashboard: React.FC = React.memo(() => {
     switch (sectionId) {
       // Check if section component exists before rendering
       case 'executive-overview-section':
-        return typeof ExecutiveOverviewSection === 'function' ? <ExecutiveOverviewSection /> : (
+        return typeof ExecutiveOverviewSection === 'function' ? (
+          <ExecutiveOverviewSection />
+        ) : (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Executive Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Executive Overview
+            </h3>
             <p className="text-gray-600 dark:text-gray-400">Dashboard content loading...</p>
           </div>
         );
 
       case 'ai-smart-features-hub':
-        return typeof AISmartFeaturesHub === 'function' ? <AISmartFeaturesHub /> : (
+        return typeof AISmartFeaturesHub === 'function' ? (
+          <AISmartFeaturesHub />
+        ) : (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">AI Smart Features Hub</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              AI Smart Features Hub
+            </h3>
             <p className="text-gray-600 dark:text-gray-400">AI tools and features loading...</p>
           </div>
         );
 
       case 'sales-pipeline-deal-analytics':
-        return typeof SalesPipelineDealAnalytics === 'function' ? <SalesPipelineDealAnalytics /> : null;
+        return typeof SalesPipelineDealAnalytics === 'function' ? (
+          <SalesPipelineDealAnalytics />
+        ) : null;
 
       case 'customer-lead-management':
         return typeof CustomerLeadManagement === 'function' ? <CustomerLeadManagement /> : null;
@@ -224,7 +220,9 @@ const Dashboard: React.FC = React.memo(() => {
       case 'gpt5-feature-status':
         return React.createElement(() => (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">GPT-5 Features</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              GPT-5 Features
+            </h3>
             <p className="text-gray-600 dark:text-gray-400">AI features loading...</p>
           </div>
         ));
@@ -236,10 +234,18 @@ const Dashboard: React.FC = React.memo(() => {
         return <CustomerProfile />;
 
       case 'recent-activity-section':
-        return <div data-testid="recent-activity"><RecentActivity /></div>;
+        return (
+          <div data-testid="recent-activity">
+            <RecentActivity />
+          </div>
+        );
 
       case 'tasks-and-funnel-section':
-        return <div data-testid="tasks-and-funnel"><TasksAndFunnel /></div>;
+        return (
+          <div data-testid="tasks-and-funnel">
+            <TasksAndFunnel />
+          </div>
+        );
 
       case 'charts-section':
         return <ChartsSection />;
@@ -253,20 +259,29 @@ const Dashboard: React.FC = React.memo(() => {
       case 'contacts-section':
         return (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contacts & Leads</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Contacts & Leads
+            </h3>
             <LoadingSpinner message="Loading contacts..." size="lg" />
           </div>
         );
 
       case 'pipeline-section':
         return (
-          <React.Suspense fallback={
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pipeline</h3>
-              <LoadingSpinner message="Loading pipeline..." size="lg" />
-            </div>
-          }>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: '500px' }}>
+          <React.Suspense
+            fallback={
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Pipeline
+                </h3>
+                <LoadingSpinner message="Loading pipeline..." size="lg" />
+              </div>
+            }
+          >
+            <div
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
+              style={{ height: '500px' }}
+            >
               <ModuleFederationPipeline showHeader={true} />
             </div>
           </React.Suspense>
@@ -275,20 +290,29 @@ const Dashboard: React.FC = React.memo(() => {
       case 'tasks-section':
         return (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tasks & Activities</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Tasks & Activities
+            </h3>
             <LoadingSpinner message="Loading tasks..." size="lg" />
           </div>
         );
 
       case 'white-label-section':
         return (
-          <React.Suspense fallback={
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">White Label</h3>
-              <LoadingSpinner message="Loading white label..." size="lg" />
-            </div>
-          }>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: '500px' }}>
+          <React.Suspense
+            fallback={
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  White Label
+                </h3>
+                <LoadingSpinner message="Loading white label..." size="lg" />
+              </div>
+            }
+          >
+            <div
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
+              style={{ height: '500px' }}
+            >
               <RemoteWhiteLabelLoader showHeader={true} />
             </div>
           </React.Suspense>
@@ -296,21 +320,30 @@ const Dashboard: React.FC = React.memo(() => {
 
       case 'product-research-section':
         return (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: '500px' }}>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
+            style={{ height: '500px' }}
+          >
             <RemoteProductResearchLoader showHeader={true} />
           </div>
         );
 
       case 'ai-analytics-section':
         return (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: '500px' }}>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
+            style={{ height: '500px' }}
+          >
             <ModuleFederationAnalytics showHeader={true} />
           </div>
         );
 
       case 'ai-goals-section':
         return (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden" style={{ height: '500px' }}>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
+            style={{ height: '500px' }}
+          >
             <RemoteAIGoalsLoader showHeader={true} />
           </div>
         );
@@ -320,7 +353,10 @@ const Dashboard: React.FC = React.memo(() => {
         return (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {sectionId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              {sectionId
+                .split('-')
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">Loading dashboard content...</p>
           </div>
@@ -329,11 +365,15 @@ const Dashboard: React.FC = React.memo(() => {
   };
 
   return (
-    <main className={`w-full h-full overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <main
+      className={`w-full h-full overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}
+    >
       {/* Dashboard Header - Always visible */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">Welcome to {config.companyName || 'SmartCRM'}</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400">
+          Welcome to {config.companyName || 'SmartCRM'}
+        </p>
       </div>
 
       {/* Onboarding Widget - Show for new users */}
@@ -348,34 +388,37 @@ const Dashboard: React.FC = React.memo(() => {
           sectionOrder.map((sectionId, index) => {
             try {
               return (
-                <DraggableSection
-                  key={sectionId}
-                  sectionId={sectionId}
-                  index={index}
-                >
-                  <div id={sectionId}>
-                    {renderSectionContent(sectionId)}
-                  </div>
+                <DraggableSection key={sectionId} sectionId={sectionId} index={index}>
+                  <div id={sectionId}>{renderSectionContent(sectionId)}</div>
                 </DraggableSection>
               );
             } catch (error) {
               console.error(`Error rendering section ${sectionId}:`, error);
               return (
-                <div key={sectionId} className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                  <h3 className="text-red-800 dark:text-red-200 font-semibold">Error loading section: {sectionId}</h3>
-                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">Check console for details</p>
+                <div
+                  key={sectionId}
+                  className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800"
+                >
+                  <h3 className="text-red-800 dark:text-red-200 font-semibold">
+                    Error loading section: {sectionId}
+                  </h3>
+                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">
+                    Check console for details
+                  </p>
                 </div>
               );
             }
           })
         ) : (
           <div className="bg-blue-50 dark:bg-blue-900/20 p-8 rounded-xl border border-blue-200 dark:border-blue-800">
-            <h3 className="text-blue-800 dark:text-blue-200 font-semibold mb-2">Dashboard Loading</h3>
+            <h3 className="text-blue-800 dark:text-blue-200 font-semibold mb-2">
+              Dashboard Loading
+            </h3>
             <p className="text-blue-600 dark:text-blue-400">
               No dashboard sections available. Please check the dashboard layout configuration.
             </p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Reload Dashboard

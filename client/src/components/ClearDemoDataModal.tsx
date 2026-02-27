@@ -24,7 +24,7 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
     { label: '15 sample communications', count: 15 },
     { label: 'AI-generated insights', count: 1 },
     { label: 'Sample activity feed', count: 1 },
-    { label: 'Demo metrics and KPIs', count: 1 }
+    { label: 'Demo metrics and KPIs', count: 1 },
   ];
 
   const handleClear = () => {
@@ -42,10 +42,11 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className={`${
-        isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      } rounded-2xl border shadow-2xl max-w-md w-full p-6`}>
-        
+      <div
+        className={`${
+          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        } rounded-2xl border shadow-2xl max-w-md w-full p-6`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -65,12 +66,16 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
         {!isCleared ? (
           <>
             {/* Warning */}
-            <div className={`mb-4 p-3 rounded-lg ${
-              isDark ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200'
-            } border flex items-start space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${
+                isDark ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200'
+              } border flex items-start space-x-2`}
+            >
               <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-yellow-400' : 'text-yellow-800'}`}>
+                <p
+                  className={`text-sm font-medium ${isDark ? 'text-yellow-400' : 'text-yellow-800'}`}
+                >
                   This will remove all demo content from your dashboard
                 </p>
                 <p className={`text-xs mt-1 ${isDark ? 'text-yellow-500' : 'text-yellow-700'}`}>
@@ -81,7 +86,9 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
 
             {/* Demo Content List */}
             <div className="mb-6">
-              <p className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <p
+                className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+              >
                 The following demo content will be hidden:
               </p>
               <ul className="space-y-2">
@@ -92,9 +99,11 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
                       isDark ? 'text-gray-400' : 'text-gray-600'
                     }`}
                   >
-                    <div className={`w-1.5 h-1.5 rounded-full ${
-                      isDark ? 'bg-gray-600' : 'bg-gray-400'
-                    }`} />
+                    <div
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isDark ? 'bg-gray-600' : 'bg-gray-400'
+                      }`}
+                    />
                     <span>{item.label}</span>
                   </li>
                 ))}
@@ -124,8 +133,20 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
                 {isClearing ? (
                   <span className="flex items-center justify-center">
                     <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Clearing...
                   </span>

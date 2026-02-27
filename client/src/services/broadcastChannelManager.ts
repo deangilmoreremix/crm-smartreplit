@@ -31,7 +31,7 @@ class BroadcastChannelManager {
   private constructor() {
     this.config = {
       name: 'crm-broadcast-channel',
-      enableLogging: true
+      enableLogging: true,
     };
 
     this.createChannel(this.config.name);
@@ -61,7 +61,7 @@ class BroadcastChannelManager {
         type: `BC_${message.type}`,
         source: message.source || 'broadcast',
         data: message.data,
-        priority: 'medium'
+        priority: 'medium',
       });
     };
 
@@ -71,7 +71,7 @@ class BroadcastChannelManager {
         type: 'BROADCAST_CHANNEL_ERROR',
         source: 'broadcastChannelManager',
         data: { channel: name, error: 'Message parsing failed' },
-        priority: 'high'
+        priority: 'high',
       });
     };
 
@@ -101,7 +101,7 @@ class BroadcastChannelManager {
       source: 'crm',
       timestamp: Date.now(),
       target,
-      id: this.generateMessageId()
+      id: this.generateMessageId(),
     };
 
     const channel = this.channels.get(this.config.name);
@@ -115,7 +115,7 @@ class BroadcastChannelManager {
           type: 'BROADCAST_SEND_ERROR',
           source: 'broadcastChannelManager',
           data: { error: error instanceof Error ? error.message : String(error), message },
-          priority: 'high'
+          priority: 'high',
         });
       }
     }
@@ -137,7 +137,7 @@ class BroadcastChannelManager {
         data,
         source: 'crm',
         timestamp: Date.now(),
-        id: this.generateMessageId()
+        id: this.generateMessageId(),
       };
 
       try {
@@ -239,7 +239,7 @@ class BroadcastChannelManager {
     return {
       activeChannels: this.channels.size,
       totalMessages,
-      channels
+      channels,
     };
   }
 }
@@ -266,13 +266,16 @@ export function useBroadcastChannel(channelName?: string) {
     };
   }, [channelName]);
 
-  const broadcast = useCallback((type: string, data: any) => {
-    if (channelName) {
-      broadcastChannelManager.broadcastToChannel(channelName, type, data);
-    } else {
-      broadcastChannelManager.broadcast(type, data);
-    }
-  }, [channelName]);
+  const broadcast = useCallback(
+    (type: string, data: any) => {
+      if (channelName) {
+        broadcastChannelManager.broadcastToChannel(channelName, type, data);
+      } else {
+        broadcastChannelManager.broadcast(type, data);
+      }
+    },
+    [channelName]
+  );
 
   const syncData = useCallback((dataType: string, data: any) => {
     broadcastChannelManager.syncData(dataType, data);
@@ -285,6 +288,6 @@ export function useBroadcastChannel(channelName?: string) {
     syncDeals: broadcastChannelManager.syncDeals.bind(broadcastChannelManager),
     syncTasks: broadcastChannelManager.syncTasks.bind(broadcastChannelManager),
     syncAnalytics: broadcastChannelManager.syncAnalytics.bind(broadcastChannelManager),
-    stats: broadcastChannelManager.getStats()
+    stats: broadcastChannelManager.getStats(),
   };
 }

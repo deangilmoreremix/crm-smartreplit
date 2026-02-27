@@ -25,7 +25,7 @@ interface TabsProps {
 
 const Tabs: React.FC<TabsProps> = ({ value, onValueChange, children, className }) => {
   const [internalValue, setInternalValue] = useState(value);
-  
+
   const handleValueChange = (newValue: string) => {
     setInternalValue(newValue);
     onValueChange?.(newValue);
@@ -33,26 +33,23 @@ const Tabs: React.FC<TabsProps> = ({ value, onValueChange, children, className }
 
   return (
     <TabsContext.Provider value={{ value: internalValue, onValueChange: handleValueChange }}>
-      <div className={cn('', className)}>
-        {children}
-      </div>
+      <div className={cn('', className)}>{children}</div>
     </TabsContext.Provider>
   );
 };
 
-const TabsList = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground',
-      className
-    )}
-    {...props}
-  />
-));
+const TabsList = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground',
+        className
+      )}
+      {...props}
+    />
+  )
+);
 TabsList.displayName = 'TabsList';
 
 interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -62,7 +59,7 @@ interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
   ({ className, value, ...props }, ref) => {
     const { value: selectedValue, onValueChange } = useTabsContext();
-    
+
     return (
       <button
         ref={ref}
@@ -88,11 +85,11 @@ interface TabsContentProps extends React.HTMLAttributes<HTMLDivElement> {
 const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
   ({ className, value, ...props }, ref) => {
     const { value: selectedValue } = useTabsContext();
-    
+
     if (selectedValue !== value) {
       return null;
     }
-    
+
     return (
       <div
         ref={ref}

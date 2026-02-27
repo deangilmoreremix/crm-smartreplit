@@ -3,7 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import { enhancedGeminiService } from '../../services/enhancedGeminiService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
-import { TrendingUp, Download, Search, BarChart3, Globe, Target, Users, DollarSign } from 'lucide-react';
+import {
+  TrendingUp,
+  Download,
+  Search,
+  BarChart3,
+  Globe,
+  Target,
+  Users,
+  DollarSign,
+} from 'lucide-react';
 
 export default function MarketTrendsAnalysis() {
   const { isDark } = useTheme();
@@ -20,33 +29,54 @@ export default function MarketTrendsAnalysis() {
     timeframe: '12',
     focusAreas: [],
     includeCompetitors: false,
-    includeForecast: true
+    includeForecast: true,
   });
   const [analysis, setAnalysis] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const industries = [
-    'Technology', 'Healthcare', 'Finance', 'Retail', 'Manufacturing',
-    'Real Estate', 'Education', 'Automotive', 'Energy', 'Entertainment'
+    'Technology',
+    'Healthcare',
+    'Finance',
+    'Retail',
+    'Manufacturing',
+    'Real Estate',
+    'Education',
+    'Automotive',
+    'Energy',
+    'Entertainment',
   ];
 
-  const regions = ['Global', 'North America', 'Europe', 'Asia Pacific', 'Latin America', 'Middle East & Africa'];
-  
+  const regions = [
+    'Global',
+    'North America',
+    'Europe',
+    'Asia Pacific',
+    'Latin America',
+    'Middle East & Africa',
+  ];
+
   const focusAreaOptions = [
-    'Market Size', 'Growth Rate', 'Consumer Behavior', 'Technology Adoption',
-    'Regulatory Changes', 'Investment Trends', 'Emerging Players', 'Digital Transformation'
+    'Market Size',
+    'Growth Rate',
+    'Consumer Behavior',
+    'Technology Adoption',
+    'Regulatory Changes',
+    'Investment Trends',
+    'Emerging Players',
+    'Digital Transformation',
   ];
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const toggleFocusArea = (area: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       focusAreas: prev.focusAreas.includes(area)
-        ? prev.focusAreas.filter(a => a !== area)
-        : [...prev.focusAreas, area]
+        ? prev.focusAreas.filter((a) => a !== area)
+        : [...prev.focusAreas, area],
     }));
   };
 
@@ -82,7 +112,7 @@ export default function MarketTrendsAnalysis() {
       const result = await enhancedGeminiService.analyzeMarketTrends({
         industry: formData.industry,
         timeframe: timeframe,
-        focusAreas: formData.focusAreas.length > 0 ? formData.focusAreas : undefined
+        focusAreas: formData.focusAreas.length > 0 ? formData.focusAreas : undefined,
       });
 
       setAnalysis(result);
@@ -93,18 +123,18 @@ export default function MarketTrendsAnalysis() {
         toolName: 'Market Trends Analysis',
         category: 'Analytics',
         executionTime: Date.now() - startTime,
-        success: true
+        success: true,
       });
     } catch (error) {
       console.error('Error generating market trends analysis:', error);
       alert('Failed to generate analysis. Please try again.');
-      
+
       aiUsageTracker.trackUsage({
         toolId: 'market-trends',
         toolName: 'Market Trends Analysis',
         category: 'Analytics',
         executionTime: Date.now() - startTime,
-        success: false
+        success: false,
       });
     } finally {
       setIsLoading(false);
@@ -151,14 +181,14 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-4 sm:space-y-6 p-4 sm:p-0"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -186,14 +216,14 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
       </motion.div>
 
       {/* Configuration Form */}
-      <motion.div 
+      <motion.div
         className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <h3 className="text-lg font-semibold mb-4">Analysis Configuration</h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Industry Selection */}
           <motion.div
@@ -206,14 +236,16 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
               value={formData.industry}
               onChange={(e) => handleInputChange('industry', e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
               <option value="">Select Industry</option>
-              {industries.map(industry => (
-                <option key={industry} value={industry}>{industry}</option>
+              {industries.map((industry) => (
+                <option key={industry} value={industry}>
+                  {industry}
+                </option>
               ))}
             </select>
           </motion.div>
@@ -229,13 +261,15 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
               value={formData.region}
               onChange={(e) => handleInputChange('region', e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
-              {regions.map(region => (
-                <option key={region} value={region}>{region}</option>
+              {regions.map((region) => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
               ))}
             </select>
           </motion.div>
@@ -251,8 +285,8 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
               value={formData.timeframe}
               onChange={(e) => handleInputChange('timeframe', e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
@@ -264,7 +298,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
           </motion.div>
 
           {/* Options */}
-          <motion.div 
+          <motion.div
             className="space-y-3"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -295,7 +329,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
         </div>
 
         {/* Focus Areas */}
-        <motion.div 
+        <motion.div
           className="mt-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -303,7 +337,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
         >
           <label className="block text-sm font-medium mb-3">Focus Areas (Optional)</label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {focusAreaOptions.map(area => (
+            {focusAreaOptions.map((area) => (
               <label key={area} className="flex items-center">
                 <input
                   type="checkbox"
@@ -318,7 +352,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
         </motion.div>
 
         {/* Generate Button */}
-        <motion.div 
+        <motion.div
           className="mt-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -349,7 +383,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
       {/* Analysis Results */}
       <AnimatePresence>
         {analysis && (
-          <motion.div 
+          <motion.div
             className="space-y-4 sm:space-y-6"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -357,7 +391,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
             transition={{ duration: 0.6 }}
           >
             {/* Summary */}
-            <motion.div 
+            <motion.div
               className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -367,20 +401,18 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                 <BarChart3 className="w-5 h-5 mr-2" />
                 Executive Summary
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {analysis.summary}
-              </p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{analysis.summary}</p>
             </motion.div>
 
             {/* Key Metrics Grid */}
             {analysis.metrics && (
-              <motion.div 
+              <motion.div
                 className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.6 }}
               >
-                <motion.div 
+                <motion.div
                   className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -398,7 +430,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                   </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                   className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -416,7 +448,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                   </div>
                 </motion.div>
 
-                <motion.div 
+                <motion.div
                   className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -438,7 +470,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
 
             {/* Key Findings */}
             {analysis.keyFindings && (
-              <motion.div 
+              <motion.div
                 className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -450,8 +482,8 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                 </h3>
                 <ul className="space-y-2">
                   {analysis.keyFindings.map((finding: string, index: number) => (
-                    <motion.li 
-                      key={index} 
+                    <motion.li
+                      key={index}
                       className="flex items-start"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -466,14 +498,14 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
             )}
 
             {/* Opportunities & Risks */}
-            <motion.div 
+            <motion.div
               className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.0, duration: 0.6 }}
             >
               {analysis.opportunities && (
-                <motion.div 
+                <motion.div
                   className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -483,8 +515,8 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                   <h3 className="text-lg font-semibold mb-4 text-green-600">Opportunities</h3>
                   <ul className="space-y-2">
                     {analysis.opportunities.map((opportunity: string, index: number) => (
-                      <motion.li 
-                        key={index} 
+                      <motion.li
+                        key={index}
                         className="flex items-start"
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -499,7 +531,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
               )}
 
               {analysis.risks && (
-                <motion.div 
+                <motion.div
                   className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -509,8 +541,8 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                   <h3 className="text-lg font-semibold mb-4 text-red-600">Risks</h3>
                   <ul className="space-y-2">
                     {analysis.risks.map((risk: string, index: number) => (
-                      <motion.li 
-                        key={index} 
+                      <motion.li
+                        key={index}
                         className="flex items-start"
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -527,7 +559,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
 
             {/* Recommendations */}
             {analysis.recommendations && (
-              <motion.div 
+              <motion.div
                 className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -539,8 +571,8 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                 </h3>
                 <ul className="space-y-3">
                   {analysis.recommendations.map((recommendation: string, index: number) => (
-                    <motion.li 
-                      key={index} 
+                    <motion.li
+                      key={index}
                       className="flex items-start"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}

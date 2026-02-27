@@ -5,28 +5,32 @@ Since CLI authentication isn't available in this environment, here are the manua
 ## Missing Functions That Need Deployment
 
 ### ✅ contacts
+
 **Status**: Created locally, needs deployment  
 **File**: `supabase/functions/contacts/index.ts`
 
-### ✅ deals  
+### ✅ deals
+
 **Status**: Created locally, needs deployment
 **File**: `supabase/functions/deals/index.ts`
 
 ## Method 1: Supabase Dashboard (Recommended)
 
 ### Deploy `contacts` Function
+
 1. Go to https://supabase.com/dashboard/project/YOUR_PROJECT_REF/functions
 2. Click **"Create a new function"**
 3. Name: `contacts`
-4. Copy the entire content from `supabase/functions/contacts/index.ts` 
+4. Copy the entire content from `supabase/functions/contacts/index.ts`
 5. Paste into the function editor
 6. Click **"Deploy function"**
 
-### Deploy `deals` Function  
+### Deploy `deals` Function
+
 1. Click **"Create a new function"**
 2. Name: `deals`
 3. Copy the entire content from `supabase/functions/deals/index.ts`
-4. Paste into the function editor  
+4. Paste into the function editor
 5. Click **"Deploy function"**
 
 ## Method 2: Using CLI (If You Have Access)
@@ -69,17 +73,19 @@ jobs:
 Once deployed, these URLs should work:
 
 ### Contacts Function
+
 - **URL**: https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts
 - **Methods**: GET, POST, PATCH, DELETE
-- **Test**: 
+- **Test**:
   ```bash
   curl https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts \
     -H "Authorization: Bearer YOUR_ANON_KEY"
   ```
 
-### Deals Function  
+### Deals Function
+
 - **URL**: https://YOUR_PROJECT_REF.supabase.co/functions/v1/deals
-- **Methods**: GET, POST, PATCH, DELETE  
+- **Methods**: GET, POST, PATCH, DELETE
 - **Test**:
   ```bash
   curl https://YOUR_PROJECT_REF.supabase.co/functions/v1/deals \
@@ -89,8 +95,9 @@ Once deployed, these URLs should work:
 ## Verify Your Existing Functions
 
 Your current deployed functions that should remain working:
+
 - ✅ ai-analysis, ai-insights, ai-workflow-builder
-- ✅ content-analyze, content-optimize, content-performance  
+- ✅ content-analyze, content-optimize, content-performance
 - ✅ gemini-generate, openai-generate
 - ✅ admin-create-user, admin-update-user
 - ✅ enrich-contact, analyze-sentiment
@@ -101,7 +108,7 @@ Your current deployed functions that should remain working:
 After deploying, test in your CRM:
 
 1. **Go to Contacts page** - Should load and work with persistent data
-2. **Create a new contact** - Should save to database, not just localStorage  
+2. **Create a new contact** - Should save to database, not just localStorage
 3. **Go to Pipeline/Deals page** - Should load and work with persistent data
 4. **Create a new deal** - Should save to database
 5. **Check remote apps** - Should now work with persistent data
@@ -109,13 +116,15 @@ After deploying, test in your CRM:
 ## Troubleshooting
 
 ### If Functions Fail to Deploy:
+
 - Check that you copied the entire file content
 - Verify no syntax errors in the dashboard editor
 - Ensure your Supabase project has the required database tables
 
 ### If Functions Deploy But Don't Work:
+
 - Check the Function logs in Supabase Dashboard
-- Verify your database tables exist (`contacts`, `deals`)  
+- Verify your database tables exist (`contacts`, `deals`)
 - Test the function URLs directly with curl
 
 ### Database Tables Required:
@@ -142,7 +151,7 @@ CREATE TABLE contacts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- deals table  
+-- deals table
 CREATE TABLE deals (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,

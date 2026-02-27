@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Edit, 
-  Save, 
-  DollarSign, 
-  Calendar, 
-  User, 
+import {
+  X,
+  Edit,
+  Save,
+  DollarSign,
+  Calendar,
+  User,
   Building2,
   Phone,
   Mail,
@@ -16,20 +16,23 @@ import {
   MessageSquare,
   Plus,
   TrendingUp,
-  Search, 
-  Users, 
-  Globe, 
-  Linkedin, 
-  Twitter, 
-  Instagram, 
-  Youtube, 
-  Github, 
-  CheckCircle
+  Search,
+  Users,
+  Globe,
+  Linkedin,
+  Twitter,
+  Instagram,
+  Youtube,
+  Github,
+  CheckCircle,
 } from 'lucide-react';
 import { Deal, DealStage } from '../types/deal';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../store/contactStore';
-import { gpt5SocialResearchService, SocialResearchResult } from '../services/gpt5SocialResearchService';
+import {
+  gpt5SocialResearchService,
+  SocialResearchResult,
+} from '../services/gpt5SocialResearchService';
 
 interface DealDetailsModalProps {
   deal: Deal | null;
@@ -38,12 +41,7 @@ interface DealDetailsModalProps {
   onSave?: (deal: Deal) => void;
 }
 
-const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
-  deal,
-  isOpen,
-  onClose,
-  onSave
-}) => {
+const DealDetailsModal: React.FC<DealDetailsModalProps> = ({ deal, isOpen, onClose, onSave }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedDeal, setEditedDeal] = useState<Deal | null>(deal);
   const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'files'>('overview');
@@ -93,10 +91,14 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -104,7 +106,7 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
     return {
       backgroundColor: stage.color + '20',
       color: stage.color,
-      borderColor: stage.color
+      borderColor: stage.color,
     };
   };
 
@@ -131,14 +133,14 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div
+          className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+        >
           <div>
             <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               {deal.title}
             </h2>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Deal Details
-            </p>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Deal Details</p>
           </div>
           <div className="flex items-center space-x-2">
             <button
@@ -192,9 +194,13 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                 setActiveTab('overview'); // Ensure overview tab is active when switching back
               }}
               className={`px-4 py-2 text-sm font-medium ${
-                !showSocialTab 
-                  ? (isDark ? 'text-blue-400 border-b-2 border-blue-400' : 'text-blue-600 border-b-2 border-blue-600')
-                  : (isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-900')
+                !showSocialTab
+                  ? isDark
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-blue-600 border-b-2 border-blue-600'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Deal Info
@@ -205,9 +211,13 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                 setActiveTab('overview'); // Keep overview active or let it be controlled by showSocialTab
               }}
               className={`px-4 py-2 text-sm font-medium ${
-                showSocialTab 
-                  ? (isDark ? 'text-blue-400 border-b-2 border-blue-400' : 'text-blue-600 border-b-2 border-blue-600')
-                  : (isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-900')
+                showSocialTab
+                  ? isDark
+                    ? 'text-blue-400 border-b-2 border-blue-400'
+                    : 'text-blue-600 border-b-2 border-blue-600'
+                  : isDark
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               Social Intelligence
@@ -227,22 +237,30 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {socialResearch.profiles.slice(0, 4).map((profile, index) => {
-                    const IconComponent = {
-                      'LinkedIn': Linkedin,
-                      'Twitter': Twitter,
-                      'Instagram': Instagram,
-                      'YouTube': Youtube,
-                      'GitHub': Github
-                    }[profile.platform] || Globe;
+                    const IconComponent =
+                      {
+                        LinkedIn: Linkedin,
+                        Twitter: Twitter,
+                        Instagram: Instagram,
+                        YouTube: Youtube,
+                        GitHub: Github,
+                      }[profile.platform] || Globe;
 
                     return (
-                      <div key={index} className={`p-3 rounded-lg ${
-                        isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
-                      }`}>
+                      <div
+                        key={index}
+                        className={`p-3 rounded-lg ${
+                          isDark
+                            ? 'bg-white/5 border border-white/10'
+                            : 'bg-gray-50 border border-gray-200'
+                        }`}
+                      >
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center space-x-2">
                             <IconComponent className="h-3 w-3 text-blue-500" />
-                            <span className={`font-medium text-xs ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            <span
+                              className={`font-medium text-xs ${isDark ? 'text-white' : 'text-gray-900'}`}
+                            >
                               {profile.platform}
                             </span>
                           </div>
@@ -251,11 +269,17 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                         <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                           @{profile.username}
                         </p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
-                          profile.confidence > 80 
-                            ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800')
-                            : (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800')
-                        }`}>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
+                            profile.confidence > 80
+                              ? isDark
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-green-100 text-green-800'
+                              : isDark
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
                           {profile.confidence}%
                         </span>
                       </div>
@@ -266,20 +290,32 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
 
               {/* Quick Insights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-3 rounded-lg ${
-                  isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
-                }`}>
-                  <h4 className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <div
+                  className={`p-3 rounded-lg ${
+                    isDark
+                      ? 'bg-white/5 border border-white/10'
+                      : 'bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  <h4
+                    className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
                     Communication Style
                   </h4>
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {socialResearch.personalityInsights.communicationStyle}
                   </p>
                 </div>
-                <div className={`p-3 rounded-lg ${
-                  isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'
-                }`}>
-                  <h4 className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <div
+                  className={`p-3 rounded-lg ${
+                    isDark
+                      ? 'bg-white/5 border border-white/10'
+                      : 'bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  <h4
+                    className={`font-medium text-sm mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
                     Best Engagement Times
                   </h4>
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -290,18 +326,29 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
 
               {/* Action Recommendations */}
               {socialResearch.monitoringRecommendations.length > 0 && (
-                <div className={`p-3 rounded-lg ${
-                  isDark ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'
-                }`}>
-                  <h4 className={`font-medium text-sm mb-2 ${isDark ? 'text-blue-400' : 'text-blue-800'}`}>
+                <div
+                  className={`p-3 rounded-lg ${
+                    isDark
+                      ? 'bg-blue-500/10 border border-blue-500/20'
+                      : 'bg-blue-50 border border-blue-200'
+                  }`}
+                >
+                  <h4
+                    className={`font-medium text-sm mb-2 ${isDark ? 'text-blue-400' : 'text-blue-800'}`}
+                  >
                     Recommended Actions
                   </h4>
                   <ul className="space-y-1">
-                    {socialResearch.monitoringRecommendations.slice(0, 2).map((recommendation, index) => (
-                      <li key={index} className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
-                        • {recommendation}
-                      </li>
-                    ))}
+                    {socialResearch.monitoringRecommendations
+                      .slice(0, 2)
+                      .map((recommendation, index) => (
+                        <li
+                          key={index}
+                          className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-700'}`}
+                        >
+                          • {recommendation}
+                        </li>
+                      ))}
                   </ul>
                 </div>
               )}
@@ -325,7 +372,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                           <input
                             type="number"
                             value={editedDeal.value}
-                            onChange={(e) => setEditedDeal({ ...editedDeal, value: Number(e.target.value) })}
+                            onChange={(e) =>
+                              setEditedDeal({ ...editedDeal, value: Number(e.target.value) })
+                            }
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
@@ -348,7 +397,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                             min="0"
                             max="100"
                             value={editedDeal.probability}
-                            onChange={(e) => setEditedDeal({ ...editedDeal, probability: Number(e.target.value) })}
+                            onChange={(e) =>
+                              setEditedDeal({ ...editedDeal, probability: Number(e.target.value) })
+                            }
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                           <span className="ml-2 text-gray-500">%</span>
@@ -356,7 +407,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                       ) : (
                         <div className="flex items-center">
                           <TrendingUp size={16} className="text-blue-600 mr-1" />
-                          <span className="text-lg font-semibold text-gray-900">{deal.probability}%</span>
+                          <span className="text-lg font-semibold text-gray-900">
+                            {deal.probability}%
+                          </span>
                         </div>
                       )}
                     </div>
@@ -371,7 +424,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                   {isEditing ? (
                     <textarea
                       value={editedDeal.description || ''}
-                      onChange={(e) => setEditedDeal({ ...editedDeal, description: e.target.value })}
+                      onChange={(e) =>
+                        setEditedDeal({ ...editedDeal, description: e.target.value })
+                      }
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Deal description..."
@@ -385,9 +440,7 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
 
                 {/* Tags */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tags
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
                   <div className="flex flex-wrap gap-2">
                     {deal.tags.map((tag, index) => (
                       <span
@@ -427,7 +480,10 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                       {contact.email && (
                         <div className="flex items-center space-x-3">
                           <Mail size={16} className="text-gray-400" />
-                          <a href={`mailto:${contact.email}`} className="text-blue-600 hover:text-blue-700">
+                          <a
+                            href={`mailto:${contact.email}`}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
                             {contact.email}
                           </a>
                         </div>
@@ -435,7 +491,10 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                       {contact.phone && (
                         <div className="flex items-center space-x-3">
                           <Phone size={16} className="text-gray-400" />
-                          <a href={`tel:${contact.phone}`} className="text-blue-600 hover:text-blue-700">
+                          <a
+                            href={`tel:${contact.phone}`}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
                             {contact.phone}
                           </a>
                         </div>
@@ -452,7 +511,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                       <Calendar size={16} className="text-gray-400" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Created</p>
-                        <p className="text-sm text-gray-600">{deal.createdAt.toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-600">
+                          {deal.createdAt.toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
 
@@ -460,7 +521,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                       <Clock size={16} className="text-gray-400" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">Last Updated</p>
-                        <p className="text-sm text-gray-600">{deal.updatedAt.toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-600">
+                          {deal.updatedAt.toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
 
@@ -469,7 +532,9 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                         <Target size={16} className="text-gray-400" />
                         <div>
                           <p className="text-sm font-medium text-gray-900">Expected Close</p>
-                          <p className="text-sm text-gray-600">{deal.expectedCloseDate.toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-600">
+                            {deal.expectedCloseDate.toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -540,11 +605,16 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({
                   <div className="text-center py-8">
                     <Paperclip size={48} className="mx-auto mb-4 text-gray-300" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No files attached</h3>
-                    <p className="text-gray-500">Upload contracts, proposals, or other documents.</p>
+                    <p className="text-gray-500">
+                      Upload contracts, proposals, or other documents.
+                    </p>
                   </div>
                 ) : (
                   deal.attachments.map((attachment, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
                       <div className="flex items-center space-x-3">
                         <Paperclip size={16} className="text-gray-400" />
                         <div>

@@ -4,17 +4,18 @@ Complete set of email templates for Supabase authentication using the **token_ha
 
 ## 📧 Templates Included
 
-| # | Template Name | File | Supabase Template Type |
-|---|---------------|------|------------------------|
-| 1 | **Confirm Signup** | `1-confirm-signup.html` | Confirm signup |
-| 2 | **Invite User** | `2-invite-user.html` | Invite user |
-| 3 | **Magic Link** | `3-magic-link.html` | Magic Link |
-| 4 | **Change Email** | `4-change-email.html` | Change Email Address |
-| 5 | **Reset Password** | `5-reset-password.html` | Reset Password |
+| #   | Template Name      | File                    | Supabase Template Type |
+| --- | ------------------ | ----------------------- | ---------------------- |
+| 1   | **Confirm Signup** | `1-confirm-signup.html` | Confirm signup         |
+| 2   | **Invite User**    | `2-invite-user.html`    | Invite user            |
+| 3   | **Magic Link**     | `3-magic-link.html`     | Magic Link             |
+| 4   | **Change Email**   | `4-change-email.html`   | Change Email Address   |
+| 5   | **Reset Password** | `5-reset-password.html` | Reset Password         |
 
 ## 🔧 Installation Instructions
 
 ### Step 1: Access Supabase Dashboard
+
 1. Go to https://supabase.com/dashboard
 2. Select your **SmartCRM** project
 3. Navigate to: **Authentication** → **Email Templates**
@@ -34,19 +35,20 @@ For each template:
 All templates use the modern **token_hash** approach instead of the deprecated `.ConfirmationURL` method.
 
 ### URL Pattern
+
 ```
 {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type={TYPE}&next={NEXT_PAGE}
 ```
 
 ### Routes by Type
 
-| Template | Type Parameter | Next Parameter | Final Destination |
-|----------|---------------|----------------|-------------------|
-| Confirm Signup | `signup` | _(none)_ | `/dashboard` |
-| Invite User | `invite` | _(none)_ | `/dashboard` |
-| Magic Link | `magiclink` | _(none)_ | `/dashboard` |
-| Change Email | `email_change` | _(none)_ | `/dashboard` |
-| Reset Password | `recovery` | `/auth/reset-password` | `/auth/reset-password` |
+| Template       | Type Parameter | Next Parameter         | Final Destination      |
+| -------------- | -------------- | ---------------------- | ---------------------- |
+| Confirm Signup | `signup`       | _(none)_               | `/dashboard`           |
+| Invite User    | `invite`       | _(none)_               | `/dashboard`           |
+| Magic Link     | `magiclink`    | _(none)_               | `/dashboard`           |
+| Change Email   | `email_change` | _(none)_               | `/dashboard`           |
+| Reset Password | `recovery`     | `/auth/reset-password` | `/auth/reset-password` |
 
 ## 🔍 How It Works
 
@@ -70,6 +72,7 @@ After updating all templates:
 ## 🎨 Design Features
 
 All templates include:
+
 - ✅ SmartCRM branding with green accent color (#16a34a)
 - ✅ Responsive design for mobile/desktop
 - ✅ Outlook MSO compatibility
@@ -92,7 +95,6 @@ Before going live:
 1. **Update Site URL** in Supabase:
    - Go to: **Settings** → **General** → **Configuration**
    - Set **Site URL** to: `https://app.smartcrm.vip`
-   
 2. **Whitelist Redirect URLs**:
    - Go to: **Authentication** → **URL Configuration**
    - Add: `https://app.smartcrm.vip/auth/confirm`

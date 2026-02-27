@@ -6,7 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -42,7 +48,7 @@ import {
   Play,
   Pause,
   Volume2,
-  Settings
+  Settings,
 } from 'lucide-react';
 
 interface ContentItem {
@@ -121,13 +127,13 @@ export default function ContentLibraryDashboard() {
         suggestedTags: ['innovation', 'technology', 'update'],
         predictedEngagement: 0.82,
         contentScore: 0.85,
-        recommendations: ['Add customer testimonials', 'Include product screenshots']
-      }
+        recommendations: ['Add customer testimonials', 'Include product screenshots'],
+      },
     },
     {
       id: '2',
       title: 'Customer Success Story Video',
-      description: 'How our solution transformed a client\'s business operations',
+      description: "How our solution transformed a client's business operations",
       type: 'video',
       category: 'Case Studies',
       tags: ['success', 'client', 'transformation'],
@@ -140,7 +146,7 @@ export default function ContentLibraryDashboard() {
       shares: 67,
       engagement: 0.92,
       thumbnail: '/api/placeholder/400/225',
-      url: 'https://example.com/video1'
+      url: 'https://example.com/video1',
     },
     {
       id: '3',
@@ -157,7 +163,7 @@ export default function ContentLibraryDashboard() {
       likes: 0,
       shares: 0,
       engagement: 0,
-      url: 'https://example.com/report1'
+      url: 'https://example.com/report1',
     },
     {
       id: '4',
@@ -175,8 +181,8 @@ export default function ContentLibraryDashboard() {
       shares: 23,
       engagement: 0.65,
       thumbnail: '/api/placeholder/400/300',
-      url: 'https://example.com/infographic1'
-    }
+      url: 'https://example.com/infographic1',
+    },
   ];
 
   const mockStats: ContentStats = {
@@ -187,7 +193,7 @@ export default function ContentLibraryDashboard() {
     averageEngagement: 0.68,
     topPerformingCategory: 'Case Studies',
     aiOptimizationScore: 0.84,
-    monthlyGrowth: 0.15
+    monthlyGrowth: 0.15,
   };
 
   const { data: content = mockContent, isLoading: contentLoading } = useQuery<ContentItem[]>({
@@ -207,7 +213,6 @@ export default function ContentLibraryDashboard() {
         `Content: ${contentItem.title}, Description: ${contentItem.description}, Type: ${contentItem.type}, Tags: ${contentItem.tags.join(', ')}`,
         'content-optimization'
       );
-      console.log('Content optimization:', result);
     } catch (error) {
       console.error('Failed to optimize content:', error);
     } finally {
@@ -217,21 +222,31 @@ export default function ContentLibraryDashboard() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'text': return <FileText className="h-5 w-5" />;
-      case 'image': return <Image className="h-5 w-5" />;
-      case 'video': return <Video className="h-5 w-5" />;
-      case 'audio': return <Music className="h-5 w-5" />;
-      case 'document': return <FileText className="h-5 w-5" />;
-      default: return <FileText className="h-5 w-5" />;
+      case 'text':
+        return <FileText className="h-5 w-5" />;
+      case 'image':
+        return <Image className="h-5 w-5" />;
+      case 'video':
+        return <Video className="h-5 w-5" />;
+      case 'audio':
+        return <Music className="h-5 w-5" />;
+      case 'document':
+        return <FileText className="h-5 w-5" />;
+      default:
+        return <FileText className="h-5 w-5" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'draft': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'archived': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'published':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'archived':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -252,7 +267,7 @@ export default function ContentLibraryDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Content Optimizer'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = (
@@ -266,19 +281,27 @@ export default function ContentLibraryDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Published</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{stats.totalViews.toLocaleString()}</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {stats.totalViews.toLocaleString()}
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Views</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(stats.averageEngagement * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(stats.averageEngagement * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Engagement</div>
       </div>
     </div>
   );
 
-  const filteredContent = content.filter(item => {
-    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !item.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const filteredContent = content.filter((item) => {
+    if (
+      searchQuery &&
+      !item.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !item.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
     if (filterType !== 'all' && item.type !== filterType) return false;
     if (filterCategory !== 'all' && item.category !== filterCategory) return false;
     if (filterStatus !== 'all' && item.status !== filterStatus) return false;
@@ -375,7 +398,7 @@ export default function ContentLibraryDashboard() {
           {/* Content Grid/List */}
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredContent.map(item => (
+              {filteredContent.map((item) => (
                 <GlassCard
                   key={item.id}
                   className="p-4 cursor-pointer hover:border-blue-300"
@@ -383,11 +406,13 @@ export default function ContentLibraryDashboard() {
                 >
                   <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
                     {item.thumbnail ? (
-                      <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover rounded-lg" />
+                      <img
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
                     ) : (
-                      <div className="text-gray-400">
-                        {getTypeIcon(item.type)}
-                      </div>
+                      <div className="text-gray-400">{getTypeIcon(item.type)}</div>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -395,18 +420,18 @@ export default function ContentLibraryDashboard() {
                       {getTypeIcon(item.type)}
                       <h3 className="font-medium text-sm line-clamp-2">{item.title}</h3>
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{item.description}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                      {item.description}
+                    </p>
                     <div className="flex items-center justify-between">
-                      <Badge className={getStatusColor(item.status)}>
-                        {item.status}
-                      </Badge>
+                      <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         <Eye className="h-3 w-3" />
                         {item.views}
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      {item.tags.slice(0, 2).map(tag => (
+                      {item.tags.slice(0, 2).map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">
                           {tag}
                         </Badge>
@@ -419,19 +444,20 @@ export default function ContentLibraryDashboard() {
           ) : (
             <GlassCard className="p-6">
               <div className="space-y-4">
-                {filteredContent.map(item => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                    <div className="flex-shrink-0">
-                      {getTypeIcon(item.type)}
-                    </div>
+                {filteredContent.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                  >
+                    <div className="flex-shrink-0">{getTypeIcon(item.type)}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium">{item.title}</h3>
-                        <Badge className={getStatusColor(item.status)}>
-                          {item.status}
-                        </Badge>
+                        <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{item.description}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        {item.description}
+                      </p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span>By {item.author}</span>
                         <span>{item.category}</span>
@@ -547,19 +573,25 @@ export default function ContentLibraryDashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth</span>
-                    <span className="font-semibold text-green-600">+{Math.round(stats.monthlyGrowth * 100)}%</span>
+                    <span className="font-semibold text-green-600">
+                      +{Math.round(stats.monthlyGrowth * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">AI Optimization Score</span>
-                    <span className="font-semibold">{Math.round(stats.aiOptimizationScore * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(stats.aiOptimizationScore * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.aiOptimizationScore * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Average Engagement</span>
-                    <span className="font-semibold">{Math.round(stats.averageEngagement * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(stats.averageEngagement * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.averageEngagement * 100} className="h-2" />
                 </div>
@@ -798,19 +830,27 @@ export default function ContentLibraryDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Title</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Title
+                  </Label>
                   <div className="font-medium">{selectedContent.title}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Type</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Type
+                  </Label>
                   <div className="font-medium capitalize">{selectedContent.type}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Category</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Category
+                  </Label>
                   <div className="font-medium">{selectedContent.category}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedContent.status)}>
                     {selectedContent.status}
                   </Badge>
@@ -818,14 +858,20 @@ export default function ContentLibraryDashboard() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Description</Label>
-                <div className="text-sm text-gray-700 dark:text-gray-300">{selectedContent.description}</div>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Description
+                </Label>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {selectedContent.description}
+                </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Tags</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Tags
+                </Label>
                 <div className="flex flex-wrap gap-2">
-                  {selectedContent.tags.map(tag => (
+                  {selectedContent.tags.map((tag) => (
                     <Badge key={tag} variant="outline">
                       {tag}
                     </Badge>
@@ -847,7 +893,9 @@ export default function ContentLibraryDashboard() {
                   <div className="text-xs text-gray-600 dark:text-gray-400">Shares</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold">{Math.round(selectedContent.engagement * 100)}%</div>
+                  <div className="text-lg font-semibold">
+                    {Math.round(selectedContent.engagement * 100)}%
+                  </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400">Engagement</div>
                 </div>
               </div>
@@ -861,12 +909,15 @@ export default function ContentLibraryDashboard() {
                   <div className="space-y-3">
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                       <div className="text-sm text-purple-800 dark:text-purple-200">
-                        <strong>Predicted Engagement:</strong> {Math.round(selectedContent.gpt5Optimization.predictedEngagement * 100)}%
+                        <strong>Predicted Engagement:</strong>{' '}
+                        {Math.round(selectedContent.gpt5Optimization.predictedEngagement * 100)}%
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Suggested Additional Tags:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Suggested Additional Tags:
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {selectedContent.gpt5Optimization.suggestedTags.map((tag, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
@@ -877,10 +928,15 @@ export default function ContentLibraryDashboard() {
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">AI Recommendations:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        AI Recommendations:
+                      </div>
                       <ul className="space-y-1">
                         {selectedContent.gpt5Optimization.recommendations.map((rec, index) => (
-                          <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                          <li
+                            key={index}
+                            className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"
+                          >
                             <span className="text-green-500 mt-1">•</span>
                             {rec}
                           </li>

@@ -26,13 +26,13 @@ const colorVariants = {
   success: 'bg-emerald-600 hover:bg-emerald-700 text-white',
   warning: 'bg-amber-600 hover:bg-amber-700 text-white',
   danger: 'bg-red-600 hover:bg-red-700 text-white',
-  neutral: 'bg-gray-600 hover:bg-gray-700 text-white'
+  neutral: 'bg-gray-600 hover:bg-gray-700 text-white',
 };
 
 const sizeVariants = {
   sm: 'p-2 text-xs',
   md: 'p-3 text-sm',
-  lg: 'p-4 text-base'
+  lg: 'p-4 text-base',
 };
 
 export const QuickActions: React.FC<QuickActionsProps> = ({
@@ -40,7 +40,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   layout = 'grid',
   size = 'md',
   className,
-  title
+  title,
 }) => {
   const getLayoutClasses = () => {
     switch (layout) {
@@ -57,11 +57,9 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   return (
     <div className={cn('w-full', className)}>
       {title && (
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          {title}
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h3>
       )}
-      
+
       <div className={getLayoutClasses()}>
         {actions.map((action) => (
           <button
@@ -73,7 +71,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               'relative flex items-center justify-center rounded-lg border transition-all duration-200',
               'focus:outline-none focus:ring-2 focus:ring-offset-2',
               sizeVariants[size],
-              action.disabled 
+              action.disabled
                 ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-400'
                 : colorVariants[action.color || 'primary'],
               'hover:scale-105 hover:shadow-md',
@@ -81,16 +79,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             )}
           >
             <div className="flex items-center space-x-2">
-              <span className="flex-shrink-0">
-                {action.icon}
-              </span>
+              <span className="flex-shrink-0">{action.icon}</span>
               {(layout === 'horizontal' || layout === 'vertical') && (
-                <span className="font-medium truncate">
-                  {action.label}
-                </span>
+                <span className="font-medium truncate">{action.label}</span>
               )}
             </div>
-            
+
             {action.badge && action.badge > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center">
                 {action.badge > 99 ? '99+' : action.badge}
@@ -109,38 +103,38 @@ export const commonActions: Omit<Action, 'onClick'>[] = [
     id: 'add-contact',
     label: 'Add Contact',
     icon: <Plus className="w-5 h-5" />,
-    color: 'primary'
+    color: 'primary',
   },
   {
     id: 'make-call',
     label: 'Make Call',
     icon: <Phone className="w-5 h-5" />,
-    color: 'success'
+    color: 'success',
   },
   {
     id: 'send-email',
     label: 'Send Email',
     icon: <Mail className="w-5 h-5" />,
-    color: 'primary'
+    color: 'primary',
   },
   {
     id: 'schedule-meeting',
     label: 'Schedule Meeting',
     icon: <Calendar className="w-5 h-5" />,
-    color: 'warning'
+    color: 'warning',
   },
   {
     id: 'add-deal',
     label: 'Add Deal',
     icon: <Users className="w-5 h-5" />,
-    color: 'success'
+    color: 'success',
   },
   {
     id: 'create-task',
     label: 'Create Task',
     icon: <FileText className="w-5 h-5" />,
-    color: 'neutral'
-  }
+    color: 'neutral',
+  },
 ];
 
 export default QuickActions;

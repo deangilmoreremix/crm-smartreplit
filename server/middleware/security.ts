@@ -7,12 +7,12 @@ export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      connectSrc: ["'self'", "https://api.openai.com", "https://*.supabase.co", "wss:", "ws:"],
-      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://js.stripe.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+      connectSrc: ["'self'", 'https://api.openai.com', 'https://*.supabase.co', 'wss:', 'ws:'],
+      frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
@@ -21,8 +21,8 @@ export const securityHeaders = helmet({
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
-    preload: true
-  }
+    preload: true,
+  },
 });
 
 // CORS configuration
@@ -38,11 +38,11 @@ export const corsConfig = cors({
       'https://www.smartcrm.vip',
       'https://app.smartcrm.vip',
       'https://*.netlify.app', // Allow Netlify deployments
-      'https://*.vercel.app',  // Allow Vercel deployments
+      'https://*.vercel.app', // Allow Vercel deployments
     ];
 
     // Check if origin matches any allowed pattern
-    const isAllowed = allowedOrigins.some(allowed => {
+    const isAllowed = allowedOrigins.some((allowed) => {
       if (allowed.includes('*')) {
         const regex = new RegExp(allowed.replace('*', '.*'));
         return regex.test(origin);
@@ -65,9 +65,9 @@ export const corsConfig = cors({
     'Accept',
     'Origin',
     'X-Tenant-ID',
-    'X-Webhook-Signature'
+    'X-Webhook-Signature',
   ],
-  exposedHeaders: ['X-Rate-Limit-Remaining', 'X-Rate-Limit-Reset']
+  exposedHeaders: ['X-Rate-Limit-Remaining', 'X-Rate-Limit-Reset'],
 });
 
 // Rate limiting configurations
@@ -84,7 +84,7 @@ export const createRateLimit = (options: {
     message: {
       error: 'Too many requests',
       message: options.message || 'Rate limit exceeded. Please try again later.',
-      retryAfter: Math.ceil(options.windowMs / 1000)
+      retryAfter: Math.ceil(options.windowMs / 1000),
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -100,9 +100,9 @@ export const createRateLimit = (options: {
       res.status(429).json({
         error: 'Too many requests',
         message: 'Rate limit exceeded. Please try again later.',
-        retryAfter: Math.ceil(options.windowMs / 1000)
+        retryAfter: Math.ceil(options.windowMs / 1000),
       });
-    }
+    },
   });
 };
 
@@ -110,7 +110,7 @@ export const createRateLimit = (options: {
 export const apiLimiter = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per 15 minutes
-  message: 'Too many API requests. Please try again later.'
+  message: 'Too many API requests. Please try again later.',
 });
 
 // Strict rate limiting for authentication endpoints
@@ -118,7 +118,7 @@ export const authLimiter = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 attempts per 15 minutes
   message: 'Too many authentication attempts. Please try again later.',
-  skipFailedRequests: false
+  skipFailedRequests: false,
 });
 
 // AI endpoints rate limiting (more restrictive due to costs)
@@ -126,21 +126,21 @@ export const aiLimiter = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 AI requests per minute
   message: 'AI request limit exceeded. Please wait before making another request.',
-  skipSuccessfulRequests: false
+  skipSuccessfulRequests: false,
 });
 
 // File upload rate limiting
 export const uploadLimiter = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 5, // 5 uploads per minute
-  message: 'Upload limit exceeded. Please wait before uploading again.'
+  message: 'Upload limit exceeded. Please wait before uploading again.',
 });
 
 // Admin endpoints rate limiting (most restrictive)
 export const adminLimiter = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 30, // 30 admin requests per minute
-  message: 'Admin request limit exceeded.'
+  message: 'Admin request limit exceeded.',
 });
 
 // Webhook rate limiting (very permissive for reliability)
@@ -148,7 +148,7 @@ export const webhookLimiter = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 1000, // 1000 webhook calls per minute
   message: 'Webhook rate limit exceeded.',
-  skipSuccessfulRequests: true // Don't count successful webhooks
+  skipSuccessfulRequests: true, // Don't count successful webhooks
 });
 
 // Health check endpoint (no rate limiting)
@@ -158,7 +158,7 @@ export const healthLimiter = rateLimit({
   standardHeaders: false,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  skipFailedRequests: true
+  skipFailedRequests: true,
 });
 
 // Request logging middleware (for security monitoring)
@@ -170,15 +170,19 @@ export const requestLogger = (req: any, res: any, next: any) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - IP: ${req.ip}`);
 
   // Override res.send to log response
-  res.send = function(data: any) {
+  res.send = function (data: any) {
     const duration = Date.now() - start;
     const statusCode = res.statusCode;
 
     // Log security-relevant information
     if (statusCode >= 400) {
-      console.warn(`[${new Date().toISOString()}] ${req.method} ${req.path} - ${statusCode} - ${duration}ms - IP: ${req.ip}`);
+      console.warn(
+        `[${new Date().toISOString()}] ${req.method} ${req.path} - ${statusCode} - ${duration}ms - IP: ${req.ip}`
+      );
     } else if (req.path.includes('/api/') && !req.path.includes('/health')) {
-      console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - ${statusCode} - ${duration}ms`);
+      console.log(
+        `[${new Date().toISOString()}] ${req.method} ${req.path} - ${statusCode} - ${duration}ms`
+      );
     }
 
     originalSend.call(this, data);
@@ -193,11 +197,12 @@ export const sanitizeInput = (req: any, res: any, next: any) => {
   const sanitize = (obj: any): any => {
     if (typeof obj === 'string') {
       // Basic XSS prevention - remove script tags and dangerous HTML
-      return obj.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-                .replace(/javascript:/gi, '')
-                .replace(/on\w+\s*=/gi, '')
-                .trim();
+      return obj
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+        .replace(/javascript:/gi, '')
+        .replace(/on\w+\s*=/gi, '')
+        .trim();
     } else if (Array.isArray(obj)) {
       return obj.map(sanitize);
     } else if (obj && typeof obj === 'object') {
@@ -227,7 +232,7 @@ export const requestSizeLimit = (req: any, res: any, next: any) => {
   if (contentLength && contentLength > maxSize) {
     return res.status(413).json({
       error: 'Request too large',
-      message: 'Request body exceeds maximum allowed size (10MB)'
+      message: 'Request body exceeds maximum allowed size (10MB)',
     });
   }
 

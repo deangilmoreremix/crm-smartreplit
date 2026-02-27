@@ -6,7 +6,9 @@
 const { Pool } = require('pg');
 
 // Use the DATABASE_URL from environment
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
@@ -63,14 +65,15 @@ async function runAuthFix() {
     await client.query(authFixSQL);
     console.log('✅ Auth fix applied!');
 
-    const result = await client.query("SELECT * FROM pg_trigger WHERE tgname = 'on_auth_user_created'");
+    const result = await client.query(
+      "SELECT * FROM pg_trigger WHERE tgname = 'on_auth_user_created'"
+    );
     if (result.rows.length > 0) {
       console.log('✅ Trigger "on_auth_user_created" exists');
     }
 
     const count = await client.query('SELECT COUNT(*) as count FROM public.profiles');
     console.log(`Total profiles: ${count.rows[0].count}`);
-
   } catch (err) {
     console.error('Error:', err.message);
   } finally {

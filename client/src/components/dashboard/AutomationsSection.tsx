@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  Clock, 
-  Repeat, 
-  Mail, 
-  Phone, 
-  MessageSquare, 
-  UserPlus, 
-  Calendar, 
+import {
+  Clock,
+  Repeat,
+  Mail,
+  Phone,
+  MessageSquare,
+  UserPlus,
+  Calendar,
   Target,
   TrendingUp,
   Star,
@@ -15,7 +15,7 @@ import {
   Sparkles,
   CheckCircle,
   AlertCircle,
-  Bell
+  Bell,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLocation } from 'wouter';
@@ -33,7 +33,9 @@ interface Automation {
 const AutomationsSection = () => {
   const { isDark } = useTheme();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<'follow-up' | 'pipeline' | 'relationships' | 'time-savers'>('follow-up');
+  const [activeTab, setActiveTab] = useState<
+    'follow-up' | 'pipeline' | 'relationships' | 'time-savers'
+  >('follow-up');
 
   const automations: Automation[] = [
     // Follow-Up Automations
@@ -44,7 +46,7 @@ const AutomationsSection = () => {
       icon: Mail,
       color: 'from-blue-500 to-cyan-500',
       hoverColor: 'hover:from-blue-600 hover:to-cyan-600',
-      category: 'follow-up'
+      category: 'follow-up',
     },
     {
       id: 'sms-reminder',
@@ -53,7 +55,7 @@ const AutomationsSection = () => {
       icon: MessageSquare,
       color: 'from-purple-500 to-pink-500',
       hoverColor: 'hover:from-purple-600 hover:to-pink-600',
-      category: 'follow-up'
+      category: 'follow-up',
     },
     {
       id: 'call-followup',
@@ -62,7 +64,7 @@ const AutomationsSection = () => {
       icon: Phone,
       color: 'from-green-500 to-emerald-500',
       hoverColor: 'hover:from-green-600 hover:to-emerald-600',
-      category: 'follow-up'
+      category: 'follow-up',
     },
     {
       id: 'task-reminder',
@@ -71,7 +73,7 @@ const AutomationsSection = () => {
       icon: CheckCircle,
       color: 'from-orange-500 to-red-500',
       hoverColor: 'hover:from-orange-600 hover:to-red-600',
-      category: 'follow-up'
+      category: 'follow-up',
     },
 
     // Pipeline Automations
@@ -82,7 +84,7 @@ const AutomationsSection = () => {
       icon: TrendingUp,
       color: 'from-indigo-500 to-purple-500',
       hoverColor: 'hover:from-indigo-600 hover:to-purple-600',
-      category: 'pipeline'
+      category: 'pipeline',
     },
     {
       id: 'lead-scoring',
@@ -91,7 +93,7 @@ const AutomationsSection = () => {
       icon: Star,
       color: 'from-yellow-500 to-orange-500',
       hoverColor: 'hover:from-yellow-600 hover:to-orange-600',
-      category: 'pipeline'
+      category: 'pipeline',
     },
     {
       id: 'stale-deal-alert',
@@ -100,7 +102,7 @@ const AutomationsSection = () => {
       icon: AlertCircle,
       color: 'from-red-500 to-pink-500',
       hoverColor: 'hover:from-red-600 hover:to-pink-600',
-      category: 'pipeline'
+      category: 'pipeline',
     },
     {
       id: 'win-probability',
@@ -109,7 +111,7 @@ const AutomationsSection = () => {
       icon: Target,
       color: 'from-teal-500 to-cyan-500',
       hoverColor: 'hover:from-teal-600 hover:to-cyan-600',
-      category: 'pipeline'
+      category: 'pipeline',
     },
 
     // Relationship Automations
@@ -120,7 +122,7 @@ const AutomationsSection = () => {
       icon: Calendar,
       color: 'from-pink-500 to-rose-500',
       hoverColor: 'hover:from-pink-600 hover:to-rose-600',
-      category: 'relationships'
+      category: 'relationships',
     },
     {
       id: 'milestone-celebration',
@@ -129,7 +131,7 @@ const AutomationsSection = () => {
       icon: Sparkles,
       color: 'from-violet-500 to-purple-500',
       hoverColor: 'hover:from-violet-600 hover:to-purple-600',
-      category: 'relationships'
+      category: 'relationships',
     },
     {
       id: 'referral-request',
@@ -138,7 +140,7 @@ const AutomationsSection = () => {
       icon: Users,
       color: 'from-blue-500 to-indigo-500',
       hoverColor: 'hover:from-blue-600 hover:to-indigo-600',
-      category: 'relationships'
+      category: 'relationships',
     },
     {
       id: 'check-in-sequence',
@@ -147,7 +149,7 @@ const AutomationsSection = () => {
       icon: UserPlus,
       color: 'from-green-500 to-teal-500',
       hoverColor: 'hover:from-green-600 hover:to-teal-600',
-      category: 'relationships'
+      category: 'relationships',
     },
 
     // Time-Savers Automations
@@ -158,7 +160,7 @@ const AutomationsSection = () => {
       icon: FileText,
       color: 'from-cyan-500 to-blue-500',
       hoverColor: 'hover:from-cyan-600 hover:to-blue-600',
-      category: 'time-savers'
+      category: 'time-savers',
     },
     {
       id: 'daily-brief',
@@ -167,7 +169,7 @@ const AutomationsSection = () => {
       icon: Bell,
       color: 'from-amber-500 to-orange-500',
       hoverColor: 'hover:from-amber-600 hover:to-orange-600',
-      category: 'time-savers'
+      category: 'time-savers',
     },
     {
       id: 'data-entry',
@@ -176,7 +178,7 @@ const AutomationsSection = () => {
       icon: Repeat,
       color: 'from-emerald-500 to-green-500',
       hoverColor: 'hover:from-emerald-600 hover:to-green-600',
-      category: 'time-savers'
+      category: 'time-savers',
     },
     {
       id: 'task-auto-create',
@@ -185,39 +187,63 @@ const AutomationsSection = () => {
       icon: Clock,
       color: 'from-rose-500 to-red-500',
       hoverColor: 'hover:from-rose-600 hover:to-red-600',
-      category: 'time-savers'
-    }
+      category: 'time-savers',
+    },
   ];
 
-  const filteredAutomations = automations.filter(auto => auto.category === activeTab);
+  const filteredAutomations = automations.filter((auto) => auto.category === activeTab);
 
   const tabs = [
-    { id: 'follow-up' as const, label: 'Follow-Up', count: automations.filter(a => a.category === 'follow-up').length },
-    { id: 'pipeline' as const, label: 'Pipeline', count: automations.filter(a => a.category === 'pipeline').length },
-    { id: 'relationships' as const, label: 'Relationships', count: automations.filter(a => a.category === 'relationships').length },
-    { id: 'time-savers' as const, label: 'Time-Savers', count: automations.filter(a => a.category === 'time-savers').length }
+    {
+      id: 'follow-up' as const,
+      label: 'Follow-Up',
+      count: automations.filter((a) => a.category === 'follow-up').length,
+    },
+    {
+      id: 'pipeline' as const,
+      label: 'Pipeline',
+      count: automations.filter((a) => a.category === 'pipeline').length,
+    },
+    {
+      id: 'relationships' as const,
+      label: 'Relationships',
+      count: automations.filter((a) => a.category === 'relationships').length,
+    },
+    {
+      id: 'time-savers' as const,
+      label: 'Time-Savers',
+      count: automations.filter((a) => a.category === 'time-savers').length,
+    },
   ];
 
   const handleAutomationClick = (automationId: string) => {
-    console.log('Automation clicked:', automationId);
     // Navigate to automation configuration page
     setLocation(`/automations/${automationId}`);
   };
 
   return (
-    <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-6 mb-8`} data-testid="section-automations">
+    <div
+      className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-6 mb-8`}
+      data-testid="section-automations"
+    >
       <div className="flex items-center justify-between mb-6">
-        <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`} data-testid="heading-automations">
+        <h2
+          className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+          data-testid="heading-automations"
+        >
           Automations
         </h2>
-        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`} data-testid="text-tagline">
+        <span
+          className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+          data-testid="text-tagline"
+        >
           Set it and forget it
         </span>
       </div>
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map(tab => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -227,8 +253,8 @@ const AutomationsSection = () => {
                   ? 'bg-blue-600 text-white'
                   : 'bg-blue-500 text-white'
                 : isDark
-                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
             data-testid={`automation-tab-${tab.id}`}
           >
@@ -252,8 +278,18 @@ const AutomationsSection = () => {
               </div>
             </div>
             <div className="mt-4">
-              <h3 className="font-semibold text-white text-base" data-testid={`text-title-${automation.id}`}>{automation.title}</h3>
-              <p className="text-white/80 text-sm mt-1" data-testid={`text-description-${automation.id}`}>{automation.description}</p>
+              <h3
+                className="font-semibold text-white text-base"
+                data-testid={`text-title-${automation.id}`}
+              >
+                {automation.title}
+              </h3>
+              <p
+                className="text-white/80 text-sm mt-1"
+                data-testid={`text-description-${automation.id}`}
+              >
+                {automation.description}
+              </p>
             </div>
             <div className="mt-4 flex items-center text-white/60 text-xs">
               <Repeat className="h-3 w-3 mr-1" />

@@ -38,11 +38,7 @@ class ErrorLogger {
   /**
    * Log an error with context
    */
-  async logError(
-    message: string,
-    error?: Error,
-    context?: ErrorContext
-  ): Promise<void> {
+  async logError(message: string, error?: Error, context?: ErrorContext): Promise<void> {
     const logEntry: ErrorLogEntry = {
       timestamp: new Date().toISOString(),
       level: 'error',
@@ -139,7 +135,7 @@ class ErrorLogger {
     try {
       // Sentry integration would go here
       // Example: Sentry.captureException(entry.error, { contexts: entry.context });
-      
+
       // For now, just log that we would send to Sentry
       if (process.env.NODE_ENV === 'development') {
         console.log('[Sentry] Would send:', entry.message);
@@ -156,7 +152,7 @@ class ErrorLogger {
     try {
       // DataDog integration would go here
       // Example: datadogLogs.logger.error(entry.message, entry.context);
-      
+
       // For now, just log that we would send to DataDog
       if (process.env.NODE_ENV === 'development') {
         console.log('[DataDog] Would send:', entry.message);
@@ -173,7 +169,7 @@ class ErrorLogger {
     try {
       const fs = await import('fs/promises');
       const path = await import('path');
-      
+
       const logDir = path.join(process.cwd(), 'logs');
       const logFile = path.join(logDir, `app-${new Date().toISOString().split('T')[0]}.log`);
 
@@ -214,11 +210,7 @@ class ErrorLogger {
       const context = this.createContextFromRequest(req);
       context.statusCode = res.statusCode || 500;
 
-      await this.logError(
-        `Unhandled error in ${req.method} ${req.path}`,
-        err,
-        context
-      );
+      await this.logError(`Unhandled error in ${req.method} ${req.path}`, err, context);
 
       // Pass to next error handler
       next(err);

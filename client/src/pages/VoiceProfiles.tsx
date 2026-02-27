@@ -30,16 +30,16 @@ const VoiceProfiles: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
-  
+
   // Form state
   const [formName, setFormName] = useState('');
   const [formVoiceId, setFormVoiceId] = useState('');
   const [formSettings, setFormSettings] = useState<any>({
     pitch: 1,
     speed: 1,
-    volume: 1
+    volume: 1,
   });
-  
+
   // Mock data initialization
   useEffect(() => {
     const mockProfiles: VoiceProfile[] = [
@@ -56,11 +56,11 @@ const VoiceProfiles: React.FC = () => {
         voice_id: 'voice-4',
         settings: { pitch: 1.1, speed: 0.9, volume: 1 },
         created_at: new Date().toISOString(),
-      }
+      },
     ];
     setProfiles(mockProfiles);
   }, []);
-  
+
   useEffect(() => {
     if (editingProfile) {
       setFormName(editingProfile.name);
@@ -70,7 +70,7 @@ const VoiceProfiles: React.FC = () => {
       resetForm();
     }
   }, [editingProfile]);
-  
+
   const loadVoiceProfiles = async () => {
     setIsLoading(true);
     setError(null);
@@ -78,23 +78,23 @@ const VoiceProfiles: React.FC = () => {
       // In a real app, this would fetch from API
       // Using mock data from useEffect
     } catch (err) {
-      console.error("Error loading voice profiles:", err);
+      console.error('Error loading voice profiles:', err);
       setError('Failed to load voice profiles');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const resetForm = () => {
     setFormName('');
     setFormVoiceId('voice-1');
     setFormSettings({ pitch: 1, speed: 1, volume: 1 });
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName || !formVoiceId) return;
-    
+
     setIsSubmitting(true);
     try {
       if (editingProfile) {
@@ -103,9 +103,9 @@ const VoiceProfiles: React.FC = () => {
           ...editingProfile,
           name: formName,
           voice_id: formVoiceId,
-          settings: formSettings
+          settings: formSettings,
         };
-        setProfiles(profiles.map(p => p.id === editingProfile.id ? updatedProfile : p));
+        setProfiles(profiles.map((p) => (p.id === editingProfile.id ? updatedProfile : p)));
         setEditingProfile(null);
       } else {
         // Create new profile
@@ -118,36 +118,36 @@ const VoiceProfiles: React.FC = () => {
         };
         setProfiles([...profiles, newProfile]);
       }
-      
+
       setShowAddForm(false);
       resetForm();
     } catch (err) {
-      console.error("Error saving voice profile:", err);
+      console.error('Error saving voice profile:', err);
       setError('Failed to save voice profile');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this voice profile?')) return;
-    
+
     setIsDeleting(id);
     try {
-      setProfiles(profiles.filter(p => p.id !== id));
+      setProfiles(profiles.filter((p) => p.id !== id));
     } catch (err) {
-      console.error("Error deleting voice profile:", err);
+      console.error('Error deleting voice profile:', err);
       setError('Failed to delete voice profile');
     } finally {
       setIsDeleting(null);
     }
   };
-  
+
   const handleEdit = (profile: VoiceProfile) => {
     setEditingProfile(profile);
     setShowAddForm(true);
   };
-  
+
   const playPreview = (profileId: string) => {
     if (playingAudio === profileId) {
       setPlayingAudio(null);
@@ -159,9 +159,9 @@ const VoiceProfiles: React.FC = () => {
       }, 3000);
     }
   };
-  
+
   const getVoiceName = (voiceId: string) => {
-    return VOICE_OPTIONS.find(option => option.id === voiceId)?.name || 'Unknown Voice';
+    return VOICE_OPTIONS.find((option) => option.id === voiceId)?.name || 'Unknown Voice';
   };
 
   return (
@@ -169,10 +169,12 @@ const VoiceProfiles: React.FC = () => {
       <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Voice Profiles</h1>
-          <p className="text-gray-600 mt-1">Manage voice settings and preferences for your content</p>
+          <p className="text-gray-600 mt-1">
+            Manage voice settings and preferences for your content
+          </p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button 
+          <button
             onClick={() => {
               setEditingProfile(null);
               setShowAddForm(true);
@@ -184,7 +186,7 @@ const VoiceProfiles: React.FC = () => {
           </button>
         </div>
       </header>
-      
+
       {/* Error Message */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -199,7 +201,7 @@ const VoiceProfiles: React.FC = () => {
             <h2 className="text-lg font-semibold">
               {editingProfile ? 'Edit Voice Profile' : 'Add New Voice Profile'}
             </h2>
-            <button 
+            <button
               onClick={() => {
                 setShowAddForm(false);
                 setEditingProfile(null);
@@ -210,11 +212,14 @@ const VoiceProfiles: React.FC = () => {
               <X size={20} />
             </button>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="profileName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="profileName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Profile Name
                 </label>
                 <input
@@ -227,7 +232,7 @@ const VoiceProfiles: React.FC = () => {
                   placeholder="Enter profile name"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="voiceType" className="block text-sm font-medium text-gray-700 mb-1">
                   Voice Type
@@ -238,7 +243,7 @@ const VoiceProfiles: React.FC = () => {
                   onChange={(e) => setFormVoiceId(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  {VOICE_OPTIONS.map(option => (
+                  {VOICE_OPTIONS.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.name}
                     </option>
@@ -246,7 +251,7 @@ const VoiceProfiles: React.FC = () => {
                 </select>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="pitch" className="block text-sm font-medium text-gray-700 mb-1">
@@ -259,14 +264,16 @@ const VoiceProfiles: React.FC = () => {
                   max="2"
                   step="0.1"
                   value={formSettings.pitch}
-                  onChange={(e) => setFormSettings({
-                    ...formSettings,
-                    pitch: parseFloat(e.target.value)
-                  })}
+                  onChange={(e) =>
+                    setFormSettings({
+                      ...formSettings,
+                      pitch: parseFloat(e.target.value),
+                    })
+                  }
                   className="w-full"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="speed" className="block text-sm font-medium text-gray-700 mb-1">
                   Speed: {formSettings.speed}
@@ -278,14 +285,16 @@ const VoiceProfiles: React.FC = () => {
                   max="2"
                   step="0.1"
                   value={formSettings.speed}
-                  onChange={(e) => setFormSettings({
-                    ...formSettings,
-                    speed: parseFloat(e.target.value)
-                  })}
+                  onChange={(e) =>
+                    setFormSettings({
+                      ...formSettings,
+                      speed: parseFloat(e.target.value),
+                    })
+                  }
                   className="w-full"
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="volume" className="block text-sm font-medium text-gray-700 mb-1">
                   Volume: {formSettings.volume}
@@ -297,15 +306,17 @@ const VoiceProfiles: React.FC = () => {
                   max="2"
                   step="0.1"
                   value={formSettings.volume}
-                  onChange={(e) => setFormSettings({
-                    ...formSettings,
-                    volume: parseFloat(e.target.value)
-                  })}
+                  onChange={(e) =>
+                    setFormSettings({
+                      ...formSettings,
+                      volume: parseFloat(e.target.value),
+                    })
+                  }
                   className="w-full"
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
@@ -323,7 +334,7 @@ const VoiceProfiles: React.FC = () => {
                 disabled={isSubmitting || !formName}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {isSubmitting ? 'Saving...' : (editingProfile ? 'Update Profile' : 'Create Profile')}
+                {isSubmitting ? 'Saving...' : editingProfile ? 'Update Profile' : 'Create Profile'}
               </button>
             </div>
           </form>
@@ -352,7 +363,10 @@ const VoiceProfiles: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {profiles.map((profile) => (
-            <div key={profile.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div
+              key={profile.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0 h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
@@ -397,7 +411,7 @@ const VoiceProfiles: React.FC = () => {
                   </button>
                 </div>
               </div>
-              
+
               {profile.settings && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -414,7 +428,7 @@ const VoiceProfiles: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               {profile.created_at && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <p className="text-xs text-gray-500">

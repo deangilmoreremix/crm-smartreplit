@@ -1,4 +1,3 @@
-
 import React from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
@@ -7,10 +6,10 @@ import { useContactStore } from '../hooks/useContactStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Avatar from '../components/ui/Avatar';
-import { 
-  Mail, 
-  Zap, 
-  TrendingUp, 
+import {
+  Mail,
+  Zap,
+  TrendingUp,
   Target,
   Clock,
   Users,
@@ -19,7 +18,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Lightbulb,
-  Edit3
+  Edit3,
 } from 'lucide-react';
 
 const SmartEmailOptimizer: React.FC = () => {
@@ -38,7 +37,11 @@ const SmartEmailOptimizer: React.FC = () => {
 
   // Get initials for avatar
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   const emailOptimizations = [
@@ -47,45 +50,53 @@ const SmartEmailOptimizer: React.FC = () => {
       suggestion: 'Add urgency keywords to increase open rates',
       impact: '+15% open rate',
       priority: 'High',
-      example: '"Limited Time: Transform Your Sales Process"'
+      example: '"Limited Time: Transform Your Sales Process"',
     },
     {
       type: 'Personalization',
       suggestion: 'Include company-specific pain points',
       impact: '+28% response rate',
       priority: 'Critical',
-      example: 'Reference recent news about their industry'
+      example: 'Reference recent news about their industry',
     },
     {
       type: 'Send Time',
       suggestion: 'Send at 9:30 AM for optimal engagement',
       impact: '+12% open rate',
       priority: 'Medium',
-      example: 'Tuesdays and Thursdays perform best'
+      example: 'Tuesdays and Thursdays perform best',
     },
     {
       type: 'Call-to-Action',
       suggestion: 'Use action-oriented button text',
       impact: '+20% click rate',
       priority: 'High',
-      example: '"Book Your Strategy Call" vs "Learn More"'
-    }
+      example: '"Book Your Strategy Call" vs "Learn More"',
+    },
   ];
 
   const recentOptimizations = [
-    { email: 'Follow-up sequence to Fortune 500', improvement: '45% higher response', status: 'success' },
+    {
+      email: 'Follow-up sequence to Fortune 500',
+      improvement: '45% higher response',
+      status: 'success',
+    },
     { email: 'Product demo invitation', improvement: '32% more bookings', status: 'success' },
     { email: 'Proposal delivery email', improvement: '18% faster responses', status: 'success' },
     { email: 'Re-engagement campaign', improvement: '25% higher opens', status: 'success' },
-    { email: 'Cold outreach template', improvement: 'Testing in progress', status: 'testing' }
+    { email: 'Cold outreach template', improvement: 'Testing in progress', status: 'testing' },
   ];
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'Critical': return 'bg-red-500/20 text-red-500';
-      case 'High': return 'bg-orange-500/20 text-orange-500';
-      case 'Medium': return 'bg-blue-500/20 text-blue-500';
-      default: return 'bg-gray-500/20 text-gray-500';
+      case 'Critical':
+        return 'bg-red-500/20 text-red-500';
+      case 'High':
+        return 'bg-orange-500/20 text-orange-500';
+      case 'Medium':
+        return 'bg-blue-500/20 text-blue-500';
+      default:
+        return 'bg-gray-500/20 text-gray-500';
     }
   };
 
@@ -112,9 +123,13 @@ const SmartEmailOptimizer: React.FC = () => {
 
         {/* Optimization Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Total Emails
               </CardTitle>
               <Mail className="h-4 w-4 text-blue-500" />
@@ -130,9 +145,13 @@ const SmartEmailOptimizer: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Optimized Emails
               </CardTitle>
               <Zap className="h-4 w-4 text-green-500" />
@@ -148,9 +167,13 @@ const SmartEmailOptimizer: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Open Rate
               </CardTitle>
               <Target className="h-4 w-4 text-purple-500" />
@@ -166,9 +189,13 @@ const SmartEmailOptimizer: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Response Rate
               </CardTitle>
               <BarChart3 className="h-4 w-4 text-orange-500" />
@@ -195,9 +222,12 @@ const SmartEmailOptimizer: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {emailOptimizations.map((optimization, index) => (
-              <div key={index} className={`p-4 rounded-lg border ${
-                isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-              }`}>
+              <div
+                key={index}
+                className={`p-4 rounded-lg border ${
+                  isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                }`}
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <Edit3 className="h-5 w-5 text-blue-500" />
@@ -219,9 +249,11 @@ const SmartEmailOptimizer: React.FC = () => {
                     </span>
                   </div>
                 </div>
-                <div className={`text-sm italic p-3 rounded ${
-                  isDark ? 'bg-gray-800 text-gray-400' : 'bg-blue-50 text-blue-700'
-                }`}>
+                <div
+                  className={`text-sm italic p-3 rounded ${
+                    isDark ? 'bg-gray-800 text-gray-400' : 'bg-blue-50 text-blue-700'
+                  }`}
+                >
                   💡 Example: {optimization.example}
                 </div>
               </div>
@@ -242,14 +274,12 @@ const SmartEmailOptimizer: React.FC = () => {
               {topContacts.map((contact) => {
                 const openRate = Math.floor(Math.random() * 40) + 40; // 40-80%
                 const responseRate = Math.floor(Math.random() * 30) + 10; // 10-40%
-                
+
                 return (
-                  <div 
-                    key={contact.id} 
+                  <div
+                    key={contact.id}
                     className={`flex items-center space-x-3 p-4 rounded-lg ${
-                      isDark 
-                        ? 'bg-gray-700 hover:bg-gray-600' 
-                        : 'bg-gray-50 hover:bg-gray-100'
+                      isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
                     } transition-colors cursor-pointer`}
                   >
                     <Avatar
@@ -258,21 +288,29 @@ const SmartEmailOptimizer: React.FC = () => {
                       fallback={getInitials(contact.name)}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium text-sm truncate ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                      }`}>
+                      <p
+                        className={`font-medium text-sm truncate ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
                         {contact.name}
                       </p>
-                      <p className={`text-sm truncate ${
-                        isDark ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
+                      <p
+                        className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                      >
                         {contact.company || 'No company'}
                       </p>
                       <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                        >
                           {openRate}% open
                         </Badge>
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-green-50 text-green-700 border-green-200"
+                        >
                           {responseRate}% response
                         </Badge>
                       </div>
@@ -295,33 +333,36 @@ const SmartEmailOptimizer: React.FC = () => {
           <CardContent className="space-y-4">
             {recentOptimizations.map((optimization, index) => (
               <div key={index} className="flex items-center space-x-3">
-                <div className={`p-2 rounded-full ${
-                  optimization.status === 'success' 
-                    ? 'bg-green-500/20 text-green-500' 
-                    : 'bg-blue-500/20 text-blue-500'
-                }`}>
-                  {optimization.status === 'success' ? 
-                    <CheckCircle className="h-4 w-4" /> : 
+                <div
+                  className={`p-2 rounded-full ${
+                    optimization.status === 'success'
+                      ? 'bg-green-500/20 text-green-500'
+                      : 'bg-blue-500/20 text-blue-500'
+                  }`}
+                >
+                  {optimization.status === 'success' ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
                     <AlertTriangle className="h-4 w-4" />
-                  }
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-sm truncate ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <p
+                    className={`font-medium text-sm truncate ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}
+                  >
                     {optimization.email}
                   </p>
-                  <p className={`text-sm truncate ${
-                    isDark ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
+                  <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     Result: {optimization.improvement}
                   </p>
                 </div>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={`text-xs ${
-                    optimization.status === 'success' 
-                      ? 'bg-green-50 text-green-700 border-green-200' 
+                    optimization.status === 'success'
+                      ? 'bg-green-50 text-green-700 border-green-200'
                       : 'bg-blue-50 text-blue-700 border-blue-200'
                   }`}
                 >

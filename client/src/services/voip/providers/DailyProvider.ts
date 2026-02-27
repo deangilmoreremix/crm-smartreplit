@@ -1,4 +1,15 @@
-import { VoIPProvider, ProviderConfig, Room, RoomConnection, Call, CallParticipant, RoomOptions, CallOptions, Recording, RecordingResult } from '../VoIPProvider';
+import {
+  VoIPProvider,
+  ProviderConfig,
+  Room,
+  RoomConnection,
+  Call,
+  CallParticipant,
+  RoomOptions,
+  CallOptions,
+  Recording,
+  RecordingResult,
+} from '../VoIPProvider';
 
 export class DailyProvider implements VoIPProvider {
   name = 'daily';
@@ -17,7 +28,7 @@ export class DailyProvider implements VoIPProvider {
         type: 'password',
         required: true,
         placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        description: 'Your Daily.co API key from the dashboard'
+        description: 'Your Daily.co API key from the dashboard',
       },
       {
         key: 'domain',
@@ -25,8 +36,8 @@ export class DailyProvider implements VoIPProvider {
         type: 'text',
         required: false,
         placeholder: 'your-domain.daily.co',
-        description: 'Your custom domain (optional, uses daily.co if not set)'
-      }
+        description: 'Your custom domain (optional, uses daily.co if not set)',
+      },
     ];
   }
 
@@ -42,15 +53,17 @@ export class DailyProvider implements VoIPProvider {
     try {
       const response = await fetch('https://api.daily.co/v1/', {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       });
 
       if (!response.ok) {
         throw new Error('Invalid Daily.co API key');
       }
     } catch (error) {
-      throw new Error(`Daily.co initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Daily.co initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -62,7 +75,7 @@ export class DailyProvider implements VoIPProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           name: roomName,
@@ -72,9 +85,9 @@ export class DailyProvider implements VoIPProvider {
             enable_recording: options.recordingEnabled ? 'cloud' : 'disabled',
             enable_chat: options.chatEnabled || false,
             start_video_off: false,
-            start_audio_off: false
-          }
-        })
+            start_audio_off: false,
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -88,11 +101,13 @@ export class DailyProvider implements VoIPProvider {
         id: roomData.id,
         name: roomData.name,
         url: roomData.url,
-        participants: participants.map(id => ({ id, name: id })),
-        createdAt: new Date(roomData.created_at)
+        participants: participants.map((id) => ({ id, name: id })),
+        createdAt: new Date(roomData.created_at),
       };
     } catch (error) {
-      throw new Error(`Daily room creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Daily room creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -101,8 +116,8 @@ export class DailyProvider implements VoIPProvider {
       // Get room details
       const roomResponse = await fetch(`https://api.daily.co/v1/rooms/${roomId}`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       });
 
       if (!roomResponse.ok) {
@@ -116,7 +131,7 @@ export class DailyProvider implements VoIPProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
           properties: {
@@ -124,9 +139,9 @@ export class DailyProvider implements VoIPProvider {
             user_name: participantId,
             user_id: participantId,
             start_video_off: false,
-            start_audio_off: false
-          }
-        })
+            start_audio_off: false,
+          },
+        }),
       });
 
       if (!tokenResponse.ok) {
@@ -141,13 +156,15 @@ export class DailyProvider implements VoIPProvider {
           name: roomData.name,
           url: roomData.url,
           participants: [], // Daily doesn't expose participant list in room details
-          createdAt: new Date(roomData.created_at)
+          createdAt: new Date(roomData.created_at),
         },
         token: tokenData.token,
-        participantId
+        participantId,
       };
     } catch (error) {
-      throw new Error(`Daily room join failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Daily room join failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -157,10 +174,13 @@ export class DailyProvider implements VoIPProvider {
   }
 
   async startCall(participants: CallParticipant[], options: CallOptions = {}): Promise<Call> {
-    const room = await this.createRoom(participants.map(p => p.id), {
-      name: `call-${Date.now()}`,
-      recordingEnabled: options.recordingEnabled
-    });
+    const room = await this.createRoom(
+      participants.map((p) => p.id),
+      {
+        name: `call-${Date.now()}`,
+        recordingEnabled: options.recordingEnabled,
+      }
+    );
 
     return {
       id: room.id,
@@ -168,7 +188,7 @@ export class DailyProvider implements VoIPProvider {
       participants,
       status: 'ringing',
       startedAt: new Date(),
-      recordingEnabled: options.recordingEnabled || false
+      recordingEnabled: options.recordingEnabled || false,
     };
   }
 
@@ -178,8 +198,8 @@ export class DailyProvider implements VoIPProvider {
       const response = await fetch(`https://api.daily.co/v1/rooms/${callId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       });
 
       if (!response.ok) {
@@ -202,11 +222,11 @@ export class DailyProvider implements VoIPProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          room_name: callId // Assuming callId is room name
-        })
+          room_name: callId, // Assuming callId is room name
+        }),
       });
 
       const recording = await response.json();
@@ -215,10 +235,12 @@ export class DailyProvider implements VoIPProvider {
         id: recording.id,
         callId,
         startedAt: new Date(),
-        status: 'recording'
+        status: 'recording',
       };
     } catch (error) {
-      throw new Error(`Daily recording start failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Daily recording start failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -227,8 +249,8 @@ export class DailyProvider implements VoIPProvider {
       // Get recording details
       const response = await fetch(`https://api.daily.co/v1/recordings/${recordingId}`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
-        }
+          Authorization: `Bearer ${this.apiKey}`,
+        },
       });
 
       const recording = await response.json();
@@ -238,10 +260,12 @@ export class DailyProvider implements VoIPProvider {
         url: recording.download_link,
         duration: recording.duration || 0,
         size: recording.size || 0,
-        format: recording.format || 'mp4'
+        format: recording.format || 'mp4',
       };
     } catch (error) {
-      throw new Error(`Daily recording retrieval failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Daily recording retrieval failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

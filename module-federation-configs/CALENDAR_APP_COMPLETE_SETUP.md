@@ -1,6 +1,7 @@
 # Complete Module Federation Setup for calendar.smartcrm.vip
 
 ## 🎯 Goal
+
 Enable the calendar app to be loaded as a federated module in the SmartCRM application instead of an iframe.
 
 ## 📦 Step 1: Install Dependencies
@@ -15,9 +16,9 @@ Replace your entire `vite.config.js` with this:
 
 ```javascript
 // vite.config.js for https://calendar.smartcrm.vip/
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import federation from '@originjs/vite-plugin-federation'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import federation from '@originjs/vite-plugin-federation';
 
 export default defineConfig({
   plugins: [
@@ -27,19 +28,19 @@ export default defineConfig({
       filename: 'remoteEntry.js',
       exposes: {
         './CalendarApp': './src/CalendarApp.tsx',
-        './CalendarModule': './src/CalendarModule.tsx'
+        './CalendarModule': './src/CalendarModule.tsx',
       },
       shared: {
-        'react': {
+        react: {
           singleton: true,
-          requiredVersion: '^18.0.0'
+          requiredVersion: '^18.0.0',
         },
         'react-dom': {
           singleton: true,
-          requiredVersion: '^18.0.0'
-        }
-      }
-    })
+          requiredVersion: '^18.0.0',
+        },
+      },
+    }),
   ],
   build: {
     target: 'esnext',
@@ -50,19 +51,19 @@ export default defineConfig({
       output: {
         format: 'systemjs',
         entryFileNames: 'remoteEntry.js',
-        minifyInternalExports: false
-      }
-    }
+        minifyInternalExports: false,
+      },
+    },
   },
   server: {
     cors: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-    }
-  }
-})
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  },
+});
 ```
 
 ## 📝 Step 3: Create CalendarApp.tsx
@@ -74,7 +75,7 @@ Create `src/CalendarApp.tsx` as the Module Federation entry point:
 import React from 'react';
 
 // Import your main calendar component
-import YourMainCalendar from './components/YourMainCalendar'; 
+import YourMainCalendar from './components/YourMainCalendar';
 
 interface CalendarAppProps {
   theme?: 'light' | 'dark';
@@ -87,11 +88,11 @@ interface CalendarAppProps {
   onDataUpdate?: (data: any) => void;
 }
 
-const CalendarApp: React.FC<CalendarAppProps> = ({ 
-  theme = 'light', 
+const CalendarApp: React.FC<CalendarAppProps> = ({
+  theme = 'light',
   mode = 'light',
   sharedData = {},
-  onDataUpdate 
+  onDataUpdate,
 }) => {
   console.log('📅 CalendarApp loaded via Module Federation');
   console.log('🎨 Theme:', theme, 'Mode:', mode);
@@ -105,7 +106,7 @@ const CalendarApp: React.FC<CalendarAppProps> = ({
 
   return (
     <div className="w-full h-full" data-module-federation="calendar">
-      <YourMainCalendar 
+      <YourMainCalendar
         theme={theme}
         mode={mode}
         appointments={sharedData.appointments}
@@ -173,7 +174,7 @@ console.log(window.CalendarApp);
 // Should show: {get: ƒ, init: ƒ}
 
 // Check available modules
-window.CalendarApp.get('./CalendarApp').then(factory => {
+window.CalendarApp.get('./CalendarApp').then((factory) => {
   const module = factory();
   console.log('Module loaded:', module);
 });
@@ -202,18 +203,23 @@ dist/
 ## 🔍 Troubleshooting
 
 ### Issue: remoteEntry.js returns 404
+
 **Solution**: Make sure `filename: 'remoteEntry.js'` is in your vite.config.js
 
 ### Issue: CORS errors
+
 **Solution**: Verify CORS headers in vite.config.js server section
 
 ### Issue: Module not found
+
 **Solution**: Check that `./CalendarApp` path matches your actual file location
 
 ### Issue: Build fails
+
 **Solution**: Ensure `@originjs/vite-plugin-federation` is installed
 
 ### Issue: Standalone app broken
+
 **Solution**: Keep the export/render split in main.tsx as shown above
 
 ## 📱 Communication with CRM
@@ -242,7 +248,7 @@ And can send data back:
 // In your calendar component
 props.onDataUpdate({
   type: 'APPOINTMENT_CREATED',
-  appointment: newAppointment
+  appointment: newAppointment,
 });
 ```
 
@@ -273,6 +279,7 @@ npx serve dist
 ## ✨ Benefits
 
 Once complete, your calendar will:
+
 - ✅ Load faster (no iframe overhead)
 - ✅ Share React instances with CRM (smaller bundle)
 - ✅ Communicate directly via props (no PostMessage)

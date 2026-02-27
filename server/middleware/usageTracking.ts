@@ -19,7 +19,7 @@ export const trackApiUsage = (featureName: string, unit: string = 'requests') =>
 
     // Override res.json to capture response
     const originalJson = res.json;
-    res.json = function(data: any) {
+    res.json = function (data: any) {
       // Record usage after response is sent
       const userId = (req as any).user?.id;
       if (userId) {
@@ -39,9 +39,9 @@ export const trackApiUsage = (featureName: string, unit: string = 'requests') =>
             ip: req.ip,
             processingTimeMs: processingTime,
             statusCode: res.statusCode,
-            responseSize: JSON.stringify(data).length
-          }
-        }).catch(error => {
+            responseSize: JSON.stringify(data).length,
+          },
+        }).catch((error) => {
           console.error('Error recording API usage:', error);
         });
       }
@@ -59,7 +59,7 @@ export const trackApiUsage = (featureName: string, unit: string = 'requests') =>
 export const trackAiUsage = (modelName: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const originalJson = res.json;
-    res.json = function(data: any) {
+    res.json = function (data: any) {
       const userId = (req as any).user?.id;
       if (userId && data) {
         // Extract token usage from AI response
@@ -79,9 +79,9 @@ export const trackAiUsage = (modelName: string) => {
               inputTokens,
               outputTokens,
               totalTokens,
-              requestType: req.body?.type || 'unknown'
-            }
-          }).catch(error => {
+              requestType: req.body?.type || 'unknown',
+            },
+          }).catch((error) => {
             console.error('Error recording AI usage:', error);
           });
         }
@@ -100,7 +100,7 @@ export const trackAiUsage = (modelName: string) => {
 export const trackStorageUsage = (operation: 'upload' | 'download' | 'delete') => {
   return async (req: RequestWithFile, res: Response, next: NextFunction) => {
     const originalJson = res.json;
-    res.json = function(data: any) {
+    res.json = function (data: any) {
       const userId = (req as any).user?.id;
       if (userId) {
         let quantity = 0;
@@ -126,9 +126,9 @@ export const trackStorageUsage = (operation: 'upload' | 'download' | 'delete') =
             metadata: {
               operation,
               fileType: req.file?.mimetype || 'unknown',
-              fileName: req.file?.originalname || 'unknown'
-            }
-          }).catch(error => {
+              fileName: req.file?.originalname || 'unknown',
+            },
+          }).catch((error) => {
             console.error('Error recording storage usage:', error);
           });
         }
@@ -154,7 +154,7 @@ export const trackUsage = (options: {
 }) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const originalJson = res.json;
-    res.json = function(data: any) {
+    res.json = function (data: any) {
       const userId = (req as any).user?.id;
       if (userId) {
         let quantity = options.quantity || 1;
@@ -176,9 +176,9 @@ export const trackUsage = (options: {
           metadata: {
             ...metadata,
             path: req.path,
-            method: req.method
-          }
-        }).catch(error => {
+            method: req.method,
+          },
+        }).catch((error) => {
           console.error('Error recording usage:', error);
         });
       }

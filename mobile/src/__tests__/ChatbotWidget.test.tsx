@@ -17,15 +17,13 @@ const mockTheme = {
     border: '#E5E7EB',
     primary: '#3B82F6',
     secondary: '#6366F1',
-  }
+  },
 };
 
 const MockProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <WhitelabelProvider config={whitelabelConfig}>
     <ThemeProvider>
-      <ChatbotProvider>
-        {children}
-      </ChatbotProvider>
+      <ChatbotProvider>{children}</ChatbotProvider>
     </ThemeProvider>
   </WhitelabelProvider>
 );

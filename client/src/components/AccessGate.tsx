@@ -1,7 +1,7 @@
 import React from 'react';
 import { useRole } from './RoleBasedAccess';
 import { UpgradePrompt } from './UpgradePrompt';
-import { hasFeatureAccess } from '../config/featureTiers';
+import { featureTiers } from '../config/featureTiers';
 
 interface AccessGateProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ export const AccessGate: React.FC<AccessGateProps> = ({
   feature,
   fallback = 'upgrade',
   customFallback,
-  compact = false
+  compact = false,
 }) => {
   const { user, canAccess } = useRole();
 
@@ -42,36 +42,32 @@ export const AccessGate: React.FC<AccessGateProps> = ({
   }
 
   // Handle different fallback types
-  switch (fallback) {
-    case 'hidden':
-      return null;
-
-    case 'custom':
-      return customFallback ? <>{customFallback}</> : null;
-
-    case 'upgrade':
-    default:
-      // Determine required tier for the feature
-      const requiredTier = getRequiredTierForFeature(feature);
-      return (
-        <UpgradePrompt
-          feature={feature}
-          currentTier={user?.productTier}
-          requiredTier={requiredTier}
-          featureName={getFeatureDisplayName(feature)}
-          compact={compact}
-        />
-      );
+  if (fallback === 'hidden') {
+    return null;
   }
+
+  if (fallback === 'custom') {
+    return customFallback ? <>{customFallback}</> : null;
+  }
+
+  // Default: 'upgrade' fallback
+  // Determine required tier for the feature
+  const requiredTier = getRequiredTierForFeature(feature);
+  return (
+    <UpgradePrompt
+      feature={feature}
+      currentTier={user?.productTier}
+      requiredTier={requiredTier}
+      featureName={getFeatureDisplayName(feature)}
+      compact={compact}
+    />
+  );
 };
 
 /**
  * Helper function to determine required tier for a feature
  */
 function getRequiredTierForFeature(feature: string): string | undefined {
-  // Import feature tiers configuration
-  const { featureTiers } = require('../config/featureTiers');
-
   // Find the highest tier that includes this feature
   const tiers = Object.keys(featureTiers).reverse(); // Check highest first
 
@@ -89,16 +85,16 @@ function getRequiredTierForFeature(feature: string): string | undefined {
  */
 function getFeatureDisplayName(feature: string): string {
   const names: Record<string, string> = {
-    'aiGoals': 'AI Goals',
-    'aiTools': 'AI Tools',
-    'aiAssistant': 'AI Assistant',
-    'videoEmail': 'Video Email',
-    'phoneSystem': 'Phone System',
-    'invoicing': 'Invoicing',
-    'contentLibrary': 'Content Library',
-    'formsSurveys': 'Forms & Surveys',
-    'whitelabel': 'White Label Features',
-    'admin': 'Admin Panel'
+    aiGoals: 'AI Goals',
+    aiTools: 'AI Tools',
+    aiAssistant: 'AI Assistant',
+    videoEmail: 'Video Email',
+    phoneSystem: 'Phone System',
+    invoicing: 'Invoicing',
+    contentLibrary: 'Content Library',
+    formsSurveys: 'Forms & Surveys',
+    whitelabel: 'White Label Features',
+    admin: 'Admin Panel',
   };
 
   return names[feature] || feature.replace(/([A-Z])/g, ' $1').trim();

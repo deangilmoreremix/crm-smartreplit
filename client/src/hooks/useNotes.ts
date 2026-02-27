@@ -67,7 +67,9 @@ export function useUpdateNote() {
       // Invalidate all note queries including filtered views
       queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
       if (updatedNote.contactId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/notes/contact/${updatedNote.contactId}`] });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/notes/contact/${updatedNote.contactId}`],
+        });
       }
       if (updatedNote.dealId) {
         queryClient.invalidateQueries({ queryKey: [`/api/notes/deal/${updatedNote.dealId}`] });
@@ -87,11 +89,12 @@ export function useDeleteNote() {
       // Invalidate all note-related queries
       queryClient.invalidateQueries({ queryKey: ['/api/notes'] });
       // Invalidate all contact and deal note queries since we don't know which one was deleted
-      queryClient.invalidateQueries({ predicate: (query) => 
-        query.queryKey[0] && 
-        typeof query.queryKey[0] === 'string' && 
-        (query.queryKey[0].startsWith('/api/notes/contact/') || 
-         query.queryKey[0].startsWith('/api/notes/deal/'))
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          query.queryKey[0] &&
+          typeof query.queryKey[0] === 'string' &&
+          (query.queryKey[0].startsWith('/api/notes/contact/') ||
+            query.queryKey[0].startsWith('/api/notes/deal/')),
       });
     },
   });

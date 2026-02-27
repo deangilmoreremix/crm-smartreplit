@@ -12,27 +12,29 @@ export const sampleContacts: Contact[] = [
     title: 'Marketing Director',
     company: 'Microsoft',
     industry: 'Technology',
-    avatarSrc: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['LinkedIn', 'Email'],
     interestLevel: 'hot',
     status: 'prospect',
     lastConnected: '2024-01-15 at 2:30 pm',
-    notes: 'Interested in enterprise solutions. Scheduled follow-up for next week. Mentioned they are evaluating new CRM systems for their sales team, with a potential budget of $250K.',
+    notes:
+      'Interested in enterprise solutions. Scheduled follow-up for next week. Mentioned they are evaluating new CRM systems for their sales team, with a potential budget of $250K.',
     aiScore: 85,
     tags: ['Enterprise', 'High Value', 'Decision Maker'],
     isFavorite: true,
     socialProfiles: {
       linkedin: 'https://linkedin.com/in/janedoe',
       twitter: 'https://twitter.com/janedoe',
-      website: 'https://microsoft.com'
+      website: 'https://microsoft.com',
     },
     customFields: {
       'Budget Range': '$200K-$500K',
       'Company Size': '10,000+',
-      'Decision Timeline': 'Q3 2025'
+      'Decision Timeline': 'Q3 2025',
     },
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-15T14:30:00Z'
+    updatedAt: '2024-01-15T14:30:00Z',
   },
   {
     id: '2',
@@ -44,17 +46,19 @@ export const sampleContacts: Contact[] = [
     title: 'Financial Manager',
     company: 'Ford',
     industry: 'Automotive',
-    avatarSrc: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['LinkedIn', 'Facebook'],
     interestLevel: 'medium',
     status: 'lead',
     lastConnected: '2024-01-12 at 4:15 pm',
-    notes: 'Evaluating cost-effectiveness of our solutions. Initial discovery call went well, but will need approval from CFO.',
+    notes:
+      'Evaluating cost-effectiveness of our solutions. Initial discovery call went well, but will need approval from CFO.',
     aiScore: 65,
     tags: ['Finance', 'Cost-Conscious', 'Mid-Market'],
     isFavorite: true,
     createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-12T16:15:00Z'
+    updatedAt: '2024-01-12T16:15:00Z',
   },
   {
     id: '3',
@@ -66,7 +70,8 @@ export const sampleContacts: Contact[] = [
     title: 'Operations Manager',
     company: 'Zenith',
     industry: 'Manufacturing',
-    avatarSrc: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Website', 'Typeform'],
     interestLevel: 'low',
     status: 'lead',
@@ -76,7 +81,7 @@ export const sampleContacts: Contact[] = [
     tags: ['Operations', 'Manufacturing'],
     isFavorite: false,
     createdAt: '2024-01-03T00:00:00Z',
-    updatedAt: '2024-01-08T11:00:00Z'
+    updatedAt: '2024-01-08T11:00:00Z',
   },
   {
     id: '4',
@@ -88,17 +93,19 @@ export const sampleContacts: Contact[] = [
     title: 'Web Developer',
     company: 'Binary Bytes',
     industry: 'Technology',
-    avatarSrc: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Referral'],
     interestLevel: 'hot',
     status: 'prospect',
     lastConnected: '2024-01-16 at 9:45 am',
-    notes: 'Referred by John Smith. Very interested in our development tools. Demo scheduled for next week.',
+    notes:
+      'Referred by John Smith. Very interested in our development tools. Demo scheduled for next week.',
     aiScore: 90,
     tags: ['Developer', 'Referral', 'Technical'],
     isFavorite: true,
     createdAt: '2024-01-04T00:00:00Z',
-    updatedAt: '2024-01-16T09:45:00Z'
+    updatedAt: '2024-01-16T09:45:00Z',
   },
   {
     id: '5',
@@ -110,7 +117,8 @@ export const sampleContacts: Contact[] = [
     title: 'Director of Procurement',
     company: 'Global Health Initiative',
     industry: 'Healthcare',
-    avatarSrc: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Website', 'Email'],
     interestLevel: 'medium',
     status: 'customer',
@@ -121,10 +129,10 @@ export const sampleContacts: Contact[] = [
     isFavorite: false,
     socialProfiles: {
       linkedin: 'https://linkedin.com/in/estherhoward',
-      website: 'https://globalhealth.org'
+      website: 'https://globalhealth.org',
     },
     createdAt: '2024-01-05T00:00:00Z',
-    updatedAt: '2024-01-20T15:20:00Z'
+    updatedAt: '2024-01-20T15:20:00Z',
   },
   {
     id: '6',
@@ -136,26 +144,28 @@ export const sampleContacts: Contact[] = [
     title: 'CTO',
     company: 'ZyncTech',
     industry: 'Technology',
-    avatarSrc: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['LinkedIn', 'Cold Call'],
     interestLevel: 'hot',
     status: 'lead',
     lastConnected: '2024-01-22 at 10:15 am',
-    notes: 'Technical decision maker with budget authority. Very interested in our API integration capabilities.',
+    notes:
+      'Technical decision maker with budget authority. Very interested in our API integration capabilities.',
     aiScore: 92,
     tags: ['C-Level', 'Technical', 'Decision Maker', 'High Value'],
     isFavorite: true,
     socialProfiles: {
       linkedin: 'https://linkedin.com/in/cameronwilliamson',
       twitter: 'https://twitter.com/cwilliamson',
-      website: 'https://zynctech.co'
+      website: 'https://zynctech.co',
     },
     customFields: {
       'Tech Stack': 'React, Node.js, AWS',
-      'Team Size': '45 developers'
+      'Team Size': '45 developers',
     },
     createdAt: '2024-01-06T00:00:00Z',
-    updatedAt: '2024-01-22T10:15:00Z'
+    updatedAt: '2024-01-22T10:15:00Z',
   },
   {
     id: '7',
@@ -167,7 +177,8 @@ export const sampleContacts: Contact[] = [
     title: 'Retail Operations Manager',
     company: 'ACME Retail',
     industry: 'Retail',
-    avatarSrc: 'https://images.pexels.com/photos/1587009/pexels-photo-1587009.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/1587009/pexels-photo-1587009.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Trade Show', 'Email'],
     interestLevel: 'cold',
     status: 'churned',
@@ -177,7 +188,7 @@ export const sampleContacts: Contact[] = [
     tags: ['Former Customer', 'Churned', 'Price Sensitive'],
     isFavorite: false,
     createdAt: '2023-06-10T00:00:00Z',
-    updatedAt: '2023-12-15T13:30:00Z'
+    updatedAt: '2023-12-15T13:30:00Z',
   },
   {
     id: '8',
@@ -189,7 +200,8 @@ export const sampleContacts: Contact[] = [
     title: 'VP of Sales',
     company: 'Innovate Corp',
     industry: 'SaaS',
-    avatarSrc: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Webinar', 'LinkedIn'],
     interestLevel: 'medium',
     status: 'prospect',
@@ -200,10 +212,10 @@ export const sampleContacts: Contact[] = [
     isFavorite: false,
     socialProfiles: {
       linkedin: 'https://linkedin.com/in/robertchen',
-      twitter: 'https://twitter.com/rchen'
+      twitter: 'https://twitter.com/rchen',
     },
     createdAt: '2024-01-08T00:00:00Z',
-    updatedAt: '2024-01-19T16:45:00Z'
+    updatedAt: '2024-01-19T16:45:00Z',
   },
   {
     id: '9',
@@ -215,7 +227,8 @@ export const sampleContacts: Contact[] = [
     title: 'Head of IT',
     company: 'EduTech University',
     industry: 'Education',
-    avatarSrc: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Email', 'Referral'],
     interestLevel: 'hot',
     status: 'prospect',
@@ -226,15 +239,15 @@ export const sampleContacts: Contact[] = [
     isFavorite: true,
     socialProfiles: {
       linkedin: 'https://linkedin.com/in/lesliealexander',
-      website: 'https://edutech.edu'
+      website: 'https://edutech.edu',
     },
     customFields: {
       'Current System': 'Legacy Oracle solution',
       'Implementation Timeline': 'Summer 2025',
-      'User Count': '15,000 students, 2,000 staff'
+      'User Count': '15,000 students, 2,000 staff',
     },
     createdAt: '2024-01-09T00:00:00Z',
-    updatedAt: '2024-01-21T14:00:00Z'
+    updatedAt: '2024-01-21T14:00:00Z',
   },
   {
     id: '10',
@@ -246,19 +259,21 @@ export const sampleContacts: Contact[] = [
     title: 'Research Director',
     company: 'Medical Science Foundation',
     industry: 'Healthcare',
-    avatarSrc: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
+    avatarSrc:
+      'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
     sources: ['Conference', 'Website'],
     interestLevel: 'low',
     status: 'lead',
     lastConnected: '2024-01-14 at 10:30 am',
-    notes: 'Met at Healthcare Innovation Conference. Interested in data analysis tools, but no immediate need.',
+    notes:
+      'Met at Healthcare Innovation Conference. Interested in data analysis tools, but no immediate need.',
     aiScore: 45,
     tags: ['Healthcare', 'Research', 'Long-term Prospect'],
     isFavorite: false,
     socialProfiles: {
-      linkedin: 'https://linkedin.com/in/diannerussell'
+      linkedin: 'https://linkedin.com/in/diannerussell',
     },
     createdAt: '2024-01-10T00:00:00Z',
-    updatedAt: '2024-01-14T10:30:00Z'
-  }
+    updatedAt: '2024-01-14T10:30:00Z',
+  },
 ];

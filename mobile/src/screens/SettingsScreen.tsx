@@ -36,9 +36,7 @@ const SettingsScreen: React.FC = () => {
         >
           <View style={styles.settingLeft}>
             <Icon name="log-out" size={20} color={theme.colors.error} />
-            <Text style={[styles.settingText, { color: theme.colors.error }]}>
-              Sign Out
-            </Text>
+            <Text style={[styles.settingText, { color: theme.colors.error }]}>Sign Out</Text>
           </View>
           <Icon name="chevron-right" size={16} color={theme.colors.textSecondary} />
         </TouchableOpacity>

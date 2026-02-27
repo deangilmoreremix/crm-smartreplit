@@ -3,6 +3,7 @@
 ## Complete Authentication Setup
 
 This app uses Supabase for all authentication flows:
+
 - ✅ Email/Password Signup & Confirmation
 - ✅ Magic Link (Passwordless Login)
 - ✅ Password Reset
@@ -23,11 +24,13 @@ All flows use a **unified `/auth/confirm` endpoint** that handles token verifica
 Add these URLs to the **Redirect URLs** allowlist:
 
 #### Development (Replit App)
+
 ```
 https://smartcrm-videoremix.replit.app/auth/confirm
 ```
 
 #### Production (Custom Domain)
+
 ```
 https://app.smartcrm.vip/auth/confirm
 ```
@@ -37,6 +40,7 @@ https://app.smartcrm.vip/auth/confirm
 ### Step 3: Verify Site URL
 
 Make sure your **Site URL** is set correctly:
+
 - Development: `https://smartcrm-videoremix.replit.app`
 - Production: `https://app.smartcrm.vip`
 
@@ -54,17 +58,20 @@ For better branding, you can customize the email templates:
 ### Step 5: Test All Flows
 
 **Signup Flow:**
+
 1. Go to `/signup` → Enter email/password
 2. Check email for confirmation link
 3. Click link → Should redirect to `/auth/confirm` → Then to `/dashboard`
 
 **Password Reset:**
+
 1. Go to `/auth/forgot-password` → Enter email
 2. Check email for reset link
 3. Click link → `/auth/confirm` → `/auth/reset-password`
 4. Enter new password → Success!
 
 **Magic Link:**
+
 1. Request magic link → Check email
 2. Click link → `/auth/confirm` → `/dashboard`
 
@@ -78,28 +85,31 @@ For better branding, you can customize the email templates:
 
 ## Authentication Flows Covered
 
-| Flow | Email Type | Redirect Behavior |
-|------|-----------|-------------------|
-| Signup | Confirm signup | `/auth/confirm` → `/dashboard` |
-| Magic Link | Magic Link | `/auth/confirm` → `/dashboard` |
-| Password Reset | Reset Password | `/auth/confirm` → `/auth/reset-password` |
-| Email Change | Change Email | `/auth/confirm` → `/dashboard` |
-| Invite User | Invite user | `/auth/confirm` → `/dashboard` |
-| Reauthentication | Reauthentication | OTP code (no redirect) |
+| Flow             | Email Type       | Redirect Behavior                        |
+| ---------------- | ---------------- | ---------------------------------------- |
+| Signup           | Confirm signup   | `/auth/confirm` → `/dashboard`           |
+| Magic Link       | Magic Link       | `/auth/confirm` → `/dashboard`           |
+| Password Reset   | Reset Password   | `/auth/confirm` → `/auth/reset-password` |
+| Email Change     | Change Email     | `/auth/confirm` → `/dashboard`           |
+| Invite User      | Invite user      | `/auth/confirm` → `/dashboard`           |
+| Reauthentication | Reauthentication | OTP code (no redirect)                   |
 
 ## Troubleshooting
 
 ### "Invalid or expired reset link" error
+
 - Check that the redirect URL is added to Supabase dashboard
 - Verify the email link hasn't expired (default is 1 hour)
 - Make sure you're using the correct Supabase project
 
 ### Email not received
+
 - Check spam folder
 - Verify email settings in Supabase dashboard
 - Confirm the email address exists in your users table
 
 ### "Authentication service is not configured" error
+
 - Verify VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in environment variables
 - Check that these values match your Supabase project
 

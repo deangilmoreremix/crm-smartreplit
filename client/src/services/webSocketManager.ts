@@ -38,7 +38,7 @@ class WebSocketManager {
       url: this.getWebSocketUrl(),
       reconnectInterval: 5000,
       maxReconnectAttempts: 10,
-      heartbeatInterval: 30000
+      heartbeatInterval: 30000,
     };
 
     this.connect();
@@ -76,7 +76,7 @@ class WebSocketManager {
         type: 'WEBSOCKET_CONNECTED',
         source: 'webSocketManager',
         data: { connectionId: this.connectionId },
-        priority: 'high'
+        priority: 'high',
       });
     };
 
@@ -89,7 +89,7 @@ class WebSocketManager {
           type: `WS_${message.type}`,
           source: message.source || 'websocket',
           data: message.data,
-          priority: 'medium'
+          priority: 'medium',
         });
       } catch (error) {
         console.error('Failed to parse WebSocket message:', error);
@@ -105,7 +105,7 @@ class WebSocketManager {
         type: 'WEBSOCKET_DISCONNECTED',
         source: 'webSocketManager',
         data: { code: event.code, reason: event.reason },
-        priority: 'high'
+        priority: 'high',
       });
 
       if (!event.wasClean) {
@@ -120,7 +120,7 @@ class WebSocketManager {
         type: 'WEBSOCKET_ERROR',
         source: 'webSocketManager',
         data: { error: error.toString() },
-        priority: 'high'
+        priority: 'high',
       });
     };
   }
@@ -132,7 +132,7 @@ class WebSocketManager {
         type: 'WEBSOCKET_MAX_RECONNECT_REACHED',
         source: 'webSocketManager',
         data: {},
-        priority: 'critical'
+        priority: 'critical',
       });
       return;
     }
@@ -153,7 +153,7 @@ class WebSocketManager {
         this.send({
           type: 'HEARTBEAT',
           data: { timestamp: Date.now() },
-          source: 'client'
+          source: 'client',
         });
       }
     }, this.config.heartbeatInterval);
@@ -188,7 +188,7 @@ class WebSocketManager {
     const fullMessage: WebSocketMessage = {
       ...message,
       id: this.generateMessageId(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     if (this.isConnected) {
@@ -212,7 +212,7 @@ class WebSocketManager {
     this.send({
       type: 'BROADCAST',
       data: { messageType: type, payload: data },
-      source: 'client'
+      source: 'client',
     });
   }
 
@@ -220,7 +220,7 @@ class WebSocketManager {
     this.send({
       type: 'SUBSCRIBE_ROOM',
       data: { roomId },
-      source: 'client'
+      source: 'client',
     });
   }
 
@@ -228,7 +228,7 @@ class WebSocketManager {
     this.send({
       type: 'UNSUBSCRIBE_ROOM',
       data: { roomId },
-      source: 'client'
+      source: 'client',
     });
   }
 
@@ -236,7 +236,7 @@ class WebSocketManager {
     this.send({
       type: 'ROOM_MESSAGE',
       data: { roomId, messageType: type, payload: data },
-      source: 'client'
+      source: 'client',
     });
   }
 
@@ -265,7 +265,7 @@ class WebSocketManager {
       isConnected: this.isConnected,
       connectionId: this.connectionId,
       reconnectAttempts: this.reconnectAttempts,
-      queueLength: this.messageQueue.length
+      queueLength: this.messageQueue.length,
     };
   }
 }
@@ -288,7 +288,7 @@ export function useWebSocket() {
     webSocketManager.send({
       type,
       data,
-      source: 'client'
+      source: 'client',
     });
   }, []);
 
@@ -309,6 +309,6 @@ export function useWebSocket() {
     broadcast,
     subscribeToRoom,
     sendToRoom,
-    connectionStatus: webSocketManager.getConnectionStatus()
+    connectionStatus: webSocketManager.getConnectionStatus(),
   };
 }

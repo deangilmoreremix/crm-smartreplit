@@ -11,7 +11,7 @@ const AIGoalsWithRemote: React.FC = () => {
       {/* Full Screen AI Goals Component - Positioned below navbar */}
       <div className="h-full w-full">
         <ModuleFederationAIGoals showHeader={false} />
-        
+
         {/* Module Federation Status Indicator - Floating */}
         <div className="absolute top-4 right-4 z-30">
           <div className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 shadow-lg">
@@ -19,7 +19,7 @@ const AIGoalsWithRemote: React.FC = () => {
             <span>Module Federation</span>
           </div>
         </div>
-        
+
         {/* External Link Button - Floating */}
         <div className="absolute top-4 left-4 z-30">
           <a

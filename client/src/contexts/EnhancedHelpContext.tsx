@@ -33,7 +33,9 @@ export const EnhancedHelpProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   return (
-    <EnhancedHelpContext.Provider value={{ showTours, setShowTours, currentTour, startTour, endTour }}>
+    <EnhancedHelpContext.Provider
+      value={{ showTours, setShowTours, currentTour, startTour, endTour }}
+    >
       {children}
     </EnhancedHelpContext.Provider>
   );

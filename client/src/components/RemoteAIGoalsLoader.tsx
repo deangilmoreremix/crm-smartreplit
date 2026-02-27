@@ -10,18 +10,16 @@ const RemoteAIGoalsLoader: React.FC<RemoteAIGoalsLoaderProps> = ({ showHeader = 
     <div className="w-full h-full">
       {showHeader && (
         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 border-b border-blue-200 dark:border-blue-800">
-          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">
-            Remote AI Goals
-          </h3>
+          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">Remote AI Goals</h3>
         </div>
       )}
-      
+
       <iframe
         src="https://agency.smartcrm.vip/"
         style={{
           width: '100%',
           height: showHeader ? 'calc(100% - 50px)' : '100%',
-          border: 'none'
+          border: 'none',
         }}
         title="Remote AI Goals"
         allow="clipboard-read; clipboard-write"

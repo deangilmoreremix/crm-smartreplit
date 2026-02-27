@@ -5,7 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,7 +38,7 @@ import {
   Zap,
   Activity,
   CheckCircle,
-  Clock
+  Clock,
 } from 'lucide-react';
 
 interface Lead {
@@ -104,8 +110,8 @@ export default function LeadAutomationDashboard() {
         nextAction: 'Schedule product demo',
         priority: 'high',
         predictedValue: 50000,
-        engagement: 0.9
-      }
+        engagement: 0.9,
+      },
     },
     {
       id: '2',
@@ -121,8 +127,8 @@ export default function LeadAutomationDashboard() {
         nextAction: 'Send educational content',
         priority: 'medium',
         predictedValue: 15000,
-        engagement: 0.7
-      }
+        engagement: 0.7,
+      },
     },
     {
       id: '3',
@@ -133,8 +139,8 @@ export default function LeadAutomationDashboard() {
       score: 45,
       lastActivity: '2024-01-10',
       source: 'Referral',
-      tags: ['Consulting', 'Small Business']
-    }
+      tags: ['Consulting', 'Small Business'],
+    },
   ];
 
   const mockCampaigns: Campaign[] = [
@@ -146,7 +152,7 @@ export default function LeadAutomationDashboard() {
       conversionRate: 0.25,
       budget: 5000,
       spent: 3200,
-      channels: ['Email', 'LinkedIn', 'Webinar']
+      channels: ['Email', 'LinkedIn', 'Webinar'],
     },
     {
       id: '2',
@@ -156,8 +162,8 @@ export default function LeadAutomationDashboard() {
       conversionRate: 0.15,
       budget: 3000,
       spent: 1800,
-      channels: ['Email', 'Social Media', 'Content']
-    }
+      channels: ['Email', 'Social Media', 'Content'],
+    },
   ];
 
   const mockStats: AutomationStats = {
@@ -166,7 +172,7 @@ export default function LeadAutomationDashboard() {
     conversionRate: 0.22,
     averageLeadScore: 68,
     monthlyGrowth: 0.18,
-    aiAccuracy: 0.89
+    aiAccuracy: 0.89,
   };
 
   const { data: leads = mockLeads, isLoading: leadsLoading } = useQuery<Lead[]>({
@@ -191,7 +197,6 @@ export default function LeadAutomationDashboard() {
         `Lead: ${lead.name} from ${lead.company}, Score: ${lead.score}, Status: ${lead.status}, Tags: ${lead.tags.join(', ')}`,
         'lead-nurturing'
       );
-      console.log('Lead optimization:', result);
     } catch (error) {
       console.error('Failed to optimize lead strategy:', error);
     } finally {
@@ -201,22 +206,33 @@ export default function LeadAutomationDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-      case 'contacted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'qualified': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'nurturing': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200';
-      case 'converted': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
-      case 'lost': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'new':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+      case 'contacted':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'qualified':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'nurturing':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200';
+      case 'converted':
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
+      case 'lost':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -237,7 +253,7 @@ export default function LeadAutomationDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Lead Insights'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = (
@@ -251,7 +267,9 @@ export default function LeadAutomationDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Active Campaigns</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{Math.round(stats.conversionRate * 100)}%</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {Math.round(stats.conversionRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</div>
       </div>
       <div className="text-center">
@@ -261,7 +279,7 @@ export default function LeadAutomationDashboard() {
     </div>
   );
 
-  const filteredLeads = leads.filter(lead => {
+  const filteredLeads = leads.filter((lead) => {
     if (filterStatus !== 'all' && lead.status !== filterStatus) return false;
     if (filterSource !== 'all' && lead.source !== filterSource) return false;
     return true;
@@ -329,7 +347,7 @@ export default function LeadAutomationDashboard() {
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
-                {filteredLeads.map(lead => (
+                {filteredLeads.map((lead) => (
                   <GlassCard
                     key={lead.id}
                     className="p-4 cursor-pointer hover:border-blue-300"
@@ -337,22 +355,28 @@ export default function LeadAutomationDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          lead.status === 'qualified' ? 'bg-green-100' :
-                          lead.status === 'nurturing' ? 'bg-purple-100' :
-                          lead.status === 'new' ? 'bg-blue-100' : 'bg-yellow-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            lead.status === 'qualified'
+                              ? 'bg-green-100'
+                              : lead.status === 'nurturing'
+                                ? 'bg-purple-100'
+                                : lead.status === 'new'
+                                  ? 'bg-blue-100'
+                                  : 'bg-yellow-100'
+                          }`}
+                        >
                           <Users className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="font-medium">{lead.name}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{lead.company}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {lead.company}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(lead.status)}>
-                          {lead.status}
-                        </Badge>
+                        <Badge className={getStatusColor(lead.status)}>{lead.status}</Badge>
                         <div className="text-right">
                           <div className="font-semibold">{lead.score}/100</div>
                           <div className="text-sm text-gray-500">{lead.source}</div>
@@ -382,13 +406,19 @@ export default function LeadAutomationDashboard() {
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
-                {campaigns.map(campaign => (
+                {campaigns.map((campaign) => (
                   <GlassCard key={campaign.id} className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-medium">{campaign.name}</h3>
-                          <Badge className={campaign.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                          <Badge
+                            className={
+                              campaign.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }
+                          >
                             {campaign.status}
                           </Badge>
                         </div>
@@ -399,7 +429,9 @@ export default function LeadAutomationDashboard() {
                           </div>
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Conversion:</span>
-                            <span className="font-medium ml-1">{Math.round(campaign.conversionRate * 100)}%</span>
+                            <span className="font-medium ml-1">
+                              {Math.round(campaign.conversionRate * 100)}%
+                            </span>
                           </div>
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Budget:</span>
@@ -415,7 +447,10 @@ export default function LeadAutomationDashboard() {
                             <span>Budget Used</span>
                             <span>{Math.round((campaign.spent / campaign.budget) * 100)}%</span>
                           </div>
-                          <Progress value={(campaign.spent / campaign.budget) * 100} className="h-2" />
+                          <Progress
+                            value={(campaign.spent / campaign.budget) * 100}
+                            className="h-2"
+                          />
                         </div>
                       </div>
                       <div className="flex gap-2 ml-4">
@@ -459,7 +494,9 @@ export default function LeadAutomationDashboard() {
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Lead Growth</span>
-                    <span className="font-semibold text-green-600">+{Math.round(stats.monthlyGrowth * 100)}%</span>
+                    <span className="font-semibold text-green-600">
+                      +{Math.round(stats.monthlyGrowth * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
                 </div>
@@ -510,19 +547,11 @@ export default function LeadAutomationDashboard() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="lead-name">Lead Name</Label>
-                    <Input
-                      id="lead-name"
-                      placeholder="Enter lead name"
-                      defaultValue="John Smith"
-                    />
+                    <Input id="lead-name" placeholder="Enter lead name" defaultValue="John Smith" />
                   </div>
                   <div>
                     <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      placeholder="Enter company"
-                      defaultValue="TechCorp Inc"
-                    />
+                    <Input id="company" placeholder="Enter company" defaultValue="TechCorp Inc" />
                   </div>
                   <div>
                     <Label htmlFor="engagement">Engagement Level</Label>
@@ -569,10 +598,7 @@ export default function LeadAutomationDashboard() {
                   </div>
                   <div>
                     <Label htmlFor="sequence-name">Sequence Name</Label>
-                    <Input
-                      id="sequence-name"
-                      placeholder="Enter sequence name"
-                    />
+                    <Input id="sequence-name" placeholder="Enter sequence name" />
                   </div>
                   <div>
                     <Label htmlFor="target-audience">Target Audience</Label>
@@ -674,37 +700,51 @@ export default function LeadAutomationDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Name</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Name
+                  </Label>
                   <div className="font-medium">{selectedLead.name}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Company</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Company
+                  </Label>
                   <div className="font-medium">{selectedLead.company}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Email
+                  </Label>
                   <div className="font-medium">{selectedLead.email}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Lead Score</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Lead Score
+                  </Label>
                   <div className="font-medium">{selectedLead.score}/100</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedLead.status)}>
                     {selectedLead.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Source</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Source
+                  </Label>
                   <div className="font-medium">{selectedLead.source}</div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Tags</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Tags
+                </Label>
                 <div className="flex gap-2">
-                  {selectedLead.tags.map(tag => (
+                  {selectedLead.tags.map((tag) => (
                     <Badge key={tag} variant="outline">
                       {tag}
                     </Badge>
@@ -729,7 +769,9 @@ export default function LeadAutomationDashboard() {
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <div className="text-sm text-blue-800 dark:text-blue-200">
                           <strong>Priority:</strong>
-                          <Badge className={`ml-2 ${getPriorityColor(selectedLead.gpt5Insights.priority)}`}>
+                          <Badge
+                            className={`ml-2 ${getPriorityColor(selectedLead.gpt5Insights.priority)}`}
+                          >
                             {selectedLead.gpt5Insights.priority}
                           </Badge>
                         </div>
@@ -737,7 +779,8 @@ export default function LeadAutomationDashboard() {
 
                       <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <div className="text-sm text-green-800 dark:text-green-200">
-                          <strong>Predicted Value:</strong> ${selectedLead.gpt5Insights.predictedValue.toLocaleString()}
+                          <strong>Predicted Value:</strong> $
+                          {selectedLead.gpt5Insights.predictedValue.toLocaleString()}
                         </div>
                       </div>
                     </div>

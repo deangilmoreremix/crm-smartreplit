@@ -38,32 +38,32 @@ export const useAnalyticsStore = create<AnalyticsStore>((set, get) => ({
     const newAnalytics: AnalyticsData = {
       ...analyticsData,
       id: Date.now().toString(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    set(state => ({
-      analytics: { ...state.analytics, [newAnalytics.id]: newAnalytics }
+    set((state) => ({
+      analytics: { ...state.analytics, [newAnalytics.id]: newAnalytics },
     }));
 
     return newAnalytics;
   },
 
   updateAnalytics: (id, updates) => {
-    set(state => ({
+    set((state) => ({
       analytics: {
         ...state.analytics,
         [id]: {
           ...state.analytics[id],
-          ...updates
-        }
-      }
+          ...updates,
+        },
+      },
     }));
   },
 
   deleteAnalytics: (id) => {
-    set(state => {
+    set((state) => {
       const { [id]: deleted, ...rest } = state.analytics;
       return { analytics: rest };
     });
-  }
+  },
 }));

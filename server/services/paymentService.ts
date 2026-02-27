@@ -1,6 +1,6 @@
-import { ProductTier } from "../../shared/schema";
-import { ProductType, handleSuccessfulPurchase, upsertEntitlement } from "../entitlements-utils";
-import { supabase } from "../supabase";
+import { ProductTier } from '../../shared/schema';
+import { ProductType, handleSuccessfulPurchase, upsertEntitlement } from '../entitlements-utils';
+import { supabase } from '../supabase';
 
 export type PaymentProvider = 'stripe' | 'paypal' | 'jvzoo' | 'zaxaa';
 
@@ -19,13 +19,13 @@ export interface PaymentMetadata {
 }
 
 export const PRODUCT_TIER_MAP: Record<string, ProductTier> = {
-  'super_admin': 'super_admin',
-  'whitelabel': 'whitelabel',
-  'smartcrm': 'smartcrm',
-  'sales_maximizer': 'sales_maximizer',
-  'ai_boost_unlimited': 'ai_boost_unlimited',
-  'ai_communication': 'ai_communication',
-  'smartcrm_bundle': 'smartcrm_bundle',
+  super_admin: 'super_admin',
+  whitelabel: 'whitelabel',
+  smartcrm: 'smartcrm',
+  sales_maximizer: 'sales_maximizer',
+  ai_boost_unlimited: 'ai_boost_unlimited',
+  ai_communication: 'ai_communication',
+  smartcrm_bundle: 'smartcrm_bundle',
 };
 
 export function detectProductTierFromName(productName: string): ProductTier {
@@ -40,7 +40,9 @@ export function detectProductTierFromName(productName: string): ProductTier {
   return 'smartcrm';
 }
 
-export function determineRoleFromTier(productTier: ProductTier): 'super_admin' | 'wl_user' | 'regular_user' {
+export function determineRoleFromTier(
+  productTier: ProductTier
+): 'super_admin' | 'wl_user' | 'regular_user' {
   if (productTier === 'super_admin') return 'super_admin';
   if (productTier === 'whitelabel' || productTier === 'smartcrm_bundle') return 'wl_user';
   return 'regular_user';
@@ -58,9 +60,7 @@ export async function findUserByEmail(email: string): Promise<string | null> {
 
   try {
     const { data: usersData } = await supabase.auth.admin.listUsers();
-    const user = usersData?.users?.find(u => 
-      u.email?.toLowerCase() === email.toLowerCase()
-    );
+    const user = usersData?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
     return user?.id || null;
   } catch (error) {
     console.error('Error finding user by email:', error);
@@ -69,9 +69,9 @@ export async function findUserByEmail(email: string): Promise<string | null> {
 }
 
 export async function updateUserProductTier(
-  userId: string, 
-  email: string, 
-  productTier: ProductTier, 
+  userId: string,
+  email: string,
+  productTier: ProductTier,
   role: string,
   paymentProvider: PaymentProvider
 ): Promise<boolean> {
@@ -83,10 +83,10 @@ export async function updateUserProductTier(
   try {
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ 
+      .update({
         product_tier: productTier,
         role: role,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
 
@@ -100,11 +100,15 @@ export async function updateUserProductTier(
         product_tier: productTier,
         role: role,
         product_tier_updated_at: new Date().toISOString(),
-        payment_provider: paymentProvider
-      }
+        payment_provider: paymentProvider,
+      },
     });
 
-    console.log(`✅ Updated user product tier via ${paymentProvider}:`, { userId, productTier, role });
+    console.log(`✅ Updated user product tier via ${paymentProvider}:`, {
+      userId,
+      productTier,
+      role,
+    });
     return true;
   } catch (error) {
     console.error('Error updating user product tier:', error);
@@ -113,8 +117,8 @@ export async function updateUserProductTier(
 }
 
 export async function revokeUserAccess(
-  userId: string, 
-  email: string, 
+  userId: string,
+  email: string,
   reason: string,
   paymentProvider: PaymentProvider
 ): Promise<boolean> {
@@ -126,10 +130,10 @@ export async function revokeUserAccess(
   try {
     await supabase
       .from('profiles')
-      .update({ 
+      .update({
         product_tier: null,
         role: 'regular_user',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
 
@@ -138,8 +142,8 @@ export async function revokeUserAccess(
         product_tier: null,
         role: 'regular_user',
         product_tier_updated_at: new Date().toISOString(),
-        [`${paymentProvider}_${reason}_at`]: new Date().toISOString()
-      }
+        [`${paymentProvider}_${reason}_at`]: new Date().toISOString(),
+      },
     });
 
     console.log(`✅ Revoked ${paymentProvider} access for user ${email} due to ${reason}`);
@@ -152,9 +156,9 @@ export async function revokeUserAccess(
 
 export async function processPayment(metadata: PaymentMetadata): Promise<boolean> {
   let userId = metadata.userId;
-  
+
   if (!userId && metadata.email) {
-    userId = await findUserByEmail(metadata.email) || undefined;
+    userId = (await findUserByEmail(metadata.email)) || undefined;
   }
 
   if (!userId) {
@@ -166,22 +170,27 @@ export async function processPayment(metadata: PaymentMetadata): Promise<boolean
   const productType = metadata.productType || 'lifetime';
   const role = determineRoleFromTier(productTier);
 
-  await updateUserProductTier(userId, metadata.email || '', productTier, role, metadata.paymentProvider);
-
-  await handleSuccessfulPurchase(
+  await updateUserProductTier(
     userId,
-    productType,
-    {
-      stripeCustomerId: metadata.paymentProvider === 'stripe' ? metadata.customerId : undefined,
-      stripeSubscriptionId: metadata.paymentProvider === 'stripe' ? metadata.subscriptionId : undefined,
-      zaxaaSubscriptionId: metadata.paymentProvider === 'zaxaa' ? metadata.subscriptionId : undefined,
-      planName: metadata.planName || productTier,
-      planAmount: metadata.planAmount,
-      currency: metadata.currency || 'USD',
-    }
+    metadata.email || '',
+    productTier,
+    role,
+    metadata.paymentProvider
   );
 
-  console.log(`✅ ${metadata.paymentProvider} payment processed: user=${userId}, tier=${productTier}, type=${productType}`);
+  await handleSuccessfulPurchase(userId, productType, {
+    stripeCustomerId: metadata.paymentProvider === 'stripe' ? metadata.customerId : undefined,
+    stripeSubscriptionId:
+      metadata.paymentProvider === 'stripe' ? metadata.subscriptionId : undefined,
+    zaxaaSubscriptionId: metadata.paymentProvider === 'zaxaa' ? metadata.subscriptionId : undefined,
+    planName: metadata.planName || productTier,
+    planAmount: metadata.planAmount,
+    currency: metadata.currency || 'USD',
+  });
+
+  console.log(
+    `✅ ${metadata.paymentProvider} payment processed: user=${userId}, tier=${productTier}, type=${productType}`
+  );
   return true;
 }
 
@@ -192,7 +201,7 @@ export async function processRefund(
   paymentProvider: PaymentProvider
 ): Promise<boolean> {
   await revokeUserAccess(userId, email, 'refunded', paymentProvider);
-  
+
   const now = new Date().toISOString();
   await upsertEntitlement({
     userId,
@@ -212,7 +221,7 @@ export async function processCancellation(
   paymentProvider: PaymentProvider
 ): Promise<boolean> {
   await revokeUserAccess(userId, email, 'cancelled', paymentProvider);
-  
+
   const now = new Date().toISOString();
   await upsertEntitlement({
     userId,

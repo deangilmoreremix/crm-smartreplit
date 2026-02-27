@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { Goal, GoalProgress, ExecutionStep, GoalExecutionResult, AIGoalContext } from '../types/goals';
+import {
+  Goal,
+  GoalProgress,
+  ExecutionStep,
+  GoalExecutionResult,
+  AIGoalContext,
+} from '../types/goals';
 import { AI_GOALS } from '../data/aiGoals';
 import { composioService } from '../services/composioService';
 
@@ -18,16 +24,16 @@ interface GoalState {
   activeExecutions: Map<string, GoalProgress>;
   completedGoals: Set<string>;
   favoriteGoals: Set<string>;
-  
+
   // Context and filtering
   currentContext: AIGoalContext | null;
   filter: GoalFilter;
-  
+
   // UI state
   selectedGoal: Goal | null;
   isExecutionModalOpen: boolean;
   realMode: boolean;
-  
+
   // Statistics
   stats: {
     totalExecutions: number;
@@ -36,39 +42,39 @@ interface GoalState {
     totalTimeSaved: number;
     estimatedROI: number;
   };
-  
+
   // Actions - Goal Management
   loadGoals: () => void;
   selectGoal: (goal: Goal) => void;
   clearSelection: () => void;
   toggleFavorite: (goalId: string) => void;
-  
+
   // Actions - Execution
   executeGoal: (goal: Goal, context?: AIGoalContext) => Promise<GoalExecutionResult>;
   cancelExecution: (goalId: string) => void;
   retryExecution: (goalId: string) => Promise<GoalExecutionResult>;
-  
+
   // Actions - Modal
   openExecutionModal: (goal: Goal) => void;
   closeExecutionModal: () => void;
-  
+
   // Actions - Context
   setContext: (context: AIGoalContext | null) => void;
   clearContext: () => void;
-  
+
   // Actions - Filtering
   updateFilter: (updates: Partial<GoalFilter>) => void;
   resetFilter: () => void;
   getFilteredGoals: () => Goal[];
-  
+
   // Actions - Mode
   setRealMode: (enabled: boolean) => void;
   toggleMode: () => void;
-  
+
   // Actions - Statistics
   updateStats: (executionResult: GoalExecutionResult) => void;
   resetStats: () => void;
-  
+
   // Actions - Progress
   updateExecutionProgress: (goalId: string, step: ExecutionStep) => void;
   completeExecution: (goalId: string, result: GoalExecutionResult) => void;
@@ -79,7 +85,7 @@ const defaultFilter: GoalFilter = {
   priorities: [],
   complexities: [],
   searchTerm: '',
-  showCompleted: true
+  showCompleted: true,
 };
 
 const defaultStats = {
@@ -87,7 +93,7 @@ const defaultStats = {
   successfulExecutions: 0,
   averageExecutionTime: 0,
   totalTimeSaved: 0,
-  estimatedROI: 0
+  estimatedROI: 0,
 };
 
 export const useGoalStore = create<GoalState>()(
@@ -108,12 +114,16 @@ export const useGoalStore = create<GoalState>()(
 
         // Goal Management
         loadGoals: () => {
-          set({
-            goals: AI_GOALS.map(aiGoal => ({
-              ...aiGoal,
-              name: aiGoal.title
-            }))
-          }, false, 'loadGoals');
+          set(
+            {
+              goals: AI_GOALS.map((aiGoal) => ({
+                ...aiGoal,
+                name: aiGoal.title,
+              })),
+            },
+            false,
+            'loadGoals'
+          );
         },
 
         selectGoal: (goal: Goal) => {
@@ -127,13 +137,13 @@ export const useGoalStore = create<GoalState>()(
         toggleFavorite: (goalId: string) => {
           const { favoriteGoals } = get();
           const newFavorites = new Set(favoriteGoals);
-          
+
           if (newFavorites.has(goalId)) {
             newFavorites.delete(goalId);
           } else {
             newFavorites.add(goalId);
           }
-          
+
           set({ favoriteGoals: newFavorites }, false, 'toggleFavorite');
         },
 
@@ -141,23 +151,27 @@ export const useGoalStore = create<GoalState>()(
         executeGoal: async (goal: Goal, context?: AIGoalContext) => {
           const { realMode, currentContext, activeExecutions } = get();
           const executionContext = context || currentContext;
-          
+
           // Initialize progress tracking
           const progress: GoalProgress = {
             goalId: goal.id,
             status: 'executing',
             progress: 0,
             steps: [],
-            startTime: new Date()
+            startTime: new Date(),
           };
-          
+
           const newActiveExecutions = new Map(activeExecutions);
           newActiveExecutions.set(goal.id, progress);
-          
-          set({ 
-            activeExecutions: newActiveExecutions,
-            selectedGoal: goal 
-          }, false, 'startExecution');
+
+          set(
+            {
+              activeExecutions: newActiveExecutions,
+              selectedGoal: goal,
+            },
+            false,
+            'startExecution'
+          );
 
           try {
             const result = await composioService.executeGoal(
@@ -165,7 +179,7 @@ export const useGoalStore = create<GoalState>()(
               {
                 goalId: goal.id,
                 realMode,
-                crmData: executionContext
+                crmData: executionContext,
               },
               (step: ExecutionStep) => {
                 get().updateExecutionProgress(goal.id, step);
@@ -174,20 +188,20 @@ export const useGoalStore = create<GoalState>()(
 
             get().completeExecution(goal.id, result);
             get().updateStats(result);
-            
+
             return result;
           } catch (error) {
             console.error('Goal execution failed:', error);
-            
+
             const errorResult: GoalExecutionResult = {
               goalId: goal.id,
               success: false,
               results: { error: error instanceof Error ? error.message : 'Unknown error' },
               executionTime: Date.now() - progress.startTime.getTime(),
               agentsUsed: [],
-              toolsUsed: []
+              toolsUsed: [],
             };
-            
+
             get().completeExecution(goal.id, errorResult);
             return errorResult;
           }
@@ -197,34 +211,42 @@ export const useGoalStore = create<GoalState>()(
           const { activeExecutions } = get();
           const newActiveExecutions = new Map(activeExecutions);
           newActiveExecutions.delete(goalId);
-          
+
           set({ activeExecutions: newActiveExecutions }, false, 'cancelExecution');
         },
 
         retryExecution: async (goalId: string) => {
           const { goals } = get();
-          const goal = goals.find(g => g.id === goalId);
-          
+          const goal = goals.find((g) => g.id === goalId);
+
           if (!goal) {
             throw new Error(`Goal not found: ${goalId}`);
           }
-          
+
           return get().executeGoal(goal);
         },
 
         // Modal Management
         openExecutionModal: (goal: Goal) => {
-          set({ 
-            selectedGoal: goal, 
-            isExecutionModalOpen: true 
-          }, false, 'openExecutionModal');
+          set(
+            {
+              selectedGoal: goal,
+              isExecutionModalOpen: true,
+            },
+            false,
+            'openExecutionModal'
+          );
         },
 
         closeExecutionModal: () => {
-          set({ 
-            isExecutionModalOpen: false,
-            selectedGoal: null 
-          }, false, 'closeExecutionModal');
+          set(
+            {
+              isExecutionModalOpen: false,
+              selectedGoal: null,
+            },
+            false,
+            'closeExecutionModal'
+          );
         },
 
         // Context Management
@@ -239,9 +261,13 @@ export const useGoalStore = create<GoalState>()(
         // Filtering
         updateFilter: (updates: Partial<GoalFilter>) => {
           const { filter } = get();
-          set({ 
-            filter: { ...filter, ...updates } 
-          }, false, 'updateFilter');
+          set(
+            {
+              filter: { ...filter, ...updates },
+            },
+            false,
+            'updateFilter'
+          );
         },
 
         resetFilter: () => {
@@ -250,39 +276,39 @@ export const useGoalStore = create<GoalState>()(
 
         getFilteredGoals: () => {
           const { goals, filter, completedGoals } = get();
-          
-          return goals.filter(goal => {
+
+          return goals.filter((goal) => {
             // Category filter
             if (filter.categories.length > 0 && !filter.categories.includes(goal.category)) {
               return false;
             }
-            
+
             // Priority filter
             if (filter.priorities.length > 0 && !filter.priorities.includes(goal.priority)) {
               return false;
             }
-            
+
             // Complexity filter
             if (filter.complexities.length > 0 && !filter.complexities.includes(goal.complexity)) {
               return false;
             }
-            
+
             // Search term filter
             if (filter.searchTerm) {
               const searchLower = filter.searchTerm.toLowerCase();
-              const matchesSearch = 
+              const matchesSearch =
                 goal.title.toLowerCase().includes(searchLower) ||
                 goal.description.toLowerCase().includes(searchLower) ||
                 goal.category.toLowerCase().includes(searchLower);
-              
+
               if (!matchesSearch) return false;
             }
-            
+
             // Completed filter
             if (!filter.showCompleted && completedGoals.has(goal.id)) {
               return false;
             }
-            
+
             return true;
           });
         },
@@ -303,11 +329,13 @@ export const useGoalStore = create<GoalState>()(
           const newStats = {
             totalExecutions: stats.totalExecutions + 1,
             successfulExecutions: stats.successfulExecutions + (executionResult.success ? 1 : 0),
-            averageExecutionTime: (stats.averageExecutionTime * stats.totalExecutions + executionResult.executionTime) / (stats.totalExecutions + 1),
+            averageExecutionTime:
+              (stats.averageExecutionTime * stats.totalExecutions + executionResult.executionTime) /
+              (stats.totalExecutions + 1),
             totalTimeSaved: stats.totalTimeSaved + (executionResult.success ? 3600000 : 0), // 1 hour saved per successful execution
-            estimatedROI: stats.estimatedROI + (executionResult.success ? 25000 : 0) // $25k ROI per successful execution
+            estimatedROI: stats.estimatedROI + (executionResult.success ? 25000 : 0), // $25k ROI per successful execution
           };
-          
+
           set({ stats: newStats }, false, 'updateStats');
         },
 
@@ -319,57 +347,62 @@ export const useGoalStore = create<GoalState>()(
         updateExecutionProgress: (goalId: string, step: ExecutionStep) => {
           const { activeExecutions } = get();
           const progress = activeExecutions.get(goalId);
-          
+
           if (!progress) return;
-          
-          const existingStepIndex = progress.steps.findIndex(s => s.id === step.id);
+
+          const existingStepIndex = progress.steps.findIndex((s) => s.id === step.id);
           const newSteps = [...progress.steps];
-          
+
           if (existingStepIndex >= 0) {
             newSteps[existingStepIndex] = step;
           } else {
             newSteps.push(step);
           }
-          
+
           const updatedProgress: GoalProgress = {
             ...progress,
             steps: newSteps,
-            progress: (newSteps.filter(s => s.status === 'completed').length / newSteps.length) * 100
+            progress:
+              (newSteps.filter((s) => s.status === 'completed').length / newSteps.length) * 100,
           };
-          
+
           const newActiveExecutions = new Map(activeExecutions);
           newActiveExecutions.set(goalId, updatedProgress);
-          
+
           set({ activeExecutions: newActiveExecutions }, false, 'updateExecutionProgress');
         },
 
         completeExecution: (goalId: string, result: GoalExecutionResult) => {
           const { activeExecutions, completedGoals } = get();
           const progress = activeExecutions.get(goalId);
-          
+
           if (!progress) return;
-          
+
           const finalProgress: GoalProgress = {
             ...progress,
             status: result.success ? 'completed' : 'failed',
             progress: 100,
             endTime: new Date(),
-            results: result.results
+            results: result.results,
           };
-          
+
           const newActiveExecutions = new Map(activeExecutions);
           newActiveExecutions.delete(goalId);
-          
+
           const newCompletedGoals = new Set(completedGoals);
           if (result.success) {
             newCompletedGoals.add(goalId);
           }
-          
-          set({ 
-            activeExecutions: newActiveExecutions,
-            completedGoals: newCompletedGoals
-          }, false, 'completeExecution');
-        }
+
+          set(
+            {
+              activeExecutions: newActiveExecutions,
+              completedGoals: newCompletedGoals,
+            },
+            false,
+            'completeExecution'
+          );
+        },
       }),
       {
         name: 'goal-store',
@@ -378,19 +411,23 @@ export const useGoalStore = create<GoalState>()(
           completedGoals: Array.from(state.completedGoals),
           stats: state.stats,
           realMode: state.realMode,
-          filter: state.filter
+          filter: state.filter,
         }),
         onRehydrateStorage: () => (state) => {
           if (state) {
             // Convert arrays back to Sets
-            state.favoriteGoals = new Set(Array.isArray(state.favoriteGoals) ? state.favoriteGoals : []);
-            state.completedGoals = new Set(Array.isArray(state.completedGoals) ? state.completedGoals : []);
+            state.favoriteGoals = new Set(
+              Array.isArray(state.favoriteGoals) ? state.favoriteGoals : []
+            );
+            state.completedGoals = new Set(
+              Array.isArray(state.completedGoals) ? state.completedGoals : []
+            );
             state.activeExecutions = new Map();
-            
+
             // Load goals on rehydration
             state.loadGoals();
           }
-        }
+        },
       }
     ),
     { name: 'goal-store' }

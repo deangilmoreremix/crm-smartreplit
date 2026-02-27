@@ -1,5 +1,9 @@
 import React from 'react';
-import { validatePassword, getPasswordStrengthColor, getPasswordStrengthText } from '../../utils/passwordValidation';
+import {
+  validatePassword,
+  getPasswordStrengthColor,
+  getPasswordStrengthText,
+} from '../../utils/passwordValidation';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
@@ -8,7 +12,7 @@ interface PasswordStrengthIndicatorProps {
 
 export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
   password,
-  className = ''
+  className = '',
 }) => {
   const validation = validatePassword(password);
 
@@ -21,21 +25,23 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
         <div className="flex-1 bg-gray-200 rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all duration-300 ${
-              validation.strength === 'weak' ? 'bg-red-500 w-1/3' :
-              validation.strength === 'medium' ? 'bg-yellow-500 w-2/3' :
-              'bg-green-500 w-full'
+              validation.strength === 'weak'
+                ? 'bg-red-500 w-1/3'
+                : validation.strength === 'medium'
+                  ? 'bg-yellow-500 w-2/3'
+                  : 'bg-green-500 w-full'
             }`}
           />
         </div>
-        <span className={`text-xs font-medium px-2 py-1 rounded-full ${getPasswordStrengthColor(validation.strength)}`}>
+        <span
+          className={`text-xs font-medium px-2 py-1 rounded-full ${getPasswordStrengthColor(validation.strength)}`}
+        >
           {validation.strength.toUpperCase()}
         </span>
       </div>
 
       {/* Strength Text */}
-      <p className="text-sm text-gray-600">
-        {getPasswordStrengthText(validation.strength)}
-      </p>
+      <p className="text-sm text-gray-600">{getPasswordStrengthText(validation.strength)}</p>
 
       {/* Validation Errors */}
       {validation.errors.length > 0 && (
@@ -76,7 +82,13 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
           <span className="ml-2">One number</span>
         </div>
         <div className="flex items-center">
-          <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'text-green-500' : 'text-gray-400'}>
+          <span
+            className={
+              /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+                ? 'text-green-500'
+                : 'text-gray-400'
+            }
+          >
             {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? '✓' : '○'}
           </span>
           <span className="ml-2">One special character</span>

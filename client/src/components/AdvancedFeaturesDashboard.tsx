@@ -4,14 +4,9 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
-  TrendingUp,
-  Target,
-  Building2,
   BarChart3,
   Settings,
-  Brain,
   Zap,
-  CheckCircle,
   Activity,
   Search,
   Database,
@@ -32,7 +27,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Search,
       status: 'active',
       usage: 85,
-      category: 'Search & Discovery'
+      category: 'Search & Discovery',
     },
     {
       id: 'bulk_operations',
@@ -41,7 +36,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Database,
       status: 'active',
       usage: 67,
-      category: 'Data Management'
+      category: 'Data Management',
     },
     {
       id: 'data_export',
@@ -50,7 +45,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Download,
       status: 'active',
       usage: 92,
-      category: 'Data Management'
+      category: 'Data Management',
     },
     {
       id: 'data_import',
@@ -59,7 +54,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Upload,
       status: 'active',
       usage: 73,
-      category: 'Data Management'
+      category: 'Data Management',
     },
     {
       id: 'workflow_automation',
@@ -68,7 +63,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Zap,
       status: 'active',
       usage: 88,
-      category: 'Automation'
+      category: 'Automation',
     },
     {
       id: 'custom_fields',
@@ -77,7 +72,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Settings,
       status: 'active',
       usage: 56,
-      category: 'Customization'
+      category: 'Customization',
     },
     {
       id: 'advanced_permissions',
@@ -86,7 +81,7 @@ export default function AdvancedFeaturesDashboard() {
       icon: Shield,
       status: 'active',
       usage: 94,
-      category: 'Security'
+      category: 'Security',
     },
     {
       id: 'audit_trail',
@@ -95,8 +90,8 @@ export default function AdvancedFeaturesDashboard() {
       icon: FileText,
       status: 'active',
       usage: 78,
-      category: 'Compliance'
-    }
+      category: 'Compliance',
+    },
   ];
 
   const performanceMetrics = {
@@ -107,7 +102,7 @@ export default function AdvancedFeaturesDashboard() {
     automationsExecuted: 1205,
     customFieldsCreated: 67,
     permissionChanges: 45,
-    auditLogEntries: 8392
+    auditLogEntries: 8392,
   };
 
   const securityFeatures = [
@@ -115,38 +110,38 @@ export default function AdvancedFeaturesDashboard() {
       name: 'Data Encryption',
       status: 'enabled',
       description: 'AES-256 encryption for data at rest and in transit',
-      level: 'enterprise'
+      level: 'enterprise',
     },
     {
       name: 'Multi-Factor Authentication',
       status: 'enabled',
       description: 'TOTP, SMS, and biometric authentication options',
-      level: 'standard'
+      level: 'standard',
     },
     {
       name: 'Single Sign-On',
       status: 'enabled',
       description: 'SAML 2.0 and OAuth 2.0 integration',
-      level: 'enterprise'
+      level: 'enterprise',
     },
     {
       name: 'IP Whitelist',
       status: 'configured',
       description: 'Restrict access from specific IP addresses',
-      level: 'standard'
+      level: 'standard',
     },
     {
       name: 'Session Management',
       status: 'enabled',
       description: 'Automatic session timeout and concurrent session limits',
-      level: 'standard'
+      level: 'standard',
     },
     {
       name: 'Data Loss Prevention',
       status: 'enabled',
       description: 'Monitor and prevent sensitive data exfiltration',
-      level: 'enterprise'
-    }
+      level: 'enterprise',
+    },
   ];
 
   const AdvancedSearchTab = () => (
@@ -171,7 +166,7 @@ export default function AdvancedFeaturesDashboard() {
                   'Date range filtering',
                   'Numerical range queries',
                   'Location-based search',
-                  'AI-powered suggestions'
+                  'AI-powered suggestions',
                 ].map((capability) => (
                   <div key={capability} className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -180,7 +175,7 @@ export default function AdvancedFeaturesDashboard() {
                 ))}
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-medium mb-3">Search Performance</h4>
               <div className="space-y-4">
@@ -229,17 +224,25 @@ export default function AdvancedFeaturesDashboard() {
               { name: 'Recent Conversations', usage: 89, shared: true },
               { name: 'Enterprise Deals', usage: 67, shared: false },
               { name: 'Support Tickets', usage: 45, shared: true },
-              { name: 'Marketing Qualified Leads', usage: 178, shared: false }
+              { name: 'Marketing Qualified Leads', usage: 178, shared: false },
             ].map((search) => (
               <div key={search.name} className="p-3 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium text-sm">{search.name}</h4>
-                  {search.shared && <Badge variant="outline" className="text-xs">Shared</Badge>}
+                  {search.shared && (
+                    <Badge variant="outline" className="text-xs">
+                      Shared
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-gray-600">{search.usage} uses this month</p>
                 <div className="flex gap-1 mt-2">
-                  <Button size="sm" variant="outline" className="text-xs h-6">Edit</Button>
-                  <Button size="sm" variant="outline" className="text-xs h-6">Run</Button>
+                  <Button size="sm" variant="outline" className="text-xs h-6">
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-xs h-6">
+                    Run
+                  </Button>
                 </div>
               </div>
             ))}
@@ -260,7 +263,9 @@ export default function AdvancedFeaturesDashboard() {
             <p className="text-sm text-gray-600 mb-3">
               Update multiple records simultaneously with validation
             </p>
-            <Button className="w-full" size="sm">Start Bulk Update</Button>
+            <Button className="w-full" size="sm">
+              Start Bulk Update
+            </Button>
           </CardContent>
         </Card>
 
@@ -272,7 +277,9 @@ export default function AdvancedFeaturesDashboard() {
             <p className="text-sm text-gray-600 mb-3">
               Safely delete multiple records with dependency checking
             </p>
-            <Button variant="outline" className="w-full" size="sm">Start Bulk Delete</Button>
+            <Button variant="outline" className="w-full" size="sm">
+              Start Bulk Delete
+            </Button>
           </CardContent>
         </Card>
 
@@ -284,7 +291,9 @@ export default function AdvancedFeaturesDashboard() {
             <p className="text-sm text-gray-600 mb-3">
               Merge duplicate records with AI-powered suggestions
             </p>
-            <Button variant="outline" className="w-full" size="sm">Start Bulk Merge</Button>
+            <Button variant="outline" className="w-full" size="sm">
+              Start Bulk Merge
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -296,44 +305,48 @@ export default function AdvancedFeaturesDashboard() {
         <CardContent>
           <div className="space-y-3">
             {[
-              { 
-                operation: 'Bulk Update', 
-                records: 150, 
-                status: 'completed', 
+              {
+                operation: 'Bulk Update',
+                records: 150,
+                status: 'completed',
                 time: '2 hours ago',
-                user: 'John Smith'
+                user: 'John Smith',
               },
-              { 
-                operation: 'Bulk Delete', 
-                records: 45, 
-                status: 'completed', 
+              {
+                operation: 'Bulk Delete',
+                records: 45,
+                status: 'completed',
                 time: '5 hours ago',
-                user: 'Sarah Johnson'
+                user: 'Sarah Johnson',
               },
-              { 
-                operation: 'Bulk Merge', 
-                records: 23, 
-                status: 'in_progress', 
+              {
+                operation: 'Bulk Merge',
+                records: 23,
+                status: 'in_progress',
                 time: '1 hour ago',
-                user: 'Mike Wilson'
+                user: 'Mike Wilson',
               },
-              { 
-                operation: 'Bulk Update', 
-                records: 89, 
-                status: 'failed', 
+              {
+                operation: 'Bulk Update',
+                records: 89,
+                status: 'failed',
                 time: '3 hours ago',
-                user: 'Lisa Davis'
-              }
+                user: 'Lisa Davis',
+              },
             ].map((op, index) => (
               <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-sm">{op.operation}</span>
-                    <Badge variant={
-                      op.status === 'completed' ? 'default' :
-                      op.status === 'in_progress' ? 'secondary' :
-                      'destructive'
-                    }>
+                    <Badge
+                      variant={
+                        op.status === 'completed'
+                          ? 'default'
+                          : op.status === 'in_progress'
+                            ? 'secondary'
+                            : 'destructive'
+                      }
+                    >
                       {op.status.replace('_', ' ')}
                     </Badge>
                   </div>
@@ -365,7 +378,10 @@ export default function AdvancedFeaturesDashboard() {
           <CardContent>
             <div className="space-y-3">
               {securityFeatures.map((feature) => (
-                <div key={feature.name} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={feature.name}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-medium text-sm">{feature.name}</h4>
@@ -375,11 +391,15 @@ export default function AdvancedFeaturesDashboard() {
                     </div>
                     <p className="text-xs text-gray-600">{feature.description}</p>
                   </div>
-                  <div className={`w-3 h-3 rounded-full ${
-                    feature.status === 'enabled' ? 'bg-green-500' :
-                    feature.status === 'configured' ? 'bg-blue-500' :
-                    'bg-gray-300'
-                  }`}></div>
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      feature.status === 'enabled'
+                        ? 'bg-green-500'
+                        : feature.status === 'configured'
+                          ? 'bg-blue-500'
+                          : 'bg-gray-300'
+                    }`}
+                  ></div>
                 </div>
               ))}
             </div>
@@ -404,7 +424,7 @@ export default function AdvancedFeaturesDashboard() {
                   <div className="bg-green-500 h-2 rounded-full" style={{ width: '98.5%' }}></div>
                 </div>
               </div>
-              
+
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span>Database Optimization</span>
@@ -414,7 +434,7 @@ export default function AdvancedFeaturesDashboard() {
                   <div className="bg-blue-500 h-2 rounded-full" style={{ width: '94.2%' }}></div>
                 </div>
               </div>
-              
+
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span>Cache Hit Rate</span>
@@ -424,7 +444,7 @@ export default function AdvancedFeaturesDashboard() {
                   <div className="bg-purple-500 h-2 rounded-full" style={{ width: '89.7%' }}></div>
                 </div>
               </div>
-              
+
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span>Memory Usage</span>
@@ -449,22 +469,26 @@ export default function AdvancedFeaturesDashboard() {
               { name: 'GDPR Compliance', status: 'compliant', score: 98 },
               { name: 'SOC 2 Type II', status: 'certified', score: 96 },
               { name: 'ISO 27001', status: 'in_progress', score: 85 },
-              { name: 'HIPAA', status: 'compliant', score: 94 }
+              { name: 'HIPAA', status: 'compliant', score: 94 },
             ].map((compliance) => (
               <div key={compliance.name} className="text-center p-4 border rounded-lg">
                 <h4 className="font-medium mb-2">{compliance.name}</h4>
-                <div className={`text-2xl font-bold mb-1 ${
-                  compliance.status === 'compliant' || compliance.status === 'certified' 
-                    ? 'text-green-600' 
-                    : 'text-orange-600'
-                }`}>
+                <div
+                  className={`text-2xl font-bold mb-1 ${
+                    compliance.status === 'compliant' || compliance.status === 'certified'
+                      ? 'text-green-600'
+                      : 'text-orange-600'
+                  }`}
+                >
                   {compliance.score}%
                 </div>
-                <Badge variant={
-                  compliance.status === 'compliant' || compliance.status === 'certified'
-                    ? 'default' 
-                    : 'secondary'
-                }>
+                <Badge
+                  variant={
+                    compliance.status === 'compliant' || compliance.status === 'certified'
+                      ? 'default'
+                      : 'secondary'
+                  }
+                >
                   {compliance.status.replace('_', ' ')}
                 </Badge>
               </div>
@@ -560,14 +584,14 @@ export default function AdvancedFeaturesDashboard() {
               {advancedFeatures.map((feature) => {
                 const IconComponent = feature.icon;
                 return (
-                  <div 
+                  <div
                     key={feature.id}
                     className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-blue-300 ${
                       selectedFeature === feature.id ? 'border-blue-500 bg-blue-50' : ''
                     }`}
-                    onClick={() => setSelectedFeature(
-                      selectedFeature === feature.id ? null : feature.id
-                    )}
+                    onClick={() =>
+                      setSelectedFeature(selectedFeature === feature.id ? null : feature.id)
+                    }
                   >
                     <div className="flex items-start gap-3">
                       <div className="p-2 bg-blue-100 rounded-lg">
@@ -581,9 +605,11 @@ export default function AdvancedFeaturesDashboard() {
                             {feature.category}
                           </Badge>
                           <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${
-                              feature.status === 'active' ? 'bg-green-500' : 'bg-gray-300'
-                            }`}></div>
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                feature.status === 'active' ? 'bg-green-500' : 'bg-gray-300'
+                              }`}
+                            ></div>
                             <span className="text-xs">{feature.usage}%</span>
                           </div>
                         </div>

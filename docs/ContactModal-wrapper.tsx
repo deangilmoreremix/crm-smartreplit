@@ -1,13 +1,13 @@
 // ContactModal.tsx - Module Federation Wrapper for your Contact Modal
 // Copy this file to your Bolt app at: /src/ContactModal.tsx
 
-import React from "react";
+import React from 'react';
 
 export interface ContactModalProps {
   isOpen: boolean;
   onClose: () => void;
   contact?: any;
-  mode: "create" | "edit" | "view";
+  mode: 'create' | 'edit' | 'view';
   onSave?: (contact: any) => void;
   onDelete?: (contactId: string) => void;
 }
@@ -27,14 +27,14 @@ const ContactModal: React.FC<ContactModalProps> = ({
   if (!isOpen) return null;
 
   const handleSave = (contactData: any) => {
-    console.log("Modal save:", contactData);
+    console.log('Modal save:', contactData);
     onSave?.(contactData);
     onClose();
   };
 
   const handleDelete = () => {
     if (contact?.id) {
-      console.log("Modal delete:", contact.id);
+      console.log('Modal delete:', contact.id);
       onDelete?.(contact.id);
       onClose();
     }
@@ -45,16 +45,13 @@ const ContactModal: React.FC<ContactModalProps> = ({
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
-            {mode === "create"
-              ? "Create Contact"
-              : mode === "edit"
-                ? "Edit Contact"
-                : "View Contact"}
+            {mode === 'create'
+              ? 'Create Contact'
+              : mode === 'edit'
+                ? 'Edit Contact'
+                : 'View Contact'}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             ×
           </button>
         </div>
@@ -73,43 +70,37 @@ const ContactModal: React.FC<ContactModalProps> = ({
         {/* Temporary placeholder - REPLACE THIS with your actual modal */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Name</label>
             <input
               type="text"
-              defaultValue={contact?.name || ""}
+              defaultValue={contact?.name || ''}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               placeholder="Contact name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
-              defaultValue={contact?.email || ""}
+              defaultValue={contact?.email || ''}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               placeholder="contact@example.com"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Company
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Company</label>
             <input
               type="text"
-              defaultValue={contact?.company || ""}
+              defaultValue={contact?.company || ''}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
               placeholder="Company name"
             />
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            {mode !== "view" && contact?.id && (
+            {mode !== 'view' && contact?.id && (
               <button
                 onClick={handleDelete}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -123,14 +114,14 @@ const ContactModal: React.FC<ContactModalProps> = ({
             >
               Cancel
             </button>
-            {mode !== "view" && (
+            {mode !== 'view' && (
               <button
                 onClick={() =>
                   handleSave({
                     id: contact?.id || Date.now().toString(),
-                    name: "Updated Contact",
-                    email: "updated@example.com",
-                    company: "Updated Company",
+                    name: 'Updated Contact',
+                    email: 'updated@example.com',
+                    company: 'Updated Company',
                   })
                 }
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

@@ -16,7 +16,7 @@ describe('ChatbotContext', () => {
 
   it('should initialize with welcome message', () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     expect(result.current.messages).toHaveLength(1);
@@ -26,7 +26,7 @@ describe('ChatbotContext', () => {
 
   it('should send user message and receive bot response', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -42,7 +42,7 @@ describe('ChatbotContext', () => {
 
   it('should handle contact-related questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     // Test "add contact" question
@@ -57,7 +57,7 @@ describe('ChatbotContext', () => {
 
   it('should handle deal-related questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     // Test deal creation question
@@ -72,7 +72,7 @@ describe('ChatbotContext', () => {
 
   it('should handle dashboard questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -85,7 +85,7 @@ describe('ChatbotContext', () => {
 
   it('should handle settings questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -98,7 +98,7 @@ describe('ChatbotContext', () => {
 
   it('should handle authentication questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -111,7 +111,7 @@ describe('ChatbotContext', () => {
 
   it('should handle general help questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -126,7 +126,7 @@ describe('ChatbotContext', () => {
 
   it('should handle greetings', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -139,7 +139,7 @@ describe('ChatbotContext', () => {
 
   it('should handle thank you messages', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -152,7 +152,7 @@ describe('ChatbotContext', () => {
 
   it('should provide fallback response for unknown questions', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {
@@ -166,7 +166,7 @@ describe('ChatbotContext', () => {
 
   it('should show and hide chatbot', () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     expect(result.current.isVisible).toBe(false);
@@ -186,7 +186,7 @@ describe('ChatbotContext', () => {
 
   it('should clear chat history', () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     act(() => {
@@ -199,7 +199,7 @@ describe('ChatbotContext', () => {
 
   it('should handle multiple messages in sequence', async () => {
     const { result } = renderHook(() => useChatbot(), {
-      wrapper: ChatbotProvider
+      wrapper: ChatbotProvider,
     });
 
     await act(async () => {

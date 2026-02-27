@@ -4,7 +4,15 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
 import { Badge } from './ui/badge';
 import { useToast } from '../hooks/use-toast';
 import { Plus, Edit, Trash2, Users, Settings, Save } from 'lucide-react';
@@ -30,7 +38,7 @@ export default function UserTemplateSystem() {
     name: '',
     role: 'regular_user',
     productTier: 'smartcrm',
-    permissions: [] as string[]
+    permissions: [] as string[],
   });
   const { toast } = useToast();
 
@@ -39,7 +47,7 @@ export default function UserTemplateSystem() {
     try {
       const response = await fetch('/api/admin/user-templates', {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
@@ -52,7 +60,7 @@ export default function UserTemplateSystem() {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -68,7 +76,7 @@ export default function UserTemplateSystem() {
       toast({
         title: 'Error',
         description: 'Template name is required',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -83,19 +91,19 @@ export default function UserTemplateSystem() {
           config: {
             role: formData.role,
             productTier: formData.productTier,
-            permissions: formData.permissions
-          }
-        })
+            permissions: formData.permissions,
+          },
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setTemplates(prev => [...prev, data.template]);
+        setTemplates((prev) => [...prev, data.template]);
         setIsCreateDialogOpen(false);
         resetForm();
         toast({
           title: 'Success',
-          description: 'User template created successfully'
+          description: 'User template created successfully',
         });
       } else {
         throw new Error('Failed to create template');
@@ -104,7 +112,7 @@ export default function UserTemplateSystem() {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -114,16 +122,16 @@ export default function UserTemplateSystem() {
 
     try {
       // Mock delete (in production, you'd have a DELETE endpoint)
-      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
       toast({
         title: 'Success',
-        description: 'Template deleted successfully'
+        description: 'Template deleted successfully',
       });
     } catch (error: any) {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -133,7 +141,7 @@ export default function UserTemplateSystem() {
     // For now, just show a toast
     toast({
       title: 'Template Applied',
-      description: `Applied template: ${template.name}`
+      description: `Applied template: ${template.name}`,
     });
   };
 
@@ -142,7 +150,7 @@ export default function UserTemplateSystem() {
       name: '',
       role: 'regular_user',
       productTier: 'smartcrm',
-      permissions: []
+      permissions: [],
     });
   };
 
@@ -152,17 +160,29 @@ export default function UserTemplateSystem() {
       name: template.name,
       role: template.config.role,
       productTier: template.config.productTier,
-      permissions: template.config.permissions || []
+      permissions: template.config.permissions || [],
     });
   };
 
   const availablePermissions = [
-    'users.create', 'users.edit', 'users.delete',
-    'contacts.create', 'contacts.edit', 'contacts.delete',
-    'deals.create', 'deals.edit', 'deals.delete',
-    'tasks.create', 'tasks.edit', 'tasks.delete',
-    'analytics.view', 'billing.view', 'settings.edit',
-    'ai_tools.use', 'integrations.manage', 'reports.export'
+    'users.create',
+    'users.edit',
+    'users.delete',
+    'contacts.create',
+    'contacts.edit',
+    'contacts.delete',
+    'deals.create',
+    'deals.edit',
+    'deals.delete',
+    'tasks.create',
+    'tasks.edit',
+    'tasks.delete',
+    'analytics.view',
+    'billing.view',
+    'settings.edit',
+    'ai_tools.use',
+    'integrations.manage',
+    'reports.export',
   ];
 
   return (
@@ -195,14 +215,17 @@ export default function UserTemplateSystem() {
                       id="template-name"
                       placeholder="e.g., Sales Representative"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="template-role">Role</Label>
-                      <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+                      <Select
+                        value={formData.role}
+                        onValueChange={(value) => setFormData((prev) => ({ ...prev, role: value }))}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -216,7 +239,12 @@ export default function UserTemplateSystem() {
 
                     <div>
                       <Label htmlFor="template-tier">Product Tier</Label>
-                      <Select value={formData.productTier} onValueChange={(value) => setFormData(prev => ({ ...prev, productTier: value }))}>
+                      <Select
+                        value={formData.productTier}
+                        onValueChange={(value) =>
+                          setFormData((prev) => ({ ...prev, productTier: value }))
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -237,9 +265,7 @@ export default function UserTemplateSystem() {
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateTemplate}>
-                    Create Template
-                  </Button>
+                  <Button onClick={handleCreateTemplate}>Create Template</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -293,7 +319,9 @@ export default function UserTemplateSystem() {
                   <CardContent className="space-y-3">
                     <div className="flex gap-2">
                       <Badge variant="outline">{template.config.role.replace('_', ' ')}</Badge>
-                      <Badge variant="secondary">{template.config.productTier.replace('_', ' ')}</Badge>
+                      <Badge variant="secondary">
+                        {template.config.productTier.replace('_', ' ')}
+                      </Badge>
                     </div>
 
                     {template.config.permissions && template.config.permissions.length > 0 && (
@@ -330,9 +358,7 @@ export default function UserTemplateSystem() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit User Template</DialogTitle>
-            <DialogDescription>
-              Update template configuration
-            </DialogDescription>
+            <DialogDescription>Update template configuration</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -340,14 +366,17 @@ export default function UserTemplateSystem() {
               <Input
                 id="edit-template-name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-template-role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, role: value }))}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -361,7 +390,12 @@ export default function UserTemplateSystem() {
 
               <div>
                 <Label htmlFor="edit-template-tier">Product Tier</Label>
-                <Select value={formData.productTier} onValueChange={(value) => setFormData(prev => ({ ...prev, productTier: value }))}>
+                <Select
+                  value={formData.productTier}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, productTier: value }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -382,22 +416,34 @@ export default function UserTemplateSystem() {
             <Button variant="outline" onClick={() => setEditingTemplate(null)}>
               Cancel
             </Button>
-            <Button onClick={() => {
-              // Mock update
-              if (editingTemplate) {
-                setTemplates(prev => prev.map(t =>
-                  t.id === editingTemplate.id
-                    ? { ...t, name: formData.name, config: { role: formData.role, productTier: formData.productTier, permissions: formData.permissions } }
-                    : t
-                ));
-                setEditingTemplate(null);
-                resetForm();
-                toast({
-                  title: 'Success',
-                  description: 'Template updated successfully'
-                });
-              }
-            }}>
+            <Button
+              onClick={() => {
+                // Mock update
+                if (editingTemplate) {
+                  setTemplates((prev) =>
+                    prev.map((t) =>
+                      t.id === editingTemplate.id
+                        ? {
+                            ...t,
+                            name: formData.name,
+                            config: {
+                              role: formData.role,
+                              productTier: formData.productTier,
+                              permissions: formData.permissions,
+                            },
+                          }
+                        : t
+                    )
+                  );
+                  setEditingTemplate(null);
+                  resetForm();
+                  toast({
+                    title: 'Success',
+                    description: 'Template updated successfully',
+                  });
+                }
+              }}
+            >
               <Save className="h-4 w-4 mr-2" />
               Update Template
             </Button>

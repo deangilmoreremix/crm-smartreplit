@@ -9,7 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,9 +38,7 @@ const LoginScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      const result = isSignUp
-        ? await signUp(email, password)
-        : await signIn(email, password);
+      const result = isSignUp ? await signUp(email, password) : await signIn(email, password);
 
       if (result.error) {
         Alert.alert('Error', result.error);
@@ -105,17 +103,15 @@ const LoginScreen: React.FC = () => {
           </Text>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-              Email
-            </Text>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Email</Text>
             <TextInput
               style={[
                 styles.input,
                 {
                   borderColor: theme.colors.border,
                   color: theme.colors.text,
-                  backgroundColor: theme.colors.background
-                }
+                  backgroundColor: theme.colors.background,
+                },
               ]}
               value={email}
               onChangeText={setEmail}
@@ -128,9 +124,7 @@ const LoginScreen: React.FC = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-              Password
-            </Text>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Password</Text>
             <View style={styles.passwordContainer}>
               <TextInput
                 style={[
@@ -139,8 +133,8 @@ const LoginScreen: React.FC = () => {
                   {
                     borderColor: theme.colors.border,
                     color: theme.colors.text,
-                    backgroundColor: theme.colors.background
-                  }
+                    backgroundColor: theme.colors.background,
+                  },
                 ]}
                 value={password}
                 onChangeText={setPassword}
@@ -164,10 +158,7 @@ const LoginScreen: React.FC = () => {
           </View>
 
           {!isSignUp && (
-            <TouchableOpacity
-              style={styles.forgotPassword}
-              onPress={handleForgotPassword}
-            >
+            <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
               <Text style={[styles.forgotPasswordText, { color: config.branding.primaryColor }]}>
                 Forgot Password?
               </Text>
@@ -175,31 +166,20 @@ const LoginScreen: React.FC = () => {
           )}
 
           <TouchableOpacity
-            style={[
-              styles.submitButton,
-              { backgroundColor: config.branding.primaryColor }
-            ]}
+            style={[styles.submitButton, { backgroundColor: config.branding.primaryColor }]}
             onPress={handleSubmit}
             disabled={loading}
           >
             {loading ? (
               <LoadingSpinner size="small" color="#FFFFFF" />
             ) : (
-              <Text style={styles.submitButtonText}>
-                {isSignUp ? 'Create Account' : 'Sign In'}
-              </Text>
+              <Text style={styles.submitButtonText}>{isSignUp ? 'Create Account' : 'Sign In'}</Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.switchMode}
-            onPress={() => setIsSignUp(!isSignUp)}
-          >
+          <TouchableOpacity style={styles.switchMode} onPress={() => setIsSignUp(!isSignUp)}>
             <Text style={[styles.switchModeText, { color: theme.colors.textSecondary }]}>
-              {isSignUp
-                ? 'Already have an account? Sign In'
-                : "Don't have an account? Sign Up"
-              }
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             </Text>
           </TouchableOpacity>
         </View>

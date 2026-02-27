@@ -11,7 +11,7 @@ async function recordDashboardDemo() {
 
   try {
     const baseUrl = process.env.APP_URL || 'http://localhost:5000';
-    
+
     // Navigate to dashboard
     await recorder.navigate(`${baseUrl}/dashboard`);
     await recorder.wait(2000);
@@ -37,7 +37,7 @@ async function recordDashboardDemo() {
 
     // Stop recording
     await recorder.stopRecording();
-    
+
     console.log('✅ Dashboard demo recorded successfully!');
   } catch (error) {
     console.error('❌ Error recording dashboard demo:', error);

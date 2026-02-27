@@ -63,7 +63,11 @@ class DomainManager {
   /**
    * Get DNS records required for domain verification
    */
-  getRequiredDNSRecords(domain: string, verificationToken: string, method: 'txt' | 'cname' | 'http'): DNSRecord[] {
+  getRequiredDNSRecords(
+    domain: string,
+    verificationToken: string,
+    method: 'txt' | 'cname' | 'http'
+  ): DNSRecord[] {
     const records: DNSRecord[] = [];
 
     switch (method) {
@@ -72,7 +76,7 @@ class DomainManager {
           type: 'TXT',
           name: `_smartcrm-verification.${domain}`,
           value: verificationToken,
-          ttl: 300
+          ttl: 300,
         });
         break;
 
@@ -81,13 +85,13 @@ class DomainManager {
           type: 'CNAME',
           name: domain,
           value: this.platformDomain,
-          ttl: 300
+          ttl: 300,
         });
         records.push({
           type: 'TXT',
           name: `_smartcrm-verification.${domain}`,
           value: verificationToken,
-          ttl: 300
+          ttl: 300,
         });
         break;
 
@@ -97,7 +101,7 @@ class DomainManager {
           type: 'A',
           name: domain,
           value: process.env.PLATFORM_IP || '0.0.0.0',
-          ttl: 300
+          ttl: 300,
         });
         break;
     }
@@ -108,7 +112,11 @@ class DomainManager {
   /**
    * Verify domain ownership via DNS
    */
-  async verifyDomainDNS(domain: string, verificationToken: string, method: 'txt' | 'cname'): Promise<boolean> {
+  async verifyDomainDNS(
+    domain: string,
+    verificationToken: string,
+    method: 'txt' | 'cname'
+  ): Promise<boolean> {
     try {
       if (method === 'txt') {
         // Check for TXT record
@@ -118,7 +126,9 @@ class DomainManager {
       } else if (method === 'cname') {
         // Check for CNAME record
         const cnameRecords = await dns.resolveCname(domain);
-        return cnameRecords.some(record => record === this.platformDomain || record.endsWith(`.${this.platformDomain}`));
+        return cnameRecords.some(
+          (record) => record === this.platformDomain || record.endsWith(`.${this.platformDomain}`)
+        );
       }
       return false;
     } catch (error: any) {
@@ -133,36 +143,40 @@ class DomainManager {
   async verifyDomainHTTP(domain: string, verificationToken: string): Promise<boolean> {
     return new Promise((resolve) => {
       const url = `https://${domain}/.well-known/smartcrm-verification.txt`;
-      
-      https.get(url, { timeout: 5000 }, (res) => {
-        let data = '';
-        res.on('data', (chunk) => data += chunk);
-        res.on('end', () => {
-          resolve(data.trim() === verificationToken);
+
+      https
+        .get(url, { timeout: 5000 }, (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', () => {
+            resolve(data.trim() === verificationToken);
+          });
+        })
+        .on('error', () => {
+          resolve(false);
         });
-      }).on('error', () => {
-        resolve(false);
-      });
     });
   }
 
   /**
    * Initiate domain verification
    */
-  async initiateDomainVerification(config: Omit<DomainConfig, 'id' | 'status' | 'dnsVerified' | 'sslStatus'>): Promise<DomainConfig> {
+  async initiateDomainVerification(
+    config: Omit<DomainConfig, 'id' | 'status' | 'dnsVerified' | 'sslStatus'>
+  ): Promise<DomainConfig> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
 
     const verificationToken = this.generateVerificationToken(config.domain, config.tenantId);
-    
+
     const domainConfig: DomainConfig = {
       ...config,
       status: 'pending',
       dnsVerified: false,
       sslStatus: 'pending',
       verificationToken,
-      lastCheckedAt: new Date()
+      lastCheckedAt: new Date(),
     };
 
     // Save to database
@@ -177,7 +191,7 @@ class DomainManager {
         ssl_status: domainConfig.sslStatus,
         verification_token: domainConfig.verificationToken,
         verification_method: domainConfig.verificationMethod,
-        last_checked_at: domainConfig.lastCheckedAt
+        last_checked_at: domainConfig.lastCheckedAt,
       })
       .select()
       .single();
@@ -228,7 +242,7 @@ class DomainManager {
         dns_verified: verified,
         status: newStatus,
         last_checked_at: new Date().toISOString(),
-        error_message: verified ? null : 'DNS verification pending'
+        error_message: verified ? null : 'DNS verification pending',
       })
       .eq('id', domainId)
       .select()
@@ -260,15 +274,15 @@ class DomainManager {
         .from('domains')
         .update({
           ssl_status: 'provisioning',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', domainId);
 
       // In production, this would integrate with Let's Encrypt or Cloudflare
       // For now, we'll simulate SSL provisioning
-      
+
       // Simulate SSL provisioning delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Update to active with expiration date (90 days from now)
       const expiresAt = new Date();
@@ -279,10 +293,9 @@ class DomainManager {
         .update({
           ssl_status: 'active',
           ssl_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', domainId);
-
     } catch (error: any) {
       // Update status to failed
       await supabase
@@ -290,7 +303,7 @@ class DomainManager {
         .update({
           ssl_status: 'failed',
           error_message: `SSL provisioning failed: ${error.message}`,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', domainId);
 
@@ -308,7 +321,7 @@ class DomainManager {
       dnsResolved: false,
       sslValid: false,
       lastChecked: new Date(),
-      issues: []
+      issues: [],
     };
 
     try {
@@ -326,11 +339,14 @@ class DomainManager {
       // Check HTTPS accessibility
       const startTime = Date.now();
       await new Promise<void>((resolve, reject) => {
-        https.get(`https://${domain}`, { timeout: 5000 }, (res) => {
-          health.isAccessible = res.statusCode === 200 || res.statusCode === 301 || res.statusCode === 302;
-          health.responseTime = Date.now() - startTime;
-          resolve();
-        }).on('error', reject);
+        https
+          .get(`https://${domain}`, { timeout: 5000 }, (res) => {
+            health.isAccessible =
+              res.statusCode === 200 || res.statusCode === 301 || res.statusCode === 302;
+            health.responseTime = Date.now() - startTime;
+            resolve();
+          })
+          .on('error', reject);
       });
 
       if (!health.isAccessible) {
@@ -347,7 +363,9 @@ class DomainManager {
         health.sslValid = true;
         const expiresAt = new Date(cert.valid_to);
         const now = new Date();
-        health.sslExpiresIn = Math.floor((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        health.sslExpiresIn = Math.floor(
+          (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        );
 
         if (health.sslExpiresIn < 30) {
           health.issues.push(`SSL certificate expires in ${health.sslExpiresIn} days`);
@@ -371,7 +389,7 @@ class DomainManager {
         host: domain,
         port: 443,
         method: 'GET',
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
       };
 
       const req = https.request(options, (res) => {
@@ -415,7 +433,7 @@ class DomainManager {
 
           // Update domain status based on health
           const updates: any = {
-            last_checked_at: new Date().toISOString()
+            last_checked_at: new Date().toISOString(),
           };
 
           if (health.issues.length > 0) {
@@ -434,11 +452,7 @@ class DomainManager {
             await this.renewSSL(domainData.id);
           }
 
-          await supabase
-            .from('domains')
-            .update(updates)
-            .eq('id', domainData.id);
-
+          await supabase.from('domains').update(updates).eq('id', domainData.id);
         } catch (error: any) {
           console.error(`Health check failed for ${domainData.domain}:`, error.message);
         }
@@ -462,13 +476,13 @@ class DomainManager {
         .from('domains')
         .update({
           ssl_status: 'provisioning',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', domainId);
 
       // In production, integrate with Let's Encrypt or Cloudflare
       // For now, simulate renewal
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Update to active with new expiration
       const expiresAt = new Date();
@@ -479,17 +493,16 @@ class DomainManager {
         .update({
           ssl_status: 'active',
           ssl_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', domainId);
-
     } catch (error: any) {
       await supabase
         .from('domains')
         .update({
           ssl_status: 'failed',
           error_message: `SSL renewal failed: ${error.message}`,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', domainId);
 
@@ -505,10 +518,7 @@ class DomainManager {
       throw new Error('Supabase not configured');
     }
 
-    const { error } = await supabase
-      .from('domains')
-      .delete()
-      .eq('id', domainId);
+    const { error } = await supabase.from('domains').delete().eq('id', domainId);
 
     if (error) {
       throw new Error(`Failed to remove domain: ${error.message}`);
@@ -523,11 +533,7 @@ class DomainManager {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
-      .from('domains')
-      .select('*')
-      .eq('id', domainId)
-      .single();
+    const { data, error } = await supabase.from('domains').select('*').eq('id', domainId).single();
 
     if (error || !data) {
       throw new Error('Domain not found');
@@ -554,19 +560,22 @@ class DomainManager {
       throw new Error(`Failed to list domains: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToDomainConfig(d));
+    return (data || []).map((d) => this.mapDatabaseToDomainConfig(d));
   }
 
   /**
    * Update domain configuration
    */
-  async updateDomainConfig(domainId: string, updates: Partial<DomainConfig>): Promise<DomainConfig> {
+  async updateDomainConfig(
+    domainId: string,
+    updates: Partial<DomainConfig>
+  ): Promise<DomainConfig> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
 
     const dbUpdates: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (updates.status) dbUpdates.status = updates.status;
@@ -605,7 +614,7 @@ class DomainManager {
       verificationToken: data.verification_token,
       verificationMethod: data.verification_method,
       lastCheckedAt: data.last_checked_at ? new Date(data.last_checked_at) : undefined,
-      errorMessage: data.error_message
+      errorMessage: data.error_message,
     };
   }
 

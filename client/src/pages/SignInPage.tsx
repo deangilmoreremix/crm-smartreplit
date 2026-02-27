@@ -8,10 +8,10 @@ const SignInPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark } = useTheme();
-  
+
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +19,6 @@ const SignInPage: React.FC = () => {
   const [isDevMode, setIsDevMode] = useState(false);
 
   useEffect(() => {
-    console.log('🔴 SIGNIN PAGE LOADED');
     setIsDevMode(localStorage.getItem('smartcrm-dev-mode') === 'true');
   }, []);
 
@@ -31,7 +30,7 @@ const SignInPage: React.FC = () => {
     setError(null);
 
     const { data, error: authError } = await signInWithEmail(formData.email, formData.password);
-    
+
     if (authError) {
       setError(authError.message);
       setLoading(false);
@@ -43,7 +42,7 @@ const SignInPage: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -62,7 +61,9 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4 relative`}>
+    <div
+      className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4 relative`}
+    >
       <button
         onClick={toggleDevMode}
         style={{
@@ -78,9 +79,11 @@ const SignInPage: React.FC = () => {
           fontWeight: '500',
           backgroundColor: isDevMode ? 'rgba(168, 85, 247, 0.2)' : 'rgba(107, 114, 128, 0.2)',
           color: isDevMode ? '#a855f7' : '#6b7280',
-          border: isDevMode ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid rgba(107, 114, 128, 0.3)',
+          border: isDevMode
+            ? '1px solid rgba(168, 85, 247, 0.3)'
+            : '1px solid rgba(107, 114, 128, 0.3)',
           zIndex: 999999,
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
         title={isDevMode ? 'Dev mode enabled - click to disable' : 'Click to enable dev mode'}
       >
@@ -88,28 +91,32 @@ const SignInPage: React.FC = () => {
         <span>Dev</span>
         <Power size={12} />
       </button>
-      
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
             Smart<span className="text-green-400">CRM</span>
           </h1>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Sign in to your account
-          </p>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Sign in to your account</p>
         </div>
-        
-        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}>
+
+        <div
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}
+        >
           {error && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}
+            >
               <AlertCircle className="h-4 w-4 text-red-500" />
               <span className={`text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{error}</span>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Email
               </label>
               <input
@@ -118,7 +125,7 @@ const SignInPage: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-lg ${
-                  isDark 
+                  isDark
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -127,9 +134,11 @@ const SignInPage: React.FC = () => {
                 disabled={loading}
               />
             </div>
-            
+
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Password
               </label>
               <div className="relative">
@@ -139,7 +148,7 @@ const SignInPage: React.FC = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 pr-10 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -151,7 +160,9 @@ const SignInPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
-                    isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'
+                    isDark
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-700'
                   }`}
                   disabled={loading}
                 >
@@ -159,7 +170,7 @@ const SignInPage: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <label className="flex items-center">
                 <input
@@ -171,14 +182,11 @@ const SignInPage: React.FC = () => {
                   Remember me
                 </span>
               </label>
-              <Link
-                to="/auth/recovery"
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
+              <Link to="/auth/recovery" className="text-sm text-blue-600 hover:text-blue-500">
                 Forgot password?
               </Link>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -191,10 +199,7 @@ const SignInPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Don't have an account?{' '}
-              <Link
-                to="/signup"
-                className="text-blue-600 hover:text-blue-500"
-              >
+              <Link to="/signup" className="text-blue-600 hover:text-blue-500">
                 Sign Up
               </Link>
             </p>

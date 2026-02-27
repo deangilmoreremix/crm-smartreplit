@@ -1,4 +1,12 @@
-import { VoIPProvider, VoIPProviderRegistry, CallParticipant, CallOptions, Call, Recording, RecordingResult } from './VoIPProvider';
+import {
+  VoIPProvider,
+  VoIPProviderRegistry,
+  CallParticipant,
+  CallOptions,
+  Call,
+  Recording,
+  RecordingResult,
+} from './VoIPProvider';
 import { TwilioProvider } from './providers/TwilioProvider';
 import { DailyProvider } from './providers/DailyProvider';
 
@@ -51,15 +59,19 @@ export class VoIPService {
     description: string;
     website: string;
   }> {
-    return VoIPProviderRegistry.getAvailableProviders().map(name => {
-      const provider = VoIPProviderRegistry.getProvider(name);
-      return provider ? {
-        name: provider.name,
-        displayName: provider.displayName,
-        description: provider.description,
-        website: provider.website
-      } : null;
-    }).filter(Boolean) as any[];
+    return VoIPProviderRegistry.getAvailableProviders()
+      .map((name) => {
+        const provider = VoIPProviderRegistry.getProvider(name);
+        return provider
+          ? {
+              name: provider.name,
+              displayName: provider.displayName,
+              description: provider.description,
+              website: provider.website,
+            }
+          : null;
+      })
+      .filter(Boolean) as any[];
   }
 
   // Get provider configuration schema
@@ -75,23 +87,29 @@ export class VoIPService {
 
   // Get current provider info
   getCurrentProvider(): { name: string; displayName: string } | null {
-    return this.currentProvider ? {
-      name: this.currentProvider.name,
-      displayName: this.currentProvider.displayName
-    } : null;
+    return this.currentProvider
+      ? {
+          name: this.currentProvider.name,
+          displayName: this.currentProvider.displayName,
+        }
+      : null;
   }
 
   // Core VoIP functionality with fallback
   async startCall(participants: CallParticipant[], options: CallOptions = {}): Promise<Call> {
     if (!this.isEnabled()) {
-      throw new Error('VoIP is not configured or enabled. Please configure a VoIP provider in settings.');
+      throw new Error(
+        'VoIP is not configured or enabled. Please configure a VoIP provider in settings.'
+      );
     }
 
     try {
       return await this.currentProvider!.startCall(participants, options);
     } catch (error) {
       console.error('VoIP provider call failed:', error);
-      throw new Error(`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your VoIP provider configuration.`);
+      throw new Error(
+        `Call failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your VoIP provider configuration.`
+      );
     }
   }
 
@@ -200,7 +218,7 @@ export class VoIPService {
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Configuration test failed'
+        message: error instanceof Error ? error.message : 'Configuration test failed',
       };
     }
   }

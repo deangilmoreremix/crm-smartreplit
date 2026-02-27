@@ -1,17 +1,21 @@
 # Bolt Contacts App Setup for Module Federation
 
 ## Step 1: Install Federation Plugin
+
 In your Bolt contacts app, run:
+
 ```bash
 npm install @originjs/vite-plugin-federation --save-dev
 ```
 
 ## Step 2: Replace vite.config.js
+
 Replace your entire `vite.config.js` with:
+
 ```javascript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import federation from '@originjs/vite-plugin-federation'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import federation from '@originjs/vite-plugin-federation';
 
 export default defineConfig({
   plugins: [
@@ -23,17 +27,19 @@ export default defineConfig({
         './ContactsApp': './src/ContactsApp.tsx',
         './ContactModal': './src/ContactModal.tsx',
       },
-      shared: ['react', 'react-dom']
-    })
+      shared: ['react', 'react-dom'],
+    }),
   ],
   build: {
-    target: 'esnext'
-  }
-})
+    target: 'esnext',
+  },
+});
 ```
 
 ## Step 3: Create ContactsApp.tsx Wrapper
+
 Create `/src/ContactsApp.tsx` in your Bolt app:
+
 ```typescript
 // src/ContactsApp.tsx
 import React from 'react';
@@ -57,7 +63,7 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
 }) => {
   // Wrap your existing contacts component here
   // Pass the props to handle communication with parent app
-  
+
   return (
     <div className={`contacts-remote-wrapper ${theme}`}>
       {/* Your existing contacts component */}
@@ -70,6 +76,7 @@ export default ContactsApp;
 ```
 
 ## Step 4: Build and Deploy
+
 ```bash
 npm run build
 ```
@@ -77,7 +84,9 @@ npm run build
 Deploy your Bolt app to Vercel/Netlify and get the URL.
 
 ## Step 5: Use in Replit
+
 In your Replit app, go to `/contacts` and use the remote settings panel to:
+
 1. Enter your deployed Bolt app URL
 2. Check "Use remote contacts app"
 

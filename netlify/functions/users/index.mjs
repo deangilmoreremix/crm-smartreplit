@@ -18,7 +18,11 @@ var handler = async (event, context) => {
   try {
     if (pathParts.length === 1 && pathParts[0] === "users" && httpMethod === "GET") {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: "Supabase not configured" }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: "Supabase not configured" })
+        };
       }
       const { data: users, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
       if (error) throw error;
@@ -26,7 +30,11 @@ var handler = async (event, context) => {
     }
     if (pathParts.length === 2 && pathParts[0] === "users" && pathParts[1] === "invite" && httpMethod === "POST") {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: "Supabase not configured" }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: "Supabase not configured" })
+        };
       }
       const { email, role, firstName, lastName, permissions } = JSON.parse(body);
       const validRoles = ["super_admin", "wl_user", "regular_user"];
@@ -56,11 +64,19 @@ var handler = async (event, context) => {
       });
       if (error) throw error;
       console.log(`\u2705 User invitation sent: ${email} as ${role}`);
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, user: data.user, role }) };
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, user: data.user, role })
+      };
     }
     if (pathParts.length === 3 && pathParts[0] === "users" && pathParts[2] === "role" && httpMethod === "PATCH") {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: "Supabase not configured" }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: "Supabase not configured" })
+        };
       }
       const { userId } = { userId: pathParts[1] };
       const { role } = JSON.parse(body);
@@ -92,7 +108,11 @@ var handler = async (event, context) => {
     }
     if (pathParts.length === 3 && pathParts[0] === "users" && pathParts[2] === "status" && httpMethod === "PATCH") {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: "Supabase not configured" }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: "Supabase not configured" })
+        };
       }
       const { userId } = { userId: pathParts[1] };
       const { status } = JSON.parse(body);
@@ -102,7 +122,11 @@ var handler = async (event, context) => {
     }
     if (pathParts.length === 2 && pathParts[0] === "users" && httpMethod === "DELETE") {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: "Supabase not configured" }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: "Supabase not configured" })
+        };
       }
       const { userId } = { userId: pathParts[1] };
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);

@@ -28,7 +28,7 @@ import {
   Camera,
   MessageSquare,
   Search,
-  Image
+  Image,
 } from 'lucide-react';
 import { gpt5SocialResearchService } from '../../services/gpt5SocialResearchService';
 
@@ -45,24 +45,24 @@ const interestColors = {
   hot: 'bg-red-500',
   medium: 'bg-yellow-500',
   low: 'bg-blue-500',
-  cold: 'bg-gray-400'
+  cold: 'bg-gray-400',
 };
 
 const interestLabels = {
   hot: 'Hot Client',
   medium: 'Medium Interest',
   low: 'Low Interest',
-  cold: 'Non Interest'
+  cold: 'Non Interest',
 };
 
 const sourceColors: { [key: string]: string } = {
-  'LinkedIn': 'bg-blue-600',
-  'Facebook': 'bg-blue-500',
-  'Email': 'bg-green-500',
-  'Website': 'bg-purple-500',
-  'Referral': 'bg-orange-500',
-  'Typeform': 'bg-pink-500',
-  'Cold Call': 'bg-gray-600'
+  LinkedIn: 'bg-blue-600',
+  Facebook: 'bg-blue-500',
+  Email: 'bg-green-500',
+  Website: 'bg-purple-500',
+  Referral: 'bg-orange-500',
+  Typeform: 'bg-pink-500',
+  'Cold Call': 'bg-gray-600',
 };
 
 const getScoreColor = (score: number) => {
@@ -78,7 +78,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
   onSelect,
   onClick,
   onAnalyze,
-  isAnalyzing = false
+  isAnalyzing = false,
 }) => {
   const [showAIInsights, setShowAIInsights] = useState(false);
   const [localAnalyzing, setLocalAnalyzing] = useState(false);
@@ -90,7 +90,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
   const [scoreExplanation, setScoreExplanation] = useState<string | null>(null);
   const [isFetchingExplanation, setIsFetchingExplanation] = useState(false);
   const [explanationError, setExplanationError] = useState<string | null>(null);
-  
+
   // Connect to AI services - using stubs for now
   const { updateContact } = useContactStore();
 
@@ -104,23 +104,20 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
   const handleAnalyzeClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isAnalyzing || localAnalyzing) return;
-    
+
     setLocalAnalyzing(true);
-    console.log('Starting AI analysis for contact:', contact.id);
     try {
       // Simulate AI analysis for now
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       const newScore = Math.floor(Math.random() * 40) + 60;
-      
+
       // Update the contact with AI score
-      await updateContact(contact.id, { 
+      await updateContact(contact.id, {
         aiScore: newScore,
-        notes: contact.notes ? 
-          `${contact.notes}\n\nAI Analysis: Analysis completed with score ${newScore}` :
-          `AI Analysis: Analysis completed with score ${newScore}`
+        notes: contact.notes
+          ? `${contact.notes}\n\nAI Analysis: Analysis completed with score ${newScore}`
+          : `AI Analysis: Analysis completed with score ${newScore}`,
       });
-      
-      console.log('AI analysis completed');
     } catch (error) {
       console.error('AI analysis failed:', error);
     } finally {
@@ -137,20 +134,23 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
 
     try {
       // Simulate explanation fetching
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       const score = contact.aiScore;
       let explanation = '';
-      
+
       if (score >= 80) {
-        explanation = 'High conversion potential based on engagement patterns, company size, and expressed interest level.';
+        explanation =
+          'High conversion potential based on engagement patterns, company size, and expressed interest level.';
       } else if (score >= 60) {
-        explanation = 'Good engagement potential with positive interaction history and suitable company profile.';
+        explanation =
+          'Good engagement potential with positive interaction history and suitable company profile.';
       } else if (score >= 40) {
-        explanation = 'Moderate interest level with some engagement indicators but requires nurturing.';
+        explanation =
+          'Moderate interest level with some engagement indicators but requires nurturing.';
       } else {
         explanation = 'Lower priority contact with limited engagement or qualification indicators.';
       }
-      
+
       setScoreExplanation(explanation);
     } catch (err) {
       console.error('Failed to fetch score explanation:', err);
@@ -166,20 +166,18 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
     if (isMultimodalEnriching) return;
 
     setIsMultimodalEnriching(true);
-    console.log('Starting multimodal enrichment for contact:', contact.id);
     try {
       if (contact.avatarSrc) {
         // Simulate multimodal enrichment
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const enrichedData = {
           inferredPersonalityTraits: 'Professional, analytical, detail-oriented',
           communicationStyle: 'Direct and concise',
           professionalDemeanor: 'Confident and approachable',
-          imageAnalysisNotes: 'Professional headshot, formal attire, confident expression'
+          imageAnalysisNotes: 'Professional headshot, formal attire, confident expression',
         };
-        
+
         await updateContact(contact.id, enrichedData);
-        console.log('Multimodal enrichment completed:', enrichedData);
       } else {
         console.warn('No avatar source found for multimodal enrichment.');
       }
@@ -196,14 +194,13 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
     try {
       const contactForResearch = {
         ...contact,
-        lastContact: contact.lastContact ? new Date(contact.lastContact) : new Date()
+        lastContact: contact.lastContact ? new Date(contact.lastContact) : new Date(),
       };
       const research = await gpt5SocialResearchService.researchContactSocialMedia(
         contactForResearch,
         ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'],
         'comprehensive'
       );
-      console.log('Social research completed:', research);
     } catch (error) {
       console.error('Social research failed:', error);
     } finally {
@@ -214,7 +211,11 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
   const analyzing = isAnalyzing || localAnalyzing;
 
   // Check if multimodal data is present
-  const hasMultimodalData = contact.inferredPersonalityTraits || contact.communicationStyle || contact.professionalDemeanor || contact.imageAnalysisNotes;
+  const hasMultimodalData =
+    contact.inferredPersonalityTraits ||
+    contact.communicationStyle ||
+    contact.professionalDemeanor ||
+    contact.imageAnalysisNotes;
 
   return (
     <div
@@ -238,12 +239,12 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
       <div className="absolute top-4 right-4 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
         {/* AI Analysis Button - Prominently Featured */}
         {onAnalyze && (
-          <button 
+          <button
             onClick={handleAnalyzeClick}
             disabled={analyzing}
             className={`p-2 rounded-lg transition-all duration-200 relative ${
-              contact.aiScore 
-                ? 'bg-purple-100 text-purple-600 hover:bg-purple-200' 
+              contact.aiScore
+                ? 'bg-purple-100 text-purple-600 hover:bg-purple-200'
                 : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 shadow-lg'
             }`}
             title={contact.aiScore ? 'Re-analyze with AI' : 'Analyze with AI'}
@@ -258,7 +259,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
             )}
           </button>
         )}
-        
+
         {/* Social Research Button */}
         <button
           onClick={handleSocialResearch}
@@ -272,7 +273,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
             <Search className="w-4 h-4" />
           )}
         </button>
-        
+
         {/* Multimodal Enrichment Button */}
         {contact.avatarSrc && (
           <button
@@ -308,7 +309,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
           <Image className="w-4 h-4" />
         </button>
 
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             // Handle edit action
@@ -317,7 +318,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
         >
           <Edit className="w-3 h-3" />
         </button>
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             // Handle more actions
@@ -339,7 +340,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
                 size="lg"
                 status={contact.status}
               />
-              
+
               {/* Analysis Loading Indicator */}
               {analyzing && (
                 <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center">
@@ -351,7 +352,9 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
             {hasMultimodalData && (
               <div className="mt-2 flex items-center space-x-1">
                 <MessageSquare className="w-3 h-3 text-indigo-500" />
-                <span className="text-xs text-indigo-700 font-medium">Multimodal insights available</span>
+                <span className="text-xs text-indigo-700 font-medium">
+                  Multimodal insights available
+                </span>
               </div>
             )}
             <h3 className="text-gray-900 font-semibold text-lg mb-1 group-hover:text-blue-600 transition-colors">
@@ -360,11 +363,11 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
             <p className="text-gray-600 text-sm">{contact.position || contact.title}</p>
             <p className="text-gray-500 text-xs">{contact.company}</p>
           </div>
-          
+
           {/* AI Score Display */}
           <div className="flex flex-col items-center space-y-2">
             {contact.aiScore ? (
-              <div 
+              <div
                 className={`h-12 w-12 rounded-full ${getScoreColor(contact.aiScore)} text-white flex items-center justify-center font-bold text-lg shadow-lg ring-2 ring-white relative`}
                 onMouseEnter={() => {
                   setShowScoreExplanation(true);
@@ -424,7 +427,9 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
 
         {/* Interest Level */}
         <div className="flex items-center justify-center space-x-2 mb-4">
-          <div className={`w-2 h-2 rounded-full ${interestColors[contact.interestLevel as keyof typeof interestColors]} animate-pulse`} />
+          <div
+            className={`w-2 h-2 rounded-full ${interestColors[contact.interestLevel as keyof typeof interestColors]} animate-pulse`}
+          />
           <span className="text-xs text-gray-600 font-medium">
             {interestLabels[contact.interestLevel as keyof typeof interestLabels]}
           </span>
@@ -451,18 +456,18 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
         {/* Interest Level Dots */}
         <div className="flex items-center justify-center space-x-1 mb-4">
           {Array.from({ length: 5 }, (_, i) => {
-            const isActive = 
+            const isActive =
               (contact.interestLevel === 'hot' && i < 5) ||
               (contact.interestLevel === 'medium' && i < 3) ||
               (contact.interestLevel === 'low' && i < 2) ||
               (contact.interestLevel === 'cold' && i < 1);
-            
+
             return (
               <div
                 key={i}
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  isActive 
-                    ? `${interestColors[contact.interestLevel as keyof typeof interestColors]} shadow-lg` 
+                  isActive
+                    ? `${interestColors[contact.interestLevel as keyof typeof interestColors]} shadow-lg`
                     : 'bg-gray-300 hover:bg-gray-400'
                 }`}
               />
@@ -490,8 +495,10 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
             <p className="text-xs text-gray-900">
               {(() => {
                 const score = contact.aiScore || 0;
-                if (score >= 80) return 'High conversion potential - prioritize for immediate follow-up.';
-                if (score >= 60) return 'Good engagement potential - schedule follow-up within 48 hours.';
+                if (score >= 80)
+                  return 'High conversion potential - prioritize for immediate follow-up.';
+                if (score >= 60)
+                  return 'Good engagement potential - schedule follow-up within 48 hours.';
                 if (score >= 40) return 'Moderate interest - nurture with valuable content.';
                 return 'Low engagement - consider re-qualification.';
               })()}
@@ -505,7 +512,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
 
         {/* Traditional Action Buttons */}
         <div className="grid grid-cols-3 gap-1.5">
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation();
               window.open(`mailto:${contact.email}`, '_blank');
@@ -514,7 +521,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
           >
             <Mail className="w-3 h-3 mr-1" /> Email
           </button>
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation();
               if (contact.phone) window.open(`tel:${contact.phone}`, '_blank');
@@ -523,7 +530,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
           >
             <Phone className="w-3 h-3 mr-1" /> Call
           </button>
-          <button 
+          <button
             onClick={(e) => {
               e.stopPropagation();
               onClick();
@@ -537,7 +544,9 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
         {/* Click indicator */}
         <div className="mt-3 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <p className="text-xs text-blue-500 font-medium">
-            {contact.aiScore ? 'Click to view details' : 'Click AI button to score • Click card for details'}
+            {contact.aiScore
+              ? 'Click to view details'
+              : 'Click AI button to score • Click card for details'}
           </p>
         </div>
       </div>

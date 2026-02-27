@@ -6,8 +6,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 /**
@@ -16,7 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
  */
 export async function syncSupabaseAuthMetadata() {
   console.log('🔄 Syncing Supabase Auth metadata with profile roles...');
-  
+
   try {
     // Get all profiles with their roles
     const { data: profiles, error: profilesError } = await supabase
@@ -41,19 +41,16 @@ export async function syncSupabaseAuthMetadata() {
     for (const profile of profiles) {
       try {
         // Update the auth user's metadata to match profile role
-        const { error: updateError } = await supabase.auth.admin.updateUserById(
-          profile.id,
-          {
-            user_metadata: {
-              first_name: profile.first_name,
-              last_name: profile.last_name,
-              role: profile.role,
-              app_context: 'smartcrm',
-              email_template_set: 'smartcrm',
-              synced_at: new Date().toISOString()
-            }
-          }
-        );
+        const { error: updateError } = await supabase.auth.admin.updateUserById(profile.id, {
+          user_metadata: {
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            role: profile.role,
+            app_context: 'smartcrm',
+            email_template_set: 'smartcrm',
+            synced_at: new Date().toISOString(),
+          },
+        });
 
         if (updateError) {
           console.error(`❌ Failed to sync ${profile.username}: ${updateError.message}`);
@@ -71,7 +68,6 @@ export async function syncSupabaseAuthMetadata() {
     console.log(`\n🎉 Metadata Sync Complete!`);
     console.log(`   ✅ Successful: ${successCount}`);
     console.log(`   ❌ Failed: ${errorCount}`);
-
   } catch (error) {
     console.error('❌ Metadata sync failed:', error);
     throw error;

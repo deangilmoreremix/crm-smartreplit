@@ -7,7 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { useTheme } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
@@ -27,7 +33,7 @@ import {
   Phone,
   MessageSquare,
   Brain,
-  Target
+  Target,
 } from 'lucide-react';
 
 interface Appointment {
@@ -80,8 +86,8 @@ export default function AppointmentsDashboard() {
       gpt5Insights: {
         optimalTime: '10:00 AM',
         preparationNotes: ['Review product specs', 'Prepare demo script'],
-        followUpActions: ['Send follow-up email', 'Schedule technical review']
-      }
+        followUpActions: ['Send follow-up email', 'Schedule technical review'],
+      },
     },
     {
       id: '2',
@@ -93,8 +99,8 @@ export default function AppointmentsDashboard() {
       type: 'meeting',
       status: 'scheduled',
       priority: 'medium',
-      notes: 'Daily team sync'
-    }
+      notes: 'Daily team sync',
+    },
   ];
 
   const mockStats: MeetingStats = {
@@ -102,20 +108,28 @@ export default function AppointmentsDashboard() {
     completedToday: 3,
     upcomingToday: 5,
     averageDuration: 45,
-    successRate: 0.85
+    successRate: 0.85,
   };
 
   // Fetch appointments data
-  const { data: appointments = mockAppointments, isLoading: appointmentsLoading, error: appointmentsError } = useQuery<Appointment[]>({
+  const {
+    data: appointments = mockAppointments,
+    isLoading: appointmentsLoading,
+    error: appointmentsError,
+  } = useQuery<Appointment[]>({
     queryKey: ['/api/appointments'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
-  const { data: stats = mockStats, isLoading: statsLoading, error: statsError } = useQuery<MeetingStats>({
+  const {
+    data: stats = mockStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery<MeetingStats>({
     queryKey: ['/api/appointments/stats'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
   // Use mock data if API fails
@@ -136,7 +150,7 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
       const response = await gpt5Communication.generateContent({
         type: 'meeting-summary',
         context: prompt,
-        goal: 'meeting-preparation'
+        goal: 'meeting-preparation',
       });
 
       setGpt5Suggestions(response.suggestions);
@@ -149,19 +163,27 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return <Video className="h-4 w-4" />;
-      case 'call': return <Phone className="h-4 w-4" />;
-      case 'in-person': return <MapPin className="h-4 w-4" />;
-      default: return <Users className="h-4 w-4" />;
+      case 'video':
+        return <Video className="h-4 w-4" />;
+      case 'call':
+        return <Phone className="h-4 w-4" />;
+      case 'in-person':
+        return <MapPin className="h-4 w-4" />;
+      default:
+        return <Users className="h-4 w-4" />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'high':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -182,7 +204,7 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
     >
       <Brain className="h-4 w-4 mr-2" />
       {isGenerating ? 'Generating...' : 'AI Insights'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = (
@@ -200,7 +222,9 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
         <div className="text-sm text-gray-600 dark:text-gray-400">Upcoming Today</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(displayStats.successRate * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(displayStats.successRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Success Rate</div>
       </div>
     </div>
@@ -245,7 +269,8 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
                         <div>
                           <h4 className="font-medium">{appointment.title}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {appointment.time} • {appointment.duration}min • {appointment.attendees.length} attendees
+                            {appointment.time} • {appointment.duration}min •{' '}
+                            {appointment.attendees.length} attendees
                           </p>
                         </div>
                       </div>
@@ -253,9 +278,7 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
                         <Badge className={getPriorityColor(appointment.priority)}>
                           {appointment.priority}
                         </Badge>
-                        <Badge variant="outline">
-                          {appointment.status}
-                        </Badge>
+                        <Badge variant="outline">{appointment.status}</Badge>
                       </div>
                     </div>
                   ))}
@@ -295,7 +318,9 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 <Calendar className="h-16 w-16 mx-auto mb-4" />
                 <p>Interactive calendar view coming soon...</p>
-                <p className="text-sm mt-2">Full calendar integration with drag-and-drop scheduling</p>
+                <p className="text-sm mt-2">
+                  Full calendar integration with drag-and-drop scheduling
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -364,7 +389,9 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 <TrendingUp className="h-16 w-16 mx-auto mb-4" />
                 <p>Advanced analytics dashboard coming soon...</p>
-                <p className="text-sm mt-2">Performance metrics, trends, and optimization insights</p>
+                <p className="text-sm mt-2">
+                  Performance metrics, trends, and optimization insights
+                </p>
               </div>
             </CardContent>
           </Card>

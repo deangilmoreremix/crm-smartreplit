@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Globe, RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
 
@@ -12,10 +11,10 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
   remoteUrls = [
     'https://taupe-sprinkles-83c9ee.netlify.app',
     'https://contacts-app.vercel.app',
-    'https://bolt.new'
+    'https://bolt.new',
   ],
   fallbackComponent: FallbackComponent,
-  onContactSync
+  onContactSync,
 }) => {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -28,8 +27,8 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
 
   const tryNextUrl = () => {
     if (currentUrlIndex < remoteUrls.length - 1) {
-      setCurrentUrlIndex(prev => prev + 1);
-      setRetryCount(prev => prev + 1);
+      setCurrentUrlIndex((prev) => prev + 1);
+      setRetryCount((prev) => prev + 1);
       setLoading(true);
       setError(null);
     } else {
@@ -39,19 +38,21 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
   };
 
   const handleIframeLoad = () => {
-    console.log(`Successfully loaded: ${currentUrl}`);
     setLoading(false);
     setError(null);
-    
+
     // Try to establish communication with the iframe
     try {
       const iframe = iframeRef.current;
       if (iframe?.contentWindow) {
         // Send initialization message
-        iframe.contentWindow.postMessage({
-          type: 'SMARTCRM_INIT',
-          data: { source: 'smartcrm', allowSync: true }
-        }, '*');
+        iframe.contentWindow.postMessage(
+          {
+            type: 'SMARTCRM_INIT',
+            data: { source: 'smartcrm', allowSync: true },
+          },
+          '*'
+        );
       }
     } catch (e) {
       console.warn('Cannot communicate with iframe due to CORS policy');
@@ -73,7 +74,7 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
     setError(null);
     setRetryCount(0);
     setCurrentUrlIndex(0);
-    
+
     if (iframeRef.current) {
       iframeRef.current.src = iframeRef.current.src;
     }
@@ -84,9 +85,8 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
     const handleMessage = (event: MessageEvent) => {
       try {
         const { type, data } = event.data;
-        
+
         if (type === 'CONTACT_SYNC_REQUEST') {
-          console.log('Remote app requested contact sync');
           onContactSync?.();
         }
       } catch (e) {
@@ -103,7 +103,6 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
     if (loading && !error) {
       const timer = setTimeout(() => {
         if (loading && retryCount < maxRetries) {
-          console.log(`Timeout loading ${currentUrl}, trying next...`);
           tryNextUrl();
         }
       }, 8000); // 8 second timeout per URL
@@ -157,7 +156,7 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
               </>
             )}
           </div>
-          
+
           <div className="flex space-x-2">
             <button
               onClick={handleRefresh}
@@ -167,7 +166,7 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
               <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </button>
-            
+
             <a
               href={currentUrl}
               target="_blank"
@@ -179,12 +178,8 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
             </a>
           </div>
         </div>
-        
-        {loading && (
-          <div className="mt-2 text-xs text-gray-500">
-            Trying: {currentUrl}
-          </div>
-        )}
+
+        {loading && <div className="mt-2 text-xs text-gray-500">Trying: {currentUrl}</div>}
       </div>
 
       {/* Iframe Container */}
@@ -205,7 +200,7 @@ const SmartIframeContacts: React.FC<SmartIframeContactsProps> = ({
             </div>
           </div>
         )}
-        
+
         <iframe
           ref={iframeRef}
           src={currentUrl}

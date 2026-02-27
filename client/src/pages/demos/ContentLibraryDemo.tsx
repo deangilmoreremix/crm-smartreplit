@@ -8,7 +8,13 @@ export default function ContentLibraryDemo() {
     { id: 3, name: 'Marketing Banner Set', type: 'image', size: '8.7 MB', downloads: 23 },
     { id: 4, name: 'Sales Presentation Template', type: 'document', size: '4.1 MB', downloads: 67 },
     { id: 5, name: 'Customer Success Stories', type: 'document', size: '1.8 MB', downloads: 34 },
-    { id: 6, name: 'Product Screenshots Collection', type: 'image', size: '12.3 MB', downloads: 56 },
+    {
+      id: 6,
+      name: 'Product Screenshots Collection',
+      type: 'image',
+      size: '12.3 MB',
+      downloads: 56,
+    },
   ];
 
   return (
@@ -16,7 +22,7 @@ export default function ContentLibraryDemo() {
       <DemoBanner feature="Content Library" />
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Content Library Demo</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <FileText className="w-8 h-8 text-blue-600 mb-2" />
@@ -48,8 +54,11 @@ export default function ContentLibraryDemo() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {content.map(item => (
-              <div key={item.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+            {content.map((item) => (
+              <div
+                key={item.id}
+                className="border rounded-lg p-4 hover:shadow-lg transition-shadow"
+              >
                 <div className="flex items-center space-x-3 mb-3">
                   {item.type === 'document' && <FileText className="w-8 h-8 text-blue-600" />}
                   {item.type === 'video' && <Video className="w-8 h-8 text-purple-600" />}

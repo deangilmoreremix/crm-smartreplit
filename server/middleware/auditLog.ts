@@ -12,7 +12,9 @@ export function auditLog(action: string) {
     const userAgent = req.get('User-Agent') || 'unknown';
 
     // Log the action
-    console.log(`🔍 AUDIT [${timestamp}] ${action}: ${userEmail} (${userId}) from ${ip} - ${method} ${path}`);
+    console.log(
+      `🔍 AUDIT [${timestamp}] ${action}: ${userEmail} (${userId}) from ${ip} - ${method} ${path}`
+    );
 
     // Store in response for potential database logging later
     (res as any).auditData = {
@@ -26,7 +28,7 @@ export function auditLog(action: string) {
       userAgent,
       params: req.params,
       query: req.query,
-      body: req.method !== 'GET' ? req.body : undefined
+      body: req.method !== 'GET' ? req.body : undefined,
     };
 
     next();

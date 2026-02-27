@@ -5,6 +5,7 @@ This document provides documentation for the email/password authentication syste
 ## Overview
 
 Simple and focused authentication using Supabase with email and password only:
+
 - Sign up with email/password
 - Login with email/password
 - Password recovery
@@ -75,7 +76,9 @@ await signOut();
 ```typescript
 import { getCurrentUser } from '../services/authService';
 
-const { data: { user } } = await getCurrentUser();
+const {
+  data: { user },
+} = await getCurrentUser();
 console.log(user);
 ```
 
@@ -87,10 +90,7 @@ import { AuthForm } from '../components/ui/AuthForm';
 function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <AuthForm 
-        onSuccess={(user) => navigate('/dashboard')}
-        redirectAfterLogin="/dashboard"
-      />
+      <AuthForm onSuccess={(user) => navigate('/dashboard')} redirectAfterLogin="/dashboard" />
     </div>
   );
 }
@@ -111,4 +111,4 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 ✅ Update Email/Password  
 ✅ Get Current User  
 ✅ Session Management  
-✅ Auth State Listeners  
+✅ Auth State Listeners

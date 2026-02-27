@@ -21,7 +21,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     if (!tenantId || !domain) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'domain']
+        required: ['tenantId', 'domain'],
       });
     }
 
@@ -30,7 +30,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     if (!domainRegex.test(domain)) {
       return res.status(400).json({
         error: 'Invalid domain format',
-        domain
+        domain,
       });
     }
 
@@ -39,7 +39,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     if (!isAvailable) {
       return res.status(409).json({
         error: 'Domain already registered',
-        domain
+        domain,
       });
     }
 
@@ -49,7 +49,7 @@ router.post('/verify', async (req: Request, res: Response) => {
       domain,
       subdomain,
       verificationToken: '', // Will be generated
-      verificationMethod: verificationMethod || 'txt'
+      verificationMethod: verificationMethod || 'txt',
     });
 
     // Get required DNS records
@@ -65,19 +65,18 @@ router.post('/verify', async (req: Request, res: Response) => {
       instructions: {
         message: 'Add the following DNS records to verify domain ownership',
         verificationMethod: domainConfig.verificationMethod,
-        estimatedTime: '5-15 minutes for DNS propagation'
-      }
+        estimatedTime: '5-15 minutes for DNS propagation',
+      },
     });
-
   } catch (error: any) {
     await errorLogger.logError('Domain verification initiation failed', error, {
       endpoint: '/api/domains/verify',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to initiate domain verification',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -98,18 +97,17 @@ router.get('/:domainId', async (req: Request, res: Response) => {
         domainConfig.domain,
         domainConfig.verificationToken,
         domainConfig.verificationMethod
-      )
+      ),
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get domain config', error, {
       endpoint: `/api/domains/${req.params.domainId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(404).json({
       error: 'Domain not found',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -128,20 +126,19 @@ router.post('/:domainId/check', async (req: Request, res: Response) => {
       domainConfig,
       verified: domainConfig.dnsVerified,
       sslActive: domainConfig.sslStatus === 'active',
-      message: domainConfig.dnsVerified 
-        ? 'Domain verified successfully' 
-        : 'Domain verification pending'
+      message: domainConfig.dnsVerified
+        ? 'Domain verified successfully'
+        : 'Domain verification pending',
     });
-
   } catch (error: any) {
     await errorLogger.logError('Domain verification check failed', error, {
       endpoint: `/api/domains/${req.params.domainId}/check`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to check domain verification',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -159,20 +156,20 @@ router.get('/health/:domain', async (req: Request, res: Response) => {
     res.json({
       health,
       status: health.issues.length === 0 ? 'healthy' : 'issues_detected',
-      recommendations: health.issues.length > 0 
-        ? ['Review DNS configuration', 'Check SSL certificate', 'Verify domain accessibility']
-        : ['Domain is healthy']
+      recommendations:
+        health.issues.length > 0
+          ? ['Review DNS configuration', 'Check SSL certificate', 'Verify domain accessibility']
+          : ['Domain is healthy'],
     });
-
   } catch (error: any) {
     await errorLogger.logError('Domain health check failed', error, {
       endpoint: `/api/domains/health/${req.params.domain}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to check domain health',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -192,18 +189,17 @@ router.post('/:domainId/ssl/renew', async (req: Request, res: Response) => {
     res.json({
       message: 'SSL certificate renewed successfully',
       domainConfig,
-      expiresAt: domainConfig.sslExpiresAt
+      expiresAt: domainConfig.sslExpiresAt,
     });
-
   } catch (error: any) {
     await errorLogger.logError('SSL renewal failed', error, {
       endpoint: `/api/domains/${req.params.domainId}/ssl/renew`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to renew SSL certificate',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -221,18 +217,17 @@ router.put('/:domainId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Domain configuration updated',
-      domainConfig
+      domainConfig,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Domain update failed', error, {
       endpoint: `/api/domains/${req.params.domainId}`,
-      method: 'PUT'
+      method: 'PUT',
     });
 
     res.status(500).json({
       error: 'Failed to update domain configuration',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -249,18 +244,17 @@ router.delete('/:domainId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Domain removed successfully',
-      domainId
+      domainId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Domain removal failed', error, {
       endpoint: `/api/domains/${req.params.domainId}`,
-      method: 'DELETE'
+      method: 'DELETE',
     });
 
     res.status(500).json({
       error: 'Failed to remove domain',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -277,18 +271,17 @@ router.get('/tenant/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       domains,
-      count: domains.length
+      count: domains.length,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to list tenant domains', error, {
       endpoint: `/api/domains/tenant/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to list domains',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -304,18 +297,17 @@ router.post('/monitor', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Domain health monitoring completed',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
     await errorLogger.logError('Domain monitoring failed', error, {
       endpoint: '/api/domains/monitor',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to monitor domain health',
-      message: error.message
+      message: error.message,
     });
   }
 });

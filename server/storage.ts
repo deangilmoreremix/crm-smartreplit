@@ -1,6 +1,41 @@
-import { profiles, type Profile, type InsertProfile, partners, type Partner, type InsertPartner, partnerTiers, type PartnerTier, partnerMetrics, partnerCustomers, commissions, type Commission, payouts, type Payout, featurePackages, type FeaturePackage, contacts, tenantConfigs, type TenantConfig, type InsertTenantConfig, userWLSettings, type UserWLSettings, type InsertUserWLSettings, partnerWLConfigs, type PartnerWLConfig, type InsertPartnerWLConfig, whiteLabelPackages, type WhiteLabelPackage, features, type Feature, type InsertFeature, userFeatures, type UserFeature, type InsertUserFeature } from "../shared/schema.js";
-import { eq, desc, sql, and } from "drizzle-orm";
-import { db } from "./db";
+import {
+  profiles,
+  type Profile,
+  type InsertProfile,
+  partners,
+  type Partner,
+  type InsertPartner,
+  partnerTiers,
+  type PartnerTier,
+  partnerMetrics,
+  partnerCustomers,
+  commissions,
+  type Commission,
+  payouts,
+  type Payout,
+  featurePackages,
+  type FeaturePackage,
+  contacts,
+  tenantConfigs,
+  type TenantConfig,
+  type InsertTenantConfig,
+  userWLSettings,
+  type UserWLSettings,
+  type InsertUserWLSettings,
+  partnerWLConfigs,
+  type PartnerWLConfig,
+  type InsertPartnerWLConfig,
+  whiteLabelPackages,
+  type WhiteLabelPackage,
+  features,
+  type Feature,
+  type InsertFeature,
+  userFeatures,
+  type UserFeature,
+  type InsertUserFeature,
+} from '../shared/schema.js';
+import { eq, desc, sql, and } from 'drizzle-orm';
+import { db } from './db';
 
 // modify the interface with any CRUD methods
 // you might need
@@ -11,7 +46,7 @@ export interface IStorage {
   createProfile(profile: InsertProfile & { id: string }): Promise<Profile>;
   getAllProfiles(): Promise<Profile[]>;
   updateProfile(id: string, updates: Partial<Profile>): Promise<Profile>;
-  
+
   // Backward compatibility - alias Profile methods as User methods
   getUser(id: string): Promise<Profile | undefined>;
   getUserByUsername(username: string): Promise<Profile | undefined>;
@@ -33,13 +68,22 @@ export interface IStorage {
   // White Label Storage Methods
   getTenantConfig(tenantId: string): Promise<TenantConfig | undefined>;
   createTenantConfig(config: InsertTenantConfig): Promise<TenantConfig>;
-  updateTenantConfig(tenantId: string, updates: Partial<TenantConfig>): Promise<TenantConfig | undefined>;
+  updateTenantConfig(
+    tenantId: string,
+    updates: Partial<TenantConfig>
+  ): Promise<TenantConfig | undefined>;
   getUserWLSettings(userId: string): Promise<UserWLSettings | undefined>;
   createUserWLSettings(settings: InsertUserWLSettings): Promise<UserWLSettings>;
-  updateUserWLSettings(userId: string, updates: Partial<UserWLSettings>): Promise<UserWLSettings | undefined>;
+  updateUserWLSettings(
+    userId: string,
+    updates: Partial<UserWLSettings>
+  ): Promise<UserWLSettings | undefined>;
   getPartnerWLConfig(partnerId: string): Promise<PartnerWLConfig | undefined>;
   createPartnerWLConfig(config: InsertPartnerWLConfig): Promise<PartnerWLConfig>;
-  updatePartnerWLConfig(partnerId: string, updates: Partial<PartnerWLConfig>): Promise<PartnerWLConfig | undefined>;
+  updatePartnerWLConfig(
+    partnerId: string,
+    updates: Partial<PartnerWLConfig>
+  ): Promise<PartnerWLConfig | undefined>;
   getWhiteLabelPackages(): Promise<WhiteLabelPackage[]>;
 
   // Feature Management Methods
@@ -50,9 +94,19 @@ export interface IStorage {
   updateFeature(id: number, updates: Partial<Feature>): Promise<Feature | undefined>;
   deleteFeature(id: number): Promise<void>;
   getUserFeatures(userId: string): Promise<UserFeature[]>;
-  setUserFeature(userId: string, featureId: number, enabled: boolean, grantedBy?: string): Promise<UserFeature>;
+  setUserFeature(
+    userId: string,
+    featureId: number,
+    enabled: boolean,
+    grantedBy?: string
+  ): Promise<UserFeature>;
   removeUserFeature(userId: string, featureId: number): Promise<void>;
-  bulkSetUserFeatures(userId: string, featureIds: number[], enabled: boolean, grantedBy?: string): Promise<UserFeature[]>;
+  bulkSetUserFeatures(
+    userId: string,
+    featureIds: number[],
+    enabled: boolean,
+    grantedBy?: string
+  ): Promise<UserFeature[]>;
 }
 
 // Database Storage Implementation using Supabase
@@ -74,10 +128,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProfile(insertProfile: InsertProfile & { id: string }): Promise<Profile> {
-    const [profile] = await this.db
-      .insert(profiles)
-      .values(insertProfile)
-      .returning();
+    const [profile] = await this.db.insert(profiles).values(insertProfile).returning();
     return profile;
   }
 
@@ -91,7 +142,7 @@ export class DatabaseStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(profiles.id, id))
       .returning();
-    
+
     if (!profile) {
       throw new Error(`Profile with id ${id} not found`);
     }
@@ -122,10 +173,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPartner(partner: InsertPartner): Promise<Partner> {
-    const [newPartner] = await this.db
-      .insert(partners)
-      .values(partner)
-      .returning();
+    const [newPartner] = await this.db.insert(partners).values(partner).returning();
     return newPartner;
   }
 
@@ -158,7 +206,7 @@ export class DatabaseStorage implements IStorage {
       monthlyGrowth: 0.08,
       tier: partner.tier,
       commissionRate: partner.commissionRate,
-      status: partner.status
+      status: partner.status,
     };
   }
 
@@ -170,7 +218,7 @@ export class DatabaseStorage implements IStorage {
         email: contacts.email,
         value: partnerCustomers.lifetime_value,
         status: partnerCustomers.status,
-        acquisitionDate: partnerCustomers.acquisitionDate
+        acquisitionDate: partnerCustomers.acquisitionDate,
       })
       .from(partnerCustomers)
       .innerJoin(contacts, eq(partnerCustomers.customerId, contacts.id))
@@ -213,7 +261,7 @@ export class DatabaseStorage implements IStorage {
         price: pkg.price || null,
         billingCycle: pkg.billingCycle || 'monthly',
         isActive: pkg.isActive !== undefined ? pkg.isActive : true,
-        targetTier: pkg.targetTier || null
+        targetTier: pkg.targetTier || null,
       })
       .returning();
     return featurePackage;
@@ -222,35 +270,38 @@ export class DatabaseStorage implements IStorage {
   async getRevenueAnalytics(): Promise<any> {
     const partners = await this.getPartners();
     const totalRevenue = partners.reduce((sum, p) => sum + parseFloat(p.totalRevenue || '0'), 0);
-    const totalCommissions = partners.reduce((sum, p) => sum + parseFloat(p.totalCommissions || '0'), 0);
+    const totalCommissions = partners.reduce(
+      (sum, p) => sum + parseFloat(p.totalCommissions || '0'),
+      0
+    );
     const totalCustomers = partners.reduce((sum, p) => sum + (p.customerCount || 0), 0);
 
     return {
       totalRevenue,
       totalCommissions,
       totalPartners: partners.length,
-      activePartners: partners.filter(p => p.status === 'active').length,
+      activePartners: partners.filter((p) => p.status === 'active').length,
       totalCustomers,
-      averageCommissionRate: 0.20,
+      averageCommissionRate: 0.2,
       monthlyGrowth: 0.12,
       topPerformingTier: 'gold',
       metrics: {
         revenue: {
           current: totalRevenue,
           previousMonth: totalRevenue * 0.9,
-          growth: 0.10
+          growth: 0.1,
         },
         commissions: {
           current: totalCommissions,
           previousMonth: totalCommissions * 0.9,
-          growth: 0.10
+          growth: 0.1,
         },
         partners: {
           current: partners.length,
           previousMonth: Math.max(1, partners.length - 1),
-          growth: partners.length > 1 ? 0.05 : 0
-        }
-      }
+          growth: partners.length > 1 ? 0.05 : 0,
+        },
+      },
     };
   }
 
@@ -264,14 +315,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTenantConfig(config: InsertTenantConfig): Promise<TenantConfig> {
-    const [tenantConfig] = await this.db
-      .insert(tenantConfigs)
-      .values(config)
-      .returning();
+    const [tenantConfig] = await this.db.insert(tenantConfigs).values(config).returning();
     return tenantConfig;
   }
 
-  async updateTenantConfig(tenantId: string, updates: Partial<TenantConfig>): Promise<TenantConfig | undefined> {
+  async updateTenantConfig(
+    tenantId: string,
+    updates: Partial<TenantConfig>
+  ): Promise<TenantConfig | undefined> {
     const [config] = await this.db
       .update(tenantConfigs)
       .set({ ...updates, updatedAt: new Date() })
@@ -289,14 +340,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUserWLSettings(settings: InsertUserWLSettings): Promise<UserWLSettings> {
-    const [userSettings] = await this.db
-      .insert(userWLSettings)
-      .values(settings)
-      .returning();
+    const [userSettings] = await this.db.insert(userWLSettings).values(settings).returning();
     return userSettings;
   }
 
-  async updateUserWLSettings(userId: string, updates: Partial<UserWLSettings>): Promise<UserWLSettings | undefined> {
+  async updateUserWLSettings(
+    userId: string,
+    updates: Partial<UserWLSettings>
+  ): Promise<UserWLSettings | undefined> {
     const [settings] = await this.db
       .update(userWLSettings)
       .set({ ...updates, updatedAt: new Date() })
@@ -314,14 +365,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPartnerWLConfig(config: InsertPartnerWLConfig): Promise<PartnerWLConfig> {
-    const [partnerConfig] = await this.db
-      .insert(partnerWLConfigs)
-      .values(config)
-      .returning();
+    const [partnerConfig] = await this.db.insert(partnerWLConfigs).values(config).returning();
     return partnerConfig;
   }
 
-  async updatePartnerWLConfig(partnerId: string, updates: Partial<PartnerWLConfig>): Promise<PartnerWLConfig | undefined> {
+  async updatePartnerWLConfig(
+    partnerId: string,
+    updates: Partial<PartnerWLConfig>
+  ): Promise<PartnerWLConfig | undefined> {
     const [config] = await this.db
       .update(partnerWLConfigs)
       .set({ ...updates, updatedAt: new Date() })
@@ -349,7 +400,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFeatureByKey(featureKey: string): Promise<Feature | undefined> {
-    const [feature] = await this.db.select().from(features).where(eq(features.featureKey, featureKey));
+    const [feature] = await this.db
+      .select()
+      .from(features)
+      .where(eq(features.featureKey, featureKey));
     return feature || undefined;
   }
 
@@ -359,7 +413,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateFeature(id: number, updates: Partial<Feature>): Promise<Feature | undefined> {
-    const [feature] = await this.db.update(features).set({ ...updates, updatedAt: new Date() }).where(eq(features.id, id)).returning();
+    const [feature] = await this.db
+      .update(features)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(features.id, id))
+      .returning();
     return feature || undefined;
   }
 
@@ -371,23 +429,45 @@ export class DatabaseStorage implements IStorage {
     return await this.db.select().from(userFeatures).where(eq(userFeatures.profileId, userId));
   }
 
-  async setUserFeature(userId: string, featureId: number, enabled: boolean, grantedBy?: string): Promise<UserFeature> {
-    const existing = await this.db.select().from(userFeatures).where(and(eq(userFeatures.profileId, userId), eq(userFeatures.featureId, featureId)));
-    
+  async setUserFeature(
+    userId: string,
+    featureId: number,
+    enabled: boolean,
+    grantedBy?: string
+  ): Promise<UserFeature> {
+    const existing = await this.db
+      .select()
+      .from(userFeatures)
+      .where(and(eq(userFeatures.profileId, userId), eq(userFeatures.featureId, featureId)));
+
     if (existing.length > 0) {
-      const [updated] = await this.db.update(userFeatures).set({ enabled, grantedBy: grantedBy || null }).where(and(eq(userFeatures.profileId, userId), eq(userFeatures.featureId, featureId))).returning();
+      const [updated] = await this.db
+        .update(userFeatures)
+        .set({ enabled, grantedBy: grantedBy || null })
+        .where(and(eq(userFeatures.profileId, userId), eq(userFeatures.featureId, featureId)))
+        .returning();
       return updated;
     } else {
-      const [newUserFeature] = await this.db.insert(userFeatures).values({ profileId: userId, featureId, enabled, grantedBy: grantedBy || null }).returning();
+      const [newUserFeature] = await this.db
+        .insert(userFeatures)
+        .values({ profileId: userId, featureId, enabled, grantedBy: grantedBy || null })
+        .returning();
       return newUserFeature;
     }
   }
 
   async removeUserFeature(userId: string, featureId: number): Promise<void> {
-    await this.db.delete(userFeatures).where(and(eq(userFeatures.profileId, userId), eq(userFeatures.featureId, featureId)));
+    await this.db
+      .delete(userFeatures)
+      .where(and(eq(userFeatures.profileId, userId), eq(userFeatures.featureId, featureId)));
   }
 
-  async bulkSetUserFeatures(userId: string, featureIds: number[], enabled: boolean, grantedBy?: string): Promise<UserFeature[]> {
+  async bulkSetUserFeatures(
+    userId: string,
+    featureIds: number[],
+    enabled: boolean,
+    grantedBy?: string
+  ): Promise<UserFeature[]> {
     const results: UserFeature[] = [];
     for (const featureId of featureIds) {
       const result = await this.setUserFeature(userId, featureId, enabled, grantedBy);
@@ -418,7 +498,7 @@ export class MemStorage implements IStorage {
     this.userWLSettings = new Map();
     this.partnerWLConfigs = new Map();
     this.whiteLabelPackages = new Map();
-    
+
     // Initialize with test data for role migration testing
     this.initializeTestData();
     this.initializePartnerTestData();
@@ -437,7 +517,7 @@ export class MemStorage implements IStorage {
         appContext: 'smartcrm',
         emailTemplateSet: 'smartcrm',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440001',
@@ -450,7 +530,7 @@ export class MemStorage implements IStorage {
         appContext: 'smartcrm',
         emailTemplateSet: 'smartcrm',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440002',
@@ -463,7 +543,7 @@ export class MemStorage implements IStorage {
         appContext: 'smartcrm',
         emailTemplateSet: 'smartcrm',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440003',
@@ -476,7 +556,7 @@ export class MemStorage implements IStorage {
         appContext: 'smartcrm',
         emailTemplateSet: 'smartcrm',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440004',
@@ -489,11 +569,11 @@ export class MemStorage implements IStorage {
         appContext: 'smartcrm',
         emailTemplateSet: 'smartcrm',
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     ];
 
-    testProfiles.forEach(profile => {
+    testProfiles.forEach((profile) => {
       this.profiles.set(profile.id, profile);
     });
   }
@@ -513,7 +593,7 @@ export class MemStorage implements IStorage {
         priority: 1,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: 'tier-silver',
@@ -527,7 +607,7 @@ export class MemStorage implements IStorage {
         priority: 2,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       {
         id: 'tier-gold',
@@ -541,11 +621,11 @@ export class MemStorage implements IStorage {
         priority: 3,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     ];
 
-    tiers.forEach(tier => this.partnerTiers.set(tier.id, tier));
+    tiers.forEach((tier) => this.partnerTiers.set(tier.id, tier));
 
     // Initialize Test Partners
     const testPartners: Partner[] = [
@@ -566,25 +646,25 @@ export class MemStorage implements IStorage {
         brandingConfig: {
           logo: '/assets/partners/techsolutions-logo.png',
           primaryColor: '#3B82F6',
-          secondaryColor: '#1E40AF'
+          secondaryColor: '#1E40AF',
         },
         contractDetails: {
           startDate: '2024-01-15',
           contractDuration: '12 months',
-          autoRenewal: true
+          autoRenewal: true,
         },
         payoutSettings: {
           method: 'bank_transfer',
           frequency: 'monthly',
-          minimumPayout: 100
+          minimumPayout: 100,
         },
         createdAt: new Date('2024-01-15'),
         updatedAt: new Date(),
-        profileId: '550e8400-e29b-41d4-a716-446655440000'
-      }
+        profileId: '550e8400-e29b-41d4-a716-446655440000',
+      },
     ];
 
-    testPartners.forEach(partner => this.partners.set(partner.id, partner));
+    testPartners.forEach((partner) => this.partners.set(partner.id, partner));
 
     // Initialize Feature Packages
     const packages: FeaturePackage[] = [
@@ -598,12 +678,14 @@ export class MemStorage implements IStorage {
         isActive: true,
         targetTier: 'bronze',
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     ];
 
-    packages.forEach(pkg => this.featurePackages.set(pkg.id, pkg));
-    console.log(`Initialized ${this.partnerTiers.size} partner tiers, ${this.partners.size} partners, ${this.featurePackages.size} feature packages`);
+    packages.forEach((pkg) => this.featurePackages.set(pkg.id, pkg));
+    console.log(
+      `Initialized ${this.partnerTiers.size} partner tiers, ${this.partners.size} partners, ${this.featurePackages.size} feature packages`
+    );
   }
 
   async getProfile(id: string): Promise<Profile | undefined> {
@@ -611,13 +693,11 @@ export class MemStorage implements IStorage {
   }
 
   async getProfileByUsername(username: string): Promise<Profile | undefined> {
-    return Array.from(this.profiles.values()).find(
-      (profile) => profile.username === username,
-    );
+    return Array.from(this.profiles.values()).find((profile) => profile.username === username);
   }
 
   async createProfile(insertProfile: InsertProfile & { id: string }): Promise<Profile> {
-    const profile: Profile = { 
+    const profile: Profile = {
       id: insertProfile.id,
       username: insertProfile.username || null,
       firstName: insertProfile.firstName || null,
@@ -627,7 +707,7 @@ export class MemStorage implements IStorage {
       appContext: 'smartcrm',
       emailTemplateSet: 'smartcrm',
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.profiles.set(insertProfile.id, profile);
     return profile;
@@ -655,13 +735,13 @@ export class MemStorage implements IStorage {
     if (!existing) {
       throw new Error(`Profile with id ${id} not found`);
     }
-    
+
     const updated = {
       ...existing,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     this.profiles.set(id, updated);
     return updated;
   }
@@ -696,7 +776,7 @@ export class MemStorage implements IStorage {
       payoutSettings: insertPartner.payoutSettings || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      profileId: insertPartner.profileId || null
+      profileId: insertPartner.profileId || null,
     };
     this.partners.set(id, partner);
     return partner;
@@ -705,11 +785,11 @@ export class MemStorage implements IStorage {
   async updatePartner(id: string, updates: Partial<Partner>): Promise<Partner | undefined> {
     const existing = this.partners.get(id);
     if (!existing) return undefined;
-    
+
     const updated = {
       ...existing,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.partners.set(id, updated);
     return updated;
@@ -728,7 +808,7 @@ export class MemStorage implements IStorage {
       monthlyGrowth: 0.08,
       tier: partner.tier,
       commissionRate: partner.commissionRate,
-      status: partner.status
+      status: partner.status,
     };
   }
 
@@ -741,19 +821,21 @@ export class MemStorage implements IStorage {
         email: 'contact@acme.com',
         value: 2500,
         status: 'active',
-        acquisitionDate: '2024-01-15'
-      }
+        acquisitionDate: '2024-01-15',
+      },
     ];
   }
 
   async getPartnerCommissions(partnerId: string): Promise<Commission[]> {
     return Array.from(this.commissions.values()).filter(
-      commission => commission.partnerId === partnerId
+      (commission) => commission.partnerId === partnerId
     );
   }
 
   async getPartnerTiers(): Promise<PartnerTier[]> {
-    return Array.from(this.partnerTiers.values()).sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    return Array.from(this.partnerTiers.values()).sort(
+      (a, b) => (a.priority || 0) - (b.priority || 0)
+    );
   }
 
   async getFeaturePackages(): Promise<FeaturePackage[]> {
@@ -772,7 +854,7 @@ export class MemStorage implements IStorage {
       isActive: pkg.isActive !== undefined ? pkg.isActive : true,
       targetTier: pkg.targetTier || null,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.featurePackages.set(id, featurePackage);
     return featurePackage;
@@ -781,35 +863,38 @@ export class MemStorage implements IStorage {
   async getRevenueAnalytics(): Promise<any> {
     const partners = Array.from(this.partners.values());
     const totalRevenue = partners.reduce((sum, p) => sum + parseFloat(p.totalRevenue || '0'), 0);
-    const totalCommissions = partners.reduce((sum, p) => sum + parseFloat(p.totalCommissions || '0'), 0);
+    const totalCommissions = partners.reduce(
+      (sum, p) => sum + parseFloat(p.totalCommissions || '0'),
+      0
+    );
     const totalCustomers = partners.reduce((sum, p) => sum + (p.customerCount || 0), 0);
 
     return {
       totalRevenue,
       totalCommissions,
       totalPartners: partners.length,
-      activePartners: partners.filter(p => p.status === 'active').length,
+      activePartners: partners.filter((p) => p.status === 'active').length,
       totalCustomers,
-      averageCommissionRate: 0.20,
+      averageCommissionRate: 0.2,
       monthlyGrowth: 0.12,
       topPerformingTier: 'gold',
       metrics: {
         revenue: {
           current: totalRevenue,
           previousMonth: totalRevenue * 0.9,
-          growth: 0.10
+          growth: 0.1,
         },
         commissions: {
           current: totalCommissions,
           previousMonth: totalCommissions * 0.9,
-          growth: 0.10
+          growth: 0.1,
         },
         partners: {
           current: partners.length,
           previousMonth: Math.max(1, partners.length - 1),
-          growth: partners.length > 1 ? 0.05 : 0
-        }
-      }
+          growth: partners.length > 1 ? 0.05 : 0,
+        },
+      },
     };
   }
 
@@ -840,20 +925,23 @@ export class MemStorage implements IStorage {
       features: config.features || null,
       profileId: config.profileId || null,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.tenantConfigs.set(id, tenantConfig);
     return tenantConfig;
   }
 
-  async updateTenantConfig(tenantId: string, updates: Partial<TenantConfig>): Promise<TenantConfig | undefined> {
+  async updateTenantConfig(
+    tenantId: string,
+    updates: Partial<TenantConfig>
+  ): Promise<TenantConfig | undefined> {
     const existing = this.tenantConfigs.get(tenantId);
     if (!existing) return undefined;
-    
+
     const updated = {
       ...existing,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.tenantConfigs.set(tenantId, updated);
     return updated;
@@ -872,20 +960,23 @@ export class MemStorage implements IStorage {
       preferences: settings.preferences || null,
       settings: settings.settings || null,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.userWLSettings.set(settings.userId, userSettings);
     return userSettings;
   }
 
-  async updateUserWLSettings(userId: string, updates: Partial<UserWLSettings>): Promise<UserWLSettings | undefined> {
+  async updateUserWLSettings(
+    userId: string,
+    updates: Partial<UserWLSettings>
+  ): Promise<UserWLSettings | undefined> {
     const existing = this.userWLSettings.get(userId);
     if (!existing) return undefined;
-    
+
     const updated = {
       ...existing,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.userWLSettings.set(userId, updated);
     return updated;
@@ -910,27 +1001,30 @@ export class MemStorage implements IStorage {
       features: config.features || null,
       profileId: config.profileId || null,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.partnerWLConfigs.set(config.partnerId, partnerConfig);
     return partnerConfig;
   }
 
-  async updatePartnerWLConfig(partnerId: string, updates: Partial<PartnerWLConfig>): Promise<PartnerWLConfig | undefined> {
+  async updatePartnerWLConfig(
+    partnerId: string,
+    updates: Partial<PartnerWLConfig>
+  ): Promise<PartnerWLConfig | undefined> {
     const existing = this.partnerWLConfigs.get(partnerId);
     if (!existing) return undefined;
-    
+
     const updated = {
       ...existing,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
     this.partnerWLConfigs.set(partnerId, updated);
     return updated;
   }
 
   async getWhiteLabelPackages(): Promise<WhiteLabelPackage[]> {
-    return Array.from(this.whiteLabelPackages.values()).filter(pkg => pkg.isActive);
+    return Array.from(this.whiteLabelPackages.values()).filter((pkg) => pkg.isActive);
   }
 
   // Feature Management Methods (MemStorage stubs - use DatabaseStorage for real feature management)
@@ -962,7 +1056,12 @@ export class MemStorage implements IStorage {
     return [];
   }
 
-  async setUserFeature(userId: string, featureId: number, enabled: boolean, grantedBy?: string): Promise<UserFeature> {
+  async setUserFeature(
+    userId: string,
+    featureId: number,
+    enabled: boolean,
+    grantedBy?: string
+  ): Promise<UserFeature> {
     throw new Error('Feature management requires DatabaseStorage - not available in MemStorage');
   }
 
@@ -970,12 +1069,15 @@ export class MemStorage implements IStorage {
     // No-op
   }
 
-  async bulkSetUserFeatures(userId: string, featureIds: number[], enabled: boolean, grantedBy?: string): Promise<UserFeature[]> {
+  async bulkSetUserFeatures(
+    userId: string,
+    featureIds: number[],
+    enabled: boolean,
+    grantedBy?: string
+  ): Promise<UserFeature[]> {
     return [];
   }
 }
 
 // Use DatabaseStorage if DATABASE_URL is available, otherwise fall back to MemStorage
-export const storage = process.env.DATABASE_URL 
-  ? new DatabaseStorage(db)
-  : new MemStorage();
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage(db) : new MemStorage();

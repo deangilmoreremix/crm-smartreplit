@@ -1,7 +1,9 @@
 # JVZoo Product Tier Authentication Setup
 
 ## Overview
+
 This system integrates JVZoo sales with Supabase authentication and product-based access control for three tiers:
+
 - **SmartCRM** (base): Dashboard, Contacts, Pipeline, Calendar
 - **Sales Maximizer**: Base features + AI Goals
 - **AI Boost Unlimited**: All features + AI Tools
@@ -9,11 +11,13 @@ This system integrates JVZoo sales with Supabase authentication and product-base
 ## Architecture
 
 ### Product Tiers
+
 1. **smartcrm** - Base CRM features (default)
 2. **sales_maximizer** - Includes AI Goals remote module
 3. **ai_boost_unlimited** - Includes all AI Tools
 
 ### Access Control Flow
+
 ```
 JVZoo Sale → Webhook → Create Supabase User → Send Magic Link → User Sets Password → Access Based on Product Tier
 ```
@@ -25,6 +29,7 @@ JVZoo Sale → Webhook → Create Supabase User → Send Magic Link → User Set
 **Webhook URL:** `https://your-domain.com/api/webhooks/jvzoo`
 
 **Required Environment Variables:**
+
 ```bash
 # JVZoo Configuration
 JVZOO_SECRET_KEY=your_secret_key_here
@@ -47,15 +52,16 @@ Update the `PRODUCT_TIER_MAP` in `server/jvzoo-webhook.ts`:
 ```typescript
 const PRODUCT_TIER_MAP: Record<string, ProductTier> = {
   // Map your actual JVZoo product IDs here
-  'YOUR_SMARTCRM_PRODUCT_ID': 'smartcrm',
-  'YOUR_SALES_MAXIMIZER_PRODUCT_ID': 'sales_maximizer', 
-  'YOUR_AI_BOOST_PRODUCT_ID': 'ai_boost_unlimited',
+  YOUR_SMARTCRM_PRODUCT_ID: 'smartcrm',
+  YOUR_SALES_MAXIMIZER_PRODUCT_ID: 'sales_maximizer',
+  YOUR_AI_BOOST_PRODUCT_ID: 'ai_boost_unlimited',
 };
 ```
 
 ### 3. Database Migration
 
 Run the migration to add product_tier column:
+
 ```bash
 # The migration file is already created at:
 # supabase/migrations/20250117000002_add_product_tier.sql
@@ -67,12 +73,14 @@ Run the migration to add product_tier column:
 ## JVZoo Webhook Events
 
 ### Supported Events
+
 - **SALE**: New purchase → Creates user account with magic link
 - **RFND**: Refund → Downgrades to base tier
 - **CGBK**: Chargeback → Downgrades to base tier
 - **INSF**: Insufficient funds → Logged (no action)
 
 ### Webhook Payload Example
+
 ```json
 {
   "ccustname": "John Doe",
@@ -105,6 +113,7 @@ curl -X POST http://localhost:5000/api/webhooks/jvzoo \
 ```
 
 **Note:** Calculate `cverify` hash:
+
 ```javascript
 const crypto = require('crypto');
 const secretKey = 'YOUR_SECRET_KEY';
@@ -118,6 +127,7 @@ console.log(hash); // Use this as cverify
 ### 2. Verify User Creation
 
 Check Supabase Dashboard → Authentication → Users
+
 - User should be created with email
 - User metadata should include `product_tier`
 
@@ -128,6 +138,7 @@ Check user's email for magic link → Click link → Set password → Login
 ### 4. Verify Access Control
 
 **SmartCRM tier users should see:**
+
 - ✅ Dashboard
 - ✅ Contacts
 - ✅ Pipeline
@@ -137,11 +148,13 @@ Check user's email for magic link → Click link → Set password → Login
 - ❌ AI Tools (hidden)
 
 **Sales Maximizer tier users should see:**
+
 - ✅ All SmartCRM features
 - ✅ AI Goals
 - ❌ AI Tools (hidden)
 
 **AI Boost Unlimited tier users should see:**
+
 - ✅ All features
 - ✅ AI Goals
 - ✅ AI Tools
@@ -157,6 +170,7 @@ Check user's email for magic link → Click link → Set password → Login
 ## Access Control Implementation
 
 ### Navigation (client/src/components/Navbar.tsx)
+
 ```typescript
 // Tabs are filtered based on canAccess() check
 const allTabs = [...]; // All navigation items
@@ -167,6 +181,7 @@ const mainTabs = allTabs.filter(tab => {
 ```
 
 ### Route Protection (client/src/App.tsx)
+
 ```typescript
 <Route path="/ai-goals" element={
   <ProtectedRoute resource="ai_goals">
@@ -177,24 +192,28 @@ const mainTabs = allTabs.filter(tab => {
 ```
 
 ### Access Rules (client/src/components/RoleBasedAccess.tsx)
+
 ```typescript
 const productTierAccess = {
-  'ai_goals': ['sales_maximizer', 'ai_boost_unlimited'],
-  'ai_tools': ['ai_boost_unlimited'],
+  ai_goals: ['sales_maximizer', 'ai_boost_unlimited'],
+  ai_tools: ['ai_boost_unlimited'],
 };
 ```
 
 ## Files Modified
 
 ### Schema & Types
+
 - `shared/schema.ts` - Added `productTier` field and types
 - `supabase/migrations/20250117000002_add_product_tier.sql` - Database migration
 
 ### Backend
+
 - `server/jvzoo-webhook.ts` - NEW: JVZoo webhook handler
 - `server/routes.ts` - Added webhook route and product tier update endpoint
 
 ### Frontend
+
 - `client/src/components/RoleBasedAccess.tsx` - Product tier access logic
 - `client/src/components/Navbar.tsx` - Conditional navigation based on tier
 - `client/src/App.tsx` - Route guards for protected features
@@ -203,22 +222,26 @@ const productTierAccess = {
 ## Troubleshooting
 
 ### Webhook Not Working
+
 1. Check JVZoo IPN configuration has correct URL
 2. Verify `JVZOO_SECRET_KEY` environment variable
 3. Check server logs for webhook verification errors
 4. Test hash calculation matches JVZoo's
 
 ### User Not Created
+
 1. Verify Supabase service role key has admin permissions
 2. Check Supabase logs for user creation errors
 3. Ensure email is valid format
 
 ### Magic Link Not Sent
+
 1. Check Supabase email templates are configured
 2. Verify SMTP settings in Supabase
 3. Check user's email metadata includes `email_template_set: 'smartcrm'`
 
 ### Access Control Not Working
+
 1. Clear browser cache and localStorage
 2. Check user's `productTier` field in database
 3. Verify `canAccess()` logic in RoleBasedAccess

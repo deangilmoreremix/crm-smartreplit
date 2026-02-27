@@ -6,7 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,7 +38,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Target
+  Target,
 } from 'lucide-react';
 
 interface Invoice {
@@ -115,12 +121,18 @@ export default function InvoicingDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'sent': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-      case 'draft': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      case 'overdue': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-      case 'cancelled': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'paid':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'sent':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+      case 'draft':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'overdue':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -141,13 +153,15 @@ export default function InvoicingDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Price Optimizer'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = stats ? (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
-        <div className="text-2xl font-bold text-blue-600">${stats.totalRevenue.toLocaleString()}</div>
+        <div className="text-2xl font-bold text-blue-600">
+          ${stats.totalRevenue.toLocaleString()}
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</div>
       </div>
       <div className="text-center">
@@ -192,7 +206,7 @@ export default function InvoicingDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
-                {invoices.map(invoice => (
+                {invoices.map((invoice) => (
                   <GlassCard
                     key={invoice.id}
                     className="p-4 cursor-pointer hover:border-blue-300"
@@ -200,25 +214,33 @@ export default function InvoicingDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          invoice.status === 'paid' ? 'bg-green-100' :
-                          invoice.status === 'sent' ? 'bg-blue-100' :
-                          invoice.status === 'overdue' ? 'bg-red-100' : 'bg-yellow-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            invoice.status === 'paid'
+                              ? 'bg-green-100'
+                              : invoice.status === 'sent'
+                                ? 'bg-blue-100'
+                                : invoice.status === 'overdue'
+                                  ? 'bg-red-100'
+                                  : 'bg-yellow-100'
+                          }`}
+                        >
                           <FileText className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="font-medium">{invoice.invoiceNumber}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{invoice.clientName}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {invoice.clientName}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(invoice.status)}>
-                          {invoice.status}
-                        </Badge>
+                        <Badge className={getStatusColor(invoice.status)}>{invoice.status}</Badge>
                         <div className="text-right">
                           <div className="font-semibold">${invoice.amount.toFixed(2)}</div>
-                          <div className="text-sm text-gray-500">Due: {new Date(invoice.dueDate).toLocaleDateString()}</div>
+                          <div className="text-sm text-gray-500">
+                            Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                          </div>
                         </div>
                         {invoice.gpt5Optimization && (
                           <div className="flex items-center gap-1">
@@ -252,7 +274,9 @@ export default function InvoicingDashboard() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Average Invoice Value</span>
-                    <span className="font-semibold">${stats.averageInvoiceValue.toLocaleString()}</span>
+                    <span className="font-semibold">
+                      ${stats.averageInvoiceValue.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Collection Rate</span>
@@ -260,7 +284,9 @@ export default function InvoicingDashboard() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth</span>
-                    <span className="font-semibold text-green-600">+{Math.round(stats.monthlyGrowth * 100)}%</span>
+                    <span className="font-semibold text-green-600">
+                      +{Math.round(stats.monthlyGrowth * 100)}%
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -343,7 +369,8 @@ export default function InvoicingDashboard() {
                   {optimizedAmount && (
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <div className="text-sm text-green-800 dark:text-green-200">
-                        Suggested Amount: <span className="font-bold">${optimizedAmount.toFixed(2)}</span>
+                        Suggested Amount:{' '}
+                        <span className="font-bold">${optimizedAmount.toFixed(2)}</span>
                       </div>
                     </div>
                   )}
@@ -362,11 +389,7 @@ export default function InvoicingDashboard() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="overdue-amount">Overdue Amount</Label>
-                    <Input
-                      id="overdue-amount"
-                      type="number"
-                      placeholder="Enter overdue amount"
-                    />
+                    <Input id="overdue-amount" type="number" placeholder="Enter overdue amount" />
                   </div>
                   <div>
                     <Label htmlFor="days-overdue">Days Overdue</Label>
@@ -514,30 +537,43 @@ export default function InvoicingDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Invoice Number</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Invoice Number
+                  </Label>
                   <div className="font-medium">{selectedInvoice.invoiceNumber}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedInvoice.status)}>
                     {selectedInvoice.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Client</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Client
+                  </Label>
                   <div className="font-medium">{selectedInvoice.clientName}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Amount</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Amount
+                  </Label>
                   <div className="font-medium">${selectedInvoice.amount.toFixed(2)}</div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Items</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Items
+                </Label>
                 <div className="space-y-2">
-                  {selectedInvoice.items.map(item => (
-                    <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  {selectedInvoice.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                    >
                       <span className="text-sm">{item.description}</span>
                       <span className="text-sm font-medium">${item.amount.toFixed(2)}</span>
                     </div>
@@ -553,7 +589,10 @@ export default function InvoicingDashboard() {
                   </Label>
                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                     <div className="text-sm text-purple-800 dark:text-purple-200">
-                      Suggested Amount: <span className="font-bold">${selectedInvoice.gpt5Optimization.suggestedAmount.toFixed(2)}</span>
+                      Suggested Amount:{' '}
+                      <span className="font-bold">
+                        ${selectedInvoice.gpt5Optimization.suggestedAmount.toFixed(2)}
+                      </span>
                     </div>
                     <div className="text-sm text-purple-700 dark:text-purple-300 mt-1">
                       Confidence: {Math.round(selectedInvoice.gpt5Optimization.confidence * 100)}%

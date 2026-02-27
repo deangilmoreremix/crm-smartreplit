@@ -1,4 +1,3 @@
-
 /**
  * Remote Social Research Bridge
  * Provides social media research capabilities to remote contact/pipeline apps
@@ -49,34 +48,39 @@ class RemoteSocialResearchBridge {
 
   private async handleRemoteSocialRequest(event: MessageEvent) {
     const { requestId, request } = event.data;
-    
+
     try {
       const response = await this.processSocialRequest(request);
-      
+
       // Send response back to remote app
-      event.source?.postMessage({
-        type: 'SOCIAL_RESEARCH_RESPONSE',
-        requestId,
-        response
-      }, event.origin);
-      
-    } catch (error) {
-      event.source?.postMessage({
-        type: 'SOCIAL_RESEARCH_RESPONSE',
-        requestId,
-        response: {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+      event.source?.postMessage(
+        {
+          type: 'SOCIAL_RESEARCH_RESPONSE',
           requestId,
-          timestamp: new Date()
-        }
-      }, event.origin);
+          response,
+        },
+        event.origin
+      );
+    } catch (error) {
+      event.source?.postMessage(
+        {
+          type: 'SOCIAL_RESEARCH_RESPONSE',
+          requestId,
+          response: {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            requestId,
+            timestamp: new Date(),
+          },
+        },
+        event.origin
+      );
     }
   }
 
   private async processSocialRequest(request: RemoteSocialRequest): Promise<RemoteSocialResponse> {
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Check cache first
     const cacheKey = this.generateCacheKey(request);
     const cached = this.responseCache.get(cacheKey);
@@ -136,20 +140,19 @@ class RemoteSocialResearchBridge {
         success: true,
         data,
         requestId,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // Cache the response
       this.responseCache.set(cacheKey, response);
-      
-      return response;
 
+      return response;
     } catch (error) {
       const response: RemoteSocialResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
         requestId,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       return response;
@@ -170,11 +173,11 @@ class RemoteSocialResearchBridge {
       contactId,
       contact,
       requestType: 'research',
-      options
+      options,
     };
 
     const response = await this.processSocialRequest(request);
-    
+
     if (!response.success) {
       throw new Error(response.error || 'Social research failed');
     }
@@ -191,11 +194,11 @@ class RemoteSocialResearchBridge {
       contactId,
       contact,
       requestType: 'enrich',
-      options
+      options,
     };
 
     const response = await this.processSocialRequest(request);
-    
+
     if (!response.success) {
       throw new Error(response.error || 'Social enrichment failed');
     }
@@ -209,8 +212,8 @@ class RemoteSocialResearchBridge {
       research: this.requestSocialResearch.bind(this),
       enrich: this.requestSocialEnrichment.bind(this),
       getSupportedPlatforms: () => gpt5SocialResearchService.isPlatformSupported,
-      getRecommendedPlatforms: (contact: Contact) => 
-        gpt5SocialResearchService.getRecommendedPlatforms(contact)
+      getRecommendedPlatforms: (contact: Contact) =>
+        gpt5SocialResearchService.getRecommendedPlatforms(contact),
     };
   }
 

@@ -16,11 +16,14 @@ export const ColorInput: React.FC<ColorInputProps> = ({
   onChange,
   label,
   placeholder = '#3B82F6',
-  ariaDescribedBy
+  ariaDescribedBy,
 }) => {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
         {label}
       </label>
       <div className="flex items-center space-x-2">

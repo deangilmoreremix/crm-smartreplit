@@ -27,11 +27,19 @@ var handler = async (event, context) => {
     if (pathParts.length >= 2 && pathParts[0] === "messaging" && pathParts[1] === "send" && httpMethod === "POST") {
       const { content, recipient, provider, priority = "medium" } = JSON.parse(body);
       if (!content || !recipient) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: "Content and recipient are required" }) };
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: "Content and recipient are required" })
+        };
       }
       const phoneRegex = /^\+?[1-9]\d{1,14}$/;
       if (!phoneRegex.test(recipient.replace(/\s+/g, ""))) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: "Invalid phone number format" }) };
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: "Invalid phone number format" })
+        };
       }
       let messageResult;
       if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
@@ -57,7 +65,9 @@ var handler = async (event, context) => {
           cost: 75e-4,
           sentAt: (/* @__PURE__ */ new Date()).toISOString()
         };
-        console.log(`\u{1F4F1} SMS sent (mock): ${recipient} - "${content.substring(0, 50)}${content.length > 50 ? "..." : ""}"`);
+        console.log(
+          `\u{1F4F1} SMS sent (mock): ${recipient} - "${content.substring(0, 50)}${content.length > 50 ? "..." : ""}"`
+        );
       }
       return {
         statusCode: 200,
@@ -72,10 +82,18 @@ var handler = async (event, context) => {
     if (pathParts.length >= 2 && pathParts[0] === "messaging" && pathParts[1] === "bulk" && httpMethod === "POST") {
       const { messages, provider = "twilio", batchSize = 10 } = JSON.parse(body);
       if (!Array.isArray(messages) || messages.length === 0) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: "Messages array is required" }) };
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: "Messages array is required" })
+        };
       }
       if (messages.length > 1e3) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: "Maximum 1000 messages per bulk send" }) };
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: "Maximum 1000 messages per bulk send" })
+        };
       }
       const results = [];
       const errors = [];
@@ -83,16 +101,19 @@ var handler = async (event, context) => {
         const batch = messages.slice(i, i + batchSize);
         const batchPromises = batch.map(async (msg) => {
           try {
-            const response = await fetch(`${process.env.SITE_URL || "https://smartcrm-videoremix.replit.app"}/api/messaging/send`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                content: msg.content,
-                recipient: msg.recipient,
-                provider,
-                priority: msg.priority || "medium"
-              })
-            });
+            const response = await fetch(
+              `${process.env.SITE_URL || "https://smartcrm-videoremix.replit.app"}/api/messaging/send`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  content: msg.content,
+                  recipient: msg.recipient,
+                  provider,
+                  priority: msg.priority || "medium"
+                })
+              }
+            );
             const result = await response.json();
             return { ...result, recipient: msg.recipient };
           } catch (error) {
@@ -125,7 +146,14 @@ var handler = async (event, context) => {
       };
     }
     if (pathParts.length >= 2 && pathParts[0] === "messaging" && pathParts[1] === "messages" && httpMethod === "GET") {
-      const { limit = 50, offset = 0, status, provider, startDate, endDate } = queryStringParameters || {};
+      const {
+        limit = 50,
+        offset = 0,
+        status,
+        provider,
+        startDate,
+        endDate
+      } = queryStringParameters || {};
       const mockMessages = [];
       for (let i = 0; i < parseInt(limit); i++) {
         mockMessages.push({
@@ -189,13 +217,21 @@ var handler = async (event, context) => {
       const { provider } = { provider: pathParts[2] };
       const { phoneNumber } = JSON.parse(body);
       if (!phoneNumber) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: "Phone number is required for testing" }) };
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: "Phone number is required for testing" })
+        };
       }
       let testResult;
       switch (provider) {
         case "twilio":
           if (!twilioAccountSid || !twilioAuthToken) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: "Twilio credentials not configured" }) };
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({ error: "Twilio credentials not configured" })
+            };
           }
           const twilio = __require("twilio")(twilioAccountSid, twilioAuthToken);
           const testMessage = await twilio.messages.create({

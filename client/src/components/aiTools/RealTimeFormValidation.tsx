@@ -19,9 +19,9 @@ interface RealTimeFormValidationProps {
   formContext?: string;
 }
 
-const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({ 
+const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
   onValidationComplete,
-  formContext = 'sales inquiry' 
+  formContext = 'sales inquiry',
 }) => {
   const gemini = useGemini();
   const [fields, setFields] = useState<FormField[]>([
@@ -29,24 +29,24 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
     { name: 'email', label: 'Email Address', type: 'email', value: '', required: true },
     { name: 'phone', label: 'Phone Number', type: 'tel', value: '', required: false },
     { name: 'company', label: 'Company Name', type: 'text', value: '', required: true },
-    { name: 'message', label: 'Message', type: 'textarea', value: '', required: true }
+    { name: 'message', label: 'Message', type: 'textarea', value: '', required: true },
   ]);
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [validating, setValidating] = useState(false);
-  const [debounceTimers, setDebounceTimers] = useState<{[key: string]: NodeJS.Timeout}>({});
-  const [aiSuggestions, setAiSuggestions] = useState<{[key: string]: string}>({});
-  
+  const [debounceTimers, setDebounceTimers] = useState<{ [key: string]: NodeJS.Timeout }>({});
+  const [aiSuggestions, setAiSuggestions] = useState<{ [key: string]: string }>({});
+
   const validateField = async (field: FormField) => {
     // Skip validation for empty non-required fields
     if (!field.value && !field.required) return field;
-    
+
     // Clear any existing timer for this field
     if (debounceTimers[field.name]) {
       clearTimeout(debounceTimers[field.name]);
     }
-    
+
     // Set a new debounce timer
     const timer = setTimeout(async () => {
       if (!field.value && field.required) {
@@ -55,11 +55,11 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
           ...field,
           validation: {
             valid: false,
-            message: `${field.label} is required`
-          }
+            message: `${field.label} is required`,
+          },
         };
       }
-      
+
       if (field.type === 'email' && field.value) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(field.value)) {
@@ -67,60 +67,65 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
             ...field,
             validation: {
               valid: false,
-              message: 'Please enter a valid email address'
-            }
+              message: 'Please enter a valid email address',
+            },
           };
         }
       }
-      
+
       if (field.value.length > 0) {
         setValidating(true);
         try {
           const result = await gemini.validateFormField(field.label, field.value, formContext);
-          
+
           // If valid but can be improved, add an AI suggestion
-          if (result.valid && (result.message.includes("suggest") || result.message.includes("improve") || result.message.includes("consider"))) {
-            setAiSuggestions(prev => ({...prev, [field.name]: result.message}));
+          if (
+            result.valid &&
+            (result.message.includes('suggest') ||
+              result.message.includes('improve') ||
+              result.message.includes('consider'))
+          ) {
+            setAiSuggestions((prev) => ({ ...prev, [field.name]: result.message }));
           } else if (result.valid) {
             // Clear any previous suggestion
-            setAiSuggestions(prev => {
-              const newSuggestions = {...prev};
+            setAiSuggestions((prev) => {
+              const newSuggestions = { ...prev };
               delete newSuggestions[field.name];
               return newSuggestions;
             });
           }
-          
+
           return {
             ...field,
             validation: {
               valid: result.valid,
-              message: result.message
-            }
+              message: result.message,
+            },
           };
         } catch (e) {
-          console.error("Error validating with Gemini", e);
+          console.error('Error validating with Gemini', e);
           return field;
         } finally {
           setValidating(false);
         }
       }
-      
+
       return field;
     }, 400); // Debounce time of 400ms
-    
-    setDebounceTimers(prev => ({...prev, [field.name]: timer}));
-    
+
+    setDebounceTimers((prev) => ({ ...prev, [field.name]: timer }));
+
     return field;
   };
-  
+
   const handleInputChange = async (name: string, value: string) => {
-    setFields(prevFields => {
-      return prevFields.map(field => {
+    setFields((prevFields) => {
+      return prevFields.map((field) => {
         if (field.name === name) {
           const updatedField = { ...field, value };
-          validateField(updatedField).then(validatedField => {
-            setFields(prevFields => 
-              prevFields.map(f => f.name === name ? validatedField : f)
+          validateField(updatedField).then((validatedField) => {
+            setFields((prevFields) =>
+              prevFields.map((f) => (f.name === name ? validatedField : f))
             );
           });
           return updatedField;
@@ -129,49 +134,50 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
       });
     });
   };
-  
+
   const validateAllFields = async () => {
     setValidating(true);
     const validatedFields = await Promise.all(fields.map(validateField));
     setFields(validatedFields);
     setValidating(false);
-    
+
     // Check if the form is valid
-    const isValid = validatedFields.every(field => 
-      (!field.required || field.value.trim().length > 0) && 
-      (!field.validation || field.validation.valid)
+    const isValid = validatedFields.every(
+      (field) =>
+        (!field.required || field.value.trim().length > 0) &&
+        (!field.validation || field.validation.valid)
     );
-    
+
     if (onValidationComplete) {
       onValidationComplete(isValid);
     }
-    
+
     return isValid;
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const isValid = await validateAllFields();
-    
+
     if (!isValid) {
       const errors = fields
-        .filter(field => field.validation && !field.validation.valid)
-        .map(field => field.validation?.message || `${field.label} is invalid`);
-      
+        .filter((field) => field.validation && !field.validation.valid)
+        .map((field) => field.validation?.message || `${field.label} is invalid`);
+
       setFormErrors(errors);
       setIsSubmitting(false);
       return;
     }
-    
+
     setFormErrors([]);
-    
+
     // In a real app, submit the form data to your backend
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
     // Reset form after successful submission
-    setFields(fields.map(field => ({ ...field, value: '', validation: undefined })));
+    setFields(fields.map((field) => ({ ...field, value: '', validation: undefined })));
     setIsSubmitting(false);
     alert('Form submitted successfully!');
   };
@@ -188,14 +194,16 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
     return null;
   };
 
-  const isFormValid = fields.every(field => 
-    !field.required || (field.value && (!field.validation || field.validation.valid))
+  const isFormValid = fields.every(
+    (field) => !field.required || (field.value && (!field.validation || field.validation.valid))
   );
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Form with Real-time Validation</h3>
-      
+      <h3 className="text-lg font-medium text-gray-900 mb-4">
+        Contact Form with Real-time Validation
+      </h3>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {formErrors.length > 0 && (
           <div className="bg-red-50 text-red-700 p-3 rounded-md border border-red-100">
@@ -210,7 +218,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
             </ul>
           </div>
         )}
-        
+
         {fields.map((field) => (
           <div key={field.name}>
             <div className="flex justify-between">
@@ -219,7 +227,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
               </label>
               <FieldStatusIndicator field={field} />
             </div>
-            
+
             <div className="mt-1 relative">
               {field.type === 'textarea' ? (
                 <textarea
@@ -230,10 +238,11 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
                   required={field.required}
                   rows={4}
                   className={`w-full p-2 border rounded-md ${
-                    field.validation ? (
-                      field.validation.valid ? 'border-green-300 focus:border-green-500 focus:ring-green-500' 
+                    field.validation
+                      ? field.validation.valid
+                        ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
                         : 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    ) : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                 />
               ) : (
@@ -245,19 +254,20 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
                   onChange={(e) => handleInputChange(field.name, e.target.value)}
                   required={field.required}
                   className={`w-full p-2 border rounded-md ${
-                    field.validation ? (
-                      field.validation.valid ? 'border-green-300 focus:border-green-500 focus:ring-green-500' 
+                    field.validation
+                      ? field.validation.valid
+                        ? 'border-green-300 focus:border-green-500 focus:ring-green-500'
                         : 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    ) : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                      : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
                   }`}
                 />
               )}
             </div>
-            
+
             {field.validation && !field.validation.valid && (
               <p className="mt-1 text-sm text-red-600">{field.validation.message}</p>
             )}
-            
+
             {aiSuggestions[field.name] && (
               <p className="mt-1 text-sm text-blue-600">
                 <span className="font-medium">Suggestion:</span> {aiSuggestions[field.name]}
@@ -265,7 +275,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
             )}
           </div>
         ))}
-        
+
         <div className="pt-4">
           <button
             type="submit"

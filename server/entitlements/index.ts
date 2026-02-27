@@ -1,32 +1,47 @@
 import { createClient } from '@supabase/supabase-js';
-import { getUserEntitlement, isUserActive, handleSuccessfulPurchase } from '../entitlements-utils.js';
+import {
+  getUserEntitlement,
+  isUserActive,
+  handleSuccessfulPurchase,
+} from '../entitlements-utils.js';
 import { db } from '../db.js';
 // Inline schema definition to avoid bundling issues
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { relations } from "drizzle-orm";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  decimal,
+  json,
+  uuid,
+} from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
+import { relations } from 'drizzle-orm';
 
-const entitlements = pgTable("entitlements", {
-  id: serial("id").primaryKey(),
-  userId: uuid("user_id").notNull(),
-  status: text("status").notNull().default("active"),
-  productType: text("product_type"),
-  revokeAt: timestamp("revoke_at", { withTimezone: true }),
-  lastInvoiceStatus: text("last_invoice_status"),
-  delinquencyCount: integer("delinquency_count").default(0),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  stripeCustomerId: text("stripe_customer_id"),
-  zaxaaSubscriptionId: text("zaxaa_subscription_id"),
-  planName: text("plan_name"),
-  planAmount: decimal("plan_amount", { precision: 10, scale: 2 }),
-  currency: text("currency").default("USD"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+const entitlements = pgTable('entitlements', {
+  id: serial('id').primaryKey(),
+  userId: uuid('user_id').notNull(),
+  status: text('status').notNull().default('active'),
+  productType: text('product_type'),
+  revokeAt: timestamp('revoke_at', { withTimezone: true }),
+  lastInvoiceStatus: text('last_invoice_status'),
+  delinquencyCount: integer('delinquency_count').default(0),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  stripeCustomerId: text('stripe_customer_id'),
+  zaxaaSubscriptionId: text('zaxaa_subscription_id'),
+  planName: text('plan_name'),
+  planAmount: decimal('plan_amount', { precision: 10, scale: 2 }),
+  currency: text('currency').default('USD'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+const supabase =
+  supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 export const handler = async (event: any, context: any) => {
   const { httpMethod, path, body } = event;
@@ -36,7 +51,7 @@ export const handler = async (event: any, context: any) => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   };
 
   if (httpMethod === 'OPTIONS') {
@@ -45,11 +60,16 @@ export const handler = async (event: any, context: any) => {
 
   try {
     // GET /api/entitlements/check - Check user entitlement
-    if (pathParts.length >= 2 && pathParts[0] === 'entitlements' && pathParts[1] === 'check' && httpMethod === 'GET') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'entitlements' &&
+      pathParts[1] === 'check' &&
+      httpMethod === 'GET'
+    ) {
       // Extract user ID from Authorization header (JWT token)
       const authHeader = event.headers?.authorization || event.headers?.Authorization || '';
       let userId = null;
-      
+
       if (authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         // For Supabase JWT tokens, extract the sub claim (user ID)
@@ -63,14 +83,18 @@ export const handler = async (event: any, context: any) => {
           console.error('Failed to parse JWT token:', e);
         }
       }
-      
+
       // Fallback for development only
       if (!userId && process.env.NODE_ENV === 'development') {
         userId = 'dev-user-12345';
       }
 
       if (!userId) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized - Valid JWT token required' }) };
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ error: 'Unauthorized - Valid JWT token required' }),
+        };
       }
 
       const entitlement = await getUserEntitlement(userId);
@@ -82,13 +106,18 @@ export const handler = async (event: any, context: any) => {
         body: JSON.stringify({
           entitlement,
           isActive,
-          hasAccess: isActive
-        })
+          hasAccess: isActive,
+        }),
       };
     }
 
     // GET /api/entitlements/list - List all entitlements
-    if (pathParts.length >= 2 && pathParts[0] === 'entitlements' && pathParts[1] === 'list' && httpMethod === 'GET') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'entitlements' &&
+      pathParts[1] === 'list' &&
+      httpMethod === 'GET'
+    ) {
       const entitlementsList = await db.select().from(entitlements).limit(100);
 
       return {
@@ -96,33 +125,38 @@ export const handler = async (event: any, context: any) => {
         headers,
         body: JSON.stringify({
           entitlements: entitlementsList || [],
-          total: entitlementsList?.length || 0
-        })
+          total: entitlementsList?.length || 0,
+        }),
       };
     }
 
     // POST /api/entitlements/create - Create entitlement
-    if (pathParts.length >= 2 && pathParts[0] === 'entitlements' && pathParts[1] === 'create' && httpMethod === 'POST') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'entitlements' &&
+      pathParts[1] === 'create' &&
+      httpMethod === 'POST'
+    ) {
       const { userId, productType, planName, planAmount, currency } = JSON.parse(body);
 
       if (!userId || !productType || !planName) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing required fields' }) };
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Missing required fields' }),
+        };
       }
 
-      const entitlement = await handleSuccessfulPurchase(
-        userId,
-        productType,
-        {
-          planName,
-          planAmount: planAmount?.toString(),
-          currency: currency || 'USD',
-        }
-      );
+      const entitlement = await handleSuccessfulPurchase(userId, productType, {
+        planName,
+        planAmount: planAmount?.toString(),
+        currency: currency || 'USD',
+      });
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, entitlement })
+        body: JSON.stringify({ success: true, entitlement }),
       };
     }
 
@@ -130,15 +164,14 @@ export const handler = async (event: any, context: any) => {
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: 'Entitlements endpoint not found' })
+      body: JSON.stringify({ error: 'Entitlements endpoint not found' }),
     };
-
   } catch (error: any) {
     console.error('Entitlements function error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message })
+      body: JSON.stringify({ error: 'Internal server error', message: error.message }),
     };
   }
 };

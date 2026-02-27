@@ -1,6 +1,15 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { TrendingUp, TrendingDown, DollarSign, Target, Award, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Target,
+  Award,
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+} from 'lucide-react';
 import { useNavigation } from '../../contexts/NavigationContext';
 
 const MetricsCards: React.FC = () => {
@@ -15,7 +24,7 @@ const MetricsCards: React.FC = () => {
       trend: 'up',
       icon: Target,
       color: 'from-blue-500 to-cyan-500',
-      feature: 'pipeline-section'
+      feature: 'pipeline-section',
     },
     {
       title: 'Pipeline Value',
@@ -24,7 +33,7 @@ const MetricsCards: React.FC = () => {
       trend: 'up',
       icon: DollarSign,
       color: 'from-green-500 to-emerald-500',
-      feature: 'pipeline-section'
+      feature: 'pipeline-section',
     },
     {
       title: 'Won Deals',
@@ -33,7 +42,7 @@ const MetricsCards: React.FC = () => {
       trend: 'up',
       icon: Award,
       color: 'from-purple-500 to-pink-500',
-      feature: 'analytics-section'
+      feature: 'analytics-section',
     },
     {
       title: 'Avg Deal Size',
@@ -42,8 +51,8 @@ const MetricsCards: React.FC = () => {
       trend: 'down',
       icon: BarChart3,
       color: 'from-orange-500 to-red-500',
-      feature: 'analytics-section'
-    }
+      feature: 'analytics-section',
+    },
   ];
 
   return (
@@ -58,7 +67,9 @@ const MetricsCards: React.FC = () => {
             <div className={`p-3 rounded-xl bg-gradient-to-r ${kpi.color} shadow-lg`}>
               <kpi.icon className="h-6 w-6 text-white" />
             </div>
-            <div className={`flex items-center ${kpi.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+            <div
+              className={`flex items-center ${kpi.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
+            >
               {kpi.trend === 'up' ? (
                 <ArrowUpRight className="h-4 w-4 mr-1" />
               ) : (
@@ -68,7 +79,9 @@ const MetricsCards: React.FC = () => {
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className={`text-2xl font-bold ${isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'} transition-colors`}>
+            <h3
+              className={`text-2xl font-bold ${isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'} transition-colors`}
+            >
               {kpi.value}
             </h3>
             <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>{kpi.title}</p>

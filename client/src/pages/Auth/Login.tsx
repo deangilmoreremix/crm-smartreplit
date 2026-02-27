@@ -13,7 +13,7 @@ const Login: FC = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ const Login: FC = () => {
 
     try {
       const { data, error: signInError } = await auth.signIn(email, password);
-      
+
       if (signInError) {
         setError(signInError.message || 'Invalid email or password');
         toast({
@@ -58,32 +58,26 @@ const Login: FC = () => {
   };
 
   return (
-    <div className={`min-h-screen ${
-      isDark ? 'bg-gray-900' : 'bg-gray-50'
-    } flex items-center justify-center p-4`}>
+    <div
+      className={`min-h-screen ${
+        isDark ? 'bg-gray-900' : 'bg-gray-50'
+      } flex items-center justify-center p-4`}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold ${
-            isDark ? 'text-white' : 'text-gray-900'
-          } mb-2`}>
+          <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
             Smart CRM
           </h1>
-          <p className={`${
-            isDark ? 'text-gray-400' : 'text-gray-600'
-          }`}>
-            Sign in to your account
-          </p>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Sign in to your account</p>
         </div>
-        
-        <Card className={`${
-          isDark 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-200'
-        } shadow-lg`}>
+
+        <Card
+          className={`${
+            isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          } shadow-lg`}
+        >
           <CardHeader>
-            <CardTitle className={`text-center ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}>
+            <CardTitle className={`text-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Welcome Back
             </CardTitle>
             <CardDescription className="text-center">
@@ -98,11 +92,12 @@ const Login: FC = () => {
                   <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 </div>
               )}
-              
+
               <div className="space-y-2">
-                <Label htmlFor="email" className={`flex items-center ${
-                  isDark ? 'text-gray-200' : 'text-gray-700'
-                }`}>
+                <Label
+                  htmlFor="email"
+                  className={`flex items-center ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Email
                 </Label>
@@ -116,16 +111,17 @@ const Login: FC = () => {
                   disabled={loading}
                   data-testid="input-email"
                   className={`${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400'
                       : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className={`flex items-center ${
-                  isDark ? 'text-gray-200' : 'text-gray-700'
-                }`}>
+                <Label
+                  htmlFor="password"
+                  className={`flex items-center ${isDark ? 'text-gray-200' : 'text-gray-700'}`}
+                >
                   <Lock className="h-4 w-4 mr-2" />
                   Password
                 </Label>
@@ -139,22 +135,22 @@ const Login: FC = () => {
                   disabled={loading}
                   data-testid="input-password"
                   className={`${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400'
                       : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Link 
+                <Link
                   to="/auth/recovery"
                   className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400"
                 >
                   Forgot Password?
                 </Link>
               </div>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={loading}
                 data-testid="button-submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -172,16 +168,11 @@ const Login: FC = () => {
                 )}
               </Button>
             </form>
-            
+
             <div className="mt-6 text-center">
-              <p className={`text-sm ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Don't have an account?{' '}
-                <Link 
-                  to="/signup"
-                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400"
-                >
+                <Link to="/signup" className="text-blue-600 hover:text-blue-500 dark:text-blue-400">
                   Sign Up
                 </Link>
               </p>

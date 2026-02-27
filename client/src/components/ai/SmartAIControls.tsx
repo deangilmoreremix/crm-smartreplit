@@ -17,7 +17,7 @@ import {
   AlertCircle,
   Info,
   Layers,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 interface SmartAIControlsProps {
@@ -29,7 +29,7 @@ interface SmartAIControlsProps {
 export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
   contact,
   contacts = [],
-  onAnalysisComplete
+  onAnalysisComplete,
 }) => {
   const {
     smartScoreContact,
@@ -40,7 +40,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
     analyzing,
     enriching,
     results,
-    errors
+    errors,
   } = useSmartAI();
 
   const { getRecommendations, getInsights, performance } = useTaskOptimization();
@@ -50,7 +50,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
   const [bulkSettings, setBulkSettings] = useState({
     costLimit: 1.0,
     timeLimit: 30000,
-    analysisType: 'contact_scoring' as const
+    analysisType: 'contact_scoring' as const,
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -65,7 +65,11 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
           result = await smartScoreContact(contact.id, contact, urgency);
           break;
         case 'enrich':
-          result = await smartEnrichContact(contact.id, contact, urgency === 'high' ? 'premium' : 'standard');
+          result = await smartEnrichContact(
+            contact.id,
+            contact,
+            urgency === 'high' ? 'premium' : 'standard'
+          );
           break;
         case 'categorize':
           result = await smartCategorizeAndTag(contact.id, contact);
@@ -87,12 +91,12 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
     if (contacts.length === 0) return;
 
     try {
-      const contactData = contacts.map(c => ({ contactId: c.id, contact: c }));
+      const contactData = contacts.map((c) => ({ contactId: c.id, contact: c }));
 
       const result = await smartBulkAnalysis(contactData, bulkSettings.analysisType, {
         urgency,
         costLimit: bulkSettings.costLimit,
-        timeLimit: bulkSettings.timeLimit
+        timeLimit: bulkSettings.timeLimit,
       });
 
       if (onAnalysisComplete) {
@@ -116,7 +120,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
       icon: Target,
       color: 'bg-blue-500',
       estimatedTime: '2-5s',
-      bestModel: 'Auto-selected'
+      bestModel: 'Auto-selected',
     },
     {
       id: 'enrich',
@@ -125,7 +129,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
       icon: Sparkles,
       color: 'bg-purple-500',
       estimatedTime: '3-8s',
-      bestModel: 'Auto-selected'
+      bestModel: 'Auto-selected',
     },
     {
       id: 'categorize',
@@ -134,7 +138,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
       icon: Layers,
       color: 'bg-green-500',
       estimatedTime: '1-3s',
-      bestModel: 'Gemma preferred'
+      bestModel: 'Gemma preferred',
     },
     {
       id: 'qualify',
@@ -143,8 +147,8 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
       icon: CheckCircle,
       color: 'bg-orange-500',
       estimatedTime: '4-10s',
-      bestModel: 'High accuracy'
-    }
+      bestModel: 'High accuracy',
+    },
   ];
 
   return (
@@ -196,7 +200,9 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {operations.map((op) => {
               const Icon = op.icon;
-              const recommendations = getRecommendationsForTask(op.id.replace('score', 'contact_scoring'));
+              const recommendations = getRecommendationsForTask(
+                op.id.replace('score', 'contact_scoring')
+              );
 
               return (
                 <div
@@ -231,7 +237,8 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
 
                   {recommendations && (
                     <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
-                      <strong>Recommended:</strong> {recommendations.recommendedProvider}/{recommendations.recommendedModel}
+                      <strong>Recommended:</strong> {recommendations.recommendedProvider}/
+                      {recommendations.recommendedModel}
                     </div>
                   )}
                 </div>
@@ -248,7 +255,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
               {[
                 { value: 'low', label: 'Low', desc: 'Cost-optimized' },
                 { value: 'medium', label: 'Medium', desc: 'Balanced' },
-                { value: 'high', label: 'High', desc: 'Accuracy-focused' }
+                { value: 'high', label: 'High', desc: 'Accuracy-focused' },
               ].map((option) => (
                 <button
                   key={option.value}
@@ -274,9 +281,9 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
           >
             <Zap className="w-4 h-4" />
             <span>
-              {analyzing || enriching 
-                ? 'Analyzing with optimal model...' 
-                : `Run ${operations.find(op => op.id === selectedOperation)?.name}`}
+              {analyzing || enriching
+                ? 'Analyzing with optimal model...'
+                : `Run ${operations.find((op) => op.id === selectedOperation)?.name}`}
             </span>
           </ModernButton>
 
@@ -293,7 +300,9 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
                     <span className="font-medium text-green-800">{key}:</span>
                     <span className="text-green-700 ml-2">
                       {result.modelUsed && `Used ${result.modelUsed}`}
-                      {result.results && Object.keys(result.results).length > 0 && ` - ${Object.keys(result.results).length} tasks completed`}
+                      {result.results &&
+                        Object.keys(result.results).length > 0 &&
+                        ` - ${Object.keys(result.results).length} tasks completed`}
                     </span>
                   </div>
                 ))}
@@ -336,7 +345,9 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
               </label>
               <select
                 value={bulkSettings.analysisType}
-                onChange={(e) => setBulkSettings(prev => ({ ...prev, analysisType: e.target.value as any }))}
+                onChange={(e) =>
+                  setBulkSettings((prev) => ({ ...prev, analysisType: e.target.value as any }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="contact_scoring">Contact Scoring</option>
@@ -348,14 +359,14 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
 
             {/* Constraints */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Limit ($)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Cost Limit ($)</label>
               <input
                 type="number"
                 step="0.10"
                 value={bulkSettings.costLimit}
-                onChange={(e) => setBulkSettings(prev => ({ ...prev, costLimit: parseFloat(e.target.value) }))}
+                onChange={(e) =>
+                  setBulkSettings((prev) => ({ ...prev, costLimit: parseFloat(e.target.value) }))
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="1.00"
               />
@@ -387,7 +398,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
                 setIsProcessing(true);
                 const { batchAPIService } = await import('../../services/openai-batch-api.service');
                 await batchAPIService.enrichContactsBulk(
-                  contacts.map(c => c.id), 
+                  contacts.map((c) => c.id),
                   [bulkSettings.analysisType],
                   { processingMode: 'immediate' }
                 );
@@ -398,8 +409,8 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
             >
               <Zap className="w-4 h-4" />
               <span>
-                {isProcessing 
-                  ? `Processing ${contacts.length} contacts...` 
+                {isProcessing
+                  ? `Processing ${contacts.length} contacts...`
                   : `Immediate Bulk Analysis (${contacts.length} contacts)`}
               </span>
             </ModernButton>
@@ -409,7 +420,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
                 setIsProcessing(true);
                 const { batchAPIService } = await import('../../services/openai-batch-api.service');
                 await batchAPIService.enrichContactsBulk(
-                  contacts.map(c => c.id), 
+                  contacts.map((c) => c.id),
                   [bulkSettings.analysisType],
                   { processingMode: 'overnight' }
                 );
@@ -420,8 +431,8 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
             >
               <Layers className="w-4 h-4" />
               <span>
-                {isProcessing 
-                  ? `Queueing ${contacts.length} contacts...` 
+                {isProcessing
+                  ? `Queueing ${contacts.length} contacts...`
                   : `Overnight Batch Analysis (50% off - ${contacts.length} contacts)`}
               </span>
             </ModernButton>
@@ -439,11 +450,15 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
 
           <div className="space-y-3">
             {performance.modelPerformance.slice(0, 5).map((model: any, index: number) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div>
                   <div className="font-medium text-gray-900">{model.model}</div>
                   <div className="text-sm text-gray-600">
-                    {Math.round(model.successRate * 100)}% success • {Math.round(model.avgTime)}ms avg
+                    {Math.round(model.successRate * 100)}% success • {Math.round(model.avgTime)}ms
+                    avg
                   </div>
                 </div>
                 <div className="text-right">

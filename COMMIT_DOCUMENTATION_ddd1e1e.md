@@ -17,6 +17,7 @@ Added a comprehensive authentication test script for production verification of 
 ## Changes Made
 
 ### New Files
+
 - [`scripts/comprehensive-auth-test.cjs`](scripts/comprehensive-auth-test.cjs) - Comprehensive auth verification script
 
 ---
@@ -41,6 +42,7 @@ node scripts/comprehensive-auth-test.cjs
 ```
 
 Expected output:
+
 ```
 === Production Readiness Test ===
 ✅ auth.users table: 130 users found

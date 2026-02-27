@@ -7,7 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Progress } from '../components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -33,7 +39,7 @@ import {
   Camera,
   Edit3,
   Share2,
-  FileText
+  FileText,
 } from 'lucide-react';
 
 interface VideoEmail {
@@ -107,20 +113,20 @@ export default function VideoEmailDashboard() {
         views: 45,
         completionRate: 0.85,
         engagement: 0.78,
-        sentDate: '2024-01-15T10:00:00Z'
+        sentDate: '2024-01-15T10:00:00Z',
       },
       gpt5Metadata: {
         generatedScript: true,
         optimizationScore: 0.92,
         suggestedImprovements: ['Add more visuals', 'Include pricing info'],
         tone: 'professional',
-        targetAudience: 'enterprise'
+        targetAudience: 'enterprise',
       },
       recipient: {
         name: 'John Smith',
         email: 'john@acme.com',
-        company: 'Acme Corp'
-      }
+        company: 'Acme Corp',
+      },
     },
     {
       id: '2',
@@ -132,16 +138,16 @@ export default function VideoEmailDashboard() {
       analytics: {
         views: 0,
         completionRate: 0,
-        engagement: 0
+        engagement: 0,
       },
       gpt5Metadata: {
         generatedScript: true,
         optimizationScore: 0.88,
         suggestedImprovements: ['Personalize greeting'],
         tone: 'friendly',
-        targetAudience: 'small business'
-      }
-    }
+        targetAudience: 'small business',
+      },
+    },
   ];
 
   const mockStats: VideoStats = {
@@ -149,19 +155,27 @@ export default function VideoEmailDashboard() {
     totalViews: 45,
     averageEngagement: 0.78,
     conversionRate: 0.15,
-    topPerformingVideo: 'Product Demo for Acme Corp'
+    topPerformingVideo: 'Product Demo for Acme Corp',
   };
 
-  const { data: videos = mockVideos, isLoading: videosLoading, error: videosError } = useQuery<VideoEmail[]>({
+  const {
+    data: videos = mockVideos,
+    isLoading: videosLoading,
+    error: videosError,
+  } = useQuery<VideoEmail[]>({
     queryKey: ['/api/videos'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
-  const { data: stats = mockStats, isLoading: statsLoading, error: statsError } = useQuery<VideoStats>({
+  const {
+    data: stats = mockStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery<VideoStats>({
     queryKey: ['/api/videos/stats'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
   // Use mock data if API fails
@@ -180,8 +194,8 @@ export default function VideoEmailDashboard() {
           recipient: params.recipient,
           purpose: params.purpose,
           tone: params.tone,
-          length: params.length
-        })
+          length: params.length,
+        }),
       });
 
       if (!response.ok) {
@@ -210,18 +224,21 @@ export default function VideoEmailDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ready': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'processing': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'draft': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      case 'sent': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'ready':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'processing':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'draft':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'sent':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
   const handleSaveVideo = async (videoData: any) => {
     try {
-      console.log('Saving video:', videoData);
-
       // Send video data to backend as JSON
       const response = await fetch('/api/videos', {
         method: 'POST',
@@ -234,8 +251,8 @@ export default function VideoEmailDashboard() {
           recipientEmail: videoData.recipientEmail,
           company: videoData.company,
           script: videoData.script,
-          videoBlob: videoData.videoBlob // Include video blob if present
-        })
+          videoBlob: videoData.videoBlob, // Include video blob if present
+        }),
       });
 
       if (!response.ok) {
@@ -243,7 +260,6 @@ export default function VideoEmailDashboard() {
       }
 
       const result = await response.json();
-      console.log('Video saved successfully:', result);
 
       // Optionally show a success message
       alert('Video email saved successfully!');
@@ -266,17 +282,19 @@ export default function VideoEmailDashboard() {
     <Button
       key="ai-generate"
       variant="outline"
-      onClick={() => generateVideoScript({
-        recipient: { name: 'John Doe', company: 'Example Corp' },
-        purpose: 'product demonstration',
-        tone: 'professional',
-        length: 90
-      })}
+      onClick={() =>
+        generateVideoScript({
+          recipient: { name: 'John Doe', company: 'Example Corp' },
+          purpose: 'product demonstration',
+          tone: 'professional',
+          length: 90,
+        })
+      }
       disabled={isGeneratingScript}
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isGeneratingScript ? 'Generating...' : 'AI Script Generator'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = stats ? (
@@ -286,15 +304,21 @@ export default function VideoEmailDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Videos</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-green-600">{displayStats.totalViews.toLocaleString()}</div>
+        <div className="text-2xl font-bold text-green-600">
+          {displayStats.totalViews.toLocaleString()}
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Views</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{Math.round(displayStats.averageEngagement * 100)}%</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {Math.round(displayStats.averageEngagement * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Engagement</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(displayStats.conversionRate * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(displayStats.conversionRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</div>
       </div>
     </div>
@@ -320,7 +344,10 @@ export default function VideoEmailDashboard() {
           {/* Video Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayVideos.map((video: VideoEmail) => (
-              <Card key={video.id} className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
+              <Card
+                key={video.id}
+                className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+              >
                 <CardContent className="p-0">
                   <div className="aspect-video bg-gray-200 dark:bg-gray-700 relative">
                     <img
@@ -335,14 +362,14 @@ export default function VideoEmailDashboard() {
                       </Button>
                     </div>
                     <div className="absolute top-2 right-2">
-                      <Badge className={getStatusColor(video.status)}>
-                        {video.status}
-                      </Badge>
+                      <Badge className={getStatusColor(video.status)}>{video.status}</Badge>
                     </div>
                   </div>
 
                   <div className="p-4">
-                    <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">{video.title}</h3>
+                    <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
+                      {video.title}
+                    </h3>
 
                     <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex justify-between">
@@ -388,12 +415,28 @@ export default function VideoEmailDashboard() {
         <TabsContent value="templates" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { name: 'Product Demo', description: 'Showcase your product features', duration: '2-3 min' },
-              { name: 'Welcome Message', description: 'Warm introduction for new customers', duration: '1-2 min' },
+              {
+                name: 'Product Demo',
+                description: 'Showcase your product features',
+                duration: '2-3 min',
+              },
+              {
+                name: 'Welcome Message',
+                description: 'Warm introduction for new customers',
+                duration: '1-2 min',
+              },
               { name: 'Follow-up', description: 'Re-engage previous prospects', duration: '1 min' },
-              { name: 'Testimonial', description: 'Share customer success stories', duration: '1-2 min' },
-              { name: 'Tutorial', description: 'Guide users through processes', duration: '3-5 min' },
-              { name: 'Announcement', description: 'Share important updates', duration: '1 min' }
+              {
+                name: 'Testimonial',
+                description: 'Share customer success stories',
+                duration: '1-2 min',
+              },
+              {
+                name: 'Tutorial',
+                description: 'Guide users through processes',
+                duration: '3-5 min',
+              },
+              { name: 'Announcement', description: 'Share important updates', duration: '1 min' },
             ].map((template, index) => (
               <Card key={index} className="cursor-pointer hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
@@ -406,9 +449,7 @@ export default function VideoEmailDashboard() {
                   </p>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">{template.duration}</span>
-                    <Button size="sm">
-                      Use Template
-                    </Button>
+                    <Button size="sm">Use Template</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -435,15 +476,21 @@ export default function VideoEmailDashboard() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Total Views</span>
-                      <span className="font-semibold">{displayStats.totalViews.toLocaleString()}</span>
+                      <span className="font-semibold">
+                        {displayStats.totalViews.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Average Completion</span>
-                      <span className="font-semibold">{Math.round(displayStats.averageEngagement * 100)}%</span>
+                      <span className="font-semibold">
+                        {Math.round(displayStats.averageEngagement * 100)}%
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Conversion Rate</span>
-                      <span className="font-semibold">{Math.round(displayStats.conversionRate * 100)}%</span>
+                      <span className="font-semibold">
+                        {Math.round(displayStats.conversionRate * 100)}%
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -458,7 +505,9 @@ export default function VideoEmailDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900 dark:text-white">{displayStats.topPerformingVideo}</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-white">
+                      {displayStats.topPerformingVideo}
+                    </h4>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Views</span>
@@ -478,8 +527,12 @@ export default function VideoEmailDashboard() {
           ) : (
             <div className="text-center py-12">
               <BarChart3 className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Analytics Available</h3>
-              <p className="text-gray-600 dark:text-gray-400">Create and send some video emails to see analytics</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Analytics Available
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Create and send some video emails to see analytics
+              </p>
             </div>
           )}
         </TabsContent>
@@ -530,12 +583,14 @@ export default function VideoEmailDashboard() {
                     </div>
                     <Button
                       className="w-full"
-                      onClick={() => generateVideoScript({
-                        recipient: { name: 'John Doe', company: 'Acme Corp' },
-                        purpose: 'product demonstration',
-                        tone: 'professional',
-                        length: 90
-                      })}
+                      onClick={() =>
+                        generateVideoScript({
+                          recipient: { name: 'John Doe', company: 'Acme Corp' },
+                          purpose: 'product demonstration',
+                          tone: 'professional',
+                          length: 90,
+                        })
+                      }
                       disabled={isGeneratingScript}
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
@@ -605,60 +660,60 @@ export default function VideoEmailDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Default Video Quality</Label>
-                  <Select value={videoQuality} onValueChange={setVideoQuality}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="720p">720p</SelectItem>
-                      <SelectItem value="1080p">1080p</SelectItem>
-                      <SelectItem value="4k">4K</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <Select value={videoQuality} onValueChange={setVideoQuality}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="720p">720p</SelectItem>
+                        <SelectItem value="1080p">1080p</SelectItem>
+                        <SelectItem value="4k">4K</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Default Duration</Label>
-                  <Select value={defaultDuration} onValueChange={setDefaultDuration}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="60">1 minute</SelectItem>
-                      <SelectItem value="120">2 minutes</SelectItem>
-                      <SelectItem value="180">3 minutes</SelectItem>
-                      <SelectItem value="300">5 minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-2">
+                    <Label>Default Duration</Label>
+                    <Select value={defaultDuration} onValueChange={setDefaultDuration}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="60">1 minute</SelectItem>
+                        <SelectItem value="120">2 minutes</SelectItem>
+                        <SelectItem value="180">3 minutes</SelectItem>
+                        <SelectItem value="300">5 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Auto-save Interval</Label>
-                  <Select value={autoSaveInterval} onValueChange={setAutoSaveInterval}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 seconds</SelectItem>
-                      <SelectItem value="30">30 seconds</SelectItem>
-                      <SelectItem value="60">1 minute</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-2">
+                    <Label>Auto-save Interval</Label>
+                    <Select value={autoSaveInterval} onValueChange={setAutoSaveInterval}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 seconds</SelectItem>
+                        <SelectItem value="30">30 seconds</SelectItem>
+                        <SelectItem value="60">1 minute</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>AI Optimization Level</Label>
-                  <Select value={aiOptimizationLevel} onValueChange={setAiOptimizationLevel}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="conservative">Conservative</SelectItem>
-                      <SelectItem value="balanced">Balanced</SelectItem>
-                      <SelectItem value="aggressive">Aggressive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="space-y-2">
+                    <Label>AI Optimization Level</Label>
+                    <Select value={aiOptimizationLevel} onValueChange={setAiOptimizationLevel}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="conservative">Conservative</SelectItem>
+                        <SelectItem value="balanced">Balanced</SelectItem>
+                        <SelectItem value="aggressive">Aggressive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>

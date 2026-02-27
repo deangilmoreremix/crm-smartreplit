@@ -19,17 +19,47 @@ import {
   Trash2,
   Edit,
   Check,
-  LayoutDashboard
+  LayoutDashboard,
 } from 'lucide-react';
 import { DashboardSectionConfig, CustomKPIConfig } from '../../types/whitelabel';
 
 const PREDEFINED_SECTIONS = [
-  { id: 'executive-overview-section', name: 'Executive Overview', icon: 'BarChart3', description: 'Key metrics and performance overview' },
-  { id: 'ai-smart-features-hub', name: 'AI Features Hub', icon: 'Brain', description: 'AI-powered tools and insights' },
-  { id: 'sales-pipeline-deal-analytics', name: 'Sales Pipeline', icon: 'Users', description: 'Deal tracking and analytics' },
-  { id: 'customer-lead-management', name: 'Customer Management', icon: 'Users', description: 'Contact and lead management' },
-  { id: 'activities-communications', name: 'Communications', icon: 'Zap', description: 'Email, calls, and messaging' },
-  { id: 'integrations-system', name: 'Integrations', icon: 'Settings', description: 'Connected apps and services' }
+  {
+    id: 'executive-overview-section',
+    name: 'Executive Overview',
+    icon: 'BarChart3',
+    description: 'Key metrics and performance overview',
+  },
+  {
+    id: 'ai-smart-features-hub',
+    name: 'AI Features Hub',
+    icon: 'Brain',
+    description: 'AI-powered tools and insights',
+  },
+  {
+    id: 'sales-pipeline-deal-analytics',
+    name: 'Sales Pipeline',
+    icon: 'Users',
+    description: 'Deal tracking and analytics',
+  },
+  {
+    id: 'customer-lead-management',
+    name: 'Customer Management',
+    icon: 'Users',
+    description: 'Contact and lead management',
+  },
+  {
+    id: 'activities-communications',
+    name: 'Communications',
+    icon: 'Zap',
+    description: 'Email, calls, and messaging',
+  },
+  {
+    id: 'integrations-system',
+    name: 'Integrations',
+    icon: 'Settings',
+    description: 'Connected apps and services',
+  },
 ];
 
 const ICON_OPTIONS = [
@@ -38,7 +68,7 @@ const ICON_OPTIONS = [
   { value: 'Settings', label: 'Settings', icon: Settings },
   { value: 'Zap', label: 'Lightning', icon: Zap },
   { value: 'Brain', label: 'AI Brain', icon: Brain },
-  { value: 'Check', label: 'Check', icon: Check }
+  { value: 'Check', label: 'Check', icon: Check },
 ];
 
 export const DashboardCustomization: React.FC = () => {
@@ -51,7 +81,7 @@ export const DashboardCustomization: React.FC = () => {
     description: '',
     icon: 'BarChart3',
     color: '#3B82F6',
-    enabled: true
+    enabled: true,
   });
 
   const updateDashboardSection = (sectionId: string, updates: Partial<DashboardSectionConfig>) => {
@@ -71,11 +101,11 @@ export const DashboardCustomization: React.FC = () => {
       description: newKPIForm.description,
       icon: newKPIForm.icon || 'BarChart3',
       color: newKPIForm.color || '#3B82F6',
-      enabled: newKPIForm.enabled !== false
+      enabled: newKPIForm.enabled !== false,
     };
 
     updateConfig({
-      customKPIs: [...config.customKPIs, newKPI]
+      customKPIs: [...config.customKPIs, newKPI],
     });
 
     setNewKPIForm({
@@ -83,12 +113,12 @@ export const DashboardCustomization: React.FC = () => {
       description: '',
       icon: 'BarChart3',
       color: '#3B82F6',
-      enabled: true
+      enabled: true,
     });
   };
 
   const updateCustomKPI = (kpiId: string, updates: Partial<CustomKPIConfig>) => {
-    const newKPIs = config.customKPIs.map(kpi =>
+    const newKPIs = config.customKPIs.map((kpi) =>
       kpi.id === kpiId ? { ...kpi, ...updates } : kpi
     );
     updateConfig({ customKPIs: newKPIs });
@@ -96,7 +126,7 @@ export const DashboardCustomization: React.FC = () => {
 
   const removeCustomKPI = (kpiId: string) => {
     updateConfig({
-      customKPIs: config.customKPIs.filter(kpi => kpi.id !== kpiId)
+      customKPIs: config.customKPIs.filter((kpi) => kpi.id !== kpiId),
     });
   };
 
@@ -112,15 +142,15 @@ export const DashboardCustomization: React.FC = () => {
               feature="Dashboard Sections"
               description="Customize the appearance and content of dashboard sections to match your brand and business needs."
               benefits={[
-                "Rebrand section titles and descriptions",
-                "Change section icons and colors",
-                "Show/hide sections based on user roles",
-                "Maintain consistent branding across the platform"
+                'Rebrand section titles and descriptions',
+                'Change section icons and colors',
+                'Show/hide sections based on user roles',
+                'Maintain consistent branding across the platform',
               ]}
               examples={[
                 "Rename 'AI Features Hub' to 'Smart Analytics Suite'",
-                "Change section colors to match company branding",
-                "Hide advanced features for basic users"
+                'Change section colors to match company branding',
+                'Hide advanced features for basic users',
               ]}
             />
           </div>
@@ -139,15 +169,21 @@ export const DashboardCustomization: React.FC = () => {
                   key={section.id}
                   className={`border rounded-lg p-4 transition-all ${
                     isEnabled
-                      ? (isDark ? 'border-gray-600 bg-gray-700/50' : 'border-gray-200 bg-gray-50')
-                      : (isDark ? 'border-gray-700 bg-gray-800/50 opacity-60' : 'border-gray-300 bg-gray-100 opacity-60')
+                      ? isDark
+                        ? 'border-gray-600 bg-gray-700/50'
+                        : 'border-gray-200 bg-gray-50'
+                      : isDark
+                        ? 'border-gray-700 bg-gray-800/50 opacity-60'
+                        : 'border-gray-300 bg-gray-100 opacity-60'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${isEnabled ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                      <div
+                        className={`p-2 rounded-lg ${isEnabled ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}
+                      >
                         {React.createElement(
-                          ICON_OPTIONS.find(opt => opt.value === displayIcon)?.icon || Settings,
+                          ICON_OPTIONS.find((opt) => opt.value === displayIcon)?.icon || Settings,
                           { className: `h-4 w-4 ${isEnabled ? 'text-blue-600' : 'text-gray-400'}` }
                         )}
                       </div>
@@ -161,13 +197,15 @@ export const DashboardCustomization: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={isEnabled ? "default" : "secondary"}>
+                      <Badge variant={isEnabled ? 'default' : 'secondary'}>
                         {isEnabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditingSection(editingSection === section.id ? null : section.id)}
+                        onClick={() =>
+                          setEditingSection(editingSection === section.id ? null : section.id)
+                        }
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -180,7 +218,9 @@ export const DashboardCustomization: React.FC = () => {
                         <Label className="text-xs">Title</Label>
                         <Input
                           value={displayTitle}
-                          onChange={(e) => updateDashboardSection(section.id, { title: e.target.value })}
+                          onChange={(e) =>
+                            updateDashboardSection(section.id, { title: e.target.value })
+                          }
                           placeholder={section.name}
                         />
                       </div>
@@ -188,7 +228,9 @@ export const DashboardCustomization: React.FC = () => {
                         <Label className="text-xs">Description</Label>
                         <Textarea
                           value={displayDescription}
-                          onChange={(e) => updateDashboardSection(section.id, { description: e.target.value })}
+                          onChange={(e) =>
+                            updateDashboardSection(section.id, { description: e.target.value })
+                          }
                           placeholder={section.description}
                           rows={2}
                         />
@@ -198,12 +240,16 @@ export const DashboardCustomization: React.FC = () => {
                           <Label className="text-xs">Icon</Label>
                           <select
                             value={displayIcon}
-                            onChange={(e) => updateDashboardSection(section.id, { icon: e.target.value })}
+                            onChange={(e) =>
+                              updateDashboardSection(section.id, { icon: e.target.value })
+                            }
                             className={`w-full mt-1 px-3 py-2 border rounded-md text-sm ${
-                              isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                              isDark
+                                ? 'bg-gray-700 border-gray-600 text-white'
+                                : 'bg-white border-gray-300'
                             }`}
                           >
-                            {ICON_OPTIONS.map(option => (
+                            {ICON_OPTIONS.map((option) => (
                               <option key={option.value} value={option.value}>
                                 {option.label}
                               </option>
@@ -215,7 +261,9 @@ export const DashboardCustomization: React.FC = () => {
                           <ColorInput
                             id={`section-color-${section.id}`}
                             value={customConfig?.customColor || '#3B82F6'}
-                            onChange={(color) => updateDashboardSection(section.id, { customColor: color })}
+                            onChange={(color) =>
+                              updateDashboardSection(section.id, { customColor: color })
+                            }
                             label=""
                           />
                         </div>
@@ -225,16 +273,14 @@ export const DashboardCustomization: React.FC = () => {
                           <input
                             type="checkbox"
                             checked={isEnabled}
-                            onChange={(e) => updateDashboardSection(section.id, { enabled: e.target.checked })}
+                            onChange={(e) =>
+                              updateDashboardSection(section.id, { enabled: e.target.checked })
+                            }
                             className="rounded"
                           />
                           <span className="text-sm">Enabled</span>
                         </label>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingSection(null)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => setEditingSection(null)}>
                           <Check className="h-4 w-4 mr-1" />
                           Done
                         </Button>
@@ -258,15 +304,15 @@ export const DashboardCustomization: React.FC = () => {
               feature="Custom KPI Cards"
               description="Create branded KPI cards that display your most important business metrics with custom colors and icons."
               benefits={[
-                "Display company-specific metrics",
-                "Custom branding for KPI cards",
-                "Flexible metric definitions",
-                "Enhanced dashboard personalization"
+                'Display company-specific metrics',
+                'Custom branding for KPI cards',
+                'Flexible metric definitions',
+                'Enhanced dashboard personalization',
               ]}
               examples={[
                 "Add 'Monthly Recurring Revenue' KPI",
                 "Create 'Customer Satisfaction Score' metric",
-                "Track 'Lead Conversion Rate' with custom styling"
+                "Track 'Lead Conversion Rate' with custom styling",
               ]}
             />
           </div>
@@ -282,7 +328,7 @@ export const DashboardCustomization: React.FC = () => {
                 <Label>Label</Label>
                 <Input
                   value={newKPIForm.label}
-                  onChange={(e) => setNewKPIForm({...newKPIForm, label: e.target.value})}
+                  onChange={(e) => setNewKPIForm({ ...newKPIForm, label: e.target.value })}
                   placeholder="e.g., Monthly Revenue"
                 />
               </div>
@@ -290,7 +336,7 @@ export const DashboardCustomization: React.FC = () => {
                 <Label>Description</Label>
                 <Input
                   value={newKPIForm.description}
-                  onChange={(e) => setNewKPIForm({...newKPIForm, description: e.target.value})}
+                  onChange={(e) => setNewKPIForm({ ...newKPIForm, description: e.target.value })}
                   placeholder="Brief description of the metric"
                 />
               </div>
@@ -298,12 +344,12 @@ export const DashboardCustomization: React.FC = () => {
                 <Label>Icon</Label>
                 <select
                   value={newKPIForm.icon}
-                  onChange={(e) => setNewKPIForm({...newKPIForm, icon: e.target.value})}
+                  onChange={(e) => setNewKPIForm({ ...newKPIForm, icon: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-md ${
                     isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                   }`}
                 >
-                  {ICON_OPTIONS.map(option => (
+                  {ICON_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -315,13 +361,17 @@ export const DashboardCustomization: React.FC = () => {
                 <ColorInput
                   id="new-kpi-color"
                   value={newKPIForm.color || '#3B82F6'}
-                  onChange={(color) => setNewKPIForm({...newKPIForm, color})}
+                  onChange={(color) => setNewKPIForm({ ...newKPIForm, color })}
                   label=""
                 />
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button onClick={addCustomKPI} disabled={!newKPIForm.label || !newKPIForm.description} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+              <Button
+                onClick={addCustomKPI}
+                disabled={!newKPIForm.label || !newKPIForm.description}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add KPI
               </Button>
@@ -344,8 +394,12 @@ export const DashboardCustomization: React.FC = () => {
                     key={kpi.id}
                     className={`border rounded-lg p-4 transition-all ${
                       kpi.enabled
-                        ? (isDark ? 'border-gray-600 bg-gray-700/50' : 'border-gray-200 bg-white')
-                        : (isDark ? 'border-gray-700 bg-gray-800/50 opacity-60' : 'border-gray-300 bg-gray-100 opacity-60')
+                        ? isDark
+                          ? 'border-gray-600 bg-gray-700/50'
+                          : 'border-gray-200 bg-white'
+                        : isDark
+                          ? 'border-gray-700 bg-gray-800/50 opacity-60'
+                          : 'border-gray-300 bg-gray-100 opacity-60'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -355,8 +409,8 @@ export const DashboardCustomization: React.FC = () => {
                           style={{ backgroundColor: `${kpi.color}20` }}
                         >
                           {React.createElement(
-                            ICON_OPTIONS.find(opt => opt.value === kpi.icon)?.icon || BarChart3,
-                            { className: "h-4 w-4", style: { color: kpi.color } }
+                            ICON_OPTIONS.find((opt) => opt.value === kpi.icon)?.icon || BarChart3,
+                            { className: 'h-4 w-4', style: { color: kpi.color } }
                           )}
                         </div>
                         <div>
@@ -369,7 +423,7 @@ export const DashboardCustomization: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={kpi.enabled ? "default" : "secondary"}>
+                        <Badge variant={kpi.enabled ? 'default' : 'secondary'}>
                           {kpi.enabled ? 'Enabled' : 'Disabled'}
                         </Badge>
                         <Button
@@ -379,11 +433,7 @@ export const DashboardCustomization: React.FC = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeCustomKPI(kpi.id)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => removeCustomKPI(kpi.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -402,7 +452,9 @@ export const DashboardCustomization: React.FC = () => {
                           <Label className="text-xs">Description</Label>
                           <Input
                             value={kpi.description}
-                            onChange={(e) => updateCustomKPI(kpi.id, { description: e.target.value })}
+                            onChange={(e) =>
+                              updateCustomKPI(kpi.id, { description: e.target.value })
+                            }
                           />
                         </div>
                         <div className="flex items-center space-x-4">
@@ -412,10 +464,12 @@ export const DashboardCustomization: React.FC = () => {
                               value={kpi.icon}
                               onChange={(e) => updateCustomKPI(kpi.id, { icon: e.target.value })}
                               className={`w-full px-3 py-2 border rounded-md text-sm ${
-                                isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                                isDark
+                                  ? 'bg-gray-700 border-gray-600 text-white'
+                                  : 'bg-white border-gray-300'
                               }`}
                             >
-                              {ICON_OPTIONS.map(option => (
+                              {ICON_OPTIONS.map((option) => (
                                 <option key={option.value} value={option.value}>
                                   {option.label}
                                 </option>
@@ -437,16 +491,14 @@ export const DashboardCustomization: React.FC = () => {
                             <input
                               type="checkbox"
                               checked={kpi.enabled}
-                              onChange={(e) => updateCustomKPI(kpi.id, { enabled: e.target.checked })}
+                              onChange={(e) =>
+                                updateCustomKPI(kpi.id, { enabled: e.target.checked })
+                              }
                               className="rounded"
                             />
                             <span className="text-sm">Enabled</span>
                           </label>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingKPI(null)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => setEditingKPI(null)}>
                             <Check className="h-4 w-4 mr-1" />
                             Done
                           </Button>

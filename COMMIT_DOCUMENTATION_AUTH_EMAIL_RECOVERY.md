@@ -13,6 +13,7 @@ This commit implements comprehensive Supabase email recovery functionality and u
 ### 1. Supabase Email Template Updates
 
 **Files:**
+
 - `attached_assets/supabase-email-templates/5-reset-password.html` (modified)
 - `attached_assets/supabase-email-templates/magic-link.html` (new)
 - `attached_assets/supabase-email-templates/reauthentication.html` (new)
@@ -21,6 +22,7 @@ This commit implements comprehensive Supabase email recovery functionality and u
 - `attached_assets/supabase-email-templates/TEMPLATE-MAPPING.md` (modified)
 
 **Changes:**
+
 - Fixed password reset email template to use `{{ .ActionURL }}` instead of `{{ .ConfirmationURL }}`
 - Added magic link email template for passwordless authentication
 - Added reauthentication email template for security-sensitive operations
@@ -30,10 +32,12 @@ This commit implements comprehensive Supabase email recovery functionality and u
 ### 2. Auth Pages Improvements
 
 **Files:**
+
 - `client/src/pages/Auth/AuthConfirm.tsx` (modified)
 - `client/src/pages/Auth/ResetPassword.tsx` (modified)
 
 **Changes:**
+
 - Enhanced `AuthConfirm.tsx`:
   - Added proper `React` import for `React.FC` type
   - Added `URLSearchParams` declaration for ESLint compatibility
@@ -52,6 +56,7 @@ This commit implements comprehensive Supabase email recovery functionality and u
 ### 3. User Management Utilities
 
 **New Files:**
+
 - `check-users.js` - Utility to list and check user status
 - `invite-keith.js` - Script to send invitation to Keith
 - `restore-keith.js` - Script to restore Keith's account
@@ -61,15 +66,18 @@ This commit implements comprehensive Supabase email recovery functionality and u
 ### 4. Documentation
 
 **New Files:**
+
 - `SUPABASE_EMAIL_RECOVERY_FIX.md` - Documentation for email recovery fix
 - `COMMIT_DOCUMENTATION_AUTH_EMAIL_RECOVERY.md` - This file
 
 **Modified Files:**
+
 - `SUPABASE_EMAIL_TEMPLATE_LINKS_GUIDE.md` - Updated with correct template variable references
 
 ### 5. Cleanup
 
 **Deleted Files:**
+
 - `ai-test-report-1770816563675.json`
 - `ai-test-report-1770816744590.json`
 - `ai-test-results-1770816563677.xml`
@@ -82,6 +90,7 @@ This commit implements comprehensive Supabase email recovery functionality and u
 ### Email Template Fix
 
 The primary issue was that the Supabase email templates were using the wrong URL variable:
+
 - **Incorrect:** `{{ .ConfirmationURL }}` or `{{ .TokenURL }}`
 - **Correct:** `{{ .ActionURL }}`
 
@@ -90,6 +99,7 @@ The `ActionURL` contains the complete URL with token_hash and other required par
 ### Authentication Flow Support
 
 The updated auth pages now support:
+
 1. **PKCE Flow (Query Parameters):** `token_hash`, `type`, `email`
 2. **Implicit Flow (URL Hash):** `access_token`, `refresh_token`, `type`
 3. **Query Parameter Tokens:** Direct tokens in query parameters
@@ -111,6 +121,7 @@ The updated auth pages now support:
 ## Rollback Instructions
 
 If issues arise, rollback to the previous commit:
+
 ```bash
 git revert 4dff1de
 ```

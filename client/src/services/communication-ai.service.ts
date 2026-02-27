@@ -105,7 +105,6 @@ export interface ConversationFlow {
 }
 
 class CommunicationAIService {
-
   async generateEmail(
     contact: Contact,
     purpose: 'introduction' | 'follow-up' | 'proposal' | 'nurturing' | 'reengagement',
@@ -123,16 +122,16 @@ class CommunicationAIService {
       data: {
         contact,
         purpose,
-        context
+        context,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         subject: response.result.subject,
         body: response.result.body,
@@ -140,19 +139,19 @@ class CommunicationAIService {
         purpose,
         personalization: response.result.personalization || {
           elements: [],
-          confidence: 70
+          confidence: 70,
         },
         optimization: response.result.optimization || {
           subjectScore: 75,
           bodyScore: 80,
           overallScore: 78,
-          improvements: []
+          improvements: [],
         },
         metadata: response.result.metadata || {
           wordCount: response.result.body?.split(' ').length || 0,
           readingTime: '1-2 minutes',
-          targetAudience: contact.title || 'Professional'
-        }
+          targetAudience: contact.title || 'Professional',
+        },
       };
     } catch (error) {
       logger.error('Email generation failed', error as Error, { contactId: contact.id, purpose });
@@ -177,39 +176,39 @@ class CommunicationAIService {
       data: {
         emailContent,
         recipient,
-        context
+        context,
       },
       context: {
-        contactId: recipient?.id
-      }
+        contactId: recipient?.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         scores: response.result.scores || {
           clarity: 75,
           engagement: 70,
           professionalism: 85,
           persuasiveness: 65,
-          overall: 74
+          overall: 74,
         },
         toneAnalysis: response.result.toneAnalysis || {
           primary: 'professional',
-          emotionalProfile: { neutral: 80, positive: 15, negative: 5 }
+          emotionalProfile: { neutral: 80, positive: 15, negative: 5 },
         },
         suggestions: response.result.suggestions || [],
         predictions: response.result.predictions || {
           responseRate: 25,
           engagementScore: 70,
-          conversionProbability: 15
+          conversionProbability: 15,
         },
         alternatives: response.result.alternatives || {
           subjectLines: [],
           openingLines: [],
-          callsToAction: []
-        }
+          callsToAction: [],
+        },
       };
     } catch (error) {
       logger.error('Email analysis failed', error as Error);
@@ -228,37 +227,39 @@ class CommunicationAIService {
       data: {
         contact,
         interactionHistory,
-        businessGoals
+        businessGoals,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         contactId: contact.id,
         optimalChannels: response.result.optimalChannels || [
-          { channel: 'email', effectiveness: 80, reasoning: ['Primary business communication'] }
+          { channel: 'email', effectiveness: 80, reasoning: ['Primary business communication'] },
         ],
         timing: response.result.timing || {
           bestDays: ['Tuesday', 'Wednesday', 'Thursday'],
           bestHours: ['9AM-11AM', '2PM-4PM'],
           frequency: 'Weekly',
-          nextOptimalContact: '2 days'
+          nextOptimalContact: '2 days',
         },
         messaging: response.result.messaging || {
           preferredTone: 'professional',
           keyMessages: [],
           avoidTopics: [],
-          personalizationTriggers: []
+          personalizationTriggers: [],
         },
-        contentRecommendations: response.result.contentRecommendations || []
+        contentRecommendations: response.result.contentRecommendations || [],
       };
     } catch (error) {
-      logger.error('Communication strategy generation failed', error as Error, { contactId: contact.id });
+      logger.error('Communication strategy generation failed', error as Error, {
+        contactId: contact.id,
+      });
       throw error;
     }
   }
@@ -278,24 +279,26 @@ class CommunicationAIService {
       data: {
         contact,
         conversationType,
-        context
+        context,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         stages: response.result.stages || [],
         objectionHandling: response.result.objectionHandling || [],
         closingStrategies: response.result.closingStrategies || [],
-        fallbackPlans: response.result.fallbackPlans || []
+        fallbackPlans: response.result.fallbackPlans || [],
       };
     } catch (error) {
-      logger.error('Conversation flow generation failed', error as Error, { contactId: contact.id });
+      logger.error('Conversation flow generation failed', error as Error, {
+        contactId: contact.id,
+      });
       throw error;
     }
   }
@@ -321,11 +324,11 @@ class CommunicationAIService {
         contact,
         emailContent,
         interactionHistory,
-        analysisType: 'timing_optimization'
+        analysisType: 'timing_optimization',
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
@@ -365,21 +368,21 @@ class CommunicationAIService {
         platform,
         purpose,
         context,
-        messageType: 'social'
+        messageType: 'social',
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
       return response.result;
     } catch (error) {
-      logger.error('Personalized message generation failed', error as Error, { 
-        contactId: contact.id, 
-        platform, 
-        purpose 
+      logger.error('Personalized message generation failed', error as Error, {
+        contactId: contact.id,
+        platform,
+        purpose,
       });
       throw error;
     }
@@ -405,18 +408,20 @@ class CommunicationAIService {
       data: {
         contact,
         communications,
-        analysisType: 'effectiveness'
+        analysisType: 'effectiveness',
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
       return response.result;
     } catch (error) {
-      logger.error('Communication effectiveness analysis failed', error as Error, { contactId: contact.id });
+      logger.error('Communication effectiveness analysis failed', error as Error, {
+        contactId: contact.id,
+      });
       throw error;
     }
   }
@@ -425,53 +430,53 @@ class CommunicationAIService {
   generateEmailSubjectVariations(originalSubject: string, count = 5): string[] {
     const variations = [];
     const baseSubject = originalSubject.toLowerCase();
-    
+
     // Simple rule-based variations (in real implementation, this would use AI)
     if (baseSubject.includes('follow')) {
       variations.push(`Quick follow-up: ${originalSubject.replace(/follow.up/i, '')}`);
       variations.push(`Re: ${originalSubject}`);
     }
-    
+
     if (baseSubject.includes('meeting')) {
       variations.push(`15-minute chat: ${originalSubject.replace(/meeting/i, 'discussion')}`);
       variations.push(`Quick call opportunity: ${originalSubject.replace(/meeting/i, '')}`);
     }
-    
+
     // Add question format
     variations.push(`${originalSubject}?`);
-    
+
     // Add urgency (sparingly)
     if (count > 3) {
       variations.push(`Important: ${originalSubject}`);
     }
-    
+
     return variations.slice(0, count);
   }
 
   calculateEmailScore(emailContent: { subject: string; body: string }): number {
     let score = 50;
-    
+
     // Subject line scoring
     const subjectLength = emailContent.subject.length;
     if (subjectLength >= 30 && subjectLength <= 50) score += 10;
     if (emailContent.subject.includes('?')) score += 5;
-    
+
     // Body scoring
     const wordCount = emailContent.body.split(' ').length;
     if (wordCount >= 50 && wordCount <= 200) score += 10;
     if (emailContent.body.includes('?')) score += 5;
     if (emailContent.body.match(/\n\n/g)?.length >= 2) score += 5; // Paragraph breaks
-    
+
     return Math.max(0, Math.min(100, score));
   }
 
   suggestCallToAction(context: { purpose: string; industry?: string; urgency?: string }): string[] {
     const actions = [];
-    
+
     switch (context.purpose) {
       case 'introduction':
         actions.push('Would you be open to a 15-minute call?');
-        actions.push('I\'d love to learn more about your current initiatives.');
+        actions.push("I'd love to learn more about your current initiatives.");
         break;
       case 'follow-up':
         actions.push('What are your thoughts on the proposal?');
@@ -482,7 +487,7 @@ class CommunicationAIService {
         actions.push('When would be a good time for a quick demo?');
         break;
     }
-    
+
     return actions;
   }
 }

@@ -24,45 +24,58 @@ const getChatbotResponse = (input: string): string => {
   // Contacts
   if (lowerInput.includes('contact') || lowerInput.includes('contacts')) {
     if (lowerInput.includes('add') || lowerInput.includes('create')) {
-      return "To add a contact:\n1. Tap the Contacts tab\n2. Press the + button\n3. Fill in name, email, phone\n4. Add company info\n5. Tap Save\n\nYour contact will appear in the list!";
+      return 'To add a contact:\n1. Tap the Contacts tab\n2. Press the + button\n3. Fill in name, email, phone\n4. Add company info\n5. Tap Save\n\nYour contact will appear in the list!';
     }
     if (lowerInput.includes('search') || lowerInput.includes('find')) {
-      return "To search contacts:\n• Use the search bar at the top\n• Filter by company, tags, or date\n• Sort by name, date added, or last contacted\n• Tap a contact to view details";
+      return 'To search contacts:\n• Use the search bar at the top\n• Filter by company, tags, or date\n• Sort by name, date added, or last contacted\n• Tap a contact to view details';
     }
-    return "Contacts are your customer database. You can:\n• View all contacts in a list\n• Add new contacts with details\n• Search and filter contacts\n• Import from CSV files\n• Export contact data\n• View contact activity history";
+    return 'Contacts are your customer database. You can:\n• View all contacts in a list\n• Add new contacts with details\n• Search and filter contacts\n• Import from CSV files\n• Export contact data\n• View contact activity history';
   }
 
   // Deals
   if (lowerInput.includes('deal') || lowerInput.includes('deals')) {
     if (lowerInput.includes('add') || lowerInput.includes('create')) {
-      return "To create a deal:\n1. Go to Deals tab\n2. Tap + button\n3. Enter deal name and value\n4. Select contact and stage\n5. Add description and notes\n6. Set close date\n7. Save the deal";
+      return 'To create a deal:\n1. Go to Deals tab\n2. Tap + button\n3. Enter deal name and value\n4. Select contact and stage\n5. Add description and notes\n6. Set close date\n7. Save the deal';
     }
     if (lowerInput.includes('stage') || lowerInput.includes('pipeline')) {
-      return "Deal stages typically include:\n• Prospect - Initial contact\n• Qualification - Needs assessment\n• Proposal - Sent quote/proposal\n• Negotiation - Terms discussion\n• Closed Won - Deal completed\n• Closed Lost - Deal lost\n\nDrag deals between stages to update progress.";
+      return 'Deal stages typically include:\n• Prospect - Initial contact\n• Qualification - Needs assessment\n• Proposal - Sent quote/proposal\n• Negotiation - Terms discussion\n• Closed Won - Deal completed\n• Closed Lost - Deal lost\n\nDrag deals between stages to update progress.';
     }
-    return "Deals track your sales pipeline:\n• Create deals with values and stages\n• Move deals through pipeline stages\n• Set and track close dates\n• Add notes, tasks, and reminders\n• View deal analytics and forecasts\n• Generate reports on pipeline health";
+    return 'Deals track your sales pipeline:\n• Create deals with values and stages\n• Move deals through pipeline stages\n• Set and track close dates\n• Add notes, tasks, and reminders\n• View deal analytics and forecasts\n• Generate reports on pipeline health';
   }
 
   // Dashboard
   if (lowerInput.includes('dashboard')) {
-    return "The Dashboard shows your key metrics:\n• Overview cards show key metrics\n• Recent activity feed\n• Quick action buttons\n• Charts for deals and revenue\n• Upcoming tasks and appointments\n• Performance indicators\n\nCustomize it in Settings to show what matters most to you.";
+    return 'The Dashboard shows your key metrics:\n• Overview cards show key metrics\n• Recent activity feed\n• Quick action buttons\n• Charts for deals and revenue\n• Upcoming tasks and appointments\n• Performance indicators\n\nCustomize it in Settings to show what matters most to you.';
   }
 
   // Settings
-  if (lowerInput.includes('setting') || lowerInput.includes('settings') || lowerInput.includes('theme') || lowerInput.includes('dark')) {
+  if (
+    lowerInput.includes('setting') ||
+    lowerInput.includes('settings') ||
+    lowerInput.includes('theme') ||
+    lowerInput.includes('dark')
+  ) {
     if (lowerInput.includes('theme') || lowerInput.includes('dark')) {
       return "To change theme:\n1. Go to Settings tab\n2. Find 'Appearance' section\n3. Toggle between Light and Dark mode\n4. Changes apply immediately\n\nDark mode reduces eye strain in low light.";
     }
-    return "Settings let you customize the app:\n• Profile: Update your information\n• Notifications: Control alerts and reminders\n• Appearance: Theme and display options\n• Privacy: Data sharing preferences\n• Sync: Data synchronization settings\n• Help: App tutorials and support";
+    return 'Settings let you customize the app:\n• Profile: Update your information\n• Notifications: Control alerts and reminders\n• Appearance: Theme and display options\n• Privacy: Data sharing preferences\n• Sync: Data synchronization settings\n• Help: App tutorials and support';
   }
 
   // Authentication
-  if (lowerInput.includes('login') || lowerInput.includes('sign in') || lowerInput.includes('password')) {
+  if (
+    lowerInput.includes('login') ||
+    lowerInput.includes('sign in') ||
+    lowerInput.includes('password')
+  ) {
     return "To sign in:\n1. Enter your email address\n2. Enter your password\n3. Tap 'Sign In' button\n\nForgot password? Tap 'Forgot Password' and enter your email for reset instructions.\n\nDon't have an account? Use 'Sign Up' to create one.";
   }
 
   // General help
-  if (lowerInput.includes('help') || lowerInput.includes('tutorial') || lowerInput.includes('learn')) {
+  if (
+    lowerInput.includes('help') ||
+    lowerInput.includes('tutorial') ||
+    lowerInput.includes('learn')
+  ) {
     return "I can teach you about:\n\n📱 Contacts: Adding, searching, managing customers\n💰 Deals: Creating, tracking, pipeline management\n📊 Dashboard: Metrics, insights, quick actions\n⚙️ Settings: Customization, preferences, themes\n\nTry asking: 'How do contacts work?' or 'Tell me about deals'";
   }
 
@@ -103,10 +116,10 @@ export const ChatbotProvider: React.FC<ChatbotProviderProps> = ({ children }) =>
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     // Simulate typing delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Get bot response
     const botResponse = getChatbotResponse(messageText);
@@ -116,7 +129,7 @@ export const ChatbotProvider: React.FC<ChatbotProviderProps> = ({ children }) =>
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, botMessage]);
+    setMessages((prev) => [...prev, botMessage]);
   };
 
   const showChatbot = () => {
@@ -146,11 +159,7 @@ export const ChatbotProvider: React.FC<ChatbotProviderProps> = ({ children }) =>
     clearMessages,
   };
 
-  return (
-    <ChatbotContext.Provider value={value}>
-      {children}
-    </ChatbotContext.Provider>
-  );
+  return <ChatbotContext.Provider value={value}>{children}</ChatbotContext.Provider>;
 };
 
 export const useChatbot = (): ChatbotContextType => {

@@ -73,13 +73,13 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const loadCompanies = async () => {
     if (!user) return;
-    
+
     try {
       const response = await fetch('/api/companies');
       if (response.ok) {
         const companies = await response.json();
         setUserCompanies(companies);
-        
+
         // Set first company as current if none selected
         if (!currentCompany && companies.length > 0) {
           setCurrentCompany(companies[0]);
@@ -92,7 +92,7 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const loadCompanyUsers = async () => {
     if (!currentCompany) return;
-    
+
     try {
       const response = await fetch(`/api/companies/${currentCompany.id}/users`);
       if (response.ok) {
@@ -108,7 +108,7 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const response = await fetch('/api/companies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
@@ -123,11 +123,11 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateCompany = async (updates: Partial<Company>) => {
     if (!currentCompany) throw new Error('No current company');
-    
+
     const response = await fetch(`/api/companies/${currentCompany.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates),
     });
 
     if (!response.ok) {
@@ -136,20 +136,18 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedCompany = await response.json();
     setCurrentCompany(updatedCompany);
-    
+
     // Update in userCompanies array
-    setUserCompanies(prev => prev.map(c => 
-      c.id === updatedCompany.id ? updatedCompany : c
-    ));
+    setUserCompanies((prev) => prev.map((c) => (c.id === updatedCompany.id ? updatedCompany : c)));
   };
 
   const inviteUser = async (email: string, role: string) => {
     if (!currentCompany) throw new Error('No current company');
-    
+
     const response = await fetch(`/api/companies/${currentCompany.id}/invitations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, role })
+      body: JSON.stringify({ email, role }),
     });
 
     if (!response.ok) {
@@ -161,11 +159,11 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateWhitelabelConfig = async (config: any) => {
     if (!currentCompany) throw new Error('No current company');
-    
+
     const response = await fetch(`/api/companies/${currentCompany.id}/whitelabel`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config)
+      body: JSON.stringify(config),
     });
 
     if (!response.ok) {
@@ -182,18 +180,20 @@ export const CompanyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [currentCompany]);
 
   return (
-    <CompanyContext.Provider value={{
-      currentCompany,
-      userCompanies,
-      companyUsers,
-      setCurrentCompany,
-      createCompany,
-      inviteUser,
-      loadCompanies,
-      loadCompanyUsers,
-      updateCompany,
-      updateWhitelabelConfig
-    }}>
+    <CompanyContext.Provider
+      value={{
+        currentCompany,
+        userCompanies,
+        companyUsers,
+        setCurrentCompany,
+        createCompany,
+        inviteUser,
+        loadCompanies,
+        loadCompanyUsers,
+        updateCompany,
+        updateWhitelabelConfig,
+      }}
+    >
       {children}
     </CompanyContext.Provider>
   );

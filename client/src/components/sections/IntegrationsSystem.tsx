@@ -43,7 +43,9 @@ const IntegrationsSystem: React.FC = () => {
           <Grid3X3 className="h-6 w-6 text-white" />
         </div>
         <div>
-          <h2 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Integrations & System</h2>
+          <h2 className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Integrations & System
+          </h2>
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Manage connected apps and system settings
           </p>
@@ -54,75 +56,117 @@ const IntegrationsSystem: React.FC = () => {
       <div className="mb-6">
         <ConnectedApps />
       </div>
-      
+
       {/* System Settings */}
-      <div className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 mb-6`}>
+      <div
+        className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 mb-6`}
+      >
         <div className="flex items-center justify-between mb-6">
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
+          <h3
+            className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
+          >
             <Settings className="h-5 w-5 mr-2 text-gray-500" />
             System Settings
           </h3>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Default AI Model Settings */}
-          <div className={`p-4 rounded-lg border ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
-            <h4 className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>Default AI Model</h4>
+          <div
+            className={`p-4 rounded-lg border ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}
+          >
+            <h4 className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
+              Default AI Model
+            </h4>
             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
               Select the default model for general AI operations
             </p>
-            <AIModelSelector 
+            <AIModelSelector
               selectedModel="gemini-2.5-flash"
               onModelChange={() => {}}
               className="w-full"
             />
           </div>
-          
+
           {/* API Settings */}
-          <div className={`p-4 rounded-lg border ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
-            <h4 className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>API Configuration</h4>
+          <div
+            className={`p-4 rounded-lg border ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}
+          >
+            <h4 className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>
+              API Configuration
+            </h4>
             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
               Configure external API connections
             </p>
-            
-            <div className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between mb-3`}>
+
+            <div
+              className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between mb-3`}
+            >
               <div className="flex items-center space-x-2">
                 <Cpu size={16} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
-                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>Google AI API</span>
+                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Google AI API
+                </span>
               </div>
-              <div className={`px-2 py-1 rounded text-xs ${
-                isGoogleConnected
-                  ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
-                  : (isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
-              }`}>
+              <div
+                className={`px-2 py-1 rounded text-xs ${
+                  isGoogleConnected
+                    ? isDark
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-green-100 text-green-700'
+                    : isDark
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-red-100 text-red-700'
+                }`}
+              >
                 {isGoogleConnected ? 'Connected' : 'Not Connected'}
               </div>
             </div>
-            
-            <div className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between mb-3`}>
+
+            <div
+              className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between mb-3`}
+            >
               <div className="flex items-center space-x-2">
                 <Cpu size={16} className={isDark ? 'text-purple-400' : 'text-purple-600'} />
-                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>OpenAI API</span>
+                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  OpenAI API
+                </span>
               </div>
-              <div className={`px-2 py-1 rounded text-xs ${
-                isOpenAIConnected
-                  ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
-                  : (isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
-              }`}>
+              <div
+                className={`px-2 py-1 rounded text-xs ${
+                  isOpenAIConnected
+                    ? isDark
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-green-100 text-green-700'
+                    : isDark
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-red-100 text-red-700'
+                }`}
+              >
                 {isOpenAIConnected ? 'Connected' : 'Not Connected'}
               </div>
             </div>
-            
-            <div className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between`}>
+
+            <div
+              className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between`}
+            >
               <div className="flex items-center space-x-2">
                 <Cpu size={16} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
-                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>Supabase</span>
+                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Supabase
+                </span>
               </div>
-              <div className={`px-2 py-1 rounded text-xs ${
-                isSupabaseConnected
-                  ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
-                  : (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700')
-              }`}>
+              <div
+                className={`px-2 py-1 rounded text-xs ${
+                  isSupabaseConnected
+                    ? isDark
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-green-100 text-green-700'
+                    : isDark
+                      ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-yellow-100 text-yellow-700'
+                }`}
+              >
                 {isSupabaseConnected ? 'Connected' : 'Not Connected'}
               </div>
             </div>

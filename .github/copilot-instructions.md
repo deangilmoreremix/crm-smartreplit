@@ -3,6 +3,7 @@
 ## Architecture Overview
 
 SmartCRM is a full-stack AI-powered sales and marketing platform built with:
+
 - **Frontend**: React 18 + TypeScript + Vite, Tailwind CSS, Zustand stores, React Query
 - **Backend**: Express server + Supabase Edge Functions (Deno runtime, built to netlify/functions)
 - **Database**: PostgreSQL with Drizzle ORM, Row Level Security (RLS)
@@ -13,36 +14,42 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 ## Core Patterns & Conventions
 
 ### API Communication
+
 - **Primary**: Use Supabase client calling Edge Functions (`/functions/v1/{name}`)
 - **Fallback**: Express routes on `/api/*` with session auth
 - **Real-time**: Supabase subscriptions for live updates
 - **Example**: `supabase.functions.invoke('contacts', { body: params })`
 
 ### Database Access
+
 - **Schema**: Shared types in `shared/schema.ts` (Drizzle ORM)
 - **Queries**: Direct Supabase client for edge functions, Drizzle for Express routes
 - **Migrations**: `npm run db:push` (Drizzle Kit)
 - **RLS**: Always enabled, profile-based data isolation
 
 ### State Management
+
 - **Global**: Zustand stores (`stores/` directory)
 - **Server state**: React Query for API data
 - **Local**: React useState/useReducer for component state
 - **Real-time sync**: Supabase subscriptions update stores
 
 ### Component Architecture
+
 - **UI Library**: Custom components in `components/ui/` (Radix UI based)
 - **Design**: Glassmorphism, dark-mode-first, Tailwind CSS
 - **Patterns**: Compound components, render props, custom hooks
 - **Remote apps**: Module federation for micro-frontends (`RemoteContactsLoader.tsx`)
 
 ### AI Integration
+
 - **Services**: Dedicated services in `services/` (OpenAI, Gemini, custom agents)
 - **Streaming**: Real-time responses with WebSockets/Edge Functions
 - **Caching**: AI responses cached in Supabase storage
 - **Rate limiting**: Built-in quota management per user tier
 
 ### Authentication & Security
+
 - **Auth**: Supabase Auth (JWT tokens)
 - **Sessions**: Express sessions for server-side routes
 - **Permissions**: Product tier checks, role-based access (`RoleBasedAccess.tsx`)
@@ -51,6 +58,7 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 ## Development Workflows
 
 ### Local Development
+
 ```bash
 npm run dev          # Start dev server (tsx)
 npm run build        # Full production build
@@ -59,17 +67,20 @@ npm run build:functions  # Edge functions only (esbuild to netlify/functions)
 ```
 
 ### Database Operations
+
 ```bash
 npm run db:push      # Apply migrations (Drizzle Kit)
 # Schema changes: Edit shared/schema.ts, run db:push
 ```
 
 ### Deployment
+
 - **Frontend**: Netlify auto-deploys from main branch
 - **Functions**: Manual deploy via Supabase dashboard or CLI
 - **Environment**: Separate .env files for dev/prod
 
 ### Testing
+
 - **Unit**: Vitest for components and utilities
 - **E2E**: Playwright for critical user flows
 - **API**: Custom test runners for edge functions
@@ -78,6 +89,7 @@ npm run db:push      # Apply migrations (Drizzle Kit)
 ## Code Organization
 
 ### File Structure
+
 ```
 client/src/
 ├── components/     # Reusable UI components
@@ -95,12 +107,14 @@ shared/           # Shared types and schemas
 ```
 
 ### Naming Conventions
+
 - **Components**: PascalCase, descriptive names (`ContactCard`, `DealKanbanBoard`)
 - **Services**: camelCase with Service suffix (`contactApiService`)
 - **Types**: PascalCase interfaces, camelCase properties
 - **Files**: kebab-case for components, camelCase for utilities
 
 ### Error Handling
+
 - **API calls**: Try/catch with user-friendly error messages
 - **Validation**: Zod schemas for input validation
 - **Logging**: Centralized logger service with different levels
@@ -109,6 +123,7 @@ shared/           # Shared types and schemas
 ## Key Integration Points
 
 ### External Services
+
 - **Email**: SendGrid for transactional emails
 - **Payments**: Stripe webhooks for subscriptions
 - **VoIP**: Custom integration for voice calls
@@ -116,12 +131,14 @@ shared/           # Shared types and schemas
 - **Webhooks**: Multiple providers (JVZoo, PayPal, Zaxaa, Stripe)
 
 ### Cross-Component Communication
+
 - **Events**: Custom event system for loose coupling (`unifiedEventSystem.ts`)
 - **BroadcastChannel**: Cross-tab communication (`broadcastChannelManager.ts`)
 - **WebSockets**: Real-time features via Supabase
 - **Shared workers**: Background processing
 
 ### Multi-Tenancy Features
+
 - **White-labeling**: Dynamic branding and customization (`white-label/` functions)
 - **Product tiers**: Feature gating based on subscription (`productTiers` enum)
 - **Partner management**: Revenue sharing and attribution (`partners/` functions)
@@ -130,12 +147,14 @@ shared/           # Shared types and schemas
 ## Performance Considerations
 
 ### Optimization Patterns
+
 - **Lazy loading**: Route-based and component code splitting
 - **Caching**: React Query for API responses, custom cache service
 - **Images**: Cloud storage with optimization
 - **Bundle**: Tree shaking, external dependencies
 
 ### Monitoring
+
 - **Health checks**: Dedicated endpoints and services (`health/` function)
 - **Error tracking**: Comprehensive logging and alerting
 - **Performance**: Real-time metrics and analytics
@@ -144,15 +163,17 @@ shared/           # Shared types and schemas
 ## Common Patterns
 
 ### Data Fetching
+
 ```typescript
 // React Query pattern
 const { data, isLoading } = useQuery({
   queryKey: ['contacts', filters],
-  queryFn: () => contactApiService.getContacts(filters)
+  queryFn: () => contactApiService.getContacts(filters),
 });
 ```
 
 ### Component Structure
+
 ```tsx
 // Compound component pattern
 const ContactCard = ({ contact, onClick }) => (
@@ -164,14 +185,13 @@ const ContactCard = ({ contact, onClick }) => (
 ```
 
 ### Service Layer
+
 ```typescript
 // Service with error handling
 class ContactService {
   async getContacts() {
     try {
-      const { data, error } = await supabase
-        .from('contacts')
-        .select('*');
+      const { data, error } = await supabase.from('contacts').select('*');
       if (error) throw error;
       return data;
     } catch (error) {
@@ -183,15 +203,17 @@ class ContactService {
 ```
 
 ### AI Integration
+
 ```typescript
 // Streaming AI response
 const response = await openaiService.streamCompletion({
   prompt: userInput,
-  onChunk: (chunk) => updateUI(chunk)
+  onChunk: (chunk) => updateUI(chunk),
 });
 ```
 
 ### Admin Access Pattern
+
 ```typescript
 // Check admin privileges
 if (response.status === 401 || response.status === 403) {

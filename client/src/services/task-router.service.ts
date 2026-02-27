@@ -17,9 +17,17 @@ export interface TaskRequirements {
 }
 
 export interface TaskContext {
-  taskType: 'contact_scoring' | 'contact_enrichment' | 'categorization' | 'tagging' | 
-            'relationship_mapping' | 'sentiment_analysis' | 'lead_qualification' | 
-            'opportunity_analysis' | 'risk_assessment' | 'engagement_prediction';
+  taskType:
+    | 'contact_scoring'
+    | 'contact_enrichment'
+    | 'categorization'
+    | 'tagging'
+    | 'relationship_mapping'
+    | 'sentiment_analysis'
+    | 'lead_qualification'
+    | 'opportunity_analysis'
+    | 'risk_assessment'
+    | 'engagement_prediction';
   requirements: TaskRequirements;
   contactData?: any;
   businessContext?: string;
@@ -50,99 +58,201 @@ export interface TaskPerformanceMetrics {
 
 class TaskRouterService {
   private performanceHistory: TaskPerformanceMetrics[] = [];
-  private modelPerformance: Map<string, { avgTime: number; successRate: number; avgCost: number }> = new Map();
-  
+  private modelPerformance: Map<string, { avgTime: number; successRate: number; avgCost: number }> =
+    new Map();
+
   // Task-specific model preferences
-  private taskProfiles: Record<string, { 
-    gemmaModels: Array<{ model: string; score: number; reasoning: string }>;
-    openaiModels: Array<{ model: string; score: number; reasoning: string }>;
-    defaultRequirements: TaskRequirements;
-  }> = {
+  private taskProfiles: Record<
+    string,
+    {
+      gemmaModels: Array<{ model: string; score: number; reasoning: string }>;
+      openaiModels: Array<{ model: string; score: number; reasoning: string }>;
+      defaultRequirements: TaskRequirements;
+    }
+  > = {
     contact_scoring: {
       gemmaModels: [
-        { model: 'gemma-2-9b-it', score: 85, reasoning: 'Excellent balance of speed and accuracy for scoring' },
-        { model: 'gemma-2-27b-it', score: 90, reasoning: 'Higher accuracy for complex scoring scenarios' },
-        { model: 'gemma-2-2b-it', score: 75, reasoning: 'Fast scoring for simple cases' }
+        {
+          model: 'gemma-2-9b-it',
+          score: 85,
+          reasoning: 'Excellent balance of speed and accuracy for scoring',
+        },
+        {
+          model: 'gemma-2-27b-it',
+          score: 90,
+          reasoning: 'Higher accuracy for complex scoring scenarios',
+        },
+        { model: 'gemma-2-2b-it', score: 75, reasoning: 'Fast scoring for simple cases' },
       ],
       openaiModels: [
-        { model: 'gpt-4o-mini', score: 88, reasoning: 'Optimal cost-performance for contact scoring' },
-        { model: 'gpt-4o', score: 95, reasoning: 'Highest accuracy for critical scoring decisions' },
-        { model: 'gpt-3.5-turbo', score: 78, reasoning: 'Cost-effective for basic scoring' }
+        {
+          model: 'gpt-4o-mini',
+          score: 88,
+          reasoning: 'Optimal cost-performance for contact scoring',
+        },
+        {
+          model: 'gpt-4o',
+          score: 95,
+          reasoning: 'Highest accuracy for critical scoring decisions',
+        },
+        { model: 'gpt-3.5-turbo', score: 78, reasoning: 'Cost-effective for basic scoring' },
       ],
-      defaultRequirements: { accuracy: 'high', speed: 'fast', cost: 'low', complexity: 'medium', volume: 'single' }
+      defaultRequirements: {
+        accuracy: 'high',
+        speed: 'fast',
+        cost: 'low',
+        complexity: 'medium',
+        volume: 'single',
+      },
     },
-    
+
     contact_enrichment: {
       gemmaModels: [
-        { model: 'gemma-2-27b-it', score: 88, reasoning: 'Comprehensive data analysis and inference' },
-        { model: 'gemma-2-9b-it', score: 82, reasoning: 'Good balance for standard enrichment' }
+        {
+          model: 'gemma-2-27b-it',
+          score: 88,
+          reasoning: 'Comprehensive data analysis and inference',
+        },
+        { model: 'gemma-2-9b-it', score: 82, reasoning: 'Good balance for standard enrichment' },
       ],
       openaiModels: [
         { model: 'gpt-4o', score: 95, reasoning: 'Superior reasoning for complex data enrichment' },
-        { model: 'gpt-4o-mini', score: 85, reasoning: 'Cost-effective enrichment with good quality' }
+        {
+          model: 'gpt-4o-mini',
+          score: 85,
+          reasoning: 'Cost-effective enrichment with good quality',
+        },
       ],
-      defaultRequirements: { accuracy: 'high', speed: 'medium', cost: 'medium', complexity: 'complex', volume: 'single' }
+      defaultRequirements: {
+        accuracy: 'high',
+        speed: 'medium',
+        cost: 'medium',
+        complexity: 'complex',
+        volume: 'single',
+      },
     },
-    
+
     categorization: {
       gemmaModels: [
         { model: 'gemma-2-2b-it', score: 90, reasoning: 'Optimized for classification tasks' },
-        { model: 'gemini-1.5-flash-8b', score: 92, reasoning: 'Fastest categorization with good accuracy' },
-        { model: 'gemma-2-9b-it', score: 85, reasoning: 'More nuanced categorization' }
+        {
+          model: 'gemini-1.5-flash-8b',
+          score: 92,
+          reasoning: 'Fastest categorization with good accuracy',
+        },
+        { model: 'gemma-2-9b-it', score: 85, reasoning: 'More nuanced categorization' },
       ],
       openaiModels: [
         { model: 'gpt-4o-mini', score: 88, reasoning: 'Reliable categorization with consistency' },
-        { model: 'gpt-3.5-turbo', score: 82, reasoning: 'Basic categorization at low cost' }
+        { model: 'gpt-3.5-turbo', score: 82, reasoning: 'Basic categorization at low cost' },
       ],
-      defaultRequirements: { accuracy: 'medium', speed: 'fast', cost: 'free', complexity: 'simple', volume: 'batch' }
+      defaultRequirements: {
+        accuracy: 'medium',
+        speed: 'fast',
+        cost: 'free',
+        complexity: 'simple',
+        volume: 'batch',
+      },
     },
-    
+
     tagging: {
       gemmaModels: [
         { model: 'gemma-2-2b-it', score: 88, reasoning: 'Excellent for simple tagging tasks' },
-        { model: 'gemini-1.5-flash-8b', score: 90, reasoning: 'Ultra-fast tagging with good precision' }
+        {
+          model: 'gemini-1.5-flash-8b',
+          score: 90,
+          reasoning: 'Ultra-fast tagging with good precision',
+        },
       ],
       openaiModels: [
         { model: 'gpt-4o-mini', score: 85, reasoning: 'Consistent tagging quality' },
-        { model: 'gpt-3.5-turbo', score: 80, reasoning: 'Cost-effective basic tagging' }
+        { model: 'gpt-3.5-turbo', score: 80, reasoning: 'Cost-effective basic tagging' },
       ],
-      defaultRequirements: { accuracy: 'medium', speed: 'realtime', cost: 'free', complexity: 'simple', volume: 'bulk' }
+      defaultRequirements: {
+        accuracy: 'medium',
+        speed: 'realtime',
+        cost: 'free',
+        complexity: 'simple',
+        volume: 'bulk',
+      },
     },
-    
+
     relationship_mapping: {
       gemmaModels: [
-        { model: 'gemma-2-27b-it', score: 85, reasoning: 'Complex reasoning for relationship analysis' }
+        {
+          model: 'gemma-2-27b-it',
+          score: 85,
+          reasoning: 'Complex reasoning for relationship analysis',
+        },
       ],
       openaiModels: [
-        { model: 'gpt-4o', score: 95, reasoning: 'Superior reasoning for complex relationship mapping' },
-        { model: 'gpt-4o-mini', score: 80, reasoning: 'Good relationship detection with efficiency' }
+        {
+          model: 'gpt-4o',
+          score: 95,
+          reasoning: 'Superior reasoning for complex relationship mapping',
+        },
+        {
+          model: 'gpt-4o-mini',
+          score: 80,
+          reasoning: 'Good relationship detection with efficiency',
+        },
       ],
-      defaultRequirements: { accuracy: 'critical', speed: 'medium', cost: 'medium', complexity: 'expert', volume: 'single' }
+      defaultRequirements: {
+        accuracy: 'critical',
+        speed: 'medium',
+        cost: 'medium',
+        complexity: 'expert',
+        volume: 'single',
+      },
     },
-    
+
     lead_qualification: {
       gemmaModels: [
         { model: 'gemma-2-9b-it', score: 88, reasoning: 'Good business logic understanding' },
-        { model: 'gemma-2-27b-it', score: 92, reasoning: 'Advanced qualification criteria analysis' }
+        {
+          model: 'gemma-2-27b-it',
+          score: 92,
+          reasoning: 'Advanced qualification criteria analysis',
+        },
       ],
       openaiModels: [
         { model: 'gpt-4o', score: 95, reasoning: 'Best-in-class qualification accuracy' },
-        { model: 'gpt-4o-mini', score: 87, reasoning: 'Efficient qualification with good accuracy' }
+        {
+          model: 'gpt-4o-mini',
+          score: 87,
+          reasoning: 'Efficient qualification with good accuracy',
+        },
       ],
-      defaultRequirements: { accuracy: 'high', speed: 'fast', cost: 'low', complexity: 'medium', volume: 'batch' }
+      defaultRequirements: {
+        accuracy: 'high',
+        speed: 'fast',
+        cost: 'low',
+        complexity: 'medium',
+        volume: 'batch',
+      },
     },
-    
+
     sentiment_analysis: {
       gemmaModels: [
         { model: 'gemma-2-9b-it', score: 85, reasoning: 'Good sentiment understanding' },
-        { model: 'gemini-1.5-flash', score: 88, reasoning: 'Fast sentiment analysis with accuracy' }
+        {
+          model: 'gemini-1.5-flash',
+          score: 88,
+          reasoning: 'Fast sentiment analysis with accuracy',
+        },
       ],
       openaiModels: [
         { model: 'gpt-4o-mini', score: 90, reasoning: 'Nuanced sentiment detection' },
-        { model: 'gpt-4o', score: 95, reasoning: 'Superior emotional intelligence' }
+        { model: 'gpt-4o', score: 95, reasoning: 'Superior emotional intelligence' },
       ],
-      defaultRequirements: { accuracy: 'high', speed: 'fast', cost: 'low', complexity: 'medium', volume: 'batch' }
-    }
+      defaultRequirements: {
+        accuracy: 'high',
+        speed: 'fast',
+        cost: 'low',
+        complexity: 'medium',
+        volume: 'batch',
+      },
+    },
   };
 
   constructor() {
@@ -152,11 +262,11 @@ class TaskRouterService {
 
   async selectOptimalModel(taskContext: TaskContext): Promise<ModelSelection> {
     const { taskType, requirements, urgency = 'medium', batchSize = 1 } = taskContext;
-    
+
     logger.info(`Selecting optimal model for task: ${taskType}`, {
       requirements,
       urgency,
-      batchSize
+      batchSize,
     });
 
     // Get task profile
@@ -170,23 +280,33 @@ class TaskRouterService {
 
     // Check provider availability and rate limits
     const providerAvailability = await this.checkProviderAvailability();
-    
+
     // Score all available models
-    const gemmaOptions = await this.scoreModels('gemini', profile.gemmaModels, finalRequirements, providerAvailability.gemini);
-    const openaiOptions = await this.scoreModels('openai', profile.openaiModels, finalRequirements, providerAvailability.openai);
-    
+    const gemmaOptions = await this.scoreModels(
+      'gemini',
+      profile.gemmaModels,
+      finalRequirements,
+      providerAvailability.gemini
+    );
+    const openaiOptions = await this.scoreModels(
+      'openai',
+      profile.openaiModels,
+      finalRequirements,
+      providerAvailability.openai
+    );
+
     // Combine and sort all options
     const allOptions = [...gemmaOptions, ...openaiOptions].sort((a, b) => b.score - a.score);
-    
+
     if (allOptions.length === 0) {
       throw new Error('No available models for the specified task');
     }
 
     const bestOption = allOptions[0];
-    const fallbackOptions = allOptions.slice(1, 4).map(option => ({
+    const fallbackOptions = allOptions.slice(1, 4).map((option) => ({
       provider: option.provider,
       model: option.model,
-      reasoning: option.reasoning
+      reasoning: option.reasoning,
     }));
 
     const selection: ModelSelection = {
@@ -196,13 +316,13 @@ class TaskRouterService {
       expectedCost: bestOption.estimatedCost,
       expectedLatency: bestOption.estimatedLatency,
       confidenceScore: bestOption.score,
-      fallbackOptions
+      fallbackOptions,
     };
 
     logger.info(`Selected model: ${selection.provider}/${selection.model}`, {
       score: selection.confidenceScore,
       reasoning: selection.reasoning,
-      fallbacksAvailable: fallbackOptions.length
+      fallbacksAvailable: fallbackOptions.length,
     });
 
     return selection;
@@ -213,14 +333,16 @@ class TaskRouterService {
     models: Array<{ model: string; score: number; reasoning: string }>,
     requirements: TaskRequirements,
     isAvailable: boolean
-  ): Promise<Array<{
-    provider: string;
-    model: string;
-    score: number;
-    reasoning: string;
-    estimatedCost: number;
-    estimatedLatency: number;
-  }>> {
+  ): Promise<
+    Array<{
+      provider: string;
+      model: string;
+      score: number;
+      reasoning: string;
+      estimatedCost: number;
+      estimatedLatency: number;
+    }>
+  > {
     if (!isAvailable) {
       return [];
     }
@@ -253,9 +375,8 @@ class TaskRouterService {
           score,
           reasoning: `${modelInfo.reasoning} (adjusted score: ${score.toFixed(1)})`,
           estimatedCost,
-          estimatedLatency
+          estimatedLatency,
         });
-
       } catch (error) {
         logger.warn(`Error scoring model ${provider}/${modelInfo.model}`, error);
         continue;
@@ -265,7 +386,11 @@ class TaskRouterService {
     return scoredModels;
   }
 
-  private adjustScoreForRequirements(baseScore: number, modelConfig: AIModel, requirements: TaskRequirements): number {
+  private adjustScoreForRequirements(
+    baseScore: number,
+    modelConfig: AIModel,
+    requirements: TaskRequirements
+  ): number {
     let score = baseScore;
 
     // Accuracy requirement adjustment
@@ -305,7 +430,11 @@ class TaskRouterService {
 
     // Volume adjustment
     if (requirements.volume === 'bulk' || requirements.volume === 'streaming') {
-      if (modelConfig.id.includes('flash') || modelConfig.id.includes('2b') || modelConfig.id.includes('9b')) {
+      if (
+        modelConfig.id.includes('flash') ||
+        modelConfig.id.includes('2b') ||
+        modelConfig.id.includes('9b')
+      ) {
         score += 15; // Prefer faster models for bulk processing
       }
     }
@@ -318,7 +447,11 @@ class TaskRouterService {
         score += 15; // Boost larger models for complex tasks
       }
     } else if (requirements.complexity === 'simple') {
-      if (modelConfig.id.includes('2b') || modelConfig.id.includes('8b') || modelConfig.id.includes('3.5')) {
+      if (
+        modelConfig.id.includes('2b') ||
+        modelConfig.id.includes('8b') ||
+        modelConfig.id.includes('3.5')
+      ) {
         score += 10; // Prefer smaller/simpler models for simple tasks
       }
     }
@@ -332,17 +465,22 @@ class TaskRouterService {
 
     // Adjust based on success rate
     const successRateMultiplier = performance.successRate;
-    
+
     // Adjust based on relative speed (compared to average)
-    const avgResponseTime = Array.from(this.modelPerformance.values())
-      .reduce((sum, p) => sum + p.avgTime, 0) / this.modelPerformance.size;
-    
+    const avgResponseTime =
+      Array.from(this.modelPerformance.values()).reduce((sum, p) => sum + p.avgTime, 0) /
+      this.modelPerformance.size;
+
     const speedMultiplier = performance.avgTime < avgResponseTime ? 1.1 : 0.9;
 
     return baseScore * successRateMultiplier * speedMultiplier;
   }
 
-  private async adjustScoreForAvailability(baseScore: number, provider: string, model: string): Promise<number> {
+  private async adjustScoreForAvailability(
+    baseScore: number,
+    provider: string,
+    model: string
+  ): Promise<number> {
     try {
       const remainingRequests = await rateLimiter.getRemainingRequests(
         `ai_${provider}`,
@@ -391,7 +529,7 @@ class TaskRouterService {
 
   private getModelConfig(provider: string, modelId: string): AIModel | null {
     const providerConfig = apiConfig.aiProviders[provider as keyof typeof apiConfig.aiProviders];
-    return providerConfig?.models.find(m => m.id === modelId) || null;
+    return providerConfig?.models.find((m) => m.id === modelId) || null;
   }
 
   private estimateCost(modelConfig: AIModel, requirements: TaskRequirements): number {
@@ -399,10 +537,18 @@ class TaskRouterService {
     let estimatedTokens = 100; // Base tokens
 
     switch (requirements.complexity) {
-      case 'simple': estimatedTokens = 150; break;
-      case 'medium': estimatedTokens = 300; break;
-      case 'complex': estimatedTokens = 600; break;
-      case 'expert': estimatedTokens = 1000; break;
+      case 'simple':
+        estimatedTokens = 150;
+        break;
+      case 'medium':
+        estimatedTokens = 300;
+        break;
+      case 'complex':
+        estimatedTokens = 600;
+        break;
+      case 'expert':
+        estimatedTokens = 1000;
+        break;
     }
 
     if (requirements.volume === 'batch') estimatedTokens *= 5;
@@ -423,15 +569,19 @@ class TaskRouterService {
       'gpt-3.5-turbo': 1800,
       'gemma-2-27b-it': 3500,
       'gemini-1.5-pro': 3000,
-      'gpt-4o': 4000
+      'gpt-4o': 4000,
     };
 
     let latency = baseLatencies[modelConfig.id] || 2500;
 
     // Adjust for complexity
     switch (requirements.complexity) {
-      case 'complex': latency *= 1.5; break;
-      case 'expert': latency *= 2; break;
+      case 'complex':
+        latency *= 1.5;
+        break;
+      case 'expert':
+        latency *= 2;
+        break;
     }
 
     return latency;
@@ -440,7 +590,7 @@ class TaskRouterService {
   // Performance tracking
   recordTaskPerformance(metrics: TaskPerformanceMetrics): void {
     this.performanceHistory.push(metrics);
-    
+
     // Keep only last 1000 records
     if (this.performanceHistory.length > 1000) {
       this.performanceHistory = this.performanceHistory.slice(-1000);
@@ -451,9 +601,12 @@ class TaskRouterService {
   }
 
   private updateModelPerformance(): void {
-    const modelStats = new Map<string, { times: number[]; successes: number; total: number; costs: number[] }>();
+    const modelStats = new Map<
+      string,
+      { times: number[]; successes: number; total: number; costs: number[] }
+    >();
 
-    this.performanceHistory.forEach(record => {
+    this.performanceHistory.forEach((record) => {
       const key = record.modelUsed;
       if (!modelStats.has(key)) {
         modelStats.set(key, { times: [], successes: 0, total: 0, costs: [] });
@@ -489,16 +642,19 @@ class TaskRouterService {
 
   private savePerformanceHistory(): void {
     try {
-      localStorage.setItem('smartcrm_task_performance', JSON.stringify(this.performanceHistory.slice(-500)));
+      localStorage.setItem(
+        'smartcrm_task_performance',
+        JSON.stringify(this.performanceHistory.slice(-500))
+      );
     } catch (error) {
       logger.warn('Failed to save performance history', error);
     }
   }
 
   // Utility methods
-  getTaskRecommendations(taskType: string): { 
-    recommendedProvider: string; 
-    recommendedModel: string; 
+  getTaskRecommendations(taskType: string): {
+    recommendedProvider: string;
+    recommendedModel: string;
     reasoning: string;
     alternatives: Array<{ provider: string; model: string; reasoning: string }>;
   } | null {
@@ -506,19 +662,23 @@ class TaskRouterService {
     if (!profile) return null;
 
     // Get top recommendations
-    const allModels = [...profile.gemmaModels, ...profile.openaiModels].sort((a, b) => b.score - a.score);
+    const allModels = [...profile.gemmaModels, ...profile.openaiModels].sort(
+      (a, b) => b.score - a.score
+    );
     const top = allModels[0];
     const alternatives = allModels.slice(1, 4);
 
     return {
-      recommendedProvider: profile.gemmaModels.find(m => m.model === top.model) ? 'gemini' : 'openai',
+      recommendedProvider: profile.gemmaModels.find((m) => m.model === top.model)
+        ? 'gemini'
+        : 'openai',
       recommendedModel: top.model,
       reasoning: top.reasoning,
-      alternatives: alternatives.map(alt => ({
-        provider: profile.gemmaModels.find(m => m.model === alt.model) ? 'gemini' : 'openai',
+      alternatives: alternatives.map((alt) => ({
+        provider: profile.gemmaModels.find((m) => m.model === alt.model) ? 'gemini' : 'openai',
         model: alt.model,
-        reasoning: alt.reasoning
-      }))
+        reasoning: alt.reasoning,
+      })),
     };
   }
 
@@ -526,27 +686,33 @@ class TaskRouterService {
     totalTasks: number;
     overallSuccessRate: number;
     avgResponseTime: number;
-    modelPerformance: Array<{ model: string; successRate: number; avgTime: number; avgCost: number }>;
+    modelPerformance: Array<{
+      model: string;
+      successRate: number;
+      avgTime: number;
+      avgCost: number;
+    }>;
   } {
     const totalTasks = this.performanceHistory.length;
-    const successfulTasks = this.performanceHistory.filter(t => t.success).length;
+    const successfulTasks = this.performanceHistory.filter((t) => t.success).length;
     const overallSuccessRate = totalTasks > 0 ? successfulTasks / totalTasks : 0;
-    const avgResponseTime = totalTasks > 0 
-      ? this.performanceHistory.reduce((sum, t) => sum + t.executionTime, 0) / totalTasks 
-      : 0;
+    const avgResponseTime =
+      totalTasks > 0
+        ? this.performanceHistory.reduce((sum, t) => sum + t.executionTime, 0) / totalTasks
+        : 0;
 
     const modelPerformance = Array.from(this.modelPerformance.entries()).map(([model, stats]) => ({
       model,
       successRate: stats.successRate,
       avgTime: stats.avgTime,
-      avgCost: stats.avgCost
+      avgCost: stats.avgCost,
     }));
 
     return {
       totalTasks,
       overallSuccessRate,
       avgResponseTime,
-      modelPerformance
+      modelPerformance,
     };
   }
 
@@ -559,9 +725,9 @@ class TaskRouterService {
         speed: urgency === 'high' ? 'fast' : 'medium',
         cost: 'low',
         complexity: 'medium',
-        volume: 'single'
+        volume: 'single',
       },
-      urgency
+      urgency,
     };
   }
 
@@ -573,9 +739,9 @@ class TaskRouterService {
         speed: 'fast',
         cost: 'free',
         complexity: 'simple',
-        volume: 'bulk'
+        volume: 'bulk',
       },
-      urgency: 'medium'
+      urgency: 'medium',
     };
   }
 
@@ -587,9 +753,9 @@ class TaskRouterService {
         speed: 'medium',
         cost: 'medium',
         complexity: 'complex',
-        volume: 'single'
+        volume: 'single',
       },
-      urgency: 'high'
+      urgency: 'high',
     };
   }
 }

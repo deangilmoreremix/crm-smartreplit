@@ -1,4 +1,3 @@
-
 /**
  * Social Profile Validator Service
  * Validates authenticity and quality of social media profiles using AI
@@ -38,13 +37,15 @@ class SocialProfileValidator {
 
   constructor() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    this.apiUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/profile-validator` : '/api/profile-validator';
+    this.apiUrl = supabaseUrl
+      ? `${supabaseUrl}/functions/v1/profile-validator`
+      : '/api/profile-validator';
   }
 
   private generateMockValidation(platform: string, profileUrl: string): ProfileValidationResult {
     const confidence = Math.floor(Math.random() * 30) + 70;
     const isAuthentic = confidence > 60;
-    
+
     return {
       isAuthentic,
       confidence,
@@ -54,28 +55,32 @@ class SocialProfileValidator {
         activityConsistency: Math.random() > 0.3,
         connectionQuality: Math.random() > 0.25,
         contentAuthenticity: Math.random() > 0.15,
-        profileMatching: Math.random() > 0.1
+        profileMatching: Math.random() > 0.1,
       },
       reasoning: [
         'Profile has consistent posting history',
         'Professional network connections appear legitimate',
         'Profile information matches provided contact details',
-        'Account creation date aligns with career timeline'
+        'Account creation date aligns with career timeline',
       ],
-      recommendations: isAuthentic ? [
-        'Profile appears legitimate for professional outreach',
-        'Good platform for initial contact',
-        'Monitor for recent activity before reaching out'
-      ] : [
-        'Exercise caution when engaging with this profile',
-        'Verify through alternative channels',
-        'Consider using different social platform'
-      ],
-      redFlags: isAuthentic ? [] : [
-        'Limited profile information',
-        'Inconsistent activity patterns',
-        'Few professional connections'
-      ]
+      recommendations: isAuthentic
+        ? [
+            'Profile appears legitimate for professional outreach',
+            'Good platform for initial contact',
+            'Monitor for recent activity before reaching out',
+          ]
+        : [
+            'Exercise caution when engaging with this profile',
+            'Verify through alternative channels',
+            'Consider using different social platform',
+          ],
+      redFlags: isAuthentic
+        ? []
+        : [
+            'Limited profile information',
+            'Inconsistent activity patterns',
+            'Few professional connections',
+          ],
     };
   }
 
@@ -98,17 +103,17 @@ class SocialProfileValidator {
             name: contact.name,
             email: contact.email,
             company: contact.company,
-            title: contact.title
+            title: contact.title,
           },
           profile: {
             platform,
-            url: profileUrl
+            url: profileUrl,
           },
-          validationLevel: 'comprehensive'
+          validationLevel: 'comprehensive',
         },
         {
           timeout: 30000,
-          retries: 2
+          retries: 2,
         }
       );
 
@@ -143,12 +148,12 @@ class SocialProfileValidator {
               activityConsistency: false,
               connectionQuality: false,
               contentAuthenticity: false,
-              profileMatching: false
+              profileMatching: false,
             },
             reasoning: ['Validation failed due to technical error'],
             recommendations: ['Unable to validate - use alternative verification'],
-            redFlags: ['Validation service unavailable']
-          }
+            redFlags: ['Validation service unavailable'],
+          },
         };
       }
     });
@@ -172,7 +177,7 @@ class SocialProfileValidator {
             contactId: contact.id,
             platform,
             profileUrl: url,
-            result
+            result,
           });
         } catch (error) {
           results.push({
@@ -180,43 +185,42 @@ class SocialProfileValidator {
             platform,
             profileUrl: url,
             result: null,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
 
       // Rate limiting delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     return results;
   }
 
-  async getProfileTrustScore(
-    validationResults: ProfileValidationResult[]
-  ): Promise<{
+  async getProfileTrustScore(validationResults: ProfileValidationResult[]): Promise<{
     overallTrustScore: number;
     trustLevel: 'high' | 'medium' | 'low';
     platformBreakdown: Record<string, number>;
     recommendations: string[];
     riskFactors: string[];
   }> {
-    const validResults = validationResults.filter(r => r.isAuthentic);
+    const validResults = validationResults.filter((r) => r.isAuthentic);
     const totalProfiles = validationResults.length;
-    
+
     if (totalProfiles === 0) {
       return {
         overallTrustScore: 0,
         trustLevel: 'low',
         platformBreakdown: {},
         recommendations: ['No profiles to validate'],
-        riskFactors: ['No social media presence found']
+        riskFactors: ['No social media presence found'],
       };
     }
 
-    const averageConfidence = validResults.reduce((sum, r) => sum + r.confidence, 0) / validResults.length;
+    const averageConfidence =
+      validResults.reduce((sum, r) => sum + r.confidence, 0) / validResults.length;
     const authenticityRate = validResults.length / totalProfiles;
-    const overallTrustScore = Math.floor((averageConfidence * 0.7) + (authenticityRate * 100 * 0.3));
+    const overallTrustScore = Math.floor(averageConfidence * 0.7 + authenticityRate * 100 * 0.3);
 
     const trustLevel = overallTrustScore > 80 ? 'high' : overallTrustScore > 60 ? 'medium' : 'low';
 
@@ -225,40 +229,50 @@ class SocialProfileValidator {
       platformBreakdown[`platform_${index}`] = result.confidence;
     });
 
-    const allRecommendations = validResults.flatMap(r => r.recommendations);
-    const allRiskFactors = validationResults.flatMap(r => r.redFlags);
+    const allRecommendations = validResults.flatMap((r) => r.recommendations);
+    const allRiskFactors = validationResults.flatMap((r) => r.redFlags);
 
     return {
       overallTrustScore,
       trustLevel,
       platformBreakdown,
       recommendations: [...new Set(allRecommendations)],
-      riskFactors: [...new Set(allRiskFactors)]
+      riskFactors: [...new Set(allRiskFactors)],
     };
   }
 
   // Utility methods
   isPlatformSupported(platform: string): boolean {
     const supportedPlatforms = [
-      'LinkedIn', 'Twitter', 'Instagram', 'Facebook', 'YouTube', 'GitHub',
-      'Medium', 'TikTok', 'Snapchat', 'Discord', 'Reddit', 'Pinterest'
+      'LinkedIn',
+      'Twitter',
+      'Instagram',
+      'Facebook',
+      'YouTube',
+      'GitHub',
+      'Medium',
+      'TikTok',
+      'Snapchat',
+      'Discord',
+      'Reddit',
+      'Pinterest',
     ];
     return supportedPlatforms.includes(platform);
   }
 
   getValidationCriteria(platform: string): string[] {
-    const commonCriteria = [
-      'Profile completeness',
-      'Activity consistency',
-      'Content authenticity'
-    ];
+    const commonCriteria = ['Profile completeness', 'Activity consistency', 'Content authenticity'];
 
     const platformSpecific: Record<string, string[]> = {
-      'LinkedIn': ['Professional network quality', 'Work history alignment', 'Endorsements authenticity'],
-      'Twitter': ['Follower quality', 'Engagement patterns', 'Account age'],
-      'Instagram': ['Content consistency', 'Engagement rates', 'Profile verification'],
-      'GitHub': ['Code contribution history', 'Repository quality', 'Community involvement'],
-      'Medium': ['Article quality', 'Publication history', 'Reader engagement']
+      LinkedIn: [
+        'Professional network quality',
+        'Work history alignment',
+        'Endorsements authenticity',
+      ],
+      Twitter: ['Follower quality', 'Engagement patterns', 'Account age'],
+      Instagram: ['Content consistency', 'Engagement rates', 'Profile verification'],
+      GitHub: ['Code contribution history', 'Repository quality', 'Community involvement'],
+      Medium: ['Article quality', 'Publication history', 'Reader engagement'],
     };
 
     return [...commonCriteria, ...(platformSpecific[platform] || [])];

@@ -31,7 +31,6 @@ async function testScreenshot() {
 
     await browser.close();
     console.log('🎉 Playwright screenshot system is working!');
-
   } catch (error) {
     console.error('❌ Test failed:', error);
     process.exit(1);

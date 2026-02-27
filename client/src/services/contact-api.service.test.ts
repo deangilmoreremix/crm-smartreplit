@@ -6,7 +6,9 @@ import { Contact } from '../types/contact';
 // Override service properties for testing
 Object.defineProperty(contactAPIService, 'supabaseUrl', { value: 'https://test.supabase.co' });
 Object.defineProperty(contactAPIService, 'supabaseKey', { value: 'test-anon-key' });
-Object.defineProperty(contactAPIService, 'baseURL', { value: 'https://test.supabase.co/functions/v1/contacts' });
+Object.defineProperty(contactAPIService, 'baseURL', {
+  value: 'https://test.supabase.co/functions/v1/contacts',
+});
 
 // Mock dependencies
 vi.mock('./cache.service', () => ({
@@ -370,9 +372,7 @@ describe('ContactAPIService', () => {
     });
 
     it('should throw error for empty updates', async () => {
-      await expect(contactAPIService.updateContact('1', {})).rejects.toThrow(
-        'No updates provided'
-      );
+      await expect(contactAPIService.updateContact('1', {})).rejects.toThrow('No updates provided');
     });
   });
 
@@ -465,7 +465,7 @@ describe('ContactAPIService', () => {
     it('should sort contacts', async () => {
       const result = await contactAPIService.getContacts({
         sortBy: 'firstName',
-        sortOrder: 'asc'
+        sortOrder: 'asc',
       });
 
       expect(result.contacts[0].firstName).toBe('Jane');

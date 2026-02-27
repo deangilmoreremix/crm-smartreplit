@@ -156,16 +156,16 @@ export function useEffectiveFeatures(userId: string) {
 // Set user feature override (admin only)
 export function useSetUserFeature() {
   return useMutation({
-    mutationFn: async ({ 
-      userId, 
-      featureId, 
-      enabled, 
-      expiresAt 
-    }: { 
-      userId: string; 
-      featureId: number; 
-      enabled: boolean; 
-      expiresAt?: string; 
+    mutationFn: async ({
+      userId,
+      featureId,
+      enabled,
+      expiresAt,
+    }: {
+      userId: string;
+      featureId: number;
+      enabled: boolean;
+      expiresAt?: string;
     }) => {
       return await apiRequest(`/api/admin/users/${userId}/features`, {
         method: 'POST',
@@ -173,8 +173,12 @@ export function useSetUserFeature() {
       });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users', variables.userId, 'features'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users', variables.userId, 'features', 'effective'] });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/admin/users', variables.userId, 'features'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/admin/users', variables.userId, 'features', 'effective'],
+      });
     },
   });
 }
@@ -188,8 +192,12 @@ export function useRemoveUserFeature() {
       });
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users', variables.userId, 'features'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users', variables.userId, 'features', 'effective'] });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/admin/users', variables.userId, 'features'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/admin/users', variables.userId, 'features', 'effective'],
+      });
     },
   });
 }

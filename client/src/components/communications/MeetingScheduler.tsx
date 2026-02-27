@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { 
-  Calendar, 
-  Clock, 
-  User, 
+import {
+  Calendar,
+  Clock,
+  User,
   Users,
   Video,
   Phone,
@@ -22,7 +22,7 @@ import {
   MoreHorizontal,
   CheckCircle,
   X,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 
@@ -78,7 +78,7 @@ const MeetingScheduler: React.FC = () => {
       createdAt: new Date(),
       createdBy: 'Current User',
       attendees: ['john@example.com'],
-      isRecurring: false
+      isRecurring: false,
     },
     {
       id: '2',
@@ -96,8 +96,8 @@ const MeetingScheduler: React.FC = () => {
       createdAt: new Date(),
       createdBy: 'Current User',
       attendees: ['jane@example.com'],
-      isRecurring: false
-    }
+      isRecurring: false,
+    },
   ]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -112,13 +112,13 @@ const MeetingScheduler: React.FC = () => {
     const slots: TimeSlot[] = [];
     const startHour = 8; // 8 AM
     const endHour = 18; // 6 PM
-    
+
     for (let hour = startHour; hour < endHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        
+
         // Check if there's a meeting at this time
-        const meetingAtTime = meetings.find(meeting => {
+        const meetingAtTime = meetings.find((meeting) => {
           const meetingHour = meeting.startTime.getHours();
           const meetingMinute = meeting.startTime.getMinutes();
           return meetingHour === hour && Math.floor(meetingMinute / 30) * 30 === minute;
@@ -128,11 +128,11 @@ const MeetingScheduler: React.FC = () => {
           time: timeString,
           available: !meetingAtTime,
           meetingId: meetingAtTime?.id,
-          meetingTitle: meetingAtTime?.title
+          meetingTitle: meetingAtTime?.title,
         });
       }
     }
-    
+
     return slots;
   };
 
@@ -172,7 +172,7 @@ const MeetingScheduler: React.FC = () => {
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
@@ -180,7 +180,7 @@ const MeetingScheduler: React.FC = () => {
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -197,18 +197,16 @@ const MeetingScheduler: React.FC = () => {
   };
 
   const updateMeetingStatus = (meetingId: string, newStatus: Meeting['status']) => {
-    setMeetings(prev =>
-      prev.map(meeting =>
-        meeting.id === meetingId
-          ? { ...meeting, status: newStatus }
-          : meeting
+    setMeetings((prev) =>
+      prev.map((meeting) =>
+        meeting.id === meetingId ? { ...meeting, status: newStatus } : meeting
       )
     );
   };
 
   const deleteMeeting = (meetingId: string) => {
     if (confirm('Are you sure you want to delete this meeting?')) {
-      setMeetings(prev => prev.filter(meeting => meeting.id !== meetingId));
+      setMeetings((prev) => prev.filter((meeting) => meeting.id !== meetingId));
     }
   };
 
@@ -217,24 +215,24 @@ const MeetingScheduler: React.FC = () => {
   };
 
   const sendCalendarInvite = (meeting: Meeting) => {
-    console.log('Sending calendar invite for:', meeting.title);
     alert(`Calendar invite sent to ${meeting.contactEmail}`);
   };
 
-  const filteredMeetings = meetings.filter(meeting => {
-    const matchesSearch = meeting.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         meeting.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         meeting.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredMeetings = meetings.filter((meeting) => {
+    const matchesSearch =
+      meeting.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      meeting.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      meeting.description.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = filterStatus === 'all' || meeting.status === filterStatus;
-    
+
     return matchesSearch && matchesStatus;
   });
 
   const getWeekDays = () => {
     const start = new Date(currentDate);
     start.setDate(currentDate.getDate() - currentDate.getDay()); // Start of week (Sunday)
-    
+
     const days = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(start);
@@ -268,21 +266,20 @@ const MeetingScheduler: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => viewMode === 'week' ? navigateWeek('prev') : navigateMonth('prev')}
+              onClick={() => (viewMode === 'week' ? navigateWeek('prev') : navigateMonth('prev'))}
               className="p-2 hover:bg-gray-100 rounded-md"
             >
               <ChevronLeft size={20} />
             </button>
-            
+
             <h3 className="text-lg font-semibold text-gray-900">
-              {viewMode === 'week' 
+              {viewMode === 'week'
                 ? `Week of ${formatDate(weekDays[0])}`
-                : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-              }
+                : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h3>
-            
+
             <button
-              onClick={() => viewMode === 'week' ? navigateWeek('next') : navigateMonth('next')}
+              onClick={() => (viewMode === 'week' ? navigateWeek('next') : navigateMonth('next'))}
               className="p-2 hover:bg-gray-100 rounded-md"
             >
               <ChevronRight size={20} />
@@ -359,7 +356,9 @@ const MeetingScheduler: React.FC = () => {
             <div className="p-4 text-sm font-medium text-gray-600">Time</div>
             {weekDays.map((day, index) => (
               <div key={index} className="p-4 text-center border-l border-gray-200">
-                <div className="text-sm font-medium text-gray-900">{day.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                <div className="text-sm font-medium text-gray-900">
+                  {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                </div>
                 <div className="text-sm text-gray-600">{day.getDate()}</div>
               </div>
             ))}
@@ -367,7 +366,10 @@ const MeetingScheduler: React.FC = () => {
 
           <div className="max-h-96 overflow-y-auto">
             {timeSlots.map((slot, index) => (
-              <div key={index} className="grid grid-cols-8 gap-0 border-b border-gray-100 hover:bg-gray-50">
+              <div
+                key={index}
+                className="grid grid-cols-8 gap-0 border-b border-gray-100 hover:bg-gray-50"
+              >
                 <div className="p-3 text-xs text-gray-600 border-r border-gray-200">
                   {slot.time}
                 </div>
@@ -397,34 +399,36 @@ const MeetingScheduler: React.FC = () => {
             <div key={meeting.id} className="p-6 hover:bg-gray-50">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4">
-                  <div className="flex items-center space-x-2">
-                    {getTypeIcon(meeting.type)}
-                  </div>
+                  <div className="flex items-center space-x-2">{getTypeIcon(meeting.type)}</div>
 
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
                       <h4 className="text-lg font-medium text-gray-900">{meeting.title}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}
+                      >
                         {meeting.status}
                       </span>
                     </div>
-                    
+
                     <p className="text-gray-600 mt-1">{meeting.description}</p>
-                    
+
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                       <div className="flex items-center space-x-1">
                         <User className="h-4 w-4" />
                         <span>{meeting.contactName}</span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-4 w-4" />
                         <span>{formatDate(meeting.startTime)}</span>
                       </div>
-                      
+
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
-                        <span>{formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}</span>
+                        <span>
+                          {formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}
+                        </span>
                       </div>
 
                       {meeting.meetingLink && (
@@ -435,9 +439,7 @@ const MeetingScheduler: React.FC = () => {
                       )}
                     </div>
 
-                    {meeting.notes && (
-                      <p className="text-gray-700 mt-3 text-sm">{meeting.notes}</p>
-                    )}
+                    {meeting.notes && <p className="text-gray-700 mt-3 text-sm">{meeting.notes}</p>}
                   </div>
                 </div>
 
@@ -452,7 +454,7 @@ const MeetingScheduler: React.FC = () => {
                       Confirm
                     </button>
                   )}
-                  
+
                   {meeting.meetingLink && (
                     <button
                       onClick={() => navigator.clipboard.writeText(meeting.meetingLink!)}
@@ -462,7 +464,7 @@ const MeetingScheduler: React.FC = () => {
                       Copy Link
                     </button>
                   )}
-                  
+
                   <button
                     onClick={() => sendCalendarInvite(meeting)}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-purple-700 bg-purple-100 hover:bg-purple-200 rounded-md transition-colors"
@@ -470,7 +472,7 @@ const MeetingScheduler: React.FC = () => {
                     <Send size={14} className="mr-1" />
                     Send Invite
                   </button>
-                  
+
                   <button
                     onClick={() => setSelectedMeeting(meeting)}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
@@ -478,7 +480,7 @@ const MeetingScheduler: React.FC = () => {
                     <Edit size={14} className="mr-1" />
                     Edit
                   </button>
-                  
+
                   <button
                     onClick={() => deleteMeeting(meeting.id)}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
@@ -499,8 +501,7 @@ const MeetingScheduler: React.FC = () => {
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm || filterStatus !== 'all'
                 ? 'Try adjusting your filters'
-                : 'Schedule your first meeting to get started'
-              }
+                : 'Schedule your first meeting to get started'}
             </p>
           </div>
         )}
@@ -524,11 +525,12 @@ const MeetingScheduler: React.FC = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <p className="text-gray-600 mb-4">
-              Meeting scheduling form would be implemented here with fields for title, contact, date/time, type, and other details.
+              Meeting scheduling form would be implemented here with fields for title, contact,
+              date/time, type, and other details.
             </p>
-            
+
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => {

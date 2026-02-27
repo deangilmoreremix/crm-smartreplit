@@ -61,10 +61,7 @@ async function runScreenshotCapture() {
   for (const [vpName, viewport] of Object.entries(cfg.viewports)) {
     const context = await browser.newContext({
       viewport,
-      userAgent:
-        vpName === 'mobile'
-          ? devices['iPhone 12'].userAgent
-          : undefined
+      userAgent: vpName === 'mobile' ? devices['iPhone 12'].userAgent : undefined,
     });
 
     const page = await context.newPage();
@@ -82,7 +79,10 @@ async function runScreenshotCapture() {
           try {
             await captureOne(page, cfg, target, shot, outDir, vpName, theme);
           } catch (e) {
-            console.warn(`✖ Failed: ${target.name} -> ${shot.label} (${vpName}/${theme})`, e?.message);
+            console.warn(
+              `✖ Failed: ${target.name} -> ${shot.label} (${vpName}/${theme})`,
+              e?.message
+            );
           }
         }
       }

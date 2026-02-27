@@ -7,7 +7,7 @@ const SalesForecastContent: React.FC = () => {
   const [formData, setFormData] = useState({
     timeframe: 'Q3 2023',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,7 @@ const SalesForecastContent: React.FC = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -25,50 +25,49 @@ const SalesForecastContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Sample deals data for analysis
       const deals = [
-        { 
-          title: "Enterprise License", 
-          value: 75000, 
-          stage: "negotiation", 
-          probability: 0.7 
+        {
+          title: 'Enterprise License',
+          value: 75000,
+          stage: 'negotiation',
+          probability: 0.7,
         },
-        { 
-          title: "Support Contract", 
-          value: 25000, 
-          stage: "proposal", 
-          probability: 0.5 
+        {
+          title: 'Support Contract',
+          value: 25000,
+          stage: 'proposal',
+          probability: 0.5,
         },
-        { 
-          title: "Software Renewal", 
-          value: 45000, 
-          stage: "closed-won", 
-          probability: 1.0 
+        {
+          title: 'Software Renewal',
+          value: 45000,
+          stage: 'closed-won',
+          probability: 1.0,
         },
-        { 
-          title: "Cloud Migration", 
-          value: 95000, 
-          stage: "initial", 
-          probability: 0.3 
+        {
+          title: 'Cloud Migration',
+          value: 95000,
+          stage: 'initial',
+          probability: 0.3,
         },
-        { 
-          title: "Consulting Services", 
-          value: 50000, 
-          stage: "negotiation", 
-          probability: 0.6 
-        }
+        {
+          title: 'Consulting Services',
+          value: 50000,
+          stage: 'negotiation',
+          probability: 0.6,
+        },
       ];
-      
-      const result = await edgeFunctionService.generateSalesForecast(
-        deals,
-        formData.timeframe
-      );
+
+      const result = await edgeFunctionService.generateSalesForecast(deals, formData.timeframe);
       setResult(result);
     } catch (err) {
       console.error('Error generating sales forecast:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the forecast');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while generating the forecast'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +81,8 @@ const SalesForecastContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-blue-800">Sales Forecasting</h3>
             <p className="text-sm text-blue-700 mt-1">
-              Generate AI-powered revenue projections and deal closure probability analysis for your sales pipeline.
+              Generate AI-powered revenue projections and deal closure probability analysis for your
+              sales pipeline.
             </p>
           </div>
         </div>
@@ -98,11 +98,14 @@ const SalesForecastContent: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100">
           <h2 className="text-xl font-semibold mb-4">Generate Sales Forecast</h2>
           <p className="text-gray-600 mb-6">
-            Use AI to analyze your deals pipeline and generate accurate revenue projections, probability-weighted forecasts, and recommendations.
+            Use AI to analyze your deals pipeline and generate accurate revenue projections,
+            probability-weighted forecasts, and recommendations.
           </p>
-          
+
           <div className="bg-gray-50 p-4 rounded-md mb-6">
-            <h4 className="font-medium text-gray-700 mb-2">Sample Pipeline Data (For Demonstration)</h4>
+            <h4 className="font-medium text-gray-700 mb-2">
+              Sample Pipeline Data (For Demonstration)
+            </h4>
             <p className="text-sm text-gray-600 mb-2">This forecast will analyze:</p>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 mb-2">
               <li>Enterprise License: $75,000 (Negotiation, 70% probability)</li>
@@ -111,9 +114,11 @@ const SalesForecastContent: React.FC = () => {
               <li>Cloud Migration: $95,000 (Initial, 30% probability)</li>
               <li>Consulting Services: $50,000 (Negotiation, 60% probability)</li>
             </ul>
-            <p className="text-sm text-gray-600 italic">Total pipeline: $290,000 (Weighted: $164,000)</p>
+            <p className="text-sm text-gray-600 italic">
+              Total pipeline: $290,000 (Weighted: $164,000)
+            </p>
           </div>
-          
+
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="timeframe" className="block text-sm font-medium text-gray-700 mb-1">
@@ -132,7 +137,7 @@ const SalesForecastContent: React.FC = () => {
                 <option value="First Half 2024">First Half 2024</option>
               </select>
             </div>
-            
+
             <button
               type="submit"
               disabled={isLoading}

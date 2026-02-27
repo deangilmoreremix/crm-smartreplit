@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from 'react';
 import { remoteAppManager } from '../utils/remoteAppManager';
 import { universalDataSync } from '../services/universalDataSync';
@@ -40,11 +39,7 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
 
     // Start auto-refresh if enabled
     if (config.autoRefresh) {
-      remoteAppManager.startAutoRefresh(
-        config.id,
-        config.url,
-        config.refreshInterval || 60000
-      );
+      remoteAppManager.startAutoRefresh(config.id, config.url, config.refreshInterval || 60000);
     }
 
     // Listen for connection status
@@ -53,7 +48,7 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
         setIsConnected(true);
         setLastSync(new Date());
         setErrorCount(0);
-        
+
         // Send initial data sync
         setTimeout(() => {
           syncInitialData(bridge);
@@ -72,7 +67,7 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
   const createAppBridge = (appConfig: RemoteAppConfig) => {
     return {
       iframe: null as HTMLIFrameElement | null,
-      
+
       setIframe(iframe: HTMLIFrameElement) {
         this.iframe = iframe;
       },
@@ -81,17 +76,20 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
         if (!this.iframe?.contentWindow) return false;
 
         try {
-          this.iframe.contentWindow.postMessage({
-            type,
-            data,
-            appId: appConfig.id,
-            source: 'crm',
-            timestamp: Date.now()
-          }, '*');
+          this.iframe.contentWindow.postMessage(
+            {
+              type,
+              data,
+              appId: appConfig.id,
+              source: 'crm',
+              timestamp: Date.now(),
+            },
+            '*'
+          );
           return true;
         } catch (error) {
           console.error(`Failed to send message to ${appConfig.id}:`, error);
-          setErrorCount(prev => prev + 1);
+          setErrorCount((prev) => prev + 1);
           return false;
         }
       },
@@ -104,7 +102,7 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
         };
         window.addEventListener('message', messageHandler);
         return () => window.removeEventListener('message', messageHandler);
-      }
+      },
     };
   };
 
@@ -116,17 +114,17 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
       appInfo: {
         name: 'Smart CRM',
         version: '2.0.0',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       data: {
         contacts: Object.values(contacts),
         deals: Object.values(deals),
-        tasks: Object.values(tasks)
+        tasks: Object.values(tasks),
       },
       config: {
         theme: 'light',
-        features: ['sync', 'realtime', 'ai']
-      }
+        features: ['sync', 'realtime', 'ai'],
+      },
     });
 
     setLastSync(new Date());
@@ -148,6 +146,6 @@ export function useUniversalRemoteIntegration(config: RemoteAppConfig) {
     errorCount,
     manualSync,
     refreshApp,
-    config
+    config,
   };
 }

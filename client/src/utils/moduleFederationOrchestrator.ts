@@ -8,7 +8,7 @@ class EventBus {
 
   emit(event: string, data: any) {
     console.log(`📡 EventBus emitting: ${event}`, data);
-    this.listeners[event]?.forEach(callback => callback(data));
+    this.listeners[event]?.forEach((callback) => callback(data));
   }
 
   on(event: string, callback: Function) {
@@ -19,7 +19,7 @@ class EventBus {
 
   off(event: string, callback: Function) {
     if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+      this.listeners[event] = this.listeners[event].filter((cb) => cb !== callback);
     }
   }
 }
@@ -43,7 +43,7 @@ interface SharedModuleState {
     theme: string;
     user: any;
   };
-  
+
   // Actions
   setModuleLoaded: (moduleId: string, component: React.ComponentType, data?: any) => void;
   setModuleStatus: (moduleId: string, status: string) => void;
@@ -59,65 +59,65 @@ export const useSharedModuleState = create<SharedModuleState>()(
       appointments: [],
       deals: [],
       theme: 'light',
-      user: null
+      user: null,
     },
 
     setModuleLoaded: (moduleId: string, component: React.ComponentType, data = {}) => {
-      set(state => ({
+      set((state) => ({
         modules: {
           ...state.modules,
           [moduleId]: {
             loaded: true,
             component,
             data,
-            status: 'ready'
-          }
-        }
+            status: 'ready',
+          },
+        },
       }));
-      
+
       // Emit global event
       globalEventBus.emit('MODULE_LOADED', { moduleId, data });
     },
 
     setModuleStatus: (moduleId: string, status: string) => {
-      set(state => ({
+      set((state) => ({
         modules: {
           ...state.modules,
           [moduleId]: {
             ...state.modules[moduleId],
-            status: status as any
-          }
-        }
+            status: status as any,
+          },
+        },
       }));
     },
 
     updateSharedData: (key: string, data: any) => {
-      set(state => ({
+      set((state) => ({
         sharedData: {
           ...state.sharedData,
-          [key]: data
-        }
+          [key]: data,
+        },
       }));
-      
+
       // Notify all modules of data update
       globalEventBus.emit('SHARED_DATA_UPDATED', { key, data });
     },
 
     syncDataAcrossModules: (source: string, data: any) => {
       console.log(`🔄 Syncing data from ${source}:`, data);
-      
+
       // Update shared state
       const currentState = get();
-      set(state => ({
+      set((state) => ({
         sharedData: {
           ...state.sharedData,
-          ...data
-        }
+          ...data,
+        },
       }));
-      
+
       // Emit to all other modules
       globalEventBus.emit('MODULE_DATA_SYNC', { source, data });
-    }
+    },
   }))
 );
 
@@ -141,7 +141,7 @@ export class ModuleFederationOrchestrator {
   private setupGlobalMessageHandler() {
     window.addEventListener('message', (event: MessageEvent) => {
       const { type, module, data } = event.data;
-      
+
       switch (type) {
         case 'MODULE_READY':
           this.handleModuleReady(module, data);
@@ -175,19 +175,19 @@ export class ModuleFederationOrchestrator {
 
   private handleModuleReady(moduleId: string, data: any) {
     console.log(`✅ Module ${moduleId} ready with data:`, data);
-    
+
     const store = useSharedModuleState.getState();
     store.setModuleStatus(moduleId, 'ready');
-    
+
     // Send initial shared data to newly ready module
     this.sendToModule(moduleId, 'INITIAL_DATA_SYNC', store.sharedData);
-    
+
     globalEventBus.emit('MODULE_READY', { moduleId, data });
   }
 
   private handleModuleDataUpdate(moduleId: string, data: any) {
     console.log(`📊 Data update from ${moduleId}:`, data);
-    
+
     const store = useSharedModuleState.getState();
     store.syncDataAcrossModules(moduleId, data);
   }
@@ -195,7 +195,7 @@ export class ModuleFederationOrchestrator {
   private handleDataRequest(moduleId: string, requestData: any) {
     const store = useSharedModuleState.getState();
     const requestedData = store.sharedData;
-    
+
     this.sendToModule(moduleId, 'DATA_RESPONSE', requestedData);
   }
 
@@ -203,14 +203,14 @@ export class ModuleFederationOrchestrator {
     // Handle synchronization requests between modules
     this.broadcastToAllModules('MODULE_SYNC_BROADCAST', {
       source: moduleId,
-      data
+      data,
     });
   }
 
   public registerModule(moduleId: string, component: React.ComponentType, initialData = {}) {
     const store = useSharedModuleState.getState();
     store.setModuleLoaded(moduleId, component, initialData);
-    
+
     // Send theme and initial state
     setTimeout(() => {
       this.sendToModule(moduleId, 'SET_THEME', { theme: 'light', mode: 'light' });
@@ -225,12 +225,12 @@ export class ModuleFederationOrchestrator {
       targetModule: moduleId,
       data,
       source: 'CRM_HOST',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Try iframe communication first
     const iframes = document.querySelectorAll('iframe');
-    iframes.forEach(iframe => {
+    iframes.forEach((iframe) => {
       try {
         iframe.contentWindow?.postMessage(message, '*');
       } catch (e) {
@@ -244,7 +244,7 @@ export class ModuleFederationOrchestrator {
 
   public broadcastToAllModules(type: string, data: any) {
     const store = useSharedModuleState.getState();
-    Object.keys(store.modules).forEach(moduleId => {
+    Object.keys(store.modules).forEach((moduleId) => {
       this.sendToModule(moduleId, type, data);
     });
   }

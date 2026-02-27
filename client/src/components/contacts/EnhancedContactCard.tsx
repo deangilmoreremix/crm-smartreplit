@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  User, 
-  Building2, 
-  Mail, 
-  Phone, 
-  Calendar, 
+import {
+  User,
+  Building2,
+  Mail,
+  Phone,
+  Calendar,
   Star, // Added Star import
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
-  Trash2, 
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
   MessageSquare,
   Video,
   LinkedinIcon,
@@ -21,7 +21,7 @@ import {
   Clock,
   Tag,
   ExternalLink,
-  Search
+  Search,
 } from 'lucide-react';
 import { gpt5SocialResearchService } from '../../services/gpt5SocialResearchService';
 import { Contact } from '../../types/contact';
@@ -45,13 +45,13 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
   onView,
   showActions = true,
   isSelected = false,
-  onSelect
+  onSelect,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isEnriching, setIsEnriching] = useState(false);
   const [isLoadingSocial, setIsLoadingSocial] = useState(false);
-  
+
   const { analyzeContact, enrichContact, updateContact } = useContactStore(); // Destructure updateContact
 
   // Get AI score color and label
@@ -65,22 +65,32 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
   // Get interest level color
   const getInterestColor = (level?: string) => {
     switch (level) {
-      case 'hot': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'cold': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-600 border-gray-200';
+      case 'hot':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'cold':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-600 border-gray-200';
     }
   };
 
   // Get status color
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'customer': return 'bg-green-100 text-green-800 border-green-200';
-      case 'prospect': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'lead': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'churned': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'customer':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'prospect':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'lead':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'churned':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -115,14 +125,13 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
     try {
       const contactForResearch = {
         ...contact,
-        lastContact: contact.lastContact ? new Date(contact.lastContact) : new Date()
+        lastContact: contact.lastContact ? new Date(contact.lastContact) : new Date(),
       };
       const research = await gpt5SocialResearchService.researchContactSocialMedia(
         contactForResearch,
         ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'],
         'comprehensive'
       );
-      console.log('Social research completed:', research);
     } catch (error) {
       console.error('Social research failed:', error);
     } finally {
@@ -133,17 +142,18 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
   const handleVideoCall = () => {
     // Assuming initiateCall is available in the context or passed as prop
     // For now, just log it
-    console.log('Initiating video call with:', contact.name);
   };
 
   const scoreInfo = getScoreColor(contact.aiScore || contact.score);
 
   return (
-    <div className={`
+    <div
+      className={`
       relative bg-white rounded-xl shadow-sm border border-gray-200 p-6 
       transition-all duration-200 hover:shadow-md hover:border-gray-300
       ${isSelected ? 'ring-2 ring-blue-500 border-blue-300' : ''}
-    `}>
+    `}
+    >
       {/* Selection Checkbox */}
       {onSelect && (
         <div className="absolute top-4 left-4">
@@ -161,8 +171,8 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
         <button
           onClick={handleToggleFavorite}
           className={`p-1 rounded-full transition-colors ${
-            contact.isFavorite 
-              ? 'text-yellow-500 hover:text-yellow-600' 
+            contact.isFavorite
+              ? 'text-yellow-500 hover:text-yellow-600'
               : 'text-gray-400 hover:text-yellow-500'
           }`}
         >
@@ -261,7 +271,10 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
       </div>
 
       {/* Avatar & Basic Info */}
-      <div className="flex items-start space-x-4 mb-4" style={{ marginTop: onSelect ? '1.5rem' : '0' }}>
+      <div
+        className="flex items-start space-x-4 mb-4"
+        style={{ marginTop: onSelect ? '1.5rem' : '0' }}
+      >
         <div className="flex-shrink-0">
           {/* Use contact.avatarSrc or contact.avatar */}
           {contact.avatarSrc || contact.avatar ? (
@@ -273,25 +286,25 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
           ) : (
             <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <span className="text-white font-semibold text-lg">
-                {contact.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                {contact.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()}
               </span>
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
-            {contact.name}
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 truncate">{contact.name}</h3>
           {contact.position && contact.company && (
             <p className="text-sm text-gray-600 truncate flex items-center">
               <Building2 size={12} className="mr-1 flex-shrink-0" />
               {contact.position} at {contact.company}
             </p>
           )}
-          {contact.industry && (
-            <p className="text-xs text-gray-500 mt-1">{contact.industry}</p>
-          )}
+          {contact.industry && <p className="text-xs text-gray-500 mt-1">{contact.industry}</p>}
         </div>
       </div>
 
@@ -299,18 +312,24 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           {(contact.aiScore || contact.score) && (
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${scoreInfo.bg} ${scoreInfo.color} flex items-center`}>
+            <div
+              className={`px-2 py-1 rounded-full text-xs font-medium ${scoreInfo.bg} ${scoreInfo.color} flex items-center`}
+            >
               <Target size={10} className="mr-1" />
               {contact.aiScore || contact.score} ({scoreInfo.label})
             </div>
           )}
-          
-          <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(contact.status)}`}>
+
+          <div
+            className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(contact.status)}`}
+          >
             {contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}
           </div>
 
           {contact.interestLevel && (
-            <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getInterestColor(contact.interestLevel)}`}>
+            <div
+              className={`px-2 py-1 rounded-full text-xs font-medium border ${getInterestColor(contact.interestLevel)}`}
+            >
               {contact.interestLevel === 'medium' ? 'warm' : contact.interestLevel}
             </div>
           )}
@@ -395,11 +414,10 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
       {(contact.lastContact || contact.lastConnected) && (
         <div className="mb-4 text-xs text-gray-500 flex items-center">
           <Clock size={12} className="mr-1" />
-          Last contact: {
-            contact.lastContact 
-              ? formatDistanceToNow(new Date(contact.lastContact), { addSuffix: true })
-              : contact.lastConnected
-          }
+          Last contact:{' '}
+          {contact.lastContact
+            ? formatDistanceToNow(new Date(contact.lastContact), { addSuffix: true })
+            : contact.lastConnected}
         </div>
       )}
 
@@ -408,12 +426,14 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
         <div className="mb-4">
           <div className="text-xs text-gray-500 mb-1">Key Info:</div>
           <div className="space-y-1">
-            {Object.entries(contact.customFields).slice(0, 2).map(([key, value]) => (
-              <div key={key} className="flex justify-between text-xs">
-                <span className="text-gray-600">{key}:</span>
-                <span className="text-gray-900 font-medium">{value}</span>
-              </div>
-            ))}
+            {Object.entries(contact.customFields)
+              .slice(0, 2)
+              .map(([key, value]) => (
+                <div key={key} className="flex justify-between text-xs">
+                  <span className="text-gray-600">{key}:</span>
+                  <span className="text-gray-900 font-medium">{value}</span>
+                </div>
+              ))}
           </div>
         </div>
       )}
@@ -427,7 +447,7 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
           <Mail size={14} className="mr-1" />
           Email
         </button>
-        
+
         {contact.phone && (
           <button
             onClick={() => window.open(`tel:${contact.phone}`, '_blank')}
@@ -437,7 +457,7 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
             Call
           </button>
         )}
-        
+
         <button
           onClick={handleVideoCall}
           className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
@@ -448,15 +468,9 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
       </div>
 
       {/* Click-outside handler for dropdown */}
-      {showDropdown && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setShowDropdown(false)}
-        />
-      )}
+      {showDropdown && <div className="fixed inset-0 z-0" onClick={() => setShowDropdown(false)} />}
     </div>
   );
 };
 
 export default EnhancedContactCard;
-

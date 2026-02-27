@@ -1,4 +1,3 @@
-
 import { openaiAssistantsService, AssistantConfig } from './openaiAssistantsService';
 import { assistantThreadManager, AssistantThread } from './assistantThreadManager';
 
@@ -24,14 +23,14 @@ class PersistentAssistantService {
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    
+
     try {
       // Load existing assistants
       await this.loadPersistedAssistants();
-      
+
       // Create specialized assistants if they don't exist
       await this.ensureSpecializedAssistants();
-      
+
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize persistent assistant service:', error);
@@ -41,7 +40,7 @@ class PersistentAssistantService {
   private async loadPersistedAssistants(): Promise<void> {
     try {
       const assistantsList = await this.assistants.listAssistants();
-      
+
       for (const assistant of assistantsList.data) {
         const persistentAssistant: PersistentAssistant = {
           id: assistant.id,
@@ -54,10 +53,10 @@ class PersistentAssistantService {
           performance: {
             averageResponseTime: 2000,
             successRate: 0.95,
-            userSatisfaction: 4.5
-          }
+            userSatisfaction: 4.5,
+          },
         };
-        
+
         this.activeAssistants.set(assistant.id, persistentAssistant);
       }
     } catch (error) {
@@ -66,15 +65,20 @@ class PersistentAssistantService {
   }
 
   private async ensureSpecializedAssistants(): Promise<void> {
-    const requiredTypes: Array<'contact' | 'deal' | 'task' | 'pipeline'> = ['contact', 'deal', 'task', 'pipeline'];
-    
+    const requiredTypes: Array<'contact' | 'deal' | 'task' | 'pipeline'> = [
+      'contact',
+      'deal',
+      'task',
+      'pipeline',
+    ];
+
     for (const type of requiredTypes) {
-      const existing = Array.from(this.activeAssistants.values()).find(a => a.type === type);
-      
+      const existing = Array.from(this.activeAssistants.values()).find((a) => a.type === type);
+
       if (!existing) {
         try {
           const assistant = await this.assistants.createSpecializedAssistant(type);
-          
+
           const persistentAssistant: PersistentAssistant = {
             id: assistant.id,
             name: assistant.name || `${type} Assistant`,
@@ -86,12 +90,12 @@ class PersistentAssistantService {
             performance: {
               averageResponseTime: 2000,
               successRate: 1.0,
-              userSatisfaction: 5.0
-            }
+              userSatisfaction: 5.0,
+            },
           };
-          
+
           this.activeAssistants.set(assistant.id, persistentAssistant);
-          
+
           // Store assistant ID in environment variable format
           this.setAssistantIdForType(type, assistant.id);
         } catch (error) {
@@ -104,7 +108,7 @@ class PersistentAssistantService {
   private getAssistantType(name: string): 'contact' | 'deal' | 'task' | 'pipeline' | 'general' {
     const lowerName = name.toLowerCase();
     if (lowerName.includes('contact')) return 'contact';
-    if (lowerName.includes('deal')) return 'deal';  
+    if (lowerName.includes('deal')) return 'deal';
     if (lowerName.includes('task')) return 'task';
     if (lowerName.includes('pipeline')) return 'pipeline';
     return 'general';
@@ -122,25 +126,31 @@ class PersistentAssistantService {
     context?: Record<string, any>
   ): Promise<{ threadId: string; assistantId: string }> {
     if (!this.initialized) await this.initialize();
-    
-    const assistant = Array.from(this.activeAssistants.values()).find(a => a.type === assistantType);
+
+    const assistant = Array.from(this.activeAssistants.values()).find(
+      (a) => a.type === assistantType
+    );
     if (!assistant) {
       throw new Error(`No ${assistantType} assistant available`);
     }
 
     // Check for existing thread
     let threadId = assistant.activeThreads.get(entityId);
-    
+
     if (!threadId) {
       // Create new thread
-      const thread = await assistantThreadManager.getOrCreateThread(assistantType, entityId, context);
+      const thread = await assistantThreadManager.getOrCreateThread(
+        assistantType,
+        entityId,
+        context
+      );
       threadId = thread.id;
       assistant.activeThreads.set(entityId, threadId);
     }
 
     return {
       threadId,
-      assistantId: assistant.id
+      assistantId: assistant.id,
     };
   }
 
@@ -156,32 +166,46 @@ class PersistentAssistantService {
     persistentMemory: boolean;
   }> {
     const startTime = Date.now();
-    
+
     try {
-      const { threadId, assistantId } = await this.getOrCreateThread(assistantType, entityId, context);
-      
-      const result = await this.assistants.chatWithAssistant(message, assistantId, threadId, context);
-      
+      const { threadId, assistantId } = await this.getOrCreateThread(
+        assistantType,
+        entityId,
+        context
+      );
+
+      const result = await this.assistants.chatWithAssistant(
+        message,
+        assistantId,
+        threadId,
+        context
+      );
+
       // Update performance metrics
       const assistant = this.activeAssistants.get(assistantId);
       if (assistant) {
         assistant.totalInteractions++;
         assistant.lastUsed = new Date();
-        
+
         const responseTime = Date.now() - startTime;
-        assistant.performance.averageResponseTime = 
-          (assistant.performance.averageResponseTime * 0.9) + (responseTime * 0.1);
+        assistant.performance.averageResponseTime =
+          assistant.performance.averageResponseTime * 0.9 + responseTime * 0.1;
       }
 
       // Sync thread across remote apps
       await assistantThreadManager.addMessageToThread(threadId, 'user', message, context);
-      await assistantThreadManager.addMessageToThread(threadId, 'assistant', result.response, context);
+      await assistantThreadManager.addMessageToThread(
+        threadId,
+        'assistant',
+        result.response,
+        context
+      );
 
       return {
         response: result.response,
         threadId: result.threadId,
         assistantId,
-        persistentMemory: true
+        persistentMemory: true,
       };
     } catch (error) {
       console.error('Persistent assistant chat failed:', error);
@@ -195,8 +219,12 @@ class PersistentAssistantService {
     message: string,
     context?: Record<string, any>
   ) {
-    const { threadId, assistantId } = await this.getOrCreateThread(assistantType, entityId, context);
-    
+    const { threadId, assistantId } = await this.getOrCreateThread(
+      assistantType,
+      entityId,
+      context
+    );
+
     return this.assistants.streamChatWithAssistant(message, assistantId, threadId, context);
   }
 
@@ -208,13 +236,11 @@ class PersistentAssistantService {
     try {
       const { threadId } = await this.getOrCreateThread(assistantType, entityId);
       const messages = await this.assistants.getMessages(threadId, limit);
-      
-      return messages.data.map(msg => ({
+
+      return messages.data.map((msg) => ({
         role: msg.role,
-        content: Array.isArray(msg.content) 
-          ? msg.content[0]?.text?.value || ''
-          : msg.content,
-        timestamp: new Date(msg.created_at * 1000)
+        content: Array.isArray(msg.content) ? msg.content[0]?.text?.value || '' : msg.content,
+        timestamp: new Date(msg.created_at * 1000),
       }));
     } catch (error) {
       console.error('Failed to get assistant memory:', error);
@@ -228,7 +254,7 @@ class PersistentAssistantService {
 
   async createCustomAssistant(config: AssistantConfig & { type?: string }): Promise<string> {
     const assistant = await this.assistants.createAssistant(config);
-    
+
     const persistentAssistant: PersistentAssistant = {
       id: assistant.id,
       name: config.name,
@@ -240,10 +266,10 @@ class PersistentAssistantService {
       performance: {
         averageResponseTime: 2000,
         successRate: 1.0,
-        userSatisfaction: 5.0
-      }
+        userSatisfaction: 5.0,
+      },
     };
-    
+
     this.activeAssistants.set(assistant.id, persistentAssistant);
     return assistant.id;
   }

@@ -5,13 +5,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  signUpWithEmail, 
-  signInWithEmail, 
+import {
+  signUpWithEmail,
+  signInWithEmail,
   resetPasswordForEmail,
   updateUser,
   signOut,
-  getCurrentUser
+  getCurrentUser,
 } from '../../services/authService';
 import { Button } from './button';
 import { Input } from './input';
@@ -27,25 +27,30 @@ export interface AuthFormProps {
   redirectAfterLogin?: string;
 }
 
-export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redirectAfterLogin }: AuthFormProps) {
+export function AuthForm({
+  mode: initialMode = 'login',
+  onSuccess,
+  onError,
+  redirectAfterLogin,
+}: AuthFormProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   // Auth state
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
+
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
   };
-  
+
   // Check for reset password token in URL
   useEffect(() => {
     const checkAuth = async () => {
@@ -55,7 +60,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
     };
     checkAuth();
   }, [searchParams]);
-  
+
   // Email/Password Sign Up
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,11 +68,11 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       showMessage('error', 'Passwords do not match');
       return;
     }
-    
+
     setLoading(true);
     try {
       const { data, error } = await signUpWithEmail(email, password);
-      
+
       if (error) {
         showMessage('error', error.message);
         onError?.(error);
@@ -82,15 +87,15 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       setLoading(false);
     }
   };
-  
+
   // Email/Password Login
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const { data, error } = await signInWithEmail(email, password);
-      
+
       if (error) {
         showMessage('error', error.message);
         onError?.(error);
@@ -106,15 +111,15 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       setLoading(false);
     }
   };
-  
+
   // Password Reset Request
   const handlePasswordResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const { data, error } = await resetPasswordForEmail(email);
-      
+
       if (error) {
         showMessage('error', error.message);
         onError?.(error);
@@ -130,7 +135,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       setLoading(false);
     }
   };
-  
+
   // Update Password (after reset)
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,12 +143,12 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       showMessage('error', 'Passwords do not match');
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const { data, error } = await updateUser({ password });
-      
+
       if (error) {
         showMessage('error', error.message);
         onError?.(error);
@@ -160,7 +165,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       setLoading(false);
     }
   };
-  
+
   // Render methods
   const renderSignupForm = () => (
     <form onSubmit={handleEmailSignup} className="space-y-4">
@@ -203,7 +208,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       </Button>
     </form>
   );
-  
+
   const renderLoginForm = () => (
     <form onSubmit={handleEmailLogin} className="space-y-4">
       <div className="space-y-2">
@@ -233,7 +238,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       </Button>
     </form>
   );
-  
+
   const renderPasswordResetForm = () => (
     <form onSubmit={handlePasswordResetRequest} className="space-y-4">
       <div className="space-y-2">
@@ -250,17 +255,12 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Sending...' : 'Send Reset Link'}
       </Button>
-      <Button 
-        type="button" 
-        variant="outline" 
-        className="w-full"
-        onClick={() => setMode('login')}
-      >
+      <Button type="button" variant="outline" className="w-full" onClick={() => setMode('login')}>
         Back to Login
       </Button>
     </form>
   );
-  
+
   const renderUpdatePasswordForm = () => (
     <form onSubmit={handleUpdatePassword} className="space-y-4">
       <div className="space-y-2">
@@ -291,17 +291,19 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       </Button>
     </form>
   );
-  
+
   // Message display
   const renderMessage = () => {
     if (!message) return null;
     return (
-      <div className={`p-3 rounded mb-4 ${message.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+      <div
+        className={`p-3 rounded mb-4 ${message.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}
+      >
         {message.text}
       </div>
     );
   };
-  
+
   // Main render
   if (mode === 'reset-password') {
     return (
@@ -317,7 +319,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       </Card>
     );
   }
-  
+
   if (mode === 'update-password') {
     return (
       <Card className="w-full max-w-md mx-auto">
@@ -332,7 +334,7 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       </Card>
     );
   }
-  
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
@@ -343,9 +345,9 @@ export function AuthForm({ mode: initialMode = 'login', onSuccess, onError, redi
       </CardHeader>
       <CardContent>
         {renderMessage()}
-        
+
         {mode === 'login' ? renderLoginForm() : renderSignupForm()}
-        
+
         <div className="text-center text-sm mt-4">
           {mode === 'login' ? (
             <>

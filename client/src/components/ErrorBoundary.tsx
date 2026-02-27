@@ -1,7 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { GlassCard } from './ui/GlassCard';
-import { ModernButton } from './ui/ModernButton';
 
 interface Props {
   children: ReactNode;
@@ -11,122 +8,197 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
+/**
+ * Global Error Boundary Component
+ * 
+ * Catches React rendering errors and displays a fallback UI instead of white-screening.
+ * This is critical for production stability - without it, any uncaught error crashes the entire app.
+ */
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return {
+      hasError: true,
+      error,
+      errorInfo: null,
+    };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error Boundary caught an error:', error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Log error for debugging
+    console.error('🔴 ErrorBoundary caught an error:', error, errorInfo);
+    
+    this.setState({
+      error,
+      errorInfo,
+    });
 
-    // Log to monitoring service (Sentry, etc.)
-    this.setState({ errorInfo });
-
-    // Call custom error handler if provided
+    // Call optional error callback
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
 
-    // In production, you would send this to your error monitoring service
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+    // In production, you could send to error tracking service
+    if (import.meta.env.PROD) {
+      // Example: Sentry.captureException(error, { extra: errorInfo });
+    }
   }
 
-  handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  handleRetry = (): void => {
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    });
   };
 
-  handleGoHome = () => {
-    window.location.href = '/';
-  };
-
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default fallback UI
       return (
-        <div className="min-h-screen w-full flex items-center justify-center px-4 py-8 bg-gray-900">
-          <GlassCard className="max-w-md w-full p-8 text-center">
-            <div className="flex justify-center mb-6">
-              <div className="p-4 rounded-full bg-red-500/20 border border-red-500/30">
-                <AlertTriangle className="h-8 w-8 text-red-400" />
-              </div>
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f9fafb',
+          padding: '20px',
+        }}>
+          <div style={{
+            maxWidth: '500px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            padding: '32px',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              margin: '0 auto 24px',
+              backgroundColor: '#fef2f2',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <svg 
+                style={{ width: '32px', height: '32px', color: '#dc2626' }}
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+                />
+              </svg>
             </div>
-
-            <h1 className="text-2xl font-bold text-white mb-4">
+            
+            <h1 style={{
+              fontSize: '24px',
+              fontWeight: '600',
+              color: '#111827',
+              marginBottom: '12px',
+            }}>
               Something went wrong
             </h1>
-
-            <p className="text-gray-400 mb-6">
-              We encountered an unexpected error. Our team has been notified and is working to fix it.
+            
+            <p style={{
+              fontSize: '14px',
+              color: '#6b7280',
+              marginBottom: '24px',
+            }}>
+              We're sorry, but something unexpected happened. Please try again or contact support if the problem persists.
             </p>
 
-            <div className="space-y-3">
-              <ModernButton
-                onClick={this.handleRetry}
-                className="w-full"
-                variant="primary"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
-              </ModernButton>
-
-              <ModernButton
-                onClick={this.handleGoHome}
-                className="w-full"
-                variant="outline"
-              >
-                <Home className="h-4 w-4 mr-2" />
-                Go Home
-              </ModernButton>
-            </div>
-
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-400">
-                  Error Details (Development Only)
-                </summary>
-                <pre className="mt-2 p-3 bg-gray-800 rounded text-xs text-red-300 overflow-auto max-h-40">
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
+            {this.state.error && (
+              <div style={{
+                backgroundColor: '#f3f4f6',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '24px',
+                textAlign: 'left',
+                overflow: 'auto',
+                maxHeight: '150px',
+              }}>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#dc2626',
+                  fontFamily: 'monospace',
+                  margin: 0,
+                  wordBreak: 'break-word',
+                }}>
+                  {this.state.error.message || 'Unknown error'}
+                </p>
+              </div>
             )}
-          </GlassCard>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={this.handleRetry}
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+              >
+                Try Again
+              </button>
+              
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  backgroundColor: '#ffffff',
+                  color: '#374151',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: '1px solid #d1d5db',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+              >
+                Reload Page
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
 
     return this.props.children;
   }
-}
-
-// Higher-order component for easier usage
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<Props, 'children'>
-) {
-  const WrappedComponent = (props: P) => (
-    <ErrorBoundary {...errorBoundaryProps}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
-
-  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-
-  return WrappedComponent;
 }
 
 export default ErrorBoundary;

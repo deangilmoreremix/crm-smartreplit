@@ -16,54 +16,62 @@ interface CallScriptData {
 const purposeOptions = [
   { value: 'cold_call', label: 'Cold Call', description: 'Initial outreach to new prospects' },
   { value: 'follow_up', label: 'Follow-up Call', description: 'Following up on previous contact' },
-  { value: 'discovery', label: 'Discovery Call', description: 'Understanding client needs and pain points' },
+  {
+    value: 'discovery',
+    label: 'Discovery Call',
+    description: 'Understanding client needs and pain points',
+  },
   { value: 'closing', label: 'Closing Call', description: 'Moving towards deal closure' },
-  { value: 'objection_handling', label: 'Objection Handling', description: 'Addressing client concerns' }
+  {
+    value: 'objection_handling',
+    label: 'Objection Handling',
+    description: 'Addressing client concerns',
+  },
 ];
 
 export default function CallScriptGenerator() {
   const { isDark } = useTheme();
   const { generateCallScript } = useEnhancedGemini();
-  
+
   const [scriptData, setScriptData] = useState<CallScriptData>({
     purpose: 'cold_call',
     contactName: '',
     companyName: '',
     industry: '',
     painPoints: [''],
-    objectives: ['']
+    objectives: [''],
   });
-  
+
   const [generatedScript, setGeneratedScript] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState(false);
 
   const handleInputChange = (field: keyof CallScriptData, value: string | number | undefined) => {
-    setScriptData(prev => ({
+    setScriptData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleArrayAdd = (field: 'painPoints' | 'objectives') => {
-    setScriptData(prev => ({
+    setScriptData((prev) => ({
       ...prev,
-      [field]: [...prev[field], '']
+      [field]: [...prev[field], ''],
     }));
   };
 
   const handleArrayUpdate = (field: 'painPoints' | 'objectives', index: number, value: string) => {
-    setScriptData(prev => ({
+    setScriptData((prev) => ({
       ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
+      [field]: prev[field].map((item, i) => (i === index ? value : item)),
     }));
   };
 
   const handleArrayRemove = (field: 'painPoints' | 'objectives', index: number) => {
-    setScriptData(prev => ({
+    setScriptData((prev) => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
+      [field]: prev[field].filter((_, i) => i !== index),
     }));
   };
 
@@ -76,14 +84,14 @@ export default function CallScriptGenerator() {
     setIsGenerating(true);
     setError('');
     setSuccess(false);
-    
+
     const startTime = Date.now();
 
     try {
       const filteredData = {
         ...scriptData,
-        painPoints: scriptData.painPoints.filter(point => point.trim()),
-        objectives: scriptData.objectives.filter(obj => obj.trim())
+        painPoints: scriptData.painPoints.filter((point) => point.trim()),
+        objectives: scriptData.objectives.filter((obj) => obj.trim()),
       };
 
       const script = await generateCallScript(filteredData);
@@ -97,13 +105,12 @@ export default function CallScriptGenerator() {
         category: 'Core AI Tools',
         executionTime: Date.now() - startTime,
         success: true,
-        customerId: 'current-user'
+        customerId: 'current-user',
       });
-
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to generate call script';
       setError(errorMsg);
-      
+
       // Track failed usage
       await aiUsageTracker.trackUsage({
         toolId: 'call-script-generator',
@@ -112,7 +119,7 @@ export default function CallScriptGenerator() {
         executionTime: Date.now() - startTime,
         success: false,
         error: errorMsg,
-        customerId: 'current-user'
+        customerId: 'current-user',
       });
     } finally {
       setIsGenerating(false);
@@ -140,7 +147,9 @@ export default function CallScriptGenerator() {
   };
 
   return (
-    <div className={`max-w-6xl mx-auto p-6 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div
+      className={`max-w-6xl mx-auto p-6 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}
+    >
       {/* Header */}
       <div className="flex items-center mb-8">
         <div className="p-3 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl mr-4">
@@ -158,7 +167,7 @@ export default function CallScriptGenerator() {
         {/* Input Form */}
         <div className={`p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <h2 className="text-xl font-semibold mb-6">Call Details</h2>
-          
+
           {/* Call Purpose */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-3">Call Purpose *</label>
@@ -175,7 +184,9 @@ export default function CallScriptGenerator() {
                   />
                   <div>
                     <div className="font-medium">{option.label}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">{option.description}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {option.description}
+                    </div>
                   </div>
                 </label>
               ))}
@@ -191,8 +202,8 @@ export default function CallScriptGenerator() {
                 value={scriptData.contactName}
                 onChange={(e) => handleInputChange('contactName', e.target.value)}
                 className={`w-full p-3 rounded-lg border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 placeholder="Enter contact name"
@@ -206,8 +217,8 @@ export default function CallScriptGenerator() {
                 value={scriptData.companyName}
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
                 className={`w-full p-3 rounded-lg border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 placeholder="Enter company name"
@@ -221,8 +232,8 @@ export default function CallScriptGenerator() {
                 value={scriptData.industry}
                 onChange={(e) => handleInputChange('industry', e.target.value)}
                 className={`w-full p-3 rounded-lg border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 placeholder="e.g., Technology, Healthcare, Finance"
@@ -239,8 +250,8 @@ export default function CallScriptGenerator() {
                     value={point}
                     onChange={(e) => handleArrayUpdate('painPoints', index, e.target.value)}
                     className={`flex-1 p-3 rounded-lg border ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                     placeholder="Enter pain point"
@@ -271,8 +282,8 @@ export default function CallScriptGenerator() {
                     value={obj}
                     onChange={(e) => handleArrayUpdate('objectives', index, e.target.value)}
                     className={`flex-1 p-3 rounded-lg border ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                     placeholder="Enter objective"
@@ -354,15 +365,19 @@ export default function CallScriptGenerator() {
           </div>
 
           {generatedScript ? (
-            <div className={`p-4 rounded-lg border ${
-              isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-            } max-h-96 overflow-y-auto`}>
+            <div
+              className={`p-4 rounded-lg border ${
+                isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+              } max-h-96 overflow-y-auto`}
+            >
               <pre className="whitespace-pre-wrap text-sm">{generatedScript}</pre>
             </div>
           ) : (
-            <div className={`p-8 text-center rounded-lg border-2 border-dashed ${
-              isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
-            }`}>
+            <div
+              className={`p-8 text-center rounded-lg border-2 border-dashed ${
+                isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
+              }`}
+            >
               <Phone className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>Your generated call script will appear here</p>
             </div>

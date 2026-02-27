@@ -13,14 +13,14 @@ async function updateJVZooAdmin() {
 
   // First, find the user by email
   const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-  
+
   if (listError) {
     console.error('❌ Error listing users:', listError);
     return;
   }
 
-  const jvzooUser = users.users.find(u => u.email === 'jvzoo@gmail.com');
-  
+  const jvzooUser = users.users.find((u) => u.email === 'jvzoo@gmail.com');
+
   if (!jvzooUser) {
     console.error('❌ User not found');
     return;
@@ -36,8 +36,8 @@ async function updateJVZooAdmin() {
       role: 'super_admin',
       permissions: ['all'],
       app_context: 'smartcrm',
-      email_template_set: 'smartcrm'
-    }
+      email_template_set: 'smartcrm',
+    },
   });
 
   if (error) {

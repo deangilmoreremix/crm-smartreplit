@@ -17,7 +17,7 @@ export const createSyncedService = (serviceName: string, service: any) => {
             type: `SERVICE_SUCCESS_${serviceName.toUpperCase()}_${methodName.toUpperCase()}`,
             source: 'crm',
             data: { serviceName, methodName, args, result },
-            priority: 'low'
+            priority: 'low',
           });
 
           return result;
@@ -26,8 +26,13 @@ export const createSyncedService = (serviceName: string, service: any) => {
           unifiedEventSystem.emit({
             type: `SERVICE_ERROR_${serviceName.toUpperCase()}_${methodName.toUpperCase()}`,
             source: 'crm',
-            data: { serviceName, methodName, args, error: error instanceof Error ? error.message : String(error) },
-            priority: 'high'
+            data: {
+              serviceName,
+              methodName,
+              args,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            priority: 'high',
           });
 
           throw error;
@@ -63,7 +68,7 @@ export const handleRemoteServiceCall = (serviceName: string, services: Record<st
               type: `REMOTE_SERVICE_RESPONSE_${serviceName.toUpperCase()}`,
               source: 'crm',
               data: { requestId, result },
-              priority: 'high'
+              priority: 'high',
             });
           } catch (error: any) {
             // Send error back
@@ -71,14 +76,14 @@ export const handleRemoteServiceCall = (serviceName: string, services: Record<st
               type: `REMOTE_SERVICE_ERROR_${serviceName.toUpperCase()}`,
               source: 'crm',
               data: { requestId, error: error.message },
-              priority: 'high'
+              priority: 'high',
             });
           }
         }
       }
     },
     priority: 5,
-    filters: { type: `REMOTE_SERVICE_CALL_${serviceName.toUpperCase()}` }
+    filters: { type: `REMOTE_SERVICE_CALL_${serviceName.toUpperCase()}` },
   });
 
   return unsubscribe;
@@ -88,7 +93,7 @@ export const handleRemoteServiceCall = (serviceName: string, services: Record<st
 export const discoverRemoteServices = (serviceNames: string[]) => {
   const discoveredServices: Record<string, any> = {};
 
-  serviceNames.forEach(serviceName => {
+  serviceNames.forEach((serviceName) => {
     // Register handler for service discovery
     unifiedEventSystem.registerHandler({
       id: `service-discovery-${serviceName}`,
@@ -97,12 +102,12 @@ export const discoverRemoteServices = (serviceNames: string[]) => {
           discoveredServices[serviceName] = {
             available: true,
             source: event.source,
-            methods: event.data.methods
+            methods: event.data.methods,
           };
         }
       },
       priority: 5,
-      filters: { type: `SERVICE_AVAILABLE_${serviceName.toUpperCase()}` }
+      filters: { type: `SERVICE_AVAILABLE_${serviceName.toUpperCase()}` },
     });
 
     // Request service discovery
@@ -110,7 +115,7 @@ export const discoverRemoteServices = (serviceNames: string[]) => {
       type: `DISCOVER_SERVICE_${serviceName.toUpperCase()}`,
       source: 'crm',
       data: {},
-      priority: 'low'
+      priority: 'low',
     });
   });
 
@@ -128,14 +133,19 @@ export const monitorServiceHealth = (serviceName: string, service: any) => {
         type: `SERVICE_HEALTH_${serviceName.toUpperCase()}`,
         source: 'crm',
         data: { serviceName, healthy: isHealthy, timestamp: Date.now() },
-        priority: 'low'
+        priority: 'low',
       });
     } catch (error) {
       unifiedEventSystem.emit({
         type: `SERVICE_HEALTH_${serviceName.toUpperCase()}`,
         source: 'crm',
-        data: { serviceName, healthy: false, error: error instanceof Error ? error.message : String(error), timestamp: Date.now() },
-        priority: 'high'
+        data: {
+          serviceName,
+          healthy: false,
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: Date.now(),
+        },
+        priority: 'high',
       });
     }
   };

@@ -42,7 +42,7 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          const tab = config.navigation.tabs.find(t => t.route === route.name);
+          const tab = config.navigation.tabs.find((t) => t.route === route.name);
           if (!tab) return null;
 
           return (
@@ -67,21 +67,22 @@ function TabNavigator() {
           fontWeight: '500',
         },
         headerStyle: {
-          backgroundColor: config.navigation.headerStyle === 'gradient'
-            ? 'transparent'
-            : theme.colors.surface,
+          backgroundColor:
+            config.navigation.headerStyle === 'gradient' ? 'transparent' : theme.colors.surface,
         },
-        headerBackground: config.navigation.headerStyle === 'gradient' ? () => (
-          <LinearGradient
-            colors={[config.branding.primaryColor, config.branding.secondaryColor]}
-            style={{ flex: 1 }}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          />
-        ) : undefined,
-        headerTintColor: config.navigation.headerStyle === 'gradient'
-          ? '#FFFFFF'
-          : theme.colors.text,
+        headerBackground:
+          config.navigation.headerStyle === 'gradient'
+            ? () => (
+                <LinearGradient
+                  colors={[config.branding.primaryColor, config.branding.secondaryColor]}
+                  style={{ flex: 1 }}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+              )
+            : undefined,
+        headerTintColor:
+          config.navigation.headerStyle === 'gradient' ? '#FFFFFF' : theme.colors.text,
         headerTitleStyle: {
           fontWeight: 'bold',
         },
@@ -91,7 +92,7 @@ function TabNavigator() {
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          title: config.navigation.tabs.find(t => t.route === 'Dashboard')?.name || 'Dashboard',
+          title: config.navigation.tabs.find((t) => t.route === 'Dashboard')?.name || 'Dashboard',
           tabBarLabel: config.navigation.showTabLabels ? 'Dashboard' : undefined,
         }}
       />
@@ -99,7 +100,7 @@ function TabNavigator() {
         name="Contacts"
         component={ContactsScreen}
         options={{
-          title: config.navigation.tabs.find(t => t.route === 'Contacts')?.name || 'Contacts',
+          title: config.navigation.tabs.find((t) => t.route === 'Contacts')?.name || 'Contacts',
           tabBarLabel: config.navigation.showTabLabels ? 'Contacts' : undefined,
         }}
       />
@@ -107,7 +108,7 @@ function TabNavigator() {
         name="Deals"
         component={DealsScreen}
         options={{
-          title: config.navigation.tabs.find(t => t.route === 'Deals')?.name || 'Deals',
+          title: config.navigation.tabs.find((t) => t.route === 'Deals')?.name || 'Deals',
           tabBarLabel: config.navigation.showTabLabels ? 'Deals' : undefined,
         }}
       />
@@ -115,7 +116,7 @@ function TabNavigator() {
         name="Settings"
         component={SettingsScreen}
         options={{
-          title: config.navigation.tabs.find(t => t.route === 'Settings')?.name || 'Settings',
+          title: config.navigation.tabs.find((t) => t.route === 'Settings')?.name || 'Settings',
           tabBarLabel: config.navigation.showTabLabels ? 'Settings' : undefined,
         }}
       />
@@ -179,17 +180,9 @@ function AppContent() {
         }}
       >
         {user ? (
-          <Stack.Screen
-            name="MainTabs"
-            component={TabNavigator}
-            options={{ headerShown: false }}
-          />
+          <Stack.Screen name="MainTabs" component={TabNavigator} options={{ headerShown: false }} />
         ) : (
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         )}
       </Stack.Navigator>
       <StatusBar style={theme.isDark ? 'light' : 'dark'} />

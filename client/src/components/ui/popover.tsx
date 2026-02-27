@@ -22,21 +22,19 @@ interface PopoverProps {
   children: React.ReactNode;
 }
 
-const Popover: React.FC<PopoverProps> = ({ 
-  open: controlledOpen, 
-  onOpenChange: controlledOnOpenChange, 
-  children 
+const Popover: React.FC<PopoverProps> = ({
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  children,
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  
+
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const onOpenChange = controlledOnOpenChange || setInternalOpen;
 
   return (
     <PopoverContext.Provider value={{ open, onOpenChange }}>
-      <div className="relative inline-block">
-        {children}
-      </div>
+      <div className="relative inline-block">{children}</div>
     </PopoverContext.Provider>
   );
 };
@@ -48,15 +46,11 @@ interface PopoverTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 const PopoverTrigger = React.forwardRef<HTMLButtonElement, PopoverTriggerProps>(
   ({ className, children, asChild, ...props }, ref) => {
     const { onOpenChange, open } = usePopoverContext();
-    
+
     if (asChild) {
-      return (
-        <div onClick={() => onOpenChange(!open)}>
-          {children}
-        </div>
-      );
+      return <div onClick={() => onOpenChange(!open)}>{children}</div>;
     }
-    
+
     return (
       <button
         ref={ref}
@@ -76,17 +70,17 @@ const PopoverContent = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & { align?: 'start' | 'center' | 'end' }
 >(({ className, align = 'center', children, ...props }, ref) => {
   const { open } = usePopoverContext();
-  
+
   if (!open) return null;
-  
+
   return (
     <div
       ref={ref}
       className={cn(
-        'absolute z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none',
+        'absolute z-50 mt-2 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none',
         {
           'left-0': align === 'start',
-          'left-1/2 transform -translate-x-1/2': align === 'center',
+          'left-1/2 -translate-x-1/2': align === 'center',
           'right-0': align === 'end',
         },
         className
@@ -99,8 +93,4 @@ const PopoverContent = React.forwardRef<
 });
 PopoverContent.displayName = 'PopoverContent';
 
-export {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-};
+export { Popover, PopoverTrigger, PopoverContent };

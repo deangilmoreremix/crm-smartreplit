@@ -17,7 +17,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem) {
     handler: (event) => {
       console.log('📨 Handler 1 received:', event.type, event.data);
     },
-    priority: 10
+    priority: 10,
   });
 
   const handler2 = window.unifiedEventSystem.registerHandler({
@@ -25,7 +25,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem) {
     handler: (event) => {
       console.log('📨 Handler 2 received:', event.type, event.data);
     },
-    priority: 5
+    priority: 5,
   });
 
   // Emit events
@@ -34,7 +34,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem) {
       type: 'DEMO_EVENT_1',
       source: 'demo-system',
       data: { message: 'First demo event!', counter: 1 },
-      priority: 'medium'
+      priority: 'medium',
     });
   }, 100);
 
@@ -43,7 +43,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem) {
       type: 'DEMO_EVENT_2',
       source: 'demo-system',
       data: { message: 'Second demo event!', counter: 2 },
-      priority: 'high'
+      priority: 'high',
     });
   }, 200);
 
@@ -67,7 +67,7 @@ if (typeof window !== 'undefined' && window.unifiedApiClient) {
       console.log('📡 Testing health endpoint...');
       const healthResponse = await window.unifiedApiClient.request({
         endpoint: '/api/health',
-        method: 'GET'
+        method: 'GET',
       });
       console.log('🏥 Health check result:', healthResponse);
     } catch (error) {
@@ -83,8 +83,8 @@ if (typeof window !== 'undefined' && window.unifiedApiClient) {
         method: 'POST',
         data: {
           prompt: 'Hello from the unified system demo!',
-          useThinking: false
-        }
+          useThinking: false,
+        },
       });
       console.log('🤖 AI response result:', aiResponse);
     } catch (error) {
@@ -113,7 +113,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem && window.unified
           try {
             const response = await window.unifiedApiClient.request({
               endpoint: '/api/test',
-              method: 'GET'
+              method: 'GET',
             });
             console.log('🔄 Integration API response:', response);
           } catch (error) {
@@ -121,7 +121,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem && window.unified
           }
         }
       },
-      priority: 10
+      priority: 10,
     });
 
     // Emit integration test event
@@ -129,7 +129,7 @@ if (typeof window !== 'undefined' && window.unifiedEventSystem && window.unified
       type: 'INTEGRATION_TEST',
       source: 'demo-system',
       data: { integration: true },
-      priority: 'high'
+      priority: 'high',
     });
 
     // Cleanup
@@ -194,7 +194,7 @@ if (typeof window !== 'undefined') {
           type: 'DEMO_RESTART',
           source: 'demo-system',
           data: { restart: true },
-          priority: 'low'
+          priority: 'low',
         });
       }
     }, 100);

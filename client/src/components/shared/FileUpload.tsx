@@ -19,11 +19,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onFilesAdded,
   fileType = 'any',
   className = '',
-  isUploading = false
+  isUploading = false,
 }) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Default accepted file types by category
   const defaultAccept = {
     document: {
@@ -32,13 +32,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/vnd.ms-powerpoint': ['.ppt'],
       'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt'],
     },
     image: {
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/png': ['.png'],
       'image/gif': ['.gif'],
-      'image/webp': ['.webp']
+      'image/webp': ['.webp'],
     },
     any: {
       'image/*': [],
@@ -48,45 +48,48 @@ const FileUpload: React.FC<FileUploadProps> = ({
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'text/plain': ['.txt'],
-      'application/json': ['.json']
-    }
+      'application/json': ['.json'],
+    },
   };
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
-    // Handle rejected files
-    if (rejectedFiles.length > 0) {
-      const firstRejection = rejectedFiles[0];
-      if (firstRejection.errors[0].code === 'file-too-large') {
-        setError(`File too large. Maximum size is ${maxSize / 1048576}MB.`);
-      } else if (firstRejection.errors[0].code === 'file-invalid-type') {
-        setError('Invalid file type. Please check accepted formats.');
-      } else {
-        setError(firstRejection.errors[0].message);
-      }
-      return;
-    }
-
-    setError(null);
-    
-    if (acceptedFiles.length > 0) {
-      const newFiles = [...uploadedFiles];
-      
-      // Handle maxFiles limit
-      if (newFiles.length + acceptedFiles.length > maxFiles) {
-        if (maxFiles === 1) {
-          // Replace the current file
-          newFiles.splice(0, newFiles.length);
+  const onDrop = useCallback(
+    (acceptedFiles: File[], rejectedFiles: any[]) => {
+      // Handle rejected files
+      if (rejectedFiles.length > 0) {
+        const firstRejection = rejectedFiles[0];
+        if (firstRejection.errors[0].code === 'file-too-large') {
+          setError(`File too large. Maximum size is ${maxSize / 1048576}MB.`);
+        } else if (firstRejection.errors[0].code === 'file-invalid-type') {
+          setError('Invalid file type. Please check accepted formats.');
         } else {
-          // Remove oldest files to make room
-          newFiles.splice(0, (newFiles.length + acceptedFiles.length) - maxFiles);
+          setError(firstRejection.errors[0].message);
         }
+        return;
       }
-      
-      const updatedFiles = [...newFiles, ...acceptedFiles];
-      setUploadedFiles(updatedFiles);
-      onFilesAdded(updatedFiles);
-    }
-  }, [maxFiles, maxSize, onFilesAdded, uploadedFiles]);
+
+      setError(null);
+
+      if (acceptedFiles.length > 0) {
+        const newFiles = [...uploadedFiles];
+
+        // Handle maxFiles limit
+        if (newFiles.length + acceptedFiles.length > maxFiles) {
+          if (maxFiles === 1) {
+            // Replace the current file
+            newFiles.splice(0, newFiles.length);
+          } else {
+            // Remove oldest files to make room
+            newFiles.splice(0, newFiles.length + acceptedFiles.length - maxFiles);
+          }
+        }
+
+        const updatedFiles = [...newFiles, ...acceptedFiles];
+        setUploadedFiles(updatedFiles);
+        onFilesAdded(updatedFiles);
+      }
+    },
+    [maxFiles, maxSize, onFilesAdded, uploadedFiles]
+  );
 
   const removeFile = (index: number) => {
     const newFiles = [...uploadedFiles];
@@ -100,18 +103,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
     onDrop,
     maxFiles,
     maxSize,
-    accept: accept || defaultAccept[fileType]
+    accept: accept || defaultAccept[fileType],
   });
 
   // Get file icon based on type
   const getFileIcon = (file: File) => {
     const fileType = file.type;
-    
+
     if (fileType.startsWith('image/')) {
       return <Image size={18} className="text-purple-500" />;
     } else if (fileType.includes('spreadsheet') || fileType.includes('excel')) {
       return <FileSpreadsheet size={18} className="text-green-500" />;
-    } else if (fileType.includes('pdf') || fileType.includes('document') || fileType.includes('text')) {
+    } else if (
+      fileType.includes('pdf') ||
+      fileType.includes('document') ||
+      fileType.includes('text')
+    ) {
       return <FileText size={18} className="text-blue-500" />;
     } else {
       return <File size={18} className="text-gray-500" />;
@@ -130,32 +137,39 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 cursor-pointer transition ${
-          isDragActive 
-            ? 'border-blue-400 bg-blue-50' 
-            : uploadedFiles.length > 0 
+          isDragActive
+            ? 'border-blue-400 bg-blue-50'
+            : uploadedFiles.length > 0
               ? 'border-green-300 bg-green-50'
               : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50'
         }`}
       >
         <input {...getInputProps()} />
-        
+
         {isUploading ? (
           <div className="text-center py-4">
             <RefreshCw size={32} className="mx-auto text-blue-500 animate-spin mb-2" />
             <p className="text-sm text-gray-600 font-medium">Uploading...</p>
-            <p className="text-xs text-gray-500">Please wait while your files are being processed</p>
+            <p className="text-xs text-gray-500">
+              Please wait while your files are being processed
+            </p>
           </div>
         ) : uploadedFiles.length > 0 ? (
           <div>
             <ul className="space-y-2">
               {uploadedFiles.map((file, index) => (
-                <li key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                <li
+                  key={index}
+                  className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200"
+                >
                   <div className="flex items-center overflow-hidden">
                     {getFileIcon(file)}
-                    <span className="ml-2 text-sm font-medium text-gray-700 truncate">{file.name}</span>
+                    <span className="ml-2 text-sm font-medium text-gray-700 truncate">
+                      {file.name}
+                    </span>
                     <span className="ml-2 text-xs text-gray-500">{formatFileSize(file.size)}</span>
                   </div>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       removeFile(index);
@@ -181,10 +195,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <Upload size={36} className="mx-auto text-gray-400 mb-3" />
             <p className="text-sm text-gray-600 mb-1">
               <span className="font-medium">
-                {isDragActive 
-                  ? 'Drop files here' 
-                  : 'Drag & drop files here or click to browse'
-                }
+                {isDragActive ? 'Drop files here' : 'Drag & drop files here or click to browse'}
               </span>
             </p>
             <p className="text-xs text-gray-500">
@@ -195,12 +206,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
           </div>
         )}
       </div>
-      
-      {error && (
-        <div className="mt-2 text-sm text-red-600">
-          {error}
-        </div>
-      )}
+
+      {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
     </div>
   );
 };

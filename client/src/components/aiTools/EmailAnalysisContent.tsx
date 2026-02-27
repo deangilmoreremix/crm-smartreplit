@@ -17,7 +17,7 @@ const EmailAnalysisContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const analysisResult = await edgeFunctionService.analyzeCustomerEmail(emailText);
       setResult(analysisResult);
@@ -31,12 +31,12 @@ const EmailAnalysisContent: React.FC = () => {
 
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles(newFiles);
-    
+
     // For analysis purposes, we'll just handle text files directly
     // In a real implementation, we might process the file on the server
     if (newFiles.length > 0) {
       const file = newFiles[0];
-      
+
       if (file.type === 'text/plain') {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -45,7 +45,9 @@ const EmailAnalysisContent: React.FC = () => {
         };
         reader.readAsText(file);
       } else {
-        setError('Only text files can be processed directly. Other file types would be processed via the server in a production environment.');
+        setError(
+          'Only text files can be processed directly. Other file types would be processed via the server in a production environment.'
+        );
       }
     }
   };
@@ -58,7 +60,8 @@ const EmailAnalysisContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-blue-800">Email Analysis Tool</h3>
             <p className="text-sm text-blue-700 mt-1">
-              Extract key information, sentiment, and action items from customer emails. Helps you prioritize responses and identify critical requests.
+              Extract key information, sentiment, and action items from customer emails. Helps you
+              prioritize responses and identify critical requests.
             </p>
           </div>
         </div>
@@ -87,10 +90,8 @@ const EmailAnalysisContent: React.FC = () => {
           </div>
 
           <div>
-            <p className="block text-sm font-medium text-gray-700 mb-2">
-              Or upload an email file:
-            </p>
-            <FileUpload 
+            <p className="block text-sm font-medium text-gray-700 mb-2">Or upload an email file:</p>
+            <FileUpload
               fileType="document"
               onFilesAdded={handleFilesAdded}
               accept={{

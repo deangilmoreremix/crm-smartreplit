@@ -17,7 +17,7 @@ let testResults = {
   total: 0,
   passed: 0,
   failed: 0,
-  tests: []
+  tests: [],
 };
 
 // Helper function to make authenticated requests to edge functions
@@ -35,27 +35,27 @@ function callEdgeFunction(functionName, payload = {}) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'User-Agent': 'SmartCRM-Edge-Function-Test/1.0'
-      }
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'User-Agent': 'SmartCRM-Edge-Function-Test/1.0',
+      },
     };
 
     const req = https.request(url, options, (res) => {
       let body = '';
-      res.on('data', (chunk) => body += chunk);
+      res.on('data', (chunk) => (body += chunk));
       res.on('end', () => {
         try {
           const jsonData = body ? JSON.parse(body) : {};
           resolve({
             status: res.statusCode,
             headers: res.headers,
-            data: jsonData
+            data: jsonData,
           });
         } catch (e) {
           resolve({
             status: res.statusCode,
             headers: res.headers,
-            data: body
+            data: body,
           });
         }
       });
@@ -105,17 +105,20 @@ async function testAnalyzeSentiment() {
   try {
     const response = await callEdgeFunction('analyze-sentiment', {
       text: "I love this product! It's amazing and works perfectly.",
-      customerId: "test-customer-123",
-      model: "gpt-4o-mini"
+      customerId: 'test-customer-123',
+      model: 'gpt-4o-mini',
     });
 
     if (response.status === 200 && response.data.sentiment) {
       return {
         passed: true,
-        message: `Sentiment: ${response.data.sentiment}, Confidence: ${response.data.score || response.data.confidence || 'N/A'}`
+        message: `Sentiment: ${response.data.sentiment}, Confidence: ${response.data.score || response.data.confidence || 'N/A'}`,
       };
     } else {
-      return { passed: false, message: `Unexpected response: ${response.status} - ${JSON.stringify(response.data)}` };
+      return {
+        passed: false,
+        message: `Unexpected response: ${response.status} - ${JSON.stringify(response.data)}`,
+      };
     }
   } catch (error) {
     return { passed: false, message: `Function call failed: ${error.message}` };
@@ -127,7 +130,7 @@ async function testContactsFunction() {
     const response = await callEdgeFunction('contacts', {
       action: 'list',
       limit: 10,
-      customerId: "test-customer-123"
+      customerId: 'test-customer-123',
     });
 
     if (response.status === 200) {
@@ -145,7 +148,7 @@ async function testDealsFunction() {
     const response = await callEdgeFunction('deals', {
       action: 'list',
       stage: 'qualification',
-      customerId: "test-customer-123"
+      customerId: 'test-customer-123',
     });
 
     if (response.status === 200) {
@@ -161,10 +164,10 @@ async function testDealsFunction() {
 async function testDraftEmailResponse() {
   try {
     const response = await callEdgeFunction('draft-email-response', {
-      customerEmail: "Hello, I need help with my order.",
-      context: "Customer is asking about order status",
-      tone: "professional",
-      customerId: "test-customer-123"
+      customerEmail: 'Hello, I need help with my order.',
+      context: 'Customer is asking about order status',
+      tone: 'professional',
+      customerId: 'test-customer-123',
     });
 
     if (response.status === 200 && response.data.response) {
@@ -180,10 +183,10 @@ async function testDraftEmailResponse() {
 async function testGenerateSalesPitch() {
   try {
     const response = await callEdgeFunction('generate-sales-pitch', {
-      product: "SmartCRM Platform",
-      targetAudience: "Small business owners",
-      keyBenefits: ["AI automation", "Easy setup", "Cost effective"],
-      customerId: "test-customer-123"
+      product: 'SmartCRM Platform',
+      targetAudience: 'Small business owners',
+      keyBenefits: ['AI automation', 'Easy setup', 'Cost effective'],
+      customerId: 'test-customer-123',
     });
 
     if (response.status === 200 && response.data.pitch) {
@@ -199,9 +202,9 @@ async function testGenerateSalesPitch() {
 async function testNaturalLanguageQuery() {
   try {
     const response = await callEdgeFunction('natural-language-query', {
-      query: "Show me all deals over $50,000 in the proposal stage",
-      customerId: "test-customer-123",
-      context: "sales_dashboard"
+      query: 'Show me all deals over $50,000 in the proposal stage',
+      customerId: 'test-customer-123',
+      context: 'sales_dashboard',
     });
 
     if (response.status === 200) {
@@ -218,11 +221,11 @@ async function testPrioritizeTasks() {
   try {
     const response = await callEdgeFunction('prioritize-tasks', {
       tasks: [
-        { id: "1", title: "Follow up with lead", urgency: "high" },
-        { id: "2", title: "Update contact info", urgency: "medium" },
-        { id: "3", title: "Send proposal", urgency: "high" }
+        { id: '1', title: 'Follow up with lead', urgency: 'high' },
+        { id: '2', title: 'Update contact info', urgency: 'medium' },
+        { id: '3', title: 'Send proposal', urgency: 'high' },
       ],
-      customerId: "test-customer-123"
+      customerId: 'test-customer-123',
     });
 
     if (response.status === 200 && response.data.prioritizedTasks) {
@@ -239,12 +242,12 @@ async function testSummarizeCustomerNotes() {
   try {
     const response = await callEdgeFunction('summarize-customer-notes', {
       notes: [
-        "Customer called about billing issue",
+        'Customer called about billing issue',
         "Requested refund for last month's service",
-        "Mentioned they were satisfied with support",
-        "Asked about upgrading to premium plan"
+        'Mentioned they were satisfied with support',
+        'Asked about upgrading to premium plan',
       ],
-      customerId: "test-customer-123"
+      customerId: 'test-customer-123',
     });
 
     if (response.status === 200 && response.data.summary) {
@@ -261,7 +264,7 @@ async function testErrorHandling() {
   try {
     // Test with invalid payload
     const response = await callEdgeFunction('analyze-sentiment', {
-      invalidField: "test"
+      invalidField: 'test',
     });
 
     if (response.status === 400) {
@@ -277,8 +280,8 @@ async function testErrorHandling() {
 async function testCORSHeaders() {
   try {
     const response = await callEdgeFunction('analyze-sentiment', {
-      text: "Test CORS",
-      customerId: "test-customer-123"
+      text: 'Test CORS',
+      customerId: 'test-customer-123',
     });
 
     const corsHeaders = response.headers['access-control-allow-origin'];
@@ -335,7 +338,7 @@ async function runAllEdgeFunctionTests() {
 
   // Detailed results
   console.log('\n📋 Detailed Results:');
-  testResults.tests.forEach(test => {
+  testResults.tests.forEach((test) => {
     const icon = test.passed ? '✅' : '❌';
     console.log(`${icon} ${test.name}: ${test.message}`);
   });
@@ -358,7 +361,7 @@ async function runAllEdgeFunctionTests() {
 
 // Run tests if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runAllEdgeFunctionTests().catch(error => {
+  runAllEdgeFunctionTests().catch((error) => {
     console.error('Edge functions test suite failed:', error);
     process.exit(1);
   });
@@ -375,5 +378,5 @@ export {
   testPrioritizeTasks,
   testSummarizeCustomerNotes,
   testErrorHandling,
-  testCORSHeaders
+  testCORSHeaders,
 };

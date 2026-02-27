@@ -3,36 +3,41 @@ const getChatbotResponse = (input) => {
   // Contacts
   if (input.includes('contact') || input.includes('contacts')) {
     if (input.includes('add') || input.includes('create')) {
-      return "To add a contact:\n1. Tap the Contacts tab\n2. Press the + button\n3. Fill in name, email, phone\n4. Add company info\n5. Tap Save\n\nYour contact will appear in the list!";
+      return 'To add a contact:\n1. Tap the Contacts tab\n2. Press the + button\n3. Fill in name, email, phone\n4. Add company info\n5. Tap Save\n\nYour contact will appear in the list!';
     }
     if (input.includes('search') || input.includes('find')) {
-      return "To search contacts:\n• Use the search bar at the top\n• Filter by company, tags, or date\n• Sort by name, date added, or last contacted\n• Tap a contact to view details";
+      return 'To search contacts:\n• Use the search bar at the top\n• Filter by company, tags, or date\n• Sort by name, date added, or last contacted\n• Tap a contact to view details';
     }
-    return "Contacts are your customer database. You can:\n• View all contacts in a list\n• Add new contacts with details\n• Search and filter contacts\n• Import from CSV files\n• Export contact data\n• View contact activity history";
+    return 'Contacts are your customer database. You can:\n• View all contacts in a list\n• Add new contacts with details\n• Search and filter contacts\n• Import from CSV files\n• Export contact data\n• View contact activity history';
   }
 
   // Deals
   if (input.includes('deal') || input.includes('deals')) {
     if (input.includes('add') || input.includes('create')) {
-      return "To create a deal:\n1. Go to Deals tab\n2. Tap + button\n3. Enter deal name and value\n4. Select contact and stage\n5. Add description and notes\n6. Set close date\n7. Save the deal";
+      return 'To create a deal:\n1. Go to Deals tab\n2. Tap + button\n3. Enter deal name and value\n4. Select contact and stage\n5. Add description and notes\n6. Set close date\n7. Save the deal';
     }
     if (input.includes('stage') || input.includes('pipeline')) {
-      return "Deal stages typically include:\n• Prospect - Initial contact\n• Qualification - Needs assessment\n• Proposal - Sent quote/proposal\n• Negotiation - Terms discussion\n• Closed Won - Deal completed\n• Closed Lost - Deal lost\n\nDrag deals between stages to update progress.";
+      return 'Deal stages typically include:\n• Prospect - Initial contact\n• Qualification - Needs assessment\n• Proposal - Sent quote/proposal\n• Negotiation - Terms discussion\n• Closed Won - Deal completed\n• Closed Lost - Deal lost\n\nDrag deals between stages to update progress.';
     }
-    return "Deals track your sales pipeline:\n• Create deals with values and stages\n• Move deals through pipeline stages\n• Set and track close dates\n• Add notes, tasks, and reminders\n• View deal analytics and forecasts\n• Generate reports on pipeline health";
+    return 'Deals track your sales pipeline:\n• Create deals with values and stages\n• Move deals through pipeline stages\n• Set and track close dates\n• Add notes, tasks, and reminders\n• View deal analytics and forecasts\n• Generate reports on pipeline health';
   }
 
   // Dashboard
   if (input.includes('dashboard')) {
-    return "The Dashboard shows your key metrics:\n• Overview cards show key metrics\n• Recent activity feed\n• Quick action buttons\n• Charts for deals and revenue\n• Upcoming tasks and appointments\n• Performance indicators\n\nCustomize it in Settings to show what matters most to you.";
+    return 'The Dashboard shows your key metrics:\n• Overview cards show key metrics\n• Recent activity feed\n• Quick action buttons\n• Charts for deals and revenue\n• Upcoming tasks and appointments\n• Performance indicators\n\nCustomize it in Settings to show what matters most to you.';
   }
 
   // Settings
-  if (input.includes('setting') || input.includes('settings') || input.includes('theme') || input.includes('dark')) {
+  if (
+    input.includes('setting') ||
+    input.includes('settings') ||
+    input.includes('theme') ||
+    input.includes('dark')
+  ) {
     if (input.includes('theme') || input.includes('dark')) {
       return "To change theme:\n1. Go to Settings tab\n2. Find 'Appearance' section\n3. Toggle between Light and Dark mode\n4. Changes apply immediately\n\nDark mode reduces eye strain in low light.";
     }
-    return "Settings let you customize the app:\n• Profile: Update your information\n• Notifications: Control alerts and reminders\n• Appearance: Theme and display options\n• Privacy: Data sharing preferences\n• Sync: Data synchronization settings\n• Help: App tutorials and support";
+    return 'Settings let you customize the app:\n• Profile: Update your information\n• Notifications: Control alerts and reminders\n• Appearance: Theme and display options\n• Privacy: Data sharing preferences\n• Sync: Data synchronization settings\n• Help: App tutorials and support';
   }
 
   // Authentication
@@ -77,38 +82,77 @@ function runTests() {
   let total = 0;
 
   // Test contacts
-  total++; if (testResponse('How do contacts work?', 'Contacts are your customer database', 'Contacts overview')) passed++;
-  total++; if (testResponse('How do I add a contact?', 'To add a contact:', 'Add contact instructions')) passed++;
-  total++; if (testResponse('How to search contacts?', 'To search contacts:', 'Search contacts')) passed++;
+  total++;
+  if (
+    testResponse(
+      'How do contacts work?',
+      'Contacts are your customer database',
+      'Contacts overview'
+    )
+  )
+    passed++;
+  total++;
+  if (testResponse('How do I add a contact?', 'To add a contact:', 'Add contact instructions'))
+    passed++;
+  total++;
+  if (testResponse('How to search contacts?', 'To search contacts:', 'Search contacts')) passed++;
 
   // Test deals
-  total++; if (testResponse('Tell me about deals', 'Deals track your sales pipeline', 'Deals overview')) passed++;
-  total++; if (testResponse('How to create a deal?', 'To create a deal:', 'Create deal instructions')) passed++;
-  total++; if (testResponse('What are deal stages?', 'Deal stages typically include:', 'Deal stages')) passed++;
+  total++;
+  if (testResponse('Tell me about deals', 'Deals track your sales pipeline', 'Deals overview'))
+    passed++;
+  total++;
+  if (testResponse('How to create a deal?', 'To create a deal:', 'Create deal instructions'))
+    passed++;
+  total++;
+  if (testResponse('What are deal stages?', 'Deal stages typically include:', 'Deal stages'))
+    passed++;
 
   // Test dashboard
-  total++; if (testResponse('What is the dashboard?', 'Dashboard shows your key metrics', 'Dashboard explanation')) passed++;
+  total++;
+  if (
+    testResponse(
+      'What is the dashboard?',
+      'Dashboard shows your key metrics',
+      'Dashboard explanation'
+    )
+  )
+    passed++;
 
   // Test settings
-  total++; if (testResponse('How do settings work?', 'Settings let you customize', 'Settings overview')) passed++;
-  total++; if (testResponse('How to change theme?', 'To change theme:', 'Theme change')) passed++;
+  total++;
+  if (testResponse('How do settings work?', 'Settings let you customize', 'Settings overview'))
+    passed++;
+  total++;
+  if (testResponse('How to change theme?', 'To change theme:', 'Theme change')) passed++;
 
   // Test authentication
-  total++; if (testResponse('How do I sign in?', 'To sign in:', 'Sign in instructions')) passed++;
+  total++;
+  if (testResponse('How do I sign in?', 'To sign in:', 'Sign in instructions')) passed++;
 
   // Test general help
-  total++; if (testResponse('What can you help with?', 'I can teach you about:', 'General help')) passed++;
+  total++;
+  if (testResponse('What can you help with?', 'I can teach you about:', 'General help')) passed++;
 
   // Test greetings
-  total++; if (testResponse('Hello', 'Hello!', 'Greeting response')) passed++;
-  total++; if (testResponse('Thank you', "You're welcome!", 'Thank you response')) passed++;
+  total++;
+  if (testResponse('Hello', 'Hello!', 'Greeting response')) passed++;
+  total++;
+  if (testResponse('Thank you', "You're welcome!", 'Thank you response')) passed++;
 
   // Test fallback
-  total++; if (testResponse('What is the meaning of life?', 'I can explain', 'Fallback response')) passed++;
+  total++;
+  if (testResponse('What is the meaning of life?', 'I can explain', 'Fallback response')) passed++;
 
   // Test case insensitivity
-  total++; if (testResponse('CONTACTS', 'Contacts are your customer database', 'Case insensitive - contacts')) passed++;
-  total++; if (testResponse('DeAlS', 'Deals track your sales pipeline', 'Case insensitive - deals')) passed++;
+  total++;
+  if (
+    testResponse('CONTACTS', 'Contacts are your customer database', 'Case insensitive - contacts')
+  )
+    passed++;
+  total++;
+  if (testResponse('DeAlS', 'Deals track your sales pipeline', 'Case insensitive - deals'))
+    passed++;
 
   console.log(`\n📊 Test Results: ${passed}/${total} tests passed`);
 

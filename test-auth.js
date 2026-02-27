@@ -12,7 +12,7 @@ try {
     { password: 'password', expected: 'weak' },
     { password: 'Password123', expected: 'medium' },
     { password: 'MySecureP@ssw0rd2024!', expected: 'strong' },
-    { password: 'weak', expected: 'weak' }
+    { password: 'weak', expected: 'weak' },
   ];
 
   testPasswords.forEach(({ password, expected }) => {
@@ -35,7 +35,8 @@ try {
       supabase: !!localStorage.getItem('supabase.auth.token'),
       smartcrm: !!localStorage.getItem('smartcrm-auth-token'),
       devSession: !!localStorage.getItem('dev-user-session'),
-      onboarding: Object.keys(localStorage).filter(key => key.startsWith('onboarding-')).length > 0
+      onboarding:
+        Object.keys(localStorage).filter((key) => key.startsWith('onboarding-')).length > 0,
     };
 
     console.log('  Auth tokens present:', authTokens);
@@ -51,7 +52,7 @@ const modulesToTest = [
   './client/src/utils/passwordValidation.ts',
   './client/src/hooks/useOnboarding.ts',
   './client/src/components/UpgradePrompt.tsx',
-  './client/src/components/AccessGate.tsx'
+  './client/src/components/AccessGate.tsx',
 ];
 
 for (const modulePath of modulesToTest) {
@@ -71,7 +72,9 @@ try {
   // Check if tiers are properly structured
   const sampleFeature = 'aiTools';
   if (featureTiers[sampleFeature]) {
-    console.log(`  ✅ Sample feature "${sampleFeature}" has ${featureTiers[sampleFeature].length} allowed tiers`);
+    console.log(
+      `  ✅ Sample feature "${sampleFeature}" has ${featureTiers[sampleFeature].length} allowed tiers`
+    );
   }
 } catch (error) {
   console.log('  ❌ Feature tiers check failed:', error.message);

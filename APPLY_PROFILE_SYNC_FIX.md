@@ -4,10 +4,10 @@
 
 The original Supabase trigger only captured `full_name` and `avatar_url` from user signups. This fix ensures ALL metadata is saved to profiles:
 
-- ✅ `first_name` 
+- ✅ `first_name`
 - ✅ `last_name`
 - ✅ `role` (with auto super_admin assignment)
-- ✅ `app_context` 
+- ✅ `app_context`
 - ✅ `email_template_set`
 
 ## Step 1: Apply the Migration to Supabase
@@ -46,6 +46,7 @@ npx tsx scripts/backfill-user-profiles.ts
 ```
 
 This will:
+
 - ✅ Create missing profiles for auth users
 - ✅ Update incomplete profiles with metadata
 - ✅ Auto-assign super_admin role to designated emails
@@ -69,7 +70,7 @@ This will:
 Run this SQL in Supabase to verify:
 
 ```sql
-SELECT 
+SELECT
   p.id,
   au.email,
   p.first_name,
@@ -86,6 +87,7 @@ LIMIT 10;
 ## Super Admin Emails
 
 These emails are automatically assigned `super_admin` role:
+
 - dean@videoremix.io
 - victor@videoremix.io
 - samuel@videoremix.io
@@ -94,16 +96,19 @@ These emails are automatically assigned `super_admin` role:
 ## Troubleshooting
 
 ### Migration Fails
+
 - Make sure you have `SUPABASE_SERVICE_ROLE_KEY` in your environment
 - Check that the profiles table exists
 - Verify you have admin permissions
 
 ### Backfill Fails
+
 - Ensure `VITE_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set
 - Check console output for specific errors
 - Verify profiles table has correct columns
 
 ### Users Still Missing Data
+
 - Re-run the backfill script: `npm run backfill:profiles`
 - Check auth.users raw_user_meta_data has the fields
 - Manually update via Supabase Table Editor if needed

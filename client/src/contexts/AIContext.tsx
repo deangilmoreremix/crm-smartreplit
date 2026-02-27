@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext } from 'react';
 
 interface AIContextValue {
@@ -9,14 +8,10 @@ const AIContext = createContext<AIContextValue | null>(null);
 
 export const AIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const value: AIContextValue = {
-    isProcessing: false
+    isProcessing: false,
   };
 
-  return (
-    <AIContext.Provider value={value}>
-      {children}
-    </AIContext.Provider>
-  );
+  return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
 };
 
 export const useAI = () => {
@@ -30,9 +25,9 @@ export const useAI = () => {
 export const useContactAI = (contactId: string) => {
   return {
     scoreContact: async (contact: any) => ({ overall: 75, reasoning: ['Good engagement'] }),
-    generateInsights: async (contact: any, types: string[]) => ([]),
+    generateInsights: async (contact: any, types: string[]) => [],
     contactScore: null,
     contactInsights: [],
-    isContactProcessing: false
+    isContactProcessing: false,
   };
 };

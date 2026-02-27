@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Video, 
-  Mic, 
-  MicOff, 
-  VideoOff, 
-  Phone, 
+import {
+  Video,
+  Mic,
+  MicOff,
+  VideoOff,
+  Phone,
   PhoneOff,
   Play,
   Users,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 const VideoCallDemo: React.FC = () => {
@@ -23,20 +23,21 @@ const VideoCallDemo: React.FC = () => {
   const demoParticipant = {
     name: 'Sarah Johnson',
     role: 'Sales Manager',
-    avatar: 'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2'
+    avatar:
+      'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
   };
 
   const startDemoCall = async () => {
     try {
       setShowPermissionError(false);
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: isVideoEnabled, 
-        audio: isAudioEnabled 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: isVideoEnabled,
+        audio: isAudioEnabled,
       });
-      
+
       setLocalStream(stream);
       setIsCallActive(true);
-      
+
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
@@ -50,7 +51,7 @@ const VideoCallDemo: React.FC = () => {
 
   const endDemoCall = () => {
     if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+      localStream.getTracks().forEach((track) => track.stop());
       setLocalStream(null);
     }
     setIsCallActive(false);
@@ -85,7 +86,7 @@ const VideoCallDemo: React.FC = () => {
   useEffect(() => {
     return () => {
       if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
+        localStream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [localStream]);
@@ -99,11 +100,10 @@ const VideoCallDemo: React.FC = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500 rounded-full mb-4">
               <Video className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-2">
-              Try Our Video Calling
-            </h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Try Our Video Calling</h3>
             <p className="text-gray-300">
-              Experience crystal-clear video calls with screen sharing, recording, and AI-powered meeting notes
+              Experience crystal-clear video calls with screen sharing, recording, and AI-powered
+              meeting notes
             </p>
           </div>
 
@@ -139,8 +139,8 @@ const VideoCallDemo: React.FC = () => {
         <div className="relative h-[500px]">
           {/* Remote participant (demo image) */}
           <div className="absolute inset-0 bg-gray-900">
-            <img 
-              src={demoParticipant.avatar} 
+            <img
+              src={demoParticipant.avatar}
               alt={demoParticipant.name}
               className="w-full h-full object-cover opacity-90"
             />
@@ -153,7 +153,7 @@ const VideoCallDemo: React.FC = () => {
           {/* Local participant video */}
           <div className="absolute bottom-4 right-4 w-40 h-28 bg-gray-800 rounded-lg overflow-hidden shadow-lg">
             {localStream && isVideoEnabled ? (
-              <video 
+              <video
                 ref={localVideoRef}
                 autoPlay
                 muted
@@ -184,8 +184,8 @@ const VideoCallDemo: React.FC = () => {
               <button
                 onClick={toggleAudio}
                 className={`p-3 rounded-full transition-colors ${
-                  isAudioEnabled 
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                  isAudioEnabled
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-red-500 hover:bg-red-600 text-white'
                 }`}
               >
@@ -195,8 +195,8 @@ const VideoCallDemo: React.FC = () => {
               <button
                 onClick={toggleVideo}
                 className={`p-3 rounded-full transition-colors ${
-                  isVideoEnabled 
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                  isVideoEnabled
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
                     : 'bg-red-500 hover:bg-red-600 text-white'
                 }`}
               >

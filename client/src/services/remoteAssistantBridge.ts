@@ -57,7 +57,7 @@ export class RemoteAssistantBridge {
       }
 
       const message: AssistantMessage = event.data;
-      
+
       // Only handle assistant-related messages
       if (!message.type?.startsWith('ASSISTANT_')) {
         return;
@@ -72,7 +72,7 @@ export class RemoteAssistantBridge {
         console.error('❌ Assistant Bridge error:', error);
         this.sendResponse(event.source as Window, message.type, {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     });
@@ -122,14 +122,14 @@ export class RemoteAssistantBridge {
         data: {
           response: response.content,
           threadId: response.threadId,
-          assistantName: response.assistantName
+          assistantName: response.assistantName,
         },
-        threadId: response.threadId
+        threadId: response.threadId,
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to start conversation'
+        error: error instanceof Error ? error.message : 'Failed to start conversation',
       };
     }
   }
@@ -152,13 +152,13 @@ export class RemoteAssistantBridge {
         success: true,
         data: {
           response: response.content,
-          threadId: response.threadId
-        }
+          threadId: response.threadId,
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to send message'
+        error: error instanceof Error ? error.message : 'Failed to send message',
       };
     }
   }
@@ -168,20 +168,16 @@ export class RemoteAssistantBridge {
     entityId: string
   ): Promise<AssistantResponse> {
     try {
-      const history = await this.assistantService.getAssistantMemory(
-        assistantType,
-        entityId,
-        20
-      );
+      const history = await this.assistantService.getAssistantMemory(assistantType, entityId, 20);
 
       return {
         success: true,
-        data: { history }
+        data: { history },
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get history'
+        error: error instanceof Error ? error.message : 'Failed to get history',
       };
     }
   }
@@ -191,25 +187,27 @@ export class RemoteAssistantBridge {
   ): Promise<AssistantResponse> {
     try {
       const assistants = this.assistantService.getAssistantStats();
-      const assistant = assistants.find(a => a.type === assistantType);
+      const assistant = assistants.find((a) => a.type === assistantType);
 
       return {
         success: true,
         data: {
-          assistant: assistant ? {
-            name: assistant.name,
-            totalInteractions: assistant.totalInteractions,
-            activeThreads: assistant.activeThreads.size,
-            performance: assistant.performance,
-            lastUsed: assistant.lastUsed,
-            isActive: assistant.activeThreads.size > 0
-          } : null
-        }
+          assistant: assistant
+            ? {
+                name: assistant.name,
+                totalInteractions: assistant.totalInteractions,
+                activeThreads: assistant.activeThreads.size,
+                performance: assistant.performance,
+                lastUsed: assistant.lastUsed,
+                isActive: assistant.activeThreads.size > 0,
+              }
+            : null,
+        },
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get status'
+        error: error instanceof Error ? error.message : 'Failed to get status',
       };
     }
   }
@@ -225,12 +223,12 @@ export class RemoteAssistantBridge {
 
       return {
         success: true,
-        data: { suggestions }
+        data: { suggestions },
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get suggestions'
+        error: error instanceof Error ? error.message : 'Failed to get suggestions',
       };
     }
   }
@@ -246,12 +244,12 @@ export class RemoteAssistantBridge {
 
       return {
         success: true,
-        data: { analysis }
+        data: { analysis },
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to perform analysis'
+        error: error instanceof Error ? error.message : 'Failed to perform analysis',
       };
     }
   }
@@ -268,24 +266,24 @@ export class RemoteAssistantBridge {
           'Schedule a follow-up meeting',
           'Send relevant case studies',
           'Connect on LinkedIn',
-          'Introduce to relevant team members'
+          'Introduce to relevant team members',
         ];
-      
+
       case 'deal':
         return [
           'Review deal requirements',
           'Schedule decision-maker meeting',
           'Send proposal follow-up',
           'Address outstanding concerns',
-          'Confirm timeline and budget'
+          'Confirm timeline and budget',
         ];
-      
+
       default:
         return [
           'Get AI insights',
           'Analyze recent activity',
           'Generate action items',
-          'Review performance metrics'
+          'Review performance metrics',
         ];
     }
   }
@@ -300,14 +298,14 @@ export class RemoteAssistantBridge {
       insights: [
         'High engagement opportunity',
         'Strong potential for conversion',
-        'Requires immediate follow-up'
+        'Requires immediate follow-up',
       ],
       recommendations: [
         'Schedule meeting within 2 days',
         'Send personalized proposal',
-        'Connect with decision maker'
+        'Connect with decision maker',
       ],
-      score: Math.floor(Math.random() * 100) + 1
+      score: Math.floor(Math.random() * 100) + 1,
     };
   }
 
@@ -315,7 +313,7 @@ export class RemoteAssistantBridge {
     const responseMessage = {
       type: `${originalType}_RESPONSE`,
       data: response,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     target.postMessage(responseMessage, this.origin);
@@ -329,12 +327,12 @@ export class RemoteAssistantBridge {
       data: {
         assistantType,
         entityId,
-        update
+        update,
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
-    this.activeIframes.forEach(iframe => {
+    this.activeIframes.forEach((iframe) => {
       if (iframe.contentWindow) {
         iframe.contentWindow.postMessage(message, this.origin);
       }

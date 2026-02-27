@@ -23,12 +23,15 @@ const PersistentVideoCallButton: React.FC = () => {
     if (!contact) return;
 
     try {
-      await initiateCall({
-        id: contact.id,
-        name: contact.name,
-        email: contact.email,
-        avatar: contact.avatarSrc || contact.avatar
-      }, type);
+      await initiateCall(
+        {
+          id: contact.id,
+          name: contact.name,
+          email: contact.email,
+          avatar: contact.avatarSrc || contact.avatar,
+        },
+        type
+      );
       setIsExpanded(false);
       setSelectedContact(null);
     } catch (error) {
@@ -40,13 +43,17 @@ const PersistentVideoCallButton: React.FC = () => {
     <div className="fixed bottom-6 right-6 z-40">
       {/* Expanded Contact List */}
       {isExpanded && (
-        <div className={`absolute bottom-20 right-0 w-80 ${
-          isDark ? 'bg-gray-900/95' : 'bg-white/95'
-        } backdrop-blur-xl border ${
-          isDark ? 'border-white/20' : 'border-gray-200'
-        } rounded-2xl shadow-2xl overflow-hidden mb-4 transform transition-all duration-300`}>
+        <div
+          className={`absolute bottom-20 right-0 w-80 ${
+            isDark ? 'bg-gray-900/95' : 'bg-white/95'
+          } backdrop-blur-xl border ${
+            isDark ? 'border-white/20' : 'border-gray-200'
+          } rounded-2xl shadow-2xl overflow-hidden mb-4 transform transition-all duration-300`}
+        >
           {/* Header */}
-          <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}>
+          <div
+            className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}
+          >
             <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Start a Call
             </h3>
@@ -82,25 +89,25 @@ const PersistentVideoCallButton: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleStartCall(contact.id, 'video')}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        isDark 
-                          ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400' 
+                        isDark
+                          ? 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
                           : 'bg-green-100 hover:bg-green-200 text-green-600'
                       }`}
                       title="Start video call"
                     >
                       <Video size={16} />
                     </button>
-                    
+
                     <button
                       onClick={() => handleStartCall(contact.id, 'audio')}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        isDark 
-                          ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400' 
+                        isDark
+                          ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
                           : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
                       }`}
                       title="Start audio call"
@@ -114,13 +121,19 @@ const PersistentVideoCallButton: React.FC = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className={`p-4 border-t ${isDark ? 'border-white/10' : 'border-gray-200'} bg-gradient-to-r ${isDark ? 'from-gray-800/50 to-gray-700/50' : 'from-gray-50 to-gray-100'}`}>
+          <div
+            className={`p-4 border-t ${isDark ? 'border-white/10' : 'border-gray-200'} bg-gradient-to-r ${isDark ? 'from-gray-800/50 to-gray-700/50' : 'from-gray-50 to-gray-100'}`}
+          >
             <div className="grid grid-cols-2 gap-3">
-              <button className={`flex items-center justify-center space-x-2 p-3 rounded-lg ${isDark ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400' : 'bg-purple-100 hover:bg-purple-200 text-purple-700'} transition-colors`}>
+              <button
+                className={`flex items-center justify-center space-x-2 p-3 rounded-lg ${isDark ? 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400' : 'bg-purple-100 hover:bg-purple-200 text-purple-700'} transition-colors`}
+              >
                 <Users size={16} />
                 <span className="text-sm font-medium">Group Call</span>
               </button>
-              <button className={`flex items-center justify-center space-x-2 p-3 rounded-lg ${isDark ? 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'} transition-colors`}>
+              <button
+                className={`flex items-center justify-center space-x-2 p-3 rounded-lg ${isDark ? 'bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'} transition-colors`}
+              >
                 <MessageSquare size={16} />
                 <span className="text-sm font-medium">Chat</span>
               </button>
@@ -135,8 +148,8 @@ const PersistentVideoCallButton: React.FC = () => {
         className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 transform ${
           isExpanded ? 'scale-110 rotate-12' : 'hover:scale-105'
         } ${
-          isDark 
-            ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600' 
+          isDark
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
             : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
         }`}
         title="Start a video call"

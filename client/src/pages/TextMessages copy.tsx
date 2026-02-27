@@ -1,25 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  MessageSquare, 
-  Send, 
-  Search, 
-  Phone, 
-  User, 
-  Clock, 
-  CheckCheck, 
-  Plus, 
-  ChevronDown, 
-  ChevronRight, 
-  Filter, 
-  MoreHorizontal, 
-  RefreshCw, 
-  X, 
-  Calendar, 
-  Smile, 
-  Paperclip, 
-  Image, 
-  Mic, 
-  Settings
+import {
+  MessageSquare,
+  Send,
+  Search,
+  Phone,
+  User,
+  Clock,
+  CheckCheck,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  Filter,
+  MoreHorizontal,
+  RefreshCw,
+  X,
+  Calendar,
+  Smile,
+  Paperclip,
+  Image,
+  Mic,
+  Settings,
 } from 'lucide-react';
 
 interface Contact {
@@ -52,7 +52,7 @@ const TextMessages: React.FC = () => {
       lastMessage: "Thanks for the information. I'll review it and get back to you.",
       lastMessageTime: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
       unread: 0,
-      status: 'online'
+      status: 'online',
     },
     {
       id: '2',
@@ -61,7 +61,7 @@ const TextMessages: React.FC = () => {
       lastMessage: 'When can we schedule a call to discuss the proposal?',
       lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
       unread: 2,
-      status: 'offline'
+      status: 'offline',
     },
     {
       id: '3',
@@ -70,7 +70,7 @@ const TextMessages: React.FC = () => {
       lastMessage: "I'm interested in learning more about your services.",
       lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
       unread: 0,
-      status: 'away'
+      status: 'away',
     },
     {
       id: '4',
@@ -79,7 +79,7 @@ const TextMessages: React.FC = () => {
       lastMessage: 'The demo was great! Looking forward to the next steps.',
       lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
       unread: 0,
-      status: 'offline'
+      status: 'offline',
     },
     {
       id: '5',
@@ -88,35 +88,38 @@ const TextMessages: React.FC = () => {
       lastMessage: 'Can you send me the pricing details?',
       lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
       unread: 0,
-      status: 'offline'
-    }
+      status: 'offline',
+    },
   ]);
-  
+
   const [messages, setMessages] = useState({
     '1': [
       {
         id: 'm1',
         contactId: '1',
-        content: 'Hi John, I wanted to follow up on our conversation yesterday. Have you had a chance to review the proposal?',
+        content:
+          'Hi John, I wanted to follow up on our conversation yesterday. Have you had a chance to review the proposal?',
         timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
         status: 'read',
-        isIncoming: false
+        isIncoming: false,
       },
       {
         id: 'm2',
         contactId: '1',
-        content: "Yes, I've looked it over. It looks good overall, but I have a few questions about the pricing structure.",
+        content:
+          "Yes, I've looked it over. It looks good overall, but I have a few questions about the pricing structure.",
         timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
         status: 'read',
-        isIncoming: true
+        isIncoming: true,
       },
       {
         id: 'm3',
         contactId: '1',
-        content: "I'd be happy to clarify. Would you like to schedule a call to discuss, or would you prefer I address your questions via email?",
+        content:
+          "I'd be happy to clarify. Would you like to schedule a call to discuss, or would you prefer I address your questions via email?",
         timestamp: new Date(Date.now() - 1000 * 60 * 40), // 40 minutes ago
         status: 'read',
-        isIncoming: false
+        isIncoming: false,
       },
       {
         id: 'm4',
@@ -124,33 +127,36 @@ const TextMessages: React.FC = () => {
         content: "Thanks for the information. I'll review it and get back to you.",
         timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
         status: 'read',
-        isIncoming: true
-      }
+        isIncoming: true,
+      },
     ],
     '2': [
       {
         id: 'm5',
         contactId: '2',
-        content: "Hello Sarah, I'm following up on our meeting last week. Did you have any additional questions?",
+        content:
+          "Hello Sarah, I'm following up on our meeting last week. Did you have any additional questions?",
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
         status: 'delivered',
-        isIncoming: false
+        isIncoming: false,
       },
       {
         id: 'm6',
         contactId: '2',
-        content: 'Yes, I was wondering about the implementation timeline. How soon can we get started?',
+        content:
+          'Yes, I was wondering about the implementation timeline. How soon can we get started?',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2.5), // 2.5 hours ago
         status: 'delivered',
-        isIncoming: true
+        isIncoming: true,
       },
       {
         id: 'm7',
         contactId: '2',
-        content: 'We can typically begin within 2 weeks of contract signing. I can send you our onboarding schedule if that would be helpful.',
+        content:
+          'We can typically begin within 2 weeks of contract signing. I can send you our onboarding schedule if that would be helpful.',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2.2), // 2.2 hours ago
         status: 'delivered',
-        isIncoming: false
+        isIncoming: false,
       },
       {
         id: 'm8',
@@ -158,53 +164,52 @@ const TextMessages: React.FC = () => {
         content: 'That would be great. Also, when can we schedule a call to discuss the proposal?',
         timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
         status: 'delivered',
-        isIncoming: true
-      }
-    ]
+        isIncoming: true,
+      },
+    ],
   });
-  
+
   const [selectedContact, setSelectedContact] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreatingContact, setIsCreatingContact] = useState(false);
   const [newContactData, setNewContactData] = useState({
     name: '',
-    phone: ''
+    phone: '',
   });
   const [isSending, setIsSending] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  
+
   const messageEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Scroll to bottom of messages when selected contact changes or new messages arrive
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedContact, messages]);
-  
+
   // Filter contacts based on search term
-  const filteredContacts = contacts.filter(contact => 
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.phone.includes(searchTerm)
+  const filteredContacts = contacts.filter(
+    (contact) =>
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.phone.includes(searchTerm)
   );
-  
+
   // Select a contact
   const selectContact = (contact: Contact) => {
     setSelectedContact(contact);
-    
+
     // Mark messages as read
     if (contact.unread && contact.unread > 0) {
-      setContacts(contacts.map(c => 
-        c.id === contact.id ? { ...c, unread: 0 } : c
-      ));
+      setContacts(contacts.map((c) => (c.id === contact.id ? { ...c, unread: 0 } : c)));
     }
   };
-  
+
   // Send a message
   const sendMessage = () => {
     if (!selectedContact || !newMessage.trim()) return;
-    
+
     setIsSending(true);
-    
+
     // Create a new message
     const newMsg: Message = {
       id: `m${Date.now()}`,
@@ -212,70 +217,74 @@ const TextMessages: React.FC = () => {
       content: newMessage,
       timestamp: new Date(),
       status: 'sending',
-      isIncoming: false
+      isIncoming: false,
     };
-    
+
     // Add to messages
     const contactMessages = messages[selectedContact.id] || [];
     setMessages({
       ...messages,
-      [selectedContact.id]: [...contactMessages, newMsg]
+      [selectedContact.id]: [...contactMessages, newMsg],
     });
-    
+
     // Update contact's last message
-    setContacts(contacts.map(c => 
-      c.id === selectedContact.id ? {
-        ...c,
-        lastMessage: newMessage,
-        lastMessageTime: new Date()
-      } : c
-    ));
-    
+    setContacts(
+      contacts.map((c) =>
+        c.id === selectedContact.id
+          ? {
+              ...c,
+              lastMessage: newMessage,
+              lastMessageTime: new Date(),
+            }
+          : c
+      )
+    );
+
     // Clear input
     setNewMessage('');
-    
+
     // Simulate sending delay
     setTimeout(() => {
-      setMessages(prevMessages => {
-        const updatedContactMessages = prevMessages[selectedContact.id].map(msg => 
+      setMessages((prevMessages) => {
+        const updatedContactMessages = prevMessages[selectedContact.id].map((msg) =>
           msg.id === newMsg.id ? { ...msg, status: 'delivered' } : msg
         );
-        
+
         return {
           ...prevMessages,
-          [selectedContact.id]: updatedContactMessages
+          [selectedContact.id]: updatedContactMessages,
         };
       });
-      
+
       setIsSending(false);
     }, 1500);
   };
-  
+
   // Create a new contact
   const createContact = () => {
     if (!newContactData.name || !newContactData.phone) return;
-    
+
     const newContact: Contact = {
       id: `${contacts.length + 1}`,
       name: newContactData.name,
       phone: newContactData.phone,
-      status: 'offline'
+      status: 'offline',
     };
-    
+
     setContacts([...contacts, newContact]);
     setNewContactData({ name: '', phone: '' });
     setIsCreatingContact(false);
-    
+
     // Select the new contact
     selectContact(newContact);
   };
-  
+
   // Format timestamp
   const formatTimestamp = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays === 1) {
@@ -286,23 +295,23 @@ const TextMessages: React.FC = () => {
       return date.toLocaleDateString();
     }
   };
-  
+
   // Message templates
   const messageTemplates = [
-    "Hi, thank you for your interest in our services. How can I help you today?",
-    "I wanted to follow up on our previous conversation. Do you have any questions I can answer?",
+    'Hi, thank you for your interest in our services. How can I help you today?',
+    'I wanted to follow up on our previous conversation. Do you have any questions I can answer?',
     "Thank you for your time today. I've attached the information we discussed.",
     "Just checking in to see if you've had a chance to review the proposal I sent.",
-    "Would you be available for a quick call this week to discuss next steps?"
+    'Would you be available for a quick call this week to discuss next steps?',
   ];
-  
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Text Messages</h1>
         <p className="text-gray-600 mt-1">Send and receive SMS messages with leads and clients</p>
       </header>
-      
+
       <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 h-[calc(100vh-200px)] min-h-[600px]">
         <div className="flex h-full">
           {/* Contacts sidebar */}
@@ -320,7 +329,7 @@ const TextMessages: React.FC = () => {
                   <Search size={18} className="text-gray-400" />
                 </div>
               </div>
-              
+
               <button
                 onClick={() => setIsCreatingContact(true)}
                 className="mt-3 w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -329,11 +338,11 @@ const TextMessages: React.FC = () => {
                 New Contact
               </button>
             </div>
-            
+
             <div className="overflow-y-auto flex-1">
               {filteredContacts.length > 0 ? (
                 <div className="divide-y divide-gray-200">
-                  {filteredContacts.map(contact => (
+                  {filteredContacts.map((contact) => (
                     <div
                       key={contact.id}
                       onClick={() => selectContact(contact)}
@@ -350,17 +359,19 @@ const TextMessages: React.FC = () => {
                             <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></div>
                           )}
                         </div>
-                        
+
                         <div className="ml-3 flex-1 min-w-0">
                           <div className="flex justify-between items-baseline">
-                            <h3 className="text-sm font-medium text-gray-900 truncate">{contact.name}</h3>
+                            <h3 className="text-sm font-medium text-gray-900 truncate">
+                              {contact.name}
+                            </h3>
                             {contact.lastMessageTime && (
                               <span className="text-xs text-gray-500">
                                 {formatTimestamp(contact.lastMessageTime)}
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="flex justify-between items-center mt-1">
                             <p className="text-xs text-gray-500 truncate">
                               {contact.lastMessage || contact.phone}
@@ -377,13 +388,11 @@ const TextMessages: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="p-4 text-center text-gray-500">
-                  No contacts found
-                </div>
+                <div className="p-4 text-center text-gray-500">No contacts found</div>
               )}
             </div>
           </div>
-          
+
           {/* Conversation area */}
           <div className="w-2/3 flex flex-col">
             {selectedContact ? (
@@ -399,7 +408,7 @@ const TextMessages: React.FC = () => {
                       <p className="text-sm text-gray-500">{selectedContact.phone}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3">
                     <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
                       <Phone size={20} />
@@ -409,7 +418,7 @@ const TextMessages: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Messages */}
                 <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
                   <div className="space-y-4">
@@ -428,7 +437,10 @@ const TextMessages: React.FC = () => {
                           <div className="text-sm">{message.content}</div>
                           <div className="mt-1 flex justify-end items-center space-x-1">
                             <span className="text-xs opacity-75">
-                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {message.timestamp.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </span>
                             {!message.isIncoming && (
                               <span>
@@ -453,7 +465,7 @@ const TextMessages: React.FC = () => {
                     <div ref={messageEndRef} />
                   </div>
                 </div>
-                
+
                 {/* Message input */}
                 <div className="p-4 border-t border-gray-200 bg-white">
                   <div className="flex items-end space-x-2">
@@ -471,9 +483,9 @@ const TextMessages: React.FC = () => {
                           }
                         }}
                       ></textarea>
-                      
+
                       <div className="absolute bottom-2 right-2 flex space-x-1">
-                        <button 
+                        <button
                           className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
                           onClick={() => setShowTemplates(!showTemplates)}
                         >
@@ -484,7 +496,7 @@ const TextMessages: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     <button
                       onClick={sendMessage}
                       disabled={!newMessage.trim() || isSending}
@@ -501,7 +513,7 @@ const TextMessages: React.FC = () => {
                       )}
                     </button>
                   </div>
-                  
+
                   {/* Message templates */}
                   {showTemplates && (
                     <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-sm p-2">
@@ -530,7 +542,9 @@ const TextMessages: React.FC = () => {
                   <div className="mx-auto h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-4">
                     <MessageSquare size={32} />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">No conversation selected</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No conversation selected
+                  </h3>
                   <p className="text-gray-500 mb-4">Select a contact to start messaging</p>
                   <button
                     onClick={() => setIsCreatingContact(true)}
@@ -545,7 +559,7 @@ const TextMessages: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* New Contact Modal */}
       {isCreatingContact && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -560,7 +574,7 @@ const TextMessages: React.FC = () => {
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -575,7 +589,7 @@ const TextMessages: React.FC = () => {
                     placeholder="Enter contact name"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number
@@ -584,13 +598,15 @@ const TextMessages: React.FC = () => {
                     type="tel"
                     id="phone"
                     value={newContactData.phone}
-                    onChange={(e) => setNewContactData({ ...newContactData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setNewContactData({ ...newContactData, phone: e.target.value })
+                    }
                     className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter phone number"
                   />
                 </div>
               </div>
-              
+
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   onClick={() => setIsCreatingContact(false)}

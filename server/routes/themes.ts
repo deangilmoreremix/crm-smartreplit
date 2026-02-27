@@ -21,13 +21,13 @@ router.post('/', async (req: Request, res: Response) => {
     if (!tenantId || !name || !config) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'name', 'config']
+        required: ['tenantId', 'name', 'config'],
       });
     }
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Authentication required'
+        error: 'Authentication required',
       });
     }
 
@@ -36,17 +36,11 @@ router.post('/', async (req: Request, res: Response) => {
     if (!validation.valid) {
       return res.status(400).json({
         error: 'Invalid theme configuration',
-        details: validation.errors
+        details: validation.errors,
       });
     }
 
-    const theme = await themeManager.createTheme(
-      tenantId,
-      name,
-      config,
-      userId,
-      description
-    );
+    const theme = await themeManager.createTheme(tenantId, name, config, userId, description);
 
     // Generate CSS for preview
     const css = themeManager.generateThemeCSS(config);
@@ -54,18 +48,17 @@ router.post('/', async (req: Request, res: Response) => {
     res.status(201).json({
       message: 'Theme created successfully',
       theme,
-      css
+      css,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Theme creation failed', error, {
       endpoint: '/api/themes',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to create theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -82,18 +75,17 @@ router.get('/tenant/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       themes,
-      count: themes.length
+      count: themes.length,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to list themes', error, {
       endpoint: `/api/themes/tenant/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to list themes',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -114,7 +106,7 @@ router.get('/active/:tenantId', async (req: Request, res: Response) => {
       return res.json({
         theme: null,
         defaultConfig,
-        css: themeManager.generateThemeCSS(defaultConfig)
+        css: themeManager.generateThemeCSS(defaultConfig),
       });
     }
 
@@ -122,18 +114,17 @@ router.get('/active/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       theme,
-      css
+      css,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get active theme', error, {
       endpoint: `/api/themes/active/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to get active theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -151,18 +142,17 @@ router.get('/:themeId', async (req: Request, res: Response) => {
 
     res.json({
       theme,
-      css
+      css,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get theme', error, {
       endpoint: `/api/themes/${req.params.themeId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(404).json({
       error: 'Theme not found',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -182,7 +172,7 @@ router.put('/:themeId', async (req: Request, res: Response) => {
       if (!validation.valid) {
         return res.status(400).json({
           error: 'Invalid theme configuration',
-          details: validation.errors
+          details: validation.errors,
         });
       }
     }
@@ -193,18 +183,17 @@ router.put('/:themeId', async (req: Request, res: Response) => {
     res.json({
       message: 'Theme updated successfully',
       theme,
-      css
+      css,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to update theme', error, {
       endpoint: `/api/themes/${req.params.themeId}`,
-      method: 'PUT'
+      method: 'PUT',
     });
 
     res.status(500).json({
       error: 'Failed to update theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -221,18 +210,17 @@ router.delete('/:themeId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Theme deleted successfully',
-      themeId
+      themeId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to delete theme', error, {
       endpoint: `/api/themes/${req.params.themeId}`,
-      method: 'DELETE'
+      method: 'DELETE',
     });
 
     res.status(500).json({
       error: 'Failed to delete theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -251,18 +239,17 @@ router.post('/:themeId/activate', async (req: Request, res: Response) => {
     res.json({
       message: 'Theme activated successfully',
       theme,
-      css
+      css,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to activate theme', error, {
       endpoint: `/api/themes/${req.params.themeId}/activate`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to activate theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -279,13 +266,13 @@ router.post('/:themeId/clone', async (req: Request, res: Response) => {
 
     if (!name) {
       return res.status(400).json({
-        error: 'Theme name is required'
+        error: 'Theme name is required',
       });
     }
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Authentication required'
+        error: 'Authentication required',
       });
     }
 
@@ -293,18 +280,17 @@ router.post('/:themeId/clone', async (req: Request, res: Response) => {
 
     res.status(201).json({
       message: 'Theme cloned successfully',
-      theme: clonedTheme
+      theme: clonedTheme,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to clone theme', error, {
       endpoint: `/api/themes/${req.params.themeId}/clone`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to clone theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -319,18 +305,17 @@ router.get('/presets/list', async (req: Request, res: Response) => {
 
     res.json({
       presets,
-      count: presets.length
+      count: presets.length,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get theme presets', error, {
       endpoint: '/api/themes/presets',
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to get theme presets',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -347,13 +332,13 @@ router.post('/import', async (req: Request, res: Response) => {
     if (!tenantId || !themeJson) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'themeJson']
+        required: ['tenantId', 'themeJson'],
       });
     }
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Authentication required'
+        error: 'Authentication required',
       });
     }
 
@@ -361,18 +346,17 @@ router.post('/import', async (req: Request, res: Response) => {
 
     res.status(201).json({
       message: 'Theme imported successfully',
-      theme
+      theme,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Theme import failed', error, {
       endpoint: '/api/themes/import',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(400).json({
       error: 'Failed to import theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -389,18 +373,20 @@ router.get('/:themeId/export', async (req: Request, res: Response) => {
     const themeJson = themeManager.exportTheme(theme);
 
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${theme.name.replace(/\s+/g, '-').toLowerCase()}-theme.json"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${theme.name.replace(/\s+/g, '-').toLowerCase()}-theme.json"`
+    );
     res.send(themeJson);
-
   } catch (error: any) {
     await errorLogger.logError('Theme export failed', error, {
       endpoint: `/api/themes/${req.params.themeId}/export`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(404).json({
       error: 'Failed to export theme',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -415,7 +401,7 @@ router.post('/preview', async (req: Request, res: Response) => {
 
     if (!config) {
       return res.status(400).json({
-        error: 'Theme config is required'
+        error: 'Theme config is required',
       });
     }
 
@@ -424,7 +410,7 @@ router.post('/preview', async (req: Request, res: Response) => {
     if (!validation.valid) {
       return res.status(400).json({
         error: 'Invalid theme configuration',
-        details: validation.errors
+        details: validation.errors,
       });
     }
 
@@ -433,18 +419,17 @@ router.post('/preview', async (req: Request, res: Response) => {
 
     res.json({
       css,
-      tailwindConfig
+      tailwindConfig,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Theme preview generation failed', error, {
       endpoint: '/api/themes/preview',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to generate theme preview',
-      message: error.message
+      message: error.message,
     });
   }
 });

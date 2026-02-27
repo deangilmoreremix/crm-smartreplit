@@ -5,6 +5,7 @@ Automated demo recording system using Puppeteer to create professional GIFs and 
 ## 🎬 Quick Start
 
 ### Generate All Demos
+
 ```bash
 tsx scripts/demos/generate-all.ts
 ```
@@ -14,6 +15,7 @@ This will run all feature demos sequentially and save MP4 videos to `demos/outpu
 ## 📁 Output
 
 All generated demos are saved to `demos/output/` directory:
+
 - **MP4 videos**: High-quality screen recordings
 - **GIF files**: Optimized animated previews (when using GIF conversion)
 
@@ -37,11 +39,11 @@ Edit the recorder options in each demo script:
 
 ```typescript
 const recorder = await createRecorder({
-  width: 1920,        // Video width
-  height: 1080,       // Video height
-  fps: 30,            // Frames per second
-  quality: 80,        // Quality (1-100)
-  outputDir: 'demos/output'  // Output directory
+  width: 1920, // Video width
+  height: 1080, // Video height
+  fps: 30, // Frames per second
+  quality: 80, // Quality (1-100)
+  outputDir: 'demos/output', // Output directory
 });
 ```
 
@@ -61,7 +63,7 @@ async function recordMyFeatureDemo() {
 
   try {
     const baseUrl = process.env.APP_URL || 'http://localhost:5000';
-    
+
     // Navigate to your feature
     await recorder.navigate(`${baseUrl}/my-feature`);
     await recorder.wait(2000);
@@ -73,13 +75,13 @@ async function recordMyFeatureDemo() {
     await recorder.hover('[data-testid="button-example"]', 800);
     await recorder.click('[data-testid="button-example"]', 1000);
     await recorder.scroll(400, 2000);
-    
+
     // Type in inputs
     await recorder.type('[data-testid="input-search"]', 'Search term', 1000);
 
     // Stop recording
     await recorder.stopRecording();
-    
+
     console.log('✅ Demo recorded successfully!');
   } catch (error) {
     console.error('❌ Error recording demo:', error);
@@ -94,47 +96,57 @@ export default recordMyFeatureDemo;
 
 ### Available Recorder Methods
 
-| Method | Description | Example |
-|--------|-------------|---------|
-| `navigate(url)` | Navigate to a URL | `await recorder.navigate('http://localhost:5000/dashboard')` |
-| `wait(ms)` | Wait for specified time | `await recorder.wait(1000)` |
-| `click(selector, waitAfter?)` | Click an element | `await recorder.click('[data-testid="button"]', 500)` |
-| `type(selector, text, waitAfter?)` | Type text | `await recorder.type('input', 'Hello', 500)` |
-| `hover(selector, waitAfter?)` | Hover over element | `await recorder.hover('.menu-item', 300)` |
-| `scroll(distance, duration?)` | Smooth scroll | `await recorder.scroll(400, 2000)` |
-| `captureScreenshot(name)` | Take screenshot | `await recorder.captureScreenshot('frame-001')` |
-| `startRecording(name)` | Start video recording | `await recorder.startRecording('demo')` |
-| `stopRecording()` | Stop video recording | `await recorder.stopRecording()` |
-| `convertToGIF(name)` | Convert screenshots to GIF | `await recorder.convertToGIF('demo')` |
+| Method                             | Description                | Example                                                      |
+| ---------------------------------- | -------------------------- | ------------------------------------------------------------ |
+| `navigate(url)`                    | Navigate to a URL          | `await recorder.navigate('http://localhost:5000/dashboard')` |
+| `wait(ms)`                         | Wait for specified time    | `await recorder.wait(1000)`                                  |
+| `click(selector, waitAfter?)`      | Click an element           | `await recorder.click('[data-testid="button"]', 500)`        |
+| `type(selector, text, waitAfter?)` | Type text                  | `await recorder.type('input', 'Hello', 500)`                 |
+| `hover(selector, waitAfter?)`      | Hover over element         | `await recorder.hover('.menu-item', 300)`                    |
+| `scroll(distance, duration?)`      | Smooth scroll              | `await recorder.scroll(400, 2000)`                           |
+| `captureScreenshot(name)`          | Take screenshot            | `await recorder.captureScreenshot('frame-001')`              |
+| `startRecording(name)`             | Start video recording      | `await recorder.startRecording('demo')`                      |
+| `stopRecording()`                  | Stop video recording       | `await recorder.stopRecording()`                             |
+| `convertToGIF(name)`               | Convert screenshots to GIF | `await recorder.convertToGIF('demo')`                        |
 
 ## 🎯 Best Practices
 
 ### 1. Use data-testid Attributes
+
 Always use `data-testid` selectors for reliability:
+
 ```typescript
 await recorder.click('[data-testid="button-submit"]');
 ```
 
 ### 2. Add Appropriate Delays
+
 Give animations time to complete:
+
 ```typescript
 await recorder.click('[data-testid="modal-open"]', 1500); // Wait for modal animation
 ```
 
 ### 3. Smooth Scrolling
+
 Use duration parameter for smooth scroll effects:
+
 ```typescript
 await recorder.scroll(400, 2000); // Scroll 400px over 2 seconds
 ```
 
 ### 4. Hover for Context
+
 Hover over elements to show tooltips and highlights:
+
 ```typescript
 await recorder.hover('[data-testid="stat-card"]', 800);
 ```
 
 ### 5. Clean Navigation
+
 Start and end at logical points:
+
 ```typescript
 // Good: Return to starting position
 await recorder.scroll(400, 2000);
@@ -161,23 +173,28 @@ await recorder.convertToGIF('my-demo');
 ## 🔧 Troubleshooting
 
 ### Puppeteer Not Launching
+
 Install system dependencies:
+
 ```bash
 # On Linux/Replit
 apt-get install -y chromium-browser
 ```
 
 ### Selector Not Found
+
 1. Check element exists with `data-testid`
 2. Add wait time before interaction
 3. Use browser DevTools to verify selector
 
 ### Recording Quality Issues
+
 Adjust FPS and quality settings:
+
 ```typescript
 const recorder = await createRecorder({
-  fps: 60,      // Higher FPS for smoother video
-  quality: 90,  // Higher quality
+  fps: 60, // Higher FPS for smoother video
+  quality: 90, // Higher quality
 });
 ```
 
@@ -196,21 +213,25 @@ Before recording production demos:
 ## 🚀 Production Usage
 
 ### 1. Start Your App
+
 ```bash
 npm run dev
 ```
 
 ### 2. Run Demo Generator
+
 ```bash
 npm run tsx scripts/demos/generate-all.ts
 ```
 
 ### 3. Check Output
+
 ```bash
 ls -lh demos/output/
 ```
 
 ### 4. Use Demos
+
 - Upload to marketing site
 - Share on social media
 - Include in documentation

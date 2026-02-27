@@ -6,7 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -35,7 +41,7 @@ import {
   Clock,
   PieChart,
   LineChart,
-  FileText
+  FileText,
 } from 'lucide-react';
 
 interface BusinessMetric {
@@ -105,7 +111,7 @@ export default function BusinessAnalyzerDashboard() {
       change: 12.5,
       trend: 'up',
       category: 'revenue',
-      period: 'This Month'
+      period: 'This Month',
     },
     {
       id: '2',
@@ -114,7 +120,7 @@ export default function BusinessAnalyzerDashboard() {
       change: 8.3,
       trend: 'up',
       category: 'customers',
-      period: 'This Month'
+      period: 'This Month',
     },
     {
       id: '3',
@@ -123,16 +129,16 @@ export default function BusinessAnalyzerDashboard() {
       change: -2.1,
       trend: 'down',
       category: 'marketing',
-      period: 'This Month'
+      period: 'This Month',
     },
     {
       id: '4',
       name: 'Average Order Value',
-      value: 89.50,
+      value: 89.5,
       change: 5.7,
       trend: 'up',
       category: 'revenue',
-      period: 'This Month'
+      period: 'This Month',
     },
     {
       id: '5',
@@ -141,7 +147,7 @@ export default function BusinessAnalyzerDashboard() {
       change: 3.2,
       trend: 'up',
       category: 'customers',
-      period: 'This Month'
+      period: 'This Month',
     },
     {
       id: '6',
@@ -150,24 +156,29 @@ export default function BusinessAnalyzerDashboard() {
       change: 1.8,
       trend: 'up',
       category: 'operations',
-      period: 'This Month'
-    }
+      period: 'This Month',
+    },
   ];
 
   const mockInsights: Insight[] = [
     {
       id: '1',
       title: 'Revenue Growth Opportunity',
-      description: 'Customer segment analysis shows 15% potential revenue increase through targeted upsell campaigns',
+      description:
+        'Customer segment analysis shows 15% potential revenue increase through targeted upsell campaigns',
       impact: 'high',
       confidence: 0.89,
       category: 'Revenue',
       recommendation: 'Implement personalized upsell recommendations based on purchase history',
       gpt5Analysis: {
         reasoning: 'Based on customer behavior patterns and market trends',
-        dataPoints: ['Purchase frequency increased 23%', 'Average cart value up 12%', 'Customer lifetime value improved'],
-        predictedOutcome: 'Expected 15-20% revenue increase within 3 months'
-      }
+        dataPoints: [
+          'Purchase frequency increased 23%',
+          'Average cart value up 12%',
+          'Customer lifetime value improved',
+        ],
+        predictedOutcome: 'Expected 15-20% revenue increase within 3 months',
+      },
     },
     {
       id: '2',
@@ -179,9 +190,13 @@ export default function BusinessAnalyzerDashboard() {
       recommendation: 'Send personalized retention offers to at-risk customers',
       gpt5Analysis: {
         reasoning: 'Pattern recognition in customer engagement metrics',
-        dataPoints: ['Login frequency decreased 40%', 'Support tickets increased 25%', 'Feature usage dropped'],
-        predictedOutcome: 'Can reduce churn by 30% with immediate intervention'
-      }
+        dataPoints: [
+          'Login frequency decreased 40%',
+          'Support tickets increased 25%',
+          'Feature usage dropped',
+        ],
+        predictedOutcome: 'Can reduce churn by 30% with immediate intervention',
+      },
     },
     {
       id: '3',
@@ -193,10 +208,14 @@ export default function BusinessAnalyzerDashboard() {
       recommendation: 'Consider expanding product line to include eco-friendly options',
       gpt5Analysis: {
         reasoning: 'Cross-industry data analysis and consumer sentiment tracking',
-        dataPoints: ['Competitor sustainability initiatives up 45%', 'Consumer surveys show 62% interest', 'Market research indicates 28% growth potential'],
-        predictedOutcome: 'Potential market share increase of 12-15%'
-      }
-    }
+        dataPoints: [
+          'Competitor sustainability initiatives up 45%',
+          'Consumer surveys show 62% interest',
+          'Market research indicates 28% growth potential',
+        ],
+        predictedOutcome: 'Potential market share increase of 12-15%',
+      },
+    },
   ];
 
   const mockReports: Report[] = [
@@ -206,7 +225,7 @@ export default function BusinessAnalyzerDashboard() {
       type: 'performance',
       status: 'ready',
       createdDate: '2024-01-15',
-      data: {}
+      data: {},
     },
     {
       id: '2',
@@ -214,19 +233,19 @@ export default function BusinessAnalyzerDashboard() {
       type: 'forecast',
       status: 'ready',
       createdDate: '2024-01-12',
-      data: {}
-    }
+      data: {},
+    },
   ];
 
   const mockStats: BusinessStats = {
     totalRevenue: 1850000,
     totalCustomers: 2847,
-    averageOrderValue: 89.50,
+    averageOrderValue: 89.5,
     conversionRate: 3.2,
     customerRetention: 78.4,
     monthlyGrowth: 12.5,
     aiAccuracy: 0.87,
-    insightsGenerated: 156
+    insightsGenerated: 156,
   };
 
   const { data: metrics = mockMetrics, isLoading: metricsLoading } = useQuery<BusinessMetric[]>({
@@ -256,7 +275,6 @@ export default function BusinessAnalyzerDashboard() {
         `Business Metric: ${metric.name}, Value: ${metric.value}, Change: ${metric.change}%, Trend: ${metric.trend}, Category: ${metric.category}`,
         'business-analysis'
       );
-      console.log('Business insight generated:', result);
     } catch (error) {
       console.error('Failed to generate business insight:', error);
     } finally {
@@ -266,18 +284,25 @@ export default function BusinessAnalyzerDashboard() {
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'up': return <TrendingUp className="h-4 w-4 text-green-500" />;
-      case 'down': return <TrendingDown className="h-4 w-4 text-red-500" />;
-      default: return <Activity className="h-4 w-4 text-gray-500" />;
+      case 'up':
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'down':
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      default:
+        return <Activity className="h-4 w-4 text-gray-500" />;
     }
   };
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'high':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -298,13 +323,15 @@ export default function BusinessAnalyzerDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isAnalyzing ? 'Analyzing...' : 'AI Business Insights'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
-        <div className="text-2xl font-bold text-blue-600">${stats.totalRevenue.toLocaleString()}</div>
+        <div className="text-2xl font-bold text-blue-600">
+          ${stats.totalRevenue.toLocaleString()}
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</div>
       </div>
       <div className="text-center">
@@ -312,7 +339,9 @@ export default function BusinessAnalyzerDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Customers</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{Math.round(stats.conversionRate * 100)}%</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {Math.round(stats.conversionRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</div>
       </div>
       <div className="text-center">
@@ -322,7 +351,7 @@ export default function BusinessAnalyzerDashboard() {
     </div>
   );
 
-  const filteredMetrics = metrics.filter(metric => {
+  const filteredMetrics = metrics.filter((metric) => {
     if (categoryFilter !== 'all' && metric.category !== categoryFilter) return false;
     return true;
   });
@@ -379,7 +408,7 @@ export default function BusinessAnalyzerDashboard() {
 
           {/* Key Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMetrics.map(metric => (
+            {filteredMetrics.map((metric) => (
               <GlassCard
                 key={metric.id}
                 className="p-6 cursor-pointer hover:border-blue-300"
@@ -392,9 +421,7 @@ export default function BusinessAnalyzerDashboard() {
                       {metric.category}
                     </span>
                   </div>
-                  <Badge variant="outline">
-                    {metric.period}
-                  </Badge>
+                  <Badge variant="outline">{metric.period}</Badge>
                 </div>
 
                 <div className="space-y-2">
@@ -405,10 +432,13 @@ export default function BusinessAnalyzerDashboard() {
                       {metric.value.toLocaleString()}
                       {metric.category === 'marketing' ? '%' : ''}
                     </span>
-                    <span className={`text-sm font-medium ${
-                      metric.change > 0 ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {metric.change > 0 ? '+' : ''}{metric.change}%
+                    <span
+                      className={`text-sm font-medium ${
+                        metric.change > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}
+                    >
+                      {metric.change > 0 ? '+' : ''}
+                      {metric.change}%
                     </span>
                   </div>
                 </div>
@@ -427,7 +457,7 @@ export default function BusinessAnalyzerDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
-                {insights.map(insight => (
+                {insights.map((insight) => (
                   <GlassCard
                     key={insight.id}
                     className="p-4 cursor-pointer hover:border-purple-300"
@@ -550,30 +580,41 @@ export default function BusinessAnalyzerDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
-                {reports.map(report => (
+                {reports.map((report) => (
                   <GlassCard key={report.id} className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          report.type === 'performance' ? 'bg-blue-100' :
-                          report.type === 'forecast' ? 'bg-green-100' :
-                          report.type === 'comparison' ? 'bg-purple-100' : 'bg-orange-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            report.type === 'performance'
+                              ? 'bg-blue-100'
+                              : report.type === 'forecast'
+                                ? 'bg-green-100'
+                                : report.type === 'comparison'
+                                  ? 'bg-purple-100'
+                                  : 'bg-orange-100'
+                          }`}
+                        >
                           <BarChart3 className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="font-medium">{report.title}</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {report.type} • Created {new Date(report.createdDate).toLocaleDateString()}
+                            {report.type} • Created{' '}
+                            {new Date(report.createdDate).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={
-                          report.status === 'ready' ? 'bg-green-100 text-green-800' :
-                          report.status === 'generating' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }>
+                        <Badge
+                          className={
+                            report.status === 'ready'
+                              ? 'bg-green-100 text-green-800'
+                              : report.status === 'generating'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                          }
+                        >
                           {report.status}
                         </Badge>
                         <Button variant="outline" size="sm">
@@ -676,15 +717,21 @@ export default function BusinessAnalyzerDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Metric Name</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Metric Name
+                  </Label>
                   <div className="font-medium">{selectedMetric.name}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Category</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Category
+                  </Label>
                   <Badge variant="outline">{selectedMetric.category}</Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Current Value</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Current Value
+                  </Label>
                   <div className="font-medium text-lg">
                     {selectedMetric.category === 'revenue' ? '$' : ''}
                     {selectedMetric.value.toLocaleString()}
@@ -692,22 +739,35 @@ export default function BusinessAnalyzerDashboard() {
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Change</Label>
-                  <div className={`font-medium ${selectedMetric.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {selectedMetric.change > 0 ? '+' : ''}{selectedMetric.change}%
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Change
+                  </Label>
+                  <div
+                    className={`font-medium ${selectedMetric.change > 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {selectedMetric.change > 0 ? '+' : ''}
+                    {selectedMetric.change}%
                   </div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Trend Analysis</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Trend Analysis
+                </Label>
                 <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     {getTrendIcon(selectedMetric.trend)}
                     <span className="font-medium capitalize">{selectedMetric.trend} Trend</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    This metric has shown {selectedMetric.trend === 'up' ? 'positive' : selectedMetric.trend === 'down' ? 'negative' : 'stable'} growth over the selected period.
+                    This metric has shown{' '}
+                    {selectedMetric.trend === 'up'
+                      ? 'positive'
+                      : selectedMetric.trend === 'down'
+                        ? 'negative'
+                        : 'stable'}{' '}
+                    growth over the selected period.
                   </p>
                 </div>
               </div>
@@ -730,34 +790,50 @@ export default function BusinessAnalyzerDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Title</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Title
+                  </Label>
                   <div className="font-medium">{selectedInsight.title}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Impact Level</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Impact Level
+                  </Label>
                   <Badge className={getImpactColor(selectedInsight.impact)}>
                     {selectedInsight.impact}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Confidence</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Confidence
+                  </Label>
                   <div className="font-medium">{Math.round(selectedInsight.confidence * 100)}%</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Category</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Category
+                  </Label>
                   <div className="font-medium">{selectedInsight.category}</div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Description</Label>
-                <div className="text-sm text-gray-700 dark:text-gray-300">{selectedInsight.description}</div>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Description
+                </Label>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {selectedInsight.description}
+                </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Recommendation</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Recommendation
+                </Label>
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="text-sm text-blue-800 dark:text-blue-200">{selectedInsight.recommendation}</div>
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                    {selectedInsight.recommendation}
+                  </div>
                 </div>
               </div>
 
@@ -775,10 +851,15 @@ export default function BusinessAnalyzerDashboard() {
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Key Data Points:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Key Data Points:
+                      </div>
                       <ul className="space-y-1">
                         {selectedInsight.gpt5Analysis.dataPoints.map((point, index) => (
-                          <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                          <li
+                            key={index}
+                            className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"
+                          >
                             <span className="text-green-500 mt-1">•</span>
                             {point}
                           </li>
@@ -788,7 +869,8 @@ export default function BusinessAnalyzerDashboard() {
 
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <div className="text-sm text-green-800 dark:text-green-200">
-                        <strong>Predicted Outcome:</strong> {selectedInsight.gpt5Analysis.predictedOutcome}
+                        <strong>Predicted Outcome:</strong>{' '}
+                        {selectedInsight.gpt5Analysis.predictedOutcome}
                       </div>
                     </div>
                   </div>

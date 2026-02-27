@@ -18,9 +18,9 @@ async function generateAllDemos() {
       console.log(`\n${'='.repeat(50)}`);
       console.log(`🎥 Recording: ${demo.name}`);
       console.log('='.repeat(50));
-      
+
       await demo.fn();
-      
+
       console.log(`✅ ${demo.name} completed\n`);
     } catch (error) {
       console.error(`❌ Failed to record ${demo.name}:`, error);

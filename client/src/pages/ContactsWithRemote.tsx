@@ -22,8 +22,10 @@ const ContactsWithRemote: React.FC = () => {
     position: contact.position || contact.title,
     tags: contact.tags || [],
     notes: contact.notes,
-    createdAt: typeof contact.createdAt === 'string' ? contact.createdAt : contact.createdAt?.toISOString(),
-    updatedAt: typeof contact.updatedAt === 'string' ? contact.updatedAt : contact.updatedAt?.toISOString()
+    createdAt:
+      typeof contact.createdAt === 'string' ? contact.createdAt : contact.createdAt?.toISOString(),
+    updatedAt:
+      typeof contact.updatedAt === 'string' ? contact.updatedAt : contact.updatedAt?.toISOString(),
   });
 
   // Initialize bridge and set up communication
@@ -40,37 +42,30 @@ const ContactsWithRemote: React.FC = () => {
     // Set up message handlers
     bridge.onMessage('REMOTE_READY', () => {
       setIsConnected(true);
-      console.log('✅ Remote contacts module connected');
     });
 
     bridge.onMessage('CONTACT_CREATED', (contact) => {
-      console.log('📝 Remote contact created:', contact);
       addContact(contact);
     });
 
     bridge.onMessage('CONTACT_UPDATED', (contact) => {
-      console.log('✏️ Remote contact updated:', contact);
       updateContact(contact.id, contact);
     });
 
     bridge.onMessage('CONTACT_DELETED', (data) => {
-      console.log('🗑️ Remote contact deleted:', data.id);
       deleteContact(data.id);
     });
 
     bridge.onMessage('REQUEST_CONTACTS', () => {
-      console.log('📤 Remote requesting contacts data');
       const crmContacts = Object.values(contacts).map(convertToCRMContact);
       bridge.syncContacts(crmContacts);
     });
 
     bridge.onMessage('SYNC_REQUEST', () => {
-      console.log('🔄 Remote requesting full sync');
       fetchContacts();
     });
 
     bridge.onMessage('NAVIGATE', (data) => {
-      console.log('🧭 Remote requesting navigation to:', data.route);
       if (data.route && typeof data.route === 'string') {
         // Use window.location for navigation
         if (data.route.startsWith('/')) {
@@ -82,12 +77,10 @@ const ContactsWithRemote: React.FC = () => {
     });
 
     bridge.onMessage('NAVIGATE_BACK', () => {
-      console.log('⬅️ Remote requesting navigation back');
       window.history.back();
     });
 
     bridge.onMessage('NAVIGATE_TO_DASHBOARD', () => {
-      console.log('🏠 Remote requesting navigation to dashboard');
       window.location.pathname = '/';
     });
 
@@ -100,21 +93,21 @@ const ContactsWithRemote: React.FC = () => {
   const handleIframeLoad = () => {
     if (iframeRef.current && bridgeRef.current) {
       bridgeRef.current.setIframe(iframeRef.current);
-      
+
       // Try to inject bridge code into remote module
       setTimeout(() => {
         injectBridgeCode();
       }, 1000);
-      
+
       // Wait for remote app to initialize, then send CRM data
       setTimeout(() => {
         const crmContacts = Object.values(contacts).map(convertToCRMContact);
         bridgeRef.current?.initializeCRM(crmContacts, {
           name: 'CRM System',
           version: '1.0.0',
-          features: ['contacts', 'deals', 'tasks', 'ai-tools', 'navigation']
+          features: ['contacts', 'deals', 'tasks', 'ai-tools', 'navigation'],
         });
-        
+
         // Send navigation capabilities
         bridgeRef.current?.sendNavigationCapabilities();
       }, 2000);
@@ -128,7 +121,7 @@ const ContactsWithRemote: React.FC = () => {
     try {
       const iframe = iframeRef.current;
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-      
+
       if (!iframeDoc) {
         console.warn('⚠️ Cannot access iframe document - cross-origin restrictions');
         return;
@@ -137,7 +130,6 @@ const ContactsWithRemote: React.FC = () => {
       // Create script element with bridge code
       const script = iframeDoc.createElement('script');
       script.textContent = `
-        console.log('🚀 Injecting CRM Bridge into remote module');
         
         // CRM Integration Bridge for Remote Contacts Module
         class CRMBridge {
@@ -155,7 +147,6 @@ const ContactsWithRemote: React.FC = () => {
               }
 
               const { type, data } = event.data;
-              console.log('📨 Remote module received:', type, data);
 
               switch (type) {
                 case 'CRM_INIT':
@@ -188,40 +179,34 @@ const ContactsWithRemote: React.FC = () => {
           }
 
           handleCRMInit(data) {
-            console.log('🚀 CRM initialized with', data.contacts?.length || 0, 'contacts');
             this.isConnected = true;
             
             // Try to integrate with existing contact management
             if (data.contacts && window.loadContactsFromCRM) {
               window.loadContactsFromCRM(data.contacts);
             } else {
-              console.log('💾 CRM contacts available:', data.contacts);
             }
           }
 
           handleContactsSync(contacts) {
-            console.log('🔄 Syncing', contacts.length, 'contacts from CRM');
             if (window.loadContactsFromCRM) {
               window.loadContactsFromCRM(contacts);
             }
           }
 
           handleLocalContactCreated(contact) {
-            console.log('➕ Local contact created:', contact);
             if (window.addContactFromCRM) {
               window.addContactFromCRM(contact);
             }
           }
 
           handleLocalContactUpdated(contact) {
-            console.log('✏️ Local contact updated:', contact);
             if (window.updateContactFromCRM) {
               window.updateContactFromCRM(contact);
             }
           }
 
           handleLocalContactDeleted(data) {
-            console.log('🗑️ Local contact deleted:', data.id);
             if (window.deleteContactFromCRM) {
               window.deleteContactFromCRM(data.id);
             }
@@ -260,7 +245,6 @@ const ContactsWithRemote: React.FC = () => {
           sendToCRM(type, data) {
             if (window.parent) {
               window.parent.postMessage({ type, data }, this.parentOrigin);
-              console.log('📤 Sent to CRM:', type, data);
             }
           }
         }
@@ -278,17 +262,13 @@ const ContactsWithRemote: React.FC = () => {
         window.navigateBack = () => window.crmBridge?.navigateBack();
         window.navigateToDashboard = () => window.crmBridge?.navigateToDashboard();
         
-        console.log('✅ CRM Bridge injected successfully');
       `;
 
       // Append script to iframe document
       iframeDoc.head.appendChild(script);
-      console.log('💉 Bridge code injected into remote module');
-
     } catch (error) {
       console.warn('⚠️ Failed to inject bridge code:', (error as Error).message);
-      console.log('📝 This is expected with cross-origin iframes. Attempting postMessage approach...');
-      
+
       // Try postMessage approach as fallback
       setTimeout(() => {
         attemptPostMessageBridge();
@@ -299,20 +279,20 @@ const ContactsWithRemote: React.FC = () => {
   // Attempt to setup bridge via postMessage
   const attemptPostMessageBridge = () => {
     if (!iframeRef.current?.contentWindow) return;
-    
-    console.log('📡 Attempting bridge setup via postMessage');
-    
+
     // Send multiple setup attempts with different approaches
     const messages = [
       { type: 'CRM_BRIDGE_SETUP', origin: window.location.origin },
       { type: 'PARENT_READY', data: { crmOrigin: window.location.origin } },
-      { type: 'INIT_COMMUNICATION', data: { ready: true } }
+      { type: 'INIT_COMMUNICATION', data: { ready: true } },
     ];
-    
+
     messages.forEach((message, index) => {
       setTimeout(() => {
-        iframeRef.current?.contentWindow?.postMessage(message, 'https://taupe-sprinkles-83c9ee.netlify.app');
-        console.log(`📤 Sent setup message ${index + 1}:`, message.type);
+        iframeRef.current?.contentWindow?.postMessage(
+          message,
+          'https://taupe-sprinkles-83c9ee.netlify.app'
+        );
       }, index * 200);
     });
   };
@@ -339,16 +319,18 @@ const ContactsWithRemote: React.FC = () => {
               Remote contact management system
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <div className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full">
               ✓ Remote Module
             </div>
-            <div className={`text-sm px-3 py-1 rounded-full flex items-center gap-1 ${
-              isConnected 
-                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
-            }`}>
+            <div
+              className={`text-sm px-3 py-1 rounded-full flex items-center gap-1 ${
+                isConnected
+                  ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                  : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
+              }`}
+            >
               {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
               {isConnected ? 'CRM Connected' : 'Connecting...'}
             </div>
@@ -365,7 +347,7 @@ const ContactsWithRemote: React.FC = () => {
             width: '100%',
             height: '100%',
             border: 'none',
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}
           title="Remote Contacts Module"
           allow="clipboard-read; clipboard-write"

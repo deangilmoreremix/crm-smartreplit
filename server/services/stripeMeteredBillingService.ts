@@ -59,7 +59,7 @@ export class StripeMeteredBillingService {
         // Try to find existing customer by user ID
         const existingCustomers = await stripe.customers.list({
           email: data.metadata?.email,
-          limit: 1
+          limit: 1,
         });
 
         if (existingCustomers.data.length > 0) {
@@ -71,8 +71,8 @@ export class StripeMeteredBillingService {
             name: data.metadata?.name,
             metadata: {
               userId: data.userId,
-              ...data.metadata
-            }
+              ...data.metadata,
+            },
           });
           customerId = customer.id;
         }
@@ -81,14 +81,16 @@ export class StripeMeteredBillingService {
       // Create subscription with metered price
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
-        items: [{
-          price: planData.stripePriceId,
-          quantity: 1,
-        }],
+        items: [
+          {
+            price: planData.stripePriceId,
+            quantity: 1,
+          },
+        ],
         metadata: {
           userId: data.userId,
           planId: data.planId,
-          ...data.metadata
+          ...data.metadata,
         },
         billing_behavior: 'default_incomplete', // Allow incomplete subscriptions
       });
@@ -103,7 +105,7 @@ export class StripeMeteredBillingService {
         billingPlanId: data.planId,
         startDate,
         endDate,
-        stripeSubscriptionId: subscription.id
+        stripeSubscriptionId: subscription.id,
       });
 
       // Set usage limits based on plan
@@ -111,8 +113,9 @@ export class StripeMeteredBillingService {
         const limits = Object.entries(planData.limits).map(([featureName, limitValue]) => ({
           userId: data.userId,
           featureName,
-          limitValue: typeof limitValue === 'number' ? limitValue : parseFloat(limitValue as string),
-          billingCycleId
+          limitValue:
+            typeof limitValue === 'number' ? limitValue : parseFloat(limitValue as string),
+          billingCycleId,
         }));
         await UsageTrackingService.setUsageLimits(limits);
       }
@@ -121,7 +124,7 @@ export class StripeMeteredBillingService {
         subscriptionId: subscription.id,
         customerId,
         billingCycleId,
-        status: subscription.status
+        status: subscription.status,
       };
     } catch (error) {
       console.error('Error creating metered subscription:', error);
@@ -141,7 +144,7 @@ export class StripeMeteredBillingService {
         {
           quantity: Math.round(data.quantity),
           timestamp: data.timestamp || Math.floor(Date.now() / 1000),
-          metadata: data.metadata
+          metadata: data.metadata,
         }
       );
 
@@ -160,10 +163,7 @@ export class StripeMeteredBillingService {
       const stripe = await this.getStripe();
 
       // Get usage events that haven't been reported to Stripe yet
-      let eventsQuery = db
-        .select()
-        .from(usageEvents)
-        .where(eq(usageEvents.userId, userId));
+      let eventsQuery = db.select().from(usageEvents).where(eq(usageEvents.userId, userId));
 
       if (billingCycleId) {
         eventsQuery = eventsQuery.where(eq(usageEvents.billingCycleId, billingCycleId));
@@ -172,28 +172,34 @@ export class StripeMeteredBillingService {
       const events = await eventsQuery;
 
       // Group events by subscription item
-      const eventsBySubscriptionItem = events.reduce((acc, event) => {
-        const itemId = event.stripeSubscriptionItemId;
-        if (!itemId) return acc;
+      const eventsBySubscriptionItem = events.reduce(
+        (acc, event) => {
+          const itemId = event.stripeSubscriptionItemId;
+          if (!itemId) return acc;
 
-        if (!acc[itemId]) {
-          acc[itemId] = [];
-        }
-        acc[itemId].push(event);
-        return acc;
-      }, {} as Record<string, typeof events>);
+          if (!acc[itemId]) {
+            acc[itemId] = [];
+          }
+          acc[itemId].push(event);
+          return acc;
+        },
+        {} as Record<string, typeof events>
+      );
 
       // Report usage for each subscription item
       for (const [subscriptionItemId, itemEvents] of Object.entries(eventsBySubscriptionItem)) {
         // Aggregate usage by timestamp (Stripe requires chronological order)
-        const usageByTimestamp = itemEvents.reduce((acc, event) => {
-          const timestamp = Math.floor(event.createdAt.getTime() / 1000);
-          if (!acc[timestamp]) {
-            acc[timestamp] = 0;
-          }
-          acc[timestamp] += parseFloat(event.quantity);
-          return acc;
-        }, {} as Record<number, number>);
+        const usageByTimestamp = itemEvents.reduce(
+          (acc, event) => {
+            const timestamp = Math.floor(event.createdAt.getTime() / 1000);
+            if (!acc[timestamp]) {
+              acc[timestamp] = 0;
+            }
+            acc[timestamp] += parseFloat(event.quantity);
+            return acc;
+          },
+          {} as Record<number, number>
+        );
 
         // Report each timestamp's usage
         for (const [timestamp, quantity] of Object.entries(usageByTimestamp)) {
@@ -203,8 +209,8 @@ export class StripeMeteredBillingService {
             timestamp: parseInt(timestamp),
             metadata: {
               eventCount: itemEvents.length,
-              billingCycleId
-            }
+              billingCycleId,
+            },
           });
         }
       }
@@ -247,15 +253,17 @@ export class StripeMeteredBillingService {
       const subscriptionItemId = subscription.items.data[0].id;
 
       const updatedSubscription = await stripe.subscriptions.update(subscriptionId, {
-        items: [{
-          id: subscriptionItemId,
-          price: planData.stripePriceId,
-        }],
+        items: [
+          {
+            id: subscriptionItemId,
+            price: planData.stripePriceId,
+          },
+        ],
         proration_behavior: prorate ? 'create_prorations' : 'none',
         metadata: {
           ...subscription.metadata,
-          planId: newPlanId
-        }
+          planId: newPlanId,
+        },
       });
 
       // Update billing cycle
@@ -263,7 +271,7 @@ export class StripeMeteredBillingService {
         .update(billingCycles)
         .set({
           billingPlanId: newPlanId,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscriptionId));
 
@@ -293,7 +301,7 @@ export class StripeMeteredBillingService {
         .update(billingCycles)
         .set({
           status: cancelAtPeriodEnd ? 'active' : 'cancelled',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscriptionId));
 
@@ -320,7 +328,7 @@ export class StripeMeteredBillingService {
         .update(billingCycles)
         .set({
           status: 'active',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscriptionId));
 
@@ -352,7 +360,7 @@ export class StripeMeteredBillingService {
       const stripe = await this.getStripe();
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
-        status: 'all'
+        status: 'all',
       });
       return subscriptions.data;
     } catch (error) {
@@ -404,7 +412,7 @@ export class StripeMeteredBillingService {
           stripeInvoiceId: invoice.id,
           invoicePdfUrl: invoice.invoice_pdf,
           totalCostCents: invoice.amount_due,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscriptionId));
 
@@ -427,7 +435,7 @@ export class StripeMeteredBillingService {
         .update(billingCycles)
         .set({
           status: 'failed',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscriptionId));
 
@@ -448,7 +456,7 @@ export class StripeMeteredBillingService {
         .set({
           startDate: new Date(subscription.current_period_start * 1000),
           endDate: new Date(subscription.current_period_end * 1000),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscription.id));
 
@@ -468,7 +476,7 @@ export class StripeMeteredBillingService {
         .update(billingCycles)
         .set({
           status: 'cancelled',
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(billingCycles.stripeSubscriptionId, subscription.id));
 

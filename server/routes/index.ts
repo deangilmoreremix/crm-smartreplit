@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express } from 'express';
 import { registerAuthRoutes } from './auth';
 import { registerCRMRoutes } from './crm';
 // Import other route modules as they are created
@@ -34,8 +34,8 @@ export async function registerRoutes(app: Express): Promise<any> {
         close: (callback?: () => void) => {
           console.log('Server closed');
           if (callback) callback();
-        }
+        },
       };
-    }
+    },
   };
 }

@@ -9,9 +9,9 @@ const EmailResponseContent: React.FC = () => {
     contactName: '',
     contactPosition: '',
     contactCompany: '',
-    dealContext: ''
+    dealContext: '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ const EmailResponseContent: React.FC = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -33,25 +33,27 @@ const EmailResponseContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const contactInfo = {
         name: formData.contactName,
         position: formData.contactPosition,
-        company: formData.contactCompany
+        company: formData.contactCompany,
       };
-      
+
       const emailResponse = await gemini.generateEmailResponse(
         formData.originalEmail,
         contactInfo,
         formData.dealContext
       );
-      
+
       setResult(emailResponse);
       setCopied(false);
     } catch (err) {
       console.error('Error generating email response:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the email response');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while generating the email response'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +75,8 @@ const EmailResponseContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-teal-800">Smart Email Response Generator</h3>
             <p className="text-sm text-teal-700 mt-1">
-              Quickly generate personalized, effective responses to customer and prospect emails. Save time while maintaining the personal touch.
+              Quickly generate personalized, effective responses to customer and prospect emails.
+              Save time while maintaining the personal touch.
             </p>
           </div>
         </div>
@@ -101,7 +104,7 @@ const EmailResponseContent: React.FC = () => {
               required
             ></textarea>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
@@ -117,7 +120,7 @@ const EmailResponseContent: React.FC = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                 <Briefcase className="h-4 w-4 mr-1 text-gray-500" />
@@ -132,7 +135,7 @@ const EmailResponseContent: React.FC = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                 <User className="h-4 w-4 mr-1 text-gray-500" />
@@ -148,7 +151,7 @@ const EmailResponseContent: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Deal/Relationship Context (Optional)
@@ -162,7 +165,7 @@ const EmailResponseContent: React.FC = () => {
               onChange={handleChange}
             ></textarea>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -188,11 +191,11 @@ const EmailResponseContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

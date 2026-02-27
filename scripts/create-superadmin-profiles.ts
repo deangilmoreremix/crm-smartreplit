@@ -9,15 +9,18 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 async function createProfiles() {
   console.log('🔍 Finding existing auth users...\n');
 
   // Get all users to find our superadmins
-  const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+  const {
+    data: { users },
+    error: usersError,
+  } = await supabase.auth.admin.listUsers();
 
   if (usersError) {
     console.error('❌ Error listing users:', usersError.message);
@@ -25,7 +28,7 @@ async function createProfiles() {
   }
 
   const superAdminEmails = ['dean@smartcrm.vip', 'samuel@smartcrm.vip', 'victor@smartcrm.vip'];
-  const superAdminUsers = users.filter(u => superAdminEmails.includes(u.email || ''));
+  const superAdminUsers = users.filter((u) => superAdminEmails.includes(u.email || ''));
 
   console.log(`✅ Found ${superAdminUsers.length} super admin users\n`);
 
@@ -35,20 +38,21 @@ async function createProfiles() {
 
     console.log(`Creating profile for ${email}...`);
 
-    // Insert or update profile  
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
+    // Insert or update profile
+    const { error: profileError } = await supabase.from('profiles').upsert(
+      {
         id: user.id,
         username: email === 'dean@smartcrm.vip' ? 'dean_admin' : email.split('@')[0],
         first_name: firstName,
         last_name: '',
         role: 'super_admin',
         app_context: 'smartcrm',
-        email_template_set: 'smartcrm'
-      }, {
-        onConflict: 'id'
-      });
+        email_template_set: 'smartcrm',
+      },
+      {
+        onConflict: 'id',
+      }
+    );
 
     if (profileError) {
       console.error(`❌ Error creating profile for ${email}:`, profileError.message);

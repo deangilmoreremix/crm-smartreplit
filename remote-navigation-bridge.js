@@ -1,7 +1,7 @@
 /**
  * Simplified Remote App Navigation Bridge
  * Add this code to each remote app to enable navigation control of the parent CRM
- * 
+ *
  * This is a simplified version that focuses on navigation without complex data sync
  * Usage: Copy this entire code block into each remote app's main JavaScript file
  */
@@ -11,7 +11,7 @@ class RemoteNavigationBridge {
     this.parentOrigin = '*'; // Change to specific domain in production: 'https://your-crm-domain.com'
     this.isConnected = false;
     this.messageQueue = [];
-    
+
     this.initBridge();
     this.setupMessageListener();
   }
@@ -21,7 +21,7 @@ class RemoteNavigationBridge {
     this.sendToParent({
       type: 'REMOTE_APP_READY',
       timestamp: Date.now(),
-      appName: this.getAppName()
+      appName: this.getAppName(),
     });
 
     // Set up connection timeout
@@ -61,42 +61,42 @@ class RemoteNavigationBridge {
   navigateToContacts() {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: '/contacts'
+      route: '/contacts',
     });
   }
 
   navigateToDashboard() {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: '/dashboard'
+      route: '/dashboard',
     });
   }
 
   navigateToDeals() {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: '/deals'
+      route: '/deals',
     });
   }
 
   navigateToTasks() {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: '/tasks'
+      route: '/tasks',
     });
   }
 
   navigateToCalendar() {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: '/calendar'
+      route: '/calendar',
     });
   }
 
   navigateToSettings() {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: '/settings'
+      route: '/settings',
     });
   }
 
@@ -104,7 +104,7 @@ class RemoteNavigationBridge {
   navigateToRoute(route) {
     this.sendToParent({
       type: 'NAVIGATE',
-      route: route
+      route: route,
     });
   }
 
@@ -112,40 +112,40 @@ class RemoteNavigationBridge {
   syncContactData(contacts) {
     this.sendToParent({
       type: 'SYNC_CONTACTS',
-      data: contacts
+      data: contacts,
     });
   }
 
   syncDealData(deals) {
     this.sendToParent({
       type: 'SYNC_DEALS',
-      data: deals
+      data: deals,
     });
   }
 
   syncTaskData(tasks) {
     this.sendToParent({
       type: 'SYNC_TASKS',
-      data: tasks
+      data: tasks,
     });
   }
 
   // Request data from parent CRM
   requestContactData() {
     this.sendToParent({
-      type: 'REQUEST_CONTACTS'
+      type: 'REQUEST_CONTACTS',
     });
   }
 
   requestDealData() {
     this.sendToParent({
-      type: 'REQUEST_DEALS'
+      type: 'REQUEST_DEALS',
     });
   }
 
   requestUserData() {
     this.sendToParent({
-      type: 'REQUEST_USER_DATA'
+      type: 'REQUEST_USER_DATA',
     });
   }
 
@@ -153,14 +153,14 @@ class RemoteNavigationBridge {
   showNotification(message, type = 'info') {
     this.sendToParent({
       type: 'SHOW_NOTIFICATION',
-      data: { message, type }
+      data: { message, type },
     });
   }
 
   updateConnectionStatus(status) {
     this.sendToParent({
       type: 'CONNECTION_STATUS',
-      data: { status, timestamp: Date.now() }
+      data: { status, timestamp: Date.now() },
     });
   }
 
@@ -188,7 +188,7 @@ class RemoteNavigationBridge {
   handleNavigationSync(data) {
     // Handle navigation state sync from parent
     console.log('Navigation sync received:', data);
-    
+
     // Update your app's internal navigation state here
     // Example: this.updateInternalRoute(data.currentRoute);
   }
@@ -196,7 +196,7 @@ class RemoteNavigationBridge {
   handleDataRequest(data) {
     // Handle data requests from parent
     console.log('Data request received:', data);
-    
+
     // Respond with requested data
     // Example: this.sendLocalData(data.requestType);
   }
@@ -204,7 +204,7 @@ class RemoteNavigationBridge {
   getAppName() {
     // Return your app's identifier
     const hostname = window.location.hostname;
-    
+
     if (hostname.includes('moonlit-tarsier')) {
       return 'white-label-suite';
     } else if (hostname.includes('clever-syrniki')) {
@@ -216,7 +216,7 @@ class RemoteNavigationBridge {
     } else if (hostname.includes('cheery-syrniki')) {
       return 'pipeline';
     }
-    
+
     return 'unknown-app';
   }
 }
@@ -242,24 +242,24 @@ if (typeof module !== 'undefined' && module.exports) {
 
 /**
  * USAGE EXAMPLES:
- * 
+ *
  * 1. Navigate to different CRM sections:
  *    window.remoteBridge.navigateToContacts();
  *    window.remoteBridge.navigateToDashboard();
  *    window.remoteBridge.navigateToDeals();
- * 
+ *
  * 2. Sync data with parent CRM:
  *    window.remoteBridge.syncContactData([{name: 'John', email: 'john@example.com'}]);
  *    window.remoteBridge.syncDealData([{title: 'Big Deal', value: 10000}]);
- * 
+ *
  * 3. Request data from parent:
  *    window.remoteBridge.requestContactData();
  *    window.remoteBridge.requestDealData();
- * 
+ *
  * 4. Show notifications in parent:
  *    window.remoteBridge.showNotification('Action completed!', 'success');
  *    window.remoteBridge.showNotification('Error occurred', 'error');
- * 
+ *
  * 5. Custom navigation:
  *    window.remoteBridge.navigateToRoute('/custom-page');
  */

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Wifi, WifiOff, RefreshCw, ExternalLink } from 'lucide-react';
 
@@ -12,10 +11,10 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
   remoteUrls = [
     'https://taupe-sprinkles-83c9ee.netlify.app',
     'https://contacts-app.vercel.app',
-    'https://your-backup-contacts.netlify.app'
+    'https://your-backup-contacts.netlify.app',
   ],
   fallbackComponent: FallbackComponent,
-  onContactSync
+  onContactSync,
 }) => {
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<'testing' | 'connected' | 'fallback'>('testing');
@@ -25,23 +24,19 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
 
   const testUrlConnection = async (url: string): Promise<boolean> => {
     try {
-      console.log(`Testing connection to: ${url}`);
-      
       // Test if the URL responds
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(url, {
         method: 'HEAD',
         mode: 'no-cors',
-        signal: controller.signal
+        signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      console.log(`Connection test to ${url}: success`);
       return true;
     } catch (error) {
-      console.log(`Connection test to ${url}: failed`, error);
       return false;
     }
   };
@@ -56,16 +51,16 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
 
     const url = remoteUrls[currentUrlIndex];
     setConnectionInfo(`Testing ${url}...`);
-    
+
     const isConnected = await testUrlConnection(url);
-    
+
     if (isConnected) {
       setCurrentUrl(url);
       setLoadingState('connected');
       setConnectionInfo(`Connected to ${url}`);
       setIsIframeLoaded(false);
     } else {
-      setCurrentUrlIndex(prev => prev + 1);
+      setCurrentUrlIndex((prev) => prev + 1);
       // Try next URL after a brief delay
       setTimeout(tryNextUrl, 1000);
     }
@@ -76,13 +71,11 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
   }, []);
 
   const handleIframeLoad = () => {
-    console.log('Remote contacts iframe loaded successfully');
     setIsIframeLoaded(true);
   };
 
   const handleIframeError = () => {
-    console.log('Iframe failed to load, trying next URL');
-    setCurrentUrlIndex(prev => prev + 1);
+    setCurrentUrlIndex((prev) => prev + 1);
     tryNextUrl();
   };
 
@@ -103,7 +96,7 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
         </div>
       );
     }
-    
+
     if (loadingState === 'connected') {
       return (
         <div className="flex items-center justify-between w-full">
@@ -134,7 +127,7 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
         </div>
       );
     }
-    
+
     return (
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center space-x-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
@@ -160,9 +153,7 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             Loading Smart Contacts
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            {connectionInfo}
-          </p>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{connectionInfo}</p>
           <div className="text-xs text-gray-500">
             Trying: {remoteUrls[currentUrlIndex] || 'All sources tested'}
           </div>
@@ -183,7 +174,7 @@ const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         {renderStatus()}
       </div>
-      
+
       {/* Main Content */}
       <div className="flex-1 relative">
         {loadingState === 'connected' && currentUrl ? (

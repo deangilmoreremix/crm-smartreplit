@@ -1,21 +1,21 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { 
-  Video, 
-  Mic, 
-  MicOff, 
-  VideoOff, 
-  Phone, 
-  PhoneOff, 
-  Minimize2, 
-  Maximize2, 
-  MessageSquare, 
+import {
+  Video,
+  Mic,
+  MicOff,
+  VideoOff,
+  Phone,
+  PhoneOff,
+  Minimize2,
+  Maximize2,
+  MessageSquare,
   Users,
   Monitor,
   MonitorOff,
   Volume2,
   VolumeX,
   Settings,
-  MoreVertical
+  MoreVertical,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useVideoCall } from '../contexts/VideoCallContext';
@@ -33,9 +33,7 @@ const CallDurationDisplay: React.FC<{ duration: number }> = React.memo(({ durati
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  return (
-    <span className="text-white text-xs">{formatDuration(duration)}</span>
-  );
+  return <span className="text-white text-xs">{formatDuration(duration)}</span>;
 });
 
 const VideoCallOverlay = () => {
@@ -54,9 +52,9 @@ const VideoCallOverlay = () => {
     endCall,
     acceptCall,
     rejectCall,
-    connectionQuality
+    connectionQuality,
   } = useVideoCall();
-  
+
   const { isDark } = useTheme();
   const [isMinimized, setIsMinimized] = useState(false);
   const [showControls, setShowControls] = useState(true);
@@ -64,11 +62,11 @@ const VideoCallOverlay = () => {
   const [showMessaging, setShowMessaging] = useState(false);
   const [showRecording, setShowRecording] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  
+
   // Use refs with useRef to avoid re-renders when updating refs
-  const localVideoRef = useRef<HTMLVideoElement>(null); 
-  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null); 
-  const remoteVideoRef = useRef<HTMLVideoElement>(null); 
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const lastRenderTimeRef = useRef<number>(Date.now());
 
   // Update video elements when streams change
@@ -93,20 +91,20 @@ const VideoCallOverlay = () => {
   // Throttled call duration timer to prevent excessive renders
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
+
     if (isInCall) {
       interval = setInterval(() => {
         // Throttle updates to once per second maximum
         const now = Date.now();
         if (now - lastRenderTimeRef.current >= 1000) {
           lastRenderTimeRef.current = now;
-          setCallDuration(prevDuration => prevDuration + 1);
+          setCallDuration((prevDuration) => prevDuration + 1);
         }
       }, 500); // Check twice per second but only update when needed
     } else {
       setCallDuration(0);
     }
-    
+
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -115,19 +113,19 @@ const VideoCallOverlay = () => {
   // Optimized auto-hide controls with cleanup
   useEffect(() => {
     if (!isInCall) return;
-    
+
     // Clear any existing timer
     if (controlsTimerRef.current) {
       clearTimeout(controlsTimerRef.current);
     }
-    
+
     // Set new timer
     controlsTimerRef.current = setTimeout(() => {
       if (isInCall) {
         setShowControls(false);
       }
     }, 5000);
-    
+
     return () => {
       if (controlsTimerRef.current) {
         clearTimeout(controlsTimerRef.current);
@@ -149,7 +147,9 @@ const VideoCallOverlay = () => {
   if (callStatus === 'ringing') {
     return (
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hardware-accelerated">
-        <div className={`${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/20' : 'border-gray-200'} rounded-3xl overflow-hidden shadow-2xl max-w-md w-full mx-4`}>
+        <div
+          className={`${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/20' : 'border-gray-200'} rounded-3xl overflow-hidden shadow-2xl max-w-md w-full mx-4`}
+        >
           {/* Caller Info */}
           <div className="p-8 text-center">
             <div className="mb-6">
@@ -161,8 +161,10 @@ const VideoCallOverlay = () => {
                 className="mx-auto"
               />
             </div>
-            
-            <h2 className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+
+            <h2
+              className={`text-2xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+            >
               {currentCall.recipient.name}
             </h2>
             <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
@@ -171,7 +173,7 @@ const VideoCallOverlay = () => {
             <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
               Incoming {currentCall.type} call...
             </p>
-            
+
             {/* Animated rings */}
             <div className="relative mt-6">
               <div className="absolute inset-0 animate-ping">
@@ -193,7 +195,7 @@ const VideoCallOverlay = () => {
             >
               <PhoneOff size={24} className="text-white" />
             </button>
-            
+
             <button
               onClick={acceptCall}
               className="w-16 h-16 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors"
@@ -209,13 +211,15 @@ const VideoCallOverlay = () => {
   return (
     <div className="contain-layout">
       <div className="fixed bottom-4 right-4 z-50">
-        <div className={`${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/20' : 'border-gray-200'} rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
-          isMinimized ? 'w-20 h-20' : 'w-96 h-72'
-        }`}>
+        <div
+          className={`${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/20' : 'border-gray-200'} rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${
+            isMinimized ? 'w-20 h-20' : 'w-96 h-72'
+          }`}
+        >
           {isMinimized ? (
             // Minimized view
-            <div 
-              className="w-full h-full relative group cursor-pointer" 
+            <div
+              className="w-full h-full relative group cursor-pointer"
               onClick={() => setIsMinimized(false)}
             >
               {remoteStream ? (
@@ -236,19 +240,24 @@ const VideoCallOverlay = () => {
                   />
                 </div>
               )}
-              
+
               <div className="absolute inset-0 bg-black/20 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Maximize2 size={16} className="text-white" />
               </div>
-              
+
               {/* Call status indicator */}
               <div className="absolute top-2 right-2 flex items-center space-x-1">
-                <div className={`w-2 h-2 rounded-full ${
-                  connectionQuality === 'excellent' ? 'bg-green-400' :
-                  connectionQuality === 'good' ? 'bg-yellow-400' :
-                  connectionQuality === 'poor' ? 'bg-orange-400' :
-                  'bg-red-400'
-                }`}></div>
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    connectionQuality === 'excellent'
+                      ? 'bg-green-400'
+                      : connectionQuality === 'good'
+                        ? 'bg-yellow-400'
+                        : connectionQuality === 'poor'
+                          ? 'bg-orange-400'
+                          : 'bg-red-400'
+                  }`}
+                ></div>
                 {isInCall && (
                   <span className="text-xs text-white bg-black/50 px-1 rounded">
                     {formatDuration(callDuration)}
@@ -260,7 +269,7 @@ const VideoCallOverlay = () => {
             // Expanded view
             <>
               {/* Video Container */}
-              <div 
+              <div
                 className="relative w-full h-48 bg-gray-900"
                 onMouseEnter={() => setShowControls(true)}
                 onMouseLeave={() => isInCall && setShowControls(false)}
@@ -285,9 +294,13 @@ const VideoCallOverlay = () => {
                       />
                       <p className="text-white font-medium">{currentCall.recipient.name}</p>
                       <p className="text-white/70 text-sm">
-                        {callStatus === 'calling' ? 'Calling...' : 
-                         callStatus === 'ringing' ? 'Ringing...' : 
-                         callStatus === 'connected' ? 'Connected' : 'Connecting...'}
+                        {callStatus === 'calling'
+                          ? 'Calling...'
+                          : callStatus === 'ringing'
+                            ? 'Ringing...'
+                            : callStatus === 'connected'
+                              ? 'Connected'
+                              : 'Connecting...'}
                       </p>
                     </div>
                   </div>
@@ -313,9 +326,11 @@ const VideoCallOverlay = () => {
                 )}
 
                 {/* Header Controls */}
-                <div className={`absolute top-3 left-3 right-3 flex justify-between items-center transition-opacity duration-300 ${
-                  showControls ? 'opacity-100' : 'opacity-0'
-                }`}>
+                <div
+                  className={`absolute top-3 left-3 right-3 flex justify-between items-center transition-opacity duration-300 ${
+                    showControls ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
                   <div className="flex items-center space-x-2">
                     {/* Connection Quality */}
                     <ConnectionQuality />
@@ -325,7 +340,7 @@ const VideoCallOverlay = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setIsMinimized(true)}
@@ -352,31 +367,33 @@ const VideoCallOverlay = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Controls Panel */}
-              <div className={`p-4 ${isDark ? 'bg-gray-800/50' : 'bg-gray-50/50'} transition-opacity duration-300 ${
-                showControls ? 'opacity-100' : 'opacity-50'
-              }`}>
+              <div
+                className={`p-4 ${isDark ? 'bg-gray-800/50' : 'bg-gray-50/50'} transition-opacity duration-300 ${
+                  showControls ? 'opacity-100' : 'opacity-50'
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   {/* Left Controls */}
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={toggleAudio}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        isAudioEnabled 
-                          ? `${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${isDark ? 'text-gray-300' : 'text-gray-600'}` 
+                        isAudioEnabled
+                          ? `${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${isDark ? 'text-gray-300' : 'text-gray-600'}`
                           : 'bg-red-500 hover:bg-red-600 text-white'
                       }`}
                       title={isAudioEnabled ? 'Mute' : 'Unmute'}
                     >
                       {isAudioEnabled ? <Mic size={16} /> : <MicOff size={16} />}
                     </button>
-                    
+
                     <button
                       onClick={toggleVideo}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        isVideoEnabled 
-                          ? `${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${isDark ? 'text-gray-300' : 'text-gray-600'}` 
+                        isVideoEnabled
+                          ? `${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${isDark ? 'text-gray-300' : 'text-gray-600'}`
                           : 'bg-red-500 hover:bg-red-600 text-white'
                       }`}
                       title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
@@ -387,8 +404,8 @@ const VideoCallOverlay = () => {
                     <button
                       onClick={toggleScreenShare}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        isScreenSharing 
-                          ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        isScreenSharing
+                          ? 'bg-blue-500 hover:bg-blue-600 text-white'
                           : `${isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${isDark ? 'text-gray-300' : 'text-gray-600'}`
                       }`}
                       title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
@@ -406,7 +423,7 @@ const VideoCallOverlay = () => {
 
                   {/* Right Controls */}
                   <div className="flex items-center space-x-3">
-                    <button 
+                    <button
                       onClick={() => setShowMessaging(!showMessaging)}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                         showMessaging
@@ -417,16 +434,16 @@ const VideoCallOverlay = () => {
                     >
                       <MessageSquare size={16} />
                     </button>
-                    
-                    <button 
+
+                    <button
                       onClick={() => setShowRecording(!showRecording)}
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`}
                       title="Recording"
                     >
                       <MoreVertical size={16} />
                     </button>
-                    
-                    <button 
+
+                    <button
                       onClick={endCall}
                       className="w-10 h-10 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
                       title="End call"
@@ -451,8 +468,12 @@ const VideoCallOverlay = () => {
       {/* Call Recording Panel */}
       {showRecording && (
         <div className="fixed right-4 bottom-80 w-96 max-h-96 overflow-y-auto">
-          <div className={`${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-xl border ${isDark ? 'border-white/20' : 'border-gray-200'} rounded-2xl shadow-2xl`}>
-            <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}>
+          <div
+            className={`${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-xl border ${isDark ? 'border-white/20' : 'border-gray-200'} rounded-2xl shadow-2xl`}
+          >
+            <div
+              className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}
+            >
               <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Call Recording
               </h3>

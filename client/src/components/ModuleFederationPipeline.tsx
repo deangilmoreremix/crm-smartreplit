@@ -1,6 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { loadRemoteComponent } from '../utils/dynamicModuleFederation';
-import { moduleFederationOrchestrator, useSharedModuleState } from '../utils/moduleFederationOrchestrator';
+import {
+  moduleFederationOrchestrator,
+  useSharedModuleState,
+} from '../utils/moduleFederationOrchestrator';
+
+// Local fallback component when Module Federation is not available
+const LocalPipelineFallback: React.FC = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="text-center p-8">
+        <div className="mb-4">
+          <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          Pipeline Module
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+          The Pipeline module is currently unavailable.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+        >
+          Retry Loading
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const PipelineApp: React.FC = () => {
   const [RemotePipeline, setRemotePipeline] = useState<React.ComponentType | null>(null);
@@ -10,33 +40,13 @@ const PipelineApp: React.FC = () => {
   useEffect(() => {
     const loadRemote = async () => {
       try {
-        console.log('🚀 Attempting Module Federation for Pipeline...');
-        
-        // Try Module Federation first
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Module Federation timeout - remote app may need MF configuration')), 3000);
-        });
-        
-        const modulePromise = loadRemoteComponent(
-          'https://cheery-syrniki-b5b6ca.netlify.app',
-          'PipelineApp',
-          './PipelineApp'
-        );
-        
-        const module = await Promise.race([modulePromise, timeoutPromise]);
-        const PipelineComponent = (module as any).default || module;
-        setRemotePipeline(() => PipelineComponent);
-        
-        // Register with orchestrator for shared state management
-        moduleFederationOrchestrator.registerModule('pipeline', PipelineComponent, {
-          deals: []
-        });
-        
-        console.log('✅ Module Federation Pipeline loaded successfully');
+        // Skip remote loading - remote modules are not available
+        // Show loading state briefly then show fallback
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setError('Module Federation not configured');
         setIsLoading(false);
       } catch (err) {
-        console.log('📺 Module Federation not available, using iframe fallback (remote app needs MF configuration)');
-        setError('Remote app needs Module Federation configuration');
+        setError('Failed to load module');
         setIsLoading(false);
       }
     };
@@ -56,37 +66,19 @@ const PipelineApp: React.FC = () => {
   }
 
   if (error || !RemotePipeline) {
-    // Fallback to iframe - remote app needs Module Federation configuration
-    return (
-      <iframe
-        src="https://cheery-syrniki-b5b6ca.netlify.app?theme=light&mode=light"
-        className="w-full h-full border-0"
-        title="Remote Pipeline System"
-        allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-navigation allow-top-navigation"
-        onLoad={(e) => {
-          // Send theme message to iframe
-          const iframe = e.currentTarget;
-          iframe.contentWindow?.postMessage({
-            type: 'SET_THEME',
-            theme: 'light',
-            mode: 'light'
-          }, '*');
-        }}
-      />
-    );
+    return <LocalPipelineFallback />;
   }
 
   // Pass shared state and theme props to Module Federation component
-  const sharedData = useSharedModuleState(state => state.sharedData);
-  
-  return React.createElement(RemotePipeline as any, { 
-    theme: "light", 
-    mode: "light",
+  const sharedData = useSharedModuleState((state) => state.sharedData);
+
+  return React.createElement(RemotePipeline as any, {
+    theme: 'light',
+    mode: 'light',
     sharedData,
     onDataUpdate: (data: any) => {
       moduleFederationOrchestrator.broadcastToAllModules('PIPELINE_DATA_UPDATE', data);
-    }
+    },
   });
 };
 
@@ -94,7 +86,9 @@ interface ModuleFederationPipelineProps {
   showHeader?: boolean;
 }
 
-const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({ showHeader = false }) => {
+const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
+  showHeader = false,
+}) => {
   return (
     <div className="h-full w-full flex flex-col" data-testid="kanban-board">
       {showHeader && (
@@ -103,7 +97,11 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({ sho
             <h3 className="text-sm font-medium text-gray-900 dark:text-white">Pipeline Deals</h3>
             <div className="flex items-center text-green-600 text-xs">
               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
               </svg>
               Module Federation
             </div>

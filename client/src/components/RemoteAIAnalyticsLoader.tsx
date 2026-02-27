@@ -6,13 +6,13 @@ interface RemoteAIAnalyticsLoaderProps {
   showHeader?: boolean;
 }
 
-const RemoteAIAnalyticsLoader: React.FC<RemoteAIAnalyticsLoaderProps> = ({ 
-  showHeader = false 
+const RemoteAIAnalyticsLoader: React.FC<RemoteAIAnalyticsLoaderProps> = ({
+  showHeader = false,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const REMOTE_URL = 'https://resilient-frangipane-6289c8.netlify.app';
 
   useEffect(() => {
@@ -63,7 +63,7 @@ const RemoteAIAnalyticsLoader: React.FC<RemoteAIAnalyticsLoaderProps> = ({
               </div>
             )}
           </div>
-          
+
           <button
             onClick={handleRefresh}
             disabled={false}
@@ -80,11 +80,23 @@ const RemoteAIAnalyticsLoader: React.FC<RemoteAIAnalyticsLoaderProps> = ({
           <div className="absolute inset-0 flex items-center justify-center bg-red-50 dark:bg-red-900/20">
             <div className="text-center p-4">
               <div className="text-red-600 mb-2">
-                <svg className="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-8 h-8 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
-              <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">AI Analytics Unavailable</h4>
+              <h4 className="text-sm font-medium text-red-800 dark:text-red-200 mb-1">
+                AI Analytics Unavailable
+              </h4>
               <p className="text-xs text-red-600 dark:text-red-300 mb-2">{error}</p>
               <button
                 onClick={handleRefresh}
@@ -102,7 +114,7 @@ const RemoteAIAnalyticsLoader: React.FC<RemoteAIAnalyticsLoaderProps> = ({
           className="w-full h-full border-0"
           title="AI Analytics Dashboard"
           allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-navigation allow-top-navigation"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
           loading="lazy"
         />
       </div>

@@ -6,7 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -34,7 +40,7 @@ import {
   Activity,
   Globe,
   Network,
-  UserPlus
+  UserPlus,
 } from 'lucide-react';
 
 interface Prospect {
@@ -119,7 +125,6 @@ export default function CircleProspectingDashboard() {
         `Prospect: ${prospect.name} at ${prospect.company}, Title: ${prospect.title}, Industry: ${prospect.industry}, Location: ${prospect.location}`,
         'prospect-analysis'
       );
-      console.log('Prospect analysis:', result);
     } catch (error) {
       console.error('Failed to analyze prospect:', error);
     } finally {
@@ -129,12 +134,18 @@ export default function CircleProspectingDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'prospect': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-      case 'contacted': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'engaged': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'qualified': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200';
-      case 'converted': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'prospect':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+      case 'contacted':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'engaged':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'qualified':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-200';
+      case 'converted':
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -155,7 +166,7 @@ export default function CircleProspectingDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isAnalyzing ? 'Analyzing...' : 'AI Prospect Analysis'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = stats ? (
@@ -169,19 +180,27 @@ export default function CircleProspectingDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Active Circles</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{Math.round(stats.conversionRate * 100)}%</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {Math.round(stats.conversionRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(stats.engagementRate * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(stats.engagementRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Engagement Rate</div>
       </div>
     </div>
   ) : null;
 
-  const filteredProspects = prospects.filter(prospect => {
-    if (searchQuery && !prospect.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !prospect.company.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const filteredProspects = prospects.filter((prospect) => {
+    if (
+      searchQuery &&
+      !prospect.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !prospect.company.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
     if (filterIndustry !== 'all' && prospect.industry !== filterIndustry) return false;
     if (filterLocation !== 'all' && !prospect.location.includes(filterLocation)) return false;
     return true;
@@ -257,7 +276,7 @@ export default function CircleProspectingDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
-                {filteredProspects.map(prospect => (
+                {filteredProspects.map((prospect) => (
                   <GlassCard
                     key={prospect.id}
                     className="p-4 cursor-pointer hover:border-blue-300"
@@ -265,26 +284,38 @@ export default function CircleProspectingDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          prospect.status === 'engaged' ? 'bg-green-100' :
-                          prospect.status === 'qualified' ? 'bg-purple-100' :
-                          prospect.status === 'prospect' ? 'bg-blue-100' : 'bg-yellow-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            prospect.status === 'engaged'
+                              ? 'bg-green-100'
+                              : prospect.status === 'qualified'
+                                ? 'bg-purple-100'
+                                : prospect.status === 'prospect'
+                                  ? 'bg-blue-100'
+                                  : 'bg-yellow-100'
+                          }`}
+                        >
                           <Users className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="font-medium">{prospect.name}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{prospect.title} at {prospect.company}</div>
-                          <div className="text-xs text-gray-500">{prospect.location} • {prospect.industry}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {prospect.title} at {prospect.company}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {prospect.location} • {prospect.industry}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(prospect.status)}>
-                          {prospect.status}
-                        </Badge>
+                        <Badge className={getStatusColor(prospect.status)}>{prospect.status}</Badge>
                         <div className="text-right">
-                          <div className="text-sm font-semibold">{prospect.connections} connections</div>
-                          <div className="text-xs text-gray-500">{Math.round(prospect.engagement * 100)}% engaged</div>
+                          <div className="text-sm font-semibold">
+                            {prospect.connections} connections
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {Math.round(prospect.engagement * 100)}% engaged
+                          </div>
                         </div>
                         {prospect.gpt5Insights && (
                           <div className="flex items-center gap-1">
@@ -311,7 +342,7 @@ export default function CircleProspectingDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
-                {circles.map(circle => (
+                {circles.map((circle) => (
                   <GlassCard key={circle.id} className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
@@ -328,11 +359,15 @@ export default function CircleProspectingDashboard() {
                           </div>
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Engagement:</span>
-                            <span className="font-medium ml-1">{Math.round(circle.engagement * 100)}%</span>
+                            <span className="font-medium ml-1">
+                              {Math.round(circle.engagement * 100)}%
+                            </span>
                           </div>
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Growth:</span>
-                            <span className="font-medium ml-1 text-green-600">+{Math.round(circle.growth * 100)}%</span>
+                            <span className="font-medium ml-1 text-green-600">
+                              +{Math.round(circle.growth * 100)}%
+                            </span>
                           </div>
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Industries:</span>
@@ -340,7 +375,7 @@ export default function CircleProspectingDashboard() {
                           </div>
                         </div>
                         <div className="mt-2 flex gap-1">
-                          {circle.industries.slice(0, 3).map(industry => (
+                          {circle.industries.slice(0, 3).map((industry) => (
                             <Badge key={industry} variant="outline" className="text-xs">
                               {industry}
                             </Badge>
@@ -376,7 +411,9 @@ export default function CircleProspectingDashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Prospect Growth</span>
-                    <span className="font-semibold text-green-600">+{Math.round(stats.monthlyGrowth * 100)}%</span>
+                    <span className="font-semibold text-green-600">
+                      +{Math.round(stats.monthlyGrowth * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
 
@@ -601,27 +638,39 @@ export default function CircleProspectingDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Name</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Name
+                  </Label>
                   <div className="font-medium">{selectedProspect.name}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Company</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Company
+                  </Label>
                   <div className="font-medium">{selectedProspect.company}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Title</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Title
+                  </Label>
                   <div className="font-medium">{selectedProspect.title}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Location</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Location
+                  </Label>
                   <div className="font-medium">{selectedProspect.location}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Industry</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Industry
+                  </Label>
                   <div className="font-medium">{selectedProspect.industry}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedProspect.status)}>
                     {selectedProspect.status}
                   </Badge>
@@ -629,7 +678,9 @@ export default function CircleProspectingDashboard() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Social Profiles</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Social Profiles
+                </Label>
                 <div className="flex gap-2">
                   {selectedProspect.socialProfiles.linkedin && (
                     <Button variant="outline" size="sm">
@@ -666,25 +717,36 @@ export default function CircleProspectingDashboard() {
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conversation Starters:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Conversation Starters:
+                      </div>
                       <ul className="space-y-1">
-                        {selectedProspect.gpt5Insights.conversationStarters.map((starter, index) => (
-                          <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
-                            <span className="text-green-500 mt-1">•</span>
-                            {starter}
-                          </li>
-                        ))}
+                        {selectedProspect.gpt5Insights.conversationStarters.map(
+                          (starter, index) => (
+                            <li
+                              key={index}
+                              className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"
+                            >
+                              <span className="text-green-500 mt-1">•</span>
+                              {starter}
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mutual Connections:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Mutual Connections:
+                      </div>
                       <div className="flex flex-wrap gap-2">
-                        {selectedProspect.gpt5Insights.mutualConnections.map((connection, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {connection}
-                          </Badge>
-                        ))}
+                        {selectedProspect.gpt5Insights.mutualConnections.map(
+                          (connection, index) => (
+                            <Badge key={index} variant="outline" className="text-xs">
+                              {connection}
+                            </Badge>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>

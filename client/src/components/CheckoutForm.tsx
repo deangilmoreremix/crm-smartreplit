@@ -78,7 +78,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ package: pkg, onSuccess }) 
       setTimeout(() => {
         onSuccess();
       }, 2000);
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during purchase');
     } finally {
@@ -152,9 +151,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ package: pkg, onSuccess }) 
         {/* Payment Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Card Information
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Card Information</label>
             <div className="border border-gray-300 rounded-md p-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
               <CardElement
                 options={{

@@ -8,36 +8,30 @@ export const DevBypassButton: React.FC = () => {
   useEffect(() => {
     // Check if we're in development environment
     const hostname = window.location.hostname;
-    console.log('🔧 DevBypassButton: Current hostname:', hostname);
-    
-    const isDevelopmentEnvironment = (
-      hostname.includes('localhost') ||
-      hostname.includes('replit.dev') ||
-      hostname.includes('github.dev') ||
-      hostname.includes('app.github.dev') ||
-      hostname.includes('netlify.app') ||
-      hostname.includes('vercel.app')
-    ) && !hostname.includes('replit.app');
-    
-    console.log('🔧 DevBypassButton: Is dev environment?', isDevelopmentEnvironment);
+
+    const isDevelopmentEnvironment =
+      (hostname.includes('localhost') ||
+        hostname.includes('replit.dev') ||
+        hostname.includes('github.dev') ||
+        hostname.includes('app.github.dev') ||
+        hostname.includes('netlify.app') ||
+        hostname.includes('vercel.app')) &&
+      !hostname.includes('replit.app');
+
     setIsDev(isDevelopmentEnvironment);
-    
+
     // Check if dev mode is currently enabled
     const devModeEnabled = localStorage.getItem('smartcrm-dev-mode') === 'true';
-    console.log('🔧 DevBypassButton: Dev mode currently enabled?', devModeEnabled);
     setIsDevMode(devModeEnabled);
   }, []);
 
   const toggleDevMode = () => {
-    console.log('🔧 DevBypassButton: Toggle clicked');
     if (!isDev) {
-      console.log('🔧 DevBypassButton: Not in dev environment, ignoring');
       return;
     }
 
     if (isDevMode) {
       // Disable dev mode
-      console.log('🔧 DevBypassButton: Disabling dev mode');
       localStorage.removeItem('smartcrm-dev-mode');
       localStorage.removeItem('dev-user-session');
       localStorage.removeItem('sb-supabase-auth-token');
@@ -45,7 +39,6 @@ export const DevBypassButton: React.FC = () => {
       alert('Dev mode disabled. Refresh page to log in normally.');
     } else {
       // Enable dev mode
-      console.log('🔧 DevBypassButton: Enabling dev mode');
       localStorage.setItem('smartcrm-dev-mode', 'true');
       setIsDevMode(true);
       alert('Dev mode enabled. Refreshing page...');
@@ -53,10 +46,7 @@ export const DevBypassButton: React.FC = () => {
     }
   };
 
-  console.log('🔧 DevBypassButton: Rendering with isDev=', isDev, ', isDevMode=', isDevMode);
-
   if (!isDev) {
-    console.log('🔧 DevBypassButton: Not in dev, returning null');
     return null;
   }
 

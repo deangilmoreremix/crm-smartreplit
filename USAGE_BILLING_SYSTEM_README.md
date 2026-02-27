@@ -5,6 +5,7 @@ This document describes the comprehensive usage-based billing system implemented
 ## Overview
 
 The usage billing system provides:
+
 - **Usage Tracking**: Real-time tracking of API calls, AI usage, and other billable events
 - **Metered Billing**: Pay-per-use pricing with tiered rates
 - **Subscription Management**: Stripe-powered subscription handling
@@ -19,7 +20,9 @@ The usage billing system provides:
 The system adds the following tables to the existing schema:
 
 #### `usage_plans`
+
 Defines billing plans with pricing tiers and limits.
+
 ```sql
 - plan_name: Unique plan identifier
 - display_name: Human-readable name
@@ -31,7 +34,9 @@ Defines billing plans with pricing tiers and limits.
 ```
 
 #### `usage_events`
+
 Tracks individual usage events.
+
 ```sql
 - user_id: User who performed the action
 - event_type: Type of event (api_call, ai_generation, etc.)
@@ -43,7 +48,9 @@ Tracks individual usage events.
 ```
 
 #### `billing_cycles`
+
 Manages billing periods.
+
 ```sql
 - user_id: User being billed
 - billing_plan_id: Associated plan
@@ -54,7 +61,9 @@ Manages billing periods.
 ```
 
 #### `user_usage_limits`
+
 Enforces usage quotas.
+
 ```sql
 - user_id: User the limit applies to
 - feature_name: Feature being limited
@@ -64,7 +73,9 @@ Enforces usage quotas.
 ```
 
 #### `billing_notifications`
+
 User alerts and warnings.
+
 ```sql
 - user_id: User to notify
 - notification_type: Type of notification
@@ -75,36 +86,44 @@ User alerts and warnings.
 ## Core Services
 
 ### UsageTrackingService
+
 Handles recording and retrieving usage data.
 
 **Key Methods:**
+
 - `recordUsage(data)`: Records a usage event
 - `getUsageStats(userId)`: Retrieves usage statistics
 - `setUsageLimits(limits)`: Sets user usage limits
 - `getUnreadNotifications(userId)`: Gets billing notifications
 
 ### BillingCalculationService
+
 Calculates costs and generates invoices.
 
 **Key Methods:**
+
 - `calculateBilling(cycleId)`: Calculates total billing for a cycle
 - `generateInvoice(cycleId)`: Creates invoice data
 - `estimateCosts(planId, usage)`: Estimates costs for usage patterns
 - `calculateProratedCharge()`: Handles plan change proration
 
 ### StripeMeteredBillingService
+
 Manages Stripe subscriptions and usage reporting.
 
 **Key Methods:**
+
 - `createMeteredSubscription(data)`: Creates Stripe subscription
 - `reportUsage(data)`: Reports usage to Stripe
 - `updateSubscriptionPlan()`: Changes subscription plans
 - `cancelSubscription()`: Cancels subscriptions
 
 ### UsageLimitService
+
 Enforces usage limits and quotas.
 
 **Key Methods:**
+
 - `checkLimit(userId, feature, quantity)`: Checks if usage is allowed
 - `enforceLimit(userId, feature, quantity)`: Enforces limits
 - `setUserLimitsFromPlan(userId, planId)`: Sets limits based on plan
@@ -115,65 +134,84 @@ Enforces usage limits and quotas.
 ### Billing Routes (`/api/billing/`)
 
 #### GET `/plans`
+
 Returns available billing plans.
 
 #### GET `/summary`
+
 Returns user's billing summary including current plan, usage, and costs.
 
 #### GET `/usage`
+
 Returns detailed usage statistics with optional date filtering.
 
 #### GET `/limits`
+
 Returns current usage limits and quotas.
 
 #### POST `/subscription`
+
 Creates a new metered subscription.
 
 #### PUT `/subscription/:id`
+
 Updates subscription plan with proration.
 
 #### DELETE `/subscription/:id`
+
 Cancels subscription.
 
 #### GET `/invoices`
+
 Returns billing history and invoices.
 
 #### GET `/notifications`
+
 Returns unread billing notifications.
 
 #### POST `/notifications/mark-read`
+
 Marks notifications as read.
 
 #### POST `/estimate`
+
 Estimates costs for usage patterns.
 
 #### POST `/prorate`
+
 Calculates prorated charges for plan changes.
 
 ## Frontend Components
 
 ### BillingDashboard
+
 Main billing interface with tabs for:
+
 - **Overview**: Current plan, usage summary, limits
 - **Usage**: Detailed usage breakdown by feature
 - **Billing**: Invoice history, subscription management
 - **Settings**: Billing preferences and notifications
 
 ### BillingPage
+
 Page wrapper for the billing dashboard.
 
 ## Usage Tracking Middleware
 
 ### trackApiUsage(featureName, unit)
+
 Tracks API endpoint usage.
 
 ### trackAiUsage(modelName)
+
 Tracks AI API token usage.
 
 ### trackStorageUsage(operation)
+
 Tracks file storage operations.
 
 ### enforceUsageLimits(featureName)
+
 Middleware to enforce usage limits on endpoints.
 
 ## Configuration
@@ -210,13 +248,16 @@ Middleware to enforce usage limits on endpoints.
 ## Stripe Integration
 
 ### Webhook Handling
+
 The system processes Stripe webhooks for:
+
 - `invoice.payment_succeeded`
 - `invoice.payment_failed`
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
 
 ### Metered Billing
+
 - Automatic usage reporting to Stripe
 - Real-time cost calculation
 - Prorated billing for plan changes
@@ -225,20 +266,24 @@ The system processes Stripe webhooks for:
 ## Usage Limits & Enforcement
 
 ### Hard vs Soft Limits
+
 - **Hard Limits**: Block usage when exceeded
 - **Soft Limits**: Allow usage but send warnings
 
 ### Warning Thresholds
+
 - 75%: Warning notification
 - 90%: Critical notification
 - 100%: Limit exceeded notification
 
 ### Reset Behavior
+
 Limits reset at the start of each billing cycle or can be configured for calendar months.
 
 ## Notifications System
 
 ### Notification Types
+
 - `limit_warning`: Usage approaching limit
 - `limit_exceeded`: Usage limit exceeded
 - `billing_cycle_end`: Billing cycle ending
@@ -246,6 +291,7 @@ Limits reset at the start of each billing cycle or can be configured for calenda
 - `subscription_cancelled`: Subscription cancelled
 
 ### Delivery Methods
+
 - In-app notifications (current implementation)
 - Email notifications (future enhancement)
 - Webhook notifications (for integrations)
@@ -253,11 +299,13 @@ Limits reset at the start of each billing cycle or can be configured for calenda
 ## Analytics & Reporting
 
 ### User Analytics
+
 - Usage trends over time
 - Cost breakdown by feature
 - Limit utilization rates
 
 ### Admin Analytics
+
 - System-wide usage patterns
 - Revenue analytics
 - Customer usage distribution
@@ -265,12 +313,14 @@ Limits reset at the start of each billing cycle or can be configured for calenda
 ## Testing
 
 Comprehensive test suite covering:
+
 - Unit tests for all services
 - Integration tests for billing flows
 - Performance tests for concurrent usage
 - Error handling and edge cases
 
 Run tests with:
+
 ```bash
 npm test server/tests/billing-system.test.js
 ```
@@ -278,6 +328,7 @@ npm test server/tests/billing-system.test.js
 ## Deployment Considerations
 
 ### Environment Variables
+
 ```env
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
@@ -285,12 +336,15 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ### Database Migrations
+
 The system uses Drizzle ORM for schema management. Run migrations on deployment:
+
 ```bash
 npx drizzle-kit migrate
 ```
 
 ### Stripe Configuration
+
 1. Create products and prices in Stripe dashboard
 2. Configure webhook endpoints for billing events
 3. Set up tax rates and billing addresses
@@ -299,6 +353,7 @@ npx drizzle-kit migrate
 ## Future Enhancements
 
 ### Planned Features
+
 - Multi-currency support
 - Advanced tiered pricing
 - Usage-based discounts
@@ -311,6 +366,7 @@ npx drizzle-kit migrate
 - Tax calculation integration
 
 ### Integration Opportunities
+
 - Zapier/webhook integrations
 - Slack notifications
 - Custom reporting APIs
@@ -327,6 +383,7 @@ npx drizzle-kit migrate
 4. **Billing calculations incorrect**: Verify pricing tier configuration
 
 ### Monitoring
+
 - Monitor Stripe webhook delivery
 - Track usage event volume
 - Alert on billing calculation errors
@@ -335,6 +392,7 @@ npx drizzle-kit migrate
 ## Support
 
 For issues or questions about the billing system:
+
 1. Check this documentation
 2. Review server logs for error details
 3. Test with Stripe dashboard for payment issues

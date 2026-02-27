@@ -1,9 +1,9 @@
 /**
  * SmartCRM Load Testing Suite
  * Tests system performance under various load conditions
- * 
+ *
  * Run with: k6 run scripts/load-testing/k6-load-test.js
- * 
+ *
  * Requirements:
  * - Install k6: https://k6.io/docs/getting-started/installation/
  * - Set environment variables: BASE_URL, TEST_EMAIL, TEST_PASSWORD
@@ -29,38 +29,38 @@ export const options = {
   stages: [
     // Warm-up: Ramp up to 100 users over 2 minutes
     { duration: '2m', target: 100 },
-    
+
     // Steady state: Maintain 100 users for 5 minutes
     { duration: '5m', target: 100 },
-    
+
     // Peak load: Ramp up to 500 users over 3 minutes
     { duration: '3m', target: 500 },
-    
+
     // Stress test: Maintain 500 users for 5 minutes
     { duration: '5m', target: 500 },
-    
+
     // Spike test: Sudden spike to 1000 users for 2 minutes
     { duration: '2m', target: 1000 },
-    
+
     // Recovery: Ramp down to 100 users over 2 minutes
     { duration: '2m', target: 100 },
-    
+
     // Cool down: Ramp down to 0 users over 1 minute
     { duration: '1m', target: 0 },
   ],
-  
+
   thresholds: {
     // 95% of requests should complete within 500ms
-    'http_req_duration': ['p(95)<500'],
-    
+    http_req_duration: ['p(95)<500'],
+
     // Error rate should be less than 1%
-    'errors': ['rate<0.01'],
-    
+    errors: ['rate<0.01'],
+
     // 99% of requests should succeed
-    'http_req_failed': ['rate<0.01'],
-    
+    http_req_failed: ['rate<0.01'],
+
     // API response time should be under 200ms for 90% of requests
-    'api_response_time': ['p(90)<200', 'p(95)<500', 'p(99)<1000'],
+    api_response_time: ['p(90)<200', 'p(95)<500', 'p(99)<1000'],
   },
 };
 
@@ -80,12 +80,16 @@ const testDeals = [
 // Setup function - runs once per VU
 export function setup() {
   // Authenticate and get session
-  const loginRes = http.post(`${BASE_URL}/api/auth/signin`, JSON.stringify({
-    email: TEST_EMAIL,
-    password: TEST_PASSWORD,
-  }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const loginRes = http.post(
+    `${BASE_URL}/api/auth/signin`,
+    JSON.stringify({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+    }),
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
 
   check(loginRes, {
     'login successful': (r) => r.status === 200,
@@ -101,14 +105,14 @@ export default function (data) {
   const params = {
     headers: {
       'Content-Type': 'application/json',
-      'Cookie': `connect.sid=${data.sessionCookie}`,
+      Cookie: `connect.sid=${data.sessionCookie}`,
     },
   };
 
   // Test 1: Health Check
   group('Health Check', () => {
     const res = http.get(`${BASE_URL}/api/health`, params);
-    
+
     const success = check(res, {
       'health check status is 200': (r) => r.status === 200,
       'health check response time < 100ms': (r) => r.timings.duration < 100,
@@ -117,7 +121,7 @@ export default function (data) {
 
     apiResponseTime.add(res.timings.duration);
     errorRate.add(!success);
-    
+
     if (success) {
       successfulRequests.add(1);
     } else {
@@ -130,7 +134,7 @@ export default function (data) {
   // Test 2: List Contacts
   group('List Contacts', () => {
     const res = http.get(`${BASE_URL}/api/contacts?page=1&limit=50`, params);
-    
+
     const success = check(res, {
       'list contacts status is 200': (r) => r.status === 200,
       'list contacts response time < 200ms': (r) => r.timings.duration < 200,
@@ -139,7 +143,7 @@ export default function (data) {
 
     apiResponseTime.add(res.timings.duration);
     errorRate.add(!success);
-    
+
     if (success) {
       successfulRequests.add(1);
     } else {
@@ -153,13 +157,13 @@ export default function (data) {
   group('Create Contact', () => {
     const contact = testContacts[Math.floor(Math.random() * testContacts.length)];
     const uniqueEmail = `${Date.now()}-${Math.random()}@example.com`;
-    
+
     const res = http.post(
       `${BASE_URL}/api/contacts`,
       JSON.stringify({ ...contact, email: uniqueEmail }),
       params
     );
-    
+
     const success = check(res, {
       'create contact status is 201': (r) => r.status === 201,
       'create contact response time < 300ms': (r) => r.timings.duration < 300,
@@ -168,7 +172,7 @@ export default function (data) {
 
     apiResponseTime.add(res.timings.duration);
     errorRate.add(!success);
-    
+
     if (success) {
       successfulRequests.add(1);
     } else {
@@ -181,7 +185,7 @@ export default function (data) {
   // Test 4: List Deals
   group('List Deals', () => {
     const res = http.get(`${BASE_URL}/api/deals?page=1&limit=50`, params);
-    
+
     const success = check(res, {
       'list deals status is 200': (r) => r.status === 200,
       'list deals response time < 200ms': (r) => r.timings.duration < 200,
@@ -190,7 +194,7 @@ export default function (data) {
 
     apiResponseTime.add(res.timings.duration);
     errorRate.add(!success);
-    
+
     if (success) {
       successfulRequests.add(1);
     } else {
@@ -203,7 +207,7 @@ export default function (data) {
   // Test 5: Dashboard Data
   group('Dashboard Data', () => {
     const res = http.get(`${BASE_URL}/api/dashboard/stats`, params);
-    
+
     const success = check(res, {
       'dashboard status is 200': (r) => r.status === 200,
       'dashboard response time < 500ms': (r) => r.timings.duration < 500,
@@ -211,7 +215,7 @@ export default function (data) {
 
     apiResponseTime.add(res.timings.duration);
     errorRate.add(!success);
-    
+
     if (success) {
       successfulRequests.add(1);
     } else {
@@ -222,7 +226,8 @@ export default function (data) {
   sleep(2);
 
   // Test 6: AI Features (if enabled)
-  if (Math.random() < 0.1) { // 10% of users test AI features
+  if (Math.random() < 0.1) {
+    // 10% of users test AI features
     group('AI Chat', () => {
       const res = http.post(
         `${BASE_URL}/api/ai/chat`,
@@ -232,7 +237,7 @@ export default function (data) {
         }),
         params
       );
-      
+
       const success = check(res, {
         'ai chat status is 200 or 429': (r) => r.status === 200 || r.status === 429,
         'ai chat response time < 2000ms': (r) => r.timings.duration < 2000,
@@ -240,7 +245,7 @@ export default function (data) {
 
       apiResponseTime.add(res.timings.duration);
       errorRate.add(!success);
-      
+
       if (success) {
         successfulRequests.add(1);
       } else {
@@ -260,7 +265,7 @@ export function teardown(data) {
   // Logout
   http.post(`${BASE_URL}/api/auth/signout`, null, {
     headers: {
-      'Cookie': `connect.sid=${data.sessionCookie}`,
+      Cookie: `connect.sid=${data.sessionCookie}`,
     },
   });
 }
@@ -268,7 +273,7 @@ export function teardown(data) {
 // Handle summary for custom reporting
 export function handleSummary(data) {
   return {
-    'stdout': textSummary(data, { indent: ' ', enableColors: true }),
+    stdout: textSummary(data, { indent: ' ', enableColors: true }),
     'load-test-results.json': JSON.stringify(data, null, 2),
     'load-test-summary.html': htmlReport(data),
   };
@@ -278,42 +283,42 @@ export function handleSummary(data) {
 function textSummary(data, options = {}) {
   const indent = options.indent || '';
   const enableColors = options.enableColors || false;
-  
+
   let summary = '\n';
   summary += `${indent}Load Test Summary\n`;
   summary += `${indent}================\n\n`;
-  
+
   // Test duration
   const duration = data.state.testRunDurationMs / 1000;
   summary += `${indent}Duration: ${duration.toFixed(2)}s\n`;
-  
+
   // VUs
   summary += `${indent}VUs: ${data.metrics.vus.values.max}\n`;
-  
+
   // Requests
   const requests = data.metrics.http_reqs.values.count;
   const rps = (requests / duration).toFixed(2);
   summary += `${indent}Total Requests: ${requests} (${rps} req/s)\n`;
-  
+
   // Success rate
   const failed = data.metrics.http_req_failed.values.rate * 100;
   const success = 100 - failed;
   summary += `${indent}Success Rate: ${success.toFixed(2)}%\n`;
-  
+
   // Response times
   summary += `${indent}\nResponse Times:\n`;
   summary += `${indent}  p50: ${data.metrics.http_req_duration.values['p(50)'].toFixed(2)}ms\n`;
   summary += `${indent}  p90: ${data.metrics.http_req_duration.values['p(90)'].toFixed(2)}ms\n`;
   summary += `${indent}  p95: ${data.metrics.http_req_duration.values['p(95)'].toFixed(2)}ms\n`;
   summary += `${indent}  p99: ${data.metrics.http_req_duration.values['p(99)'].toFixed(2)}ms\n`;
-  
+
   // Thresholds
   summary += `${indent}\nThresholds:\n`;
   for (const [name, threshold] of Object.entries(data.thresholds)) {
     const passed = threshold.ok ? '✓' : '✗';
     summary += `${indent}  ${passed} ${name}\n`;
   }
-  
+
   return summary;
 }
 
@@ -324,7 +329,7 @@ function htmlReport(data) {
   const rps = (requests / duration).toFixed(2);
   const failed = (data.metrics.http_req_failed.values.rate * 100).toFixed(2);
   const success = (100 - failed).toFixed(2);
-  
+
   return `
 <!DOCTYPE html>
 <html>
@@ -404,14 +409,18 @@ function htmlReport(data) {
         <th>Threshold</th>
         <th>Status</th>
       </tr>
-      ${Object.entries(data.thresholds).map(([name, threshold]) => `
+      ${Object.entries(data.thresholds)
+        .map(
+          ([name, threshold]) => `
         <tr>
           <td>${name}</td>
           <td class="${threshold.ok ? 'threshold-pass' : 'threshold-fail'}">
             ${threshold.ok ? '✓ PASS' : '✗ FAIL'}
           </td>
         </tr>
-      `).join('')}
+      `
+        )
+        .join('')}
     </table>
   </div>
 </body>

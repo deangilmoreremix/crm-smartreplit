@@ -7,7 +7,9 @@
 const { Pool } = require('pg');
 
 // Supabase connection
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
@@ -47,7 +49,6 @@ async function runTests() {
 
     // Test 8: List all errors/warnings
     await printResults();
-
   } catch (err) {
     console.error('❌ Test failed:', err.message);
   } finally {
@@ -57,7 +58,7 @@ async function runTests() {
 
 async function testAuthUsersTable() {
   console.log('1️⃣ Testing auth.users table...');
-  
+
   try {
     // Check total users
     const countResult = await pool.query('SELECT COUNT(*) FROM auth.users');
@@ -66,10 +67,10 @@ async function testAuthUsersTable() {
 
     // Check unconfirmed emails
     const unconfirmedResult = await pool.query(
-      "SELECT COUNT(*) FROM auth.users WHERE email_confirmed_at IS NULL"
+      'SELECT COUNT(*) FROM auth.users WHERE email_confirmed_at IS NULL'
     );
     const unconfirmedCount = parseInt(unconfirmedResult.rows[0].count);
-    
+
     if (unconfirmedCount > 0) {
       warnings.push(`${unconfirmedCount} users have NOT confirmed their emails`);
       console.log(`   ⚠️  Unconfirmed: ${unconfirmedCount}`);
@@ -79,16 +80,15 @@ async function testAuthUsersTable() {
 
     // Check never logged in
     const neverLoggedInResult = await pool.query(
-      "SELECT COUNT(*) FROM auth.users WHERE last_sign_in_at IS NULL"
+      'SELECT COUNT(*) FROM auth.users WHERE last_sign_in_at IS NULL'
     );
     const neverLoggedIn = parseInt(neverLoggedInResult.rows[0].count);
-    
+
     if (neverLoggedIn > 0) {
       console.log(`   ⚠️  Never logged in: ${neverLoggedIn}`);
     } else {
       console.log('   ✅ All users have logged in');
     }
-
   } catch (err) {
     errors.push(`auth.users table error: ${err.message}`);
     console.log(`   ❌ Error: ${err.message}`);
@@ -97,7 +97,7 @@ async function testAuthUsersTable() {
 
 async function testProfilesTable() {
   console.log('\n2️⃣ Testing public.profiles table...');
-  
+
   try {
     // Check total profiles
     const countResult = await pool.query('SELECT COUNT(*) FROM public.profiles');
@@ -111,7 +111,7 @@ async function testProfilesTable() {
       WHERE p.id IS NULL
     `);
     const orphanCount = parseInt(orphanResult.rows[0].count);
-    
+
     if (orphanCount > 0) {
       errors.push(`${orphanCount} users are MISSING profiles`);
       console.log(`   ❌ Missing profiles: ${orphanCount}`);
@@ -127,21 +127,20 @@ async function testProfilesTable() {
       ORDER BY count DESC
     `);
     console.log('   Role distribution:');
-    roleResult.rows.forEach(row => {
+    roleResult.rows.forEach((row) => {
       console.log(`      ${row.role}: ${row.count}`);
     });
 
     // Check for null roles
     const nullRoleResult = await pool.query(
-      "SELECT COUNT(*) FROM public.profiles WHERE role IS NULL"
+      'SELECT COUNT(*) FROM public.profiles WHERE role IS NULL'
     );
     const nullRoleCount = parseInt(nullRoleResult.rows[0].count);
-    
+
     if (nullRoleCount > 0) {
       warnings.push(`${nullRoleCount} profiles have NULL role`);
       console.log(`   ⚠️  Null roles: ${nullRoleCount}`);
     }
-
   } catch (err) {
     errors.push(`profiles table error: ${err.message}`);
     console.log(`   ❌ Error: ${err.message}`);
@@ -150,14 +149,14 @@ async function testProfilesTable() {
 
 async function testTriggers() {
   console.log('\n3️⃣ Testing triggers...');
-  
+
   try {
     // Check on_auth_user_created trigger
     const trigger1Result = await pool.query(`
       SELECT * FROM pg_trigger 
       WHERE tgname = 'on_auth_user_created'
     `);
-    
+
     if (trigger1Result.rows.length > 0) {
       console.log('   ✅ on_auth_user_created trigger exists');
     } else {
@@ -170,7 +169,7 @@ async function testTriggers() {
       SELECT * FROM pg_trigger 
       WHERE tgname = 'on_auth_user_updated'
     `);
-    
+
     if (trigger2Result.rows.length > 0) {
       console.log('   ✅ on_auth_user_updated trigger exists');
     } else {
@@ -182,14 +181,13 @@ async function testTriggers() {
       SELECT * FROM pg_proc 
       WHERE proname = 'handle_new_user'
     `);
-    
+
     if (funcResult.rows.length > 0) {
       console.log('   ✅ handle_new_user function exists');
     } else {
       errors.push('handle_new_user function is MISSING');
       console.log('   ❌ handle_new_user function missing');
     }
-
   } catch (err) {
     errors.push(`trigger check error: ${err.message}`);
     console.log(`   ❌ Error: ${err.message}`);
@@ -198,7 +196,7 @@ async function testTriggers() {
 
 async function testRLSPolicies() {
   console.log('\n4️⃣ Testing RLS policies...');
-  
+
   try {
     // Check RLS enabled on profiles
     const rlsResult = await pool.query(`
@@ -206,7 +204,7 @@ async function testRLSPolicies() {
       FROM pg_class 
       WHERE relname = 'profiles'
     `);
-    
+
     if (rlsResult.rows.length > 0 && rlsResult.rows[0].relrowsecurity) {
       console.log('   ✅ RLS enabled on profiles');
     } else {
@@ -219,13 +217,12 @@ async function testRLSPolicies() {
       FROM pg_policies
       WHERE tablename = 'profiles'
     `);
-    
+
     console.log(`   Found ${policiesResult.rows.length} policies on profiles`);
-    
+
     if (policiesResult.rows.length === 0) {
       warnings.push('No RLS policies found on profiles table');
     }
-
   } catch (err) {
     errors.push(`RLS check error: ${err.message}`);
     console.log(`   ❌ Error: ${err.message}`);
@@ -234,7 +231,7 @@ async function testRLSPolicies() {
 
 async function testForeignKeys() {
   console.log('\n5️⃣ Testing foreign key relationships...');
-  
+
   try {
     // Check for orphaned profiles (profiles without auth.users)
     const orphanedProfilesResult = await pool.query(`
@@ -243,14 +240,13 @@ async function testForeignKeys() {
       WHERE u.id IS NULL
     `);
     const orphanedCount = parseInt(orphanedProfilesResult.rows[0].count);
-    
+
     if (orphanedCount > 0) {
       errors.push(`${orphanedCount} profiles exist WITHOUT matching auth.users`);
       console.log(`   ❌ Orphaned profiles: ${orphanedCount}`);
     } else {
       console.log('   ✅ No orphaned profiles');
     }
-
   } catch (err) {
     errors.push(`FK check error: ${err.message}`);
     console.log(`   ❌ Error: ${err.message}`);
@@ -259,18 +255,17 @@ async function testForeignKeys() {
 
 async function testStorageBuckets() {
   console.log('\n6️⃣ Testing storage buckets...');
-  
+
   try {
     // Check storage.buckets (Supabase storage)
     const bucketsResult = await pool.query(`
       SELECT * FROM storage.buckets
     `);
-    
+
     console.log(`   Found ${bucketsResult.rows.length} storage buckets`);
-    bucketsResult.rows.forEach(bucket => {
+    bucketsResult.rows.forEach((bucket) => {
       console.log(`      - ${bucket.id}`);
     });
-
   } catch (err) {
     // Storage buckets might not exist in all Supabase setups
     console.log(`   ⚠️  Could not check storage: ${err.message}`);
@@ -279,7 +274,7 @@ async function testStorageBuckets() {
 
 async function testEdgeFunctions() {
   console.log('\n7️⃣ Testing edge functions...');
-  
+
   try {
     // Check for auth-related functions
     const functionsResult = await pool.query(`
@@ -288,20 +283,19 @@ async function testEdgeFunctions() {
       WHERE routine_schema = 'public'
       ORDER BY routine_name
     `);
-    
+
     console.log(`   Found ${functionsResult.rows.length} public functions`);
-    
+
     // Check for specific auth functions
     const authFuncs = ['handle_new_user', 'handle_user_update', 'exec_sql'];
-    authFuncs.forEach(func => {
-      const found = functionsResult.rows.some(r => r.routine_name.includes(func));
+    authFuncs.forEach((func) => {
+      const found = functionsResult.rows.some((r) => r.routine_name.includes(func));
       if (found) {
         console.log(`   ✅ ${func} exists`);
       } else {
         console.log(`   ⚠️  ${func} not found`);
       }
     });
-
   } catch (err) {
     console.log(`   ⚠️  Could not check functions: ${err.message}`);
   }
@@ -327,7 +321,7 @@ async function printResults() {
   }
 
   console.log('\n' + '='.repeat(60));
-  
+
   // Exit with error code if there are errors
   process.exit(errors.length > 0 ? 1 : 0);
 }

@@ -8,15 +8,15 @@ import { errorLogger } from './errorLogger';
 export enum CircuitState {
   CLOSED = 'closed',
   OPEN = 'open',
-  HALF_OPEN = 'half-open'
+  HALF_OPEN = 'half-open',
 }
 
 export interface CircuitBreakerConfig {
-  failureThreshold: number;     // Number of failures before opening
-  recoveryTimeout: number;      // Time to wait before trying half-open (ms)
-  monitoringPeriod: number;     // Time window for failure counting (ms)
-  successThreshold: number;     // Successes needed to close circuit in half-open
-  timeout: number;             // Request timeout (ms)
+  failureThreshold: number; // Number of failures before opening
+  recoveryTimeout: number; // Time to wait before trying half-open (ms)
+  monitoringPeriod: number; // Time window for failure counting (ms)
+  successThreshold: number; // Successes needed to close circuit in half-open
+  timeout: number; // Request timeout (ms)
 }
 
 export interface CircuitBreakerStats {
@@ -52,7 +52,7 @@ class CircuitBreaker {
       monitoringPeriod: 60000, // 1 minute
       successThreshold: 3,
       timeout: 5000, // 5 seconds
-      ...config
+      ...config,
     };
   }
 
@@ -77,7 +77,6 @@ class CircuitBreaker {
 
       this.onSuccess();
       return result;
-
     } catch (error: any) {
       this.onFailure(error);
       throw error;
@@ -138,7 +137,7 @@ class CircuitBreaker {
     errorLogger.logError(`Circuit breaker ${this.name} failure`, error, {
       state: this.state,
       failures: this.failures,
-      totalFailures: this.totalFailures
+      totalFailures: this.totalFailures,
     });
   }
 
@@ -157,10 +156,14 @@ class CircuitBreaker {
     console.log(`Circuit breaker ${this.name}: TRIPPED - Opening circuit`);
 
     // Log circuit breaker trip
-    errorLogger.logError(`Circuit breaker ${this.name} tripped`, new Error('Circuit breaker opened'), {
-      failures: this.failures,
-      failureThreshold: this.config.failureThreshold
-    });
+    errorLogger.logError(
+      `Circuit breaker ${this.name} tripped`,
+      new Error('Circuit breaker opened'),
+      {
+        failures: this.failures,
+        failureThreshold: this.config.failureThreshold,
+      }
+    );
   }
 
   /**
@@ -185,7 +188,7 @@ class CircuitBreaker {
       lastSuccessTime: this.lastSuccessTime,
       totalRequests: this.totalRequests,
       totalFailures: this.totalFailures,
-      totalSuccesses: this.totalSuccesses
+      totalSuccesses: this.totalSuccesses,
     };
   }
 
@@ -215,8 +218,10 @@ class CircuitBreaker {
    * Check if circuit is available for requests
    */
   isAvailable(): boolean {
-    return this.state === CircuitState.CLOSED ||
-           (this.state === CircuitState.HALF_OPEN && this.shouldAttemptReset());
+    return (
+      this.state === CircuitState.CLOSED ||
+      (this.state === CircuitState.HALF_OPEN && this.shouldAttemptReset())
+    );
   }
 }
 
@@ -227,10 +232,7 @@ class CircuitBreakerRegistry {
   /**
    * Get or create a circuit breaker
    */
-  getBreaker(
-    name: string,
-    config?: Partial<CircuitBreakerConfig>
-  ): CircuitBreaker {
+  getBreaker(name: string, config?: Partial<CircuitBreakerConfig>): CircuitBreaker {
     if (!this.breakers.has(name)) {
       this.breakers.set(name, new CircuitBreaker(name, config));
     }
@@ -294,7 +296,7 @@ class CircuitBreakerRegistry {
       open,
       halfOpen,
       closed,
-      issues
+      issues,
     };
   }
 }
@@ -306,31 +308,31 @@ export const circuitBreakerRegistry = new CircuitBreakerRegistry();
 export const dnsCircuitBreaker = circuitBreakerRegistry.getBreaker('dns', {
   failureThreshold: 3,
   recoveryTimeout: 30000, // 30 seconds
-  timeout: 5000
+  timeout: 5000,
 });
 
 export const sslCircuitBreaker = circuitBreakerRegistry.getBreaker('ssl', {
   failureThreshold: 5,
   recoveryTimeout: 60000, // 1 minute
-  timeout: 10000
+  timeout: 10000,
 });
 
 export const aiCircuitBreaker = circuitBreakerRegistry.getBreaker('ai', {
   failureThreshold: 10,
   recoveryTimeout: 120000, // 2 minutes
-  timeout: 30000 // 30 seconds
+  timeout: 30000, // 30 seconds
 });
 
 export const emailCircuitBreaker = circuitBreakerRegistry.getBreaker('email', {
   failureThreshold: 5,
   recoveryTimeout: 60000,
-  timeout: 10000
+  timeout: 10000,
 });
 
 export const storageCircuitBreaker = circuitBreakerRegistry.getBreaker('storage', {
   failureThreshold: 3,
   recoveryTimeout: 30000,
-  timeout: 15000
+  timeout: 15000,
 });
 
 // Utility function to execute with circuit breaker
@@ -364,6 +366,6 @@ export function getCircuitBreakerHealth(): {
   return {
     healthy,
     summary,
-    details
+    details,
   };
 }

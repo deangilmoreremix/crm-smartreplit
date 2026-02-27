@@ -9,13 +9,14 @@ const RemoteIntelLoader: React.FC = () => {
 
     const handleLoad = () => {
       try {
-        iframe.contentWindow?.postMessage({ 
-          type: 'SET_THEME', 
-          theme: 'light' 
-        }, '*');
-      } catch (error) {
-        console.log('Unable to communicate with Intel iframe');
-      }
+        iframe.contentWindow?.postMessage(
+          {
+            type: 'SET_THEME',
+            theme: 'light',
+          },
+          '*'
+        );
+      } catch (error) {}
     };
 
     iframe.addEventListener('load', handleLoad);
@@ -30,7 +31,7 @@ const RemoteIntelLoader: React.FC = () => {
         className="w-full border-0"
         style={{
           height: 'calc(100vh - 64px)',
-          minHeight: 'calc(100vh - 64px)'
+          minHeight: 'calc(100vh - 64px)',
         }}
         title="Intel Dashboard"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"

@@ -37,10 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Initialize Supabase client
   useEffect(() => {
     if (config.services.supabase.url && config.services.supabase.anonKey) {
-      const client = createClient(
-        config.services.supabase.url,
-        config.services.supabase.anonKey
-      );
+      const client = createClient(config.services.supabase.url, config.services.supabase.anonKey);
       setSupabase(client);
     }
   }, [config.services.supabase]);
@@ -66,28 +63,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loadUser();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          // Store user data
-          try {
-            await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(session.user));
-          } catch (error) {
-            console.error('Error storing user data:', error);
-          }
-        } else {
-          setUser(null);
-          // Clear stored user data
-          try {
-            await AsyncStorage.removeItem(USER_STORAGE_KEY);
-          } catch (error) {
-            console.error('Error clearing user data:', error);
-          }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        // Store user data
+        try {
+          await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(session.user));
+        } catch (error) {
+          console.error('Error storing user data:', error);
         }
-        setLoading(false);
+      } else {
+        setUser(null);
+        // Clear stored user data
+        try {
+          await AsyncStorage.removeItem(USER_STORAGE_KEY);
+        } catch (error) {
+          console.error('Error clearing user data:', error);
+        }
       }
-    );
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, [supabase]);
@@ -181,9 +178,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resetPassword,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

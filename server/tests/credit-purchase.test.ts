@@ -27,12 +27,15 @@ describe('Credit Purchase Flow Tests', () => {
     testUserId = randomUUID();
 
     // Create test user in profiles table
-    await db.insert(profiles).values({
-      id: testUserId,
-      email: `test-${testUserId}@example.com`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).onConflictDoNothing();
+    await db
+      .insert(profiles)
+      .values({
+        id: testUserId,
+        email: `test-${testUserId}@example.com`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoNothing();
 
     // Use existing plan from database
     const plan = await db
@@ -57,12 +60,8 @@ describe('Credit Purchase Flow Tests', () => {
 
   beforeEach(async () => {
     // Reset user credits before each test
-    await db
-      .delete(creditTransactions)
-      .where(eq(creditTransactions.userId, testUserId));
-    await db
-      .delete(userCredits)
-      .where(eq(userCredits.userId, testUserId));
+    await db.delete(creditTransactions).where(eq(creditTransactions.userId, testUserId));
+    await db.delete(userCredits).where(eq(userCredits.userId, testUserId));
   });
 
   describe('CreditService - Core Functionality', () => {
@@ -160,7 +159,7 @@ describe('Credit Purchase Flow Tests', () => {
       expect(Array.isArray(packages)).toBe(true);
       expect(packages.length).toBeGreaterThan(0);
 
-      const starterPack = packages.find(p => p.planName === 'credit_pack_starter');
+      const starterPack = packages.find((p) => p.planName === 'credit_pack_starter');
       expect(starterPack).toBeDefined();
       expect(starterPack?.credits).toBe(760);
       expect(starterPack?.basePriceCents).toBe(2000);
@@ -237,7 +236,7 @@ describe('Credit Purchase Flow Tests', () => {
 
       const results = await Promise.all(promises);
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.success).toBe(true);
         expect(result.creditsPurchased).toBe(500);
       });
@@ -268,8 +267,8 @@ describe('Credit Purchase Flow Tests', () => {
 
       expect(transactions).toHaveLength(2);
 
-      const purchaseTxn = transactions.find(t => t.type === 'purchase');
-      const usageTxn = transactions.find(t => t.type === 'usage');
+      const purchaseTxn = transactions.find((t) => t.type === 'purchase');
+      const usageTxn = transactions.find((t) => t.type === 'usage');
 
       expect(purchaseTxn?.balanceBefore).toBe('0');
       expect(purchaseTxn?.balanceAfter).toBe('500');
@@ -292,7 +291,7 @@ describe('Credit Purchase Flow Tests', () => {
 
       // Calculate expected balance from transactions
       let expectedCredits = 0;
-      transactions.forEach(txn => {
+      transactions.forEach((txn) => {
         if (txn.type === 'purchase') {
           expectedCredits += txn.amount;
         } else if (txn.type === 'usage') {
@@ -311,12 +310,7 @@ describe('Credit Purchase Flow Tests', () => {
       });
 
       // Refund some
-      await CreditService.refundCredits(
-        testUserId,
-        200,
-        'Test refund',
-        'refund_txn_123'
-      );
+      await CreditService.refundCredits(testUserId, 200, 'Test refund', 'refund_txn_123');
 
       const balance = await CreditService.getCreditBalance(testUserId);
       expect(balance.availableCredits).toBe(300); // 500 - 200
@@ -325,7 +319,7 @@ describe('Credit Purchase Flow Tests', () => {
       const transactions = await CreditService.getCreditTransactionHistory(testUserId);
       expect(transactions).toHaveLength(2);
 
-      const refundTxn = transactions.find(t => t.type === 'refund');
+      const refundTxn = transactions.find((t) => t.type === 'refund');
       expect(refundTxn?.amount).toBe(200);
       expect(refundTxn?.stripeTransactionId).toBe('refund_txn_123');
     });

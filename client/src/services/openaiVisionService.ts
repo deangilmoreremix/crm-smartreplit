@@ -2,7 +2,7 @@ import { useApiStore } from '../store/apiStore';
 
 export const useOpenAIVision = () => {
   const { apiKeys } = useApiStore();
-  
+
   const analyzeImage = async (imageUrl: string, prompt: string = "What's in this image?") => {
     if (!apiKeys.openai) {
       throw new Error('OpenAI API key is not set');
@@ -13,17 +13,17 @@ export const useOpenAIVision = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKeys.openai}`,
+          Authorization: `Bearer ${apiKeys.openai}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: 'gpt-4o',
           messages: [
             {
-              role: "user",
+              role: 'user',
               content: [
-                { type: "text", text: prompt },
+                { type: 'text', text: prompt },
                 {
-                  type: "image_url",
+                  type: 'image_url',
                   image_url: {
                     url: imageUrl,
                   },

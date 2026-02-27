@@ -18,13 +18,15 @@ const MeetingSummaryContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const summaryResult = await edgeFunctionService.generateMeetingSummary(transcript);
       setResult(summaryResult);
     } catch (err) {
       console.error('Error generating meeting summary:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while summarizing the meeting');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while summarizing the meeting'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -33,12 +35,12 @@ const MeetingSummaryContent: React.FC = () => {
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles(newFiles);
     setIsUploading(true);
-    
+
     // For analysis purposes, we'll just handle text files directly
     // In a real implementation, we might use a transcription service for audio files
     if (newFiles.length > 0) {
       const file = newFiles[0];
-      
+
       if (file.type === 'text/plain') {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -50,7 +52,9 @@ const MeetingSummaryContent: React.FC = () => {
       } else {
         setTimeout(() => {
           setIsUploading(false);
-          setError('For this analysis, only text files can be processed directly. In a production environment, audio and video files would be transcribed via a service like Whisper API.');
+          setError(
+            'For this analysis, only text files can be processed directly. In a production environment, audio and video files would be transcribed via a service like Whisper API.'
+          );
         }, 1500);
       }
     }
@@ -64,7 +68,8 @@ const MeetingSummaryContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-purple-800">Meeting Summarizer</h3>
             <p className="text-sm text-purple-700 mt-1">
-              Transform meeting transcripts into concise, actionable summaries. Identify key points, decisions made, and action items in seconds.
+              Transform meeting transcripts into concise, actionable summaries. Identify key points,
+              decisions made, and action items in seconds.
             </p>
           </div>
         </div>
@@ -96,7 +101,7 @@ const MeetingSummaryContent: React.FC = () => {
             <p className="block text-sm font-medium text-gray-700 mb-2">
               Or upload a transcript file:
             </p>
-            <FileUpload 
+            <FileUpload
               fileType="any"
               onFilesAdded={handleFilesAdded}
               isUploading={isUploading}

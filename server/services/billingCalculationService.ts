@@ -1,7 +1,7 @@
-import { eq, and, gte, lte, sql } from "drizzle-orm";
-import { db } from "../db";
-import { usageEvents, billingCycles, usagePlans } from "../../shared/schema";
-import { UsageTrackingService } from "./usageTrackingService";
+import { eq, and, gte, lte, sql } from 'drizzle-orm';
+import { db } from '../db';
+import { usageEvents, billingCycles, usagePlans } from '../../shared/schema';
+import { UsageTrackingService } from './usageTrackingService';
 
 export interface BillingCalculation {
   billingCycleId: string;
@@ -55,20 +55,23 @@ export class BillingCalculationService {
         .where(eq(usageEvents.billingCycleId, billingCycleId));
 
       // Aggregate usage by feature
-      const usageByFeature = events.reduce((acc, event) => {
-        const feature = event.featureName;
-        if (!acc[feature]) {
-          acc[feature] = {
-            totalQuantity: 0,
-            totalCost: 0,
-            events: []
-          };
-        }
-        acc[feature].totalQuantity += parseFloat(event.quantity);
-        acc[feature].totalCost += event.costCents;
-        acc[feature].events.push(event);
-        return acc;
-      }, {} as Record<string, any>);
+      const usageByFeature = events.reduce(
+        (acc, event) => {
+          const feature = event.featureName;
+          if (!acc[feature]) {
+            acc[feature] = {
+              totalQuantity: 0,
+              totalCost: 0,
+              events: [],
+            };
+          }
+          acc[feature].totalQuantity += parseFloat(event.quantity);
+          acc[feature].totalCost += event.costCents;
+          acc[feature].events.push(event);
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
       // Calculate total cost
       const totalCostCents = Object.values(usageByFeature).reduce(
@@ -81,7 +84,7 @@ export class BillingCalculationService {
       const breakdown: Record<string, any> = {
         usage: usageByFeature,
         baseSubscription: 0,
-        total: totalCostCents
+        total: totalCostCents,
       };
 
       if (billingCycle.billingPlanId) {
@@ -101,12 +104,15 @@ export class BillingCalculationService {
 
       return {
         billingCycleId,
-        totalUsage: Object.keys(usageByFeature).reduce((acc, feature) => {
-          acc[feature] = usageByFeature[feature].totalQuantity;
-          return acc;
-        }, {} as Record<string, number>),
+        totalUsage: Object.keys(usageByFeature).reduce(
+          (acc, feature) => {
+            acc[feature] = usageByFeature[feature].totalQuantity;
+            return acc;
+          },
+          {} as Record<string, number>
+        ),
         totalCostCents: finalTotalCost,
-        breakdown
+        breakdown,
       };
     } catch (error) {
       console.error('Error calculating billing:', error);
@@ -153,8 +159,8 @@ export class BillingCalculationService {
             totalCents: plan[0].basePriceCents,
             metadata: {
               planName: plan[0].planName,
-              billingInterval: plan[0].billingInterval
-            }
+              billingInterval: plan[0].billingInterval,
+            },
           });
         }
       }
@@ -170,8 +176,8 @@ export class BillingCalculationService {
             metadata: {
               featureName,
               unit: featureData.events[0]?.unit || 'units',
-              eventCount: featureData.events.length
-            }
+              eventCount: featureData.events.length,
+            },
           });
         }
       }
@@ -186,8 +192,8 @@ export class BillingCalculationService {
         lineItems,
         metadata: {
           billingPlanId: billingCycle.billingPlanId,
-          stripeSubscriptionId: billingCycle.stripeSubscriptionId
-        }
+          stripeSubscriptionId: billingCycle.stripeSubscriptionId,
+        },
       };
     } catch (error) {
       console.error('Error generating invoice:', error);
@@ -208,7 +214,7 @@ export class BillingCalculationService {
       // Get current and new plans
       const [currentPlan, newPlan] = await Promise.all([
         db.select().from(usagePlans).where(eq(usagePlans.id, currentPlanId)).limit(1),
-        db.select().from(usagePlans).where(eq(usagePlans.id, newPlanId)).limit(1)
+        db.select().from(usagePlans).where(eq(usagePlans.id, newPlanId)).limit(1),
       ]);
 
       if (currentPlan.length === 0 || newPlan.length === 0) {
@@ -222,15 +228,16 @@ export class BillingCalculationService {
       const currentCycle = await db
         .select()
         .from(billingCycles)
-        .where(and(
-          eq(billingCycles.userId, userId),
-          eq(billingCycles.status, 'active')
-        ))
+        .where(and(eq(billingCycles.userId, userId), eq(billingCycles.status, 'active')))
         .limit(1);
 
       if (currentCycle.length === 0) {
         // No proration needed if no active cycle
-        return { creditCents: 0, chargeCents: newPlanData.basePriceCents, netChangeCents: newPlanData.basePriceCents };
+        return {
+          creditCents: 0,
+          chargeCents: newPlanData.basePriceCents,
+          netChangeCents: newPlanData.basePriceCents,
+        };
       }
 
       const cycle = currentCycle[0];
@@ -238,8 +245,12 @@ export class BillingCalculationService {
       const cycleEnd = cycle.endDate;
 
       // Calculate days remaining in cycle
-      const totalDaysInCycle = Math.ceil((cycleEnd.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24));
-      const daysRemaining = Math.ceil((cycleEnd.getTime() - changeDate.getTime()) / (1000 * 60 * 60 * 24));
+      const totalDaysInCycle = Math.ceil(
+        (cycleEnd.getTime() - cycleStart.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const daysRemaining = Math.ceil(
+        (cycleEnd.getTime() - changeDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
       const daysUsed = totalDaysInCycle - daysRemaining;
 
       // Calculate prorated amounts
@@ -270,28 +281,33 @@ export class BillingCalculationService {
       const events = await db
         .select()
         .from(usageEvents)
-        .where(and(
-          eq(usageEvents.userId, userId),
-          gte(usageEvents.createdAt, startDate),
-          lte(usageEvents.createdAt, endDate)
-        ));
+        .where(
+          and(
+            eq(usageEvents.userId, userId),
+            gte(usageEvents.createdAt, startDate),
+            lte(usageEvents.createdAt, endDate)
+          )
+        );
 
       // Aggregate costs by feature
-      const breakdown = events.reduce((acc, event) => {
-        const feature = event.featureName;
-        if (!acc[feature]) {
-          acc[feature] = {
-            totalQuantity: 0,
-            totalCost: 0,
-            eventCount: 0,
-            unit: event.unit
-          };
-        }
-        acc[feature].totalQuantity += parseFloat(event.quantity);
-        acc[feature].totalCost += event.costCents;
-        acc[feature].eventCount += 1;
-        return acc;
-      }, {} as Record<string, any>);
+      const breakdown = events.reduce(
+        (acc, event) => {
+          const feature = event.featureName;
+          if (!acc[feature]) {
+            acc[feature] = {
+              totalQuantity: 0,
+              totalCost: 0,
+              eventCount: 0,
+              unit: event.unit,
+            };
+          }
+          acc[feature].totalQuantity += parseFloat(event.quantity);
+          acc[feature].totalCost += event.costCents;
+          acc[feature].eventCount += 1;
+          return acc;
+        },
+        {} as Record<string, any>
+      );
 
       const totalCostCents = Object.values(breakdown).reduce(
         (sum: number, feature: any) => sum + feature.totalCost,
@@ -314,11 +330,7 @@ export class BillingCalculationService {
   ): Promise<{ totalCostCents: number; breakdown: Record<string, any> }> {
     try {
       // Get the plan
-      const plan = await db
-        .select()
-        .from(usagePlans)
-        .where(eq(usagePlans.id, planId))
-        .limit(1);
+      const plan = await db.select().from(usagePlans).where(eq(usagePlans.id, planId)).limit(1);
 
       if (plan.length === 0) {
         throw new Error(`Plan ${planId} not found`);
@@ -328,7 +340,7 @@ export class BillingCalculationService {
       let totalCostCents = planData.basePriceCents;
       const breakdown: Record<string, any> = {
         baseSubscription: planData.basePriceCents,
-        usage: {}
+        usage: {},
       };
 
       // Calculate usage costs based on pricing tiers
@@ -377,10 +389,7 @@ export class BillingCalculationService {
       const currentCycle = await db
         .select()
         .from(billingCycles)
-        .where(and(
-          eq(billingCycles.userId, userId),
-          eq(billingCycles.status, 'active')
-        ))
+        .where(and(eq(billingCycles.userId, userId), eq(billingCycles.status, 'active')))
         .limit(1);
 
       // Get current usage stats
@@ -408,7 +417,7 @@ export class BillingCalculationService {
         currentPlan,
         usageStats,
         currentBilling,
-        nextBillingDate: currentCycle[0]?.endDate || null
+        nextBillingDate: currentCycle[0]?.endDate || null,
       };
     } catch (error) {
       console.error('Error getting billing summary:', error);

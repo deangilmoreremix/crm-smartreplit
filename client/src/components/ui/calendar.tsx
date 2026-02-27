@@ -17,14 +17,24 @@ export const Calendar: React.FC<CalendarProps> = ({
   className,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  
+
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
-  
+
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  
+
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -32,38 +42,38 @@ export const Calendar: React.FC<CalendarProps> = ({
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startDay = firstDay.getDay();
-    
+
     const days = [];
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < startDay; i++) {
       days.push(null);
     }
-    
+
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
-    
+
     return days;
   };
-  
+
   const isSelected = (date: Date) => {
     if (!selected) return false;
-    
+
     if (mode === 'single' && selected instanceof Date) {
       return date.toDateString() === selected.toDateString();
     }
-    
+
     return false;
   };
-  
+
   const handleDateClick = (date: Date) => {
     if (mode === 'single') {
       onSelect?.(date);
     }
   };
-  
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
     if (direction === 'prev') {
@@ -73,32 +83,26 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
     setCurrentDate(newDate);
   };
-  
+
   const days = getDaysInMonth(currentDate);
-  
+
   return (
     <div className={cn('p-3', className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={() => navigateMonth('prev')}
-          className="p-1 hover:bg-accent rounded"
-        >
+        <button onClick={() => navigateMonth('prev')} className="p-1 hover:bg-accent rounded">
           <ChevronLeft className="h-4 w-4" />
         </button>
-        
+
         <h2 className="font-semibold">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h2>
-        
-        <button
-          onClick={() => navigateMonth('next')}
-          className="p-1 hover:bg-accent rounded"
-        >
+
+        <button onClick={() => navigateMonth('next')} className="p-1 hover:bg-accent rounded">
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
-      
+
       {/* Day names */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {dayNames.map((day) => (
@@ -110,7 +114,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           </div>
         ))}
       </div>
-      
+
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1">
         {days.map((date, index) => (

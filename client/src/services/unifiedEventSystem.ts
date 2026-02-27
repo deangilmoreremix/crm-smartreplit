@@ -57,7 +57,7 @@ class UnifiedEventSystem {
     return () => {
       const handlers = this.eventHandlers.get(handler.id);
       if (handlers) {
-        const index = handlers.findIndex(h => h === handler);
+        const index = handlers.findIndex((h) => h === handler);
         if (index !== -1) {
           handlers.splice(index, 1);
         }
@@ -74,7 +74,7 @@ class UnifiedEventSystem {
       ...event,
       id: this.generateEventId(),
       timestamp: Date.now(),
-      priority: event.priority || 'medium'
+      priority: event.priority || 'medium',
     };
 
     // Add to history
@@ -95,7 +95,10 @@ class UnifiedEventSystem {
   }
 
   // Emit event to specific target
-  async emitTo(target: string, event: Omit<UnifiedEvent, 'id' | 'timestamp' | 'target'>): Promise<void> {
+  async emitTo(
+    target: string,
+    event: Omit<UnifiedEvent, 'id' | 'timestamp' | 'target'>
+  ): Promise<void> {
     await this.emit({ ...event, target });
   }
 
@@ -131,7 +134,7 @@ class UnifiedEventSystem {
     const matchingHandlers: EventHandler[] = [];
 
     Array.from(this.eventHandlers.entries()).forEach(([handlerId, handlers]) => {
-      handlers.forEach(handler => {
+      handlers.forEach((handler) => {
         if (this.matchesFilters(event, handler.filters)) {
           matchingHandlers.push(handler);
         }
@@ -173,7 +176,7 @@ class UnifiedEventSystem {
         type: eventType,
         source: sourceApp || 'remote',
         data,
-        priority: 'medium'
+        priority: 'medium',
       });
     });
 
@@ -183,7 +186,7 @@ class UnifiedEventSystem {
         type: 'DATA_SYNC',
         source: e.detail.source || 'system',
         data: e.detail,
-        priority: 'high'
+        priority: 'high',
       });
     });
 
@@ -193,7 +196,7 @@ class UnifiedEventSystem {
         type: 'AI_EVENT',
         source: e.detail.source || 'ai',
         data: e.detail,
-        priority: 'medium'
+        priority: 'medium',
       });
     });
   }
@@ -211,7 +214,7 @@ class UnifiedEventSystem {
   // Get active handlers count
   getActiveHandlersCount(): number {
     let count = 0;
-    Array.from(this.eventHandlers.values()).forEach(handlers => {
+    Array.from(this.eventHandlers.values()).forEach((handlers) => {
       count += handlers.length;
     });
     return count;
@@ -221,7 +224,7 @@ class UnifiedEventSystem {
   getQueueStatus(): { queueLength: number; processing: boolean } {
     return {
       queueLength: this.eventQueue.length,
-      processing: this.processingQueue
+      processing: this.processingQueue,
     };
   }
 }
@@ -243,7 +246,7 @@ export function useUnifiedEvents(
       id: handlerId,
       handler,
       priority,
-      filters
+      filters,
     };
 
     const unsubscribe = unifiedEventSystem.registerHandler(eventHandler);
@@ -255,9 +258,12 @@ export function useUnifiedEvents(
     return unifiedEventSystem.emit(event);
   }, []);
 
-  const emitTo = useCallback((target: string, event: Omit<UnifiedEvent, 'id' | 'timestamp' | 'target'>) => {
-    return unifiedEventSystem.emitTo(target, event);
-  }, []);
+  const emitTo = useCallback(
+    (target: string, event: Omit<UnifiedEvent, 'id' | 'timestamp' | 'target'>) => {
+      return unifiedEventSystem.emitTo(target, event);
+    },
+    []
+  );
 
   return { emit, emitTo };
 }

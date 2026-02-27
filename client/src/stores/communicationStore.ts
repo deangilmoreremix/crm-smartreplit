@@ -17,7 +17,9 @@ interface CommunicationStore {
 
   // Actions
   fetchCommunications: () => Promise<void>;
-  addCommunication: (comm: Omit<Communication, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Communication | null>;
+  addCommunication: (
+    comm: Omit<Communication, 'id' | 'createdAt' | 'updatedAt'>
+  ) => Promise<Communication | null>;
   updateCommunication: (id: string, updates: Partial<Communication>) => Promise<void>;
   deleteCommunication: (id: string) => Promise<void>;
 }
@@ -32,14 +34,17 @@ export const useCommunicationStore = create<CommunicationStore>((set) => ({
     try {
       const response = await api.get<Communication[]>('/api/communications');
       if (response.success && response.data) {
-        const commsMap = response.data.reduce((acc, comm) => {
-          acc[comm.id.toString()] = {
-            ...comm,
-            createdAt: new Date(comm.createdAt),
-            updatedAt: new Date(comm.updatedAt),
-          };
-          return acc;
-        }, {} as Record<string, Communication>);
+        const commsMap = response.data.reduce(
+          (acc, comm) => {
+            acc[comm.id.toString()] = {
+              ...comm,
+              createdAt: new Date(comm.createdAt),
+              updatedAt: new Date(comm.updatedAt),
+            };
+            return acc;
+          },
+          {} as Record<string, Communication>
+        );
         set({ communications: commsMap, isLoading: false });
       } else {
         set({ error: response.error || 'Failed to fetch communications', isLoading: false });
@@ -59,8 +64,8 @@ export const useCommunicationStore = create<CommunicationStore>((set) => ({
           updatedAt: new Date(response.data.updatedAt),
         };
 
-        set(state => ({
-          communications: { ...state.communications, [newComm.id.toString()]: newComm }
+        set((state) => ({
+          communications: { ...state.communications, [newComm.id.toString()]: newComm },
         }));
 
         return newComm;
@@ -83,8 +88,8 @@ export const useCommunicationStore = create<CommunicationStore>((set) => ({
           createdAt: new Date(response.data.createdAt),
           updatedAt: new Date(response.data.updatedAt),
         };
-        set(state => ({
-          communications: { ...state.communications, [id]: updatedComm }
+        set((state) => ({
+          communications: { ...state.communications, [id]: updatedComm },
         }));
       } else {
         set({ error: response.error || 'Failed to update communication' });
@@ -98,7 +103,7 @@ export const useCommunicationStore = create<CommunicationStore>((set) => ({
     try {
       const response = await api.delete(`/api/communications/${id}`);
       if (response.success) {
-        set(state => {
+        set((state) => {
           const newComms = { ...state.communications };
           delete newComms[id];
           return { communications: newComms };
@@ -109,5 +114,5 @@ export const useCommunicationStore = create<CommunicationStore>((set) => ({
     } catch {
       set({ error: 'Failed to delete communication' });
     }
-  }
+  },
 }));

@@ -1,4 +1,3 @@
-
 import { remoteAppManager } from '../utils/remoteAppManager';
 import { useContactStore } from '../store/contactStore';
 import { useDealStore } from '../store/dealStore';
@@ -112,7 +111,7 @@ export class UniversalDataSyncService {
 
   private handleIncomingContactData(action: string, data: any) {
     const contactStore = useContactStore.getState();
-    
+
     switch (action) {
       case 'create':
         contactStore.addContact(data);
@@ -128,7 +127,7 @@ export class UniversalDataSyncService {
 
   private handleIncomingDealData(action: string, data: any) {
     const dealStore = useDealStore.getState();
-    
+
     switch (action) {
       case 'create':
         dealStore.addDeal(data);
@@ -144,7 +143,7 @@ export class UniversalDataSyncService {
 
   private handleIncomingTaskData(action: string, data: any) {
     const taskStore = useTaskStore.getState();
-    
+
     switch (action) {
       case 'create':
         taskStore.addTask(data);
@@ -172,28 +171,28 @@ export class UniversalDataSyncService {
       analytics: {
         totalContacts: Object.keys(contactStore.contacts).length,
         totalDeals: Object.keys(dealStore.deals).length,
-        totalTasks: Object.keys(taskStore.tasks).length
+        totalTasks: Object.keys(taskStore.tasks).length,
       },
       timestamp: Date.now(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
   }
 
   // Sync all data to remote apps
   syncAllData() {
     const syncData = this.getCurrentSyncData();
-    
+
     // Sync to each data type
     remoteAppManager.syncContactsToAllApps(syncData.contacts);
     remoteAppManager.syncDealsToAllApps(syncData.deals);
     remoteAppManager.syncTasksToAllApps(syncData.tasks);
-    
+
     // Broadcast full sync event
     remoteAppManager.broadcastToAllApps('FULL_DATA_SYNC', syncData, 'crm');
-    
+
     this.lastSyncTimestamp = Date.now();
     this.isDirty.clear();
-    
+
     console.log('✅ Full data sync completed');
   }
 

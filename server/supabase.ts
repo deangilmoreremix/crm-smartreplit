@@ -8,14 +8,15 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.warn('Supabase server configuration missing. Some features may not work.');
 }
 
-export const supabase = supabaseUrl && supabaseServiceKey
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  : null;
+export const supabase =
+  supabaseUrl && supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
 
 export const isSupabaseConfigured = () => {
   return !!supabase;

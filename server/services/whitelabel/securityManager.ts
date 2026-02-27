@@ -51,7 +51,12 @@ export interface SecurityPolicy {
   id: string;
   tenantId: string;
   policyType: 'ip_whitelist' | 'password_policy' | 'session_policy' | 'mfa_policy' | 'api_access';
-  config: IPWhitelistConfig | PasswordPolicyConfig | SessionPolicyConfig | MFAPolicyConfig | APIAccessConfig;
+  config:
+    | IPWhitelistConfig
+    | PasswordPolicyConfig
+    | SessionPolicyConfig
+    | MFAPolicyConfig
+    | APIAccessConfig;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -137,7 +142,7 @@ class SecurityManager {
           metadata: metadata || {},
           is_active: true,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -152,15 +157,14 @@ class SecurityManager {
         action: 'sso_configured',
         resourceType: 'sso_configuration',
         resourceId: data.id,
-        metadata: { provider }
+        metadata: { provider },
       });
 
       return this.mapDatabaseToSSOConfig(data);
-
     } catch (error: any) {
       await errorLogger.logError('SSO configuration failed', error, {
         tenantId,
-        provider
+        provider,
       });
       throw error;
     }
@@ -197,13 +201,12 @@ class SecurityManager {
       // For now, return a mock success
       return {
         success: true,
-        message: 'SSO connection test successful'
+        message: 'SSO connection test successful',
       };
-
     } catch (error: any) {
       return {
         success: false,
-        message: error.message
+        message: error.message,
       };
     }
   }
@@ -232,7 +235,7 @@ class SecurityManager {
           config,
           is_active: true,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -247,15 +250,14 @@ class SecurityManager {
         action: 'security_policy_created',
         resourceType: 'security_policy',
         resourceId: data.id,
-        metadata: { policyType }
+        metadata: { policyType },
       });
 
       return this.mapDatabaseToSecurityPolicy(data);
-
     } catch (error: any) {
       await errorLogger.logError('Security policy creation failed', error, {
         tenantId,
-        policyType
+        policyType,
       });
       throw error;
     }
@@ -269,10 +271,7 @@ class SecurityManager {
       return [];
     }
 
-    let query = supabase
-      .from('security_policies')
-      .select('*')
-      .eq('tenant_id', tenantId);
+    let query = supabase.from('security_policies').select('*').eq('tenant_id', tenantId);
 
     if (policyType) {
       query = query.eq('policy_type', policyType);
@@ -284,19 +283,22 @@ class SecurityManager {
       throw new Error(`Failed to get security policies: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToSecurityPolicy(d));
+    return (data || []).map((d) => this.mapDatabaseToSecurityPolicy(d));
   }
 
   /**
    * Update security policy
    */
-  async updateSecurityPolicy(policyId: string, updates: Partial<SecurityPolicy>): Promise<SecurityPolicy> {
+  async updateSecurityPolicy(
+    policyId: string,
+    updates: Partial<SecurityPolicy>
+  ): Promise<SecurityPolicy> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
 
     const dbUpdates: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (updates.config) {
@@ -332,10 +334,7 @@ class SecurityManager {
       throw new Error('Supabase not configured');
     }
 
-    const { error } = await supabase
-      .from('security_policies')
-      .delete()
-      .eq('id', policyId);
+    const { error } = await supabase.from('security_policies').delete().eq('id', policyId);
 
     if (error) {
       throw new Error(`Failed to delete security policy: ${error.message}`);
@@ -420,7 +419,7 @@ class SecurityManager {
           ip_address: entry.ipAddress,
           user_agent: entry.userAgent,
           metadata: entry.metadata || {},
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -430,11 +429,10 @@ class SecurityManager {
       }
 
       return this.mapDatabaseToAuditLog(data);
-
     } catch (error: any) {
       // Don't throw on audit log failures - log to error logger instead
       await errorLogger.logError('Audit logging failed', error, {
-        action: entry.action
+        action: entry.action,
       });
       throw error;
     }
@@ -496,7 +494,7 @@ class SecurityManager {
       throw new Error(`Failed to get audit logs: ${error.message}`);
     }
 
-    const logs = (data || []).map(d => this.mapDatabaseToAuditLog(d));
+    const logs = (data || []).map((d) => this.mapDatabaseToAuditLog(d));
     const total = count || 0;
     const pages = Math.ceil(total / limit);
 
@@ -509,12 +507,12 @@ class SecurityManager {
   async isIPWhitelisted(tenantId: string, ipAddress: string): Promise<boolean> {
     try {
       const policies = await this.getSecurityPolicies(tenantId, 'ip_whitelist');
-      
+
       if (policies.length === 0) {
         return true; // No whitelist policy = allow all
       }
 
-      const activePolicy = policies.find(p => p.isActive);
+      const activePolicy = policies.find((p) => p.isActive);
       if (!activePolicy) {
         return true;
       }
@@ -534,11 +532,10 @@ class SecurityManager {
       }
 
       return !config.blockByDefault;
-
     } catch (error: any) {
       await errorLogger.logError('IP whitelist check failed', error, {
         tenantId,
-        ipAddress
+        ipAddress,
       });
       return true; // Fail open to avoid blocking legitimate traffic
     }
@@ -555,19 +552,25 @@ class SecurityManager {
     }
 
     // For now, just check if IP starts with range prefix
-    const prefix = rangeIP.split('.').slice(0, parseInt(mask) / 8).join('.');
+    const prefix = rangeIP
+      .split('.')
+      .slice(0, parseInt(mask) / 8)
+      .join('.');
     return ip.startsWith(prefix);
   }
 
   /**
    * Validate password against policy
    */
-  async validatePassword(tenantId: string, password: string): Promise<{ valid: boolean; errors: string[] }> {
+  async validatePassword(
+    tenantId: string,
+    password: string
+  ): Promise<{ valid: boolean; errors: string[] }> {
     const errors: string[] = [];
 
     try {
       const policies = await this.getSecurityPolicies(tenantId, 'password_policy');
-      
+
       if (policies.length === 0) {
         // Default policy
         if (password.length < 8) {
@@ -576,7 +579,7 @@ class SecurityManager {
         return { valid: errors.length === 0, errors };
       }
 
-      const activePolicy = policies.find(p => p.isActive);
+      const activePolicy = policies.find((p) => p.isActive);
       if (!activePolicy) {
         return { valid: true, errors: [] };
       }
@@ -604,10 +607,9 @@ class SecurityManager {
       }
 
       return { valid: errors.length === 0, errors };
-
     } catch (error: any) {
       await errorLogger.logError('Password validation failed', error, {
-        tenantId
+        tenantId,
       });
       return { valid: true, errors: [] }; // Fail open
     }
@@ -619,18 +621,17 @@ class SecurityManager {
   async isMFARequired(tenantId: string): Promise<boolean> {
     try {
       const policies = await this.getSecurityPolicies(tenantId, 'mfa_policy');
-      
-      const activePolicy = policies.find(p => p.isActive);
+
+      const activePolicy = policies.find((p) => p.isActive);
       if (!activePolicy) {
         return false;
       }
 
       const config = activePolicy.config as MFAPolicyConfig;
       return config.required;
-
     } catch (error: any) {
       await errorLogger.logError('MFA check failed', error, {
-        tenantId
+        tenantId,
       });
       return false; // Fail open
     }
@@ -649,12 +650,14 @@ class SecurityManager {
     const ssoConfig = await this.getActiveSSOConfig(tenantId);
     const mfaRequired = await this.isMFARequired(tenantId);
     const policies = await this.getSecurityPolicies(tenantId);
-    
-    const ipWhitelistActive = policies.some(p => p.policyType === 'ip_whitelist' && p.isActive);
-    const passwordPolicyActive = policies.some(p => p.policyType === 'password_policy' && p.isActive);
+
+    const ipWhitelistActive = policies.some((p) => p.policyType === 'ip_whitelist' && p.isActive);
+    const passwordPolicyActive = policies.some(
+      (p) => p.policyType === 'password_policy' && p.isActive
+    );
 
     const { logs: recentAuditLogs } = await this.getAuditLogs(tenantId, {
-      limit: 10
+      limit: 10,
     });
 
     return {
@@ -662,7 +665,7 @@ class SecurityManager {
       mfaRequired,
       ipWhitelistActive,
       passwordPolicyActive,
-      recentAuditLogs
+      recentAuditLogs,
     };
   }
 
@@ -678,7 +681,7 @@ class SecurityManager {
       metadata: data.metadata || {},
       isActive: data.is_active,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 
@@ -693,7 +696,7 @@ class SecurityManager {
       config: data.config,
       isActive: data.is_active,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 
@@ -711,7 +714,7 @@ class SecurityManager {
       ipAddress: data.ip_address,
       userAgent: data.user_agent,
       metadata: data.metadata || {},
-      createdAt: new Date(data.created_at)
+      createdAt: new Date(data.created_at),
     };
   }
 }

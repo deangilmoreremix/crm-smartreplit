@@ -20,7 +20,7 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
   onContactUpdate,
   onContactDelete,
   initialContacts,
-  theme = 'light'
+  theme = 'light',
 }) => {
   const [contacts, setContacts] = useState(initialContacts || []);
 
@@ -38,17 +38,15 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
         onContactSelect?.(contact);
         break;
       case 'create':
-        setContacts(prev => [...prev, contact]);
+        setContacts((prev) => [...prev, contact]);
         onContactCreate?.(contact);
         break;
       case 'update':
-        setContacts(prev => 
-          prev.map(c => c.id === contact.id ? contact : c)
-        );
+        setContacts((prev) => prev.map((c) => (c.id === contact.id ? contact : c)));
         onContactUpdate?.(contact);
         break;
       case 'delete':
-        setContacts(prev => prev.filter(c => c.id !== contact.id));
+        setContacts((prev) => prev.filter((c) => c.id !== contact.id));
         onContactDelete?.(contact.id);
         break;
     }
@@ -67,9 +65,9 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
           color: white;
         }
       `}</style>
-      
+
       {/* Use your existing Bolt App component */}
-      <App 
+      <App
         // Pass any props your App component needs
         // You might need to modify your App.tsx to accept these props
         contacts={contacts}

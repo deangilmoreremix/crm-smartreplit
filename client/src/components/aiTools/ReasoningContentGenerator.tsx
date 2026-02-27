@@ -1,41 +1,41 @@
 import React, { useState } from 'react';
 import { useOpenAI } from '../../services/openaiLegacyService';
 import AIToolContent from '../shared/AIToolContent';
-import { 
-  Brain, 
-  FileText, 
-  RefreshCw, 
-  Copy, 
-  Check, 
-  Target, 
-  Users, 
+import {
+  Brain,
+  FileText,
+  RefreshCw,
+  Copy,
+  Check,
+  Target,
+  Users,
   MessageSquare,
   Sparkles,
   Zap,
   Mail,
   Phone,
   Shield,
-  Hash
+  Hash,
 } from 'lucide-react';
 
 interface ReasoningContentGeneratorProps {
   contentType?: 'email' | 'proposal' | 'script' | 'objection' | 'social';
 }
 
-const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({ 
-  contentType = 'email' 
+const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
+  contentType = 'email',
 }) => {
   const openai = useOpenAI();
-  
+
   const [formData, setFormData] = useState({
     audience: '',
     context: '',
     objective: '',
     constraints: '',
     previousCommunication: '',
-    tone: 'professional'
+    tone: 'professional',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -43,11 +43,13 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
   const [reasoningVisible, setReasoningVisible] = useState(false);
   const [reasoningInsights, setReasoningInsights] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -57,11 +59,11 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Get the content title based on type
       const contentTitle = getContentTitle();
-      
+
       // Generate reasoning insights first
       const reasoningPrompt = `
         You are an expert AI reasoning engine for ${contentTitle} creation.
@@ -86,10 +88,10 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
         
         Format your response as a strategic analysis that would help a sales or marketing professional understand the reasoning behind the content creation approach.
       `;
-      
+
       const reasoningText = await openai.generateReasoning(reasoningPrompt);
       setReasoningInsights(reasoningText);
-      
+
       // Now generate the actual content using the reasoning insights
       const contentPrompt = `
         You are an expert ${contentTitle} creator.
@@ -110,9 +112,9 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
         
         ${getContentSpecificInstructions()}
       `;
-      
+
       const contentText = await openai.generateScript(contentPrompt);
-      
+
       setResult(contentText);
       setCopied(false);
     } catch (err) {
@@ -130,20 +132,26 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
       // TODO: Replace with real AI implementation;
     }
   };
-  
+
   const getContentTitle = () => {
-    switch(contentType) {
-      case 'email': return 'Email';
-      case 'proposal': return 'Sales Proposal';
-      case 'script': return 'Call Script';
-      case 'objection': return 'Objection Handler';
-      case 'social': return 'Social Media Content';
-      default: return 'Content';
+    switch (contentType) {
+      case 'email':
+        return 'Email';
+      case 'proposal':
+        return 'Sales Proposal';
+      case 'script':
+        return 'Call Script';
+      case 'objection':
+        return 'Objection Handler';
+      case 'social':
+        return 'Social Media Content';
+      default:
+        return 'Content';
     }
   };
-  
+
   const getContentSpecificInstructions = () => {
-    switch(contentType) {
+    switch (contentType) {
       case 'email':
         return 'Include a subject line, greeting, body, and signature. Make it concise but persuasive.';
       case 'proposal':
@@ -158,18 +166,24 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
         return '';
     }
   };
-  
+
   const getContentIcon = () => {
-    switch(contentType) {
-      case 'email': return <Mail className="h-6 w-6 text-blue-600" />;
-      case 'proposal': return <FileText className="h-6 w-6 text-purple-600" />;
-      case 'script': return <MessageSquare className="h-6 w-6 text-green-600" />;
-      case 'objection': return <Shield className="h-6 w-6 text-red-600" />;
-      case 'social': return <Hash className="h-6 w-6 text-cyan-600" />;
-      default: return <FileText className="h-6 w-6 text-blue-600" />;
+    switch (contentType) {
+      case 'email':
+        return <Mail className="h-6 w-6 text-blue-600" />;
+      case 'proposal':
+        return <FileText className="h-6 w-6 text-purple-600" />;
+      case 'script':
+        return <MessageSquare className="h-6 w-6 text-green-600" />;
+      case 'objection':
+        return <Shield className="h-6 w-6 text-red-600" />;
+      case 'social':
+        return <Hash className="h-6 w-6 text-cyan-600" />;
+      default:
+        return <FileText className="h-6 w-6 text-blue-600" />;
     }
   };
-  
+
   // Tone options
   const toneOptions = [
     { value: 'professional', label: 'Professional' },
@@ -177,7 +191,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
     { value: 'persuasive', label: 'Persuasive' },
     { value: 'urgent', label: 'Urgent' },
     { value: 'empathetic', label: 'Empathetic' },
-    { value: 'authoritative', label: 'Authoritative' }
+    { value: 'authoritative', label: 'Authoritative' },
   ];
 
   return (
@@ -186,9 +200,12 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
         <div className="flex items-start">
           <Brain className="text-purple-600 mt-1 mr-3 h-5 w-5" />
           <div>
-            <h3 className="font-medium text-purple-800">{getContentTitle()} Generator with AI Reasoning</h3>
+            <h3 className="font-medium text-purple-800">
+              {getContentTitle()} Generator with AI Reasoning
+            </h3>
             <p className="text-sm text-purple-700 mt-1">
-              Create highly effective {contentType} content using our advanced AI reasoning engine that understands context, audience, and strategic objectives.
+              Create highly effective {contentType} content using our advanced AI reasoning engine
+              that understands context, audience, and strategic objectives.
             </p>
           </div>
         </div>
@@ -217,7 +234,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               required
             ></textarea>
           </div>
-          
+
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
               <Target className="h-4 w-4 mr-1 text-gray-500" />
@@ -233,7 +250,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               required
             ></textarea>
           </div>
-          
+
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
               <FileText className="h-4 w-4 mr-1 text-gray-500" />
@@ -248,7 +265,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               placeholder="Provide relevant context about your product/service, the current situation, and any specific details that would help create better content"
             ></textarea>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
@@ -264,7 +281,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
                 placeholder="Summarize any previous communications or interactions"
               ></textarea>
             </div>
-            
+
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                 <FileText className="h-4 w-4 mr-1 text-gray-500" />
@@ -280,23 +297,23 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               ></textarea>
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tone
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tone</label>
             <select
               name="tone"
               value={formData.tone}
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
             >
-              {toneOptions.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+              {toneOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -322,7 +339,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-between items-center mb-2">
-            <button 
+            <button
               onClick={() => setReasoningVisible(!reasoningVisible)}
               className="flex items-center text-purple-600 hover:text-purple-700"
             >
@@ -333,31 +350,31 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               onClick={handleCopy}
               className="flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
             >
-              {copied ? <Check className="h-4 w-4 mr-1 text-green-600" /> : <Copy className="h-4 w-4 mr-1" />}
+              {copied ? (
+                <Check className="h-4 w-4 mr-1 text-green-600" />
+              ) : (
+                <Copy className="h-4 w-4 mr-1" />
+              )}
               {copied ? 'Copied!' : 'Copy Result'}
             </button>
           </div>
-          
+
           {reasoningVisible && reasoningInsights && (
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-4">
               <h4 className="font-medium text-purple-800 mb-2 flex items-center">
                 <Sparkles className="h-4 w-4 mr-2" />
                 AI Strategic Reasoning
               </h4>
-              <div className="text-sm text-purple-700 whitespace-pre-wrap">
-                {reasoningInsights}
-              </div>
+              <div className="text-sm text-purple-700 whitespace-pre-wrap">{reasoningInsights}</div>
             </div>
           )}
-          
+
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <h4 className="font-medium text-gray-800 mb-3 flex items-center">
               {getContentIcon()}
               <span className="ml-2">Generated {getContentTitle()}</span>
             </h4>
-            <div className="text-sm text-gray-700 whitespace-pre-wrap">
-              {result}
-            </div>
+            <div className="text-sm text-gray-700 whitespace-pre-wrap">{result}</div>
           </div>
         </div>
       )}

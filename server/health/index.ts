@@ -38,7 +38,7 @@ async function checkDatabase(): Promise<HealthCheck> {
       name: 'database',
       status: 'healthy',
       message: 'Database connection successful',
-      responseTime: Date.now() - start
+      responseTime: Date.now() - start,
     };
   } catch (error: any) {
     return {
@@ -46,7 +46,7 @@ async function checkDatabase(): Promise<HealthCheck> {
       status: 'unhealthy',
       message: `Database connection failed: ${error.message}`,
       responseTime: Date.now() - start,
-      details: { error: error.message }
+      details: { error: error.message },
     };
   }
 }
@@ -63,18 +63,15 @@ async function checkSupabase(): Promise<HealthCheck> {
         name: 'supabase',
         status: 'warning',
         message: 'Supabase not configured (using mock data)',
-        responseTime: Date.now() - start
+        responseTime: Date.now() - start,
       };
     }
 
     // Test Supabase connection with a simple query
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('count')
-      .limit(1)
-      .single();
+    const { data, error } = await supabase.from('profiles').select('count').limit(1).single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows
       throw error;
     }
 
@@ -82,7 +79,7 @@ async function checkSupabase(): Promise<HealthCheck> {
       name: 'supabase',
       status: 'healthy',
       message: 'Supabase connection successful',
-      responseTime: Date.now() - start
+      responseTime: Date.now() - start,
     };
   } catch (error: any) {
     return {
@@ -90,7 +87,7 @@ async function checkSupabase(): Promise<HealthCheck> {
       status: 'unhealthy',
       message: `Supabase connection failed: ${error.message}`,
       responseTime: Date.now() - start,
-      details: { error: error.message }
+      details: { error: error.message },
     };
   }
 }
@@ -128,15 +125,15 @@ async function checkExternalAPIs(): Promise<HealthCheck> {
     results.push({ service: 'google_ai', status: 'unhealthy', message: error.message });
   }
 
-  const hasUnhealthy = results.some(r => r.status === 'unhealthy');
-  const hasWarning = results.some(r => r.status === 'warning');
+  const hasUnhealthy = results.some((r) => r.status === 'unhealthy');
+  const hasWarning = results.some((r) => r.status === 'warning');
 
   return {
     name: 'external_apis',
     status: hasUnhealthy ? 'unhealthy' : hasWarning ? 'warning' : 'healthy',
-    message: `External APIs: ${results.filter(r => r.status === 'healthy').length} healthy, ${results.filter(r => r.status === 'warning').length} warnings, ${results.filter(r => r.status === 'unhealthy').length} unhealthy`,
+    message: `External APIs: ${results.filter((r) => r.status === 'healthy').length} healthy, ${results.filter((r) => r.status === 'warning').length} warnings, ${results.filter((r) => r.status === 'unhealthy').length} unhealthy`,
     responseTime: Date.now() - start,
-    details: { apis: results }
+    details: { apis: results },
   };
 }
 
@@ -169,8 +166,8 @@ function checkMemory(): HealthCheck {
       heapUsed: usedMB,
       usagePercent,
       external: Math.round(memUsage.external / 1024 / 1024),
-      rss: Math.round(memUsage.rss / 1024 / 1024)
-    }
+      rss: Math.round(memUsage.rss / 1024 / 1024),
+    },
   };
 }
 
@@ -191,8 +188,8 @@ function checkSystem(): HealthCheck {
       platform: process.platform,
       arch: process.arch,
       nodeVersion: process.version,
-      loadAverage: loadAverage.map((load: number) => Math.round(load * 100) / 100)
-    }
+      loadAverage: loadAverage.map((load: number) => Math.round(load * 100) / 100),
+    },
   };
 }
 
@@ -205,14 +202,14 @@ export async function performHealthCheck(): Promise<HealthStatus> {
     checkSupabase(),
     checkExternalAPIs(),
     checkMemory(),
-    checkSystem()
+    checkSystem(),
   ]);
 
   const summary = {
     total: checks.length,
-    healthy: checks.filter(c => c.status === 'healthy').length,
-    unhealthy: checks.filter(c => c.status === 'unhealthy').length,
-    warning: checks.filter(c => c.status === 'warning').length
+    healthy: checks.filter((c) => c.status === 'healthy').length,
+    unhealthy: checks.filter((c) => c.status === 'unhealthy').length,
+    warning: checks.filter((c) => c.status === 'warning').length,
   };
 
   let overallStatus: 'healthy' | 'unhealthy' | 'degraded' = 'healthy';
@@ -228,7 +225,7 @@ export async function performHealthCheck(): Promise<HealthStatus> {
     uptime: Math.round(process.uptime()),
     version: process.env.npm_package_version || '1.0.0',
     checks,
-    summary
+    summary,
   };
 }
 
@@ -254,7 +251,7 @@ export async function healthCheckMiddleware(req: any, res: any) {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       error: 'Health check failed',
-      message: error.message
+      message: error.message,
     });
   }
 }

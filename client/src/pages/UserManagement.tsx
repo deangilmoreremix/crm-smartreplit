@@ -1,12 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Shield, Mail, Calendar, Search, Filter, UserCheck, UserX, Settings, Lock, Send, Key, AlertTriangle, CheckCircle } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
+  Shield,
+  Mail,
+  Calendar,
+  Search,
+  Filter,
+  UserCheck,
+  UserX,
+  Settings,
+  Lock,
+  Send,
+  Key,
+  AlertTriangle,
+  CheckCircle,
+} from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthStore } from '../store/authStore';
 import { useRole } from '../components/RoleBasedAccess';
 import { RoleMigrationPanel } from '../components/RoleMigrationPanel';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 
 interface User {
   id: string;
@@ -14,7 +39,14 @@ interface User {
   firstName?: string;
   lastName?: string;
   role: 'super_admin' | 'wl_user' | 'regular_user';
-  productTier?: 'super_admin' | 'whitelabel' | 'smartcrm' | 'sales_maximizer' | 'ai_boost_unlimited' | 'ai_communication' | 'smartcrm_bundle';
+  productTier?:
+    | 'super_admin'
+    | 'whitelabel'
+    | 'smartcrm'
+    | 'sales_maximizer'
+    | 'ai_boost_unlimited'
+    | 'ai_communication'
+    | 'smartcrm_bundle';
   tenantId: string;
   status: 'active' | 'inactive' | 'suspended';
   lastActive: string;
@@ -60,18 +92,18 @@ export default function UserManagement() {
     admin: {
       role: 'super_admin',
       productTier: 'super_admin',
-      description: 'Full system access'
+      description: 'Full system access',
     },
     sales: {
       role: 'wl_user',
       productTier: 'sales_maximizer',
-      description: 'Sales team member'
+      description: 'Sales team member',
     },
     client: {
       role: 'regular_user',
       productTier: 'smartcrm',
-      description: 'Standard user'
-    }
+      description: 'Standard user',
+    },
   };
 
   // Advanced filters
@@ -80,13 +112,13 @@ export default function UserManagement() {
     productTier: 'all',
     status: 'all',
     dateRange: 'all',
-    lastActive: 'all'
+    lastActive: 'all',
   });
 
   // Apply user template
   const applyTemplate = (templateKey: keyof typeof userTemplates) => {
     const template = userTemplates[templateKey];
-    setInviteData(prev => ({
+    setInviteData((prev) => ({
       ...prev,
       role: template.role as any,
       // Note: productTier would be set via separate API call
@@ -102,7 +134,7 @@ export default function UserManagement() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ daysInactive: 30 })
+        body: JSON.stringify({ daysInactive: 30 }),
       });
 
       const data = await response.json();
@@ -120,7 +152,7 @@ export default function UserManagement() {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -133,7 +165,7 @@ export default function UserManagement() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetTier: 'smartcrm_bundle' })
+        body: JSON.stringify({ targetTier: 'smartcrm_bundle' }),
       });
 
       const data = await response.json();
@@ -151,15 +183,18 @@ export default function UserManagement() {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<User | null>(null);
-  const [bulkActionConfirm, setBulkActionConfirm] = useState<{ action: string; count: number } | null>(null);
+  const [bulkActionConfirm, setBulkActionConfirm] = useState<{
+    action: string;
+    count: number;
+  } | null>(null);
 
   // Check if user has admin access - only super admins can manage users
-  const isAdmin = isSuperAdmin() || (currentUser?.email === 'dev@smartcrm.local');
+  const isAdmin = isSuperAdmin() || currentUser?.email === 'dev@smartcrm.local';
 
   // Auto-fetch users when page loads
   useEffect(() => {
@@ -174,10 +209,10 @@ export default function UserManagement() {
       const response = await fetch('/api/users', {
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
-      
+
       if (response.ok) {
         const usersData = await response.json();
         setUsers(usersData);
@@ -200,31 +235,37 @@ export default function UserManagement() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(inviteData),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
         toast({
-          title: "Success",
+          title: 'Success',
           description: `Invitation sent to ${inviteData.email}`,
         });
         setShowInviteModal(false);
-        setInviteData({ email: '', role: 'regular_user', firstName: '', lastName: '', permissions: [] });
+        setInviteData({
+          email: '',
+          role: 'regular_user',
+          firstName: '',
+          lastName: '',
+          permissions: [],
+        });
         fetchUsers();
       } else {
         toast({
-          title: "Failed to send invitation",
+          title: 'Failed to send invitation',
           description: data.error || 'Unknown error occurred',
-          variant: "destructive"
+          variant: 'destructive',
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error sending invitation",
+        title: 'Error sending invitation',
         description: error.message || 'Network error occurred',
-        variant: "destructive"
+        variant: 'destructive',
       });
     }
   };
@@ -235,29 +276,29 @@ export default function UserManagement() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: "User role updated successfully",
+          title: 'Success',
+          description: 'User role updated successfully',
         });
         fetchUsers();
       } else {
         toast({
-          title: "Failed to update role",
+          title: 'Failed to update role',
           description: data.error || 'Unknown error occurred',
-          variant: "destructive"
+          variant: 'destructive',
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error updating role",
+        title: 'Error updating role',
         description: error.message || 'Network error occurred',
-        variant: "destructive"
+        variant: 'destructive',
       });
     }
   };
@@ -268,68 +309,63 @@ export default function UserManagement() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
         toast({
-          title: "Success",
+          title: 'Success',
           description: `User ${newStatus === 'active' ? 'activated' : newStatus === 'suspended' ? 'suspended' : 'updated'} successfully`,
         });
         fetchUsers();
       } else {
         toast({
-          title: "Failed to update status",
+          title: 'Failed to update status',
           description: data.error || 'Unknown error occurred',
-          variant: "destructive"
+          variant: 'destructive',
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error updating status",
+        title: 'Error updating status',
         description: error.message || 'Network error occurred',
-        variant: "destructive"
+        variant: 'destructive',
       });
     }
   };
 
   const updateUserProductTier = async (userId: string, newTier: string) => {
     try {
-      console.log(`🔄 Updating product tier: userId=${userId}, newTier=${newTier}`);
-      
       // Update local state immediately for optimistic UI
-      setTierDropdownStates(prev => ({ ...prev, [userId]: newTier }));
-      
+      setTierDropdownStates((prev) => ({ ...prev, [userId]: newTier }));
+
       const response = await fetch(`/api/users/${userId}/product-tier`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productTier: newTier }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
-      console.log(`📡 Response status: ${response.status}`);
       const data = await response.json();
-      console.log(`📦 Response data:`, data);
 
       if (response.ok) {
-        console.log(`✅ Product tier updated successfully!`);
         toast({
-          title: "Success",
-          description: "User product tier updated successfully",
+          title: 'Success',
+          description: 'User product tier updated successfully',
         });
         // Re-fetch to confirm changes from server
         setTimeout(() => fetchUsers(), 500);
       } else {
         console.error(`❌ Failed to update product tier:`, data);
         toast({
-          title: "Failed to update product tier",
+          title: 'Failed to update product tier',
           description: data.error || 'Unknown error occurred',
-          variant: "destructive"
+          variant: 'destructive',
         });
         // Revert optimistic update on error
-        setTierDropdownStates(prev => {
+        setTierDropdownStates((prev) => {
           const updated = { ...prev };
           delete updated[userId];
           return updated;
@@ -337,9 +373,11 @@ export default function UserManagement() {
       }
     } catch (error) {
       console.error(`❌ Exception updating product tier:`, error);
-      alert(`Error updating product tier: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      alert(
+        `Error updating product tier: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       // Revert optimistic update on error
-      setTierDropdownStates(prev => {
+      setTierDropdownStates((prev) => {
         const updated = { ...prev };
         delete updated[userId];
         return updated;
@@ -348,7 +386,7 @@ export default function UserManagement() {
   };
 
   const deleteUser = async (userId: string) => {
-    const user = users.find(u => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     if (!user) return;
 
     setDeleteConfirmUser(user);
@@ -360,29 +398,29 @@ export default function UserManagement() {
     try {
       const response = await fetch(`/api/users/${deleteConfirmUser.id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       });
 
       const data = await response.json();
 
       if (response.ok) {
         toast({
-          title: "Success",
+          title: 'Success',
           description: `User ${deleteConfirmUser.email} deleted successfully`,
         });
         fetchUsers();
       } else {
         toast({
-          title: "Failed to delete user",
+          title: 'Failed to delete user',
           description: data.error || 'Unknown error occurred',
-          variant: "destructive"
+          variant: 'destructive',
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error deleting user",
+        title: 'Error deleting user',
         description: error.message || 'Network error occurred',
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setDeleteConfirmUser(null);
@@ -392,7 +430,7 @@ export default function UserManagement() {
   const sendPasswordSetupEmail = async (email: string, firstName?: string) => {
     try {
       setSendingPasswordEmail(email);
-      
+
       const response = await fetch('/api/admin/send-password-setup', {
         method: 'POST',
         credentials: 'include',
@@ -426,7 +464,7 @@ export default function UserManagement() {
   };
 
   const sendBulkPasswordSetupEmails = async () => {
-    const emailsToSend = filteredUsers.map(u => u.email).filter(Boolean);
+    const emailsToSend = filteredUsers.map((u) => u.email).filter(Boolean);
     if (emailsToSend.length === 0) {
       toast({
         title: 'No Users',
@@ -439,14 +477,14 @@ export default function UserManagement() {
     // Use confirmation dialog instead of confirm()
     setBulkActionConfirm({
       action: `Send password setup emails to ${emailsToSend.length} users?`,
-      count: emailsToSend.length
+      count: emailsToSend.length,
     });
   };
 
   const executeBulkPasswordSetup = async () => {
     if (!bulkActionConfirm) return;
 
-    const emailsToSend = filteredUsers.map(u => u.email).filter(Boolean);
+    const emailsToSend = filteredUsers.map((u) => u.email).filter(Boolean);
 
     try {
       const response = await fetch('/api/admin/send-bulk-password-setup', {
@@ -511,15 +549,17 @@ export default function UserManagement() {
     }
   };
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     const email = user.email?.toLowerCase() || '';
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
     const searchLower = searchTerm.toLowerCase();
 
     const matchesSearch = email.includes(searchLower) || fullName.includes(searchLower);
     const matchesRole = advancedFilters.role === 'all' || user.role === advancedFilters.role;
-    const matchesProductTier = advancedFilters.productTier === 'all' || user.productTier === advancedFilters.productTier;
-    const matchesStatus = advancedFilters.status === 'all' || user.status === advancedFilters.status;
+    const matchesProductTier =
+      advancedFilters.productTier === 'all' || user.productTier === advancedFilters.productTier;
+    const matchesStatus =
+      advancedFilters.status === 'all' || user.status === advancedFilters.status;
 
     // Date range filtering (simplified)
     let matchesDateRange = true;
@@ -558,7 +598,14 @@ export default function UserManagement() {
       }
     }
 
-    return matchesSearch && matchesRole && matchesProductTier && matchesStatus && matchesDateRange && matchesLastActive;
+    return (
+      matchesSearch &&
+      matchesRole &&
+      matchesProductTier &&
+      matchesStatus &&
+      matchesDateRange &&
+      matchesLastActive
+    );
   });
 
   const availableRoles = [
@@ -568,21 +615,39 @@ export default function UserManagement() {
   ];
 
   const availablePermissions = [
-    'users.create', 'users.edit', 'users.delete',
-    'contacts.create', 'contacts.edit', 'contacts.delete',
-    'deals.create', 'deals.edit', 'deals.delete',
-    'tasks.create', 'tasks.edit', 'tasks.delete',
-    'analytics.view', 'billing.view', 'settings.edit',
-    'ai_tools.use', 'integrations.manage', 'reports.export'
+    'users.create',
+    'users.edit',
+    'users.delete',
+    'contacts.create',
+    'contacts.edit',
+    'contacts.delete',
+    'deals.create',
+    'deals.edit',
+    'deals.delete',
+    'tasks.create',
+    'tasks.edit',
+    'tasks.delete',
+    'analytics.view',
+    'billing.view',
+    'settings.edit',
+    'ai_tools.use',
+    'integrations.manage',
+    'reports.export',
   ];
 
   if (!isAdmin) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div
+        className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
+      >
         <div className="text-center">
           <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Access Denied</h1>
-          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>You don't have permission to manage users.</p>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+            Access Denied
+          </h1>
+          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+            You don't have permission to manage users.
+          </p>
         </div>
       </div>
     );
@@ -590,7 +655,9 @@ export default function UserManagement() {
 
   if (isLoading) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div
+        className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}
+      >
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Loading users...</p>
@@ -672,10 +739,12 @@ export default function UserManagement() {
         {/* Migration Panel */}
         {showMigrationPanel && (
           <div className="mb-8">
-            <RoleMigrationPanel onComplete={() => {
-              fetchUsers();
-              setShowMigrationPanel(false);
-            }} />
+            <RoleMigrationPanel
+              onComplete={() => {
+                fetchUsers();
+                setShowMigrationPanel(false);
+              }}
+            />
           </div>
         )}
 
@@ -696,7 +765,7 @@ export default function UserManagement() {
             </div>
             <select
               value={advancedFilters.role}
-              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, role: e.target.value }))}
+              onChange={(e) => setAdvancedFilters((prev) => ({ ...prev, role: e.target.value }))}
               className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
               }`}
@@ -708,7 +777,9 @@ export default function UserManagement() {
             </select>
             <select
               value={advancedFilters.productTier}
-              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, productTier: e.target.value }))}
+              onChange={(e) =>
+                setAdvancedFilters((prev) => ({ ...prev, productTier: e.target.value }))
+              }
               className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
               }`}
@@ -724,7 +795,7 @@ export default function UserManagement() {
             </select>
             <select
               value={advancedFilters.status}
-              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, status: e.target.value }))}
+              onChange={(e) => setAdvancedFilters((prev) => ({ ...prev, status: e.target.value }))}
               className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
               }`}
@@ -740,7 +811,9 @@ export default function UserManagement() {
           <div className="flex flex-col sm:flex-row gap-4">
             <select
               value={advancedFilters.dateRange}
-              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, dateRange: e.target.value }))}
+              onChange={(e) =>
+                setAdvancedFilters((prev) => ({ ...prev, dateRange: e.target.value }))
+              }
               className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
               }`}
@@ -752,7 +825,9 @@ export default function UserManagement() {
             </select>
             <select
               value={advancedFilters.lastActive}
-              onChange={(e) => setAdvancedFilters(prev => ({ ...prev, lastActive: e.target.value }))}
+              onChange={(e) =>
+                setAdvancedFilters((prev) => ({ ...prev, lastActive: e.target.value }))
+              }
               className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                 isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
               }`}
@@ -762,13 +837,15 @@ export default function UserManagement() {
               <option value="inactive">Inactive (30+ days)</option>
             </select>
             <button
-              onClick={() => setAdvancedFilters({
-                role: 'all',
-                productTier: 'all',
-                status: 'all',
-                dateRange: 'all',
-                lastActive: 'all'
-              })}
+              onClick={() =>
+                setAdvancedFilters({
+                  role: 'all',
+                  productTier: 'all',
+                  status: 'all',
+                  dateRange: 'all',
+                  lastActive: 'all',
+                })
+              }
               className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
             >
               Clear Filters
@@ -782,27 +859,41 @@ export default function UserManagement() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className={`${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
                 <tr>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th
+                    className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}
+                  >
                     User
                   </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th
+                    className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}
+                  >
                     Role
                   </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th
+                    className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}
+                  >
                     Product Tier
                   </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th
+                    className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}
+                  >
                     Status
                   </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th
+                    className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}
+                  >
                     Last Active
                   </th>
-                  <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  <th
+                    className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}
+                  >
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y divide-gray-200 dark:divide-gray-700`}>
+              <tbody
+                className={`${isDark ? 'bg-gray-800' : 'bg-white'} divide-y divide-gray-200 dark:divide-gray-700`}
+              >
                 {filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -813,10 +904,14 @@ export default function UserManagement() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          <div
+                            className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                          >
                             {user.firstName} {user.lastName}
                           </div>
-                          <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-1`}>
+                          <div
+                            className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-1`}
+                          >
                             <Mail className="h-3 w-3" />
                             {user.email}
                           </div>
@@ -824,12 +919,17 @@ export default function UserManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.role === 'super_admin' ? 'bg-red-100 text-red-800' :
-                        user.role === 'wl_user' ? 'bg-purple-100 text-purple-800' :
-                        user.role === 'regular_user' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.role === 'super_admin'
+                            ? 'bg-red-100 text-red-800'
+                            : user.role === 'wl_user'
+                              ? 'bg-purple-100 text-purple-800'
+                              : user.role === 'regular_user'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
                         {user.role.replace('_', ' ')}
                       </span>
                     </td>
@@ -838,13 +938,19 @@ export default function UserManagement() {
                         value={tierDropdownStates[user.id] || user.productTier || 'smartcrm'}
                         onChange={(e) => updateUserProductTier(user.id, e.target.value)}
                         className={`px-2 py-1 text-xs font-semibold rounded-md border ${
-                          user.productTier === 'super_admin' ? 'bg-red-50 text-red-800 border-red-200' :
-                          user.productTier === 'whitelabel' ? 'bg-indigo-50 text-indigo-800 border-indigo-200' :
-                          user.productTier === 'smartcrm_bundle' ? 'bg-green-50 text-green-800 border-green-200' :
-                          user.productTier === 'ai_communication' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' :
-                          user.productTier === 'ai_boost_unlimited' ? 'bg-purple-50 text-purple-800 border-purple-200' :
-                          user.productTier === 'sales_maximizer' ? 'bg-orange-50 text-orange-800 border-orange-200' :
-                          'bg-blue-50 text-blue-800 border-blue-200'
+                          user.productTier === 'super_admin'
+                            ? 'bg-red-50 text-red-800 border-red-200'
+                            : user.productTier === 'whitelabel'
+                              ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                              : user.productTier === 'smartcrm_bundle'
+                                ? 'bg-green-50 text-green-800 border-green-200'
+                                : user.productTier === 'ai_communication'
+                                  ? 'bg-yellow-50 text-yellow-800 border-yellow-200'
+                                  : user.productTier === 'ai_boost_unlimited'
+                                    ? 'bg-purple-50 text-purple-800 border-purple-200'
+                                    : user.productTier === 'sales_maximizer'
+                                      ? 'bg-orange-50 text-orange-800 border-orange-200'
+                                      : 'bg-blue-50 text-blue-800 border-blue-200'
                         }`}
                         data-testid={`select-product-tier-${user.id}`}
                       >
@@ -858,15 +964,21 @@ export default function UserManagement() {
                       </select>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.status === 'active' ? 'bg-green-100 text-green-800' :
-                        user.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : user.status === 'inactive'
+                              ? 'bg-gray-100 text-gray-800'
+                              : 'bg-red-100 text-red-800'
+                        }`}
+                      >
                         {user.status}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                    >
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {new Date(user.lastActive).toLocaleDateString()}
@@ -891,7 +1003,7 @@ export default function UserManagement() {
                           <Edit className="h-4 w-4" />
                           Edit
                         </button>
-                        
+
                         {user.status === 'active' ? (
                           <button
                             onClick={() => updateUserStatus(user.id, 'suspended')}
@@ -932,12 +1044,29 @@ export default function UserManagement() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
             { label: 'Total Users', value: users.length, color: 'blue' },
-            { label: 'Active Users', value: users.filter(u => u.status === 'active').length, color: 'green' },
-            { label: 'Suspended', value: users.filter(u => u.status === 'suspended').length, color: 'red' },
-            { label: 'Admins', value: users.filter(u => u.role.includes('admin')).length, color: 'purple' },
+            {
+              label: 'Active Users',
+              value: users.filter((u) => u.status === 'active').length,
+              color: 'green',
+            },
+            {
+              label: 'Suspended',
+              value: users.filter((u) => u.status === 'suspended').length,
+              color: 'red',
+            },
+            {
+              label: 'Admins',
+              value: users.filter((u) => u.role.includes('admin')).length,
+              color: 'purple',
+            },
           ].map((stat) => (
-            <div key={stat.label} className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg shadow`}>
-              <h3 className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{stat.label}</h3>
+            <div
+              key={stat.label}
+              className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-lg shadow`}
+            >
+              <h3 className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                {stat.label}
+              </h3>
               <p className={`text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
             </div>
           ))}
@@ -954,7 +1083,9 @@ export default function UserManagement() {
 
             {/* User Templates */}
             <div className="mb-6">
-              <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-3`}>
+              <h4
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-3`}
+              >
                 Quick Templates
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -963,10 +1094,14 @@ export default function UserManagement() {
                     key={key}
                     onClick={() => applyTemplate(key as keyof typeof userTemplates)}
                     className={`p-3 border rounded-lg text-left hover:bg-blue-50 hover:border-blue-300 transition-colors ${
-                      isDark ? 'border-gray-600 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 bg-gray-50'
+                      isDark
+                        ? 'border-gray-600 bg-gray-700 hover:bg-gray-600'
+                        : 'border-gray-300 bg-gray-50'
                     }`}
                   >
-                    <div className={`font-medium capitalize ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <div
+                      className={`font-medium capitalize ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       {key}
                     </div>
                     <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -979,13 +1114,15 @@ export default function UserManagement() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                >
                   Email Address *
                 </label>
                 <input
                   type="email"
                   value={inviteData.email}
-                  onChange={(e) => setInviteData({...inviteData, email: e.target.value})}
+                  onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                   }`}
@@ -993,12 +1130,14 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                >
                   Role *
                 </label>
                 <select
                   value={inviteData.role}
-                  onChange={(e) => setInviteData({...inviteData, role: e.target.value})}
+                  onChange={(e) => setInviteData({ ...inviteData, role: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                   }`}
@@ -1011,26 +1150,30 @@ export default function UserManagement() {
                 </select>
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                >
                   First Name
                 </label>
                 <input
                   type="text"
                   value={inviteData.firstName}
-                  onChange={(e) => setInviteData({...inviteData, firstName: e.target.value})}
+                  onChange={(e) => setInviteData({ ...inviteData, firstName: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                   }`}
                 />
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                >
                   Last Name
                 </label>
                 <input
                   type="text"
                   value={inviteData.lastName}
-                  onChange={(e) => setInviteData({...inviteData, lastName: e.target.value})}
+                  onChange={(e) => setInviteData({ ...inviteData, lastName: e.target.value })}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
                   }`}
@@ -1042,7 +1185,9 @@ export default function UserManagement() {
               <button
                 onClick={() => setShowInviteModal(false)}
                 className={`px-4 py-2 border rounded-md hover:bg-gray-50 ${
-                  isDark ? 'text-gray-300 border-gray-600 hover:bg-gray-700' : 'text-gray-600 border-gray-300'
+                  isDark
+                    ? 'text-gray-300 border-gray-600 hover:bg-gray-700'
+                    : 'text-gray-600 border-gray-300'
                 }`}
               >
                 Cancel
@@ -1062,90 +1207,104 @@ export default function UserManagement() {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden`}>
+          <div
+            className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden`}
+          >
             <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
               Edit User: {editingUser.email}
             </h3>
             <div className="overflow-y-auto flex-1 pr-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Role
-                </label>
-                <select
-                  defaultValue={editingUser.role}
-                  onChange={(e) => updateUserRole(editingUser.id, e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  data-testid="select-user-role"
-                >
-                  {availableRoles.map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                  >
+                    Role
+                  </label>
+                  <select
+                    defaultValue={editingUser.role}
+                    onChange={(e) => updateUserRole(editingUser.id, e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                    }`}
+                    data-testid="select-user-role"
+                  >
+                    {availableRoles.map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                  >
+                    Status
+                  </label>
+                  <select
+                    defaultValue={editingUser.status}
+                    onChange={(e) => updateUserStatus(editingUser.id, e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                    }`}
+                    data-testid="select-user-status"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}
+                  >
+                    Product Tier
+                  </label>
+                  <select
+                    defaultValue={editingUser.productTier || 'smartcrm'}
+                    onChange={(e) => updateUserProductTier(editingUser.id, e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
+                    }`}
+                    data-testid="select-product-tier"
+                  >
+                    <option value="super_admin">Super Admin</option>
+                    <option value="whitelabel">Whitelabel</option>
+                    <option value="smartcrm_bundle">SmartCRM Bundle</option>
+                    <option value="smartcrm">SmartCRM</option>
+                    <option value="sales_maximizer">Sales Maximizer</option>
+                    <option value="ai_boost_unlimited">AI Boost Unlimited</option>
+                    <option value="ai_communication">AI Communication</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Status
-                </label>
-                <select
-                  defaultValue={editingUser.status}
-                  onChange={(e) => updateUserStatus(editingUser.id, e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  data-testid="select-user-status"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                </select>
-              </div>
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Product Tier
-                </label>
-                <select
-                  defaultValue={editingUser.productTier || 'smartcrm'}
-                  onChange={(e) => updateUserProductTier(editingUser.id, e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                  }`}
-                  data-testid="select-product-tier"
-                >
-                  <option value="super_admin">Super Admin</option>
-                  <option value="whitelabel">Whitelabel</option>
-                  <option value="smartcrm_bundle">SmartCRM Bundle</option>
-                  <option value="smartcrm">SmartCRM</option>
-                  <option value="sales_maximizer">Sales Maximizer</option>
-                  <option value="ai_boost_unlimited">AI Boost Unlimited</option>
-                  <option value="ai_communication">AI Communication</option>
-                </select>
-              </div>
-            </div>
 
-            {/* Feature Management Coming Soon */}
-            <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} pt-4 mb-6`}>
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                <h4 className={`text-md font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Feature Access Control
-                </h4>
+              {/* Feature Management Coming Soon */}
+              <div
+                className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-200'} pt-4 mb-6`}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Lock className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <h4
+                    className={`text-md font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    Feature Access Control
+                  </h4>
+                </div>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Individual feature management coming soon. Features are automatically inherited
+                  based on the user's product tier.
+                </p>
               </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Individual feature management coming soon. Features are automatically inherited based on the user's product tier.
-              </p>
-            </div>
-
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
               <button
                 onClick={() => setEditingUser(null)}
                 className={`px-4 py-2 border rounded-md hover:bg-gray-50 ${
-                  isDark ? 'text-gray-300 border-gray-600 hover:bg-gray-700' : 'text-gray-600 border-gray-300'
+                  isDark
+                    ? 'text-gray-300 border-gray-600 hover:bg-gray-700'
+                    : 'text-gray-600 border-gray-300'
                 }`}
                 data-testid="button-close-edit-user"
               >
@@ -1175,8 +1334,12 @@ export default function UserManagement() {
                   <Users className="h-8 w-8 text-gray-400" />
                 </div>
                 <div>
-                  <p className="font-medium">{deleteConfirmUser.firstName} {deleteConfirmUser.lastName}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{deleteConfirmUser.email}</p>
+                  <p className="font-medium">
+                    {deleteConfirmUser.firstName} {deleteConfirmUser.lastName}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {deleteConfirmUser.email}
+                  </p>
                   <p className="text-xs text-gray-500">Role: {deleteConfirmUser.role}</p>
                 </div>
               </div>
@@ -1201,20 +1364,16 @@ export default function UserManagement() {
               <Mail className="h-5 w-5 text-blue-600" />
               Confirm Bulk Action
             </DialogTitle>
-            <DialogDescription>
-              {bulkActionConfirm?.action}
-            </DialogDescription>
+            <DialogDescription>{bulkActionConfirm?.action}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkActionConfirm(null)}>
               Cancel
             </Button>
-            <Button onClick={executeBulkPasswordSetup}>
-              Send Emails
-            </Button>
+            <Button onClick={executeBulkPasswordSetup}>Send Emails</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
+}

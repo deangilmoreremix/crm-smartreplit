@@ -32,9 +32,9 @@ export default function AutomatedLifecycle() {
       description: 'Automatically suspend users inactive for a specified period',
       config: {
         enabled: false,
-        threshold: 90
+        threshold: 90,
       },
-      isActive: false
+      isActive: false,
     },
     {
       id: 'upgrade_trials',
@@ -43,9 +43,9 @@ export default function AutomatedLifecycle() {
       description: 'Automatically upgrade high-usage trial users to paid plans',
       config: {
         enabled: false,
-        targetTier: 'smartcrm_bundle'
+        targetTier: 'smartcrm_bundle',
       },
-      isActive: false
+      isActive: false,
     },
     {
       id: 'send_reminders',
@@ -55,9 +55,9 @@ export default function AutomatedLifecycle() {
       config: {
         enabled: false,
         threshold: 30,
-        frequency: 'weekly'
+        frequency: 'weekly',
       },
-      isActive: false
+      isActive: false,
     },
     {
       id: 'cleanup_old_data',
@@ -66,16 +66,16 @@ export default function AutomatedLifecycle() {
       description: 'Automatically clean up old logs and temporary data',
       config: {
         enabled: false,
-        threshold: 365
+        threshold: 365,
       },
-      isActive: false
-    }
+      isActive: false,
+    },
   ]);
 
   const { toast } = useToast();
 
   const handleToggleAction = async (actionId: string, enabled: boolean) => {
-    const action = actions.find(a => a.id === actionId);
+    const action = actions.find((a) => a.id === actionId);
     if (!action) return;
 
     try {
@@ -87,21 +87,21 @@ export default function AutomatedLifecycle() {
           actionType: actionId,
           config: {
             ...action.config,
-            enabled
-          }
-        })
+            enabled,
+          },
+        }),
       });
 
       if (response.ok) {
-        setActions(prev => prev.map(a =>
-          a.id === actionId
-            ? { ...a, config: { ...a.config, enabled }, isActive: enabled }
-            : a
-        ));
+        setActions((prev) =>
+          prev.map((a) =>
+            a.id === actionId ? { ...a, config: { ...a.config, enabled }, isActive: enabled } : a
+          )
+        );
 
         toast({
           title: 'Success',
-          description: `${action.name} ${enabled ? 'enabled' : 'disabled'} successfully`
+          description: `${action.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
         });
       } else {
         throw new Error('Failed to update automated action');
@@ -110,21 +110,19 @@ export default function AutomatedLifecycle() {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
 
   const handleConfigChange = (actionId: string, key: string, value: any) => {
-    setActions(prev => prev.map(a =>
-      a.id === actionId
-        ? { ...a, config: { ...a.config, [key]: value } }
-        : a
-    ));
+    setActions((prev) =>
+      prev.map((a) => (a.id === actionId ? { ...a, config: { ...a.config, [key]: value } } : a))
+    );
   };
 
   const runActionNow = async (actionId: string) => {
-    const action = actions.find(a => a.id === actionId);
+    const action = actions.find((a) => a.id === actionId);
     if (!action) return;
 
     try {
@@ -132,20 +130,18 @@ export default function AutomatedLifecycle() {
       // In production, you'd call the appropriate API endpoint
       toast({
         title: 'Action Executed',
-        description: `${action.name} executed successfully`
+        description: `${action.name} executed successfully`,
       });
 
       // Update last run time
-      setActions(prev => prev.map(a =>
-        a.id === actionId
-          ? { ...a, lastRun: new Date().toISOString() }
-          : a
-      ));
+      setActions((prev) =>
+        prev.map((a) => (a.id === actionId ? { ...a, lastRun: new Date().toISOString() } : a))
+      );
     } catch (error: any) {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -217,7 +213,9 @@ export default function AutomatedLifecycle() {
                         id={`threshold-${action.id}`}
                         type="number"
                         value={action.config.threshold || 90}
-                        onChange={(e) => handleConfigChange(action.id, 'threshold', parseInt(e.target.value))}
+                        onChange={(e) =>
+                          handleConfigChange(action.id, 'threshold', parseInt(e.target.value))
+                        }
                         min="1"
                         max="365"
                       />
@@ -229,7 +227,9 @@ export default function AutomatedLifecycle() {
                       <Label htmlFor={`targetTier-${action.id}`}>Target Tier</Label>
                       <Select
                         value={action.config.targetTier || 'smartcrm_bundle'}
-                        onValueChange={(value) => handleConfigChange(action.id, 'targetTier', value)}
+                        onValueChange={(value) =>
+                          handleConfigChange(action.id, 'targetTier', value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -251,7 +251,9 @@ export default function AutomatedLifecycle() {
                           id={`threshold-${action.id}`}
                           type="number"
                           value={action.config.threshold || 30}
-                          onChange={(e) => handleConfigChange(action.id, 'threshold', parseInt(e.target.value))}
+                          onChange={(e) =>
+                            handleConfigChange(action.id, 'threshold', parseInt(e.target.value))
+                          }
                           min="1"
                           max="90"
                         />
@@ -260,7 +262,9 @@ export default function AutomatedLifecycle() {
                         <Label htmlFor={`frequency-${action.id}`}>Frequency</Label>
                         <Select
                           value={action.config.frequency || 'weekly'}
-                          onValueChange={(value) => handleConfigChange(action.id, 'frequency', value)}
+                          onValueChange={(value) =>
+                            handleConfigChange(action.id, 'frequency', value)
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue />
@@ -282,7 +286,9 @@ export default function AutomatedLifecycle() {
                         id={`threshold-${action.id}`}
                         type="number"
                         value={action.config.threshold || 365}
-                        onChange={(e) => handleConfigChange(action.id, 'threshold', parseInt(e.target.value))}
+                        onChange={(e) =>
+                          handleConfigChange(action.id, 'threshold', parseInt(e.target.value))
+                        }
                         min="30"
                         max="3650"
                       />
@@ -321,8 +327,9 @@ export default function AutomatedLifecycle() {
                 <div>
                   <h3 className="font-medium text-blue-900">Automation Summary</h3>
                   <p className="text-sm text-blue-700">
-                    {actions.filter(a => a.config.enabled).length} of {actions.length} automated actions are currently active.
-                    These actions help maintain system health and user engagement automatically.
+                    {actions.filter((a) => a.config.enabled).length} of {actions.length} automated
+                    actions are currently active. These actions help maintain system health and user
+                    engagement automatically.
                   </p>
                 </div>
               </div>

@@ -16,40 +16,44 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
 let demoResults = {
   tests: [],
   passed: 0,
-  failed: 0
+  failed: 0,
 };
 
 // Helper function to make HTTP requests
 function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https:') ? https : http;
-    const req = protocol.request(url, {
-      method: options.method || 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'SmartCRM-Demo-Test/1.0',
-        ...options.headers
+    const req = protocol.request(
+      url,
+      {
+        method: options.method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SmartCRM-Demo-Test/1.0',
+          ...options.headers,
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const jsonData = data ? JSON.parse(data) : {};
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: jsonData,
+            });
+          } catch (e) {
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: data,
+            });
+          }
+        });
       }
-    }, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const jsonData = data ? JSON.parse(data) : {};
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: jsonData
-          });
-        } catch (e) {
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: data
-          });
-        }
-      });
-    });
+    );
 
     req.on('error', reject);
     req.setTimeout(10000, () => {
@@ -77,7 +81,7 @@ async function demoHealthCheck() {
     demoResults.tests.push({
       name: 'Health Check',
       passed,
-      message: passed ? 'Health endpoint responding correctly' : 'Health check failed'
+      message: passed ? 'Health endpoint responding correctly' : 'Health check failed',
     });
 
     if (passed) demoResults.passed++;
@@ -91,7 +95,7 @@ async function demoHealthCheck() {
     demoResults.tests.push({
       name: 'Health Check',
       passed: false,
-      message: `Health check error: ${error.message}`
+      message: `Health check error: ${error.message}`,
     });
     demoResults.failed++;
     return false;
@@ -110,7 +114,7 @@ async function demoSupabaseTest() {
     demoResults.tests.push({
       name: 'Supabase Connection',
       passed,
-      message: passed ? 'Supabase connection successful' : 'Supabase connection issue'
+      message: passed ? 'Supabase connection successful' : 'Supabase connection issue',
     });
 
     if (passed) demoResults.passed++;
@@ -124,7 +128,7 @@ async function demoSupabaseTest() {
     demoResults.tests.push({
       name: 'Supabase Connection',
       passed: false,
-      message: `Supabase test error: ${error.message}`
+      message: `Supabase test error: ${error.message}`,
     });
     demoResults.failed++;
     return false;
@@ -143,7 +147,9 @@ async function demoOpenAIStatus() {
     demoResults.tests.push({
       name: 'OpenAI Status',
       passed: configured,
-      message: configured ? `OpenAI configured with model: ${response.data.model}` : 'OpenAI not configured'
+      message: configured
+        ? `OpenAI configured with model: ${response.data.model}`
+        : 'OpenAI not configured',
     });
 
     if (configured) demoResults.passed++;
@@ -157,7 +163,7 @@ async function demoOpenAIStatus() {
     demoResults.tests.push({
       name: 'OpenAI Status',
       passed: false,
-      message: `OpenAI status error: ${error.message}`
+      message: `OpenAI status error: ${error.message}`,
     });
     demoResults.failed++;
     return false;
@@ -172,8 +178,8 @@ async function demoFallbackMechanism() {
       body: {
         userMetrics: { totalDeals: 5, totalValue: 25000 },
         timeOfDay: 'morning',
-        recentActivity: ['Test activity']
-      }
+        recentActivity: ['Test activity'],
+      },
     });
 
     const hasFallback = response.data.source === 'intelligent_fallback';
@@ -184,7 +190,7 @@ async function demoFallbackMechanism() {
     demoResults.tests.push({
       name: 'Fallback Mechanism',
       passed: response.status === 200,
-      message: hasFallback ? 'Intelligent fallback working' : 'AI service responding'
+      message: hasFallback ? 'Intelligent fallback working' : 'AI service responding',
     });
 
     if (response.status === 200) demoResults.passed++;
@@ -198,7 +204,7 @@ async function demoFallbackMechanism() {
     demoResults.tests.push({
       name: 'Fallback Mechanism',
       passed: false,
-      message: `Fallback test error: ${error.message}`
+      message: `Fallback test error: ${error.message}`,
     });
     demoResults.failed++;
     return false;
@@ -282,17 +288,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (arg === '--help' || arg === '-h') {
     showUsage();
   } else {
-    runDemo().catch(error => {
+    runDemo().catch((error) => {
       console.error('❌ Demo failed:', error);
       process.exit(1);
     });
   }
 }
 
-export {
-  runDemo,
-  demoHealthCheck,
-  demoSupabaseTest,
-  demoOpenAIStatus,
-  demoFallbackMechanism
-};
+export { runDemo, demoHealthCheck, demoSupabaseTest, demoOpenAIStatus, demoFallbackMechanism };

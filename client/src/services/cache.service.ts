@@ -19,11 +19,11 @@ export const cacheService = {
       const item = {
         data,
         expiry: ttl ? Date.now() + ttl : null,
-        tags: tags || []
+        tags: tags || [],
       };
       localStorage.setItem(`${namespace}_${key}`, JSON.stringify(item));
     } catch {
       // Ignore storage errors
     }
-  }
+  },
 };

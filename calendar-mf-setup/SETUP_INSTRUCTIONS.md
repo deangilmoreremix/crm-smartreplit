@@ -19,6 +19,7 @@ npm install @originjs/vite-plugin-federation
 Replace your entire `vite.config.js` with the provided `vite.config.js` file from this setup package.
 
 **Key configuration details:**
+
 - **Scope name**: `CalendarApp`
 - **Entry file**: `remoteEntry.js`
 - **Exposed module**: `./CalendarApp` → `./src/CalendarApp.tsx`
@@ -33,6 +34,7 @@ Replace your entire `vite.config.js` with the provided `vite.config.js` file fro
 3. **Important**: Replace `YourMainApp` with your actual main component import
 
 Example:
+
 ```tsx
 // If your main app is at src/App.tsx
 import YourMainApp from './App';
@@ -91,16 +93,20 @@ npm run build
 After deployment, check these URLs:
 
 ### ✅ Module Federation Entry (MUST work)
+
 ```
 https://calendar.smartcrm.vip/remoteEntry.js
 ```
+
 - Should return JavaScript code (not HTML)
 - Should contain "CalendarApp" references
 
 ### ✅ Standalone App (Should still work)
+
 ```
 https://calendar.smartcrm.vip/
 ```
+
 - Should show your calendar/dashboard app as normal
 
 ---
@@ -117,7 +123,7 @@ console.log(window.CalendarApp);
 // Should show: {get: ƒ, init: ƒ}
 
 // Test loading the module
-window.CalendarApp.get('./CalendarApp').then(factory => {
+window.CalendarApp.get('./CalendarApp').then((factory) => {
   const module = factory();
   console.log('Module loaded:', module);
 });
@@ -136,22 +142,29 @@ window.CalendarApp.get('./CalendarApp').then(factory => {
 ## 🔧 Troubleshooting
 
 ### Issue: remoteEntry.js returns 404
+
 **Solution**: Make sure `filename: 'remoteEntry.js'` is in your vite.config.js
 
 ### Issue: remoteEntry.js returns HTML instead of JS
-**Solution**: 
+
+**Solution**:
+
 - Your build didn't include Module Federation
 - Check that `@originjs/vite-plugin-federation` is installed
 - Verify the plugin is in your vite.config.js
 
 ### Issue: CORS errors
+
 **Solution**: Verify CORS headers in vite.config.js (already included in provided config)
 
 ### Issue: Module not found
+
 **Solution**: Check that `./CalendarApp` path matches your actual file location in `exposes` config
 
 ### Issue: Build fails
-**Solution**: 
+
+**Solution**:
+
 ```bash
 # Clean and rebuild
 rm -rf node_modules dist
@@ -206,6 +219,7 @@ If Module Federation still doesn't work:
 ## ✨ Once Complete
 
 Your calendar will load seamlessly in SmartCRM via Module Federation with:
+
 - ✅ Better performance (no iframe overhead)
 - ✅ Direct props passing
 - ✅ Shared React instances

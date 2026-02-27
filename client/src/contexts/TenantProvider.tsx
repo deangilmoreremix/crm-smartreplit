@@ -54,21 +54,21 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   const fetchTenantInfo = async () => {
     try {
       setIsLoading(true);
-      
+
       // Extract tenant ID from various sources
       const tenantId = getTenantIdFromEnvironment();
-      
+
       if (tenantId) {
         const response = await fetch('/api/tenant/info', {
           headers: {
             'X-Tenant-ID': tenantId,
           },
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setTenant(data.tenant);
-          
+
           // Apply branding immediately after fetching
           if (data.tenant) {
             applyTenantBranding(data.tenant);
@@ -81,7 +81,10 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
       }
     } catch (error) {
       // Only log significant errors, not network failures during development
-      console.debug('Tenant info fetch skipped:', error instanceof Error ? error.message : 'Unknown error');
+      console.debug(
+        'Tenant info fetch skipped:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +94,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
     // Method 1: From subdomain
     const hostname = window.location.hostname;
     const subdomain = hostname.split('.')[0];
-    
+
     if (subdomain && subdomain !== 'www' && subdomain !== 'localhost') {
       return subdomain;
     }
@@ -119,14 +122,14 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
 
   const applyTenantBranding = (tenantData: Tenant) => {
     const root = document.documentElement;
-    
+
     // Apply custom CSS variables for branding
     root.style.setProperty('--primary-color', tenantData.branding.primaryColor);
     root.style.setProperty('--secondary-color', tenantData.branding.secondaryColor);
-    
+
     // Update document title
     document.title = `${tenantData.branding.companyName} - Smart CRM`;
-    
+
     // Update favicon if custom logo exists
     if (tenantData.branding.logo) {
       updateFavicon(tenantData.branding.logo);
@@ -134,7 +137,9 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   };
 
   const updateFavicon = (logoUrl: string) => {
-    const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement || document.createElement('link');
+    const link =
+      (document.querySelector("link[rel*='icon']") as HTMLLinkElement) ||
+      document.createElement('link');
     link.type = 'image/x-icon';
     link.rel = 'shortcut icon';
     link.href = logoUrl;

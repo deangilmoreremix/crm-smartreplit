@@ -1,6 +1,13 @@
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { db } from '../db';
-import { userCredits, creditTransactions, usagePlans, profiles, type InsertUserCredits, type InsertCreditTransaction } from '../../shared/schema';
+import {
+  userCredits,
+  creditTransactions,
+  usagePlans,
+  profiles,
+  type InsertUserCredits,
+  type InsertCreditTransaction,
+} from '../../shared/schema';
 
 export interface CreditPurchaseData {
   userId: string;
@@ -121,7 +128,10 @@ export class CreditService {
         stripeTransactionId: data.stripeTransactionId,
       };
 
-      const result = await db.insert(creditTransactions).values(transaction).returning({ id: creditTransactions.id });
+      const result = await db
+        .insert(creditTransactions)
+        .values(transaction)
+        .returning({ id: creditTransactions.id });
 
       return {
         success: true,
@@ -144,7 +154,9 @@ export class CreditService {
       const currentBalance = await this.getCreditBalance(data.userId);
 
       if (currentBalance.availableCredits < data.amount) {
-        throw new Error(`Insufficient credits. Available: ${currentBalance.availableCredits}, Required: ${data.amount}`);
+        throw new Error(
+          `Insufficient credits. Available: ${currentBalance.availableCredits}, Required: ${data.amount}`
+        );
       }
 
       // Calculate new balance
@@ -172,7 +184,10 @@ export class CreditService {
         usageEventId: data.usageEventId,
       };
 
-      const result = await db.insert(creditTransactions).values(transaction).returning({ id: creditTransactions.id });
+      const result = await db
+        .insert(creditTransactions)
+        .values(transaction)
+        .returning({ id: creditTransactions.id });
 
       return {
         success: true,
@@ -211,7 +226,7 @@ export class CreditService {
         .orderBy(desc(creditTransactions.createdAt))
         .limit(limit);
 
-      return transactions.map(transaction => ({
+      return transactions.map((transaction) => ({
         id: transaction.id,
         type: transaction.type,
         amount: parseFloat(transaction.amount),
@@ -235,12 +250,9 @@ export class CreditService {
       const packages = await db
         .select()
         .from(usagePlans)
-        .where(and(
-          eq(usagePlans.billingType, 'pay_per_use'),
-          eq(usagePlans.isActive, true)
-        ));
+        .where(and(eq(usagePlans.billingType, 'pay_per_use'), eq(usagePlans.isActive, true)));
 
-      return packages.map(pkg => {
+      return packages.map((pkg) => {
         const limits = pkg.limits as any;
         return {
           id: pkg.id,
@@ -261,7 +273,12 @@ export class CreditService {
   /**
    * Admin: Grant credits to user
    */
-  static async grantCredits(userId: string, amount: number, description: string, adminId: string): Promise<any> {
+  static async grantCredits(
+    userId: string,
+    amount: number,
+    description: string,
+    adminId: string
+  ): Promise<any> {
     try {
       // Get current balance
       const currentBalance = await this.getCreditBalance(userId);
@@ -314,7 +331,12 @@ export class CreditService {
   /**
    * Process refund - return credits to user
    */
-  static async refundCredits(userId: string, amount: number, description: string, stripeTransactionId?: string): Promise<any> {
+  static async refundCredits(
+    userId: string,
+    amount: number,
+    description: string,
+    stripeTransactionId?: string
+  ): Promise<any> {
     try {
       // Get current balance
       const currentBalance = await this.getCreditBalance(userId);

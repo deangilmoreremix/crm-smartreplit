@@ -29,8 +29,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
-  }
+    flowType: 'pkce',
+  },
 });
 
 async function runTests() {
@@ -52,7 +52,10 @@ async function runTests() {
 
   // Test 2: Check current auth state
   console.log('\n3. Checking Auth State...');
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
   if (sessionError) {
     console.log('⚠️  Session error:', sessionError.message);
   } else if (session) {
@@ -63,12 +66,12 @@ async function runTests() {
 
   // Test 3: Check if auth functions work
   console.log('\n4. Testing Auth Functions...');
-  
+
   // Test signInWithPassword with invalid credentials (should fail gracefully)
   const testEmail = 'test-nonexistent@example.com';
   const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
     email: testEmail,
-    password: 'test-password'
+    password: 'test-password',
   });
 
   if (signInError) {
@@ -88,9 +91,12 @@ async function runTests() {
   // Test 4: Check password reset email sending
   console.log('\n5. Testing Password Reset Email...');
   const resetEmail = 'keith@beappsolute.com';
-  const { data: resetData, error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-    redirectTo: 'https://app.smartcrm.vip/auth/reset-password'
-  });
+  const { data: resetData, error: resetError } = await supabase.auth.resetPasswordForEmail(
+    resetEmail,
+    {
+      redirectTo: 'https://app.smartcrm.vip/auth/reset-password',
+    }
+  );
 
   if (resetError) {
     console.log('❌ Password reset failed:', resetError.message);
@@ -98,9 +104,12 @@ async function runTests() {
   } else {
     console.log('✅ Password reset email sent successfully');
     passed++;
-    
+
     // Get the user to check if they exist
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError) {
       console.log('⚠️  Could not fetch user info:', userError.message);
     } else if (user) {
@@ -115,16 +124,19 @@ async function runTests() {
   const expectedRedirects = [
     'https://app.smartcrm.vip/auth/reset-password',
     'https://app.smartcrm.vip/auth/confirm',
-    'https://app.smartcrm.vip/auth/callback'
+    'https://app.smartcrm.vip/auth/callback',
   ];
-  
+
   console.log('Expected redirect URLs:');
-  expectedRedirects.forEach(url => console.log('   -', url));
+  expectedRedirects.forEach((url) => console.log('   -', url));
   console.log('✅ Redirect URLs documented');
 
   // Test 6: Check session after potential recovery
   console.log('\n7. Final Session Check...');
-  const { data: { session: finalSession }, error: finalSessionError } = await supabase.auth.getSession();
+  const {
+    data: { session: finalSession },
+    error: finalSessionError,
+  } = await supabase.auth.getSession();
   if (finalSessionError) {
     console.log('❌ Final session check error:', finalSessionError.message);
     failed++;
@@ -157,7 +169,7 @@ async function runTests() {
   }
 }
 
-runTests().catch(err => {
+runTests().catch((err) => {
   console.error('❌ Test runner error:', err);
   process.exit(1);
 });

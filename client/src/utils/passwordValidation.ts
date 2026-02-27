@@ -48,17 +48,27 @@ export const validatePassword = (password: string): PasswordValidationResult => 
 
   // Bonus points for additional complexity
   if (password.length >= 20) score += 5;
-  if (/[^\w\s]/.test(password) && /\d/.test(password) && /[a-z]/.test(password) && /[A-Z]/.test(password)) {
+  if (
+    /[^\w\s]/.test(password) &&
+    /\d/.test(password) &&
+    /[a-z]/.test(password) &&
+    /[A-Z]/.test(password)
+  ) {
     score += 10; // All character types
   }
 
   // Common password patterns to avoid
   const commonPatterns = [
-    /^password/i, /^123456/, /^qwerty/i, /^admin/i,
-    /^user/i, /^login/i, /^welcome/i
+    /^password/i,
+    /^123456/,
+    /^qwerty/i,
+    /^admin/i,
+    /^user/i,
+    /^login/i,
+    /^welcome/i,
   ];
 
-  if (commonPatterns.some(pattern => pattern.test(password))) {
+  if (commonPatterns.some((pattern) => pattern.test(password))) {
     errors.push('Password contains common patterns that are easily guessed');
     score = Math.max(0, score - 20);
   }
@@ -83,24 +93,32 @@ export const validatePassword = (password: string): PasswordValidationResult => 
     valid: errors.length === 0,
     errors,
     strength,
-    score: Math.min(100, Math.max(0, score))
+    score: Math.min(100, Math.max(0, score)),
   };
 };
 
 export const getPasswordStrengthColor = (strength: 'weak' | 'medium' | 'strong'): string => {
   switch (strength) {
-    case 'weak': return 'text-red-600 bg-red-100';
-    case 'medium': return 'text-yellow-600 bg-yellow-100';
-    case 'strong': return 'text-green-600 bg-green-100';
-    default: return 'text-gray-600 bg-gray-100';
+    case 'weak':
+      return 'text-red-600 bg-red-100';
+    case 'medium':
+      return 'text-yellow-600 bg-yellow-100';
+    case 'strong':
+      return 'text-green-600 bg-green-100';
+    default:
+      return 'text-gray-600 bg-gray-100';
   }
 };
 
 export const getPasswordStrengthText = (strength: 'weak' | 'medium' | 'strong'): string => {
   switch (strength) {
-    case 'weak': return 'Weak - Easily guessed';
-    case 'medium': return 'Medium - Could be stronger';
-    case 'strong': return 'Strong - Good security';
-    default: return 'Unknown';
+    case 'weak':
+      return 'Weak - Easily guessed';
+    case 'medium':
+      return 'Medium - Could be stronger';
+    case 'strong':
+      return 'Strong - Good security';
+    default:
+      return 'Unknown';
   }
 };

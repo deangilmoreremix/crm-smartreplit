@@ -17,20 +17,20 @@ const QuickActions = () => {
   const { openTool } = useAITools();
   const { initiateCall } = useVideoCall();
   const navigate = useNavigate();
-  
+
   // Get active deals
-  const activeDeals = deals.filter((deal: Deal) =>
-    deal.stage.id !== 'closed-won' && deal.stage.id !== 'closed-lost'
+  const activeDeals = deals.filter(
+    (deal: Deal) => deal.stage.id !== 'closed-won' && deal.stage.id !== 'closed-lost'
   );
 
   // Get deals with contacts for avatar display
   const dealsWithContacts = activeDeals
     .map((deal: Deal) => ({
       ...deal,
-      contact: contacts[deal.contactId]
+      contact: contacts[deal.contactId],
     }))
     .filter((deal) => deal.contact); // Only include deals with valid contacts
-  
+
   // Get contacts for the contact button
   const activeContacts = Object.values(contacts);
 
@@ -38,7 +38,7 @@ const QuickActions = () => {
   const renderAvatarStack = (items: any[], maxVisible: number = 3) => {
     const visibleItems = items.slice(0, maxVisible);
     const remainingCount = Math.max(0, items.length - maxVisible);
-    
+
     return (
       <div className="flex items-center mt-3">
         <div className="flex -space-x-2">
@@ -46,7 +46,7 @@ const QuickActions = () => {
             // If the item is a deal with contact property, use the contact
             // Otherwise assume it's a contact directly
             const contact = 'contact' in item ? item.contact : item;
-            
+
             return (
               <div key={index} className="relative" style={{ zIndex: maxVisible - index }}>
                 <Avatar
@@ -54,15 +54,17 @@ const QuickActions = () => {
                   alt={contact.name}
                   size="sm"
                   fallback={getInitials(contact.name)}
-className="shadow-sm"
+                  className="shadow-sm"
                 />
               </div>
             );
           })}
           {remainingCount > 0 && (
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shadow-sm ${
-              isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
-            }`}>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shadow-sm ${
+                isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
               +{remainingCount}
             </div>
           )}
@@ -75,7 +77,7 @@ className="shadow-sm"
   };
 
   const handleActionClick = (action: string) => {
-    switch(action) {
+    switch (action) {
       case 'newDeal':
         // Navigate to pipeline page where user can create deals
         navigate('/pipeline');
@@ -99,7 +101,7 @@ className="shadow-sm"
         const dummyRecipient = {
           id: 'demo',
           name: 'Demo Call',
-          email: 'demo@example.com'
+          email: 'demo@example.com',
         };
         initiateCall(dummyRecipient, 'video');
         break;
@@ -117,7 +119,7 @@ className="shadow-sm"
       color: 'from-green-500 to-emerald-500',
       hoverColor: 'hover:from-green-600 hover:to-emerald-600',
       action: 'newDeal',
-      data: dealsWithContacts
+      data: dealsWithContacts,
     },
     {
       title: 'Add Contact',
@@ -126,7 +128,7 @@ className="shadow-sm"
       color: 'from-blue-500 to-cyan-500',
       hoverColor: 'hover:from-blue-600 hover:to-cyan-600',
       action: 'addContact',
-      data: activeContacts
+      data: activeContacts,
     },
     {
       title: 'Schedule Meeting',
@@ -134,7 +136,7 @@ className="shadow-sm"
       icon: Calendar,
       color: 'from-purple-500 to-pink-500',
       hoverColor: 'hover:from-purple-600 hover:to-pink-600',
-      action: 'scheduleMeeting'
+      action: 'scheduleMeeting',
     },
     {
       title: 'Send Email',
@@ -142,7 +144,7 @@ className="shadow-sm"
       icon: Mail,
       color: 'from-orange-500 to-red-500',
       hoverColor: 'hover:from-orange-600 hover:to-red-600',
-      action: 'sendEmail'
+      action: 'sendEmail',
     },
     {
       title: 'Video Call',
@@ -150,13 +152,15 @@ className="shadow-sm"
       icon: Video,
       color: 'from-indigo-500 to-purple-500',
       hoverColor: 'hover:from-indigo-600 hover:to-purple-600',
-      action: 'videoCall'
-    }
+      action: 'videoCall',
+    },
   ];
 
   return (
     <div className="mb-8">
-      <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>Quick Actions</h2>
+      <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>
+        Quick Actions
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action, index) => (
           <button
@@ -173,9 +177,12 @@ className="shadow-sm"
                 <p className="text-sm text-white/80">{action.description}</p>
               </div>
             </div>
-            
+
             {/* Render avatar stack if data is available */}
-            {'data' in action && action.data && action.data.length > 0 && renderAvatarStack(action.data)}
+            {'data' in action &&
+              action.data &&
+              action.data.length > 0 &&
+              renderAvatarStack(action.data)}
           </button>
         ))}
       </div>

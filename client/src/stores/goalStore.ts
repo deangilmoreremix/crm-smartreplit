@@ -44,33 +44,33 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
       ...goalData,
       id: Date.now().toString(),
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    set(state => ({
-      goals: { ...state.goals, [newGoal.id]: newGoal }
+    set((state) => ({
+      goals: { ...state.goals, [newGoal.id]: newGoal },
     }));
 
     return newGoal;
   },
 
   updateGoal: (id, updates) => {
-    set(state => ({
+    set((state) => ({
       goals: {
         ...state.goals,
         [id]: {
           ...state.goals[id],
           ...updates,
-          updatedAt: new Date()
-        }
-      }
+          updatedAt: new Date(),
+        },
+      },
     }));
   },
 
   deleteGoal: (id) => {
-    set(state => {
+    set((state) => {
       const { [id]: deleted, ...rest } = state.goals;
       return { goals: rest };
     });
-  }
+  },
 }));

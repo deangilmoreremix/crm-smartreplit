@@ -4,8 +4,20 @@ import { Video, Play, Send, Eye, TrendingUp } from 'lucide-react';
 export default function VideoEmailDemo() {
   const videos = [
     { id: 1, title: 'Product Demo for Acme Corp', views: 12, sent: '2 days ago', thumbnail: 'AC' },
-    { id: 2, title: 'Proposal Walkthrough - TechStart', views: 8, sent: '1 week ago', thumbnail: 'TS' },
-    { id: 3, title: 'Follow-up Video for Global Solutions', views: 5, sent: '3 days ago', thumbnail: 'GS' },
+    {
+      id: 2,
+      title: 'Proposal Walkthrough - TechStart',
+      views: 8,
+      sent: '1 week ago',
+      thumbnail: 'TS',
+    },
+    {
+      id: 3,
+      title: 'Follow-up Video for Global Solutions',
+      views: 5,
+      sent: '3 days ago',
+      thumbnail: 'GS',
+    },
   ];
 
   return (
@@ -13,7 +25,7 @@ export default function VideoEmailDemo() {
       <DemoBanner feature="Video Email" />
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Video Email Demo</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <Video className="w-8 h-8 text-purple-600 mb-2" />
@@ -46,8 +58,11 @@ export default function VideoEmailDemo() {
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {videos.map(video => (
-              <div key={video.id} className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+            {videos.map((video) => (
+              <div
+                key={video.id}
+                className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+              >
                 <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-40 flex items-center justify-center relative">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-gray-900">
                     {video.thumbnail}
@@ -59,7 +74,10 @@ export default function VideoEmailDemo() {
                 <div className="p-4">
                   <h3 className="font-semibold mb-2">{video.title}</h3>
                   <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span className="flex items-center"><Eye className="w-4 h-4 mr-1" />{video.views} views</span>
+                    <span className="flex items-center">
+                      <Eye className="w-4 h-4 mr-1" />
+                      {video.views} views
+                    </span>
                     <span>{video.sent}</span>
                   </div>
                 </div>

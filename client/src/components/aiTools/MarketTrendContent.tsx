@@ -9,19 +9,21 @@ const MarketTrendContent: React.FC = () => {
     industry: '',
     targetMarket: '',
     timeframe: '6 months',
-    additionalContext: ''
+    additionalContext: '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -31,7 +33,7 @@ const MarketTrendContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const analysisResult = await edgeFunctionService.analyzeMarketTrends(
         formData.industry,
@@ -41,7 +43,9 @@ const MarketTrendContent: React.FC = () => {
       setResult(analysisResult);
     } catch (err) {
       console.error('Error analyzing market trends:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while analyzing market trends');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while analyzing market trends'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -49,13 +53,14 @@ const MarketTrendContent: React.FC = () => {
 
   const handleFilesAdded = (newFiles: File[]) => {
     setFiles(newFiles);
-    
+
     // In a real app, we would extract market data from the files
     if (newFiles.length > 0) {
       setTimeout(() => {
         setFormData({
           ...formData,
-          additionalContext: formData.additionalContext + "\n\nData from uploaded files would be processed here."
+          additionalContext:
+            formData.additionalContext + '\n\nData from uploaded files would be processed here.',
         });
       }, 1000);
     }
@@ -74,7 +79,7 @@ const MarketTrendContent: React.FC = () => {
     'Transportation',
     'Energy & Utilities',
     'Media & Entertainment',
-    'Telecommunications'
+    'Telecommunications',
   ];
 
   // Market segment suggestions
@@ -88,7 +93,7 @@ const MarketTrendContent: React.FC = () => {
     'Education',
     'Healthcare Providers',
     'Financial Institutions',
-    'E-commerce'
+    'E-commerce',
   ];
 
   // Timeframe options
@@ -97,7 +102,7 @@ const MarketTrendContent: React.FC = () => {
     { value: '6 months', label: 'Next 6 months' },
     { value: '12 months', label: 'Next 12 months' },
     { value: '2 years', label: 'Next 2 years' },
-    { value: '5 years', label: 'Next 5 years' }
+    { value: '5 years', label: 'Next 5 years' },
   ];
 
   return (
@@ -108,7 +113,8 @@ const MarketTrendContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-cyan-800">Market Trend Analysis</h3>
             <p className="text-sm text-cyan-700 mt-1">
-              Get insights on industry trends, market opportunities, and strategic recommendations for your target market.
+              Get insights on industry trends, market opportunities, and strategic recommendations
+              for your target market.
             </p>
           </div>
         </div>
@@ -145,7 +151,7 @@ const MarketTrendContent: React.FC = () => {
               </datalist>
             </div>
           </div>
-          
+
           <div>
             <label htmlFor="targetMarket" className="block text-sm font-medium text-gray-700 mb-1">
               Target Market / Segment
@@ -169,7 +175,7 @@ const MarketTrendContent: React.FC = () => {
               </datalist>
             </div>
           </div>
-          
+
           <div>
             <label htmlFor="timeframe" className="block text-sm font-medium text-gray-700 mb-1">
               Timeframe
@@ -181,16 +187,19 @@ const MarketTrendContent: React.FC = () => {
               value={formData.timeframe}
               onChange={handleChange}
             >
-              {timeframeOptions.map(option => (
+              {timeframeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
-          
+
           <div>
-            <label htmlFor="additionalContext" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="additionalContext"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Additional Context (Optional)
             </label>
             <textarea
@@ -203,26 +212,26 @@ const MarketTrendContent: React.FC = () => {
               onChange={handleChange}
             ></textarea>
           </div>
-          
+
           <div>
             <p className="block text-sm font-medium text-gray-700 mb-2">
               Upload Market Reports (Optional)
             </p>
-            <FileUpload 
+            <FileUpload
               fileType="document"
               onFilesAdded={handleFilesAdded}
               maxFiles={2}
               accept={{
                 'application/pdf': ['.pdf'],
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-                'text/csv': ['.csv']
+                'text/csv': ['.csv'],
               }}
             />
             <p className="text-xs text-gray-500 mt-1">
               Upload relevant market reports or data sheets to enhance your analysis.
             </p>
           </div>
-            
+
           <div className="flex justify-between items-center pt-4">
             <div className="text-sm text-gray-500">
               Analysis includes: trends, opportunities, challenges, and recommendations

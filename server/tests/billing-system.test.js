@@ -25,7 +25,7 @@ describe('Usage Billing System Tests', () => {
         featureName: 'openai_api',
         quantity: 1000, // tokens
         unit: 'tokens',
-        metadata: { model: 'gpt-4', endpoint: '/api/chat' }
+        metadata: { model: 'gpt-4', endpoint: '/api/chat' },
       };
 
       const eventId = await UsageTrackingService.recordUsage(usageData);
@@ -68,7 +68,7 @@ describe('Usage Billing System Tests', () => {
       const planId = 'test-plan-id';
       const usagePattern = {
         api_calls: 10000,
-        ai_tokens: 100000
+        ai_tokens: 100000,
       };
 
       const estimate = await BillingCalculationService.estimateCosts(planId, usagePattern);
@@ -133,7 +133,7 @@ describe('Usage Billing System Tests', () => {
         eventType: 'api_call',
         featureName: 'openai_api',
         quantity: 500,
-        unit: 'tokens'
+        unit: 'tokens',
       });
 
       expect(eventId).toBeDefined();
@@ -185,14 +185,14 @@ describe('Usage Billing System Tests', () => {
             eventType: 'api_call',
             featureName: 'test_api',
             quantity: 1,
-            unit: 'requests'
+            unit: 'requests',
           })
         );
       }
 
       const results = await Promise.all(promises);
       expect(results).toHaveLength(10);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeDefined();
       });
     });

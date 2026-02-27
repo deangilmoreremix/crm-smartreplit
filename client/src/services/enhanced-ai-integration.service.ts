@@ -11,9 +11,18 @@ import { Contact } from '../types';
 export interface EnhancedAIAnalysisRequest {
   contactId: string;
   contact: Contact;
-  analysisTypes: Array<'contact_scoring' | 'contact_enrichment' | 'categorization' | 'tagging' | 
-                     'relationship_mapping' | 'sentiment_analysis' | 'lead_qualification' | 
-                     'opportunity_analysis' | 'risk_assessment' | 'engagement_prediction'>;
+  analysisTypes: Array<
+    | 'contact_scoring'
+    | 'contact_enrichment'
+    | 'categorization'
+    | 'tagging'
+    | 'relationship_mapping'
+    | 'sentiment_analysis'
+    | 'lead_qualification'
+    | 'opportunity_analysis'
+    | 'risk_assessment'
+    | 'engagement_prediction'
+  >;
   urgency?: 'low' | 'medium' | 'high' | 'critical';
   requirements?: Partial<import('./task-router.service').TaskRequirements>;
   businessContext?: string;
@@ -28,19 +37,25 @@ export interface SmartBulkRequest {
 }
 
 class EnhancedAIIntegrationService {
-  
   async smartAnalyzeContact(request: EnhancedAIAnalysisRequest): Promise<any> {
     const startTime = Date.now();
-    const { contactId, contact, analysisTypes, urgency = 'medium', requirements, businessContext } = request;
-    
+    const {
+      contactId,
+      contact,
+      analysisTypes,
+      urgency = 'medium',
+      requirements,
+      businessContext,
+    } = request;
+
     logger.info(`Starting smart analysis for contact ${contactId}`, {
       analysisTypes,
       urgency,
-      contactCompany: contact.company
+      contactCompany: contact.company,
     });
 
     const results: Record<string, any> = {};
-    
+
     // Process each analysis type with optimal model selection
     for (const analysisType of analysisTypes) {
       try {
@@ -49,16 +64,19 @@ class EnhancedAIIntegrationService {
           requirements: this.getDefaultRequirements(analysisType, urgency, requirements),
           contactData: contact,
           businessContext,
-          urgency
+          urgency,
         };
 
         // Select optimal model for this specific task
         const modelSelection = await taskRouter.selectOptimalModel(taskContext);
-        
-        logger.info(`Selected ${modelSelection.provider}/${modelSelection.model} for ${analysisType}`, {
-          reasoning: modelSelection.reasoning,
-          confidence: modelSelection.confidenceScore
-        });
+
+        logger.info(
+          `Selected ${modelSelection.provider}/${modelSelection.model} for ${analysisType}`,
+          {
+            reasoning: modelSelection.reasoning,
+            confidence: modelSelection.confidenceScore,
+          }
+        );
 
         // Execute the analysis with selected model
         const analysisResult = await this.executeAnalysisWithModel(
@@ -70,7 +88,7 @@ class EnhancedAIIntegrationService {
           ...analysisResult,
           modelUsed: `${modelSelection.provider}/${modelSelection.model}`,
           modelReasoning: modelSelection.reasoning,
-          selectionConfidence: modelSelection.confidenceScore
+          selectionConfidence: modelSelection.confidenceScore,
         };
 
         // Record performance metrics
@@ -81,14 +99,13 @@ class EnhancedAIIntegrationService {
           accuracy: this.estimateAccuracy(analysisResult),
           cost: modelSelection.expectedCost,
           success: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
-        
-        taskRouter.recordTaskPerformance(metrics);
 
+        taskRouter.recordTaskPerformance(metrics);
       } catch (error) {
         logger.error(`Analysis failed for ${analysisType}`, error as Error, { contactId });
-        
+
         // Record failed performance
         taskRouter.recordTaskPerformance({
           taskType: analysisType,
@@ -97,40 +114,40 @@ class EnhancedAIIntegrationService {
           accuracy: 0,
           cost: 0,
           success: false,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
 
         results[analysisType] = {
           error: error instanceof Error ? error.message : 'Analysis failed',
-          failed: true
+          failed: true,
         };
       }
     }
 
     const totalTime = Date.now() - startTime;
-    
+
     logger.info(`Smart analysis completed for contact ${contactId}`, {
       totalTime,
-      completedTasks: Object.keys(results).filter(k => !results[k].failed).length,
-      failedTasks: Object.keys(results).filter(k => results[k].failed).length
+      completedTasks: Object.keys(results).filter((k) => !results[k].failed).length,
+      failedTasks: Object.keys(results).filter((k) => results[k].failed).length,
     });
 
     return {
       contactId,
       results,
       totalExecutionTime: totalTime,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
   async smartBulkAnalysis(request: SmartBulkRequest): Promise<any> {
     const { contacts, analysisType, urgency = 'medium', costLimit, timeLimit } = request;
     const startTime = Date.now();
-    
+
     logger.info(`Starting smart bulk analysis`, {
       contactCount: contacts.length,
       analysisType,
-      urgency
+      urgency,
     });
 
     // Determine optimal strategy for bulk processing
@@ -141,34 +158,40 @@ class EnhancedAIIntegrationService {
         speed: 'fast',
         cost: costLimit ? 'low' : 'free',
         complexity: 'simple',
-        volume: contacts.length > 50 ? 'bulk' : 'batch'
+        volume: contacts.length > 50 ? 'bulk' : 'batch',
       },
       urgency,
-      batchSize: contacts.length
+      batchSize: contacts.length,
     };
 
     const modelSelection = await taskRouter.selectOptimalModel(taskContext);
-    
-    logger.info(`Selected ${modelSelection.provider}/${modelSelection.model} for bulk ${analysisType}`, {
-      contactCount: contacts.length,
-      expectedCost: modelSelection.expectedCost * contacts.length,
-      reasoning: modelSelection.reasoning
-    });
+
+    logger.info(
+      `Selected ${modelSelection.provider}/${modelSelection.model} for bulk ${analysisType}`,
+      {
+        contactCount: contacts.length,
+        expectedCost: modelSelection.expectedCost * contacts.length,
+        reasoning: modelSelection.reasoning,
+      }
+    );
 
     // Check cost and time constraints
     const estimatedCost = modelSelection.expectedCost * contacts.length;
     const estimatedTime = modelSelection.expectedLatency * Math.ceil(contacts.length / 10); // Batch processing
-    
+
     if (costLimit && estimatedCost > costLimit) {
       // Try to find a cheaper model
-      const cheaperContext = { ...taskContext, requirements: { ...taskContext.requirements, cost: 'free' } };
+      const cheaperContext = {
+        ...taskContext,
+        requirements: { ...taskContext.requirements, cost: 'free' },
+      };
       const cheaperSelection = await taskRouter.selectOptimalModel(cheaperContext);
-      
+
       if (cheaperSelection.expectedCost * contacts.length <= costLimit) {
         logger.info(`Switched to cheaper model due to cost constraint`, {
           original: `${modelSelection.provider}/${modelSelection.model}`,
           cheaper: `${cheaperSelection.provider}/${cheaperSelection.model}`,
-          costSavings: (estimatedCost - cheaperSelection.expectedCost * contacts.length)
+          costSavings: estimatedCost - cheaperSelection.expectedCost * contacts.length,
         });
         return this.executeBulkWithModel(contacts, analysisType, cheaperSelection);
       } else {
@@ -177,7 +200,9 @@ class EnhancedAIIntegrationService {
     }
 
     if (timeLimit && estimatedTime > timeLimit) {
-      throw new Error(`Estimated completion time (${estimatedTime}ms) exceeds limit (${timeLimit}ms)`);
+      throw new Error(
+        `Estimated completion time (${estimatedTime}ms) exceeds limit (${timeLimit}ms)`
+      );
     }
 
     return this.executeBulkWithModel(contacts, analysisType, modelSelection);
@@ -197,21 +222,22 @@ class EnhancedAIIntegrationService {
     // Process in batches
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize);
-      
+
       try {
         const batchResults = await this.processBatch(batch, analysisType, modelSelection);
         results.push(...batchResults.successful);
         failed.push(...batchResults.failed);
         totalCost += batchResults.cost;
-        
+
         // Small delay between batches to respect rate limits
         if (i + batchSize < contacts.length) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
-        
       } catch (error) {
         logger.error('Batch processing failed', error as Error, { batchStart: i, batchSize });
-        failed.push(...batch.map(c => ({ contactId: c.contactId, error: 'Batch processing failed' })));
+        failed.push(
+          ...batch.map((c) => ({ contactId: c.contactId, error: 'Batch processing failed' }))
+        );
       }
     }
 
@@ -225,7 +251,7 @@ class EnhancedAIIntegrationService {
       accuracy: results.length / contacts.length,
       cost: totalCost,
       success: results.length > 0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     return {
@@ -238,8 +264,8 @@ class EnhancedAIIntegrationService {
         totalCost,
         totalTime,
         modelUsed: `${modelSelection.provider}/${modelSelection.model}`,
-        avgCostPerContact: totalCost / contacts.length
-      }
+        avgCostPerContact: totalCost / contacts.length,
+      },
     };
   }
 
@@ -256,13 +282,21 @@ class EnhancedAIIntegrationService {
         );
         return { contactId, result, success: true };
       } catch (error) {
-        return { contactId, error: error instanceof Error ? error.message : 'Unknown error', success: false };
+        return {
+          contactId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          success: false,
+        };
       }
     });
 
     const results = await Promise.all(promises);
-    const successful = results.filter(r => r.success).map(r => ({ contactId: r.contactId, ...r.result }));
-    const failed = results.filter(r => !r.success).map(r => ({ contactId: r.contactId, error: r.error }));
+    const successful = results
+      .filter((r) => r.success)
+      .map((r) => ({ contactId: r.contactId, ...r.result }));
+    const failed = results
+      .filter((r) => !r.success)
+      .map((r) => ({ contactId: r.contactId, error: r.error }));
     const cost = modelSelection.expectedCost * batch.length;
 
     return { successful, failed, cost };
@@ -275,24 +309,29 @@ class EnhancedAIIntegrationService {
       options: {
         provider: modelSelection.provider,
         model: modelSelection.model,
-        includeConfidence: true
-      }
+        includeConfidence: true,
+      },
     };
 
     return baseAIIntegration.analyzeContact(enhancedRequest);
   }
 
   private getDefaultRequirements(
-    analysisType: string, 
-    urgency: string, 
+    analysisType: string,
+    urgency: string,
     customRequirements?: any
   ): import('./task-router.service').TaskRequirements {
     const baseRequirements = {
-      accuracy: urgency === 'critical' ? 'critical' as const : urgency === 'high' ? 'high' as const : 'medium' as const,
-      speed: urgency === 'critical' ? 'fast' as const : 'medium' as const,
+      accuracy:
+        urgency === 'critical'
+          ? ('critical' as const)
+          : urgency === 'high'
+            ? ('high' as const)
+            : ('medium' as const),
+      speed: urgency === 'critical' ? ('fast' as const) : ('medium' as const),
       cost: 'low' as const,
       complexity: 'medium' as const,
-      volume: 'single' as const
+      volume: 'single' as const,
     };
 
     // Task-specific adjustments
@@ -333,22 +372,30 @@ class EnhancedAIIntegrationService {
   }
 
   // Convenience methods for common operations
-  async scoreContact(contactId: string, contact: Contact, urgency: 'low' | 'medium' | 'high' = 'medium'): Promise<any> {
+  async scoreContact(
+    contactId: string,
+    contact: Contact,
+    urgency: 'low' | 'medium' | 'high' = 'medium'
+  ): Promise<any> {
     return this.smartAnalyzeContact({
       contactId,
       contact,
       analysisTypes: ['contact_scoring'],
-      urgency
+      urgency,
     });
   }
 
-  async enrichContact(contactId: string, contact: Contact, priority: 'standard' | 'premium' = 'standard'): Promise<any> {
+  async enrichContact(
+    contactId: string,
+    contact: Contact,
+    priority: 'standard' | 'premium' = 'standard'
+  ): Promise<any> {
     return this.smartAnalyzeContact({
       contactId,
       contact,
       analysisTypes: ['contact_enrichment'],
       urgency: priority === 'premium' ? 'high' : 'medium',
-      requirements: priority === 'premium' ? { accuracy: 'critical', cost: 'medium' } : undefined
+      requirements: priority === 'premium' ? { accuracy: 'critical', cost: 'medium' } : undefined,
     });
   }
 
@@ -358,7 +405,7 @@ class EnhancedAIIntegrationService {
       contact,
       analysisTypes: ['categorization', 'tagging'],
       urgency: 'medium',
-      requirements: { speed: 'fast', cost: 'free' }
+      requirements: { speed: 'fast', cost: 'free' },
     });
   }
 
@@ -368,7 +415,7 @@ class EnhancedAIIntegrationService {
       contact,
       analysisTypes: ['lead_qualification', 'contact_scoring', 'sentiment_analysis'],
       urgency: 'high',
-      businessContext
+      businessContext,
     });
   }
 

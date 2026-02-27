@@ -13,7 +13,7 @@ export const handler = async (event: any, context: any) => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   };
 
   if (httpMethod === 'OPTIONS') {
@@ -22,7 +22,12 @@ export const handler = async (event: any, context: any) => {
 
   try {
     // GET /api/white-label/tenants - Get all tenants
-    if (pathParts.length >= 2 && pathParts[0] === 'white-label' && pathParts[1] === 'tenants' && httpMethod === 'GET') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'white-label' &&
+      pathParts[1] === 'tenants' &&
+      httpMethod === 'GET'
+    ) {
       if (!supabase) {
         const tenants = [
           {
@@ -37,8 +42,8 @@ export const handler = async (event: any, context: any) => {
             monthly_revenue: 299,
             user_count: 25,
             created_at: '2024-01-15T00:00:00Z',
-            parent_partner_id: 'partner_1'
-          }
+            parent_partner_id: 'partner_1',
+          },
         ];
         return { statusCode: 200, headers, body: JSON.stringify(tenants) };
       }
@@ -53,7 +58,12 @@ export const handler = async (event: any, context: any) => {
     }
 
     // PUT /api/white-label/tenants/:tenantId - Update tenant
-    if (pathParts.length >= 3 && pathParts[0] === 'white-label' && pathParts[1] === 'tenants' && httpMethod === 'PUT') {
+    if (
+      pathParts.length >= 3 &&
+      pathParts[0] === 'white-label' &&
+      pathParts[1] === 'tenants' &&
+      httpMethod === 'PUT'
+    ) {
       const tenantId = pathParts[2];
       const updates = JSON.parse(body);
 
@@ -61,7 +71,7 @@ export const handler = async (event: any, context: any) => {
         const updatedTenant = {
           id: tenantId,
           ...updates,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         };
         return { statusCode: 200, headers, body: JSON.stringify(updatedTenant) };
       }
@@ -78,24 +88,39 @@ export const handler = async (event: any, context: any) => {
     }
 
     // DELETE /api/white-label/tenants/:tenantId - Delete tenant
-    if (pathParts.length >= 3 && pathParts[0] === 'white-label' && pathParts[1] === 'tenants' && httpMethod === 'DELETE') {
+    if (
+      pathParts.length >= 3 &&
+      pathParts[0] === 'white-label' &&
+      pathParts[1] === 'tenants' &&
+      httpMethod === 'DELETE'
+    ) {
       const tenantId = pathParts[2];
 
       if (!supabase) {
-        return { statusCode: 200, headers, body: JSON.stringify({ message: 'Tenant deleted successfully', id: tenantId }) };
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ message: 'Tenant deleted successfully', id: tenantId }),
+        };
       }
 
-      const { error } = await supabase
-        .from('tenants')
-        .delete()
-        .eq('id', tenantId);
+      const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
 
       if (error) throw error;
-      return { statusCode: 200, headers, body: JSON.stringify({ message: 'Tenant deleted successfully', id: tenantId }) };
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: 'Tenant deleted successfully', id: tenantId }),
+      };
     }
 
     // GET /api/white-label/config/:tenantId - Get tenant config
-    if (pathParts.length >= 3 && pathParts[0] === 'white-label' && pathParts[1] === 'config' && httpMethod === 'GET') {
+    if (
+      pathParts.length >= 3 &&
+      pathParts[0] === 'white-label' &&
+      pathParts[1] === 'config' &&
+      httpMethod === 'GET'
+    ) {
       const tenantId = pathParts[2];
 
       if (!supabase) {
@@ -116,7 +141,7 @@ export const handler = async (event: any, context: any) => {
           support_email: 'support@demo.com',
           support_phone: null,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         };
         return { statusCode: 200, headers, body: JSON.stringify(mockConfig) };
       }
@@ -132,14 +157,23 @@ export const handler = async (event: any, context: any) => {
       }
 
       if (!data) {
-        return { statusCode: 404, headers, body: JSON.stringify({ error: 'White-label configuration not found' }) };
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ error: 'White-label configuration not found' }),
+        };
       }
 
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
     // PUT /api/white-label/config/:tenantId - Update tenant config
-    if (pathParts.length >= 3 && pathParts[0] === 'white-label' && pathParts[1] === 'config' && httpMethod === 'PUT') {
+    if (
+      pathParts.length >= 3 &&
+      pathParts[0] === 'white-label' &&
+      pathParts[1] === 'config' &&
+      httpMethod === 'PUT'
+    ) {
       const tenantId = pathParts[2];
       const updates = JSON.parse(body);
 
@@ -148,7 +182,7 @@ export const handler = async (event: any, context: any) => {
           id: 'config_1',
           tenant_id: tenantId,
           ...updates,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         };
         return { statusCode: 200, headers, body: JSON.stringify(updatedConfig) };
       }
@@ -177,7 +211,7 @@ export const handler = async (event: any, context: any) => {
             tenant_id: tenantId,
             ...updates,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
           .select()
           .single();
@@ -193,15 +227,14 @@ export const handler = async (event: any, context: any) => {
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: 'White-label endpoint not found' })
+      body: JSON.stringify({ error: 'White-label endpoint not found' }),
     };
-
   } catch (error: any) {
     console.error('White-label function error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message })
+      body: JSON.stringify({ error: 'Internal server error', message: error.message }),
     };
   }
 };

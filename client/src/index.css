@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* Theme Color Variables */
 :root {
@@ -45,11 +45,12 @@
   --destructive-foreground: 210 40% 98%;
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 94.0%;
+  --ring: 224.3 76.3% 94%;
 }
 
 /* Essential full-screen setup with theme support */
-html, body {
+html,
+body {
   height: 100vh;
   width: 100vw;
   margin: 0;
@@ -79,9 +80,9 @@ html, body {
 /* Hide any development banners or overlays */
 .replit-banner,
 .replit-dev-banner,
-[class*="replit"],
-[id*="replit"],
-iframe[src*="replit"] {
+[class*='replit'],
+[id*='replit'],
+iframe[src*='replit'] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
@@ -318,17 +319,36 @@ iframe {
 }
 
 /* Apply text transitions only to specific elements to prevent flashing */
-h1, h2, h3, h4, h5, h6, p, span, button, a {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+button,
+a {
   transition: color 0.2s ease;
 }
 
 /* Apply background transitions only to specific interactive elements */
-button, a, .interactive {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+button,
+a,
+.interactive {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 /* Force pointer events for all interactive elements */
-button, a, input, select, textarea, [role="button"], [onclick] {
+button,
+a,
+input,
+select,
+textarea,
+[role='button'],
+[onclick] {
   pointer-events: auto !important;
   cursor: pointer !important;
 }
@@ -374,7 +394,11 @@ button, a, input, select, textarea, [role="button"], [onclick] {
 }
 
 @keyframes bounce-gentle {
-  0%, 20%, 50%, 80%, 100% {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
     transform: translateY(0);
   }
   40% {
@@ -386,7 +410,8 @@ button, a, input, select, textarea, [role="button"], [onclick] {
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
   }
   50% {
@@ -395,7 +420,8 @@ button, a, input, select, textarea, [role="button"], [onclick] {
 }
 
 @keyframes badge-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -432,7 +458,7 @@ button, a, input, select, textarea, [role="button"], [onclick] {
 }
 
 /* Dark theme support */
-[data-theme="dark"] {
+[data-theme='dark'] {
   --glass-bg: rgba(30, 41, 59, 0.8);
   --glass-border: rgba(148, 163, 184, 0.2);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -453,9 +479,7 @@ button, a, input, select, textarea, [role="button"], [onclick] {
 }
 
 .glass-card.gradient {
-  background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.7) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
 }
 
 /* Legacy glassmorphism utility classes */

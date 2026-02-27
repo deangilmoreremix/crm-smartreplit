@@ -1,34 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useFormStore, FormTemplate, FormField } from '../store/formStore';
-import { 
-  FileText, 
-  Plus, 
-  BarChart3, 
-  Eye, 
-  Copy, 
-  Settings, 
-  Trash2, 
-  Edit, 
-  Search, 
-  Filter, 
-  ChevronDown, 
-  X, 
-  Save, 
-  CheckCircle, 
-  AlertCircle, 
-  ArrowRight, 
-  Calendar, 
-  Users, 
-  RefreshCw, 
-  ToggleLeft, 
-  ToggleRight
+import {
+  FileText,
+  Plus,
+  BarChart3,
+  Eye,
+  Copy,
+  Settings,
+  Trash2,
+  Edit,
+  Search,
+  Filter,
+  ChevronDown,
+  X,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  ArrowRight,
+  Calendar,
+  Users,
+  RefreshCw,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import FormSubmissionsView from '../components/marketing/FormSubmissionsView';
 
 const FormsAndSurveys: React.FC = () => {
-  const { forms, fetchForms, createForm, updateForm, deleteForm, getPublicFormUrl, toggleFormActive } = useFormStore();
-  
+  const {
+    forms,
+    fetchForms,
+    createForm,
+    updateForm,
+    deleteForm,
+    getPublicFormUrl,
+    toggleFormActive,
+  } = useFormStore();
+
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -38,19 +46,19 @@ const FormsAndSurveys: React.FC = () => {
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'submissions' | 'lastUpdated'>('lastUpdated');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
+
   // Form editor state
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [newFieldType, setNewFieldType] = useState<FormField['type']>('text');
-  
+
   // Load forms on component mount
   useEffect(() => {
     setIsLoading(true);
     fetchForms().finally(() => setIsLoading(false));
   }, [fetchForms]);
-  
+
   // Reset form editor when selected form changes
   useEffect(() => {
     if (selectedForm) {
@@ -62,125 +70,126 @@ const FormsAndSurveys: React.FC = () => {
       setFormDescription('');
       setFormFields([
         { id: `field-${Date.now()}-1`, type: 'text', label: 'Full Name', required: true },
-        { id: `field-${Date.now()}-2`, type: 'email', label: 'Email Address', required: true }
+        { id: `field-${Date.now()}-2`, type: 'email', label: 'Email Address', required: true },
       ]);
     }
   }, [selectedForm]);
-  
+
   // Filter and sort forms
   const filteredForms = Object.values(forms)
-    .filter(form => 
-      form.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.description.toLowerCase().includes(searchTerm.toLowerCase())
+    .filter(
+      (form) =>
+        form.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        form.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === 'name') {
-        return sortOrder === 'asc' 
-          ? a.name.localeCompare(b.name) 
-          : b.name.localeCompare(a.name);
+        return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       } else if (sortBy === 'submissions') {
-        return sortOrder === 'asc' 
-          ? a.submissions - b.submissions 
-          : b.submissions - a.submissions;
+        return sortOrder === 'asc' ? a.submissions - b.submissions : b.submissions - a.submissions;
       } else {
-        return sortOrder === 'asc' 
-          ? a.lastUpdated.getTime() - b.lastUpdated.getTime() 
+        return sortOrder === 'asc'
+          ? a.lastUpdated.getTime() - b.lastUpdated.getTime()
           : b.lastUpdated.getTime() - a.lastUpdated.getTime();
       }
     });
-  
+
   // Add a new field to the form
   const addField = () => {
     const newField: FormField = {
       id: `field-${Date.now()}-${formFields.length + 1}`,
       type: newFieldType,
       label: `New ${newFieldType.charAt(0).toUpperCase() + newFieldType.slice(1)} Field`,
-      required: false
+      required: false,
     };
-    
+
     if (newFieldType === 'select' || newFieldType === 'checkbox' || newFieldType === 'radio') {
       newField.options = ['Option 1', 'Option 2', 'Option 3'];
     }
-    
+
     setFormFields([...formFields, newField]);
   };
-  
+
   // Remove a field from the form
   const removeField = (id: string) => {
-    setFormFields(formFields.filter(field => field.id !== id));
+    setFormFields(formFields.filter((field) => field.id !== id));
   };
-  
+
   // Update a field property
   const updateField = (id: string, updates: Partial<FormField>) => {
-    setFormFields(formFields.map(field => 
-      field.id === id ? { ...field, ...updates } : field
-    ));
+    setFormFields(formFields.map((field) => (field.id === id ? { ...field, ...updates } : field)));
   };
-  
+
   // Add an option to a field
   const addOption = (fieldId: string) => {
-    setFormFields(formFields.map(field => {
-      if (field.id === fieldId && field.options) {
-        return {
-          ...field,
-          options: [...field.options, `Option ${field.options.length + 1}`]
-        };
-      }
-      return field;
-    }));
+    setFormFields(
+      formFields.map((field) => {
+        if (field.id === fieldId && field.options) {
+          return {
+            ...field,
+            options: [...field.options, `Option ${field.options.length + 1}`],
+          };
+        }
+        return field;
+      })
+    );
   };
-  
+
   // Remove an option from a field
   const removeOption = (fieldId: string, optionIndex: number) => {
-    setFormFields(formFields.map(field => {
-      if (field.id === fieldId && field.options) {
-        return {
-          ...field,
-          options: field.options.filter((_, index) => index !== optionIndex)
-        };
-      }
-      return field;
-    }));
+    setFormFields(
+      formFields.map((field) => {
+        if (field.id === fieldId && field.options) {
+          return {
+            ...field,
+            options: field.options.filter((_, index) => index !== optionIndex),
+          };
+        }
+        return field;
+      })
+    );
   };
-  
+
   // Update an option
   const updateOption = (fieldId: string, optionIndex: number, value: string) => {
-    setFormFields(formFields.map(field => {
-      if (field.id === fieldId && field.options) {
-        const newOptions = [...field.options];
-        newOptions[optionIndex] = value;
-        return {
-          ...field,
-          options: newOptions
-        };
-      }
-      return field;
-    }));
+    setFormFields(
+      formFields.map((field) => {
+        if (field.id === fieldId && field.options) {
+          const newOptions = [...field.options];
+          newOptions[optionIndex] = value;
+          return {
+            ...field,
+            options: newOptions,
+          };
+        }
+        return field;
+      })
+    );
   };
-  
+
   // Save form
   const saveForm = async () => {
     if (!formName) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       if (selectedForm) {
         // Update existing form
         await updateForm(selectedForm.id, {
           name: formName,
           description: formDescription,
-          fields: formFields
+          fields: formFields,
         });
       } else {
         // Create new form
         await createForm({
           name: formName,
           description: formDescription,
-          fields: formFields
+          fields: formFields,
         });
       }
-      
+
       // Reset and close form editor
       setShowCreateForm(false);
       setShowEditForm(false);
@@ -191,13 +200,13 @@ const FormsAndSurveys: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Delete form
   const confirmDeleteForm = async () => {
     if (!selectedForm) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       await deleteForm(selectedForm.id);
       setShowDeleteConfirm(false);
@@ -208,20 +217,20 @@ const FormsAndSurveys: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Copy form URL to clipboard
   const copyFormUrl = (formId: string) => {
     const url = getPublicFormUrl(formId);
     navigator.clipboard.writeText(url);
-    
+
     // Show a toast or notification here
     alert('Form URL copied to clipboard');
   };
-  
+
   // Toggle form active status
   const handleToggleActive = async (formId: string, isActive: boolean) => {
     setIsLoading(true);
-    
+
     try {
       await toggleFormActive(formId, !isActive);
     } catch (error) {
@@ -230,16 +239,18 @@ const FormsAndSurveys: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Forms & Surveys</h1>
-          <p className="text-gray-600 mt-1">Create and manage forms to collect information from your leads and customers</p>
+          <p className="text-gray-600 mt-1">
+            Create and manage forms to collect information from your leads and customers
+          </p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button 
+          <button
             onClick={() => {
               setSelectedForm(null);
               setShowCreateForm(true);
@@ -251,7 +262,7 @@ const FormsAndSurveys: React.FC = () => {
           </button>
         </div>
       </header>
-      
+
       {/* Forms List */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 mb-6">
         <div className="p-4 border-b border-gray-200">
@@ -260,7 +271,7 @@ const FormsAndSurveys: React.FC = () => {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search size={16} className="text-gray-400" />
               </div>
-              <input 
+              <input
                 type="text"
                 placeholder="Search forms..."
                 value={searchTerm}
@@ -268,12 +279,10 @@ const FormsAndSurveys: React.FC = () => {
                 className="pl-10 pr-4 py-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <div className="relative">
-                <button 
-                  className="flex items-center px-3 py-2 border rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
-                >
+                <button className="flex items-center px-3 py-2 border rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50">
                   <Filter size={16} className="mr-1" />
                   Sort by
                   <ChevronDown size={16} className="ml-1" />
@@ -283,7 +292,7 @@ const FormsAndSurveys: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {isLoading ? (
           <div className="p-8 text-center">
             <RefreshCw size={32} className="mx-auto animate-spin text-blue-600 mb-4" />
@@ -294,7 +303,9 @@ const FormsAndSurveys: React.FC = () => {
             <FileText size={48} className="mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No forms found</h3>
             <p className="text-gray-500 mb-4">
-              {searchTerm ? 'No forms match your search criteria' : 'Create your first form to get started'}
+              {searchTerm
+                ? 'No forms match your search criteria'
+                : 'Create your first form to get started'}
             </p>
             <button
               onClick={() => {
@@ -312,28 +323,46 @@ const FormsAndSurveys: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Form Name
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Submissions
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Conversion Rate
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Last Updated
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredForms.map(form => (
+                {filteredForms.map((form) => (
                   <tr key={form.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -342,7 +371,9 @@ const FormsAndSurveys: React.FC = () => {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{form.name}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">{form.description}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-xs">
+                            {form.description}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -353,8 +384,8 @@ const FormsAndSurveys: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{form.conversionRate}%</div>
                       <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-blue-600 rounded-full" 
+                        <div
+                          className="h-full bg-blue-600 rounded-full"
                           style={{ width: `${form.conversionRate}%` }}
                         ></div>
                       </div>
@@ -366,8 +397,8 @@ const FormsAndSurveys: React.FC = () => {
                       <button
                         onClick={() => handleToggleActive(form.id, form.isActive)}
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          form.isActive 
-                            ? 'bg-green-100 text-green-800' 
+                          form.isActive
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
@@ -432,12 +463,12 @@ const FormsAndSurveys: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* Form Performance Overview */}
       {filteredForms.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Form Performance Overview</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
               <div className="flex justify-between items-start">
@@ -452,15 +483,21 @@ const FormsAndSurveys: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-green-50 rounded-lg p-4 border border-green-100">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-green-700">Avg. Conversion Rate</p>
                   <p className="text-2xl font-bold text-green-900">
-                    {Object.values(forms).length > 0 
-                      ? (Object.values(forms).reduce((sum, form) => sum + (form.conversionRate || 0), 0) / Object.values(forms).length).toFixed(1)
-                      : 0}%
+                    {Object.values(forms).length > 0
+                      ? (
+                          Object.values(forms).reduce(
+                            (sum, form) => sum + (form.conversionRate || 0),
+                            0
+                          ) / Object.values(forms).length
+                        ).toFixed(1)
+                      : 0}
+                    %
                   </p>
                 </div>
                 <div className="p-2 bg-green-100 rounded-full text-green-600">
@@ -468,7 +505,7 @@ const FormsAndSurveys: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
               <div className="flex justify-between items-start">
                 <div>
@@ -482,13 +519,13 @@ const FormsAndSurveys: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-amber-700">Active Forms</p>
                   <p className="text-2xl font-bold text-amber-900">
-                    {Object.values(forms).filter(form => form.isActive).length}
+                    {Object.values(forms).filter((form) => form.isActive).length}
                   </p>
                 </div>
                 <div className="p-2 bg-amber-100 rounded-full text-amber-600">
@@ -499,7 +536,7 @@ const FormsAndSurveys: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Form Editor Modal */}
       {(showCreateForm || showEditForm) && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -520,11 +557,14 @@ const FormsAndSurveys: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="formName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="formName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Form Name
                   </label>
                   <input
@@ -536,9 +576,12 @@ const FormsAndSurveys: React.FC = () => {
                     placeholder="Enter form name"
                   />
                 </div>
-                
+
                 <div>
-                  <label htmlFor="formDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="formDescription"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Description
                   </label>
                   <textarea
@@ -550,7 +593,7 @@ const FormsAndSurveys: React.FC = () => {
                     placeholder="Enter form description"
                   ></textarea>
                 </div>
-                
+
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-sm font-medium text-gray-700">Form Fields</h3>
@@ -577,10 +620,13 @@ const FormsAndSurveys: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4 max-h-96 overflow-y-auto p-1">
                     {formFields.map((field, index) => (
-                      <div key={field.id} className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                      <div
+                        key={field.id}
+                        className="border border-gray-200 rounded-md p-4 bg-gray-50"
+                      >
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center">
                             <span className="w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-800 rounded-full text-xs font-medium mr-2">
@@ -597,7 +643,7 @@ const FormsAndSurveys: React.FC = () => {
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        
+
                         <div className="space-y-3">
                           <div>
                             <label className="block text-xs font-medium text-gray-500 mb-1">
@@ -610,8 +656,12 @@ const FormsAndSurveys: React.FC = () => {
                               className="w-full p-2 text-sm border rounded-md focus:ring-blue-500 focus:border-blue-500"
                             />
                           </div>
-                          
-                          {(field.type === 'text' || field.type === 'email' || field.type === 'phone' || field.type === 'number' || field.type === 'textarea') && (
+
+                          {(field.type === 'text' ||
+                            field.type === 'email' ||
+                            field.type === 'phone' ||
+                            field.type === 'number' ||
+                            field.type === 'textarea') && (
                             <div>
                               <label className="block text-xs font-medium text-gray-500 mb-1">
                                 Placeholder (Optional)
@@ -619,13 +669,17 @@ const FormsAndSurveys: React.FC = () => {
                               <input
                                 type="text"
                                 value={field.placeholder || ''}
-                                onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+                                onChange={(e) =>
+                                  updateField(field.id, { placeholder: e.target.value })
+                                }
                                 className="w-full p-2 text-sm border rounded-md focus:ring-blue-500 focus:border-blue-500"
                               />
                             </div>
                           )}
-                          
-                          {(field.type === 'select' || field.type === 'checkbox' || field.type === 'radio') && (
+
+                          {(field.type === 'select' ||
+                            field.type === 'checkbox' ||
+                            field.type === 'radio') && (
                             <div>
                               <div className="flex justify-between items-center mb-1">
                                 <label className="block text-xs font-medium text-gray-500">
@@ -644,7 +698,9 @@ const FormsAndSurveys: React.FC = () => {
                                     <input
                                       type="text"
                                       value={option}
-                                      onChange={(e) => updateOption(field.id, optionIndex, e.target.value)}
+                                      onChange={(e) =>
+                                        updateOption(field.id, optionIndex, e.target.value)
+                                      }
                                       className="flex-1 p-1.5 text-sm border rounded-md focus:ring-blue-500 focus:border-blue-500"
                                     />
                                     <button
@@ -658,33 +714,40 @@ const FormsAndSurveys: React.FC = () => {
                               </div>
                             </div>
                           )}
-                          
+
                           <div className="flex items-center">
                             <input
                               type="checkbox"
                               id={`required-${field.id}`}
                               checked={field.required}
-                              onChange={(e) => updateField(field.id, { required: e.target.checked })}
+                              onChange={(e) =>
+                                updateField(field.id, { required: e.target.checked })
+                              }
                               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                             />
-                            <label htmlFor={`required-${field.id}`} className="ml-2 block text-xs text-gray-700">
+                            <label
+                              htmlFor={`required-${field.id}`}
+                              className="ml-2 block text-xs text-gray-700"
+                            >
                               Required field
                             </label>
                           </div>
                         </div>
                       </div>
                     ))}
-                    
+
                     {formFields.length === 0 && (
                       <div className="text-center p-4 border border-dashed border-gray-300 rounded-md">
-                        <p className="text-gray-500">No fields added yet. Add your first field to get started.</p>
+                        <p className="text-gray-500">
+                          No fields added yet. Add your first field to get started.
+                        </p>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 bg-gray-50">
               <div className="flex justify-end space-x-3">
                 <button
@@ -718,7 +781,7 @@ const FormsAndSurveys: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && selectedForm && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -729,15 +792,14 @@ const FormsAndSurveys: React.FC = () => {
                   <AlertCircle size={24} className="text-red-600" />
                 </div>
               </div>
-              
-              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">
-                Delete Form
-              </h3>
-              
+
+              <h3 className="text-lg font-medium text-gray-900 text-center mb-2">Delete Form</h3>
+
               <p className="text-sm text-gray-500 text-center mb-4">
-                Are you sure you want to delete "{selectedForm.name}"? This action cannot be undone and all form submissions will be permanently deleted.
+                Are you sure you want to delete "{selectedForm.name}"? This action cannot be undone
+                and all form submissions will be permanently deleted.
               </p>
-              
+
               <div className="mt-6 flex justify-center space-x-3">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
@@ -756,7 +818,7 @@ const FormsAndSurveys: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Form Submissions Modal */}
       {showSubmissions && selectedForm && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -774,11 +836,11 @@ const FormsAndSurveys: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6">
               <FormSubmissionsView formId={selectedForm.id} />
             </div>
-            
+
             <div className="p-6 border-t border-gray-200 bg-gray-50">
               <div className="flex justify-end">
                 <button
@@ -792,16 +854,18 @@ const FormsAndSurveys: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Quick Tips */}
       <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
         <h3 className="text-lg font-medium text-blue-800 mb-4">Form Best Practices</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-700">Keep forms short and focused on essential information</p>
+              <p className="text-sm text-blue-700">
+                Keep forms short and focused on essential information
+              </p>
             </div>
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
@@ -812,11 +876,13 @@ const FormsAndSurveys: React.FC = () => {
               <p className="text-sm text-blue-700">Make only the most essential fields required</p>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-700">Use dropdown menus for fields with predefined options</p>
+              <p className="text-sm text-blue-700">
+                Use dropdown menus for fields with predefined options
+              </p>
             </div>
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
@@ -824,14 +890,18 @@ const FormsAndSurveys: React.FC = () => {
             </div>
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-700">Test your form on different devices before sharing</p>
+              <p className="text-sm text-blue-700">
+                Test your form on different devices before sharing
+              </p>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-700">Send a confirmation email after form submission</p>
+              <p className="text-sm text-blue-700">
+                Send a confirmation email after form submission
+              </p>
             </div>
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
@@ -839,13 +909,18 @@ const FormsAndSurveys: React.FC = () => {
             </div>
             <div className="flex items-start">
               <CheckCircle size={18} className="text-blue-600 mr-2 mt-0.5" />
-              <p className="text-sm text-blue-700">A/B test different form layouts to optimize conversion</p>
+              <p className="text-sm text-blue-700">
+                A/B test different form layouts to optimize conversion
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="mt-4 text-center">
-          <Link to="/faq" className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center">
+          <Link
+            to="/faq"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center"
+          >
             Learn more about form best practices
             <ArrowRight size={16} className="ml-1" />
           </Link>

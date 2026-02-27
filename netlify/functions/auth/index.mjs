@@ -89,7 +89,11 @@ var handler = async (event, context) => {
           })
         };
       } else {
-        return { statusCode: 200, headers, body: JSON.stringify({ success: true, message: "Event processed" }) };
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ success: true, message: "Event processed" })
+        };
       }
     }
     return {

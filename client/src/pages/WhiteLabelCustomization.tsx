@@ -30,7 +30,7 @@ import {
   Tablet,
   Building2,
   FileText,
-  ImageIcon
+  ImageIcon,
 } from 'lucide-react';
 
 const WhiteLabelCustomization: React.FC = () => {
@@ -51,14 +51,14 @@ const WhiteLabelCustomization: React.FC = () => {
 
   // Preview update functions
   const updatePreviewConfig = useCallback((updates: Partial<WhitelabelConfig>) => {
-    setPreviewConfig(prev => ({ ...prev, ...updates }));
+    setPreviewConfig((prev) => ({ ...prev, ...updates }));
   }, []);
 
   const applyPreviewChanges = useCallback(() => {
     updateConfig(previewConfig);
     toast({
-      title: "Preview Applied",
-      description: "Branding changes have been applied successfully"
+      title: 'Preview Applied',
+      description: 'Branding changes have been applied successfully',
     });
   }, [previewConfig, updateConfig, toast]);
 
@@ -87,11 +87,14 @@ const WhiteLabelCustomization: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [importText, setImportText] = useState('');
 
-  const handleButtonUpdate = useCallback((index: number, updates: Partial<WhitelabelButton>) => {
-    const newButtons = [...config.ctaButtons];
-    newButtons[index] = { ...newButtons[index], ...updates };
-    updateConfig({ ctaButtons: newButtons });
-  }, [config.ctaButtons, updateConfig]);
+  const handleButtonUpdate = useCallback(
+    (index: number, updates: Partial<WhitelabelButton>) => {
+      const newButtons = [...config.ctaButtons];
+      newButtons[index] = { ...newButtons[index], ...updates };
+      updateConfig({ ctaButtons: newButtons });
+    },
+    [config.ctaButtons, updateConfig]
+  );
 
   const addButton = useCallback(() => {
     const newButton: WhitelabelButton = {
@@ -100,15 +103,18 @@ const WhiteLabelCustomization: React.FC = () => {
       url: '/dashboard',
       color: '#3B82F6',
       variant: 'primary',
-      enabled: true
+      enabled: true,
     };
     updateConfig({ ctaButtons: [...config.ctaButtons, newButton] });
   }, [config.ctaButtons, updateConfig]);
 
-  const removeButton = useCallback((index: number) => {
-    const newButtons = config.ctaButtons.filter((_, i) => i !== index);
-    updateConfig({ ctaButtons: newButtons });
-  }, [config.ctaButtons, updateConfig]);
+  const removeButton = useCallback(
+    (index: number) => {
+      const newButtons = config.ctaButtons.filter((_, i) => i !== index);
+      updateConfig({ ctaButtons: newButtons });
+    },
+    [config.ctaButtons, updateConfig]
+  );
 
   const handleExport = async () => {
     const configString = exportConfig();
@@ -118,35 +124,35 @@ const WhiteLabelCustomization: React.FC = () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
         toast({
-          title: "Export Successful",
-          description: "Configuration copied to clipboard"
+          title: 'Export Successful',
+          description: 'Configuration copied to clipboard',
         });
       } catch (error) {
-        const textArea = document.createElement("textarea");
+        const textArea = document.createElement('textarea');
         textArea.value = configString;
         document.body.appendChild(textArea);
         textArea.select();
-        document.execCommand("copy");
+        document.execCommand('copy');
         document.body.removeChild(textArea);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
         toast({
-          title: "Export Successful",
-          description: "Configuration copied to clipboard"
+          title: 'Export Successful',
+          description: 'Configuration copied to clipboard',
         });
       }
     } else {
-      const textArea = document.createElement("textarea");
+      const textArea = document.createElement('textarea');
       textArea.value = configString;
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand("copy");
+      document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
-        title: "Export Successful",
-        description: "Configuration copied to clipboard"
+        title: 'Export Successful',
+        description: 'Configuration copied to clipboard',
       });
     }
   };
@@ -154,9 +160,9 @@ const WhiteLabelCustomization: React.FC = () => {
   const handleImport = () => {
     if (!importText.trim()) {
       toast({
-        title: "Import Error",
-        description: "Please enter configuration data to import",
-        variant: "destructive"
+        title: 'Import Error',
+        description: 'Please enter configuration data to import',
+        variant: 'destructive',
       });
       return;
     }
@@ -165,15 +171,15 @@ const WhiteLabelCustomization: React.FC = () => {
       importConfig(importText);
       setImportText('');
       toast({
-        title: "Import Successful",
-        description: "Configuration imported successfully"
+        title: 'Import Successful',
+        description: 'Configuration imported successfully',
       });
     } catch (error) {
       console.error('Failed to import config:', error);
       toast({
-        title: "Import Failed",
-        description: error instanceof Error ? error.message : "Invalid configuration format",
-        variant: "destructive"
+        title: 'Import Failed',
+        description: error instanceof Error ? error.message : 'Invalid configuration format',
+        variant: 'destructive',
       });
     }
   };
@@ -182,7 +188,9 @@ const WhiteLabelCustomization: React.FC = () => {
   const BrandingPreview = () => (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Live Preview</h3>
+        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Live Preview
+        </h3>
         <div className="flex items-center gap-2">
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
@@ -211,22 +219,32 @@ const WhiteLabelCustomization: React.FC = () => {
         </div>
       </div>
 
-      <div className={`border rounded-lg overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+      <div
+        className={`border rounded-lg overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+      >
         <div
           className={`bg-white transition-all duration-300 ${
-            previewDevice === 'mobile' ? 'w-80 mx-auto' :
-            previewDevice === 'tablet' ? 'w-96 mx-auto' : 'w-full'
+            previewDevice === 'mobile'
+              ? 'w-80 mx-auto'
+              : previewDevice === 'tablet'
+                ? 'w-96 mx-auto'
+                : 'w-full'
           }`}
           style={{
-            transform: previewDevice === 'mobile' ? 'scale(0.8)' : previewDevice === 'tablet' ? 'scale(0.9)' : 'scale(1)',
-            transformOrigin: 'top center'
+            transform:
+              previewDevice === 'mobile'
+                ? 'scale(0.8)'
+                : previewDevice === 'tablet'
+                  ? 'scale(0.9)'
+                  : 'scale(1)',
+            transformOrigin: 'top center',
           }}
         >
           {/* Preview Header */}
           <div
             className="h-16 flex items-center justify-between px-6 shadow-sm"
             style={{
-              background: `linear-gradient(to right, ${previewConfig.primaryColor}, ${previewConfig.secondaryColor})`
+              background: `linear-gradient(to right, ${previewConfig.primaryColor}, ${previewConfig.secondaryColor})`,
             }}
           >
             <div className="flex items-center space-x-3">
@@ -257,13 +275,14 @@ const WhiteLabelCustomization: React.FC = () => {
               Transform Your Sales Process with AI
             </h1>
             <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-              {previewConfig.companyName || 'SmartCRM'} combines powerful sales tools with advanced AI capabilities to streamline your workflow and boost your results.
+              {previewConfig.companyName || 'SmartCRM'} combines powerful sales tools with advanced
+              AI capabilities to streamline your workflow and boost your results.
             </p>
             <div className="flex justify-center space-x-4">
               <button
                 className="px-6 py-3 text-white rounded-lg font-medium"
                 style={{
-                  background: `linear-gradient(to right, ${previewConfig.primaryColor}, ${previewConfig.secondaryColor})`
+                  background: `linear-gradient(to right, ${previewConfig.primaryColor}, ${previewConfig.secondaryColor})`,
                 }}
               >
                 Start Your Free Trial
@@ -279,7 +298,9 @@ const WhiteLabelCustomization: React.FC = () => {
   );
 
   return (
-    <div className={`min-h-screen pb-8 transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div
+      className={`min-h-screen pb-8 transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}
+    >
       <div className="container mx-auto px-6 py-8 space-y-8 max-w-7xl">
         {/* Dashboard Header - Matching Dashboard Design */}
         <DashboardHeader
@@ -317,7 +338,10 @@ const WhiteLabelCustomization: React.FC = () => {
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset
             </Button>
-            <Button onClick={handleExport} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+            <Button
+              onClick={handleExport}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+            >
               <Download className="h-4 w-4 mr-2" />
               Export Config
             </Button>
@@ -353,7 +377,9 @@ const WhiteLabelCustomization: React.FC = () => {
               <TabsContent value="branding" className="space-y-6 mt-6">
                 <GlassCard>
                   <CardHeader>
-                    <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle
+                      className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       <Palette className="h-5 w-5 mr-2 text-blue-500" />
                       Color Scheme
                     </CardTitle>
@@ -382,7 +408,9 @@ const WhiteLabelCustomization: React.FC = () => {
 
                 <GlassCard>
                   <CardHeader>
-                    <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle
+                      className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       <ImageIcon className="h-5 w-5 mr-2 text-purple-500" />
                       Visual Assets
                     </CardTitle>
@@ -397,9 +425,9 @@ const WhiteLabelCustomization: React.FC = () => {
                         onBlur={(e) => {
                           if (e.target.value && !validateUrl(e.target.value)) {
                             toast({
-                              title: "Invalid URL",
-                              description: "Please enter a valid URL",
-                              variant: "destructive"
+                              title: 'Invalid URL',
+                              description: 'Please enter a valid URL',
+                              variant: 'destructive',
                             });
                           }
                         }}
@@ -425,7 +453,9 @@ const WhiteLabelCustomization: React.FC = () => {
               <TabsContent value="company" className="space-y-6 mt-6">
                 <GlassCard>
                   <CardHeader>
-                    <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle
+                      className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       <Building2 className="h-5 w-5 mr-2 text-green-500" />
                       Company Information
                     </CardTitle>
@@ -472,7 +502,9 @@ const WhiteLabelCustomization: React.FC = () => {
               <TabsContent value="content" className="space-y-6 mt-6">
                 <GlassCard>
                   <CardHeader>
-                    <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle
+                      className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       <Type className="h-5 w-5 mr-2 text-orange-500" />
                       Content Customization
                     </CardTitle>
@@ -504,7 +536,9 @@ const WhiteLabelCustomization: React.FC = () => {
 
                 <GlassCard>
                   <CardHeader>
-                    <CardTitle className={`flex items-center justify-between ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle
+                      className={`flex items-center justify-between ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       <div className="flex items-center">
                         <Link className="h-5 w-5 mr-2 text-indigo-500" />
                         CTA Buttons
@@ -517,7 +551,10 @@ const WhiteLabelCustomization: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {config.ctaButtons.map((button, index) => (
-                      <div key={button.id} className={`flex items-center gap-3 p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                      <div
+                        key={button.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}
+                      >
                         <Input
                           value={button.text}
                           onChange={(e) => handleButtonUpdate(index, { text: e.target.value })}
@@ -554,7 +591,9 @@ const WhiteLabelCustomization: React.FC = () => {
               <TabsContent value="import" className="space-y-6 mt-6">
                 <GlassCard>
                   <CardHeader>
-                    <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle
+                      className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
                       <Upload className="h-5 w-5 mr-2 text-teal-500" />
                       Import Configuration
                     </CardTitle>

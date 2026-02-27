@@ -1,4 +1,3 @@
-
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 
@@ -62,11 +61,7 @@ export interface Task {
 class DatabaseService {
   // Profile methods
   async getProfile(userId: string): Promise<Profile | null> {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
 
     if (error) {
       console.error('Error fetching profile:', error);
@@ -108,12 +103,10 @@ class DatabaseService {
     return data || [];
   }
 
-  async createContact(contact: Omit<Contact, 'id' | 'created_at' | 'updated_at'>): Promise<Contact | null> {
-    const { data, error } = await supabase
-      .from('contacts')
-      .insert([contact])
-      .select()
-      .single();
+  async createContact(
+    contact: Omit<Contact, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Contact | null> {
+    const { data, error } = await supabase.from('contacts').insert([contact]).select().single();
 
     if (error) {
       console.error('Error creating contact:', error);
@@ -140,10 +133,7 @@ class DatabaseService {
   }
 
   async deleteContact(contactId: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('contacts')
-      .delete()
-      .eq('id', contactId);
+    const { error } = await supabase.from('contacts').delete().eq('id', contactId);
 
     if (error) {
       console.error('Error deleting contact:', error);
@@ -170,11 +160,7 @@ class DatabaseService {
   }
 
   async createDeal(deal: Omit<Deal, 'id' | 'created_at' | 'updated_at'>): Promise<Deal | null> {
-    const { data, error } = await supabase
-      .from('deals')
-      .insert([deal])
-      .select()
-      .single();
+    const { data, error } = await supabase.from('deals').insert([deal]).select().single();
 
     if (error) {
       console.error('Error creating deal:', error);
@@ -201,10 +187,7 @@ class DatabaseService {
   }
 
   async deleteDeal(dealId: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('deals')
-      .delete()
-      .eq('id', dealId);
+    const { error } = await supabase.from('deals').delete().eq('id', dealId);
 
     if (error) {
       console.error('Error deleting deal:', error);
@@ -231,11 +214,7 @@ class DatabaseService {
   }
 
   async createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at'>): Promise<Task | null> {
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert([task])
-      .select()
-      .single();
+    const { data, error } = await supabase.from('tasks').insert([task]).select().single();
 
     if (error) {
       console.error('Error creating task:', error);
@@ -262,10 +241,7 @@ class DatabaseService {
   }
 
   async deleteTask(taskId: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', taskId);
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
 
     if (error) {
       console.error('Error deleting task:', error);

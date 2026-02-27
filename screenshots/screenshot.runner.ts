@@ -1,5 +1,5 @@
-import { chromium, devices } from "@playwright/test";
-import fs from "fs";
+import { chromium, devices } from '@playwright/test';
+import fs from 'fs';
 
 type Viewport = { width: number; height: number };
 type NavStep =
@@ -18,7 +18,7 @@ type Shot = {
 type PageTarget = {
   name: string;
   baseUrl?: string; // SPA entry
-  url?: string;     // direct URL (remote apps)
+  url?: string; // direct URL (remote apps)
   navigate?: NavStep[];
   shots: Shot[];
 };
@@ -27,7 +27,7 @@ type Config = {
   outputDir: string;
   defaultWait: number;
   viewports: Record<string, Viewport>;
-  themes: ("light" | "dark")[];
+  themes: ('light' | 'dark')[];
   pages: PageTarget[];
 };
 
@@ -37,30 +37,33 @@ async function ensureDir(dir: string) {
 
 async function runNavSteps(page: any, steps: NavStep[] = []) {
   for (const step of steps) {
-    if ("click" in step) {
+    if ('click' in step) {
       await page.click(step.click, { timeout: 15000 });
-    } else if ("waitFor" in step) {
-      await page.waitForSelector(step.waitFor, { state: "visible", timeout: step.timeout ?? 15000 });
-    } else if ("eval" in step) {
+    } else if ('waitFor' in step) {
+      await page.waitForSelector(step.waitFor, {
+        state: 'visible',
+        timeout: step.timeout ?? 15000,
+      });
+    } else if ('eval' in step) {
       await page.evaluate(step.eval);
-      await page.waitForLoadState("networkidle").catch(() => {});
-    } else if ("wait" in step) {
+      await page.waitForLoadState('networkidle').catch(() => {});
+    } else if ('wait' in step) {
       await page.waitForTimeout(step.wait);
     }
   }
 }
 
 (async () => {
-  const cfg: Config = JSON.parse(fs.readFileSync("shots.targets.json", "utf-8"));
+  const cfg: Config = JSON.parse(fs.readFileSync('shots.targets.json', 'utf-8'));
   const browser = await chromium.launch();
   try {
     for (const [vpName, viewport] of Object.entries(cfg.viewports)) {
       for (const theme of cfg.themes) {
         const context = await browser.newContext({
-          ...devices["Desktop Chrome"],
+          ...devices['Desktop Chrome'],
           viewport,
           colorScheme: theme,
-          ignoreHTTPSErrors: true
+          ignoreHTTPSErrors: true,
         });
         const page = await context.newPage();
 
@@ -69,10 +72,10 @@ async function runNavSteps(page: any, steps: NavStep[] = []) {
 
           if (target.url) {
             // Direct URL (remote apps)
-            await page.goto(target.url, { waitUntil: "networkidle", timeout: 30000 });
+            await page.goto(target.url, { waitUntil: 'networkidle', timeout: 30000 });
           } else if (target.baseUrl) {
             // SPA entry + nav steps
-            await page.goto(target.baseUrl, { waitUntil: "networkidle", timeout: 30000 });
+            await page.goto(target.baseUrl, { waitUntil: 'networkidle', timeout: 30000 });
             // Wait a bit more for SPA to hydrate
             await page.waitForTimeout(3000);
             await runNavSteps(page, target.navigate);

@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Goal, ExecutionStep } from '../types/goals';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Activity, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock, 
+import {
+  Play,
+  Pause,
+  Square,
+  Activity,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
   Brain,
   Zap,
   Eye,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from './ui/button';
 // import { Progress } from './ui/progress';
@@ -39,7 +39,7 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
   onComplete,
   onCancel,
   realMode = false,
-  autoStart = false
+  autoStart = false,
 }) => {
   const [isRunning, setIsRunning] = useState(autoStart);
   const [isPaused, setIsPaused] = useState(false);
@@ -51,7 +51,7 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
     totalSteps: goal.agentsRequired.length,
     estimatedTimeRemaining: parseInt(goal.estimatedSetupTime.replace(/[^0-9]/g, '')) * 60 || 900,
     confidence: 85,
-    crmUpdates: 0
+    crmUpdates: 0,
   });
   const [thinking, setThinking] = useState('Initializing AI agents...');
   const [logs, setLogs] = useState<string[]>([]);
@@ -62,9 +62,12 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
 
   useEffect(() => {
     if (isRunning && !isPaused) {
-      const interval = setInterval(() => {
-        updateExecution();
-      }, realMode ? 2000 : 500);
+      const interval = setInterval(
+        () => {
+          updateExecution();
+        },
+        realMode ? 2000 : 500
+      );
 
       return () => clearInterval(interval);
     }
@@ -79,11 +82,11 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
       agent: agent,
       thinking: '',
       toolsUsed: goal.toolsNeeded.slice(0, 2),
-      crmImpact: ''
+      crmImpact: '',
     }));
 
     setSteps(executionSteps);
-    setLiveMetrics(prev => ({ ...prev, totalSteps: executionSteps.length }));
+    setLiveMetrics((prev) => ({ ...prev, totalSteps: executionSteps.length }));
   };
 
   const updateExecution = () => {
@@ -93,58 +96,58 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
     }
 
     const step = steps[currentStep];
-    
-    setSteps(prevSteps => {
+
+    setSteps((prevSteps) => {
       const newSteps = [...prevSteps];
       const targetStep = newSteps[currentStep];
-      
+
       if (targetStep.status === 'pending') {
         targetStep.status = 'executing';
         targetStep.progress = 0;
         setThinking(`${targetStep.agent} is analyzing ${goal.category} requirements...`);
         addLog(`🤖 ${targetStep.agent} started analysis`);
-        
-        setLiveMetrics(prev => ({
+
+        setLiveMetrics((prev) => ({
           ...prev,
-          agentsActive: prev.agentsActive + 1
+          agentsActive: prev.agentsActive + 1,
         }));
       } else if (targetStep.status === 'executing') {
         targetStep.progress = Math.min(100, targetStep.progress + (realMode ? 15 : 25));
-        
+
         if (targetStep.progress >= 100) {
           targetStep.status = 'completed';
           targetStep.result = generateStepResult(targetStep, goal);
           targetStep.thinking = `Completed ${goal.category} optimization with ${(85 + Math.random() * 10).toFixed(1)}% confidence`;
-          
-          setLiveMetrics(prev => ({
+
+          setLiveMetrics((prev) => ({
             ...prev,
             agentsActive: prev.agentsActive - 1,
             stepsCompleted: prev.stepsCompleted + 1,
             confidence: Math.min(95, prev.confidence + 2),
-            crmUpdates: prev.crmUpdates + (realMode ? 1 : 0)
+            crmUpdates: prev.crmUpdates + (realMode ? 1 : 0),
           }));
-          
+
           addLog(`✅ ${targetStep.agent} completed successfully`);
-          setCurrentStep(prev => prev + 1);
+          setCurrentStep((prev) => prev + 1);
         } else {
           const thinkingMessages = [
             `Processing ${goal.category} data patterns...`,
             `Analyzing ROI potential...`,
             `Optimizing ${goal.businessImpact}...`,
             `Evaluating success metrics...`,
-            `Calculating implementation requirements...`
+            `Calculating implementation requirements...`,
           ];
           setThinking(thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)]);
         }
       }
-      
+
       return newSteps;
     });
 
     // Update time remaining
-    setLiveMetrics(prev => ({
+    setLiveMetrics((prev) => ({
       ...prev,
-      estimatedTimeRemaining: Math.max(0, prev.estimatedTimeRemaining - (realMode ? 10 : 5))
+      estimatedTimeRemaining: Math.max(0, prev.estimatedTimeRemaining - (realMode ? 10 : 5)),
     }));
   };
 
@@ -154,27 +157,27 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
       insights: [
         `${goal.priority} priority optimization identified`,
         `${goal.complexity} implementation complexity confirmed`,
-        `ROI potential: ${goal.roi}`
+        `ROI potential: ${goal.roi}`,
       ],
       recommendations: [
         `Implement ${goal.toolsNeeded[0]} integration`,
         `Monitor ${goal.successMetrics[0]}`,
-        `Track ${goal.category} performance metrics`
+        `Track ${goal.category} performance metrics`,
       ],
-      confidence: 85 + Math.random() * 10
+      confidence: 85 + Math.random() * 10,
     };
   };
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [...prev, `[${timestamp}] ${message}`].slice(-10));
+    setLogs((prev) => [...prev, `[${timestamp}] ${message}`].slice(-10));
   };
 
   const completeExecution = () => {
     setIsRunning(false);
     setThinking('Execution completed! Generating final report...');
     addLog('🎉 Goal execution completed successfully');
-    
+
     setTimeout(() => {
       onComplete({
         success: true,
@@ -185,10 +188,13 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
             `Goal "${goal.title}" executed successfully`,
             `${liveMetrics.stepsCompleted} agents completed analysis`,
             `Confidence level: ${liveMetrics.confidence}%`,
-            `Estimated business impact: ${goal.businessImpact}`
-          ]
+            `Estimated business impact: ${goal.businessImpact}`,
+          ],
         },
-        executionTime: (parseInt(goal.estimatedSetupTime.replace(/[^0-9]/g, '')) * 60 - liveMetrics.estimatedTimeRemaining) * 1000
+        executionTime:
+          (parseInt(goal.estimatedSetupTime.replace(/[^0-9]/g, '')) * 60 -
+            liveMetrics.estimatedTimeRemaining) *
+          1000,
       });
     }, 1000);
   };
@@ -328,24 +334,20 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
           <div className="space-y-4">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  {getStepIcon(step.status)}
-                </div>
+                <div className="flex-shrink-0">{getStepIcon(step.status)}</div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium">{step.name}</span>
                     <span className="text-sm text-gray-500">{step.progress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${step.progress}%` }}
                     ></div>
                   </div>
                   {step.thinking && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {step.thinking}
-                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{step.thinking}</p>
                   )}
                 </div>
               </div>
@@ -373,11 +375,7 @@ const LiveGoalExecution: React.FC<LiveGoalExecutionProps> = ({
                 </div>
               ))
             )}
-            {isRunning && (
-              <div className="text-yellow-400 animate-pulse">
-                ▶ Processing...
-              </div>
-            )}
+            {isRunning && <div className="text-yellow-400 animate-pulse">▶ Processing...</div>}
           </div>
         </CardContent>
       </Card>

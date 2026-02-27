@@ -5,17 +5,20 @@
 The SmartCRM application is now configured to load the AI Calendar from `https://calendar.smartcrm.vip/` using Module Federation with an intelligent fallback system:
 
 ### 1. **Module Federation First**
+
 - Attempts to load the calendar as a federated module (if configured)
 - URL: `https://calendar.smartcrm.vip/remoteEntry.js`
 - Scope: `CalendarApp`
 - Module: `./CalendarApp`
 
 ### 2. **Iframe Fallback**
+
 - If Module Federation fails (3-second timeout), automatically falls back to iframe
 - URL: `https://calendar.smartcrm.vip?theme=light&mode=light`
 - Includes theme synchronization via PostMessage
 
 ### 3. **Smart Integration**
+
 - Shared state management between CRM and calendar
 - Theme synchronization (light/dark mode)
 - Real-time data updates via event broadcasting
@@ -25,15 +28,19 @@ The SmartCRM application is now configured to load the AI Calendar from `https:/
 To enable **full Module Federation** (instead of iframe fallback), the calendar app needs:
 
 ### Step 1: Install Module Federation Plugin
+
 ```bash
 npm install @originjs/vite-plugin-federation
 ```
 
 ### Step 2: Use the Provided Config
+
 Replace your `vite.config.js` with the configuration file we've created:
+
 - Located at: `module-federation-configs/calendar-app-vite.config.js`
 
 ### Step 3: Create CalendarApp Component
+
 Create a new file `src/CalendarApp.tsx` that exports your main calendar component:
 
 ```tsx
@@ -47,15 +54,15 @@ interface CalendarAppProps {
   onDataUpdate?: (data: any) => void;
 }
 
-const CalendarApp: React.FC<CalendarAppProps> = ({ 
-  theme = 'light', 
+const CalendarApp: React.FC<CalendarAppProps> = ({
+  theme = 'light',
   mode = 'light',
   sharedData,
-  onDataUpdate 
+  onDataUpdate,
 }) => {
   return (
     <div className="w-full h-full">
-      <YourMainCalendarComponent 
+      <YourMainCalendarComponent
         theme={theme}
         mode={mode}
         data={sharedData}
@@ -69,6 +76,7 @@ export default CalendarApp;
 ```
 
 ### Step 4: Update Main Entry (Optional)
+
 If you want to maintain standalone functionality:
 
 ```tsx
@@ -85,22 +93,26 @@ root.render(<CalendarApp />);
 ```
 
 ### Step 5: Build and Deploy
+
 ```bash
 npm run build
 ```
 
 After deployment, the calendar will be available at:
+
 - `https://calendar.smartcrm.vip/remoteEntry.js` (Module Federation)
 - `https://calendar.smartcrm.vip/` (Standalone)
 
 ## 🔄 Current Behavior
 
 ### Without Module Federation Setup (Current)
+
 - Calendar loads via **iframe** at `https://calendar.smartcrm.vip`
 - Works perfectly fine, just uses iframe instead of native integration
 - Theme syncs via PostMessage
 
 ### With Module Federation Setup (Future)
+
 - Calendar loads as a **native federated module**
 - Better performance (no iframe overhead)
 - Direct props passing and state sharing
@@ -118,14 +130,14 @@ After deployment, the calendar will be available at:
 
 ## 📊 Benefits of Module Federation
 
-| Feature | Iframe | Module Federation |
-|---------|--------|-------------------|
-| Performance | Good | Excellent |
-| State Sharing | PostMessage | Direct Props |
-| Bundle Size | Separate | Shared Dependencies |
-| SEO | Limited | Full |
-| Debugging | Harder | Easier |
-| Theme Sync | PostMessage | Direct Props |
+| Feature       | Iframe      | Module Federation   |
+| ------------- | ----------- | ------------------- |
+| Performance   | Good        | Excellent           |
+| State Sharing | PostMessage | Direct Props        |
+| Bundle Size   | Separate    | Shared Dependencies |
+| SEO           | Limited     | Full                |
+| Debugging     | Harder      | Easier              |
+| Theme Sync    | PostMessage | Direct Props        |
 
 ## 🚀 Summary
 

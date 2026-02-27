@@ -23,7 +23,7 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
   onContactUpdate,
   onContactDelete,
   initialContacts,
-  theme = 'light'
+  theme = 'light',
 }) => {
   const [contacts, setContacts] = useState(initialContacts || []);
 
@@ -43,17 +43,15 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
   // Handle contact creation
   const handleContactCreate = (newContact: any) => {
     console.log('Contact created:', newContact);
-    setContacts(prev => [...prev, newContact]);
+    setContacts((prev) => [...prev, newContact]);
     onContactCreate?.(newContact);
   };
 
   // Handle contact updates
   const handleContactUpdate = (updatedContact: any) => {
     console.log('Contact updated:', updatedContact);
-    setContacts(prev => 
-      prev.map(contact => 
-        contact.id === updatedContact.id ? updatedContact : contact
-      )
+    setContacts((prev) =>
+      prev.map((contact) => (contact.id === updatedContact.id ? updatedContact : contact))
     );
     onContactUpdate?.(updatedContact);
   };
@@ -61,7 +59,7 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
   // Handle contact deletion
   const handleContactDelete = (contactId: string) => {
     console.log('Contact deleted:', contactId);
-    setContacts(prev => prev.filter(contact => contact.id !== contactId));
+    setContacts((prev) => prev.filter((contact) => contact.id !== contactId));
     onContactDelete?.(contactId);
   };
 
@@ -79,7 +77,7 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
           color: white;
         }
       `}</style>
-      
+
       {/* Replace this section with your actual Bolt contacts component */}
       {/* Example integration: */}
       {/*
@@ -92,20 +90,18 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
         theme={theme}
       />
       */}
-      
+
       {/* Temporary placeholder - REPLACE THIS with your actual component */}
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-4">
-          Remote Contacts App from Bolt
-        </h2>
+        <h2 className="text-2xl font-bold mb-4">Remote Contacts App from Bolt</h2>
         <p className="text-gray-600 mb-4">
           Replace this section with your actual contacts component from Bolt.
         </p>
-        
+
         {/* Example of how to display contacts */}
         <div className="grid gap-4">
           {contacts.map((contact, index) => (
-            <div 
+            <div
               key={contact.id || index}
               className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50"
               onClick={() => handleContactSelect(contact)}
@@ -116,15 +112,17 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
             </div>
           ))}
         </div>
-        
+
         {/* Example create button */}
         <button
-          onClick={() => handleContactCreate({
-            id: Date.now().toString(),
-            name: 'New Contact',
-            email: 'new@example.com',
-            company: 'New Company'
-          })}
+          onClick={() =>
+            handleContactCreate({
+              id: Date.now().toString(),
+              name: 'New Contact',
+              email: 'new@example.com',
+              company: 'New Company',
+            })
+          }
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
         >
           Add Test Contact

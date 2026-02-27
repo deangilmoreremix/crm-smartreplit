@@ -58,11 +58,19 @@ var handler = async (event, context) => {
     if (pathParts.length >= 3 && pathParts[0] === "white-label" && pathParts[1] === "tenants" && httpMethod === "DELETE") {
       const tenantId = pathParts[2];
       if (!supabase) {
-        return { statusCode: 200, headers, body: JSON.stringify({ message: "Tenant deleted successfully", id: tenantId }) };
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ message: "Tenant deleted successfully", id: tenantId })
+        };
       }
       const { error } = await supabase.from("tenants").delete().eq("id", tenantId);
       if (error) throw error;
-      return { statusCode: 200, headers, body: JSON.stringify({ message: "Tenant deleted successfully", id: tenantId }) };
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ message: "Tenant deleted successfully", id: tenantId })
+      };
     }
     if (pathParts.length >= 3 && pathParts[0] === "white-label" && pathParts[1] === "config" && httpMethod === "GET") {
       const tenantId = pathParts[2];
@@ -93,7 +101,11 @@ var handler = async (event, context) => {
         throw error;
       }
       if (!data) {
-        return { statusCode: 404, headers, body: JSON.stringify({ error: "White-label configuration not found" }) };
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({ error: "White-label configuration not found" })
+        };
       }
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }

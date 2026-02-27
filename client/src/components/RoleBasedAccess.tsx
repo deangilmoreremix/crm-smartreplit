@@ -89,11 +89,6 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
           status: 'active'
         };
 
-        console.log('✅ User role loaded:', {
-          email: userData.email,
-          role: userData.role,
-          productTier: userData.productTier
-        });
         setUser(userData);
       }
     } catch (error) {

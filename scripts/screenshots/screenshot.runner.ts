@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { chromium, devices } from '@playwright/test';
 
-type Viewport = { width: number; height: number; };
+type Viewport = { width: number; height: number };
 type Shot = {
   label: string;
   selector?: string;
@@ -18,7 +18,7 @@ type Config = {
   outputDir: string;
   defaultWait: number;
   viewports: Record<string, Viewport>;
-  themes: ('light'|'dark')[];
+  themes: ('light' | 'dark')[];
   auth: {
     enabled: boolean;
     loginUrl: string;
@@ -46,7 +46,7 @@ async function loginIfNeeded(cfg: Config, page: any) {
   ]);
 }
 
-async function setTheme(page: any, theme: 'light'|'dark') {
+async function setTheme(page: any, theme: 'light' | 'dark') {
   // If your app reads prefers-color-scheme:
   await page.emulateMedia({ colorScheme: theme });
   // If your app uses a class toggle, you can force it:
@@ -61,7 +61,7 @@ async function captureOne(
   shot: Shot,
   outDir: string,
   vpName: string,
-  theme: 'light'|'dark'
+  theme: 'light' | 'dark'
 ) {
   await page.goto(target.url, { waitUntil: 'networkidle' });
 
@@ -96,10 +96,7 @@ async function captureOne(
   for (const [vpName, viewport] of Object.entries(cfg.viewports)) {
     const context = await browser.newContext({
       viewport,
-      userAgent:
-        vpName === 'mobile'
-          ? devices['iPhone 12'].userAgent
-          : undefined
+      userAgent: vpName === 'mobile' ? devices['iPhone 12'].userAgent : undefined,
     });
 
     const page = await context.newPage();
@@ -117,7 +114,10 @@ async function captureOne(
           try {
             await captureOne(page, cfg, target, shot, outDir, vpName, theme);
           } catch (e: any) {
-            console.warn(`✖ Failed: ${target.name} -> ${shot.label} (${vpName}/${theme})`, e?.message);
+            console.warn(
+              `✖ Failed: ${target.name} -> ${shot.label} (${vpName}/${theme})`,
+              e?.message
+            );
           }
         }
       }

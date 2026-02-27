@@ -9,17 +9,17 @@ import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  
+
   // Get app context from URL parameters for multi-tenant email routing
   const urlParams = new URLSearchParams(window.location.search);
   const appContext = urlParams.get('app') || 'smartcrm';
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,10 +53,10 @@ const SignUpPage: React.FC = () => {
         last_name: formData.lastName,
         full_name: `${formData.firstName} ${formData.lastName}`.trim(),
         app_context: appContext,
-        email_template_set: appContext
-      }
+        email_template_set: appContext,
+      },
     });
-    
+
     if (signUpError) {
       setError(signUpError.message);
       setLoading(false);
@@ -73,41 +73,51 @@ const SignUpPage: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}>
+    <div
+      className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
             Smart<span className="text-green-400">CRM</span>
           </h1>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Create your account
-          </p>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Create your account</p>
         </div>
-        
-        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}>
+
+        <div
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}
+        >
           {error && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}
+            >
               <AlertCircle className="h-4 w-4 text-red-500" />
               <span className={`text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border flex items-center space-x-2`}
+            >
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>{success}</span>
+              <span className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                {success}
+              </span>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+                >
                   First Name
                 </label>
                 <input
@@ -116,7 +126,7 @@ const SignUpPage: React.FC = () => {
                   value={formData.firstName}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -125,7 +135,9 @@ const SignUpPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+                <label
+                  className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+                >
                   Last Name
                 </label>
                 <input
@@ -134,7 +146,7 @@ const SignUpPage: React.FC = () => {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -143,9 +155,11 @@ const SignUpPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Email
               </label>
               <input
@@ -154,7 +168,7 @@ const SignUpPage: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-lg ${
-                  isDark 
+                  isDark
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -163,9 +177,11 @@ const SignUpPage: React.FC = () => {
                 disabled={loading}
               />
             </div>
-            
+
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Password
               </label>
               <div className="relative">
@@ -175,7 +191,7 @@ const SignUpPage: React.FC = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 pr-10 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -187,21 +203,22 @@ const SignUpPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
-                    isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'
+                    isDark
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-700'
                   }`}
                   disabled={loading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <PasswordStrengthIndicator
-                password={formData.password}
-                className="mt-2"
-              />
+              <PasswordStrengthIndicator password={formData.password} className="mt-2" />
             </div>
-            
+
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Confirm Password
               </label>
               <div className="relative">
@@ -211,7 +228,7 @@ const SignUpPage: React.FC = () => {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   className={`w-full px-3 py-2 pr-10 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -223,15 +240,21 @@ const SignUpPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
-                    isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'
+                    isDark
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-700'
                   }`}
                   disabled={loading}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -240,14 +263,11 @@ const SignUpPage: React.FC = () => {
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Already have an account?{' '}
-              <Link
-                to="/signin"
-                className="text-blue-600 hover:text-blue-500"
-              >
+              <Link to="/signin" className="text-blue-600 hover:text-blue-500">
                 Sign In
               </Link>
             </p>

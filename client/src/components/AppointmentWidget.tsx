@@ -14,7 +14,7 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
   const navigate = useNavigate();
 
   const upcomingAppointments = Object.values(appointments)
-    .filter(apt => apt.status === 'scheduled' && apt.startTime > new Date())
+    .filter((apt) => apt.status === 'scheduled' && apt.startTime > new Date())
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
     .slice(0, limit);
 
@@ -32,10 +32,10 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
       dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
 
-    const timeStr = date.toLocaleTimeString(undefined, { 
-      hour: 'numeric', 
+    const timeStr = date.toLocaleTimeString(undefined, {
+      hour: 'numeric',
       minute: '2-digit',
-      hour12: true 
+      hour12: true,
     });
 
     return `${dateStr} at ${timeStr}`;
@@ -43,36 +43,44 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'call': return Phone;
-      case 'demo': 
-      case 'meeting': 
-      case 'presentation': 
-      default: return Video;
+      case 'call':
+        return Phone;
+      case 'demo':
+      case 'meeting':
+      case 'presentation':
+      default:
+        return Video;
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'call': return 'text-blue-400 bg-blue-500/20';
-      case 'demo': return 'text-green-400 bg-green-500/20';
-      case 'presentation': return 'text-purple-400 bg-purple-500/20';
-      default: return 'text-gray-400 bg-gray-500/20';
+      case 'call':
+        return 'text-blue-400 bg-blue-500/20';
+      case 'demo':
+        return 'text-green-400 bg-green-500/20';
+      case 'presentation':
+        return 'text-purple-400 bg-purple-500/20';
+      default:
+        return 'text-gray-400 bg-gray-500/20';
     }
   };
 
   return (
     <div className="p-6 relative">
       {/* Add Appointment Button */}
-      <button 
+      <button
         onClick={() => navigate('/appointments/new')}
         className={`absolute top-4 right-4 p-1 rounded-full ${
-          isDark ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400' : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+          isDark
+            ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
+            : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
         }`}
         title="New appointment"
       >
         <Plus size={16} />
       </button>
-      
+
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-white flex items-center">
           <Calendar size={20} className="text-blue-400 mr-2" />
@@ -87,11 +95,11 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
         <div className="space-y-3">
           {upcomingAppointments.map((appointment) => {
             const TypeIcon = getTypeIcon(appointment.type);
-            
+
             return (
-              <div 
-                key={appointment.id} 
-                className="border border-white/10 rounded-lg p-4 hover:bg-white/5 transition-colors group cursor-pointer" 
+              <div
+                key={appointment.id}
+                className="border border-white/10 rounded-lg p-4 hover:bg-white/5 transition-colors group cursor-pointer"
                 onClick={() => navigate(`/appointments/${appointment.id}`)}
               >
                 <div className="flex items-start space-x-3">
@@ -113,12 +121,17 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      appointment.type === 'demo' ? 'bg-green-500/20 text-green-400' :
-                      appointment.type === 'call' ? 'bg-blue-500/20 text-blue-400' :
-                      appointment.type === 'presentation' ? 'bg-purple-500/20 text-purple-400' :
-                      'bg-gray-500/20 text-gray-400'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        appointment.type === 'demo'
+                          ? 'bg-green-500/20 text-green-400'
+                          : appointment.type === 'call'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : appointment.type === 'presentation'
+                              ? 'bg-purple-500/20 text-purple-400'
+                              : 'bg-gray-500/20 text-gray-400'
+                      }`}
+                    >
                       {appointment.type}
                     </span>
                     <button className="text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
@@ -134,7 +147,7 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
         <div className="text-center py-10">
           <Calendar size={32} className="mx-auto text-gray-600 mb-3" />
           <p className="text-gray-400 mb-3">No upcoming appointments</p>
-          <button 
+          <button
             onClick={() => navigate('/appointments/new')}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors"
           >

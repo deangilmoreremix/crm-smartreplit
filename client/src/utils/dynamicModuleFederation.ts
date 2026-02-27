@@ -23,7 +23,7 @@ class DynamicModuleFederation {
 
   async loadRemoteModule<T = unknown>(config: RemoteModuleConfig): Promise<T> {
     const { url, scope, module } = config;
-    
+
     // Load the remote script if not already loaded
     if (!this.loadedScripts.has(url)) {
       await this.loadScript(url);
@@ -32,10 +32,10 @@ class DynamicModuleFederation {
 
     // Get the container
     const container = await this.getContainer(scope);
-    
+
     // Initialize container with shared dependencies
     await this.initContainer(container);
-    
+
     // Get the module factory
     const factory = await container.get(module);
     const Module = factory() as { default?: unknown };
@@ -49,74 +49,81 @@ class DynamicModuleFederation {
       const possibleUrls = [
         url.endsWith('.js') ? url : `${url}/remoteEntry.js`, // Root path FIRST (e.g., https://ai-analytics.smartcrm.vip/remoteEntry.js)
         `${url}/assets/remoteEntry.js`,
-        `${url}/static/js/remoteEntry.js`
+        `${url}/static/js/remoteEntry.js`,
       ];
-      
+
       let currentUrlIndex = 0;
-      
+
       const tryNextUrl = async () => {
         if (currentUrlIndex >= possibleUrls.length) {
-          const error = new Error(`Failed to load remote script from any of: ${possibleUrls.join(', ')}`);
+          const error = new Error(
+            `Failed to load remote script from any of: ${possibleUrls.join(', ')}`
+          );
           console.error('❌ Module Federation script loading failed:', error);
           reject(error);
           return;
         }
-        
+
         const scriptUrl = possibleUrls[currentUrlIndex];
         currentUrlIndex++;
-        
+
         console.log(`🔄 Trying Module Federation script: ${scriptUrl}`);
-        
+
         try {
           const script = document.createElement('script');
           script.type = 'text/javascript';
           script.async = true;
-          
+
           await new Promise<void>((scriptResolve, scriptReject) => {
             script.onload = () => {
               console.log(`✅ Module Federation script loaded: ${scriptUrl}`);
               scriptResolve();
             };
-            
+
             script.onerror = (error: Event | string) => {
-                const errorMessage = (error as any)?.message || String(error);
-                const errorDetails = {
-                  error: errorMessage,
-                  scriptUrl,
-                  event: error,
-                  timestamp: new Date().toISOString(),
-                  userAgent: typeof navigator !== 'undefined' ? (navigator as Navigator).userAgent : 'unknown',
-                  isDev: window.location.hostname.includes('github.dev') || window.location.hostname.includes('localhost')
-                };
-                console.warn(`❌ Failed to load script from: ${scriptUrl}`, errorDetails);
- 
-                // Check if it's a certificate error
-                if (errorMessage.includes('ERR_CERT') || errorMessage.includes('certificate')) {
-                  console.warn(`🔒 Certificate error detected for ${scriptUrl}. This is common in development with self-signed certificates.`);
-                }
- 
-                scriptReject(error);
+              const errorMessage = (error as any)?.message || String(error);
+              const errorDetails = {
+                error: errorMessage,
+                scriptUrl,
+                event: error,
+                timestamp: new Date().toISOString(),
+                userAgent:
+                  typeof navigator !== 'undefined' ? (navigator as Navigator).userAgent : 'unknown',
+                isDev:
+                  window.location.hostname.includes('github.dev') ||
+                  window.location.hostname.includes('localhost'),
               };
-            
+              console.warn(`❌ Failed to load script from: ${scriptUrl}`, errorDetails);
+
+              // Check if it's a certificate error
+              if (errorMessage.includes('ERR_CERT') || errorMessage.includes('certificate')) {
+                console.warn(
+                  `🔒 Certificate error detected for ${scriptUrl}. This is common in development with self-signed certificates.`
+                );
+              }
+
+              scriptReject(error);
+            };
+
             // Timeout fallback
             setTimeout(() => {
               scriptReject(new Error(`Script load timeout: ${scriptUrl}`));
             }, 5000);
-            
+
             script.src = scriptUrl;
             document.head.appendChild(script);
           }).catch(() => {
             // On error, try the next URL
             tryNextUrl();
           });
-          
+
           resolve();
         } catch (error) {
           console.error('Error during script load attempt:', error);
           tryNextUrl();
         }
       };
-      
+
       tryNextUrl();
     });
   }
@@ -130,25 +137,28 @@ class DynamicModuleFederation {
     // Wait for the global to be available (reduced for faster fallback)
     let retries = 0;
     const maxRetries = 20; // 2 seconds max wait
-    
+
     console.log(`🔍 Looking for Module Federation container: ${scope}`);
-    
+
     while (!window[scope] && retries < maxRetries) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       retries++;
-      
+
       if (retries % 10 === 0) {
         console.log(`⏳ Still waiting for container "${scope}" (${retries}/${maxRetries})`);
       }
     }
 
     if (!window[scope]) {
-      const availableContainers = Object.keys(window).filter(key => 
-        typeof window[key] === 'object' && 
-        window[key] !== null && 
-        typeof (window[key] as any).get === 'function'
+      const availableContainers = Object.keys(window).filter(
+        (key) =>
+          typeof window[key] === 'object' &&
+          window[key] !== null &&
+          typeof (window[key] as any).get === 'function'
       );
-      const error = new Error(`Remote container "${scope}" not found. Available containers: ${availableContainers.join(', ') || 'none'}`);
+      const error = new Error(
+        `Remote container "${scope}" not found. Available containers: ${availableContainers.join(', ') || 'none'}`
+      );
       console.error('❌ Module Federation container not found:', error);
       throw error;
     }
@@ -164,7 +174,7 @@ class DynamicModuleFederation {
     const shared = {
       react: () => import('react'),
       'react-dom': () => import('react-dom'),
-      'react-router-dom': () => import('react-router-dom')
+      'react-router-dom': () => import('react-router-dom'),
     };
 
     await container.init(shared);
@@ -197,7 +207,7 @@ export async function loadRemoteComponent<T = unknown>(
   return moduleFederation.loadRemoteModule<T>({
     url: remoteUrl,
     scope,
-    module
+    module,
   });
 }
 
@@ -227,9 +237,9 @@ export function useRemoteComponent<T = unknown>(
       try {
         setLoading(true);
         setError(null);
-        
+
         const loadedComponent = await loadRemoteComponent<T>(remoteUrl, scope, module);
-        
+
         if (!cancelled) {
           setComponent(loadedComponent);
         }

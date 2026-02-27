@@ -1,7 +1,25 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useOpenAIAssistants } from '../../services/openaiAssistantsService';
-import { Bot, Send, RefreshCw, Plus, Settings, X, Save, Zap, PlayCircle, PauseCircle, StopCircle, CheckCircle, Clock, AlertCircle, Target, Users, Calendar, Mail } from 'lucide-react';
+import {
+  Bot,
+  Send,
+  RefreshCw,
+  Plus,
+  Settings,
+  X,
+  Save,
+  Zap,
+  PlayCircle,
+  PauseCircle,
+  StopCircle,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Target,
+  Users,
+  Calendar,
+  Mail,
+} from 'lucide-react';
 
 interface WorkflowStep {
   id: string;
@@ -40,7 +58,7 @@ interface Message {
 
 const AgentWorkflowChat: React.FC = () => {
   const assistants = useOpenAIAssistants();
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -49,17 +67,17 @@ const AgentWorkflowChat: React.FC = () => {
   const [workflows, setWorkflows] = useState<AgentWorkflow[]>([]);
   const [activeWorkflow, setActiveWorkflow] = useState<AgentWorkflow | null>(null);
   const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
-  
+
   const messageEndRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     initializeWorkflowAgent();
   }, []);
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
+
   const initializeWorkflowAgent = async () => {
     try {
       // Create a specialized workflow agent
@@ -77,108 +95,115 @@ const AgentWorkflowChat: React.FC = () => {
         When users request workflows, provide detailed step-by-step plans and ask clarifying questions to ensure the workflow meets their specific needs.`,
         ['function_calling', 'code_interpreter']
       );
-      
+
       setAssistantId(assistant.id);
-      
+
       const thread = await assistants.createThread();
       setThreadId(thread.id);
-      
+
       // Welcome message
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: 'Hello! I\'m your AI Workflow Automation Agent. I can help you create, manage, and execute automated workflows for your business processes.\n\nHere are some things I can help you with:\n• Create lead nurturing sequences\n• Automate follow-up communications\n• Schedule periodic data analysis\n• Set up customer onboarding workflows\n• Build sales pipeline automation\n\nWhat kind of workflow would you like to create?',
-        createdAt: new Date()
-      }]);
-      
+      setMessages([
+        {
+          id: 'welcome',
+          role: 'assistant',
+          content:
+            "Hello! I'm your AI Workflow Automation Agent. I can help you create, manage, and execute automated workflows for your business processes.\n\nHere are some things I can help you with:\n• Create lead nurturing sequences\n• Automate follow-up communications\n• Schedule periodic data analysis\n• Set up customer onboarding workflows\n• Build sales pipeline automation\n\nWhat kind of workflow would you like to create?",
+          createdAt: new Date(),
+        },
+      ]);
     } catch (error) {
       console.error('Failed to initialize workflow agent:', error);
     }
   };
-  
+
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   const handleSendMessage = async () => {
     if (!input.trim() || !threadId || !assistantId) return;
-    
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    
+
     try {
       // Check if the message is requesting workflow creation
-      if (input.toLowerCase().includes('create workflow') || input.toLowerCase().includes('build workflow')) {
+      if (
+        input.toLowerCase().includes('create workflow') ||
+        input.toLowerCase().includes('build workflow')
+      ) {
         const workflow = await generateWorkflowFromPrompt(input);
         if (workflow) {
-          setWorkflows(prev => [...prev, workflow]);
+          setWorkflows((prev) => [...prev, workflow]);
           setActiveWorkflow(workflow);
         }
       }
-      
+
       // Send to AI assistant
       await assistants.addMessageToThread(threadId, input);
       const run = await assistants.runAssistant(threadId, assistantId);
-      
+
       // Poll for response
       const response = await pollForResponse(run.id);
       if (response) {
-        setMessages(prev => [...prev, {
-          id: response.id,
-          role: 'assistant',
-          content: response.content,
-          createdAt: new Date()
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: response.id,
+            role: 'assistant',
+            content: response.content,
+            createdAt: new Date(),
+          },
+        ]);
       }
-      
     } catch (error) {
       console.error('Error processing message:', error);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const pollForResponse = async (runId: string): Promise<any> => {
     let attempts = 0;
     const maxAttempts = 30;
-    
+
     while (attempts < maxAttempts) {
       try {
         const run = await assistants.getRunStatus(threadId!, runId);
-        
+
         if (run.status === 'completed') {
           const messages = await assistants.getThreadMessages(threadId!);
-          const latestMessage = messages.data.find(m => m.role === 'assistant');
-          
+          const latestMessage = messages.data.find((m) => m.role === 'assistant');
+
           if (latestMessage && latestMessage.content[0].type === 'text') {
             return {
               id: latestMessage.id,
-              content: latestMessage.content[0].text.value
+              content: latestMessage.content[0].text.value,
             };
           }
         } else if (run.status === 'failed') {
           throw new Error('Assistant run failed');
         }
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         attempts++;
       } catch (error) {
         console.error('Error polling for response:', error);
         break;
       }
     }
-    
+
     return null;
   };
-  
+
   const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow | null> => {
     try {
       // Simple workflow generation based on prompt keywords
@@ -191,16 +216,16 @@ const AgentWorkflowChat: React.FC = () => {
         status: 'draft',
         trigger: 'manual',
         createdAt: new Date(),
-        runCount: 0
+        runCount: 0,
       };
-      
+
       return workflow;
     } catch (error) {
       console.error('Error generating workflow:', error);
       return null;
     }
   };
-  
+
   const extractWorkflowName = (prompt: string): string => {
     if (prompt.toLowerCase().includes('lead')) return 'Lead Nurturing Workflow';
     if (prompt.toLowerCase().includes('follow')) return 'Follow-up Automation';
@@ -209,10 +234,10 @@ const AgentWorkflowChat: React.FC = () => {
     if (prompt.toLowerCase().includes('sales')) return 'Sales Pipeline Automation';
     return 'Custom Workflow';
   };
-  
+
   const generateStepsFromPrompt = (prompt: string): WorkflowStep[] => {
     const steps: WorkflowStep[] = [];
-    
+
     if (prompt.toLowerCase().includes('lead')) {
       steps.push(
         {
@@ -220,21 +245,21 @@ const AgentWorkflowChat: React.FC = () => {
           name: 'Identify New Leads',
           action: 'query_crm',
           parameters: { filter: 'new_leads', timeframe: '24h' },
-          status: 'pending'
+          status: 'pending',
         },
         {
           id: 'step_2',
           name: 'Send Welcome Email',
           action: 'send_email',
           parameters: { template: 'welcome', personalized: true },
-          status: 'pending'
+          status: 'pending',
         },
         {
           id: 'step_3',
           name: 'Schedule Follow-up',
           action: 'create_task',
           parameters: { type: 'follow_up', delay: '3_days' },
-          status: 'pending'
+          status: 'pending',
         }
       );
     } else if (prompt.toLowerCase().includes('follow')) {
@@ -244,83 +269,92 @@ const AgentWorkflowChat: React.FC = () => {
           name: 'Check Deal Status',
           action: 'query_deals',
           parameters: { status: 'proposal_sent' },
-          status: 'pending'
+          status: 'pending',
         },
         {
           id: 'step_2',
           name: 'Send Follow-up',
           action: 'send_email',
           parameters: { template: 'follow_up', timing: 'after_3_days' },
-          status: 'pending'
+          status: 'pending',
         }
       );
     }
-    
+
     return steps;
   };
-  
+
   const executeWorkflow = async (workflow: AgentWorkflow) => {
-    setWorkflows(prev => prev.map(w => 
-      w.id === workflow.id 
-        ? { ...w, status: 'active', lastRun: new Date() }
-        : w
-    ));
-    
+    setWorkflows((prev) =>
+      prev.map((w) => (w.id === workflow.id ? { ...w, status: 'active', lastRun: new Date() } : w))
+    );
+
     // Simulate workflow execution
     for (const step of workflow.steps) {
-      setWorkflows(prev => prev.map(w => 
-        w.id === workflow.id 
-          ? {
-              ...w, 
-              steps: w.steps.map(s => 
-                s.id === step.id ? { ...s, status: 'running' } : s
-              )
-            }
-          : w
-      ));
-      
+      setWorkflows((prev) =>
+        prev.map((w) =>
+          w.id === workflow.id
+            ? {
+                ...w,
+                steps: w.steps.map((s) => (s.id === step.id ? { ...s, status: 'running' } : s)),
+              }
+            : w
+        )
+      );
+
       // Simulate step execution
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setWorkflows(prev => prev.map(w => 
-        w.id === workflow.id 
-          ? {
-              ...w, 
-              steps: w.steps.map(s => 
-                s.id === step.id 
-                  ? { ...s, status: 'completed', result: `${step.name} completed successfully` }
-                  : s
-              )
-            }
-          : w
-      ));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setWorkflows((prev) =>
+        prev.map((w) =>
+          w.id === workflow.id
+            ? {
+                ...w,
+                steps: w.steps.map((s) =>
+                  s.id === step.id
+                    ? { ...s, status: 'completed', result: `${step.name} completed successfully` }
+                    : s
+                ),
+              }
+            : w
+        )
+      );
     }
-    
-    setWorkflows(prev => prev.map(w => 
-      w.id === workflow.id 
-        ? { ...w, status: 'completed', runCount: w.runCount + 1 }
-        : w
-    ));
-    
+
+    setWorkflows((prev) =>
+      prev.map((w) =>
+        w.id === workflow.id ? { ...w, status: 'completed', runCount: w.runCount + 1 } : w
+      )
+    );
+
     // Add completion message
-    setMessages(prev => [...prev, {
-      id: `completion_${Date.now()}`,
-      role: 'system',
-      content: `✅ Workflow "${workflow.name}" completed successfully! All ${workflow.steps.length} steps executed.`,
-      createdAt: new Date()
-    }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `completion_${Date.now()}`,
+        role: 'system',
+        content: `✅ Workflow "${workflow.name}" completed successfully! All ${workflow.steps.length} steps executed.`,
+        createdAt: new Date(),
+      },
+    ]);
   };
-  
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'running': case 'active': return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />;
-      case 'failed': return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'paused': return <PauseCircle className="h-4 w-4 text-yellow-500" />;
-      default: return <Clock className="h-4 w-4 text-gray-400" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'running':
+      case 'active':
+        return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />;
+      case 'failed':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'paused':
+        return <PauseCircle className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />;
     }
   };
-  
+
   return (
     <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-lg">
       {/* Header */}
@@ -343,7 +377,7 @@ const AgentWorkflowChat: React.FC = () => {
           </button>
         </div>
       </div>
-      
+
       <div className="flex flex-1 overflow-hidden">
         {/* Chat Area */}
         <div className="flex-1 flex flex-col">
@@ -372,11 +406,17 @@ const AgentWorkflowChat: React.FC = () => {
                       <div className="h-4 w-4 bg-white/30 rounded-full mr-2" />
                     )}
                     <span className="text-xs font-medium opacity-75">
-                      {message.role === 'assistant' ? 'Workflow Agent' : 
-                       message.role === 'system' ? 'System' : 'You'}
+                      {message.role === 'assistant'
+                        ? 'Workflow Agent'
+                        : message.role === 'system'
+                          ? 'System'
+                          : 'You'}
                     </span>
                     <span className="text-xs ml-2 opacity-50">
-                      {message.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {message.createdAt.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </div>
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -385,7 +425,7 @@ const AgentWorkflowChat: React.FC = () => {
                 </div>
               </div>
             ))}
-            
+
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 p-4 rounded-2xl">
@@ -396,10 +436,10 @@ const AgentWorkflowChat: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             <div ref={messageEndRef} />
           </div>
-          
+
           {/* Input */}
           <div className="p-4 border-t border-gray-200">
             <form
@@ -425,7 +465,7 @@ const AgentWorkflowChat: React.FC = () => {
                 <Send className="h-5 w-5" />
               </button>
             </form>
-            
+
             {/* Quick Actions */}
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -449,7 +489,7 @@ const AgentWorkflowChat: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Workflow Panel */}
         {showWorkflowBuilder && (
           <div className="w-80 border-l border-gray-200 bg-gray-50 p-4 overflow-y-auto">
@@ -462,7 +502,7 @@ const AgentWorkflowChat: React.FC = () => {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            
+
             <div className="space-y-3">
               {workflows.map((workflow) => (
                 <div key={workflow.id} className="bg-white rounded-lg p-3 border border-gray-200">
@@ -470,9 +510,9 @@ const AgentWorkflowChat: React.FC = () => {
                     <h4 className="font-medium text-sm">{workflow.name}</h4>
                     {getStatusIcon(workflow.status)}
                   </div>
-                  
+
                   <p className="text-xs text-gray-600 mb-3">{workflow.description}</p>
-                  
+
                   <div className="space-y-1 mb-3">
                     {workflow.steps.map((step) => (
                       <div key={step.id} className="flex items-center text-xs">
@@ -481,7 +521,7 @@ const AgentWorkflowChat: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     {workflow.status === 'draft' && (
                       <button
@@ -499,13 +539,13 @@ const AgentWorkflowChat: React.FC = () => {
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="mt-2 text-xs text-gray-500">
                     Runs: {workflow.runCount} | Created: {workflow.createdAt.toLocaleDateString()}
                   </div>
                 </div>
               ))}
-              
+
               {workflows.length === 0 && (
                 <div className="text-center py-6 text-gray-500">
                   <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />

@@ -14,12 +14,14 @@ interface VoIPConfigPanelProps {
 
 const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfigPanelProps) => {
   const { isDark } = useTheme();
-  const [availableProviders, setAvailableProviders] = useState<Array<{
-    name: string;
-    displayName: string;
-    description: string;
-    website: string;
-  }>>([]);
+  const [availableProviders, setAvailableProviders] = useState<
+    Array<{
+      name: string;
+      displayName: string;
+      description: string;
+      website: string;
+    }>
+  >([]);
 
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [config, setConfig] = useState<Record<string, any>>({});
@@ -71,7 +73,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
       const testConfig: VoIPConfig = {
         provider: selectedProvider,
         config,
-        enabled: true
+        enabled: true,
       };
 
       const result = await voipService.testConfig(testConfig);
@@ -79,7 +81,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
     } catch (error) {
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Test failed'
+        message: error instanceof Error ? error.message : 'Test failed',
       });
     } finally {
       setIsTesting(false);
@@ -95,7 +97,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
       const voipConfig: VoIPConfig = {
         provider: selectedProvider,
         config,
-        enabled: isEnabled
+        enabled: isEnabled,
       };
 
       await voipService.saveConfig(voipConfig);
@@ -107,7 +109,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
       console.error('Failed to save VoIP config:', error);
       setTestResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Save failed'
+        message: error instanceof Error ? error.message : 'Save failed',
       });
     } finally {
       setIsSaving(false);
@@ -138,9 +140,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
       <Card>
         <CardHeader>
           <CardTitle>Select VoIP Provider</CardTitle>
-          <CardDescription>
-            Choose your preferred VoIP service provider
-          </CardDescription>
+          <CardDescription>Choose your preferred VoIP service provider</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -149,8 +149,12 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
                 key={provider.name}
                 className={`p-4 border rounded-lg cursor-pointer transition-all ${
                   selectedProvider === provider.name
-                    ? isDark ? 'border-blue-500 bg-blue-500/10' : 'border-blue-500 bg-blue-50'
-                    : isDark ? 'border-gray-700 hover:border-gray-600' : 'border-gray-200 hover:border-gray-300'
+                    ? isDark
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-blue-500 bg-blue-50'
+                    : isDark
+                      ? 'border-gray-700 hover:border-gray-600'
+                      : 'border-gray-200 hover:border-gray-300'
                 }`}
                 onClick={() => handleProviderChange(provider.name)}
               >
@@ -164,9 +168,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {selectedProvider === provider.name && (
-                      <span className="text-blue-500">✓</span>
-                    )}
+                    {selectedProvider === provider.name && <span className="text-blue-500">✓</span>}
                     <a
                       href={provider.website}
                       target="_blank"
@@ -252,11 +254,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
                   Allow users to make video and audio calls
                 </p>
               </div>
-              <Switch
-                id="enabled"
-                checked={isEnabled}
-                onCheckedChange={setIsEnabled}
-              />
+              <Switch id="enabled" checked={isEnabled} onCheckedChange={setIsEnabled} />
             </div>
           </CardContent>
         </Card>
@@ -264,11 +262,13 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
 
       {/* Test Results */}
       {testResult && (
-        <div className={`p-4 rounded-lg border ${
-          testResult.success
-            ? 'border-green-500 bg-green-50 text-green-700'
-            : 'border-red-500 bg-red-50 text-red-700'
-        }`}>
+        <div
+          className={`p-4 rounded-lg border ${
+            testResult.success
+              ? 'border-green-500 bg-green-50 text-green-700'
+              : 'border-red-500 bg-red-50 text-red-700'
+          }`}
+        >
           <div className="flex items-center gap-2">
             <span>{testResult.success ? '✓' : '✗'}</span>
             <span>{testResult.message}</span>
@@ -278,11 +278,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
 
       {/* Action Buttons */}
       <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={isSaving}
-        >
+        <Button variant="outline" onClick={onClose} disabled={isSaving}>
           Cancel
         </Button>
 
@@ -295,10 +291,7 @@ const VoIPConfigPanel: React.FC<VoIPConfigPanelProps> = ({ onClose }: VoIPConfig
             {isTesting ? 'Testing...' : 'Test Configuration'}
           </Button>
 
-          <Button
-            onClick={saveConfiguration}
-            disabled={!selectedProvider || isSaving}
-          >
+          <Button onClick={saveConfiguration} disabled={!selectedProvider || isSaving}>
             {isSaving ? 'Saving...' : 'Save Configuration'}
           </Button>
         </div>

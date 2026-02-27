@@ -47,12 +47,16 @@ class OpenAIBatchAPIService {
   }
 
   // Mass Contact Enrichment - Process 1000s at 50% cost (overnight) or full price (immediate)
-  async enrichContactsBulk(contactIds: string[], analysisTypes: string[] = ['scoring', 'social', 'personality'], options: { processingMode?: 'immediate' | 'overnight' } = {}): Promise<BatchJob> {
+  async enrichContactsBulk(
+    contactIds: string[],
+    analysisTypes: string[] = ['scoring', 'social', 'personality'],
+    options: { processingMode?: 'immediate' | 'overnight' } = {}
+  ): Promise<BatchJob> {
     const contacts = await this.getContactsById(contactIds);
     const batchRequests: BatchRequest[] = [];
 
     contacts.forEach((contact, index) => {
-      analysisTypes.forEach(analysisType => {
+      analysisTypes.forEach((analysisType) => {
         const prompt = this.buildEnrichmentPrompt(contact, analysisType);
 
         batchRequests.push({
@@ -64,15 +68,16 @@ class OpenAIBatchAPIService {
             messages: [
               {
                 role: 'system',
-                content: 'You are a professional contact enrichment AI that provides detailed analysis and insights.'
+                content:
+                  'You are a professional contact enrichment AI that provides detailed analysis and insights.',
               },
               {
                 role: 'user',
-                content: prompt
-              }
+                content: prompt,
+              },
             ],
-            max_tokens: 1000
-          }
+            max_tokens: 1000,
+          },
         });
       });
     });
@@ -82,7 +87,8 @@ class OpenAIBatchAPIService {
 
     // Immediate processing costs full price, overnight gets 50% discount
     const baseCost = 0.003; // Approximate cost per request in normal mode
-    const estimatedCost = contactIds.length * (processingMode === 'overnight' ? baseCost * 0.5 : baseCost);
+    const estimatedCost =
+      contactIds.length * (processingMode === 'overnight' ? baseCost * 0.5 : baseCost);
 
     const job: BatchJob = {
       id: jobId,
@@ -95,8 +101,8 @@ class OpenAIBatchAPIService {
       metadata: {
         contactIds,
         analysisTypes,
-        processingMode
-      }
+        processingMode,
+      },
     };
 
     this.jobs.set(job.id, job);
@@ -112,7 +118,9 @@ class OpenAIBatchAPIService {
           // In a real scenario, you'd fetch results from OpenAI batch API here
           // For simulation, we'll just mark as completed
           this.jobs.set(job.id, job);
-          logger.info(`Immediate batch contact enrichment completed: ${contactIds.length} contacts`);
+          logger.info(
+            `Immediate batch contact enrichment completed: ${contactIds.length} contacts`
+          );
         }, 3000); // 3 seconds for demo
       }, 500);
     } else {
@@ -128,12 +136,16 @@ class OpenAIBatchAPIService {
           // In a real scenario, you'd fetch results from OpenAI batch API here
           // For simulation, we'll just mark as completed
           this.jobs.set(job.id, job);
-          logger.info(`Overnight batch contact enrichment queued and simulated completion: ${contactIds.length} contacts`);
+          logger.info(
+            `Overnight batch contact enrichment queued and simulated completion: ${contactIds.length} contacts`
+          );
         }, 8000); // 8 seconds for demo
       }, 1000);
     }
 
-    logger.info(`Batch contact enrichment submitted: ${contactIds.length} contacts, mode: ${processingMode}, estimated cost: $${estimatedCost}`);
+    logger.info(
+      `Batch contact enrichment submitted: ${contactIds.length} contacts, mode: ${processingMode}, estimated cost: $${estimatedCost}`
+    );
     return job;
   }
 
@@ -162,15 +174,16 @@ class OpenAIBatchAPIService {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert email marketing copywriter who creates personalized, engaging emails that drive conversions.'
+              content:
+                'You are an expert email marketing copywriter who creates personalized, engaging emails that drive conversions.',
             },
             {
               role: 'user',
-              content: prompt
-            }
+              content: prompt,
+            },
           ],
-          max_tokens: 800
-        }
+          max_tokens: 800,
+        },
       });
     });
 
@@ -182,7 +195,7 @@ class OpenAIBatchAPIService {
       status: 'queued',
       itemCount: contactIds.length,
       estimatedCost,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     this.jobs.set(job.id, job);
@@ -208,15 +221,16 @@ class OpenAIBatchAPIService {
           messages: [
             {
               role: 'system',
-              content: 'You are a sales analytics expert who provides deep insights into deal progression, risk factors, and optimization opportunities.'
+              content:
+                'You are a sales analytics expert who provides deep insights into deal progression, risk factors, and optimization opportunities.',
             },
             {
               role: 'user',
-              content: prompt
-            }
+              content: prompt,
+            },
           ],
-          max_tokens: 1200
-        }
+          max_tokens: 1200,
+        },
       });
     });
 
@@ -228,7 +242,7 @@ class OpenAIBatchAPIService {
       status: 'queued',
       itemCount: dealIds.length,
       estimatedCost,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     this.jobs.set(job.id, job);
@@ -254,15 +268,16 @@ class OpenAIBatchAPIService {
           messages: [
             {
               role: 'system',
-              content: 'You are a social media research specialist who analyzes professional profiles to provide actionable insights for sales and networking.'
+              content:
+                'You are a social media research specialist who analyzes professional profiles to provide actionable insights for sales and networking.',
             },
             {
               role: 'user',
-              content: prompt
-            }
+              content: prompt,
+            },
           ],
-          max_tokens: 1000
-        }
+          max_tokens: 1000,
+        },
       });
     });
 
@@ -274,7 +289,7 @@ class OpenAIBatchAPIService {
       status: 'queued',
       itemCount: contactIds.length,
       estimatedCost,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     this.jobs.set(job.id, job);
@@ -286,7 +301,7 @@ class OpenAIBatchAPIService {
   private async submitBatchJob(jobId: string, requests: BatchRequest[]): Promise<void> {
     try {
       // Create batch file
-      const batchContent = requests.map(req => JSON.stringify(req)).join('\n');
+      const batchContent = requests.map((req) => JSON.stringify(req)).join('\n');
 
       // Upload file to OpenAI
       const formData = new FormData();
@@ -297,9 +312,9 @@ class OpenAIBatchAPIService {
       const uploadResponse = await fetch(`${this.baseUrl}/files`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (!uploadResponse.ok) {
@@ -317,8 +332,8 @@ class OpenAIBatchAPIService {
       const batchResponse = await fetch(`${this.baseUrl}/batches`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           input_file_id: uploadResult.id,
@@ -326,9 +341,9 @@ class OpenAIBatchAPIService {
           completion_window: completionWindow,
           metadata: {
             job_id: jobId,
-            created_by: 'smartcrm'
-          }
-        })
+            created_by: 'smartcrm',
+          },
+        }),
       });
 
       if (!batchResponse.ok) {
@@ -346,7 +361,6 @@ class OpenAIBatchAPIService {
 
       // Start monitoring the batch
       this.monitorBatchJob(jobId, batchResult.id);
-
     } catch (error) {
       logger.error(`Failed to submit batch job ${jobId}`, error as Error);
       const job = this.jobs.get(jobId);
@@ -362,8 +376,8 @@ class OpenAIBatchAPIService {
       try {
         const response = await fetch(`${this.baseUrl}/batches/${batchId}`, {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`
-          }
+            Authorization: `Bearer ${this.apiKey}`,
+          },
         });
 
         if (!response.ok) {
@@ -377,18 +391,26 @@ class OpenAIBatchAPIService {
 
         if (batch.status === 'completed') {
           // Download results
-          const resultsResponse = await fetch(`${this.baseUrl}/files/${batch.output_file_id}/content`, {
-            headers: {
-              'Authorization': `Bearer ${this.apiKey}`
+          const resultsResponse = await fetch(
+            `${this.baseUrl}/files/${batch.output_file_id}/content`,
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+              },
             }
-          });
+          );
 
           if (!resultsResponse.ok) {
-            throw new Error(`Failed to download batch results for ${batchId}: ${resultsResponse.status}`);
+            throw new Error(
+              `Failed to download batch results for ${batchId}: ${resultsResponse.status}`
+            );
           }
 
           const resultsText = await resultsResponse.text();
-          const parsedResults = resultsText.split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
+          const parsedResults = resultsText
+            .split('\n')
+            .filter((line) => line.trim())
+            .map((line) => JSON.parse(line));
 
           job.status = 'completed';
           job.completedAt = new Date().toISOString();
@@ -397,7 +419,6 @@ class OpenAIBatchAPIService {
 
           // Process results based on job type
           await this.processBatchResults(job, parsedResults);
-
         } else if (batch.status === 'failed') {
           job.status = 'failed';
           this.jobs.set(jobId, job);
@@ -414,9 +435,9 @@ class OpenAIBatchAPIService {
     // Initial check after a short delay, or immediately if it's an immediate job
     const job = this.jobs.get(jobId);
     if (job?.processingMode === 'immediate') {
-        setTimeout(checkStatus, 60000); // Start monitoring after 1 minute for immediate jobs
+      setTimeout(checkStatus, 60000); // Start monitoring after 1 minute for immediate jobs
     } else {
-        setTimeout(checkStatus, 30000); // Start monitoring after 30 seconds for overnight jobs
+      setTimeout(checkStatus, 30000); // Start monitoring after 30 seconds for overnight jobs
     }
   }
 
@@ -546,10 +567,13 @@ Provide: likely social media platforms, professional interests, content engageme
 
           // Update contact with enrichment data
           await contactAPIService.updateContact(contactId, {
-            [`ai_${analysisType}_analysis`]: enrichmentData
+            [`ai_${analysisType}_analysis`]: enrichmentData,
           });
         } catch (error) {
-          logger.error(`Failed to parse or update contact ${contactId} with enrichment data (customId: ${customId})`, { error });
+          logger.error(
+            `Failed to parse or update contact ${contactId} with enrichment data (customId: ${customId})`,
+            { error }
+          );
         }
       }
     }
@@ -598,7 +622,10 @@ Provide: likely social media platforms, professional interests, content engageme
             // Store analysis data in available fields or extend Deal interface as needed
           });
         } catch (error) {
-          logger.error(`Failed to parse or update deal ${dealId} with analysis data (customId: ${customId})`, { error });
+          logger.error(
+            `Failed to parse or update deal ${dealId} with analysis data (customId: ${customId})`,
+            { error }
+          );
         }
       }
     }
@@ -626,7 +653,10 @@ Provide: likely social media platforms, professional interests, content engageme
             // Store social insights in available fields or extend Contact interface as needed
           });
         } catch (error) {
-          logger.error(`Failed to parse or update contact ${contactId} with social insights (customId: ${customId})`, { error });
+          logger.error(
+            `Failed to parse or update contact ${contactId} with social insights (customId: ${customId})`,
+            { error }
+          );
         }
       }
     }
@@ -647,7 +677,7 @@ Provide: likely social media platforms, professional interests, content engageme
   }
 
   getBatchJobsByType(type: BatchJob['type']): BatchJob[] {
-    return Array.from(this.jobs.values()).filter(job => job.type === type);
+    return Array.from(this.jobs.values()).filter((job) => job.type === type);
   }
 }
 

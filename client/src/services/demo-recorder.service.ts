@@ -45,14 +45,17 @@ class DemoRecorderService {
 
   private initializeCanvas(): void {
     if (typeof document === 'undefined') return;
-    
+
     this.canvas = document.createElement('canvas');
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
   }
 
-  async startRecording(sessionName: string, format: 'gif' | 'mp4' | 'webm' = 'webm'): Promise<RecordingSession> {
+  async startRecording(
+    sessionName: string,
+    format: 'gif' | 'mp4' | 'webm' = 'webm'
+  ): Promise<RecordingSession> {
     if (this.isRecording) {
       throw new Error('Recording already in progress');
     }
@@ -66,9 +69,9 @@ class DemoRecorderService {
       // Get screen capture stream
       this.stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
-          cursor: 'always'
+          cursor: 'always',
         } as any,
-        audio: false
+        audio: false,
       });
 
       this.currentSession = {
@@ -79,7 +82,7 @@ class DemoRecorderService {
         frames: [],
         fps: this.frameRate,
         status: 'recording',
-        format
+        format,
       };
 
       this.isRecording = true;
@@ -88,7 +91,7 @@ class DemoRecorderService {
       // Setup media recorder for video formats
       if (format !== 'gif') {
         this.recorder = new MediaRecorder(this.stream, {
-          mimeType: 'video/webm'
+          mimeType: 'video/webm',
         });
 
         const chunks: Blob[] = [];
@@ -122,10 +125,8 @@ class DemoRecorderService {
       try {
         // Try to capture canvas using canvas API directly
         if (this.canvas && this.ctx) {
-          const imageData = this.ctx.getImageData(
-            0, 0, this.canvas.width, this.canvas.height
-          );
-          
+          const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
           if (imageData && this.currentSession) {
             this.currentSession.frames.push(imageData);
             this.frameCount++;
@@ -155,7 +156,7 @@ class DemoRecorderService {
     }
 
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach((track) => track.stop());
     }
 
     this.currentSession.endTime = Date.now();
@@ -212,7 +213,10 @@ class DemoRecorderService {
         await this.downloadBlob(gif, `${this.currentSession.name}.gif`);
       } else {
         // Download video
-        await this.downloadBlob(blob, `${this.currentSession.name}.${format === 'mp4' ? 'webm' : format}`);
+        await this.downloadBlob(
+          blob,
+          `${this.currentSession.name}.${format === 'mp4' ? 'webm' : format}`
+        );
       }
 
       this.currentSession.status = 'completed';
@@ -260,7 +264,7 @@ class DemoRecorderService {
     const demoFeature: DemoFeature = {
       ...feature,
       id: `feature-${Date.now()}`,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     this.features.set(demoFeature.id, demoFeature);
@@ -299,4 +303,3 @@ class DemoRecorderService {
 }
 
 export const demoRecorder = new DemoRecorderService();
-

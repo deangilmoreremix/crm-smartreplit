@@ -7,7 +7,7 @@ export default function AnalyticsDemo() {
       <DemoBanner feature="Analytics Dashboard" />
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Analytics Demo</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-4">
@@ -17,7 +17,7 @@ export default function AnalyticsDemo() {
             <p className="text-gray-600 text-sm">Revenue Growth</p>
             <p className="text-3xl font-bold mt-2">$127,500</p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-4">
               <Users className="w-8 h-8 text-blue-600" />
@@ -26,7 +26,7 @@ export default function AnalyticsDemo() {
             <p className="text-gray-600 text-sm">New Contacts</p>
             <p className="text-3xl font-bold mt-2">1,248</p>
           </div>
-          
+
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center justify-between mb-4">
               <Target className="w-8 h-8 text-purple-600" />
@@ -48,11 +48,13 @@ export default function AnalyticsDemo() {
                 <div key={quarter}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium">{quarter} 2024</span>
-                    <span className="text-sm font-semibold">${[85000, 92000, 108000, 127500][i].toLocaleString()}</span>
+                    <span className="text-sm font-semibold">
+                      ${[85000, 92000, 108000, 127500][i].toLocaleString()}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
                       style={{ width: `${[65, 70, 85, 100][i]}%` }}
                     ></div>
                   </div>
@@ -73,7 +75,7 @@ export default function AnalyticsDemo() {
                 { stage: 'Proposal', count: 18, color: 'bg-orange-500' },
                 { stage: 'Negotiation', count: 12, color: 'bg-purple-500' },
                 { stage: 'Closed Won', count: 28, color: 'bg-green-500' },
-              ].map(item => (
+              ].map((item) => (
                 <div key={item.stage} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className={`w-3 h-3 rounded-full ${item.color}`}></div>
@@ -90,7 +92,9 @@ export default function AnalyticsDemo() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-semibold mb-2">AI-Powered Insights</h3>
-              <p className="opacity-90">Get real-time analytics and predictive insights to drive your business forward</p>
+              <p className="opacity-90">
+                Get real-time analytics and predictive insights to drive your business forward
+              </p>
             </div>
             <TrendingUp className="w-12 h-12 opacity-80" />
           </div>

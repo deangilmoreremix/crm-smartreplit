@@ -27,7 +27,7 @@ class TestRunner {
   }
 
   private printSummary() {
-    const passed = this.results.filter(r => r.passed).length;
+    const passed = this.results.filter((r) => r.passed).length;
     const total = this.results.length;
 
     console.log(`\n📊 Test Results: ${passed}/${total} tests passed`);
@@ -70,7 +70,7 @@ describe('UnifiedEventSystem', () => {
       unsubscribe = unifiedEventSystem.registerHandler({
         id: 'test-handler',
         handler: mockHandler,
-        priority: 10
+        priority: 10,
       });
 
       // Emit event
@@ -78,11 +78,11 @@ describe('UnifiedEventSystem', () => {
         type: 'TEST_EVENT',
         source: 'test-source',
         data: { message: 'test data' },
-        priority: 'medium'
+        priority: 'medium',
       });
 
       // Wait for event processing
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Verify handler was called
       if (handlerCalls.length !== 1) {
@@ -113,21 +113,21 @@ describe('UnifiedEventSystem', () => {
         id: 'handler1',
         handler: handler1,
         priority: 10,
-        filters: { type: 'FILTERED_EVENT' }
+        filters: { type: 'FILTERED_EVENT' },
       });
 
       unifiedEventSystem.registerHandler({
         id: 'handler2',
         handler: handler2,
         priority: 10,
-        filters: { source: 'other-source' }
+        filters: { source: 'other-source' },
       });
 
       // Emit event that should only match handler1
       await unifiedEventSystem.emit({
         type: 'FILTERED_EVENT',
         source: 'test-source',
-        data: {}
+        data: {},
       });
 
       jest.runOnlyPendingTimers();
@@ -145,19 +145,19 @@ describe('UnifiedEventSystem', () => {
       unifiedEventSystem.registerHandler({
         id: 'low-priority',
         handler: handler1,
-        priority: 5
+        priority: 5,
       });
 
       unifiedEventSystem.registerHandler({
         id: 'high-priority',
         handler: handler2,
-        priority: 15
+        priority: 15,
       });
 
       await unifiedEventSystem.emit({
         type: 'PRIORITY_TEST',
         source: 'test',
-        data: {}
+        data: {},
       });
 
       jest.runOnlyPendingTimers();
@@ -175,13 +175,13 @@ describe('UnifiedEventSystem', () => {
         id: 'target-handler',
         handler: mockTargetHandler,
         priority: 10,
-        filters: { target: 'specific-target' }
+        filters: { target: 'specific-target' },
       });
 
       await unifiedEventSystem.emitTo('specific-target', {
         type: 'TARGETED_EVENT',
         source: 'test',
-        data: { targeted: true }
+        data: { targeted: true },
       });
 
       jest.runOnlyPendingTimers();
@@ -190,7 +190,7 @@ describe('UnifiedEventSystem', () => {
       expect(mockTargetHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           target: 'specific-target',
-          type: 'TARGETED_EVENT'
+          type: 'TARGETED_EVENT',
         })
       );
     });
@@ -206,7 +206,7 @@ describe('UnifiedEventSystem', () => {
         await unifiedEventSystem.emit({
           type: 'HISTORY_TEST',
           source: 'test',
-          data: { index: i }
+          data: { index: i },
         });
       }
 
@@ -224,7 +224,7 @@ describe('UnifiedEventSystem', () => {
       unifiedEventSystem.registerHandler({
         id: 'ttl-handler',
         handler,
-        priority: 10
+        priority: 10,
       });
 
       // Emit event with short TTL
@@ -232,7 +232,7 @@ describe('UnifiedEventSystem', () => {
         type: 'TTL_TEST',
         source: 'test',
         data: {},
-        ttl: 1000 // 1 second
+        ttl: 1000, // 1 second
       });
 
       // Fast-forward time past TTL
@@ -255,19 +255,19 @@ describe('UnifiedEventSystem', () => {
       unifiedEventSystem.registerHandler({
         id: 'error-handler',
         handler: errorHandler,
-        priority: 10
+        priority: 10,
       });
 
       unifiedEventSystem.registerHandler({
         id: 'success-handler',
         handler: successHandler,
-        priority: 5
+        priority: 5,
       });
 
       await unifiedEventSystem.emit({
         type: 'ERROR_TEST',
         source: 'test',
-        data: {}
+        data: {},
       });
 
       jest.runOnlyPendingTimers();
@@ -284,13 +284,13 @@ describe('UnifiedEventSystem', () => {
       unifiedEventSystem.registerHandler({
         id: 'stats-handler',
         handler: () => {},
-        priority: 10
+        priority: 10,
       });
 
       await unifiedEventSystem.emit({
         type: 'STATS_TEST',
         source: 'test',
-        data: {}
+        data: {},
       });
 
       const queueStatus = unifiedEventSystem.getQueueStatus();

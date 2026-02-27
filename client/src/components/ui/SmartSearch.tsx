@@ -22,14 +22,14 @@ interface SmartSearchProps {
 }
 
 export const SmartSearch: React.FC<SmartSearchProps> = ({
-  placeholder = "Search...",
+  placeholder = 'Search...',
   suggestions = [],
   recentSearches = [],
   filters = [],
   aiPowered = true,
   onSearch,
   onSuggestionClick,
-  className
+  className,
 }) => {
   const [query, setQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
@@ -75,10 +75,8 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
   };
 
   const toggleFilter = (filter: string) => {
-    setSelectedFilters(prev => 
-      prev.includes(filter) 
-        ? prev.filter(f => f !== filter)
-        : [...prev, filter]
+    setSelectedFilters((prev) =>
+      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
     );
   };
 
@@ -89,24 +87,26 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
 
   // Combine and deduplicate suggestions
   const allSuggestions = [
-    ...recentSearches.map(text => ({ 
-      id: `recent-${text}`, 
-      text, 
+    ...recentSearches.map((text) => ({
+      id: `recent-${text}`,
+      text,
       type: 'recent' as const,
-      icon: <Clock className="w-4 h-4" />
+      icon: <Clock className="w-4 h-4" />,
     })),
-    ...suggestions
+    ...suggestions,
   ];
 
   return (
-    <div ref={searchRef} className={cn("relative w-full max-w-2xl", className)}>
-      <div className={cn(
-        "flex items-center rounded-lg border transition-all duration-200",
-        "bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm",
-        "hover:shadow-md focus-within:shadow-lg",
-        isExpanded ? "shadow-lg" : "shadow-sm",
-        showSuggestions && "rounded-b-none border-b-transparent"
-      )}>
+    <div ref={searchRef} className={cn('relative w-full max-w-2xl', className)}>
+      <div
+        className={cn(
+          'flex items-center rounded-lg border transition-all duration-200',
+          'bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm',
+          'hover:shadow-md focus-within:shadow-lg',
+          isExpanded ? 'shadow-lg' : 'shadow-sm',
+          showSuggestions && 'rounded-b-none border-b-transparent'
+        )}
+      >
         {/* Search Icon */}
         <div className="pl-4 pr-2">
           <Search className="w-5 h-5 text-gray-400" />
@@ -125,8 +125,8 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
           }}
           placeholder={placeholder}
           className={cn(
-            "flex-1 py-3 px-2 bg-transparent border-0 outline-none",
-            "text-gray-900 dark:text-gray-100 placeholder:text-gray-500"
+            'flex-1 py-3 px-2 bg-transparent border-0 outline-none',
+            'text-gray-900 dark:text-gray-100 placeholder:text-gray-500'
           )}
         />
 
@@ -152,16 +152,14 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
-              "p-2 mr-2 rounded-md transition-colors",
-              "hover:bg-gray-100 dark:hover:bg-gray-800",
-              selectedFilters.length > 0 && "bg-blue-50 dark:bg-blue-950/20 text-blue-600"
+              'p-2 mr-2 rounded-md transition-colors',
+              'hover:bg-gray-100 dark:hover:bg-gray-800',
+              selectedFilters.length > 0 && 'bg-blue-50 dark:bg-blue-950/20 text-blue-600'
             )}
           >
             <Filter className="w-4 h-4" />
             {selectedFilters.length > 0 && (
-              <span className="ml-1 text-xs font-medium">
-                {selectedFilters.length}
-              </span>
+              <span className="ml-1 text-xs font-medium">{selectedFilters.length}</span>
             )}
           </button>
         )}
@@ -172,15 +170,15 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
         <div className="absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-x border-b rounded-b-lg shadow-lg z-10">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap gap-2">
-              {filters.map(filter => (
+              {filters.map((filter) => (
                 <button
                   key={filter}
                   onClick={() => toggleFilter(filter)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
+                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
                     selectedFilters.includes(filter)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   )}
                 >
                   {filter}
@@ -201,22 +199,16 @@ export const SmartSearch: React.FC<SmartSearchProps> = ({
                 onClick={() => handleSuggestionSelect(suggestion)}
                 className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center space-x-3"
               >
-                <div className="text-gray-400">
-                  {suggestion.icon}
-                </div>
+                <div className="text-gray-400">{suggestion.icon}</div>
                 <div className="flex-1">
                   <div className="text-gray-900 dark:text-gray-100 font-medium">
                     {suggestion.text}
                   </div>
                   {suggestion.category && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {suggestion.category}
-                    </div>
+                    <div className="text-xs text-gray-500 mt-1">{suggestion.category}</div>
                   )}
                 </div>
-                {suggestion.type === 'ai' && (
-                  <Sparkles className="w-4 h-4 text-blue-500" />
-                )}
+                {suggestion.type === 'ai' && <Sparkles className="w-4 h-4 text-blue-500" />}
               </button>
             ))}
           </div>

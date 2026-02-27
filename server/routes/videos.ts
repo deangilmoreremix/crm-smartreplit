@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express } from 'express';
 
 // In-memory storage for video emails (temporary until database schema is added)
 interface VideoEmail {
@@ -38,7 +38,7 @@ const videoStats = {
   totalViews: 0,
   averageEngagement: 0,
   conversionRate: 0,
-  topPerformingVideo: ''
+  topPerformingVideo: '',
 };
 
 export function registerVideoRoutes(app: Express): void {
@@ -51,7 +51,7 @@ export function registerVideoRoutes(app: Express): void {
       }
 
       // Filter videos by user
-      const userVideos = videoEmails.filter(video => video.profileId === userId);
+      const userVideos = videoEmails.filter((video) => video.profileId === userId);
       res.json(userVideos);
     } catch (error) {
       console.error('Error fetching videos:', error);
@@ -68,19 +68,27 @@ export function registerVideoRoutes(app: Express): void {
       }
 
       // Calculate stats from user's videos
-      const userVideos = videoEmails.filter(video => video.profileId === userId);
+      const userVideos = videoEmails.filter((video) => video.profileId === userId);
       const stats = {
         totalVideos: userVideos.length,
         totalViews: userVideos.reduce((sum, video) => sum + video.analytics.views, 0),
-        averageEngagement: userVideos.length > 0
-          ? userVideos.reduce((sum, video) => sum + video.analytics.engagement, 0) / userVideos.length
-          : 0,
+        averageEngagement:
+          userVideos.length > 0
+            ? userVideos.reduce((sum, video) => sum + video.analytics.engagement, 0) /
+              userVideos.length
+            : 0,
         conversionRate: 0.15, // Mock conversion rate
-        topPerformingVideo: userVideos.length > 0
-          ? userVideos.reduce((top, video) =>
-              video.analytics.views > (userVideos.find(v => v.title === top)?.analytics.views || 0)
-                ? video.title : top, userVideos[0]?.title || '')
-          : ''
+        topPerformingVideo:
+          userVideos.length > 0
+            ? userVideos.reduce(
+                (top, video) =>
+                  video.analytics.views >
+                  (userVideos.find((v) => v.title === top)?.analytics.views || 0)
+                    ? video.title
+                    : top,
+                userVideos[0]?.title || ''
+              )
+            : '',
       };
 
       res.json(stats);
@@ -114,23 +122,26 @@ export function registerVideoRoutes(app: Express): void {
         analytics: {
           views: 0,
           completionRate: 0,
-          engagement: 0
+          engagement: 0,
         },
         gpt5Metadata: {
           generatedScript: false,
           optimizationScore: 0.8,
           suggestedImprovements: [],
           tone: 'professional',
-          targetAudience: 'business'
+          targetAudience: 'business',
         },
-        recipient: recipientName && recipientEmail ? {
-          name: recipientName,
-          email: recipientEmail,
-          company: company || ''
-        } : undefined,
+        recipient:
+          recipientName && recipientEmail
+            ? {
+                name: recipientName,
+                email: recipientEmail,
+                company: company || '',
+              }
+            : undefined,
         profileId: userId,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       videoEmails.push(newVideo);
@@ -150,7 +161,7 @@ export function registerVideoRoutes(app: Express): void {
       }
 
       const videoId = req.params.id;
-      const video = videoEmails.find(v => v.id === videoId && v.profileId === userId);
+      const video = videoEmails.find((v) => v.id === videoId && v.profileId === userId);
 
       if (!video) {
         return res.status(404).json({ error: 'Video not found' });
@@ -172,7 +183,7 @@ export function registerVideoRoutes(app: Express): void {
       }
 
       const videoId = req.params.id;
-      const videoIndex = videoEmails.findIndex(v => v.id === videoId && v.profileId === userId);
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === userId);
 
       if (videoIndex === -1) {
         return res.status(404).json({ error: 'Video not found' });
@@ -181,7 +192,7 @@ export function registerVideoRoutes(app: Express): void {
       const updatedVideo = {
         ...videoEmails[videoIndex],
         ...req.body,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       videoEmails[videoIndex] = updatedVideo;
@@ -201,7 +212,7 @@ export function registerVideoRoutes(app: Express): void {
       }
 
       const videoId = req.params.id;
-      const videoIndex = videoEmails.findIndex(v => v.id === videoId && v.profileId === userId);
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === userId);
 
       if (videoIndex === -1) {
         return res.status(404).json({ error: 'Video not found' });
@@ -228,12 +239,16 @@ export function registerVideoRoutes(app: Express): void {
       // Mock AI script generation
       const mockScripts = {
         demo: "Hello! I'm excited to show you how our solution can transform your business operations. Let me walk you through the key features that will save you time and increase productivity.",
-        welcome: "Welcome to our community! I'm thrilled to have you here. Let me introduce myself and share what we can accomplish together.",
-        followup: "I wanted to follow up on our previous conversation. Based on what we discussed, here are the next steps we can take to move forward.",
-        announcement: "I have some exciting news to share with you. We've been working hard on improvements that I think you'll really appreciate."
+        welcome:
+          "Welcome to our community! I'm thrilled to have you here. Let me introduce myself and share what we can accomplish together.",
+        followup:
+          'I wanted to follow up on our previous conversation. Based on what we discussed, here are the next steps we can take to move forward.',
+        announcement:
+          "I have some exciting news to share with you. We've been working hard on improvements that I think you'll really appreciate.",
       };
 
-      const script = mockScripts[purpose as keyof typeof mockScripts] ||
+      const script =
+        mockScripts[purpose as keyof typeof mockScripts] ||
         "Hello! Thank you for your time. I'd like to discuss how we can work together to achieve your goals.";
 
       res.json({
@@ -241,10 +256,10 @@ export function registerVideoRoutes(app: Express): void {
         tone,
         estimatedDuration: Math.ceil(script.length / 150), // Rough words per minute estimate
         suggestions: [
-          "Add a personal touch by mentioning something specific about their business",
-          "Include a clear call-to-action at the end",
-          "Keep the script concise and engaging"
-        ]
+          'Add a personal touch by mentioning something specific about their business',
+          'Include a clear call-to-action at the end',
+          'Keep the script concise and engaging',
+        ],
       });
     } catch (error) {
       console.error('Error generating script:', error);

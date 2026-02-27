@@ -1,7 +1,9 @@
 # Dashboard Design System & Coding Structure
 
 ## Overview
+
 Your CRM dashboard uses a modern design system built with:
+
 - **Tailwind CSS** for utility-first styling
 - **shadcn/ui** for consistent component library
 - **CSS Custom Properties** for theming
@@ -10,30 +12,32 @@ Your CRM dashboard uses a modern design system built with:
 ## Design Architecture
 
 ### 1. Color System (CSS Variables)
+
 ```css
 /* Located in client/src/index.css */
 
 /* Light Theme */
 :root {
-  --background: 0 0% 100%;           /* White background */
-  --foreground: 222.2 84% 4.9%;      /* Dark text */
-  --card: 0 0% 100%;                 /* Card backgrounds */
-  --primary: 222.2 47.4% 11.2%;      /* Primary brand color */
-  --secondary: 210 40% 96%;          /* Secondary elements */
-  --muted: 210 40% 96%;              /* Muted backgrounds */
-  --border: 214.3 31.8% 91.4%;      /* Border colors */
+  --background: 0 0% 100%; /* White background */
+  --foreground: 222.2 84% 4.9%; /* Dark text */
+  --card: 0 0% 100%; /* Card backgrounds */
+  --primary: 222.2 47.4% 11.2%; /* Primary brand color */
+  --secondary: 210 40% 96%; /* Secondary elements */
+  --muted: 210 40% 96%; /* Muted backgrounds */
+  --border: 214.3 31.8% 91.4%; /* Border colors */
 }
 
 /* Dark Theme */
 .dark {
-  --background: 222.2 84% 4.9%;      /* Dark background */
-  --foreground: 210 40% 98%;         /* Light text */
-  --card: 222.2 84% 4.9%;            /* Dark cards */
-  --primary: 217.2 91.2% 59.8%;      /* Bright primary */
+  --background: 222.2 84% 4.9%; /* Dark background */
+  --foreground: 210 40% 98%; /* Light text */
+  --card: 222.2 84% 4.9%; /* Dark cards */
+  --primary: 217.2 91.2% 59.8%; /* Bright primary */
 }
 ```
 
 ### 2. Component Structure
+
 ```typescript
 // Dashboard Layout Pattern
 const Dashboard = () => {
@@ -43,12 +47,12 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold">Title</h1>
         <Button>Action</Button>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6"> {/* Metrics Grid */}
         <Card>...</Card>
         <Card>...</Card>
       </div>
-      
+
       <Tabs defaultValue="overview">             {/* Tabbed Content */}
         <TabsList>...</TabsList>
         <TabsContent>...</TabsContent>
@@ -59,6 +63,7 @@ const Dashboard = () => {
 ```
 
 ### 3. Card Component Pattern
+
 ```typescript
 <Card className="p-6">
   <CardHeader className="flex flex-row items-center justify-between">
@@ -78,29 +83,33 @@ const Dashboard = () => {
 ## Key Design Elements
 
 ### 1. Typography Scale
+
 - **Headlines**: `text-3xl font-bold` (Dashboard titles)
-- **Card Titles**: `text-sm font-medium` (Metric labels)  
+- **Card Titles**: `text-sm font-medium` (Metric labels)
 - **Values**: `text-2xl font-bold` (Key numbers)
 - **Descriptions**: `text-xs text-muted-foreground` (Helper text)
 
 ### 2. Spacing System
+
 - **Container**: `space-y-6 p-6` (24px gaps, 24px padding)
 - **Grid Gaps**: `gap-6` (24px between grid items)
 - **Card Padding**: `p-6` (24px internal padding)
 
 ### 3. Grid Layouts
+
 ```typescript
 // Responsive metric cards
-"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6';
 
 // Two-column layout
-"grid grid-cols-1 lg:grid-cols-2 gap-6"
+'grid grid-cols-1 lg:grid-cols-2 gap-6';
 
 // Full-width sections
-"col-span-1 lg:col-span-2"
+'col-span-1 lg:col-span-2';
 ```
 
 ### 4. Color Usage Patterns
+
 - **Backgrounds**: `bg-white dark:bg-gray-900`
 - **Cards**: `bg-white dark:bg-gray-800`
 - **Text**: `text-gray-900 dark:text-white`
@@ -110,6 +119,7 @@ const Dashboard = () => {
 ## Interactive Elements
 
 ### 1. Buttons
+
 ```typescript
 <Button className="bg-blue-600 hover:bg-blue-700">
   Primary Action
@@ -117,6 +127,7 @@ const Dashboard = () => {
 ```
 
 ### 2. Tabs
+
 ```typescript
 <Tabs defaultValue="overview" className="space-y-6">
   <TabsList className="grid w-full grid-cols-4">
@@ -126,6 +137,7 @@ const Dashboard = () => {
 ```
 
 ### 3. Select Dropdowns
+
 ```typescript
 <Select value={timeRange} onValueChange={setTimeRange}>
   <SelectTrigger className="w-40">
@@ -140,6 +152,7 @@ const Dashboard = () => {
 ## Chart Styling
 
 ### 1. Recharts Integration
+
 ```typescript
 <ResponsiveContainer width="100%" height={300}>
   <AreaChart data={data}>
@@ -147,11 +160,11 @@ const Dashboard = () => {
     <XAxis dataKey="month" />
     <YAxis />
     <Tooltip formatter={(value) => [formatCurrency(value), 'Revenue']} />
-    <Area 
-      type="monotone" 
-      dataKey="revenue" 
+    <Area
+      type="monotone"
+      dataKey="revenue"
       stroke="#3B82F6"     // Blue-500
-      fill="#3B82F6" 
+      fill="#3B82F6"
       fillOpacity={0.1}
     />
   </AreaChart>
@@ -159,6 +172,7 @@ const Dashboard = () => {
 ```
 
 ### 2. Chart Colors
+
 - **Primary**: `#3B82F6` (Blue-500)
 - **Success**: `#10B981` (Green-500)
 - **Warning**: `#F59E0B` (Yellow-500)
@@ -167,16 +181,18 @@ const Dashboard = () => {
 ## Responsive Design
 
 ### 1. Breakpoints
+
 - **Mobile**: Default (`grid-cols-1`)
 - **Tablet**: `md:` prefix (`md:grid-cols-2`)
 - **Desktop**: `lg:` prefix (`lg:grid-cols-4`)
 
 ### 2. Mobile-First Approach
+
 ```typescript
 className="
-  grid 
+  grid
   grid-cols-1          // Mobile: 1 column
-  md:grid-cols-2       // Tablet: 2 columns  
+  md:grid-cols-2       // Tablet: 2 columns
   lg:grid-cols-4       // Desktop: 4 columns
   gap-6                // 24px gaps on all sizes
 "
@@ -185,18 +201,27 @@ className="
 ## Animation & Transitions
 
 ### 1. Smooth Transitions
+
 ```css
 /* Applied to specific elements */
-h1, h2, h3, button, a {
+h1,
+h2,
+h3,
+button,
+a {
   transition: color 0.2s ease;
 }
 
-button, .interactive {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+button,
+.interactive {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 ```
 
 ### 2. Loading States
+
 ```typescript
 {isLoading && (
   <div className="flex items-center justify-center h-96">
@@ -206,6 +231,7 @@ button, .interactive {
 ```
 
 ## File Structure
+
 ```
 client/src/
 ├── index.css                    # Global styles & CSS variables

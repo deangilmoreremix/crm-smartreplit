@@ -2,7 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+const supabase =
+  supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 export const handler = async (event: any, context: any) => {
   const { httpMethod, path, body } = event;
@@ -12,7 +13,7 @@ export const handler = async (event: any, context: any) => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   };
 
   if (httpMethod === 'OPTIONS') {
@@ -23,7 +24,11 @@ export const handler = async (event: any, context: any) => {
     // GET /api/users - Get all users
     if (pathParts.length === 1 && pathParts[0] === 'users' && httpMethod === 'GET') {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase not configured' }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Supabase not configured' }),
+        };
       }
 
       const { data: users, error } = await supabase
@@ -36,9 +41,18 @@ export const handler = async (event: any, context: any) => {
     }
 
     // POST /api/users/invite - Invite user
-    if (pathParts.length === 2 && pathParts[0] === 'users' && pathParts[1] === 'invite' && httpMethod === 'POST') {
+    if (
+      pathParts.length === 2 &&
+      pathParts[0] === 'users' &&
+      pathParts[1] === 'invite' &&
+      httpMethod === 'POST'
+    ) {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase not configured' }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Supabase not configured' }),
+        };
       }
 
       const { email, role, firstName, lastName, permissions } = JSON.parse(body);
@@ -51,8 +65,8 @@ export const handler = async (event: any, context: any) => {
           body: JSON.stringify({
             error: 'Invalid role',
             validRoles,
-            message: 'Role must be one of: super_admin, wl_user, regular_user'
-          })
+            message: 'Role must be one of: super_admin, wl_user, regular_user',
+          }),
         };
       }
 
@@ -65,21 +79,34 @@ export const handler = async (event: any, context: any) => {
           app_context: 'smartcrm',
           email_template_set: 'smartcrm',
           invited_at: new Date().toISOString(),
-          invited_by: 'admin'
+          invited_by: 'admin',
         },
-        redirectTo: `${process.env.SITE_URL || 'https://smart-crm.videoremix.io'}/auth/callback`
+        redirectTo: `${process.env.SITE_URL || 'https://smart-crm.videoremix.io'}/auth/callback`,
       });
 
       if (error) throw error;
 
       console.log(`✅ User invitation sent: ${email} as ${role}`);
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, user: data.user, role }) };
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true, user: data.user, role }),
+      };
     }
 
     // PATCH /api/users/:userId/role - Update user role
-    if (pathParts.length === 3 && pathParts[0] === 'users' && pathParts[2] === 'role' && httpMethod === 'PATCH') {
+    if (
+      pathParts.length === 3 &&
+      pathParts[0] === 'users' &&
+      pathParts[2] === 'role' &&
+      httpMethod === 'PATCH'
+    ) {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase not configured' }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Supabase not configured' }),
+        };
       }
 
       const { userId } = { userId: pathParts[1] };
@@ -93,8 +120,8 @@ export const handler = async (event: any, context: any) => {
           body: JSON.stringify({
             error: 'Invalid role',
             validRoles,
-            message: 'Role must be one of: super_admin, wl_user, regular_user'
-          })
+            message: 'Role must be one of: super_admin, wl_user, regular_user',
+          }),
         };
       }
 
@@ -108,8 +135,8 @@ export const handler = async (event: any, context: any) => {
       const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
         user_metadata: {
           role: role,
-          role_updated_at: new Date().toISOString()
-        }
+          role_updated_at: new Date().toISOString(),
+        },
       });
 
       if (authError) {
@@ -121,18 +148,24 @@ export const handler = async (event: any, context: any) => {
     }
 
     // PATCH /api/users/:userId/status - Update user status
-    if (pathParts.length === 3 && pathParts[0] === 'users' && pathParts[2] === 'status' && httpMethod === 'PATCH') {
+    if (
+      pathParts.length === 3 &&
+      pathParts[0] === 'users' &&
+      pathParts[2] === 'status' &&
+      httpMethod === 'PATCH'
+    ) {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase not configured' }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Supabase not configured' }),
+        };
       }
 
       const { userId } = { userId: pathParts[1] };
       const { status } = JSON.parse(body);
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ status })
-        .eq('id', userId);
+      const { data, error } = await supabase.from('profiles').update({ status }).eq('id', userId);
 
       if (error) throw error;
       return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
@@ -141,7 +174,11 @@ export const handler = async (event: any, context: any) => {
     // DELETE /api/users/:userId - Delete user
     if (pathParts.length === 2 && pathParts[0] === 'users' && httpMethod === 'DELETE') {
       if (!supabase) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Supabase not configured' }) };
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Supabase not configured' }),
+        };
       }
 
       const { userId } = { userId: pathParts[1] };
@@ -149,10 +186,7 @@ export const handler = async (event: any, context: any) => {
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
       if (authError) throw authError;
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
 
       if (profileError) throw profileError;
       return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
@@ -162,15 +196,14 @@ export const handler = async (event: any, context: any) => {
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: 'Users endpoint not found' })
+      body: JSON.stringify({ error: 'Users endpoint not found' }),
     };
-
   } catch (error: any) {
     console.error('Users function error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message })
+      body: JSON.stringify({ error: 'Internal server error', message: error.message }),
     };
   }
 };

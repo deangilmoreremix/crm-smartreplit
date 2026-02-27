@@ -23,23 +23,23 @@ const testSuites = [
   {
     name: 'API Health Tests',
     file: 'test-api-health.test.js',
-    description: 'Tests all APIs, Supabase connection, and service availability'
+    description: 'Tests all APIs, Supabase connection, and service availability',
   },
   {
     name: 'Supabase Edge Functions Tests',
     file: 'supabase-edge-functions.test.js',
-    description: 'Tests all Supabase edge functions with authentication'
+    description: 'Tests all Supabase edge functions with authentication',
   },
   {
     name: 'Fallback Mechanisms Tests',
     file: 'fallback-mechanisms.test.js',
-    description: 'Tests all fallback scenarios when services fail'
+    description: 'Tests all fallback scenarios when services fail',
   },
   {
     name: 'Health Monitor Tests',
     file: 'health-monitor.test.js',
-    description: 'Tests the health monitoring system'
-  }
+    description: 'Tests the health monitoring system',
+  },
 ];
 
 // Test results aggregator
@@ -51,7 +51,7 @@ let overallResults = {
   totalWarnings: 0,
   startTime: null,
   endTime: null,
-  duration: 0
+  duration: 0,
 };
 
 // Helper function to run a test suite
@@ -63,7 +63,7 @@ function runTestSuite(suite) {
 
     const testProcess = spawn('node', [suite.file], {
       stdio: 'inherit',
-      cwd: process.cwd()
+      cwd: process.cwd(),
     });
 
     let suiteResult = {
@@ -71,7 +71,7 @@ function runTestSuite(suite) {
       file: suite.file,
       exitCode: null,
       duration: 0,
-      startTime: Date.now()
+      startTime: Date.now(),
     };
 
     testProcess.on('close', (code) => {
@@ -99,7 +99,7 @@ function runTestSuite(suite) {
 function checkTestFiles() {
   const missingFiles = [];
 
-  testSuites.forEach(suite => {
+  testSuites.forEach((suite) => {
     try {
       // Use fs.accessSync to check if file exists
       fs.accessSync(path.join(__dirname, suite.file), fs.constants.F_OK);
@@ -110,7 +110,7 @@ function checkTestFiles() {
 
   if (missingFiles.length > 0) {
     console.log('❌ Missing test files:');
-    missingFiles.forEach(file => console.log(`   - ${file}`));
+    missingFiles.forEach((file) => console.log(`   - ${file}`));
     console.log('\n💡 Run the following commands to create missing test files:');
     console.log('   node test-api-health.test.js');
     console.log('   node supabase-edge-functions.test.js');
@@ -139,9 +139,10 @@ function generateReport() {
   console.log(`   ❌ Failed: ${overallResults.totalFailed}`);
   console.log(`   ⚠️  Warnings: ${overallResults.totalWarnings}`);
 
-  const successRate = overallResults.totalTests > 0
-    ? ((overallResults.totalPassed / overallResults.totalTests) * 100).toFixed(1)
-    : '0.0';
+  const successRate =
+    overallResults.totalTests > 0
+      ? ((overallResults.totalPassed / overallResults.totalTests) * 100).toFixed(1)
+      : '0.0';
   console.log(`   Success Rate: ${successRate}%`);
 
   console.log(`\n📋 Suite Details:`);
@@ -195,8 +196,11 @@ function runEnvironmentChecks() {
       check: () => {
         const version = process.version;
         const isValid = parseInt(version.split('.')[0].slice(1)) >= 18;
-        return { passed: isValid, message: `Node.js ${version} ${isValid ? '(✅ Supported)' : '(❌ Requires v18+)'}` };
-      }
+        return {
+          passed: isValid,
+          message: `Node.js ${version} ${isValid ? '(✅ Supported)' : '(❌ Requires v18+)'}`,
+        };
+      },
     },
     {
       name: 'BASE_URL',
@@ -204,9 +208,9 @@ function runEnvironmentChecks() {
         const url = process.env.BASE_URL;
         return {
           passed: !!url,
-          message: url ? `${url} (✅ Configured)` : 'Not set (⚠️ Using default)'
+          message: url ? `${url} (✅ Configured)` : 'Not set (⚠️ Using default)',
         };
-      }
+      },
     },
     {
       name: 'SUPABASE_URL',
@@ -214,9 +218,9 @@ function runEnvironmentChecks() {
         const url = process.env.SUPABASE_URL;
         return {
           passed: !!url,
-          message: url ? 'Configured (✅)' : 'Not set (❌ Required for edge functions)'
+          message: url ? 'Configured (✅)' : 'Not set (❌ Required for edge functions)',
         };
-      }
+      },
     },
     {
       name: 'SUPABASE_ANON_KEY',
@@ -224,9 +228,9 @@ function runEnvironmentChecks() {
         const key = process.env.SUPABASE_ANON_KEY;
         return {
           passed: !!key,
-          message: key ? 'Configured (✅)' : 'Not set (❌ Required for edge functions)'
+          message: key ? 'Configured (✅)' : 'Not set (❌ Required for edge functions)',
         };
-      }
+      },
     },
     {
       name: 'OpenAI API Key',
@@ -234,9 +238,9 @@ function runEnvironmentChecks() {
         const key = process.env.OPENAI_API_KEY;
         return {
           passed: !!key,
-          message: key ? 'Configured (✅)' : 'Not set (⚠️ Limited AI functionality)'
+          message: key ? 'Configured (✅)' : 'Not set (⚠️ Limited AI functionality)',
         };
-      }
+      },
     },
     {
       name: 'Google AI API Key',
@@ -244,15 +248,17 @@ function runEnvironmentChecks() {
         const key = process.env.GOOGLE_AI_API_KEY;
         return {
           passed: !!key,
-          message: key ? 'Configured (✅)' : 'Not set (⚠️ Limited AI functionality)'
+          message: key ? 'Configured (✅)' : 'Not set (⚠️ Limited AI functionality)',
         };
-      }
-    }
+      },
+    },
   ];
 
-  checks.forEach(check => {
+  checks.forEach((check) => {
     const result = check.check();
-    console.log(`   ${result.passed ? '✅' : result.passed === false ? '❌' : '⚠️'} ${check.name}: ${result.message}`);
+    console.log(
+      `   ${result.passed ? '✅' : result.passed === false ? '❌' : '⚠️'} ${check.name}: ${result.message}`
+    );
   });
 
   console.log('');
@@ -287,8 +293,8 @@ async function runComprehensiveTests() {
 
   // Calculate totals from suite results
   overallResults.totalTests = overallResults.suites.length;
-  overallResults.totalPassed = overallResults.suites.filter(s => s.exitCode === 0).length;
-  overallResults.totalFailed = overallResults.suites.filter(s => s.exitCode !== 0).length;
+  overallResults.totalPassed = overallResults.suites.filter((s) => s.exitCode === 0).length;
+  overallResults.totalFailed = overallResults.suites.filter((s) => s.exitCode !== 0).length;
 
   // Generate comprehensive report
   generateReport();
@@ -334,15 +340,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   if (arg === '--help' || arg === '-h') {
     showUsage();
   } else {
-    runComprehensiveTests().catch(error => {
+    runComprehensiveTests().catch((error) => {
       console.error('❌ Comprehensive test suite failed:', error);
       process.exit(1);
     });
   }
 }
 
-export {
-  runComprehensiveTests,
-  testSuites,
-  overallResults
-};
+export { runComprehensiveTests, testSuites, overallResults };

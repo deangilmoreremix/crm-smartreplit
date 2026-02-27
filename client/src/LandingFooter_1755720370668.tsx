@@ -1,21 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
-import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Twitter, 
-  Linkedin, 
-  Facebook, 
-  Instagram, 
-  Youtube, 
-  ArrowRight 
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Twitter,
+  Linkedin,
+  Facebook,
+  Instagram,
+  Youtube,
+  ArrowRight,
 } from 'lucide-react';
 
 const LandingFooter: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  
+
   return (
     <footer className="bg-gray-900 text-white pt-20 pb-10">
       <div className="container mx-auto px-4">
@@ -29,7 +29,8 @@ const LandingFooter: React.FC = () => {
               </span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">
-              The all-in-one sales platform that combines powerful CRM capabilities with AI-driven insights to transform your sales process.
+              The all-in-one sales platform that combines powerful CRM capabilities with AI-driven
+              insights to transform your sales process.
             </p>
             <div className="space-y-2">
               <div className="flex items-center">
@@ -46,44 +47,62 @@ const LandingFooter: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Features */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Features</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/features/ai-tools" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/features/ai-tools"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   AI Sales Tools
                 </Link>
               </li>
               <li>
-                <Link to="/features/contacts" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/features/contacts"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Contact Management
                 </Link>
               </li>
               <li>
-                <Link to="/features/pipeline" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/features/pipeline"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Deal Pipeline
                 </Link>
               </li>
               <li>
-                <Link to="/features/communications" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/features/communications"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Communication Tools
                 </Link>
               </li>
               <li>
-                <Link to="/features/automation" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/features/automation"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Sales Automation
                 </Link>
               </li>
               <li>
-                <Link to="/features/appointments" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/features/appointments"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Appointment Scheduling
                 </Link>
               </li>
             </ul>
           </div>
-          
+
           {/* Company */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Company</h3>
@@ -114,51 +133,72 @@ const LandingFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/partners" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/partners"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Partners
                 </Link>
               </li>
             </ul>
           </div>
-          
+
           {/* Resources */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-white">Resources</h3>
             <ul className="space-y-3">
               <li>
-                <HashLink to="/#pricing" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <HashLink
+                  to="/#pricing"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Pricing
                 </HashLink>
               </li>
               <li>
-                <Link to="/resources/documentation" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/resources/documentation"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Documentation
                 </Link>
               </li>
               <li>
-                <Link to="/resources/guides" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/resources/guides"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Guides
                 </Link>
               </li>
               <li>
-                <Link to="/resources/api" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/resources/api"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   API Reference
                 </Link>
               </li>
               <li>
-                <Link to="/resources/webinars" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/resources/webinars"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Webinars
                 </Link>
               </li>
               <li>
-                <Link to="/resources/community" className="text-gray-400 hover:text-blue-400 transition-colors">
+                <Link
+                  to="/resources/community"
+                  className="text-gray-400 hover:text-blue-400 transition-colors"
+                >
                   Community
                 </Link>
               </li>
             </ul>
           </div>
         </div>
-        
+
         {/* Newsletter */}
         <div className="border-t border-gray-800 mt-12 pt-8 pb-6">
           <div className="max-w-3xl mx-auto text-center">
@@ -178,7 +218,7 @@ const LandingFooter: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Bottom Footer */}
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
@@ -186,33 +226,67 @@ const LandingFooter: React.FC = () => {
               &copy; {currentYear} SmartCRM. All rights reserved.
             </p>
           </div>
-          
+
           <div className="flex space-x-8">
-            <Link to="/legal/privacy" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+            <Link
+              to="/legal/privacy"
+              className="text-gray-400 hover:text-blue-400 transition-colors text-sm"
+            >
               Privacy Policy
             </Link>
-            <Link to="/legal/terms" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+            <Link
+              to="/legal/terms"
+              className="text-gray-400 hover:text-blue-400 transition-colors text-sm"
+            >
               Terms of Service
             </Link>
-            <Link to="/legal/cookies" className="text-gray-400 hover:text-blue-400 transition-colors text-sm">
+            <Link
+              to="/legal/cookies"
+              className="text-gray-400 hover:text-blue-400 transition-colors text-sm"
+            >
               Cookie Policy
             </Link>
           </div>
-          
+
           <div className="flex space-x-4 mt-4 md:mt-0">
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+            >
               <Twitter size={20} />
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+            >
               <Linkedin size={20} />
             </a>
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+            >
               <Facebook size={20} />
             </a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+            >
               <Instagram size={20} />
             </a>
-            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-400 transition-colors">
+            <a
+              href="https://youtube.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-blue-400 transition-colors"
+            >
               <Youtube size={20} />
             </a>
           </div>

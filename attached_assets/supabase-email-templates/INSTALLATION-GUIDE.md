@@ -3,6 +3,7 @@
 ## 📦 What You Have
 
 ✅ **5 Production-Ready Email Templates**
+
 - All using modern **token_hash** approach (not deprecated `.ConfirmationURL`)
 - Consistent SmartCRM branding and design
 - Mobile responsive with Outlook/MSO compatibility
@@ -21,6 +22,7 @@
 You'll see 5 email template options in Supabase. Update them in this order:
 
 #### Template 1: Confirm Signup
+
 1. Click **"Confirm signup"** in Supabase dashboard
 2. **Delete all existing content** in the editor
 3. Open file: `1-confirm-signup.html`
@@ -29,6 +31,7 @@ You'll see 5 email template options in Supabase. Update them in this order:
 6. Click **Save**
 
 #### Template 2: Invite User
+
 1. Click **"Invite user"** in Supabase dashboard
 2. **Delete all existing content**
 3. Open file: `2-invite-user.html`
@@ -37,6 +40,7 @@ You'll see 5 email template options in Supabase. Update them in this order:
 6. Click **Save**
 
 #### Template 3: Magic Link
+
 1. Click **"Magic Link"** in Supabase dashboard
 2. **Delete all existing content**
 3. Open file: `3-magic-link.html`
@@ -45,6 +49,7 @@ You'll see 5 email template options in Supabase. Update them in this order:
 6. Click **Save**
 
 #### Template 4: Change Email Address
+
 1. Click **"Change Email Address"** in Supabase dashboard
 2. **Delete all existing content**
 3. Open file: `4-change-email.html`
@@ -53,6 +58,7 @@ You'll see 5 email template options in Supabase. Update them in this order:
 6. Click **Save**
 
 #### Template 5: Reset Password
+
 1. Click **"Reset Password"** in Supabase dashboard
 2. **Delete all existing content**
 3. Open file: `5-reset-password.html`
@@ -79,6 +85,7 @@ Whitelist your authentication callback URLs:
 3. Add these URLs (one per line):
 
 **Production URLs:**
+
 ```
 https://app.smartcrm.vip/auth/confirm
 https://app.smartcrm.vip/auth/reset-password
@@ -86,6 +93,7 @@ https://app.smartcrm.vip/**
 ```
 
 **Development URLs** (optional):
+
 ```
 https://smartcrm-videoremix.replit.dev/auth/confirm
 https://smartcrm-videoremix.replit.dev/auth/reset-password
@@ -139,22 +147,27 @@ After installation, verify:
 ## 🎨 What Makes These Templates Special
 
 ### Token Hash Method
+
 ```html
 {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery
 ```
 
 **Why this works:**
+
 - ✅ Reliable: Supabase always populates `{{ .TokenHash }}`
 - ✅ Secure: One-time use tokens with expiration
 - ✅ Flexible: Your app handles routing via `AuthConfirm.tsx`
 
 **Old method (broken):**
+
 ```html
-{{ .ConfirmationURL }}  ❌ Often stays empty!
+{{ .ConfirmationURL }} ❌ Often stays empty!
 ```
 
 ### Consistent Design
+
 All templates share:
+
 - **SmartCRM logo** with green accent (#16a34a)
 - **Professional layout** with card design
 - **Clear call-to-action** buttons
@@ -163,6 +176,7 @@ All templates share:
 - **Support contact** in footer
 
 ### Email Client Compatibility
+
 - ✅ Gmail (Web, iOS, Android)
 - ✅ Outlook (Desktop, Web)
 - ✅ Apple Mail (iOS, macOS)
@@ -175,10 +189,12 @@ All templates share:
 ### Problem: Email link is empty or shows template code
 
 **Symptoms:**
+
 - Link shows `{{ .TokenHash }}` instead of actual token
 - Clicking link does nothing
 
 **Solution:**
+
 1. Make sure you copied the ENTIRE template (including DOCTYPE)
 2. Verify you're using the correct file for each template type
 3. Save the template in Supabase after pasting
@@ -186,6 +202,7 @@ All templates share:
 ### Problem: Link redirects to wrong page
 
 **Check:**
+
 1. Verify Site URL is correct in Supabase settings
 2. Check redirect URLs are whitelisted
 3. For password reset, link should include `&next=/auth/reset-password`
@@ -193,11 +210,13 @@ All templates share:
 ### Problem: "Invalid token" error
 
 **Causes:**
+
 - Token expired (1-24 hours depending on type)
 - Token already used (one-time use only)
 - Site URL mismatch
 
 **Solution:**
+
 1. Request a new email
 2. Verify Site URL matches between Supabase and your app
 3. Check token hasn't been used already
@@ -205,6 +224,7 @@ All templates share:
 ### Problem: Email not arriving
 
 **Check:**
+
 1. Spam/junk folder
 2. Email rate limits (Supabase free tier: 3-4 emails/hour)
 3. SMTP configuration in Supabase
@@ -215,18 +235,19 @@ All templates share:
 **Usually affects:** Outlook, older email clients
 
 **Check:**
+
 1. Did you copy the complete HTML (including `<style>` section)?
 2. Make sure DOCTYPE declaration is included
 3. Verify no content was accidentally cut off
 
 ## 📊 Template Features Comparison
 
-| Feature | Signup | Invite | Magic Link | Change Email | Reset Password |
-|---------|--------|--------|------------|--------------|----------------|
-| Token Type | signup | invite | magiclink | email_change | recovery |
-| Expiration | 24h | 7 days | 1h | 24h | 1h |
-| One-time use | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Redirects to | Dashboard | Dashboard | Dashboard | Dashboard | Reset Password |
+| Feature      | Signup    | Invite    | Magic Link | Change Email | Reset Password |
+| ------------ | --------- | --------- | ---------- | ------------ | -------------- |
+| Token Type   | signup    | invite    | magiclink  | email_change | recovery       |
+| Expiration   | 24h       | 7 days    | 1h         | 24h          | 1h             |
+| One-time use | ✅        | ✅        | ✅         | ✅           | ✅             |
+| Redirects to | Dashboard | Dashboard | Dashboard  | Dashboard    | Reset Password |
 
 ## 🎯 Production Deployment
 
@@ -267,12 +288,12 @@ Once all templates are installed and tested, your SmartCRM authentication system
 ✅ Reliable token-based authentication flows  
 ✅ Secure password reset functionality  
 ✅ Beautiful emails on all devices and clients  
-✅ Clear user guidance with security messaging  
+✅ Clear user guidance with security messaging
 
 ---
 
-**Installation Date**: _________________  
-**Tested By**: _________________  
-**Production Ready**: ☐ Yes ☐ No  
+**Installation Date**: **\*\*\*\***\_**\*\*\*\***  
+**Tested By**: **\*\*\*\***\_**\*\*\*\***  
+**Production Ready**: ☐ Yes ☐ No
 
 **SmartCRM** · Smart Solutions for Your Business

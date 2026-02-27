@@ -16,7 +16,6 @@ const logEmailToLead = async ({
   content: string;
 }) => {
   // TODO: Implement lead communication logging when database is available
-  console.log('Email logged for lead:', { leadId, summary, content });
 };
 
 const EmailComposerContent: React.FC = () => {
@@ -25,9 +24,9 @@ const EmailComposerContent: React.FC = () => {
     recipientPosition: '',
     recipientCompany: '',
     emailPurpose: '',
-    additionalContext: ''
+    additionalContext: '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +34,13 @@ const EmailComposerContent: React.FC = () => {
 
   // Using server-side OpenAI service
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -49,14 +50,14 @@ const EmailComposerContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const contactInfo = {
         name: formData.recipientName,
         position: formData.recipientPosition,
-        company: formData.recipientCompany
+        company: formData.recipientCompany,
       };
-      
+
       const prompt = `Generate a professional email draft with the following details:
         Recipient: ${formData.recipientName} ${formData.recipientPosition ? `(${formData.recipientPosition})` : ''}
         Company: ${formData.recipientCompany}
@@ -64,13 +65,13 @@ const EmailComposerContent: React.FC = () => {
         Additional Context: ${formData.additionalContext}
         
         Please create a complete email with subject line, greeting, body, and professional closing.`;
-      
+
       const emailDraft = await openAIService.generateEmail({
         recipient: formData.recipientName,
         purpose: formData.emailPurpose,
-        context: formData.additionalContext
+        context: formData.additionalContext,
       });
-      
+
       setResult(`Subject: ${emailDraft.subject}\n\n${emailDraft.body}`);
       setCopied(false);
     } catch (err) {
@@ -100,7 +101,7 @@ const EmailComposerContent: React.FC = () => {
     'Addressing concerns',
     'Re-engagement',
     'Request for feedback',
-    'Custom...'
+    'Custom...',
   ];
 
   return (
@@ -111,7 +112,8 @@ const EmailComposerContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-blue-800">Smart Email Composer</h3>
             <p className="text-sm text-blue-700 mt-1">
-              Generate personalized, professional emails for your contacts with just a few details. Perfect for introductions, follow-ups, and more.
+              Generate personalized, professional emails for your contacts with just a few details.
+              Perfect for introductions, follow-ups, and more.
             </p>
           </div>
         </div>
@@ -140,7 +142,7 @@ const EmailComposerContent: React.FC = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                 <Building className="h-4 w-4 mr-1 text-gray-500" />
@@ -156,7 +158,7 @@ const EmailComposerContent: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
               <FileText className="h-4 w-4 mr-1 text-gray-500" />
@@ -171,11 +173,9 @@ const EmailComposerContent: React.FC = () => {
               onChange={handleChange}
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Purpose
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email Purpose</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-3">
               {emailPurposes.map((purpose, index) => (
                 <button
@@ -188,7 +188,7 @@ const EmailComposerContent: React.FC = () => {
                   }`}
                   onClick={() => {
                     if (purpose !== 'Custom...') {
-                      setFormData({...formData, emailPurpose: purpose});
+                      setFormData({ ...formData, emailPurpose: purpose });
                     }
                   }}
                 >
@@ -196,7 +196,7 @@ const EmailComposerContent: React.FC = () => {
                 </button>
               ))}
             </div>
-            
+
             <textarea
               name="emailPurpose"
               rows={3}
@@ -207,7 +207,7 @@ const EmailComposerContent: React.FC = () => {
               required
             ></textarea>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Additional Context (Optional)
@@ -221,7 +221,7 @@ const EmailComposerContent: React.FC = () => {
               onChange={handleChange}
             ></textarea>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -247,11 +247,11 @@ const EmailComposerContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -279,20 +279,20 @@ const EmailComposerContent: React.FC = () => {
 };
 
 // CheckIcon component
-const CheckIcon = ({ size, className }: { size: number, className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+const CheckIcon = ({ size, className }: { size: number; className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
-    <path d="M20 6L9 17l-5-5"/>
+    <path d="M20 6L9 17l-5-5" />
   </svg>
 );
 

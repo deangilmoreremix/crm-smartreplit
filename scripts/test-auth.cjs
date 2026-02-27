@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Test Supabase Authentication - Sign In & Password Reset
- * 
+ *
  * Usage:
  *   node scripts/test-auth.js check <email>     - Check user exists
  *   node scripts/test-auth.js signin <email> <password>  - Test sign in
@@ -12,7 +12,9 @@
 const { Pool } = require('pg');
 
 // Supabase connection
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
 const SUPABASE_URL = 'https://gadedbrnqzpfqtsdfzcg.supabase.co';
 
 const pool = new Pool({
@@ -24,14 +26,17 @@ const pool = new Pool({
 async function checkUser(email) {
   console.log(`\n🔍 Checking user: ${email}`);
   console.log('='.repeat(50));
-  
-  const result = await pool.query(`
+
+  const result = await pool.query(
+    `
     SELECT u.id, u.email, u.email_confirmed_at, u.last_sign_in_at, u.created_at,
            p.id as profile_id, p.role, p.first_name, p.last_name
     FROM auth.users u
     LEFT JOIN public.profiles p ON u.id = p.id
     WHERE u.email = $1
-  `, [email]);
+  `,
+    [email]
+  );
 
   if (result.rows.length === 0) {
     console.log('❌ User NOT found in auth.users');
@@ -47,14 +52,14 @@ async function checkUser(email) {
   console.log(`   Created: ${user.created_at}`);
   console.log(`   Profile ID: ${user.profile_id || '❌ MISSING'}`);
   console.log(`   Profile Role: ${user.role || 'N/A'}`);
-  
+
   return !!user.profile_id;
 }
 
 async function listUsers() {
   console.log('\n📋 Listing all users...');
   console.log('='.repeat(50));
-  
+
   const result = await pool.query(`
     SELECT u.email, u.email_confirmed_at, u.last_sign_in_at, p.role, p.first_name
     FROM auth.users u
@@ -66,7 +71,9 @@ async function listUsers() {
   console.log(`Found ${result.rows.length} users:\n`);
   result.rows.forEach((user, i) => {
     const confirmed = user.email_confirmed_at ? '✅' : '❌';
-    console.log(`${i + 1}. ${user.email} ${confirmed} | Role: ${user.role || 'N/A'} | Last Login: ${user.last_sign_in_at || 'Never'}`);
+    console.log(
+      `${i + 1}. ${user.email} ${confirmed} | Role: ${user.role || 'N/A'} | Last Login: ${user.last_sign_in_at || 'Never'}`
+    );
   });
 }
 

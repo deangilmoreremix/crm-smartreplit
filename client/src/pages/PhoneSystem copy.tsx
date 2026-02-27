@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
-import { Phone, User, Clock, BarChart2, RefreshCw, Send, MessageSquare, Mic, MicOff, Volume2, VolumeX, PhoneOff, Play, Pause, MousePointer } from 'lucide-react';
+import {
+  Phone,
+  User,
+  Clock,
+  BarChart2,
+  RefreshCw,
+  Send,
+  MessageSquare,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  PhoneOff,
+  Play,
+  Pause,
+  MousePointer,
+} from 'lucide-react';
 
 interface CallLog {
   id: string;
@@ -14,7 +30,9 @@ interface CallLog {
 }
 
 const PhoneSystem: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dialer' | 'logs' | 'voicemail' | 'settings'>('dialer');
+  const [activeTab, setActiveTab] = useState<'dialer' | 'logs' | 'voicemail' | 'settings'>(
+    'dialer'
+  );
   const [dialerNumber, setDialerNumber] = useState('');
   const [isCallInProgress, setIsCallInProgress] = useState(false);
   const [callStatus, setCallStatus] = useState<string | null>(null);
@@ -25,7 +43,7 @@ const PhoneSystem: React.FC = () => {
   const [callTimer, setCallTimer] = useState<NodeJS.Timeout | null>(null);
   const [recordingPlayback, setRecordingPlayback] = useState<string | null>(null);
   const [isPlayingRecording, setIsPlayingRecording] = useState(false);
-  
+
   // Call logs data
   const [callLogs] = useState<CallLog[]>([
     {
@@ -37,7 +55,7 @@ const PhoneSystem: React.FC = () => {
       duration: 325, // 5:25
       status: 'completed',
       notes: 'Discussed proposal details. Follow up next week.',
-      recordingUrl: 'https://example.com/recording1.mp3'
+      recordingUrl: 'https://example.com/recording1.mp3',
     },
     {
       id: '2',
@@ -47,7 +65,7 @@ const PhoneSystem: React.FC = () => {
       startTime: new Date(Date.now() - 172800000), // 2 days ago
       duration: 0,
       status: 'missed',
-      notes: 'Left a voicemail about scheduling a demo'
+      notes: 'Left a voicemail about scheduling a demo',
     },
     {
       id: '3',
@@ -57,7 +75,7 @@ const PhoneSystem: React.FC = () => {
       startTime: new Date(Date.now() - 259200000), // 3 days ago
       duration: 183, // 3:03
       status: 'completed',
-      recordingUrl: 'https://example.com/recording2.mp3'
+      recordingUrl: 'https://example.com/recording2.mp3',
     },
     {
       id: '4',
@@ -68,26 +86,27 @@ const PhoneSystem: React.FC = () => {
       duration: 0,
       status: 'voicemail',
       notes: 'Asked about pricing options',
-      recordingUrl: 'https://example.com/voicemail1.mp3'
-    }
+      recordingUrl: 'https://example.com/voicemail1.mp3',
+    },
   ]);
-  
+
   // Voicemail data
-  const voicemails = callLogs.filter(log => log.status === 'voicemail');
-  
+  const voicemails = callLogs.filter((log) => log.status === 'voicemail');
+
   // Handle dialer input
   const handleDialerInput = (value: string) => {
-    if (dialerNumber.length < 14) { // Limit to standard phone number length
+    if (dialerNumber.length < 14) {
+      // Limit to standard phone number length
       setDialerNumber(dialerNumber + value);
     }
   };
-  
+
   const handleBackspace = () => {
     if (dialerNumber.length > 0) {
       setDialerNumber(dialerNumber.slice(0, -1));
     }
   };
-  
+
   const formatPhoneNumber = (number: string) => {
     if (number.length <= 3) {
       return number;
@@ -97,65 +116,65 @@ const PhoneSystem: React.FC = () => {
       return `(${number.slice(0, 3)}) ${number.slice(3, 6)}-${number.slice(6)}`;
     }
   };
-  
+
   const startCall = () => {
     if (dialerNumber.trim().length === 0) return;
-    
+
     // Use the system dialer to initiate the call
     window.location.href = `tel:${dialerNumber.replace(/\D/g, '')}`;
-    
+
     // In a real implementation, we might also log the call attempt
     // For the demo, we'll also show the in-app calling UI
     setIsCallInProgress(true);
     setCallStatus('Calling...');
-    
+
     // Simulate call connecting
     setTimeout(() => {
       setCallStatus('Connected');
       setCallDuration(0);
-      
+
       // Start timer
       const timerId = setInterval(() => {
-        setCallDuration(prev => prev + 1);
+        setCallDuration((prev) => prev + 1);
       }, 1000);
-      
+
       setCallTimer(timerId);
     }, 2000);
   };
-  
+
   const endCall = () => {
     setIsCallInProgress(false);
     setCallStatus(null);
-    
+
     // Clear timer
     if (callTimer) {
       clearInterval(callTimer);
       setCallTimer(null);
     }
-    
+
     // Reset call states
     setCallDuration(0);
     setIsMuted(false);
     setIsOnHold(false);
     setIsSpeakerOn(false);
   };
-  
+
   // Add function to handle direct calls from call logs
   const handleCallContact = (phoneNumber: string) => {
     window.location.href = `tel:${phoneNumber.replace(/\D/g, '')}`;
   };
-  
+
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
   };
-  
+
   const formatDateTimeForCallLog = (date: Date) => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === today.toDateString()) {
       return `Today, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else if (date.toDateString() === yesterday.toDateString()) {
@@ -164,7 +183,7 @@ const PhoneSystem: React.FC = () => {
       return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
   };
-  
+
   const togglePlayRecording = (recordingUrl: string) => {
     if (recordingPlayback === recordingUrl && isPlayingRecording) {
       setIsPlayingRecording(false);
@@ -173,7 +192,7 @@ const PhoneSystem: React.FC = () => {
       setIsPlayingRecording(true);
     }
   };
-  
+
   const renderTab = () => {
     switch (activeTab) {
       case 'dialer':
@@ -187,7 +206,7 @@ const PhoneSystem: React.FC = () => {
                 className="w-full text-center text-2xl py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-            
+
             {isCallInProgress ? (
               <div className="mb-6">
                 <div className="text-center mb-2">
@@ -235,7 +254,7 @@ const PhoneSystem: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4 mb-6">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map(digit => (
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map((digit) => (
                   <button
                     key={digit}
                     onClick={() => handleDialerInput(digit.toString())}
@@ -246,7 +265,7 @@ const PhoneSystem: React.FC = () => {
                 ))}
               </div>
             )}
-            
+
             {!isCallInProgress && (
               <div className="flex justify-center relative">
                 <button
@@ -260,20 +279,25 @@ const PhoneSystem: React.FC = () => {
                 >
                   <Phone size={24} />
                 </button>
-                
+
                 {dialerNumber.length > 0 && (
                   <button
                     onClick={handleBackspace}
                     className="absolute right-8 mt-5 text-gray-400 hover:text-gray-600"
                   >
                     <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                      />
                     </svg>
                   </button>
                 )}
               </div>
             )}
-            
+
             {/* Click-to-call explainer */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <div className="text-center bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
@@ -283,7 +307,8 @@ const PhoneSystem: React.FC = () => {
                   <span className="text-sm font-medium">Click to Call</span>
                 </div>
                 <p className="text-sm text-gray-700">
-                  When you enter a number and click the call button, your device's default phone app will open, ready to dial.
+                  When you enter a number and click the call button, your device's default phone app
+                  will open, ready to dial.
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   This works on mobile phones, and computers with calling capabilities.
@@ -292,26 +317,28 @@ const PhoneSystem: React.FC = () => {
             </div>
           </div>
         );
-        
+
       case 'logs':
         return (
           <div className="p-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Recent Calls</h2>
-              <button className="text-blue-600 text-sm hover:text-blue-800">
-                Export Logs
-              </button>
+              <button className="text-blue-600 text-sm hover:text-blue-800">Export Logs</button>
             </div>
-            
+
             <div className="space-y-4">
-              {callLogs.map(call => (
+              {callLogs.map((call) => (
                 <div key={call.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center">
-                        <span className={`mr-2 ${
-                          call.direction === 'inbound' ? 'text-green-500 rotate-180' : 'text-blue-500'
-                        }`}>
+                        <span
+                          className={`mr-2 ${
+                            call.direction === 'inbound'
+                              ? 'text-green-500 rotate-180'
+                              : 'text-blue-500'
+                          }`}
+                        >
                           <Phone size={16} />
                         </span>
                         <span className="font-medium">{call.contactName}</span>
@@ -319,10 +346,14 @@ const PhoneSystem: React.FC = () => {
                       <p className="text-sm text-gray-500">{call.phoneNumber}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">{formatDateTimeForCallLog(call.startTime)}</p>
+                      <p className="text-sm text-gray-500">
+                        {formatDateTimeForCallLog(call.startTime)}
+                      </p>
                       <div className="flex items-center justify-end">
                         {call.status === 'completed' && (
-                          <span className="text-xs text-gray-500">{formatDuration(call.duration)}</span>
+                          <span className="text-xs text-gray-500">
+                            {formatDuration(call.duration)}
+                          </span>
                         )}
                         {call.status === 'missed' && (
                           <span className="text-xs text-red-500">Missed</span>
@@ -333,13 +364,13 @@ const PhoneSystem: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {call.notes && (
                     <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
                       {call.notes}
                     </div>
                   )}
-                  
+
                   {call.recordingUrl && (
                     <div className="mt-2">
                       <button
@@ -360,12 +391,12 @@ const PhoneSystem: React.FC = () => {
                       </button>
                     </div>
                   )}
-                  
+
                   <div className="mt-3 flex justify-end space-x-2">
                     <button className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md">
                       Add Note
                     </button>
-                    <button 
+                    <button
                       className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                       onClick={() => handleCallContact(call.phoneNumber)}
                     >
@@ -377,7 +408,7 @@ const PhoneSystem: React.FC = () => {
             </div>
           </div>
         );
-        
+
       case 'voicemail':
         return (
           <div className="p-4">
@@ -385,7 +416,7 @@ const PhoneSystem: React.FC = () => {
               <h2 className="text-lg font-semibold">Voicemail</h2>
               <span className="text-sm text-gray-500">{voicemails.length} messages</span>
             </div>
-            
+
             {voicemails.length === 0 ? (
               <div className="text-center p-6 bg-gray-50 rounded-lg">
                 <MessageSquare size={32} className="text-gray-300 mx-auto mb-2" />
@@ -393,7 +424,7 @@ const PhoneSystem: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {voicemails.map(voicemail => (
+                {voicemails.map((voicemail) => (
                   <div key={voicemail.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -404,16 +435,18 @@ const PhoneSystem: React.FC = () => {
                         <p className="text-sm text-gray-500">{voicemail.phoneNumber}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-500">{formatDateTimeForCallLog(voicemail.startTime)}</p>
+                        <p className="text-sm text-gray-500">
+                          {formatDateTimeForCallLog(voicemail.startTime)}
+                        </p>
                       </div>
                     </div>
-                    
+
                     {voicemail.notes && (
                       <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
                         {voicemail.notes}
                       </div>
                     )}
-                    
+
                     {voicemail.recordingUrl && (
                       <div className="mt-3 flex justify-between items-center">
                         <button
@@ -432,12 +465,12 @@ const PhoneSystem: React.FC = () => {
                             </>
                           )}
                         </button>
-                        
+
                         <div className="flex space-x-2">
                           <button className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-md">
                             Mark as Read
                           </button>
-                          <button 
+                          <button
                             className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md"
                             onClick={() => handleCallContact(voicemail.phoneNumber)}
                           >
@@ -452,12 +485,12 @@ const PhoneSystem: React.FC = () => {
             )}
           </div>
         );
-        
+
       case 'settings':
         return (
           <div className="p-4">
             <h2 className="text-lg font-semibold mb-4">Phone Settings</h2>
-            
+
             <div className="space-y-6">
               <div>
                 <h3 className="text-md font-medium mb-2">Phone Numbers</h3>
@@ -467,13 +500,11 @@ const PhoneSystem: React.FC = () => {
                       <p className="font-medium">(555) 123-8765</p>
                       <p className="text-sm text-gray-500">Primary Line</p>
                     </div>
-                    <button className="text-blue-600 text-sm hover:text-blue-800">
-                      Manage
-                    </button>
+                    <button className="text-blue-600 text-sm hover:text-blue-800">Manage</button>
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-md font-medium mb-2">Call Forwarding</h3>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -487,7 +518,7 @@ const PhoneSystem: React.FC = () => {
                   </label>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-md font-medium mb-2">Voicemail Greeting</h3>
                 <div className="border rounded-lg p-4">
@@ -504,7 +535,7 @@ const PhoneSystem: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <h3 className="text-md font-medium mb-2">Notifications</h3>
                 <div className="space-y-2">
@@ -534,28 +565,28 @@ const PhoneSystem: React.FC = () => {
             </div>
           </div>
         );
-        
+
       default:
         return null;
     }
   };
-  
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <header className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Phone System</h1>
         <p className="text-gray-600 mt-1">Make and receive calls directly from your CRM</p>
       </header>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="flex border-b">
-              <button 
+              <button
                 onClick={() => setActiveTab('dialer')}
                 className={`flex-1 py-3 font-medium text-center ${
-                  activeTab === 'dialer' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'dialer'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -564,11 +595,11 @@ const PhoneSystem: React.FC = () => {
                   Dialer
                 </div>
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('logs')}
                 className={`flex-1 py-3 font-medium text-center ${
-                  activeTab === 'logs' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'logs'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -577,11 +608,11 @@ const PhoneSystem: React.FC = () => {
                   Call Logs
                 </div>
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('voicemail')}
                 className={`flex-1 py-3 font-medium text-center ${
-                  activeTab === 'voicemail' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'voicemail'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -590,30 +621,44 @@ const PhoneSystem: React.FC = () => {
                   Voicemail
                 </div>
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('settings')}
                 className={`flex-1 py-3 font-medium text-center ${
-                  activeTab === 'settings' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                  activeTab === 'settings'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <div className="flex justify-center items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    ></path>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    ></path>
                   </svg>
                   Settings
                 </div>
               </button>
             </div>
-            
-            <div className="h-[600px] overflow-y-auto">
-              {renderTab()}
-            </div>
+
+            <div className="h-[600px] overflow-y-auto">{renderTab()}</div>
           </div>
         </div>
-        
+
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">Recent Contacts</h2>
@@ -626,10 +671,12 @@ const PhoneSystem: React.FC = () => {
                     </div>
                     <div>
                       <p className="font-medium">{name}</p>
-                      <p className="text-xs text-gray-500">Last called: {index === 0 ? 'Yesterday' : `${index + 1} days ago`}</p>
+                      <p className="text-xs text-gray-500">
+                        Last called: {index === 0 ? 'Yesterday' : `${index + 1} days ago`}
+                      </p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     className="p-2 rounded-full hover:bg-gray-100"
                     onClick={() => handleCallContact(`(555) ${index}23-456${index}`)}
                   >
@@ -639,7 +686,7 @@ const PhoneSystem: React.FC = () => {
               ))}
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Call Summary</h2>
@@ -674,7 +721,7 @@ const PhoneSystem: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-3">SMS Messages</h2>
             <p className="text-gray-600 text-sm mb-4">

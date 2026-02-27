@@ -15,7 +15,6 @@ const PipelineWithRemote: React.FC = () => {
 
   // Handle iframe load event - same as contacts
   const handleIframeLoad = () => {
-    console.log('📱 Remote pipeline iframe loaded');
     // Set connected status - no complex bridge needed
     setTimeout(() => {
       setIsConnected(true);
@@ -36,16 +35,18 @@ const PipelineWithRemote: React.FC = () => {
               Remote pipeline management system
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <div className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full">
               ✓ Remote Module
             </div>
-            <div className={`text-sm px-3 py-1 rounded-full flex items-center gap-1 ${
-              isConnected 
-                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
-            }`}>
+            <div
+              className={`text-sm px-3 py-1 rounded-full flex items-center gap-1 ${
+                isConnected
+                  ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                  : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
+              }`}
+            >
               {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
               {isConnected ? 'CRM Connected' : 'Connecting...'}
             </div>
@@ -62,7 +63,7 @@ const PipelineWithRemote: React.FC = () => {
             width: '100%',
             height: '100%',
             border: 'none',
-            overflow: 'hidden'
+            overflow: 'hidden',
           }}
           title="Remote Pipeline Module"
           allow="clipboard-read; clipboard-write"

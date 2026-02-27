@@ -12,23 +12,23 @@ import {
   Search,
   X,
   User,
-  Briefcase
+  Briefcase,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 
 const Tasks: React.FC = () => {
-  const { 
-    tasks, 
+  const {
+    tasks,
     isLoading,
-    createTask, 
-    updateTask, 
-    deleteTask, 
+    createTask,
+    updateTask,
+    deleteTask,
     markTaskComplete,
     selectTask,
-    selectedTask
+    selectedTask,
   } = useTaskStore();
-  
+
   const [filter, setFilter] = useState<{
     status: 'all' | 'completed' | 'uncompleted';
     priority: 'all' | 'high' | 'medium' | 'low';
@@ -36,17 +36,17 @@ const Tasks: React.FC = () => {
   }>({
     status: 'all',
     priority: 'all',
-    dateRange: 'all'
+    dateRange: 'all',
   });
-  
+
   const [sortBy] = useState<{
     field: 'dueDate' | 'priority' | 'title';
     direction: 'asc' | 'desc';
   }>({
     field: 'dueDate',
-    direction: 'asc'
+    direction: 'asc',
   });
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -56,21 +56,21 @@ const Tasks: React.FC = () => {
     dueDate: undefined,
     priority: 'medium',
     completed: false,
-    category: 'follow-up'
+    category: 'follow-up',
   });
 
   // Get all tasks as array
   const allTasks = Object.values(tasks);
-  
+
   // Filter tasks based on current filters
-  const filteredTasks = allTasks.filter(task => {
+  const filteredTasks = allTasks.filter((task) => {
     // Status filter
     if (filter.status === 'completed' && !task.completed) return false;
     if (filter.status === 'uncompleted' && task.completed) return false;
-    
+
     // Priority filter
     if (filter.priority !== 'all' && task.priority !== filter.priority) return false;
-    
+
     // Date range filter
     if (filter.dateRange !== 'all' && task.dueDate) {
       const now = new Date();
@@ -79,7 +79,7 @@ const Tasks: React.FC = () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       const weekFromNow = new Date(today);
       weekFromNow.setDate(weekFromNow.getDate() + 7);
-      
+
       switch (filter.dateRange) {
         case 'overdue':
           if (task.dueDate >= today) return false;
@@ -92,21 +92,23 @@ const Tasks: React.FC = () => {
           break;
       }
     }
-    
+
     // Search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      return task.title.toLowerCase().includes(searchLower) ||
-             (task.description || '').toLowerCase().includes(searchLower);
+      return (
+        task.title.toLowerCase().includes(searchLower) ||
+        (task.description || '').toLowerCase().includes(searchLower)
+      );
     }
-    
+
     return true;
   });
-  
+
   // Sort filtered tasks
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     let comparison = 0;
-    
+
     switch (sortBy.field) {
       case 'title':
         comparison = a.title.localeCompare(b.title);
@@ -122,17 +124,17 @@ const Tasks: React.FC = () => {
         else comparison = a.dueDate.getTime() - b.dueDate.getTime();
         break;
     }
-    
+
     return sortBy.direction === 'desc' ? -comparison : comparison;
   });
 
   // Group tasks by status and due date
   const groupedTasks = {
-    overdue: sortedTasks.filter(task => {
+    overdue: sortedTasks.filter((task) => {
       if (task.completed || !task.dueDate) return false;
       return task.dueDate < new Date();
     }),
-    today: sortedTasks.filter(task => {
+    today: sortedTasks.filter((task) => {
       if (task.completed || !task.dueDate) return false;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -140,7 +142,7 @@ const Tasks: React.FC = () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       return task.dueDate >= today && task.dueDate < tomorrow;
     }),
-    upcoming: sortedTasks.filter(task => {
+    upcoming: sortedTasks.filter((task) => {
       if (task.completed || !task.dueDate) return false;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -148,10 +150,10 @@ const Tasks: React.FC = () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       return task.dueDate >= tomorrow;
     }),
-    completed: sortedTasks.filter(task => task.completed),
-    noDueDate: sortedTasks.filter(task => !task.completed && !task.dueDate)
+    completed: sortedTasks.filter((task) => task.completed),
+    noDueDate: sortedTasks.filter((task) => !task.completed && !task.dueDate),
   };
-  
+
   // Open task detail or create form
   const openTaskDetail = (id: string) => {
     selectTask(id);
@@ -160,7 +162,7 @@ const Tasks: React.FC = () => {
     setTaskForm(task);
     setShowTaskModal(true);
   };
-  
+
   // Open task creation form
   const openCreateForm = () => {
     selectTask(null);
@@ -171,11 +173,11 @@ const Tasks: React.FC = () => {
       dueDate: undefined,
       priority: 'medium',
       completed: false,
-      category: 'follow-up'
+      category: 'follow-up',
     });
     setShowTaskModal(true);
   };
-  
+
   // Submit task form (create or update)
   const handleSubmit = async () => {
     if (selectedTask) {
@@ -185,19 +187,19 @@ const Tasks: React.FC = () => {
       // Create new task
       await createTask(taskForm);
     }
-    
+
     setShowTaskModal(false);
   };
-  
+
   // Format date for display
   const formatDate = (date?: Date) => {
     if (!date) return 'No due date';
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     if (date < today) {
       return `Overdue - ${date.toLocaleDateString()}`;
     } else if (date >= today && date < tomorrow) {
@@ -206,47 +208,57 @@ const Tasks: React.FC = () => {
       return date.toLocaleDateString();
     }
   };
-  
+
   // Priority badge component
   const PriorityBadge = ({ priority }: { priority: Task['priority'] }) => {
     const colors: Record<string, string> = {
-      'urgent': 'bg-red-200 text-red-900',
-      'high': 'bg-red-100 text-red-800',
-      'medium': 'bg-yellow-100 text-yellow-800',
-      'low': 'bg-green-100 text-green-800'
+      urgent: 'bg-red-200 text-red-900',
+      high: 'bg-red-100 text-red-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      low: 'bg-green-100 text-green-800',
     };
-    
+
     return (
       <span className={`text-xs px-2 py-1 rounded-full ${colors[priority]} capitalize`}>
         {priority}
       </span>
     );
   };
-  
+
   // Category badge
   const CategoryBadge = ({ category }: { category: string }) => {
     const colors: Record<string, string> = {
-      'call': 'bg-purple-100 text-purple-800',
-      'email': 'bg-blue-100 text-blue-800',
-      'meeting': 'bg-indigo-100 text-indigo-800',
+      call: 'bg-purple-100 text-purple-800',
+      email: 'bg-blue-100 text-blue-800',
+      meeting: 'bg-indigo-100 text-indigo-800',
       'follow-up': 'bg-amber-100 text-amber-800',
-      'proposal': 'bg-pink-100 text-pink-800',
-      'research': 'bg-cyan-100 text-cyan-800',
-      'administrative': 'bg-gray-100 text-gray-800',
-      'other': 'bg-gray-100 text-gray-800'
+      proposal: 'bg-pink-100 text-pink-800',
+      research: 'bg-cyan-100 text-cyan-800',
+      administrative: 'bg-gray-100 text-gray-800',
+      other: 'bg-gray-100 text-gray-800',
     };
-    
+
     return (
-      <span className={`text-xs px-2 py-1 rounded-full ${colors[category] || colors.other} capitalize`}>
+      <span
+        className={`text-xs px-2 py-1 rounded-full ${colors[category] || colors.other} capitalize`}
+      >
         {category.replace('-', ' ')}
       </span>
     );
   };
-  
+
   // Task group component
-  const TaskGroup = ({ title, tasks, icon }: { title: string; tasks: Task[]; icon: React.ReactNode }) => {
+  const TaskGroup = ({
+    title,
+    tasks,
+    icon,
+  }: {
+    title: string;
+    tasks: Task[];
+    icon: React.ReactNode;
+  }) => {
     if (tasks.length === 0) return null;
-    
+
     return (
       <div className="mb-6">
         <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center">
@@ -255,9 +267,9 @@ const Tasks: React.FC = () => {
           <span className="ml-2 text-sm text-gray-500">({tasks.length})</span>
         </h3>
         <div className="space-y-3">
-          {tasks.map(task => (
-            <div 
-              key={task.id} 
+          {tasks.map((task) => (
+            <div
+              key={task.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 hover:border-blue-200 p-3 transition-all cursor-pointer"
               onClick={() => openTaskDetail(task.id)}
             >
@@ -275,36 +287,34 @@ const Tasks: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <h4 className={`text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                    <h4
+                      className={`text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                    >
                       {task.title}
                     </h4>
                     {task.description && (
-                      <p className="mt-1 text-xs text-gray-500 line-clamp-2">
-                        {task.description}
-                      </p>
+                      <p className="mt-1 text-xs text-gray-500 line-clamp-2">{task.description}</p>
                     )}
                     {(task.dueDate || task.priority) && (
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         {task.dueDate && (
                           <div className="flex items-center text-xs">
                             <Clock size={12} className="mr-1 text-gray-400" />
-                            <span className={
-                              !task.completed && task.dueDate < new Date() 
-                                ? 'text-red-600 font-medium' 
-                                : 'text-gray-500'
-                            }>
+                            <span
+                              className={
+                                !task.completed && task.dueDate < new Date()
+                                  ? 'text-red-600 font-medium'
+                                  : 'text-gray-500'
+                              }
+                            >
                               {formatDate(task.dueDate)}
                             </span>
                           </div>
                         )}
-                        
-                        {task.priority && (
-                          <PriorityBadge priority={task.priority} />
-                        )}
-                        
-                        {task.category && (
-                          <CategoryBadge category={task.category} />
-                        )}
+
+                        {task.priority && <PriorityBadge priority={task.priority} />}
+
+                        {task.category && <CategoryBadge category={task.category} />}
                       </div>
                     )}
                   </div>
@@ -316,7 +326,7 @@ const Tasks: React.FC = () => {
       </div>
     );
   };
-  
+
   return (
     <PageLayout
       title="Tasks"
@@ -337,7 +347,6 @@ const Tasks: React.FC = () => {
         </div>
       }
     >
-      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Task count summary cards */}
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 flex items-center">
@@ -346,12 +355,10 @@ const Tasks: React.FC = () => {
           </div>
           <div>
             <p className="text-sm text-gray-500">Total Tasks</p>
-            <p className="text-xl font-semibold">
-              {Object.values(tasks).length}
-            </p>
+            <p className="text-xl font-semibold">{Object.values(tasks).length}</p>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 flex items-center">
           <div className="h-10 w-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-600 mr-3">
             <Clock size={20} />
@@ -359,11 +366,11 @@ const Tasks: React.FC = () => {
           <div>
             <p className="text-sm text-gray-500">Pending</p>
             <p className="text-xl font-semibold">
-              {Object.values(tasks).filter(task => !task.completed).length}
+              {Object.values(tasks).filter((task) => !task.completed).length}
             </p>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100 flex items-center">
           <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600 mr-3">
             <CheckCircle size={20} />
@@ -371,17 +378,17 @@ const Tasks: React.FC = () => {
           <div>
             <p className="text-sm text-gray-500">Completed</p>
             <p className="text-xl font-semibold">
-              {Object.values(tasks).filter(task => task.completed).length}
+              {Object.values(tasks).filter((task) => task.completed).length}
             </p>
           </div>
         </div>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div className="p-4 border-b border-gray-200">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
             <h2 className="text-lg font-medium text-gray-900">Task List</h2>
-            
+
             <div className="flex space-x-2">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -395,20 +402,20 @@ const Tasks: React.FC = () => {
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>
-              
+
               <select
                 value={`${filter.status}`}
-                onChange={(e) => setFilter({...filter, status: e.target.value as any})}
+                onChange={(e) => setFilter({ ...filter, status: e.target.value as any })}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="all">All Status</option>
                 <option value="uncompleted">Pending</option>
                 <option value="completed">Completed</option>
               </select>
-              
+
               <select
                 value={filter.priority}
-                onChange={(e) => setFilter({...filter, priority: e.target.value as any})}
+                onChange={(e) => setFilter({ ...filter, priority: e.target.value as any })}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="all">All Priorities</option>
@@ -416,10 +423,10 @@ const Tasks: React.FC = () => {
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
-              
+
               <select
                 value={filter.dateRange}
-                onChange={(e) => setFilter({...filter, dateRange: e.target.value as any})}
+                onChange={(e) => setFilter({ ...filter, dateRange: e.target.value as any })}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               >
                 <option value="all">All Dates</option>
@@ -430,7 +437,7 @@ const Tasks: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="p-4">
           {/* Tasks lists by group */}
           {isLoading ? (
@@ -452,32 +459,32 @@ const Tasks: React.FC = () => {
             </div>
           ) : (
             <div>
-              <TaskGroup 
-                title="Overdue" 
+              <TaskGroup
+                title="Overdue"
                 tasks={groupedTasks.overdue}
                 icon={<AlertCircle size={20} className="text-red-500" />}
               />
-              
-              <TaskGroup 
-                title="Today" 
+
+              <TaskGroup
+                title="Today"
                 tasks={groupedTasks.today}
                 icon={<Clock size={20} className="text-blue-500" />}
               />
-              
-              <TaskGroup 
-                title="Upcoming" 
+
+              <TaskGroup
+                title="Upcoming"
                 tasks={groupedTasks.upcoming}
                 icon={<Calendar size={20} className="text-indigo-500" />}
               />
-              
-              <TaskGroup 
-                title="No Due Date" 
+
+              <TaskGroup
+                title="No Due Date"
                 tasks={groupedTasks.noDueDate}
                 icon={<CheckSquare size={20} className="text-gray-500" />}
               />
-              
-              <TaskGroup 
-                title="Completed" 
+
+              <TaskGroup
+                title="Completed"
                 tasks={groupedTasks.completed}
                 icon={<CheckCircle size={20} className="text-green-500" />}
               />
@@ -485,7 +492,7 @@ const Tasks: React.FC = () => {
           )}
         </div>
       </div>
-      
+
       {/* Task Detail/Create Modal */}
       {showTaskModal && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -494,15 +501,21 @@ const Tasks: React.FC = () => {
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+              &#8203;
+            </span>
+
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium text-gray-900">
-                        {selectedTask ? (editMode ? 'Edit Task' : 'Task Details') : 'Create New Task'}
+                        {selectedTask
+                          ? editMode
+                            ? 'Edit Task'
+                            : 'Task Details'
+                          : 'Create New Task'}
                       </h3>
                       <button
                         onClick={() => setShowTaskModal(false)}
@@ -511,58 +524,91 @@ const Tasks: React.FC = () => {
                         <X size={20} />
                       </button>
                     </div>
-                    
-                    {(editMode || !selectedTask) ? (
+
+                    {editMode || !selectedTask ? (
                       <div className="space-y-4">
                         <div>
-                          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                          <label
+                            htmlFor="title"
+                            className="block text-sm font-medium text-gray-700"
+                          >
                             Task Title
                           </label>
                           <input
                             id="title"
                             type="text"
                             value={taskForm.title || ''}
-                            onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
+                            onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           />
                         </div>
-                        
+
                         <div>
-                          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                          <label
+                            htmlFor="description"
+                            className="block text-sm font-medium text-gray-700"
+                          >
                             Description
                           </label>
                           <textarea
                             id="description"
                             rows={3}
                             value={taskForm.description || ''}
-                            onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
+                            onChange={(e) =>
+                              setTaskForm({ ...taskForm, description: e.target.value })
+                            }
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                             placeholder="Task description or notes"
                           />
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="dueDate"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Due Date
                             </label>
                             <input
                               id="dueDate"
                               type="datetime-local"
-                              value={taskForm.dueDate ? new Date(taskForm.dueDate.getTime() - taskForm.dueDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                              onChange={(e) => setTaskForm({...taskForm, dueDate: e.target.value ? new Date(e.target.value) : undefined})}
+                              value={
+                                taskForm.dueDate
+                                  ? new Date(
+                                      taskForm.dueDate.getTime() -
+                                        taskForm.dueDate.getTimezoneOffset() * 60000
+                                    )
+                                      .toISOString()
+                                      .slice(0, 16)
+                                  : ''
+                              }
+                              onChange={(e) =>
+                                setTaskForm({
+                                  ...taskForm,
+                                  dueDate: e.target.value ? new Date(e.target.value) : undefined,
+                                })
+                              }
                               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                             />
                           </div>
-                          
+
                           <div>
-                            <label htmlFor="priority" className="block text-sm font-medium text-gray-700">
+                            <label
+                              htmlFor="priority"
+                              className="block text-sm font-medium text-gray-700"
+                            >
                               Priority
                             </label>
                             <select
                               id="priority"
                               value={taskForm.priority}
-                              onChange={(e) => setTaskForm({...taskForm, priority: e.target.value as 'high' | 'medium' | 'low'})}
+                              onChange={(e) =>
+                                setTaskForm({
+                                  ...taskForm,
+                                  priority: e.target.value as 'high' | 'medium' | 'low',
+                                })
+                              }
                               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                             >
                               <option value="high">High</option>
@@ -571,15 +617,20 @@ const Tasks: React.FC = () => {
                             </select>
                           </div>
                         </div>
-                        
+
                         <div>
-                          <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                          <label
+                            htmlFor="category"
+                            className="block text-sm font-medium text-gray-700"
+                          >
                             Category
                           </label>
                           <select
                             id="category"
                             value={taskForm.category}
-                            onChange={(e) => setTaskForm({...taskForm, category: e.target.value as any})}
+                            onChange={(e) =>
+                              setTaskForm({ ...taskForm, category: e.target.value as any })
+                            }
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                           >
                             <option value="call">Call</option>
@@ -592,13 +643,15 @@ const Tasks: React.FC = () => {
                             <option value="other">Other</option>
                           </select>
                         </div>
-                        
+
                         <div className="flex items-center">
                           <input
                             id="completed"
                             type="checkbox"
                             checked={taskForm.completed || false}
-                            onChange={(e) => setTaskForm({...taskForm, completed: e.target.checked})}
+                            onChange={(e) =>
+                              setTaskForm({ ...taskForm, completed: e.target.checked })
+                            }
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
                           <label htmlFor="completed" className="ml-2 block text-sm text-gray-900">
@@ -619,29 +672,33 @@ const Tasks: React.FC = () => {
                               />
                             </div>
                             <div className="ml-3">
-                              <h4 className={`text-lg font-medium ${tasks[selectedTask].completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              <h4
+                                className={`text-lg font-medium ${tasks[selectedTask].completed ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                              >
                                 {tasks[selectedTask].title}
                               </h4>
-                              
+
                               <div className="flex flex-wrap gap-2 mt-2">
                                 {tasks[selectedTask].dueDate && (
                                   <div className="flex items-center text-sm text-gray-500">
                                     <Clock size={16} className="mr-1 text-gray-400" />
-                                    <span className={
-                                      !tasks[selectedTask].completed && 
-                                      tasks[selectedTask].dueDate < new Date() 
-                                        ? 'text-red-600 font-medium' 
-                                        : 'text-gray-500'
-                                    }>
+                                    <span
+                                      className={
+                                        !tasks[selectedTask].completed &&
+                                        tasks[selectedTask].dueDate < new Date()
+                                          ? 'text-red-600 font-medium'
+                                          : 'text-gray-500'
+                                      }
+                                    >
                                       {formatDate(tasks[selectedTask].dueDate)}
                                     </span>
                                   </div>
                                 )}
-                                
+
                                 {tasks[selectedTask].priority && (
                                   <PriorityBadge priority={tasks[selectedTask].priority} />
                                 )}
-                                
+
                                 {tasks[selectedTask].category && (
                                   <CategoryBadge category={tasks[selectedTask].category} />
                                 )}
@@ -649,16 +706,18 @@ const Tasks: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        
+
                         {tasks[selectedTask].description && (
                           <div className="mt-4">
                             <h4 className="text-sm font-medium text-gray-700 mb-2">Description</h4>
                             <div className="prose prose-sm max-w-none bg-gray-50 p-3 rounded-md border border-gray-200">
-                              <p className="whitespace-pre-wrap">{tasks[selectedTask].description}</p>
+                              <p className="whitespace-pre-wrap">
+                                {tasks[selectedTask].description}
+                              </p>
                             </div>
                           </div>
                         )}
-                        
+
                         {tasks[selectedTask].relatedTo && (
                           <div className="mt-4">
                             <h4 className="text-sm font-medium text-gray-700 mb-1">Related To</h4>
@@ -677,14 +736,14 @@ const Tasks: React.FC = () => {
                             </div>
                           </div>
                         )}
-                        
+
                         <div className="mt-4">
                           <h4 className="text-sm font-medium text-gray-700 mb-1">Created</h4>
                           <p className="text-sm text-gray-600">
                             {tasks[selectedTask].createdAt.toLocaleString()}
                           </p>
                         </div>
-                        
+
                         {tasks[selectedTask].completedAt && (
                           <div className="mt-4">
                             <h4 className="text-sm font-medium text-gray-700 mb-1">Completed</h4>

@@ -5,38 +5,53 @@
 
 // Simple navigation functions that just send messages to parent
 function navigateToDashboard() {
-  window.parent.postMessage({ 
-    type: 'NAVIGATE', 
-    route: '/dashboard' 
-  }, '*');
+  window.parent.postMessage(
+    {
+      type: 'NAVIGATE',
+      route: '/dashboard',
+    },
+    '*'
+  );
 }
 
 function navigateToContacts() {
-  window.parent.postMessage({ 
-    type: 'NAVIGATE', 
-    route: '/contacts' 
-  }, '*');
+  window.parent.postMessage(
+    {
+      type: 'NAVIGATE',
+      route: '/contacts',
+    },
+    '*'
+  );
 }
 
 function navigateToDeals() {
-  window.parent.postMessage({ 
-    type: 'NAVIGATE', 
-    route: '/deals' 
-  }, '*');
+  window.parent.postMessage(
+    {
+      type: 'NAVIGATE',
+      route: '/deals',
+    },
+    '*'
+  );
 }
 
 function navigateToTasks() {
-  window.parent.postMessage({ 
-    type: 'NAVIGATE', 
-    route: '/tasks' 
-  }, '*');
+  window.parent.postMessage(
+    {
+      type: 'NAVIGATE',
+      route: '/tasks',
+    },
+    '*'
+  );
 }
 
 function navigateToCalendar() {
-  window.parent.postMessage({ 
-    type: 'NAVIGATE', 
-    route: '/calendar' 
-  }, '*');
+  window.parent.postMessage(
+    {
+      type: 'NAVIGATE',
+      route: '/calendar',
+    },
+    '*'
+  );
 }
 
 // Add navigation buttons to your app
@@ -108,10 +123,10 @@ function addSimpleNavigation() {
       " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">Calendar</button>
     </div>
   `;
-  
+
   // Add to top of the page
   document.body.insertAdjacentHTML('afterbegin', navHTML);
-  
+
   console.log('✅ Simple CRM navigation added');
 }
 
@@ -124,10 +139,10 @@ if (document.readyState === 'loading') {
 
 /**
  * USAGE:
- * 
+ *
  * 1. Copy this entire file content
  * 2. Paste it into a <script> tag in each remote app's HTML
  * 3. Or save as a .js file and include it: <script src="simple-navigation.js"></script>
- * 
+ *
  * That's it! No complex setup needed.
  */

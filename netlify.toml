@@ -7,8 +7,29 @@ functions = "netlify/functions"
 NODE_VERSION = "20"
 SECRETS_SCAN_ENABLED = "true"
 
+[dev]
+command = "npm run dev"
+targetPort = 5000
+port = 8888
+
 # SPA fallback for client-side routing
 [[redirects]]
 from = "/*"
 to = "/index.html"
+status = 200
+
+# API redirects to Netlify Functions
+[[redirects]]
+from = "/api/openai/smart-greeting"
+to = "/.netlify/functions/openai"
+status = 200
+
+[[redirects]]
+from = "/api/openai/kpi-analysis"
+to = "/.netlify/functions/openai"
+status = 200
+
+[[redirects]]
+from = "/api/openai/business-intelligence"
+to = "/.netlify/functions/openai"
 status = 200

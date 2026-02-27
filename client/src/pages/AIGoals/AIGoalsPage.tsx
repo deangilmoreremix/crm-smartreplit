@@ -5,17 +5,17 @@ import InteractiveGoalCard from '../../components/InteractiveGoalCard';
 import GoalExecutionModal from '../../components/GoalExecutionModal';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader } from '../../components/ui/card';
-import { 
-  Brain, 
-  Info, 
-  Lightbulb, 
-  ArrowLeft, 
-  Sparkles, 
-  Zap, 
-  Target, 
-  Users, 
-  BarChart3, 
-  Bot, 
+import {
+  Brain,
+  Info,
+  Lightbulb,
+  ArrowLeft,
+  Sparkles,
+  Zap,
+  Target,
+  Users,
+  BarChart3,
+  Bot,
   Activity,
   TrendingUp,
   FileText,
@@ -26,7 +26,7 @@ import {
   Grid3X3,
   List,
   Clock,
-  Play
+  Play,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAITools } from '../../components/AIToolsProvider';
@@ -46,7 +46,7 @@ const AIGoalsPage: React.FC = () => {
   const [showExecutionModal, setShowExecutionModal] = useState(false);
   const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
   const [realMode, setRealMode] = useState(false);
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -56,10 +56,10 @@ const AIGoalsPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [executingGoals, setExecutingGoals] = useState<Set<string>>(new Set());
-  
+
   const navigate = useNavigate();
   const { openTool } = useAITools();
-  
+
   // Get context from session storage or URL params
   const [context, setContext] = useState<AIGoalContext | null>(() => {
     try {
@@ -77,15 +77,16 @@ const AIGoalsPage: React.FC = () => {
   // Helper functions
   const searchGoals = (query: string) => {
     const lowercaseQuery = query.toLowerCase();
-    return allGoals.filter(goal =>
-      goal.title.toLowerCase().includes(lowercaseQuery) ||
-      goal.description.toLowerCase().includes(lowercaseQuery) ||
-      goal.businessImpact.toLowerCase().includes(lowercaseQuery)
+    return allGoals.filter(
+      (goal) =>
+        goal.title.toLowerCase().includes(lowercaseQuery) ||
+        goal.description.toLowerCase().includes(lowercaseQuery) ||
+        goal.businessImpact.toLowerCase().includes(lowercaseQuery)
     );
   };
 
   const getGoalsByCategory = (categoryId: string) => {
-    return allGoals.filter(goal => goal.category.toLowerCase() === categoryId.toLowerCase());
+    return allGoals.filter((goal) => goal.category.toLowerCase() === categoryId.toLowerCase());
   };
 
   // Filter goals based on current criteria
@@ -99,17 +100,17 @@ const AIGoalsPage: React.FC = () => {
 
     // Apply category filter
     if (selectedCategory !== 'All') {
-      filtered = filtered.filter(goal => goal.category === selectedCategory);
+      filtered = filtered.filter((goal) => goal.category === selectedCategory);
     }
 
     // Apply priority filter
     if (selectedPriority !== 'All') {
-      filtered = filtered.filter(goal => goal.priority === selectedPriority);
+      filtered = filtered.filter((goal) => goal.priority === selectedPriority);
     }
 
     // Apply complexity filter
     if (selectedComplexity !== 'All') {
-      filtered = filtered.filter(goal => goal.complexity === selectedComplexity);
+      filtered = filtered.filter((goal) => goal.complexity === selectedComplexity);
     }
 
     setFilteredGoals(filtered);
@@ -118,12 +119,10 @@ const AIGoalsPage: React.FC = () => {
   const handleExecuteGoal = (goal: Goal) => {
     setSelectedGoal(goal);
     setIsExecutionModalOpen(true);
-    
+
     // Show notification about demo mode
     if (!realMode) {
-      setTimeout(() => {
-        console.log('💡 Tip: Switch to Live Mode above to execute real AI agents instead of demos');
-      }, 1000);
+      setTimeout(() => {}, 1000);
     }
   };
 
@@ -134,28 +133,28 @@ const AIGoalsPage: React.FC = () => {
 
   const getCategoryIcon = (category: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
-      'Sales': <TrendingUp className="h-5 w-5" />,
-      'Marketing': <Target className="h-5 w-5" />,
-      'Relationship': <Users className="h-5 w-5" />,
-      'Automation': <Zap className="h-5 w-5" />,
-      'Analytics': <Activity className="h-5 w-5" />,
-      'Content': <FileText className="h-5 w-5" />,
-      'Admin': <Settings className="h-5 w-5" />,
-      'AI-Native': <Brain className="h-5 w-5" />
+      Sales: <TrendingUp className="h-5 w-5" />,
+      Marketing: <Target className="h-5 w-5" />,
+      Relationship: <Users className="h-5 w-5" />,
+      Automation: <Zap className="h-5 w-5" />,
+      Analytics: <Activity className="h-5 w-5" />,
+      Content: <FileText className="h-5 w-5" />,
+      Admin: <Settings className="h-5 w-5" />,
+      'AI-Native': <Brain className="h-5 w-5" />,
     };
     return iconMap[category] || <Bot className="h-5 w-5" />;
   };
 
   const getCategoryColor = (category: string): string => {
     const colorMap: { [key: string]: string } = {
-      'Sales': 'from-blue-500 to-blue-600',
-      'Marketing': 'from-purple-500 to-purple-600',
-      'Relationship': 'from-green-500 to-green-600',
-      'Automation': 'from-orange-500 to-orange-600',
-      'Analytics': 'from-teal-500 to-teal-600',
-      'Content': 'from-yellow-500 to-yellow-600',
-      'Admin': 'from-indigo-500 to-indigo-600',
-      'AI-Native': 'from-pink-500 to-pink-600'
+      Sales: 'from-blue-500 to-blue-600',
+      Marketing: 'from-purple-500 to-purple-600',
+      Relationship: 'from-green-500 to-green-600',
+      Automation: 'from-orange-500 to-orange-600',
+      Analytics: 'from-teal-500 to-teal-600',
+      Content: 'from-yellow-500 to-yellow-600',
+      Admin: 'from-indigo-500 to-indigo-600',
+      'AI-Native': 'from-pink-500 to-pink-600',
     };
     return colorMap[category] || 'from-gray-500 to-gray-600';
   };
@@ -164,12 +163,12 @@ const AIGoalsPage: React.FC = () => {
     return selectedCategory === 'All' ? allGoals : getGoalsByCategory(selectedCategory);
   };
 
-  const categoryStats = goalCategories.map(category => ({
+  const categoryStats = goalCategories.map((category) => ({
     name: category.name,
     id: category.id,
     count: getGoalsByCategory(category.id).length,
     icon: getCategoryIcon(category.id),
-    color: getCategoryColor(category.id)
+    color: getCategoryColor(category.id),
   }));
 
   return (
@@ -179,13 +178,12 @@ const AIGoalsPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                AI Business Goals
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Business Goals</h1>
               <p className="text-lg text-gray-600 mb-4">
-                Transform your business with AI-powered automation. Choose from {allGoals.length} pre-built goals across {goalCategories.length} categories.
+                Transform your business with AI-powered automation. Choose from {allGoals.length}{' '}
+                pre-built goals across {goalCategories.length} categories.
               </p>
-              
+
               {/* Mode Toggle with Enhanced UX */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -194,7 +192,9 @@ const AIGoalsPage: React.FC = () => {
                     <button
                       onClick={() => setRealMode(false)}
                       className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        !realMode ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                        !realMode
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
                       🎭 Demo Mode
@@ -202,27 +202,33 @@ const AIGoalsPage: React.FC = () => {
                     <button
                       onClick={() => setRealMode(true)}
                       className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        realMode ? 'bg-white text-green-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                        realMode
+                          ? 'bg-white text-green-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
                       🚀 Live Mode
                     </button>
                   </div>
                 </div>
-                
+
                 {realMode ? (
                   <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-200 rounded-lg">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-green-700 font-medium">Real AI execution enabled</span>
+                    <span className="text-sm text-green-700 font-medium">
+                      Real AI execution enabled
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg">
-                    <span className="text-sm text-blue-700">Demo mode - Click Live Mode for real execution</span>
+                    <span className="text-sm text-blue-700">
+                      Demo mode - Click Live Mode for real execution
+                    </span>
                   </div>
                 )}
               </div>
             </div>
-            
+
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-4 mt-6 lg:mt-0">
               <div className="text-center">
@@ -256,11 +262,15 @@ const AIGoalsPage: React.FC = () => {
               }`}
             >
               <div className="flex flex-col items-center text-center">
-                <div className={`mb-2 ${selectedCategory === category.id ? 'text-white' : 'text-gray-600'}`}>
+                <div
+                  className={`mb-2 ${selectedCategory === category.id ? 'text-white' : 'text-gray-600'}`}
+                >
                   {category.icon}
                 </div>
                 <div className="text-sm font-medium">{category.name}</div>
-                <div className={`text-xs ${selectedCategory === category.id ? 'text-white/80' : 'text-gray-500'}`}>
+                <div
+                  className={`text-xs ${selectedCategory === category.id ? 'text-white/80' : 'text-gray-500'}`}
+                >
                   {category.count} goals
                 </div>
               </div>
@@ -284,7 +294,7 @@ const AIGoalsPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -292,9 +302,11 @@ const AIGoalsPage: React.FC = () => {
             >
               <Filter className="h-5 w-5" />
               Filters
-              <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+              />
             </button>
-            
+
             {/* View Mode Toggle */}
             <div className="flex bg-gray-100 rounded-lg p-1">
               <button
@@ -315,7 +327,7 @@ const AIGoalsPage: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
           {/* Expanded Filters */}
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -327,12 +339,14 @@ const AIGoalsPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="All">All Priorities</option>
-                  {priorityLevels.map(priority => (
-                    <option key={priority} value={priority}>{priority}</option>
+                  {priorityLevels.map((priority) => (
+                    <option key={priority} value={priority}>
+                      {priority}
+                    </option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Complexity</label>
                 <select
@@ -341,12 +355,14 @@ const AIGoalsPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="All">All Complexity Levels</option>
-                  {complexityLevels.map(complexity => (
-                    <option key={complexity} value={complexity}>{complexity}</option>
+                  {complexityLevels.map((complexity) => (
+                    <option key={complexity} value={complexity}>
+                      {complexity}
+                    </option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <select
@@ -355,8 +371,10 @@ const AIGoalsPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="All">All Categories</option>
-                  {goalCategories.map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
+                  {goalCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -375,10 +393,11 @@ const AIGoalsPage: React.FC = () => {
               {searchQuery && ` for "${searchQuery}"`}
             </p>
           </div>
-          
+
           {filteredGoals.length > 0 && (
             <div className="text-sm text-gray-600">
-              Total estimated setup time: {Math.round(filteredGoals.length * 1.5)} - {Math.round(filteredGoals.length * 3)} hours
+              Total estimated setup time: {Math.round(filteredGoals.length * 1.5)} -{' '}
+              {Math.round(filteredGoals.length * 3)} hours
             </div>
           )}
         </div>
@@ -406,13 +425,20 @@ const AIGoalsPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'
-              : 'space-y-4'
-          }>
+          <div
+            className={
+              viewMode === 'grid'
+                ? 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'
+                : 'space-y-4'
+            }
+          >
             {filteredGoals.map((goal) => (
-              <div key={goal.id} className={viewMode === 'list' ? 'bg-white rounded-xl p-4 border border-gray-200' : ''}>
+              <div
+                key={goal.id}
+                className={
+                  viewMode === 'list' ? 'bg-white rounded-xl p-4 border border-gray-200' : ''
+                }
+              >
                 {viewMode === 'grid' ? (
                   <InteractiveGoalCard
                     goal={goal}
@@ -427,14 +453,20 @@ const AIGoalsPage: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-bold text-gray-900">{goal.title}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          goal.priority === 'High' ? 'bg-red-100 text-red-700' :
-                          goal.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            goal.priority === 'High'
+                              ? 'bg-red-100 text-red-700'
+                              : goal.priority === 'Medium'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-green-100 text-green-700'
+                          }`}
+                        >
                           {goal.priority}
                         </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700`}
+                        >
                           {goal.complexity}
                         </span>
                       </div>
@@ -457,8 +489,8 @@ const AIGoalsPage: React.FC = () => {
                     <button
                       onClick={() => handleExecuteGoal(goal)}
                       className={`px-6 py-3 text-white rounded-lg transition-colors flex items-center gap-2 ${
-                        realMode 
-                          ? 'bg-green-600 hover:bg-green-700' 
+                        realMode
+                          ? 'bg-green-600 hover:bg-green-700'
                           : 'bg-blue-600 hover:bg-blue-700'
                       }`}
                     >

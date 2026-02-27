@@ -23,40 +23,44 @@ let healthStatus = {
   overall: 'unknown',
   lastCheck: null,
   services: {},
-  alerts: []
+  alerts: [],
 };
 
 // Helper function to make HTTP requests
 function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https:') ? https : http;
-    const req = protocol.request(url, {
-      method: options.method || 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'SmartCRM-Health-Monitor/1.0',
-        ...options.headers
+    const req = protocol.request(
+      url,
+      {
+        method: options.method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SmartCRM-Health-Monitor/1.0',
+          ...options.headers,
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const jsonData = data ? JSON.parse(data) : {};
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: jsonData,
+            });
+          } catch (e) {
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: data,
+            });
+          }
+        });
       }
-    }, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const jsonData = data ? JSON.parse(data) : {};
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: jsonData
-          });
-        } catch (e) {
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: data
-          });
-        }
-      });
-    });
+    );
 
     req.on('error', reject);
     req.setTimeout(30000, () => {
@@ -93,7 +97,7 @@ function sendAlert(subject, message) {
     timestamp: new Date().toISOString(),
     subject,
     message,
-    resolved: false
+    resolved: false,
   });
 
   // Keep only last 100 alerts
@@ -117,7 +121,7 @@ async function checkHealthEndpoint() {
       status: isHealthy ? 'healthy' : 'unhealthy',
       lastCheck: new Date().toISOString(),
       responseTime: Date.now() - new Date().getTime(),
-      details: response.data
+      details: response.data,
     };
 
     if (!isHealthy) {
@@ -129,7 +133,7 @@ async function checkHealthEndpoint() {
     healthStatus.services.health = {
       status: 'error',
       lastCheck: new Date().toISOString(),
-      error: error.message
+      error: error.message,
     };
     sendAlert('Health Endpoint Error', error.message);
     return false;
@@ -144,7 +148,7 @@ async function checkSupabaseConnection() {
     healthStatus.services.supabase = {
       status: isHealthy ? 'healthy' : 'degraded',
       lastCheck: new Date().toISOString(),
-      details: response.data
+      details: response.data,
     };
 
     if (!isHealthy && response.data.status !== 'error') {
@@ -156,7 +160,7 @@ async function checkSupabaseConnection() {
     healthStatus.services.supabase = {
       status: 'error',
       lastCheck: new Date().toISOString(),
-      error: error.message
+      error: error.message,
     };
     sendAlert('Supabase Connection Error', error.message);
     return false;
@@ -172,7 +176,7 @@ async function checkOpenAIStatus() {
       status: isHealthy ? 'healthy' : 'degraded',
       lastCheck: new Date().toISOString(),
       model: response.data.model,
-      details: response.data
+      details: response.data,
     };
 
     return isHealthy;
@@ -180,7 +184,7 @@ async function checkOpenAIStatus() {
     healthStatus.services.openai = {
       status: 'error',
       lastCheck: new Date().toISOString(),
-      error: error.message
+      error: error.message,
     };
     return false;
   }
@@ -195,7 +199,7 @@ async function checkGoogleAIStatus() {
       status: isHealthy ? 'healthy' : 'degraded',
       lastCheck: new Date().toISOString(),
       model: response.data.googleai?.model,
-      details: response.data.googleai
+      details: response.data.googleai,
     };
 
     return isHealthy;
@@ -203,7 +207,7 @@ async function checkGoogleAIStatus() {
     healthStatus.services.googleai = {
       status: 'error',
       lastCheck: new Date().toISOString(),
-      error: error.message
+      error: error.message,
     };
     return false;
   }
@@ -215,7 +219,7 @@ async function checkEdgeFunctions() {
     'contacts',
     'deals',
     'draft-email-response',
-    'generate-sales-pitch'
+    'generate-sales-pitch',
   ];
 
   let healthy = 0;
@@ -226,10 +230,10 @@ async function checkEdgeFunctions() {
       const response = await makeRequest(`${SUPABASE_URL}/functions/v1/${func}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
         },
-        body: { test: true }
+        body: { test: true },
       });
 
       if (response.status === 200) {
@@ -249,7 +253,7 @@ async function checkEdgeFunctions() {
     lastCheck: new Date().toISOString(),
     healthy,
     unhealthy,
-    total: functions.length
+    total: functions.length,
   };
 
   return unhealthy === 0;
@@ -259,7 +263,7 @@ async function checkDatabaseEndpoints() {
   const endpoints = [
     { path: '/api/partners', description: 'Partners API' },
     { path: '/api/white-label/tenants', description: 'Tenants API' },
-    { path: '/api/users', description: 'Users API' }
+    { path: '/api/users', description: 'Users API' },
   ];
 
   let healthy = 0;
@@ -286,7 +290,7 @@ async function checkDatabaseEndpoints() {
     lastCheck: new Date().toISOString(),
     healthy,
     unhealthy,
-    total: endpoints.length
+    total: endpoints.length,
   };
 
   return unhealthy === 0;
@@ -299,17 +303,18 @@ async function checkFallbackMechanisms() {
       body: {
         userMetrics: { totalDeals: 5, totalValue: 25000 },
         timeOfDay: 'morning',
-        recentActivity: ['Test activity']
-      }
+        recentActivity: ['Test activity'],
+      },
     });
 
-    const isHealthy = response.status === 200 &&
+    const isHealthy =
+      response.status === 200 &&
       (response.data.source === 'intelligent_fallback' || response.data.source === 'gpt-4o-mini');
 
     healthStatus.services.fallbacks = {
       status: isHealthy ? 'healthy' : 'error',
       lastCheck: new Date().toISOString(),
-      fallbackActive: response.data.source === 'intelligent_fallback'
+      fallbackActive: response.data.source === 'intelligent_fallback',
     };
 
     if (!isHealthy) {
@@ -321,7 +326,7 @@ async function checkFallbackMechanisms() {
     healthStatus.services.fallbacks = {
       status: 'error',
       lastCheck: new Date().toISOString(),
-      error: error.message
+      error: error.message,
     };
     sendAlert('Fallback Mechanisms Error', error.message);
     return false;
@@ -339,27 +344,39 @@ async function performHealthCheck() {
     checkGoogleAIStatus(),
     checkEdgeFunctions(),
     checkDatabaseEndpoints(),
-    checkFallbackMechanisms()
+    checkFallbackMechanisms(),
   ]);
 
   const results = checks.map((result, index) => ({
-    check: ['Health Endpoint', 'Supabase', 'OpenAI', 'Google AI', 'Edge Functions', 'Database', 'Fallbacks'][index],
+    check: [
+      'Health Endpoint',
+      'Supabase',
+      'OpenAI',
+      'Google AI',
+      'Edge Functions',
+      'Database',
+      'Fallbacks',
+    ][index],
     success: result.status === 'fulfilled' ? result.value : false,
-    error: result.status === 'rejected' ? result.reason.message : null
+    error: result.status === 'rejected' ? result.reason.message : null,
   }));
 
   // Calculate overall health
-  const successfulChecks = results.filter(r => r.success).length;
+  const successfulChecks = results.filter((r) => r.success).length;
   const totalChecks = results.length;
 
-  healthStatus.overall = successfulChecks === totalChecks ? 'healthy' :
-                         successfulChecks >= totalChecks * 0.7 ? 'degraded' : 'unhealthy';
+  healthStatus.overall =
+    successfulChecks === totalChecks
+      ? 'healthy'
+      : successfulChecks >= totalChecks * 0.7
+        ? 'degraded'
+        : 'unhealthy';
   healthStatus.lastCheck = new Date().toISOString();
 
   log(`Health check completed: ${successfulChecks}/${totalChecks} checks passed`);
 
   // Log detailed results
-  results.forEach(result => {
+  results.forEach((result) => {
     if (result.success) {
       log(`✅ ${result.check}: OK`);
     } else {
@@ -369,9 +386,15 @@ async function performHealthCheck() {
 
   // Send critical alerts
   if (healthStatus.overall === 'unhealthy') {
-    sendAlert('CRITICAL: System Unhealthy', `${successfulChecks}/${totalChecks} health checks failed`);
+    sendAlert(
+      'CRITICAL: System Unhealthy',
+      `${successfulChecks}/${totalChecks} health checks failed`
+    );
   } else if (healthStatus.overall === 'degraded') {
-    sendAlert('WARNING: System Degraded', `${successfulChecks}/${totalChecks} health checks passed`);
+    sendAlert(
+      'WARNING: System Degraded',
+      `${successfulChecks}/${totalChecks} health checks passed`
+    );
   }
 
   return healthStatus;
@@ -385,14 +408,20 @@ function startHealthServer(port = 8080) {
       res.end(JSON.stringify(healthStatus, null, 2));
     } else if (req.url === '/status') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        overall: healthStatus.overall,
-        lastCheck: healthStatus.lastCheck,
-        services: Object.keys(healthStatus.services).reduce((acc, key) => {
-          acc[key] = healthStatus.services[key].status;
-          return acc;
-        }, {})
-      }, null, 2));
+      res.end(
+        JSON.stringify(
+          {
+            overall: healthStatus.overall,
+            lastCheck: healthStatus.lastCheck,
+            services: Object.keys(healthStatus.services).reduce((acc, key) => {
+              acc[key] = healthStatus.services[key].status;
+              return acc;
+            }, {}),
+          },
+          null,
+          2
+        )
+      );
     } else {
       res.writeHead(404);
       res.end('Not found');
@@ -469,9 +498,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 }
 
-export {
-  performHealthCheck,
-  startMonitoring,
-  startHealthServer,
-  healthStatus
-};
+export { performHealthCheck, startMonitoring, startHealthServer, healthStatus };

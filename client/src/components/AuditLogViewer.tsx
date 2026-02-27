@@ -66,14 +66,12 @@ export default function AuditLogViewer() {
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: '20',
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        )
+        ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== '')),
       });
 
       const response = await fetch(`/api/admin/audit-logs?${queryParams}`, {
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
@@ -87,7 +85,7 @@ export default function AuditLogViewer() {
       toast({
         title: 'Error',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -99,7 +97,7 @@ export default function AuditLogViewer() {
   }, [page, filters]);
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1); // Reset to first page when filters change
   };
 
@@ -114,7 +112,10 @@ export default function AuditLogViewer() {
   };
 
   const formatAction = (action: string) => {
-    return action.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    return action
+      .replace('_', ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatDate = (dateString: string) => {
@@ -129,14 +130,15 @@ export default function AuditLogViewer() {
             <Shield className="h-5 w-5" />
             Audit Log Viewer
           </CardTitle>
-          <CardDescription>
-            Monitor all administrative actions and system events
-          </CardDescription>
+          <CardDescription>Monitor all administrative actions and system events</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Select value={filters.action} onValueChange={(value) => handleFilterChange('action', value)}>
+            <Select
+              value={filters.action}
+              onValueChange={(value) => handleFilterChange('action', value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="All Actions" />
               </SelectTrigger>
@@ -222,7 +224,12 @@ export default function AuditLogViewer() {
                           <td className="px-4 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <Icon className="h-4 w-4 mr-2 text-gray-400" />
-                              <Badge className={ACTION_COLORS[log.action as keyof typeof ACTION_COLORS] || 'bg-gray-100 text-gray-800'}>
+                              <Badge
+                                className={
+                                  ACTION_COLORS[log.action as keyof typeof ACTION_COLORS] ||
+                                  'bg-gray-100 text-gray-800'
+                                }
+                              >
                                 {formatAction(log.action)}
                               </Badge>
                             </div>
@@ -231,15 +238,11 @@ export default function AuditLogViewer() {
                             <div className="text-sm font-medium text-gray-900">
                               {log.adminEmail}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {log.ipAddress}
-                            </div>
+                            <div className="text-sm text-gray-500">{log.ipAddress}</div>
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap">
                             {log.targetUserEmail ? (
-                              <div className="text-sm text-gray-900">
-                                {log.targetUserEmail}
-                              </div>
+                              <div className="text-sm text-gray-900">{log.targetUserEmail}</div>
                             ) : (
                               <span className="text-gray-400">-</span>
                             )}
@@ -269,7 +272,7 @@ export default function AuditLogViewer() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                   disabled={page === 1}
                   variant="outline"
                   size="sm"
@@ -277,7 +280,7 @@ export default function AuditLogViewer() {
                   Previous
                 </Button>
                 <Button
-                  onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
                   disabled={page === totalPages}
                   variant="outline"
                   size="sm"

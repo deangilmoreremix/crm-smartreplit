@@ -1,4 +1,3 @@
-
 import React from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
@@ -7,17 +6,17 @@ import { useContactStore } from '../hooks/useContactStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Avatar from '../components/ui/Avatar';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  MessageSquare, 
+import {
+  BarChart3,
+  TrendingUp,
+  MessageSquare,
   Phone,
   Mail,
   Activity,
   Clock,
   Users,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
 } from 'lucide-react';
 
 const ActivityAnalytics: React.FC = () => {
@@ -43,7 +42,11 @@ const ActivityAnalytics: React.FC = () => {
 
   // Get initials for avatar
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -58,12 +61,15 @@ const ActivityAnalytics: React.FC = () => {
       }
     >
       <div className="space-y-8">
-
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Total Communications
               </CardTitle>
               <MessageSquare className="h-4 w-4 text-blue-500" />
@@ -79,9 +85,13 @@ const ActivityAnalytics: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Emails Sent
               </CardTitle>
               <Mail className="h-4 w-4 text-green-500" />
@@ -97,9 +107,13 @@ const ActivityAnalytics: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Calls Made
               </CardTitle>
               <Phone className="h-4 w-4 text-purple-500" />
@@ -115,9 +129,13 @@ const ActivityAnalytics: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Avg Response Time
               </CardTitle>
               <Clock className="h-4 w-4 text-orange-500" />
@@ -148,19 +166,28 @@ const ActivityAnalytics: React.FC = () => {
                 { channel: 'Email', count: 89, rate: '24%', color: 'bg-blue-100 text-blue-600' },
                 { channel: 'Phone', count: 42, rate: '85%', color: 'bg-green-100 text-green-600' },
                 { channel: 'SMS', count: 18, rate: '92%', color: 'bg-purple-100 text-purple-600' },
-                { channel: 'WhatsApp', count: 5, rate: '100%', color: 'bg-green-100 text-green-600' },
-                { channel: 'LinkedIn', count: 2, rate: '50%', color: 'bg-blue-100 text-blue-600' }
+                {
+                  channel: 'WhatsApp',
+                  count: 5,
+                  rate: '100%',
+                  color: 'bg-green-100 text-green-600',
+                },
+                { channel: 'LinkedIn', count: 2, rate: '50%', color: 'bg-blue-100 text-blue-600' },
               ].map((channel, index) => (
-                <div 
+                <div
                   key={channel.channel}
                   className={`p-4 rounded-lg ${
                     isDark ? 'bg-gray-700' : 'bg-gray-50'
                   } border ${isDark ? 'border-gray-600' : 'border-gray-200'}`}
                 >
-                  <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}>
+                  <div
+                    className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-2`}
+                  >
                     {channel.channel}
                   </div>
-                  <div className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+                  <div
+                    className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}
+                  >
                     {channel.count} sent
                   </div>
                   <div className={`text-sm px-2 py-1 rounded-full ${channel.color}`}>
@@ -183,28 +210,22 @@ const ActivityAnalytics: React.FC = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {topContacts.map((contact) => (
-                <div 
-                  key={contact.id} 
+                <div
+                  key={contact.id}
                   className={`flex items-center space-x-3 p-4 rounded-lg ${
-                    isDark 
-                      ? 'bg-gray-700 hover:bg-gray-600' 
-                      : 'bg-gray-50 hover:bg-gray-100'
+                    isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
                   } transition-colors cursor-pointer`}
                 >
-                  <Avatar
-                    src={contact.avatarSrc}
-                    size="md"
-                    fallback={getInitials(contact.name)}
-                  />
+                  <Avatar src={contact.avatarSrc} size="md" fallback={getInitials(contact.name)} />
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium text-sm truncate ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}>
+                    <p
+                      className={`font-medium text-sm truncate ${
+                        isDark ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
                       {contact.name}
                     </p>
-                    <p className={`text-sm truncate ${
-                      isDark ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
+                    <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {contact.company || 'No company'}
                     </p>
                     <div className="flex items-center mt-1">
@@ -230,41 +251,56 @@ const ActivityAnalytics: React.FC = () => {
           <CardContent className="space-y-4">
             {[
               { type: 'email', contact: 'Jane Doe', time: '2 hours ago', status: 'opened' },
-              { type: 'call', contact: 'Darlene Robertson', time: '4 hours ago', status: 'completed' },
+              {
+                type: 'call',
+                contact: 'Darlene Robertson',
+                time: '4 hours ago',
+                status: 'completed',
+              },
               { type: 'sms', contact: 'Wade Warren', time: '6 hours ago', status: 'delivered' },
               { type: 'email', contact: 'Kathryn Murphy', time: '1 day ago', status: 'replied' },
-              { type: 'call', contact: 'Jerome Bell', time: '2 days ago', status: 'missed' }
+              { type: 'call', contact: 'Jerome Bell', time: '2 days ago', status: 'missed' },
             ].map((activity, index) => (
               <div key={index} className="flex items-center space-x-3">
-                <div className={`p-2 rounded-full ${
-                  activity.type === 'email' ? 'bg-blue-100 text-blue-600' :
-                  activity.type === 'call' ? 'bg-green-100 text-green-600' :
-                  'bg-purple-100 text-purple-600'
-                }`}>
-                  {activity.type === 'email' ? <Mail className="h-4 w-4" /> :
-                   activity.type === 'call' ? <Phone className="h-4 w-4" /> :
-                   <MessageSquare className="h-4 w-4" />}
+                <div
+                  className={`p-2 rounded-full ${
+                    activity.type === 'email'
+                      ? 'bg-blue-100 text-blue-600'
+                      : activity.type === 'call'
+                        ? 'bg-green-100 text-green-600'
+                        : 'bg-purple-100 text-purple-600'
+                  }`}
+                >
+                  {activity.type === 'email' ? (
+                    <Mail className="h-4 w-4" />
+                  ) : activity.type === 'call' ? (
+                    <Phone className="h-4 w-4" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-sm truncate ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <p
+                    className={`font-medium text-sm truncate ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}
+                  >
                     {activity.contact}
                   </p>
-                  <p className={`text-sm truncate ${
-                    isDark ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
+                  <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     {activity.type} • {activity.time}
                   </p>
                 </div>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={`text-xs ${
-                    activity.status === 'opened' || activity.status === 'completed' || activity.status === 'replied' 
-                      ? 'bg-green-50 text-green-700 border-green-200' :
-                    activity.status === 'delivered' 
-                      ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      'bg-orange-50 text-orange-700 border-orange-200'
+                    activity.status === 'opened' ||
+                    activity.status === 'completed' ||
+                    activity.status === 'replied'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : activity.status === 'delivered'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-orange-50 text-orange-700 border-orange-200'
                   }`}
                 >
                   {activity.status}
@@ -273,9 +309,9 @@ const ActivityAnalytics: React.FC = () => {
             ))}
           </CardContent>
         </Card>
-        </div>
-      </PageLayout>
-    );
-  };
+      </div>
+    </PageLayout>
+  );
+};
 
 export default ActivityAnalytics;

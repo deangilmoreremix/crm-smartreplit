@@ -18,9 +18,12 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '2-3 hours',
     businessImpact: 'Increase sales team efficiency by 40% and improve conversion rates',
     realWorldExample: 'A SaaS company increased qualified leads by 60% using AI scoring',
-    successMetrics: ['Lead-to-opportunity conversion rate increase by 25%', 'Sales cycle reduction by 15%'],
+    successMetrics: [
+      'Lead-to-opportunity conversion rate increase by 25%',
+      'Sales cycle reduction by 15%',
+    ],
     prerequisite: ['CRM system with API access', 'Lead tracking data (minimum 3 months)'],
-    roi: '250-400% within 6 months'
+    roi: '250-400% within 6 months',
   },
   {
     id: 'emailPersonalization',
@@ -40,7 +43,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'An e-commerce brand increased email revenue by 85% using AI personalization',
     successMetrics: ['Open rate increase by 45%', 'Click-through rate increase by 60%'],
     prerequisite: ['Email marketing platform', 'Customer behavioral data'],
-    roi: '180-300% within 4 months'
+    roi: '180-300% within 4 months',
   },
   {
     id: 'pipelineOptimization',
@@ -57,10 +60,11 @@ export const allGoals: Goal[] = [
     toolsNeeded: ['CRM Integration', 'Analytics Engine', 'Reporting Dashboard'],
     estimatedSetupTime: '3-4 hours',
     businessImpact: 'Improve pipeline conversion rates by 35% and reduce sales cycle time',
-    realWorldExample: 'A B2B company increased deal closure rate from 15% to 24% with AI optimization',
+    realWorldExample:
+      'A B2B company increased deal closure rate from 15% to 24% with AI optimization',
     successMetrics: ['Pipeline velocity increase by 30%', 'Deal size increase by 20%'],
     prerequisite: ['Sales pipeline data', 'Deal stage definitions', 'Historical conversion data'],
-    roi: '400-600% within 8 months'
+    roi: '400-600% within 8 months',
   },
   {
     id: 'dealRiskAssessment',
@@ -77,10 +81,11 @@ export const allGoals: Goal[] = [
     toolsNeeded: ['Deal Data', 'Historical Analytics', 'Notification System'],
     estimatedSetupTime: '2-3 hours',
     businessImpact: 'Reduce deal slippage by 40% and improve forecast accuracy',
-    realWorldExample: 'A software company reduced forecast variance from 25% to 8% using AI risk assessment',
+    realWorldExample:
+      'A software company reduced forecast variance from 25% to 8% using AI risk assessment',
     successMetrics: ['Forecast accuracy improvement by 30%', 'Deal slippage reduction by 40%'],
     prerequisite: ['Deal tracking system', 'Historical sales data', 'Risk criteria definition'],
-    roi: '200-350% within 6 months'
+    roi: '200-350% within 6 months',
   },
   {
     id: 'competitorAnalysis',
@@ -100,7 +105,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A tech startup increased win rate against competitors from 30% to 55%',
     successMetrics: ['Competitive win rate increase by 25%', 'Battle card usage increase by 80%'],
     prerequisite: ['Competitor list', 'Market intelligence sources', 'Sales team training'],
-    roi: '300-500% within 12 months'
+    roi: '300-500% within 12 months',
   },
 
   // Marketing Goals (12 goals)
@@ -121,8 +126,12 @@ export const allGoals: Goal[] = [
     businessImpact: 'Increase campaign ROI by 50% and reduce wasted ad spend',
     realWorldExample: 'A retail company improved ROAS from 3:1 to 6:1 using AI optimization',
     successMetrics: ['ROAS improvement by 50%', 'Cost per acquisition reduction by 30%'],
-    prerequisite: ['Marketing platform access', 'Campaign historical data', 'Budget allocation data'],
-    roi: '250-400% within 6 months'
+    prerequisite: [
+      'Marketing platform access',
+      'Campaign historical data',
+      'Budget allocation data',
+    ],
+    roi: '250-400% within 6 months',
   },
   {
     id: 'contentStrategy',
@@ -142,7 +151,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A SaaS company grew organic traffic by 120% with AI content strategy',
     successMetrics: ['Organic traffic increase by 45%', 'Content engagement increase by 70%'],
     prerequisite: ['Content audit', 'Audience personas', 'Competitor content analysis'],
-    roi: '200-350% within 10 months'
+    roi: '200-350% within 10 months',
   },
   {
     id: 'audienceSegmentation',
@@ -160,9 +169,12 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '2-3 hours',
     businessImpact: 'Improve campaign targeting effectiveness by 60%',
     realWorldExample: 'An e-commerce brand increased conversion rates by 45% with AI segmentation',
-    successMetrics: ['Campaign targeting effectiveness increase by 60%', 'Conversion rate increase by 45%'],
+    successMetrics: [
+      'Campaign targeting effectiveness increase by 60%',
+      'Conversion rate increase by 45%',
+    ],
     prerequisite: ['Customer data', 'Behavioral tracking', 'Campaign management system'],
-    roi: '180-300% within 5 months'
+    roi: '180-300% within 5 months',
   },
 
   // Relationship Goals (10 goals)
@@ -182,9 +194,16 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '3-4 hours',
     businessImpact: 'Reduce onboarding time by 50% and improve customer satisfaction',
     realWorldExample: 'A software company reduced time-to-value from 30 days to 12 days',
-    successMetrics: ['Onboarding completion rate increase by 40%', 'Time-to-value reduction by 50%'],
-    prerequisite: ['Onboarding process documentation', 'Customer communication channels', 'Success metrics'],
-    roi: '300-450% within 6 months'
+    successMetrics: [
+      'Onboarding completion rate increase by 40%',
+      'Time-to-value reduction by 50%',
+    ],
+    prerequisite: [
+      'Onboarding process documentation',
+      'Customer communication channels',
+      'Success metrics',
+    ],
+    roi: '300-450% within 6 months',
   },
   {
     id: 'relationshipMapping',
@@ -201,10 +220,14 @@ export const allGoals: Goal[] = [
     toolsNeeded: ['Social Media APIs', 'CRM Integration', 'Data Processing Engine'],
     estimatedSetupTime: '4-5 hours',
     businessImpact: 'Identify key influencers and improve account penetration by 35%',
-    realWorldExample: 'A consulting firm increased enterprise deal size by 60% using relationship mapping',
-    successMetrics: ['Account penetration increase by 35%', 'Influencer identification accuracy 85%+'],
+    realWorldExample:
+      'A consulting firm increased enterprise deal size by 60% using relationship mapping',
+    successMetrics: [
+      'Account penetration increase by 35%',
+      'Influencer identification accuracy 85%+',
+    ],
     prerequisite: ['Account hierarchy data', 'Social media access', 'Contact database'],
-    roi: '250-400% within 8 months'
+    roi: '250-400% within 8 months',
   },
 
   // Automation Goals (8 goals)
@@ -226,7 +249,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A marketing agency automated 80% of lead qualification saving 15 hours/week',
     successMetrics: ['Manual work reduction by 70%', 'Process efficiency increase by 60%'],
     prerequisite: ['Process documentation', 'System integrations', 'Workflow requirements'],
-    roi: '400-600% within 12 months'
+    roi: '400-600% within 12 months',
   },
   {
     id: 'taskAutomation',
@@ -246,7 +269,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A sales team automated follow-ups and increased response rates by 40%',
     successMetrics: ['Time savings 10+ hours/week', 'Task completion rate increase by 50%'],
     prerequisite: ['Task categorization', 'Calendar system', 'Automation rules'],
-    roi: '200-350% within 4 months'
+    roi: '200-350% within 4 months',
   },
 
   // Analytics Goals (8 goals)
@@ -268,7 +291,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A startup improved decision-making speed by 60% with AI analytics',
     successMetrics: ['Decision-making speed increase by 50%', 'Data accuracy improvement by 40%'],
     prerequisite: ['Data sources integration', 'KPI definitions', 'Dashboard requirements'],
-    roi: '300-500% within 8 months'
+    roi: '300-500% within 8 months',
   },
   {
     id: 'predictiveAnalytics',
@@ -288,7 +311,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A retail company reduced inventory costs by 25% using predictive analytics',
     successMetrics: ['Prediction accuracy 90%+', 'Planning efficiency increase by 40%'],
     prerequisite: ['Historical data (12+ months)', 'ML infrastructure', 'Data quality standards'],
-    roi: '400-700% within 12 months'
+    roi: '400-700% within 12 months',
   },
 
   // Content Goals (5 goals)
@@ -310,8 +333,8 @@ export const allGoals: Goal[] = [
     realWorldExample: 'A media company increased engagement by 90% with personalized content',
     successMetrics: ['Content engagement increase by 80%', 'Personalization accuracy 85%+'],
     prerequisite: ['Content library', 'Customer segments', 'Engagement tracking'],
-    roi: '250-400% within 6 months'
-  }
+    roi: '250-400% within 6 months',
+  },
 ];
 
 export const goalCategories: GoalCategory[] = [
@@ -321,7 +344,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Lead generation, qualification, and deal closure',
     icon: 'Target',
     color: 'from-blue-500 to-blue-600',
-    totalGoals: 15
+    totalGoals: 15,
   },
   {
     id: 'Marketing',
@@ -329,7 +352,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Campaign optimization and audience targeting',
     icon: 'Megaphone',
     color: 'from-purple-500 to-purple-600',
-    totalGoals: 12
+    totalGoals: 12,
   },
   {
     id: 'Relationship',
@@ -337,7 +360,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Customer relationship and account management',
     icon: 'Users',
     color: 'from-green-500 to-green-600',
-    totalGoals: 10
+    totalGoals: 10,
   },
   {
     id: 'Automation',
@@ -345,7 +368,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Process automation and workflow optimization',
     icon: 'Zap',
     color: 'from-orange-500 to-orange-600',
-    totalGoals: 8
+    totalGoals: 8,
   },
   {
     id: 'Analytics',
@@ -353,7 +376,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Data analysis and performance insights',
     icon: 'BarChart3',
     color: 'from-teal-500 to-teal-600',
-    totalGoals: 8
+    totalGoals: 8,
   },
   {
     id: 'Content',
@@ -361,6 +384,6 @@ export const goalCategories: GoalCategory[] = [
     description: 'Content creation and optimization',
     icon: 'FileText',
     color: 'from-yellow-500 to-yellow-600',
-    totalGoals: 5
-  }
+    totalGoals: 5,
+  },
 ];

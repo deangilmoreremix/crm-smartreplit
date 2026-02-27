@@ -45,6 +45,7 @@ See `SETUP_INSTRUCTIONS.md` for complete setup details.
 ## 📞 Need Help?
 
 See troubleshooting section in `SETUP_INSTRUCTIONS.md` or check:
+
 - Build output for `remoteEntry.js`
 - Browser console for specific errors
 - CORS headers configuration

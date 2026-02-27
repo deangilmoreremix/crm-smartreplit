@@ -15,7 +15,7 @@ import {
   Download,
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
 interface ImportContactsModalProps {
@@ -44,18 +44,14 @@ interface ImportResult {
   errors: string[];
 }
 
-export const ImportContactsModal = ({
-  isOpen,
-  onClose,
-  onImport
-}: ImportContactsModalProps) => {
+export const ImportContactsModal = ({ isOpen, onClose, onImport }: ImportContactsModalProps) => {
   const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'complete'>('upload');
   const [csvContent, setCsvContent] = useState('');
   const [parsedContacts, setParsedContacts] = useState<ParsedContact[]>([]);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  
+
   const { toast } = useToast();
   const { addContact } = useContactStore();
 
@@ -69,7 +65,7 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
       throw new Error('CSV must have at least a header row and one data row');
     }
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/['"]/g, ''));
     const contacts: ParsedContact[] = [];
     const errors: string[] = [];
 
@@ -78,17 +74,17 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
       if (!line) continue;
 
       const values = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
-      const cleanValues = values.map(v => v.replace(/^["']|["']$/g, '').trim());
+      const cleanValues = values.map((v) => v.replace(/^["']|["']$/g, '').trim());
 
       const contact: ParsedContact = {
         firstName: '',
         lastName: '',
-        email: ''
+        email: '',
       };
 
       headers.forEach((header, index) => {
         const value = cleanValues[index] || '';
-        
+
         switch (header) {
           case 'firstname':
           case 'first_name':
@@ -141,7 +137,10 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
             contact.notes = value;
             break;
           case 'tags':
-            contact.tags = value.split(';').map(t => t.trim()).filter(Boolean);
+            contact.tags = value
+              .split(';')
+              .map((t) => t.trim())
+              .filter(Boolean);
             break;
           case 'name':
           case 'fullname':
@@ -173,59 +172,62 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
     return contacts;
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (!file) return;
 
-    setFileName(file.name);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      setCsvContent(content);
-      
-      try {
-        const parsed = parseCSV(content);
-        if (parsed.length === 0) {
+      setFileName(file.name);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setCsvContent(content);
+
+        try {
+          const parsed = parseCSV(content);
+          if (parsed.length === 0) {
+            toast({
+              title: 'No valid contacts found',
+              description: 'Please check your CSV format',
+              variant: 'destructive',
+            });
+            return;
+          }
+          setParsedContacts(parsed);
+          setStep('preview');
           toast({
-            title: "No valid contacts found",
-            description: "Please check your CSV format",
-            variant: "destructive"
+            title: 'File parsed successfully',
+            description: `Found ${parsed.length} contacts`,
           });
-          return;
+        } catch (error: any) {
+          toast({
+            title: 'Error parsing CSV',
+            description: error.message,
+            variant: 'destructive',
+          });
         }
-        setParsedContacts(parsed);
-        setStep('preview');
-        toast({
-          title: "File parsed successfully",
-          description: `Found ${parsed.length} contacts`
-        });
-      } catch (error: any) {
-        toast({
-          title: "Error parsing CSV",
-          description: error.message,
-          variant: "destructive"
-        });
-      }
-    };
-    reader.readAsText(file);
-  }, [toast]);
+      };
+      reader.readAsText(file);
+    },
+    [toast]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'text/csv': ['.csv'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt'],
     },
-    maxFiles: 1
+    maxFiles: 1,
   });
 
   const handlePasteCSV = () => {
     if (!csvContent.trim()) {
       toast({
-        title: "Error",
-        description: "Please paste your CSV data first",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please paste your CSV data first',
+        variant: 'destructive',
       });
       return;
     }
@@ -234,23 +236,23 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
       const parsed = parseCSV(csvContent);
       if (parsed.length === 0) {
         toast({
-          title: "No valid contacts found",
-          description: "Please check your CSV format",
-          variant: "destructive"
+          title: 'No valid contacts found',
+          description: 'Please check your CSV format',
+          variant: 'destructive',
         });
         return;
       }
       setParsedContacts(parsed);
       setStep('preview');
       toast({
-        title: "CSV parsed successfully",
-        description: `Found ${parsed.length} contacts`
+        title: 'CSV parsed successfully',
+        description: `Found ${parsed.length} contacts`,
       });
     } catch (error: any) {
       toast({
-        title: "Error parsing CSV",
+        title: 'Error parsing CSV',
         description: error.message,
-        variant: "destructive"
+        variant: 'destructive',
       });
     }
   };
@@ -258,11 +260,11 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
   const handleImport = async () => {
     setIsLoading(true);
     setStep('importing');
-    
+
     const result: ImportResult = {
       success: 0,
       failed: 0,
-      errors: []
+      errors: [],
     };
 
     const importedContacts: Contact[] = [];
@@ -283,9 +285,9 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
           sources: [contact.source || 'CSV Import'],
           status: (contact.status as any) || 'lead',
           notes: contact.notes,
-          tags: contact.tags || []
+          tags: contact.tags || [],
         });
-        
+
         importedContacts.push(newContact);
         result.success++;
       } catch (error: any) {
@@ -303,8 +305,8 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
     }
 
     toast({
-      title: "Import Complete",
-      description: `Successfully imported ${result.success} contacts${result.failed > 0 ? `, ${result.failed} failed` : ''}`
+      title: 'Import Complete',
+      description: `Successfully imported ${result.success} contacts${result.failed > 0 ? `, ${result.failed} failed` : ''}`,
     });
   };
 
@@ -337,7 +339,10 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" data-testid="import-contacts-modal">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      data-testid="import-contacts-modal"
+    >
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
@@ -345,7 +350,9 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
               <Upload className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Import Contacts</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Import Contacts
+              </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {step === 'upload' && 'Upload a CSV file or paste data'}
                 {step === 'preview' && `${parsedContacts.length} contacts ready to import`}
@@ -404,7 +411,9 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
                   <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white dark:bg-gray-900 text-gray-500">or paste CSV data</span>
+                  <span className="px-4 bg-white dark:bg-gray-900 text-gray-500">
+                    or paste CSV data
+                  </span>
                 </div>
               </div>
 
@@ -426,7 +435,8 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
                   <div className="text-sm">
                     <p className="font-medium text-blue-800 dark:text-blue-200">CSV Format</p>
                     <p className="text-blue-700 dark:text-blue-300 mt-1">
-                      Required: firstName, lastName, email<br />
+                      Required: firstName, lastName, email
+                      <br />
                       Optional: phone, company, position, industry, source, status, notes, tags
                     </p>
                     <button
@@ -457,10 +467,18 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                       <tr>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Name</th>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Email</th>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Company</th>
-                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">Status</th>
+                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                          Name
+                        </th>
+                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                          Email
+                        </th>
+                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                          Company
+                        </th>
+                        <th className="px-4 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                          Status
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -469,8 +487,12 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
                           <td className="px-4 py-2 text-gray-900 dark:text-white">
                             {contact.firstName} {contact.lastName}
                           </td>
-                          <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{contact.email}</td>
-                          <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{contact.company || '-'}</td>
+                          <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
+                            {contact.email}
+                          </td>
+                          <td className="px-4 py-2 text-gray-600 dark:text-gray-400">
+                            {contact.company || '-'}
+                          </td>
                           <td className="px-4 py-2">
                             <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
                               {contact.status || 'lead'}
@@ -493,7 +515,9 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-              <p className="text-lg font-medium text-gray-900 dark:text-white">Importing contacts...</p>
+              <p className="text-lg font-medium text-gray-900 dark:text-white">
+                Importing contacts...
+              </p>
               <p className="text-gray-500 mt-1">Please wait while we add your contacts</p>
             </div>
           )}
@@ -503,7 +527,9 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                   <div className="text-3xl font-bold text-green-600">{importResult.success}</div>
-                  <div className="text-green-700 dark:text-green-300 text-sm">Successfully imported</div>
+                  <div className="text-green-700 dark:text-green-300 text-sm">
+                    Successfully imported
+                  </div>
                 </div>
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg text-center">
                   <div className="text-3xl font-bold text-red-600">{importResult.failed}</div>
@@ -516,7 +542,9 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
                   <p className="font-medium text-red-800 dark:text-red-200 mb-2">Errors:</p>
                   <ul className="space-y-1">
                     {importResult.errors.slice(0, 5).map((error, index) => (
-                      <li key={index} className="text-sm text-red-700 dark:text-red-300">• {error}</li>
+                      <li key={index} className="text-sm text-red-700 dark:text-red-300">
+                        • {error}
+                      </li>
                     ))}
                     {importResult.errors.length > 5 && (
                       <li className="text-sm text-red-700 dark:text-red-300">
@@ -550,7 +578,11 @@ Jane,Smith,jane.smith@company.com,(555) 987-6543,Tech Solutions,CEO,Software,Ref
               <Button variant="outline" onClick={handleClose} data-testid="cancel-import">
                 Cancel
               </Button>
-              <Button onClick={handlePasteCSV} disabled={!csvContent.trim()} data-testid="parse-csv">
+              <Button
+                onClick={handlePasteCSV}
+                disabled={!csvContent.trim()}
+                data-testid="parse-csv"
+              >
                 Parse CSV
               </Button>
             </>

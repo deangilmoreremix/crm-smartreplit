@@ -1,15 +1,37 @@
 import React, { useState } from 'react';
-import { useFeatures, useCreateFeature, useUpdateFeature, useDeleteFeature, useTierFeatures, useSetTierFeatures, type Feature } from '../hooks/useFeatures';
+import {
+  useFeatures,
+  useCreateFeature,
+  useUpdateFeature,
+  useDeleteFeature,
+  useTierFeatures,
+  useSetTierFeatures,
+  type Feature,
+} from '../hooks/useFeatures';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { Switch } from '../components/ui/switch';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { useToast } from '../hooks/use-toast';
 import { Settings, Plus, Trash2, Edit, Shield, Zap, Users, Briefcase, Lock } from 'lucide-react';
 
@@ -46,9 +68,8 @@ export default function FeatureManagement() {
     isEnabled: true,
   });
 
-  const filteredFeatures = selectedCategory === 'all' 
-    ? features 
-    : features.filter(f => f.category === selectedCategory);
+  const filteredFeatures =
+    selectedCategory === 'all' ? features : features.filter((f) => f.category === selectedCategory);
 
   const handleCreateFeature = async () => {
     try {
@@ -70,7 +91,7 @@ export default function FeatureManagement() {
 
   const handleUpdateFeature = async () => {
     if (!editingFeature) return;
-    
+
     try {
       await updateFeature.mutateAsync({
         id: editingFeature.id,
@@ -93,7 +114,7 @@ export default function FeatureManagement() {
 
   const handleDeleteFeature = async (id: number) => {
     if (!confirm('Are you sure you want to delete this feature?')) return;
-    
+
     try {
       await deleteFeature.mutateAsync(id);
       toast({
@@ -167,9 +188,7 @@ export default function FeatureManagement() {
             <DialogContent data-testid="dialog-create-feature">
               <DialogHeader>
                 <DialogTitle>Create New Feature</DialogTitle>
-                <DialogDescription>
-                  Add a new feature to the system
-                </DialogDescription>
+                <DialogDescription>Add a new feature to the system</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
@@ -231,7 +250,11 @@ export default function FeatureManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} data-testid="button-cancel">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  data-testid="button-cancel"
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleCreateFeature} data-testid="button-save-feature">
@@ -245,9 +268,7 @@ export default function FeatureManagement() {
             <DialogContent data-testid="dialog-edit-feature">
               <DialogHeader>
                 <DialogTitle>Edit Feature</DialogTitle>
-                <DialogDescription>
-                  Update feature details
-                </DialogDescription>
+                <DialogDescription>Update feature details</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
@@ -306,7 +327,11 @@ export default function FeatureManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setEditingFeature(null)} data-testid="button-cancel-edit">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingFeature(null)}
+                  data-testid="button-cancel-edit"
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleUpdateFeature} data-testid="button-update-feature">
@@ -319,7 +344,9 @@ export default function FeatureManagement() {
 
         <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-4">
           <TabsList>
-            <TabsTrigger value="all" data-testid="tab-all-features">All Features</TabsTrigger>
+            <TabsTrigger value="all" data-testid="tab-all-features">
+              All Features
+            </TabsTrigger>
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
@@ -347,15 +374,19 @@ export default function FeatureManagement() {
             ) : (
               <div className="grid gap-4">
                 {filteredFeatures.map((feature) => {
-                  const category = CATEGORIES.find(c => c.value === feature.category);
+                  const category = CATEGORIES.find((c) => c.value === feature.category);
                   const Icon = category?.icon || Settings;
-                  
+
                   return (
                     <Card key={feature.id} data-testid={`card-feature-${feature.id}`}>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-lg ${feature.isEnabled ? 'bg-green-100' : 'bg-gray-100'}`}>
-                            <Icon className={`h-5 w-5 ${feature.isEnabled ? 'text-green-600' : 'text-gray-400'}`} />
+                          <div
+                            className={`p-2 rounded-lg ${feature.isEnabled ? 'bg-green-100' : 'bg-gray-100'}`}
+                          >
+                            <Icon
+                              className={`h-5 w-5 ${feature.isEnabled ? 'text-green-600' : 'text-gray-400'}`}
+                            />
                           </div>
                           <div>
                             <CardTitle className="text-lg">{feature.name}</CardTitle>
@@ -428,11 +459,11 @@ function TierFeatureConfig({ features }: { features: Feature[] }) {
   const setTierFeatures = useSetTierFeatures();
   const { toast } = useToast();
 
-  const tierFeatureIds = new Set(tierFeatures.map(tf => tf.featureId));
+  const tierFeatureIds = new Set(tierFeatures.map((tf) => tf.featureId));
 
   const handleToggleTierFeature = async (featureId: number) => {
     const newFeatureIds = tierFeatureIds.has(featureId)
-      ? Array.from(tierFeatureIds).filter(id => id !== featureId)
+      ? Array.from(tierFeatureIds).filter((id) => id !== featureId)
       : [...Array.from(tierFeatureIds), featureId];
 
     try {

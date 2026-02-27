@@ -47,7 +47,7 @@ const LeadCapture: React.FC = () => {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <LeadCaptureForm />
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Recent Leads</CardTitle>
@@ -57,21 +57,34 @@ const LeadCapture: React.FC = () => {
               {[
                 { name: 'Sarah Johnson', company: 'TechCorp', score: 85, time: '2 hours ago' },
                 { name: 'Michael Chen', company: 'Global Finance', score: 92, time: '4 hours ago' },
-                { name: 'Emily Rodriguez', company: 'Creative Studios', score: 78, time: '6 hours ago' },
+                {
+                  name: 'Emily Rodriguez',
+                  company: 'Creative Studios',
+                  score: 78,
+                  time: '6 hours ago',
+                },
                 { name: 'David Kim', company: 'NextGen Solutions', score: 88, time: '8 hours ago' },
-                { name: 'Lisa Wang', company: 'Smart Logistics', score: 95, time: '1 day ago' }
+                { name: 'Lisa Wang', company: 'Smart Logistics', score: 95, time: '1 day ago' },
               ].map((lead, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                >
                   <div>
                     <p className="font-medium">{lead.name}</p>
                     <p className="text-sm text-gray-500">{lead.company}</p>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${
-                        lead.score >= 90 ? 'bg-green-500' : 
-                        lead.score >= 80 ? 'bg-yellow-500' : 'bg-gray-400'
-                      }`}></div>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          lead.score >= 90
+                            ? 'bg-green-500'
+                            : lead.score >= 80
+                              ? 'bg-yellow-500'
+                              : 'bg-gray-400'
+                        }`}
+                      ></div>
                       <span className="font-medium">{lead.score}</span>
                     </div>
                     <p className="text-xs text-gray-500">{lead.time}</p>

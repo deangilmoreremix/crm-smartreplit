@@ -1,21 +1,25 @@
 # User Role Migration Guide
 
 ## Overview
+
 Your CRM now has a new 3-tier role system with proper user management. This guide helps you migrate existing users and understand the new system.
 
 ## New Role Structure
 
-### **Super Admin** 
+### **Super Admin**
+
 - **Who**: dean@videoremix.io, victor@videoremix.io, samuel@videoremix.io only
 - **Access**: Full platform access including user management
 - **Auto-Assignment**: Automatically assigned based on email address
 
-### **WL Users** 
+### **WL Users**
+
 - **Who**: All current users (except super admins)
 - **Access**: Complete CRM features + AI tools + advanced features
 - **No Access**: User management and admin dashboard
 
 ### **Regular Users**
+
 - **Who**: New users going forward (default for new invites)
 - **Access**: Core CRM only (Dashboard, Contacts, Pipeline, Calendar, Communication)
 - **Includes**: CSV import capabilities
@@ -23,12 +27,14 @@ Your CRM now has a new 3-tier role system with proper user management. This guid
 ## How to Migrate Your Users
 
 ### **Step 1: Access User Management**
+
 1. Login as a super admin (dean@, victor@, or samuel@)
 2. Navigate to **User Management** page
 3. Click the **"Role Migration"** button
 
 ### **Step 2: Run Migration**
-1. Click **"Run Role Migration"** 
+
+1. Click **"Run Role Migration"**
    - Updates all existing users to correct roles
    - Super admins assigned by email
    - All other existing users become WL Users
@@ -39,7 +45,9 @@ Your CRM now has a new 3-tier role system with proper user management. This guid
    - Updates user metadata for consistency
 
 ### **Step 3: Invite New Users**
+
 When inviting new users:
+
 - **Regular Users**: Default option, core CRM access
 - **WL Users**: Full CRM features, select when needed
 - **Super Admin**: Only assign to trusted administrators
@@ -47,6 +55,7 @@ When inviting new users:
 ## API Changes
 
 ### **User Invite API**
+
 ```javascript
 // Updated invite endpoint validates roles
 POST /api/users/invite
@@ -59,6 +68,7 @@ POST /api/users/invite
 ```
 
 ### **Role Update API**
+
 ```javascript
 // Updated role update with validation
 PATCH /api/users/{userId}/role
@@ -70,6 +80,7 @@ PATCH /api/users/{userId}/role
 ## Email Template Routing
 
 Users now get appropriate email templates based on their role:
+
 - **All users**: SmartCRM branded templates
 - **App context**: Automatically set to 'smartcrm'
 - **Metadata sync**: Ensures consistency between database and auth
@@ -84,16 +95,19 @@ Users now get appropriate email templates based on their role:
 ## Troubleshooting
 
 ### **Migration Issues**
+
 - Check server logs for detailed error messages
 - Ensure Supabase connection is working
 - Verify environment variables are set
 
 ### **Role Access Issues**
+
 - Clear browser cache and re-login
 - Check that migration completed successfully
 - Verify user exists in both database and Supabase Auth
 
 ### **Email Template Issues**
+
 - Run metadata sync again
 - Check Supabase Auth dashboard for user metadata
 - Verify webhook configuration
@@ -106,13 +120,14 @@ If you prefer running migrations directly:
 # Run role migration
 npm run tsx server/migrate-user-roles.ts
 
-# Sync Supabase metadata  
+# Sync Supabase metadata
 npm run tsx server/update-supabase-users.ts
 ```
 
 ## Support
 
 For issues with migration:
+
 1. Check the Role Migration panel for detailed status
 2. Review server logs in the workflow console
 3. Contact support with specific error messages

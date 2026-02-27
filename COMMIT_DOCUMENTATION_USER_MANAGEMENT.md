@@ -10,18 +10,18 @@ Implemented comprehensive Supabase user management with email/password authentic
 
 ### New Files
 
-| File | Description |
-|------|-------------|
-| `client/src/services/authService.ts` | Client-side authentication service with all auth methods |
-| `client/src/components/ui/AuthForm.tsx` | Reusable authentication form component |
-| `SUPABASE_USER_MANAGEMENT.md` | Complete documentation for auth features |
-| `supabase/functions/invite-user/index.js` | Edge Function for user invitations |
-| `server/routes/auth.ts` | Server-side auth routes for admin operations |
+| File                                      | Description                                              |
+| ----------------------------------------- | -------------------------------------------------------- |
+| `client/src/services/authService.ts`      | Client-side authentication service with all auth methods |
+| `client/src/components/ui/AuthForm.tsx`   | Reusable authentication form component                   |
+| `SUPABASE_USER_MANAGEMENT.md`             | Complete documentation for auth features                 |
+| `supabase/functions/invite-user/index.js` | Edge Function for user invitations                       |
+| `server/routes/auth.ts`                   | Server-side auth routes for admin operations             |
 
 ### Modified Files
 
-| File | Changes |
-|------|---------|
+| File                              | Changes                    |
+| --------------------------------- | -------------------------- |
 | `client/src/pages/SignInPage.tsx` | Updated to use authService |
 | `client/src/pages/SignUpPage.tsx` | Updated to use authService |
 
@@ -40,18 +40,18 @@ Implemented comprehensive Supabase user management with email/password authentic
 
 ```typescript
 // Sign up
-signUpWithEmail(email, password, options)
+signUpWithEmail(email, password, options);
 
 // Sign in
-signInWithEmail(email, password)
+signInWithEmail(email, password);
 
 // Password recovery
-resetPasswordForEmail(email)
+resetPasswordForEmail(email);
 
 // Update user
-updateUser({ email, password, data })
-getCurrentUser()
-signOut()
+updateUser({ email, password, data });
+getCurrentUser();
+signOut();
 ```
 
 ## Usage
@@ -61,10 +61,7 @@ signOut()
 ```tsx
 import { AuthForm } from '../components/ui/AuthForm';
 
-<AuthForm 
-  onSuccess={(user) => navigate('/dashboard')}
-  redirectAfterLogin="/dashboard"
-/>
+<AuthForm onSuccess={(user) => navigate('/dashboard')} redirectAfterLogin="/dashboard" />;
 ```
 
 ### Using the Auth Service Directly

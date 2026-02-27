@@ -2,9 +2,9 @@ import { enhancedGeminiService } from './enhancedGeminiService';
 import { openAIService } from './openAIService';
 
 // Feature types for orchestration
-export type AIFeature = 
+export type AIFeature =
   | 'email_generation'
-  | 'pipeline_analysis' 
+  | 'pipeline_analysis'
   | 'deal_insights'
   | 'meeting_agenda'
   | 'contact_scoring'
@@ -35,12 +35,15 @@ interface ServiceResponse {
 
 class AIOrchestratorService {
   // Track usage statistics for smart routing
-  private usageStats: Record<string, {
-    callCount: number;
-    successCount: number;
-    avgResponseTime: number;
-    avgCost: number;
-  }> = {};
+  private usageStats: Record<
+    string,
+    {
+      callCount: number;
+      successCount: number;
+      avgResponseTime: number;
+      avgCost: number;
+    }
+  > = {};
 
   constructor() {
     this.initializeStats();
@@ -48,17 +51,21 @@ class AIOrchestratorService {
 
   private initializeStats() {
     const models = [
-      'gemma-2-2b-it', 'gemma-2-9b-it', 'gemma-2-27b-it',
-      'gemini-2.5-flash', 'gemini-2.5-flash-8b',
-      'gpt-4o-mini', 'gpt-3.5-turbo'
+      'gemma-2-2b-it',
+      'gemma-2-9b-it',
+      'gemma-2-27b-it',
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-8b',
+      'gpt-4o-mini',
+      'gpt-3.5-turbo',
     ];
 
-    models.forEach(model => {
+    models.forEach((model) => {
       this.usageStats[model] = {
         callCount: 0,
         successCount: 0,
         avgResponseTime: 0,
-        avgCost: 0
+        avgCost: 0,
       };
     });
   }
@@ -69,13 +76,13 @@ class AIOrchestratorService {
   private stripMarkdownCodeBlocks(content: string): string {
     // Remove markdown code blocks (```json...``` or ```...```)
     let cleaned = content.trim();
-    
+
     // Remove opening code block markers
     cleaned = cleaned.replace(/^```(?:json|javascript|js)?\s*/i, '');
-    
+
     // Remove closing code block markers
     cleaned = cleaned.replace(/\s*```\s*$/i, '');
-    
+
     // Remove any remaining leading/trailing whitespace
     return cleaned.trim();
   }
@@ -86,17 +93,17 @@ class AIOrchestratorService {
   private parseJsonSafely(content: string): any {
     // First strip any markdown code blocks
     const cleaned = this.stripMarkdownCodeBlocks(content);
-    
+
     try {
       return JSON.parse(cleaned);
     } catch (error) {
       console.warn('Failed to parse JSON, attempting additional cleanup:', error);
-      
+
       // Additional cleanup attempt - sometimes AI adds explanatory text before/after the JSON
       try {
         const jsonStart = cleaned.indexOf('{');
         const jsonEnd = cleaned.lastIndexOf('}') + 1;
-        
+
         if (jsonStart >= 0 && jsonEnd > jsonStart) {
           const jsonPart = cleaned.substring(jsonStart, jsonEnd);
           return JSON.parse(jsonPart);
@@ -104,7 +111,7 @@ class AIOrchestratorService {
       } catch (secondError) {
         console.error('Failed additional JSON parsing attempt:', secondError);
       }
-      
+
       throw new Error('Failed to parse response as JSON');
     }
   }
@@ -113,24 +120,26 @@ class AIOrchestratorService {
    * Validate and clean customer ID for UUID compatibility
    */
   private validateCustomerId(customerId?: string): string | undefined {
-    if (!customerId || 
-        customerId === 'demo-customer-id' || 
-        customerId.includes('demo') || 
-        customerId.includes('placeholder') ||
-        customerId === 'test-customer' ||
-        customerId.startsWith('demo-') ||
-        customerId.startsWith('test-') ||
-        customerId.length < 10) {
+    if (
+      !customerId ||
+      customerId === 'demo-customer-id' ||
+      customerId.includes('demo') ||
+      customerId.includes('placeholder') ||
+      customerId === 'test-customer' ||
+      customerId.startsWith('demo-') ||
+      customerId.startsWith('test-') ||
+      customerId.length < 10
+    ) {
       return undefined;
     }
-    
+
     // Check if it's a valid UUID format (basic validation)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(customerId)) {
       console.debug(`Invalid customer ID format: ${customerId}, treating as null`);
       return undefined;
     }
-    
+
     return customerId;
   }
 
@@ -162,15 +171,23 @@ class AIOrchestratorService {
 
     // Get model recommendations based on feature type
     const modelType =
-      feature === 'email_generation' ? 'email_generation' :
-      feature === 'pipeline_analysis' ? 'business_analysis' :
-      feature === 'deal_insights' ? 'business_analysis' :
-      feature === 'meeting_agenda' ? 'content_creation' :
-      feature === 'contact_scoring' ? 'contact_scoring' :
-      feature === 'content_creation' ? 'content_creation' :
-      feature === 'quick_response' ? 'categorization' :
-      feature === 'lead_qualification' ? 'lead_qualification' :
-      'categorization';
+      feature === 'email_generation'
+        ? 'email_generation'
+        : feature === 'pipeline_analysis'
+          ? 'business_analysis'
+          : feature === 'deal_insights'
+            ? 'business_analysis'
+            : feature === 'meeting_agenda'
+              ? 'content_creation'
+              : feature === 'contact_scoring'
+                ? 'contact_scoring'
+                : feature === 'content_creation'
+                  ? 'content_creation'
+                  : feature === 'quick_response'
+                    ? 'categorization'
+                    : feature === 'lead_qualification'
+                      ? 'lead_qualification'
+                      : 'categorization';
 
     // Check server-side availability to determine which models to use
     try {
@@ -208,7 +225,7 @@ class AIOrchestratorService {
         callCount: 0,
         successCount: 0,
         avgResponseTime: 0,
-        avgCost: 0
+        avgCost: 0,
       };
     }
 
@@ -217,7 +234,8 @@ class AIOrchestratorService {
     if (success) stats.successCount++;
 
     // Update averages
-    stats.avgResponseTime = (stats.avgResponseTime * (stats.callCount - 1) + responseTime) / stats.callCount;
+    stats.avgResponseTime =
+      (stats.avgResponseTime * (stats.callCount - 1) + responseTime) / stats.callCount;
     stats.avgCost = (stats.avgCost * (stats.callCount - 1) + cost) / stats.callCount;
   }
 
@@ -252,26 +270,35 @@ class AIOrchestratorService {
       return {
         content: {
           subject: `Following up: ${context.purpose}`,
-          body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI generation unavailable - please configure API keys]\n\nBest regards`
+          body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI generation unavailable - please configure API keys]\n\nBest regards`,
         },
-        model: "none",
-        provider: "none",
+        model: 'none',
+        provider: 'none',
         responseTime: 0,
         success: false,
-        error: "No AI provider configured. Please check your API keys."
+        error: 'No AI provider configured. Please check your API keys.',
       };
     }
-    
+
     const modelId = await this.getOptimalModel('email_generation', taskContext);
     const service = this.getServiceForModel(modelId);
     const startTime = Date.now();
 
     try {
-      const email = await service.generateEmail(context, this.validateCustomerId(taskContext.customerId), modelId);
+      const email = await service.generateEmail(
+        context,
+        this.validateCustomerId(taskContext.customerId),
+        modelId
+      );
       const responseTime = Date.now() - startTime;
 
       // Estimate cost
-      const tokensUsed = (context.purpose.length + (context.context?.length || 0) + email.subject.length + email.body.length) / 4;
+      const tokensUsed =
+        (context.purpose.length +
+          (context.context?.length || 0) +
+          email.subject.length +
+          email.body.length) /
+        4;
       const cost = this.estimateCost(modelId, tokensUsed);
 
       this.updateStats(modelId, responseTime, cost, true);
@@ -283,19 +310,19 @@ class AIOrchestratorService {
         responseTime,
         cost,
         tokensUsed,
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         content: {
           subject: `Following up: ${context.purpose}`,
-          body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI generation currently unavailable - please try again later]\n\nBest regards`
+          body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI generation currently unavailable - please try again later]\n\nBest regards`,
         },
         model: modelId,
         provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -312,19 +339,19 @@ class AIOrchestratorService {
       return {
         content: {
           healthScore: 0,
-          keyInsights: ["AI analysis unavailable - please configure API keys"],
-          bottlenecks: ["API keys not configured"],
-          opportunities: ["Configure API keys to enable AI analysis"],
-          forecastAccuracy: 0
+          keyInsights: ['AI analysis unavailable - please configure API keys'],
+          bottlenecks: ['API keys not configured'],
+          opportunities: ['Configure API keys to enable AI analysis'],
+          forecastAccuracy: 0,
         },
-        model: "none",
-        provider: "none",
+        model: 'none',
+        provider: 'none',
         responseTime: 0,
         success: false,
-        error: "No AI provider configured. Please check your API keys."
+        error: 'No AI provider configured. Please check your API keys.',
       };
     }
-    
+
     const modelId = await this.getOptimalModel('pipeline_analysis', taskContext);
     const startTime = Date.now();
 
@@ -332,14 +359,14 @@ class AIOrchestratorService {
       let result;
       if (this.isGoogleModel(modelId)) {
         result = await enhancedGeminiService.generateInsights(
-          pipelineData, 
-          this.validateCustomerId(taskContext.customerId), 
+          pipelineData,
+          this.validateCustomerId(taskContext.customerId),
           modelId
         );
       } else {
         result = await openAIService.analyzePipelineHealth(
-          pipelineData, 
-          this.validateCustomerId(taskContext.customerId), 
+          pipelineData,
+          this.validateCustomerId(taskContext.customerId),
           modelId
         );
       }
@@ -360,22 +387,22 @@ class AIOrchestratorService {
         responseTime,
         cost,
         tokensUsed,
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         content: {
           healthScore: 0,
-          keyInsights: ["Unable to analyze pipeline health. Please try again later."],
-          bottlenecks: ["Analysis unavailable"],
-          opportunities: ["Analysis unavailable"],
-          forecastAccuracy: 0
+          keyInsights: ['Unable to analyze pipeline health. Please try again later.'],
+          bottlenecks: ['Analysis unavailable'],
+          opportunities: ['Analysis unavailable'],
+          forecastAccuracy: 0,
         },
         model: modelId,
         provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -401,34 +428,34 @@ class AIOrchestratorService {
           objective: context.purpose,
           agendaItems: [
             {
-              topic: "Introduction",
+              topic: 'Introduction',
               duration: 5,
-              owner: "All",
-              description: "Welcome and meeting objectives"
+              owner: 'All',
+              description: 'Welcome and meeting objectives',
             },
             {
-              topic: "Main Discussion",
+              topic: 'Main Discussion',
               duration: Math.max(context.duration - 10, 10),
-              owner: "All",
-              description: context.purpose
+              owner: 'All',
+              description: context.purpose,
             },
             {
-              topic: "Next Steps",
+              topic: 'Next Steps',
               duration: 5,
-              owner: "All",
-              description: "Action items and follow-up tasks"
-            }
+              owner: 'All',
+              description: 'Action items and follow-up tasks',
+            },
           ],
-          notes: "AI generation unavailable - please configure API keys"
+          notes: 'AI generation unavailable - please configure API keys',
         },
-        model: "none",
-        provider: "none",
+        model: 'none',
+        provider: 'none',
         responseTime: 0,
         success: false,
-        error: "No AI provider configured. Please check your API keys."
+        error: 'No AI provider configured. Please check your API keys.',
       };
     }
-    
+
     const modelId = await this.getOptimalModel('meeting_agenda', taskContext);
     const startTime = Date.now();
 
@@ -461,27 +488,31 @@ class AIOrchestratorService {
             "notes": "string"
           }
         `;
-        
+
         const geminiResponse = await enhancedGeminiService.generateContent({
           prompt,
           model: modelId,
           customerId: this.validateCustomerId(taskContext.customerId),
           featureUsed: 'meeting-agenda',
-          systemInstruction: "You are an expert meeting facilitator. Create focused, efficient meeting agendas. Return only valid JSON without markdown formatting."
+          systemInstruction:
+            'You are an expert meeting facilitator. Create focused, efficient meeting agendas. Return only valid JSON without markdown formatting.',
         });
-        
+
         result = this.parseJsonSafely(geminiResponse.content);
       } else {
         result = await openAIService.generateMeetingAgenda(
-          context, 
-          this.validateCustomerId(taskContext.customerId), 
+          context,
+          this.validateCustomerId(taskContext.customerId),
           modelId
         );
       }
 
       const responseTime = Date.now() - startTime;
-      const inputSize = context.meetingTitle.length + JSON.stringify(context.attendees).length + 
-        context.purpose.length + (context.previousNotes?.length || 0);
+      const inputSize =
+        context.meetingTitle.length +
+        JSON.stringify(context.attendees).length +
+        context.purpose.length +
+        (context.previousNotes?.length || 0);
       const outputSize = JSON.stringify(result).length;
       const tokensUsed = Math.ceil((inputSize + outputSize) / 4);
       const cost = this.estimateCost(modelId, tokensUsed);
@@ -495,11 +526,11 @@ class AIOrchestratorService {
         responseTime,
         cost,
         tokensUsed,
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error(`Error generating meeting agenda with ${modelId}:`, error);
-      
+
       // Fallback to basic structure
       return {
         content: {
@@ -507,31 +538,31 @@ class AIOrchestratorService {
           objective: context.purpose,
           agendaItems: [
             {
-              topic: "Introduction",
+              topic: 'Introduction',
               duration: 5,
-              owner: context.attendees[0] || "Meeting organizer",
-              description: "Welcome and meeting objectives"
+              owner: context.attendees[0] || 'Meeting organizer',
+              description: 'Welcome and meeting objectives',
             },
             {
-              topic: "Main Discussion",
+              topic: 'Main Discussion',
               duration: Math.max(context.duration - 10, 10),
-              owner: "All",
-              description: context.purpose
+              owner: 'All',
+              description: context.purpose,
             },
             {
-              topic: "Next Steps",
+              topic: 'Next Steps',
               duration: 5,
-              owner: "All",
-              description: "Action items and follow-up tasks"
-            }
+              owner: 'All',
+              description: 'Action items and follow-up tasks',
+            },
           ],
-          notes: "Generated agenda is a fallback due to service error."
+          notes: 'Generated agenda is a fallback due to service error.',
         },
         model: modelId,
         provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -539,38 +570,36 @@ class AIOrchestratorService {
   /**
    * Generate deal insights with the optimal model
    */
-  async analyzeDeal(
-    dealData: any,
-    taskContext: TaskContext = {}
-  ): Promise<ServiceResponse> {
+  async analyzeDeal(dealData: any, taskContext: TaskContext = {}): Promise<ServiceResponse> {
     // Check if any provider is available
     if (!(await this.hasAvailableProvider())) {
       return {
         content: {
-          riskLevel: "unknown",
-          keyInsights: ["AI analysis unavailable - please configure API keys"],
-          recommendedActions: ["Configure API keys to enable AI analysis"],
+          riskLevel: 'unknown',
+          keyInsights: ['AI analysis unavailable - please configure API keys'],
+          recommendedActions: ['Configure API keys to enable AI analysis'],
           winProbability: 0,
-          potentialBlockers: ["API keys not configured"]
+          potentialBlockers: ['API keys not configured'],
         },
-        model: "none",
-        provider: "none",
+        model: 'none',
+        provider: 'none',
         responseTime: 0,
         success: false,
-        error: "No AI provider configured. Please check your API keys."
+        error: 'No AI provider configured. Please check your API keys.',
       };
     }
-    
+
     // For complex analytical tasks like deal analysis, prefer more capable models
-    const useGPT4 = dealData.deals && dealData.deals.some((deal: any) => deal.value > 100000) || 
-                   taskContext.complexity === 'high';
+    const useGPT4 =
+      (dealData.deals && dealData.deals.some((deal: any) => deal.value > 100000)) ||
+      taskContext.complexity === 'high';
     const defaultModelId = useGPT4 ? 'gpt-4o-mini' : 'gemini-2.5-flash';
-    
+
     const modelId = await this.getOptimalModel('deal_insights', {
       ...taskContext,
-      modelId: taskContext.modelId || defaultModelId
+      modelId: taskContext.modelId || defaultModelId,
     });
-    
+
     const startTime = Date.now();
 
     try {
@@ -591,20 +620,21 @@ class AIOrchestratorService {
             "potentialBlockers": ["string"]
           }
         `;
-        
+
         const geminiResponse = await enhancedGeminiService.generateContent({
           prompt,
           model: modelId,
           customerId: this.validateCustomerId(taskContext.customerId),
           featureUsed: 'deal-insights',
-          systemInstruction: "You are a sales analytics expert specializing in deal risk assessment. Return only plain JSON without markdown code blocks."
+          systemInstruction:
+            'You are a sales analytics expert specializing in deal risk assessment. Return only plain JSON without markdown code blocks.',
         });
-        
+
         result = this.parseJsonSafely(geminiResponse.content);
       } else {
         result = await openAIService.generateDealInsights(
-          dealData, 
-          this.validateCustomerId(taskContext.customerId), 
+          dealData,
+          this.validateCustomerId(taskContext.customerId),
           modelId
         );
       }
@@ -624,24 +654,24 @@ class AIOrchestratorService {
         responseTime,
         cost,
         tokensUsed,
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error(`Error analyzing deal with ${modelId}:`, error);
-      
+
       return {
         content: {
-          riskLevel: "unknown",
-          keyInsights: ["Unable to analyze deal. Please try again later."],
-          recommendedActions: ["Manual review required"],
+          riskLevel: 'unknown',
+          keyInsights: ['Unable to analyze deal. Please try again later.'],
+          recommendedActions: ['Manual review required'],
           winProbability: 0,
-          potentialBlockers: ["AI analysis service unavailable"]
+          potentialBlockers: ['AI analysis service unavailable'],
         },
         model: modelId,
         provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -659,23 +689,23 @@ class AIOrchestratorService {
         content: {
           highValueContacts: [],
           needFollowUp: [],
-          patterns: ["AI analysis unavailable - please configure API keys"],
-          scoringRecommendations: ["Configure API keys to enable AI analysis"]
+          patterns: ['AI analysis unavailable - please configure API keys'],
+          scoringRecommendations: ['Configure API keys to enable AI analysis'],
         },
-        model: "none",
-        provider: "none",
+        model: 'none',
+        provider: 'none',
         responseTime: 0,
         success: false,
-        error: "No AI provider configured. Please check your API keys."
+        error: 'No AI provider configured. Please check your API keys.',
       };
     }
-    
+
     // For contact analysis, prefer models with good pattern recognition
     const modelId = await this.getOptimalModel('contact_scoring', {
       ...taskContext,
-      modelId: taskContext.modelId || 'gemini-2.5-flash'
+      modelId: taskContext.modelId || 'gemini-2.5-flash',
     });
-    
+
     const startTime = Date.now();
     const prompt = `
       Analyze these contacts and provide insights:
@@ -705,21 +735,26 @@ class AIOrchestratorService {
           model: modelId,
           customerId: this.validateCustomerId(taskContext.customerId),
           featureUsed: 'contact-insights',
-          systemInstruction: "You are a CRM analytics expert specialized in contact scoring and analysis. Return only plain JSON without markdown code blocks."
+          systemInstruction:
+            'You are a CRM analytics expert specialized in contact scoring and analysis. Return only plain JSON without markdown code blocks.',
         });
-        
+
         result = this.parseJsonSafely(geminiResponse.content);
       } else {
         const openAIResponse = await openAIService.generateContent({
           messages: [
-            { role: 'system', content: "You are a CRM analytics expert specialized in contact scoring and analysis. Return only plain JSON without markdown code blocks." },
-            { role: 'user', content: prompt }
+            {
+              role: 'system',
+              content:
+                'You are a CRM analytics expert specialized in contact scoring and analysis. Return only plain JSON without markdown code blocks.',
+            },
+            { role: 'user', content: prompt },
           ],
           model: modelId,
           customerId: this.validateCustomerId(taskContext.customerId),
-          featureUsed: 'contact-insights'
+          featureUsed: 'contact-insights',
         });
-        
+
         result = this.parseJsonSafely(openAIResponse.content);
       }
 
@@ -738,23 +773,23 @@ class AIOrchestratorService {
         responseTime,
         cost,
         tokensUsed,
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error(`Error generating contact insights with ${modelId}:`, error);
-      
+
       return {
         content: {
           highValueContacts: [],
           needFollowUp: [],
-          patterns: ["Unable to analyze contacts at this time."],
-          scoringRecommendations: ["Manual review recommended"]
+          patterns: ['Unable to analyze contacts at this time.'],
+          scoringRecommendations: ['Manual review recommended'],
         },
         model: modelId,
         provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -765,7 +800,7 @@ class AIOrchestratorService {
   private estimateCost(modelId: string, tokens: number): number {
     const pricing: Record<string, number> = {
       'gemma-2-2b-it': 0.00000035, // per token
-      'gemma-2-9b-it': 0.00000050, // per token
+      'gemma-2-9b-it': 0.0000005, // per token
       'gemma-2-27b-it': 0.00000125, // per token
       'gemini-2.5-flash': 0.00000075, // per token
       'gemini-2.5-flash-8b': 0.00000035, // per token
@@ -783,7 +818,10 @@ class AIOrchestratorService {
     return {
       modelStats: this.usageStats,
       totalCalls: Object.values(this.usageStats).reduce((sum, stat) => sum + stat.callCount, 0),
-      totalSuccesses: Object.values(this.usageStats).reduce((sum, stat) => sum + stat.successCount, 0),
+      totalSuccesses: Object.values(this.usageStats).reduce(
+        (sum, stat) => sum + stat.successCount,
+        0
+      ),
       avgResponseTime: this.calculateAverageResponseTime(),
       avgCost: this.calculateAverageCost(),
     };

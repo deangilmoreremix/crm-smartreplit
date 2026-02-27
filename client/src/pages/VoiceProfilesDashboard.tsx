@@ -5,7 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -42,7 +48,7 @@ import {
   Eye,
   Calendar,
   Filter,
-  Search
+  Search,
 } from 'lucide-react';
 
 interface VoiceProfile {
@@ -109,7 +115,8 @@ export default function VoiceProfilesDashboard() {
     {
       id: '1',
       name: 'Professional Male',
-      description: 'Clear, confident voice perfect for business presentations and corporate communications',
+      description:
+        'Clear, confident voice perfect for business presentations and corporate communications',
       voiceType: 'male',
       language: 'English',
       accent: 'American',
@@ -126,8 +133,11 @@ export default function VoiceProfilesDashboard() {
         naturalness: 0.88,
         emotionalRange: 0.82,
         languageAccuracy: 0.96,
-        recommendations: ['Slightly increase warmth for better engagement', 'Consider adding more dynamic intonation']
-      }
+        recommendations: [
+          'Slightly increase warmth for better engagement',
+          'Consider adding more dynamic intonation',
+        ],
+      },
     },
     {
       id: '2',
@@ -149,8 +159,11 @@ export default function VoiceProfilesDashboard() {
         naturalness: 0.94,
         emotionalRange: 0.89,
         languageAccuracy: 0.93,
-        recommendations: ['Excellent naturalness score', 'Consider adding more authoritative tone for leadership content']
-      }
+        recommendations: [
+          'Excellent naturalness score',
+          'Consider adding more authoritative tone for leadership content',
+        ],
+      },
     },
     {
       id: '3',
@@ -172,9 +185,12 @@ export default function VoiceProfilesDashboard() {
         naturalness: 0.76,
         emotionalRange: 0.91,
         languageAccuracy: 0.88,
-        recommendations: ['Training in progress - naturalness improving', 'Focus on clarity for technical terms']
-      }
-    }
+        recommendations: [
+          'Training in progress - naturalness improving',
+          'Focus on clarity for technical terms',
+        ],
+      },
+    },
   ];
 
   const mockStats: VoiceStats = {
@@ -185,7 +201,7 @@ export default function VoiceProfilesDashboard() {
     mostUsedProfile: 'Professional Male',
     monthlyGrowth: 0.23,
     aiOptimizationScore: 0.91,
-    languageSupport: 15
+    languageSupport: 15,
   };
 
   const { data: profiles = mockProfiles, isLoading: profilesLoading } = useQuery<VoiceProfile[]>({
@@ -205,7 +221,6 @@ export default function VoiceProfilesDashboard() {
         `Voice Profile: ${profile.name}, Type: ${profile.voiceType}, Language: ${profile.language}, Personality: ${profile.personality}, Use Case: ${profile.useCase}`,
         'voice-optimization'
       );
-      console.log('Voice profile optimization:', result);
     } catch (error) {
       console.error('Failed to optimize voice profile:', error);
     } finally {
@@ -215,19 +230,27 @@ export default function VoiceProfilesDashboard() {
 
   const getVoiceTypeIcon = (type: string) => {
     switch (type) {
-      case 'male': return <Users className="h-5 w-5" />;
-      case 'female': return <Users className="h-5 w-5" />;
-      case 'neutral': return <Users className="h-5 w-5" />;
-      default: return <Users className="h-5 w-5" />;
+      case 'male':
+        return <Users className="h-5 w-5" />;
+      case 'female':
+        return <Users className="h-5 w-5" />;
+      case 'neutral':
+        return <Users className="h-5 w-5" />;
+      default:
+        return <Users className="h-5 w-5" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'training': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'inactive': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'active':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'training':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -248,7 +271,7 @@ export default function VoiceProfilesDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Voice Optimization'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = (
@@ -262,19 +285,27 @@ export default function VoiceProfilesDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Active Profiles</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{stats.totalUsage.toLocaleString()}</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {stats.totalUsage.toLocaleString()}
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Usage</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(stats.averageQuality * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(stats.averageQuality * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Quality</div>
       </div>
     </div>
   );
 
-  const filteredProfiles = profiles.filter(profile => {
-    if (searchQuery && !profile.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !profile.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const filteredProfiles = profiles.filter((profile) => {
+    if (
+      searchQuery &&
+      !profile.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !profile.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
     if (filterType !== 'all' && profile.voiceType !== filterType) return false;
     if (filterLanguage !== 'all' && profile.language !== filterLanguage) return false;
     if (filterStatus !== 'all' && profile.status !== filterStatus) return false;
@@ -352,25 +383,27 @@ export default function VoiceProfilesDashboard() {
 
           {/* Voice Profiles Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProfiles.map(profile => (
+            {filteredProfiles.map((profile) => (
               <GlassCard
                 key={profile.id}
                 className="p-6 cursor-pointer hover:border-blue-300"
                 onClick={() => setSelectedProfile(profile)}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-3 rounded-full ${
-                    profile.voiceType === 'male' ? 'bg-blue-100 dark:bg-blue-900/20' :
-                    profile.voiceType === 'female' ? 'bg-pink-100 dark:bg-pink-900/20' :
-                    'bg-purple-100 dark:bg-purple-900/20'
-                  }`}>
+                  <div
+                    className={`p-3 rounded-full ${
+                      profile.voiceType === 'male'
+                        ? 'bg-blue-100 dark:bg-blue-900/20'
+                        : profile.voiceType === 'female'
+                          ? 'bg-pink-100 dark:bg-pink-900/20'
+                          : 'bg-purple-100 dark:bg-purple-900/20'
+                    }`}
+                  >
                     {getVoiceTypeIcon(profile.voiceType)}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold">{profile.name}</h3>
-                    <Badge className={getStatusColor(profile.status)}>
-                      {profile.status}
-                    </Badge>
+                    <Badge className={getStatusColor(profile.status)}>{profile.status}</Badge>
                   </div>
                 </div>
 
@@ -549,22 +582,38 @@ export default function VoiceProfilesDashboard() {
               <div className="px-0 pb-0">
                 <div className="space-y-6">
                   <div className="text-center">
-                    <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center ${
-                      isRecording ? 'bg-red-100 dark:bg-red-900/20 animate-pulse' : 'bg-gray-100 dark:bg-gray-700'
-                    }`}>
-                      <Mic className={`h-8 w-8 ${isRecording ? 'text-red-600' : 'text-gray-600'}`} />
+                    <div
+                      className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center ${
+                        isRecording
+                          ? 'bg-red-100 dark:bg-red-900/20 animate-pulse'
+                          : 'bg-gray-100 dark:bg-gray-700'
+                      }`}
+                    >
+                      <Mic
+                        className={`h-8 w-8 ${isRecording ? 'text-red-600' : 'text-gray-600'}`}
+                      />
                     </div>
                     <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                      {isRecording ? 'Recording in progress...' : 'Click record to start capturing voice samples'}
+                      {isRecording
+                        ? 'Recording in progress...'
+                        : 'Click record to start capturing voice samples'}
                     </p>
                   </div>
 
                   <div className="flex justify-center gap-4">
                     <Button
                       onClick={() => setIsRecording(!isRecording)}
-                      className={isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}
+                      className={
+                        isRecording
+                          ? 'bg-red-600 hover:bg-red-700'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      }
                     >
-                      {isRecording ? <Square className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
+                      {isRecording ? (
+                        <Square className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Mic className="h-4 w-4 mr-2" />
+                      )}
                       {isRecording ? 'Stop Recording' : 'Start Recording'}
                     </Button>
                     <Button variant="outline" disabled={!isRecording && !isPlaying}>
@@ -646,13 +695,17 @@ export default function VoiceProfilesDashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth</span>
-                    <span className="font-semibold text-green-600">+{Math.round(stats.monthlyGrowth * 100)}%</span>
+                    <span className="font-semibold text-green-600">
+                      +{Math.round(stats.monthlyGrowth * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">AI Optimization Score</span>
-                    <span className="font-semibold">{Math.round(stats.aiOptimizationScore * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(stats.aiOptimizationScore * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.aiOptimizationScore * 100} className="h-2" />
 
@@ -863,19 +916,27 @@ export default function VoiceProfilesDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Name</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Name
+                  </Label>
                   <div className="font-medium">{selectedProfile.name}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Voice Type</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Voice Type
+                  </Label>
                   <div className="font-medium capitalize">{selectedProfile.voiceType}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Language</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Language
+                  </Label>
                   <div className="font-medium">{selectedProfile.language}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedProfile.status)}>
                     {selectedProfile.status}
                   </Badge>
@@ -883,17 +944,25 @@ export default function VoiceProfilesDashboard() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Description</Label>
-                <div className="text-sm text-gray-700 dark:text-gray-300">{selectedProfile.description}</div>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Description
+                </Label>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {selectedProfile.description}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Personality</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Personality
+                  </Label>
                   <div className="font-medium">{selectedProfile.personality}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Use Case</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Use Case
+                  </Label>
                   <div className="font-medium">{selectedProfile.useCase}</div>
                 </div>
               </div>
@@ -904,7 +973,9 @@ export default function VoiceProfilesDashboard() {
                   <div className="text-xs text-gray-600 dark:text-gray-400">Usage Count</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold">{Math.round(selectedProfile.quality * 100)}%</div>
+                  <div className="text-lg font-semibold">
+                    {Math.round(selectedProfile.quality * 100)}%
+                  </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400">Quality</div>
                 </div>
                 <div className="text-center">
@@ -927,31 +998,40 @@ export default function VoiceProfilesDashboard() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <div className="text-sm text-blue-800 dark:text-blue-200">
-                          <strong>Voice Clarity:</strong> {Math.round(selectedProfile.gpt5Optimization.voiceClarity * 100)}%
+                          <strong>Voice Clarity:</strong>{' '}
+                          {Math.round(selectedProfile.gpt5Optimization.voiceClarity * 100)}%
                         </div>
                       </div>
                       <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <div className="text-sm text-green-800 dark:text-green-200">
-                          <strong>Naturalness:</strong> {Math.round(selectedProfile.gpt5Optimization.naturalness * 100)}%
+                          <strong>Naturalness:</strong>{' '}
+                          {Math.round(selectedProfile.gpt5Optimization.naturalness * 100)}%
                         </div>
                       </div>
                       <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                         <div className="text-sm text-purple-800 dark:text-purple-200">
-                          <strong>Emotional Range:</strong> {Math.round(selectedProfile.gpt5Optimization.emotionalRange * 100)}%
+                          <strong>Emotional Range:</strong>{' '}
+                          {Math.round(selectedProfile.gpt5Optimization.emotionalRange * 100)}%
                         </div>
                       </div>
                       <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                         <div className="text-sm text-orange-800 dark:text-orange-200">
-                          <strong>Language Accuracy:</strong> {Math.round(selectedProfile.gpt5Optimization.languageAccuracy * 100)}%
+                          <strong>Language Accuracy:</strong>{' '}
+                          {Math.round(selectedProfile.gpt5Optimization.languageAccuracy * 100)}%
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">AI Recommendations:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        AI Recommendations:
+                      </div>
                       <ul className="space-y-1">
                         {selectedProfile.gpt5Optimization.recommendations.map((rec, index) => (
-                          <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                          <li
+                            key={index}
+                            className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2"
+                          >
                             <span className="text-green-500 mt-1">•</span>
                             {rec}
                           </li>

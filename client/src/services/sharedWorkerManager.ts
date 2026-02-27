@@ -309,7 +309,7 @@ class SharedWorkerManager {
         type: 'WORKER_CREATION_FAILED',
         source: 'sharedWorkerManager',
         data: { workerName: name, error: error instanceof Error ? error.message : String(error) },
-        priority: 'high'
+        priority: 'high',
       });
     }
   }
@@ -328,7 +328,7 @@ class SharedWorkerManager {
         type: 'WORKER_STATUS_UPDATE',
         source: 'sharedWorkerManager',
         data: { workerName, status: message.status },
-        priority: 'low'
+        priority: 'low',
       });
     }
   }
@@ -338,7 +338,7 @@ class SharedWorkerManager {
       type: 'WORKER_ERROR',
       source: 'sharedWorkerManager',
       data: { workerName, error: error instanceof Error ? error.message : String(error) },
-      priority: 'high'
+      priority: 'high',
     });
   }
 
@@ -353,7 +353,7 @@ class SharedWorkerManager {
         type: 'WORKER_TASK_COMPLETED',
         source: 'sharedWorkerManager',
         data: { taskId, executionTime },
-        priority: 'low'
+        priority: 'low',
       });
 
       this.processQueue();
@@ -365,13 +365,17 @@ class SharedWorkerManager {
     if (callback) {
       this.processingTasks.delete(taskId);
       this.taskCallbacks.delete(taskId);
-      callback.reject({ taskId, success: false, error: error instanceof Error ? error.message : String(error) });
+      callback.reject({
+        taskId,
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       unifiedEventSystem.emit({
         type: 'WORKER_TASK_FAILED',
         source: 'sharedWorkerManager',
         data: { taskId, error: error instanceof Error ? error.message : String(error) },
-        priority: 'medium'
+        priority: 'medium',
       });
 
       this.processQueue();
@@ -394,7 +398,6 @@ class SharedWorkerManager {
       this.executeTaskInternal(task);
     }
   }
-
 
   private getWorkerForTask(taskType: string): string {
     if (taskType.startsWith('AI_') || taskType.includes('EMBEDDING')) {
@@ -424,7 +427,7 @@ class SharedWorkerManager {
         type: 'EXECUTE_TASK',
         taskId: task.id,
         taskType: task.type,
-        data: task.data
+        data: task.data,
       });
     } catch (error) {
       console.error('Failed to send task to worker:', error);
@@ -437,7 +440,11 @@ class SharedWorkerManager {
   }
 
   // Public API
-  public async executeTask(type: string, data: any, priority: 'low' | 'medium' | 'high' = 'medium'): Promise<WorkerResult> {
+  public async executeTask(
+    type: string,
+    data: any,
+    priority: 'low' | 'medium' | 'high' = 'medium'
+  ): Promise<WorkerResult> {
     return new Promise((resolve, reject) => {
       const taskId = this.generateTaskId();
       const task: WorkerTask = { id: taskId, type, data, priority };
@@ -489,7 +496,7 @@ class SharedWorkerManager {
       queueLength: this.taskQueue.length,
       processingTasks: this.processingTasks.size,
       availableWorkers: this.workers.size,
-      workerStatus
+      workerStatus,
     };
   }
 
@@ -502,7 +509,7 @@ class SharedWorkerManager {
   }
 
   terminateAllWorkers(): void {
-    Array.from(this.workers.keys()).forEach(name => {
+    Array.from(this.workers.keys()).forEach((name) => {
       this.terminateWorker(name);
     });
   }
@@ -515,9 +522,12 @@ export const sharedWorkerManager = SharedWorkerManager.getInstance();
 import { useCallback } from 'react';
 
 export function useSharedWorker() {
-  const executeTask = useCallback((type: string, data: any, priority?: 'low' | 'medium' | 'high') => {
-    return sharedWorkerManager.executeTask(type, data, priority);
-  }, []);
+  const executeTask = useCallback(
+    (type: string, data: any, priority?: 'low' | 'medium' | 'high') => {
+      return sharedWorkerManager.executeTask(type, data, priority);
+    },
+    []
+  );
 
   const processContacts = useCallback((contacts: any[]) => {
     return sharedWorkerManager.processContacts(contacts);
@@ -539,6 +549,6 @@ export function useSharedWorker() {
     calculateEmbeddings: sharedWorkerManager.calculateEmbeddings.bind(sharedWorkerManager),
     processBulkData: sharedWorkerManager.processBulkData.bind(sharedWorkerManager),
     generateChart: sharedWorkerManager.generateChart.bind(sharedWorkerManager),
-    getStats: sharedWorkerManager.getStats.bind(sharedWorkerManager)
+    getStats: sharedWorkerManager.getStats.bind(sharedWorkerManager),
   };
 }

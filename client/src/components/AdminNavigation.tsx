@@ -15,15 +15,15 @@ const AdminNavigation: React.FC = () => {
     'dean@smartcrm.vip', // Production super admin
     'samuel@videoremix.io',
     'victor@videoremix.io',
-    'dev@smartcrm.local' // Dev bypass user
+    'dev@smartcrm.local', // Dev bypass user
   ];
 
   // Check if user is admin
-  const isAdmin = user?.email && (
-    adminEmails.includes(user.email.toLowerCase()) || 
-    user.role === 'admin' || 
-    user.role === 'super_admin'
-  );
+  const isAdmin =
+    user?.email &&
+    (adminEmails.includes(user.email.toLowerCase()) ||
+      user.role === 'admin' ||
+      user.role === 'super_admin');
 
   // Don't render if not admin
   if (!isAdmin) {
@@ -36,49 +36,51 @@ const AdminNavigation: React.FC = () => {
       href: '/admin/bulk-import',
       icon: Users,
       description: 'Import multiple users via CSV',
-      testId: 'link-bulk-import'
+      testId: 'link-bulk-import',
     },
     {
       title: 'User Management',
       href: '/admin/users',
       icon: Database,
       description: 'Manage user accounts and permissions',
-      testId: 'link-user-management'
+      testId: 'link-user-management',
     },
     {
       title: 'System Analytics',
       href: '/admin/analytics',
       icon: BarChart3,
       description: 'View system usage and metrics',
-      testId: 'link-analytics'
+      testId: 'link-analytics',
     },
     {
       title: 'Admin Settings',
       href: '/admin/settings',
       icon: Settings,
       description: 'Configure system settings',
-      testId: 'link-settings'
+      testId: 'link-settings',
     },
     {
       title: 'Feature Management',
       href: '/admin/feature-management',
       icon: Shield,
       description: 'Manage feature access and permissions',
-      testId: 'link-feature-management'
+      testId: 'link-feature-management',
     },
     {
       title: 'Demo Recorder',
       href: '/demo-recorder',
       icon: Video,
       description: 'Record and generate GIFs/videos of features',
-      testId: 'link-demo-recorder'
-    }
+      testId: 'link-demo-recorder',
+    },
   ];
 
   const isActivePath = (path: string) => location.pathname === path;
 
   return (
-    <div className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 mb-6`}>
+    <div
+      className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6 mb-6`}
+    >
       <div className="flex items-center space-x-3 mb-6">
         <Shield className="w-6 h-6 text-red-600" />
         <div>
@@ -102,8 +104,8 @@ const AdminNavigation: React.FC = () => {
               to={item.href}
               className={`p-4 rounded-xl border transition-all duration-200 hover:scale-[1.02] ${
                 isActive
-                  ? isDark 
-                    ? 'bg-red-500/20 border-red-400/30 shadow-lg' 
+                  ? isDark
+                    ? 'bg-red-500/20 border-red-400/30 shadow-lg'
                     : 'bg-red-50 border-red-200 shadow-lg'
                   : isDark
                     ? 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -112,22 +114,20 @@ const AdminNavigation: React.FC = () => {
               data-testid={item.testId}
             >
               <div className="flex items-start space-x-3">
-                <Icon className={`w-5 h-5 mt-0.5 ${
-                  isActive 
-                    ? 'text-red-600' 
-                    : isDark ? 'text-gray-400' : 'text-gray-600'
-                }`} />
+                <Icon
+                  className={`w-5 h-5 mt-0.5 ${
+                    isActive ? 'text-red-600' : isDark ? 'text-gray-400' : 'text-gray-600'
+                  }`}
+                />
                 <div>
-                  <h3 className={`font-medium ${
-                    isActive
-                      ? 'text-red-600'
-                      : isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <h3
+                    className={`font-medium ${
+                      isActive ? 'text-red-600' : isDark ? 'text-white' : 'text-gray-900'
+                    }`}
+                  >
                     {item.title}
                   </h3>
-                  <p className={`text-sm ${
-                    isDark ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {item.description}
                   </p>
                 </div>

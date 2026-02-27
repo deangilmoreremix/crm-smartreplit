@@ -28,7 +28,7 @@ const CONFIG = {
   TIMEOUT: 30000,
   RETRIES: 3,
   VERBOSE: process.env.VERBOSE === 'true',
-  SKIP_EXPENSIVE_TESTS: process.env.SKIP_EXPENSIVE_TESTS === 'true'
+  SKIP_EXPENSIVE_TESTS: process.env.SKIP_EXPENSIVE_TESTS === 'true',
 };
 
 // Test Results Tracker
@@ -98,9 +98,9 @@ async function makeRequest(url, options = {}) {
     timeout: CONFIG.TIMEOUT,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers
+      ...options.headers,
     },
-    ...options
+    ...options,
   };
 
   for (let attempt = 1; attempt <= CONFIG.RETRIES; attempt++) {
@@ -115,7 +115,7 @@ async function makeRequest(url, options = {}) {
       // Wait before retry (exponential backoff)
       const delay = Math.pow(2, attempt) * 1000;
       console.log(`Request failed, retrying in ${delay}ms... (${attempt}/${CONFIG.RETRIES})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
@@ -128,7 +128,7 @@ const MockData = {
     email: 'john.smith@techcorp.com',
     company: 'TechCorp Inc',
     title: 'VP of Engineering',
-    phone: '+1-555-0123'
+    phone: '+1-555-0123',
   }),
 
   userMetrics: () => ({
@@ -137,14 +137,14 @@ const MockData = {
     wonDeals: 18,
     lostDeals: 7,
     avgDealSize: 50000,
-    conversionRate: 72
+    conversionRate: 72,
   }),
 
   kpiData: () => ({
     revenue: { current: 125000, target: 150000, growth: 15.2 },
     deals: { current: 25, target: 30, growth: 8.3 },
     conversion: { current: 72, target: 75, growth: 2.1 },
-    pipeline: { current: 850000, target: 1000000, growth: 12.5 }
+    pipeline: { current: 850000, target: 1000000, growth: 12.5 },
   }),
 
   dealData: () => ({
@@ -155,10 +155,10 @@ const MockData = {
     probability: 75,
     expectedCloseDate: '2024-02-15',
     contacts: ['john.smith@techcorp.com'],
-    competitors: ['CompetitorA', 'CompetitorB']
+    competitors: ['CompetitorA', 'CompetitorB'],
   }),
 
-  socialProfiles: () => ([
+  socialProfiles: () => [
     {
       platform: 'LinkedIn',
       username: 'johnsmith',
@@ -167,7 +167,7 @@ const MockData = {
       followers: 1250,
       engagement: 85,
       lastActivity: new Date(),
-      confidence: 95
+      confidence: 95,
     },
     {
       platform: 'Twitter',
@@ -177,9 +177,9 @@ const MockData = {
       followers: 890,
       engagement: 65,
       lastActivity: new Date(Date.now() - 86400000),
-      confidence: 80
-    }
-  ])
+      confidence: 80,
+    },
+  ],
 };
 
 // Test Categories
@@ -228,7 +228,6 @@ class AITestSuite {
 
       // Authentication & Security
       await this.testAuthentication();
-
     } catch (error) {
       console.error('Test suite failed:', error);
       this.results.fail('Test Suite Execution', error);
@@ -251,9 +250,11 @@ class AITestSuite {
         if (typeof data.configured === 'boolean') {
           this.results.pass('OpenAI Status - Basic Response');
         } else {
-          this.results.fail('OpenAI Status - Basic Response',
+          this.results.fail(
+            'OpenAI Status - Basic Response',
             new Error('Invalid response structure'),
-            { expected: 'configured: boolean', actual: typeof data.configured });
+            { expected: 'configured: boolean', actual: typeof data.configured }
+          );
         }
 
         // Check capabilities array if configured
@@ -265,13 +266,13 @@ class AITestSuite {
         if (data.model) {
           this.results.pass('OpenAI Status - Model Info');
         }
-
       } else {
-        this.results.fail('OpenAI Status - HTTP Status',
+        this.results.fail(
+          'OpenAI Status - HTTP Status',
           new Error(`Unexpected status: ${response.status}`),
-          { expected: 200, actual: response.status });
+          { expected: 200, actual: response.status }
+        );
       }
-
     } catch (error) {
       this.results.fail('OpenAI Status - Request Failed', error);
     }
@@ -281,10 +282,10 @@ class AITestSuite {
     console.log('\n🔍 Testing OpenAI Embeddings');
 
     try {
-      const testText = "This is a test document for embedding generation.";
+      const testText = 'This is a test document for embedding generation.';
       const response = await makeRequest(`${this.baseURL}/api/openai/embeddings`, {
         method: 'POST',
-        data: { text: testText }
+        data: { text: testText },
       });
 
       if (response.status === 200) {
@@ -301,15 +302,18 @@ class AITestSuite {
             this.results.pass('Embeddings - Usage Tracking');
           }
         } else {
-          this.results.fail('Embeddings - Response Structure',
+          this.results.fail(
+            'Embeddings - Response Structure',
             new Error('Invalid response format'),
-            { expected: 'success: true, embedding: array', actual: JSON.stringify(data) });
+            { expected: 'success: true, embedding: array', actual: JSON.stringify(data) }
+          );
         }
       } else {
-        this.results.fail('Embeddings - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Embeddings - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Embeddings - API Key Required', 'No API key configured');
@@ -331,10 +335,10 @@ class AITestSuite {
       const response = await makeRequest(`${this.baseURL}/api/openai/images/generate`, {
         method: 'POST',
         data: {
-          prompt: "A professional headshot of a business executive",
-          size: "256x256",
-          quality: "standard"
-        }
+          prompt: 'A professional headshot of a business executive',
+          size: '256x256',
+          quality: 'standard',
+        },
       });
 
       if (response.status === 200) {
@@ -347,14 +351,17 @@ class AITestSuite {
             this.results.pass('Image Generation - Valid Image URL');
           }
         } else {
-          this.results.fail('Image Generation - Response Structure',
-            new Error('Invalid response format'));
+          this.results.fail(
+            'Image Generation - Response Structure',
+            new Error('Invalid response format')
+          );
         }
       } else {
-        this.results.fail('Image Generation - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Image Generation - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Image Generation - API Key Required', 'No API key configured');
@@ -375,8 +382,8 @@ class AITestSuite {
         data: {
           userMetrics,
           timeOfDay: 'morning',
-          recentActivity: ['Closed a $50k deal', 'Added 3 new contacts']
-        }
+          recentActivity: ['Closed a $50k deal', 'Added 3 new contacts'],
+        },
       });
 
       if (response.status === 200) {
@@ -393,14 +400,17 @@ class AITestSuite {
             this.results.pass('Smart Greeting - Model Tracking');
           }
         } else {
-          this.results.fail('Smart Greeting - Response Structure',
-            new Error('Missing greeting or insight fields'));
+          this.results.fail(
+            'Smart Greeting - Response Structure',
+            new Error('Missing greeting or insight fields')
+          );
         }
       } else {
-        this.results.fail('Smart Greeting - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Smart Greeting - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Smart Greeting - API Key Required', 'No API key configured');
@@ -415,11 +425,14 @@ class AITestSuite {
 
     try {
       const historicalData = MockData.kpiData();
-      const currentMetrics = { ...historicalData, revenue: { ...historicalData.revenue, current: 140000 } };
+      const currentMetrics = {
+        ...historicalData,
+        revenue: { ...historicalData.revenue, current: 140000 },
+      };
 
       const response = await makeRequest(`${this.baseURL}/api/openai/kpi-analysis`, {
         method: 'POST',
-        data: { historicalData, currentMetrics }
+        data: { historicalData, currentMetrics },
       });
 
       if (response.status === 200) {
@@ -432,14 +445,17 @@ class AITestSuite {
             this.results.pass('KPI Analysis - Recommendations Provided');
           }
         } else {
-          this.results.fail('KPI Analysis - Response Structure',
-            new Error('Missing required fields'));
+          this.results.fail(
+            'KPI Analysis - Response Structure',
+            new Error('Missing required fields')
+          );
         }
       } else {
-        this.results.fail('KPI Analysis - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'KPI Analysis - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('KPI Analysis - API Key Required', 'No API key configured');
@@ -457,7 +473,7 @@ class AITestSuite {
 
       const response = await makeRequest(`${this.baseURL}/api/openai/deal-intelligence`, {
         method: 'POST',
-        data: { dealData }
+        data: { dealData },
       });
 
       if (response.status === 200) {
@@ -474,14 +490,17 @@ class AITestSuite {
             this.results.pass('Deal Intelligence - Action Items');
           }
         } else {
-          this.results.fail('Deal Intelligence - Response Structure',
-            new Error('Missing insights or recommendations'));
+          this.results.fail(
+            'Deal Intelligence - Response Structure',
+            new Error('Missing insights or recommendations')
+          );
         }
       } else {
-        this.results.fail('Deal Intelligence - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Deal Intelligence - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Deal Intelligence - API Key Required', 'No API key configured');
@@ -500,12 +519,16 @@ class AITestSuite {
         totalDeals: 89,
         totalRevenue: 2450000,
         avgDealSize: 27528,
-        conversionRate: 68.5
+        conversionRate: 68.5,
       };
 
       const response = await makeRequest(`${this.baseURL}/api/openai/business-intelligence`, {
         method: 'POST',
-        data: { crmData, marketData: {}, goals: ['Increase revenue by 25%', 'Improve conversion rate'] }
+        data: {
+          crmData,
+          marketData: {},
+          goals: ['Increase revenue by 25%', 'Improve conversion rate'],
+        },
       });
 
       if (response.status === 200) {
@@ -522,14 +545,17 @@ class AITestSuite {
             this.results.pass('Business Intelligence - Strategic Recommendations');
           }
         } else {
-          this.results.fail('Business Intelligence - Response Structure',
-            new Error('Missing analysis or insights'));
+          this.results.fail(
+            'Business Intelligence - Response Structure',
+            new Error('Missing analysis or insights')
+          );
         }
       } else {
-        this.results.fail('Business Intelligence - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Business Intelligence - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Business Intelligence - API Key Required', 'No API key configured');
@@ -552,10 +578,10 @@ class AITestSuite {
       const response = await makeRequest(`${this.baseURL}/api/openai/multimodal-analysis`, {
         method: 'POST',
         data: {
-          content: "Analyze this business presentation for key insights",
-          imageUrl: "https://example.com/sample-chart.png",
-          context: "Q4 sales performance review"
-        }
+          content: 'Analyze this business presentation for key insights',
+          imageUrl: 'https://example.com/sample-chart.png',
+          context: 'Q4 sales performance review',
+        },
       });
 
       if (response.status === 200) {
@@ -568,14 +594,17 @@ class AITestSuite {
             this.results.pass('Multimodal Analysis - Visual Analysis');
           }
         } else {
-          this.results.fail('Multimodal Analysis - Response Structure',
-            new Error('Missing analysis results'));
+          this.results.fail(
+            'Multimodal Analysis - Response Structure',
+            new Error('Missing analysis results')
+          );
         }
       } else {
-        this.results.fail('Multimodal Analysis - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Multimodal Analysis - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Multimodal Analysis - API Key Required', 'No API key configured');
@@ -593,14 +622,14 @@ class AITestSuite {
         historical: [
           { month: '2023-01', revenue: 85000, deals: 12 },
           { month: '2023-02', revenue: 92000, deals: 15 },
-          { month: '2023-03', revenue: 88000, deals: 13 }
+          { month: '2023-03', revenue: 88000, deals: 13 },
         ],
-        current: { revenue: 95000, deals: 16 }
+        current: { revenue: 95000, deals: 16 },
       };
 
       const response = await makeRequest(`${this.baseURL}/api/openai/predictive-analytics`, {
         method: 'POST',
-        data: { salesData, timeframe: '3months' }
+        data: { salesData, timeframe: '3months' },
       });
 
       if (response.status === 200) {
@@ -617,14 +646,17 @@ class AITestSuite {
             this.results.pass('Predictive Analytics - Trend Analysis');
           }
         } else {
-          this.results.fail('Predictive Analytics - Response Structure',
-            new Error('Missing predictions or forecast'));
+          this.results.fail(
+            'Predictive Analytics - Response Structure',
+            new Error('Missing predictions or forecast')
+          );
         }
       } else {
-        this.results.fail('Predictive Analytics - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Predictive Analytics - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Predictive Analytics - API Key Required', 'No API key configured');
@@ -644,12 +676,12 @@ class AITestSuite {
         currentRevenue: 2450000,
         growthTargets: ['30% YoY growth', 'Expand to 3 new markets'],
         challenges: ['Increasing competition', 'Talent acquisition'],
-        opportunities: ['AI integration', 'International expansion']
+        opportunities: ['AI integration', 'International expansion'],
       };
 
       const response = await makeRequest(`${this.baseURL}/api/openai/strategic-planning`, {
         method: 'POST',
-        data: { businessContext, timeframe: '12months' }
+        data: { businessContext, timeframe: '12months' },
       });
 
       if (response.status === 200) {
@@ -666,14 +698,17 @@ class AITestSuite {
             this.results.pass('Strategic Planning - Timeline Creation');
           }
         } else {
-          this.results.fail('Strategic Planning - Response Structure',
-            new Error('Missing strategy or plan'));
+          this.results.fail(
+            'Strategic Planning - Response Structure',
+            new Error('Missing strategy or plan')
+          );
         }
       } else {
-        this.results.fail('Strategic Planning - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Strategic Planning - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Strategic Planning - API Key Required', 'No API key configured');
@@ -691,12 +726,12 @@ class AITestSuite {
         responseTimes: [120, 95, 150, 85, 110],
         errorRates: [0.02, 0.01, 0.03, 0.005, 0.015],
         throughput: [850, 920, 780, 950, 890],
-        resourceUsage: { cpu: 65, memory: 70, disk: 45 }
+        resourceUsage: { cpu: 65, memory: 70, disk: 45 },
       };
 
       const response = await makeRequest(`${this.baseURL}/api/openai/performance-optimization`, {
         method: 'POST',
-        data: { performanceData, systemType: 'CRM Application' }
+        data: { performanceData, systemType: 'CRM Application' },
       });
 
       if (response.status === 200) {
@@ -709,14 +744,17 @@ class AITestSuite {
             this.results.pass('Performance Optimization - Bottleneck Identification');
           }
         } else {
-          this.results.fail('Performance Optimization - Response Structure',
-            new Error('Missing recommendations or optimizations'));
+          this.results.fail(
+            'Performance Optimization - Response Structure',
+            new Error('Missing recommendations or optimizations')
+          );
         }
       } else {
-        this.results.fail('Performance Optimization - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Performance Optimization - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Performance Optimization - API Key Required', 'No API key configured');
@@ -733,11 +771,11 @@ class AITestSuite {
       const response = await makeRequest(`${this.baseURL}/api/openai/advanced-content`, {
         method: 'POST',
         data: {
-          prompt: "Generate a compelling sales email for enterprise software",
-          contentType: "email",
-          audience: "CTO",
-          goal: "Schedule a demo"
-        }
+          prompt: 'Generate a compelling sales email for enterprise software',
+          contentType: 'email',
+          audience: 'CTO',
+          goal: 'Schedule a demo',
+        },
       });
 
       if (response.status === 200) {
@@ -750,14 +788,17 @@ class AITestSuite {
             this.results.pass('Advanced Content - Reasoning Provided');
           }
         } else {
-          this.results.fail('Advanced Content - Response Structure',
-            new Error('Missing generated content'));
+          this.results.fail(
+            'Advanced Content - Response Structure',
+            new Error('Missing generated content')
+          );
         }
       } else {
-        this.results.fail('Advanced Content - HTTP Status',
-          new Error(`Unexpected status: ${response.status}`));
+        this.results.fail(
+          'Advanced Content - HTTP Status',
+          new Error(`Unexpected status: ${response.status}`)
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 400 && error.response?.data?.error?.includes('API key')) {
         this.results.skip('Advanced Content - API Key Required', 'No API key configured');
@@ -782,7 +823,7 @@ class AITestSuite {
       try {
         const response = await makeRequest(`${this.baseURL}/api/social-research`, {
           method: 'POST',
-          data: { contact, platforms: ['LinkedIn'], depth: 'basic' }
+          data: { contact, platforms: ['LinkedIn'], depth: 'basic' },
         });
 
         if (response.status === 200) {
@@ -790,7 +831,10 @@ class AITestSuite {
         }
       } catch (error) {
         if (error.response?.status === 404) {
-          this.results.skip('Social Media Research - Endpoint Not Implemented', 'API endpoint not found');
+          this.results.skip(
+            'Social Media Research - Endpoint Not Implemented',
+            'API endpoint not found'
+          );
         } else {
           this.results.fail('Social Media Research - API Test Failed', error);
         }
@@ -805,9 +849,11 @@ class AITestSuite {
           this.results.pass('Social Media Research - Mock Mode Working');
         }
       } else {
-        this.results.skip('Social Media Research - Service Not Loaded', 'Service script not available in test environment');
+        this.results.skip(
+          'Social Media Research - Service Not Loaded',
+          'Service script not available in test environment'
+        );
       }
-
     } catch (error) {
       this.results.fail('Social Media Research - Service Test Failed', error);
     }
@@ -821,11 +867,13 @@ class AITestSuite {
     try {
       await makeRequest(`${this.baseURL}/api/openai/embeddings`, {
         method: 'POST',
-        data: { text: '' } // Empty text
+        data: { text: '' }, // Empty text
       });
 
-      this.results.fail('Error Handling - Invalid Input',
-        new Error('Should have rejected empty text'));
+      this.results.fail(
+        'Error Handling - Invalid Input',
+        new Error('Should have rejected empty text')
+      );
     } catch (error) {
       if (error.response?.status === 400) {
         this.results.pass('Error Handling - Invalid Input Rejected');
@@ -839,11 +887,13 @@ class AITestSuite {
       await makeRequest(`${this.baseURL}/api/openai/smart-greeting`, {
         method: 'POST',
         data: '{ invalid json',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
 
-      this.results.fail('Error Handling - Malformed JSON',
-        new Error('Should have rejected malformed JSON'));
+      this.results.fail(
+        'Error Handling - Malformed JSON',
+        new Error('Should have rejected malformed JSON')
+      );
     } catch (error) {
       if (error.response?.status >= 400) {
         this.results.pass('Error Handling - Malformed JSON Rejected');
@@ -866,9 +916,9 @@ class AITestSuite {
           data: {
             userMetrics: MockData.userMetrics(),
             timeOfDay: 'morning',
-            recentActivity: []
-          }
-        }).catch(error => {
+            recentActivity: [],
+          },
+        }).catch((error) => {
           if (error.response?.status === 429) {
             return { rateLimited: true, error };
           }
@@ -879,8 +929,8 @@ class AITestSuite {
 
     try {
       const results = await Promise.allSettled(requests);
-      const rateLimitedCount = results.filter(result =>
-        result.status === 'fulfilled' && result.value?.rateLimited
+      const rateLimitedCount = results.filter(
+        (result) => result.status === 'fulfilled' && result.value?.rateLimited
       ).length;
 
       if (rateLimitedCount > 0) {
@@ -909,7 +959,10 @@ class AITestSuite {
         }
       }
     } catch (error) {
-      this.results.skip('Circuit Breaker - Status Not Available', 'Usage endpoint may require auth');
+      this.results.skip(
+        'Circuit Breaker - Status Not Available',
+        'Usage endpoint may require auth'
+      );
     }
   }
 
@@ -927,8 +980,8 @@ class AITestSuite {
         data: {
           userMetrics: MockData.userMetrics(),
           timeOfDay: 'morning',
-          recentActivity: []
-        }
+          recentActivity: [],
+        },
       });
 
       if (response.status === 200 && response.data.source === 'intelligent_fallback') {
@@ -939,7 +992,6 @@ class AITestSuite {
       if (originalKey) {
         process.env.OPENAI_API_KEY = originalKey;
       }
-
     } catch (error) {
       this.results.fail('Fallback Mechanisms - Test Failed', error);
     }
@@ -954,7 +1006,7 @@ class AITestSuite {
       const contacts = [
         MockData.contact(),
         { ...MockData.contact(), name: 'Jane Doe', email: 'jane.doe@techcorp.com' },
-        { ...MockData.contact(), name: 'Bob Johnson', email: 'bob.johnson@techcorp.com' }
+        { ...MockData.contact(), name: 'Bob Johnson', email: 'bob.johnson@techcorp.com' },
       ];
 
       const response = await makeRequest(`${this.baseURL}/api/batch/enrich-contacts`, {
@@ -962,8 +1014,8 @@ class AITestSuite {
         data: {
           contacts,
           enrichmentTypes: ['contact_scoring'],
-          processingMode: 'immediate'
-        }
+          processingMode: 'immediate',
+        },
       });
 
       if (response.status === 200) {
@@ -973,10 +1025,12 @@ class AITestSuite {
           this.results.pass('Batch Processing - Results Array Returned');
         }
       }
-
     } catch (error) {
       if (error.response?.status === 404) {
-        this.results.skip('Batch Processing - Endpoint Not Available', 'Batch processing not implemented');
+        this.results.skip(
+          'Batch Processing - Endpoint Not Available',
+          'Batch processing not implemented'
+        );
       } else {
         this.results.fail('Batch Processing - Test Failed', error);
       }
@@ -1005,9 +1059,11 @@ class AITestSuite {
           this.results.pass('Usage Monitoring - Circuit Breaker Integration');
         }
       } else {
-        this.results.skip('Usage Monitoring - Endpoint Not Available', 'May require authentication');
+        this.results.skip(
+          'Usage Monitoring - Endpoint Not Available',
+          'May require authentication'
+        );
       }
-
     } catch (error) {
       if (error.response?.status === 401 || error.response?.status === 403) {
         this.results.skip('Usage Monitoring - Authentication Required', 'Endpoint requires auth');
@@ -1025,7 +1081,7 @@ class AITestSuite {
     const protectedEndpoints = [
       '/api/openai/embeddings',
       '/api/openai/images/generate',
-      '/api/openai/assistants/threads'
+      '/api/openai/assistants/threads',
     ];
 
     for (const endpoint of protectedEndpoints) {
@@ -1033,11 +1089,10 @@ class AITestSuite {
         await makeRequest(`${this.baseURL}${endpoint}`, {
           method: 'POST',
           data: {},
-          headers: {} // No auth headers
+          headers: {}, // No auth headers
         });
 
-        this.results.fail(`Authentication - ${endpoint}`,
-          new Error('Should have been rejected'));
+        this.results.fail(`Authentication - ${endpoint}`, new Error('Should have been rejected'));
       } catch (error) {
         if (error.response?.status === 401 || error.response?.status === 403) {
           this.results.pass(`Authentication - ${endpoint} Protected`);
@@ -1080,7 +1135,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Run if called directly
 if (typeof require !== 'undefined' && require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Test suite execution failed:', error);
     process.exit(1);
   });

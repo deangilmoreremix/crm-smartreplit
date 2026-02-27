@@ -15,7 +15,7 @@ import {
   BarChart3,
   Settings,
   Bell,
-  Download
+  Download,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,17 +35,23 @@ interface BillingSummary {
   } | null;
   usageStats: {
     period: { start: string; end: string };
-    featureUsage: Record<string, {
-      totalQuantity: number;
-      totalCost: number;
-      eventCount: number;
-      unit: string;
-    }>;
-    currentLimits: Record<string, {
-      limit: number;
-      used: number;
-      isHardLimit: boolean;
-    }>;
+    featureUsage: Record<
+      string,
+      {
+        totalQuantity: number;
+        totalCost: number;
+        eventCount: number;
+        unit: string;
+      }
+    >;
+    currentLimits: Record<
+      string,
+      {
+        limit: number;
+        used: number;
+        isHardLimit: boolean;
+      }
+    >;
     totalEvents: number;
     totalCost: number;
   };
@@ -123,11 +129,11 @@ export const BillingDashboard: React.FC = () => {
       await fetch('/api/billing/notifications/mark-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationIds })
+        body: JSON.stringify({ notificationIds }),
       });
-      setNotifications(prev => prev.map(n =>
-        notificationIds.includes(n.id) ? { ...n, isRead: true } : n
-      ));
+      setNotifications((prev) =>
+        prev.map((n) => (notificationIds.includes(n.id) ? { ...n, isRead: true } : n))
+      );
     } catch (error) {
       console.error('Error marking notifications as read:', error);
     }
@@ -151,7 +157,7 @@ export const BillingDashboard: React.FC = () => {
     return 'text-green-600';
   };
 
-  const unreadNotifications = notifications.filter(n => !n.isRead);
+  const unreadNotifications = notifications.filter((n) => !n.isRead);
 
   if (loading) {
     return (
@@ -173,7 +179,7 @@ export const BillingDashboard: React.FC = () => {
           {unreadNotifications.length > 0 && (
             <Button
               variant="outline"
-              onClick={() => markNotificationsRead(unreadNotifications.map(n => n.id))}
+              onClick={() => markNotificationsRead(unreadNotifications.map((n) => n.id))}
             >
               <Bell className="w-4 h-4 mr-2" />
               Mark All Read ({unreadNotifications.length})
@@ -189,7 +195,7 @@ export const BillingDashboard: React.FC = () => {
       {/* Notifications */}
       {unreadNotifications.length > 0 && (
         <div className="space-y-2">
-          {unreadNotifications.slice(0, 3).map(notification => (
+          {unreadNotifications.slice(0, 3).map((notification) => (
             <Alert key={notification.id}>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>{notification.title}</AlertTitle>
@@ -222,8 +228,7 @@ export const BillingDashboard: React.FC = () => {
                 <p className="text-xs text-muted-foreground">
                   {billingSummary?.currentPlan?.billingType === 'subscription'
                     ? `$${billingSummary.currentPlan.basePriceCents / 100}/month`
-                    : 'Pay per use'
-                  }
+                    : 'Pay per use'}
                 </p>
               </CardContent>
             </Card>
@@ -237,14 +242,12 @@ export const BillingDashboard: React.FC = () => {
                 <div className="text-2xl font-bold">
                   {billingSummary?.currentBilling
                     ? formatCurrency(billingSummary.currentBilling.totalCostCents)
-                    : '$0.00'
-                  }
+                    : '$0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {billingSummary?.nextBillingDate
                     ? `Next billing: ${formatDate(billingSummary.nextBillingDate)}`
-                    : 'No active billing cycle'
-                  }
+                    : 'No active billing cycle'}
                 </p>
               </CardContent>
             </Card>
@@ -258,9 +261,7 @@ export const BillingDashboard: React.FC = () => {
                 <div className="text-2xl font-bold">
                   {billingSummary?.usageStats?.totalEvents || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  API calls and AI requests
-                </p>
+                <p className="text-xs text-muted-foreground">API calls and AI requests</p>
               </CardContent>
             </Card>
           </div>
@@ -269,12 +270,10 @@ export const BillingDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Usage Limits</CardTitle>
-              <CardDescription>
-                Monitor your current usage against plan limits
-              </CardDescription>
+              <CardDescription>Monitor your current usage against plan limits</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {usageLimits.map(limit => {
+              {usageLimits.map((limit) => {
                 const used = parseFloat(limit.usedValue);
                 const limitValue = parseFloat(limit.limitValue);
                 const percentage = getUsagePercentage(used, limitValue);
@@ -287,7 +286,11 @@ export const BillingDashboard: React.FC = () => {
                       </span>
                       <span className={`text-sm ${getUsageColor(percentage)}`}>
                         {used.toLocaleString()} / {limitValue.toLocaleString()}
-                        {limit.isHardLimit && <Badge variant="destructive" className="ml-2">Hard Limit</Badge>}
+                        {limit.isHardLimit && (
+                          <Badge variant="destructive" className="ml-2">
+                            Hard Limit
+                          </Badge>
+                        )}
                       </span>
                     </div>
                     <Progress value={percentage} className="h-2" />
@@ -309,22 +312,29 @@ export const BillingDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {billingSummary?.usageStats && Object.entries(billingSummary.usageStats.featureUsage).map(([feature, stats]: [string, any]) => (
-                  <div key={feature} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h4 className="font-medium capitalize">{feature.replace('_', ' ')}</h4>
-                      <p className="text-sm text-gray-600">
-                        {stats.totalQuantity.toLocaleString()} {stats.unit} • {stats.eventCount} events
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatCurrency(stats.totalCost)}</p>
-                      <p className="text-sm text-gray-600">
-                        ${(stats.totalCost / stats.totalQuantity).toFixed(4)} per {stats.unit}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                {billingSummary?.usageStats &&
+                  Object.entries(billingSummary.usageStats.featureUsage).map(
+                    ([feature, stats]: [string, any]) => (
+                      <div
+                        key={feature}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div>
+                          <h4 className="font-medium capitalize">{feature.replace('_', ' ')}</h4>
+                          <p className="text-sm text-gray-600">
+                            {stats.totalQuantity.toLocaleString()} {stats.unit} • {stats.eventCount}{' '}
+                            events
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{formatCurrency(stats.totalCost)}</p>
+                          <p className="text-sm text-gray-600">
+                            ${(stats.totalCost / stats.totalQuantity).toFixed(4)} per {stats.unit}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
               </div>
             </CardContent>
           </Card>
@@ -335,9 +345,7 @@ export const BillingDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Billing History</CardTitle>
-              <CardDescription>
-                View your past invoices and billing cycles
-              </CardDescription>
+              <CardDescription>View your past invoices and billing cycles</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8 text-gray-500">
@@ -351,9 +359,7 @@ export const BillingDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Subscription Management</CardTitle>
-              <CardDescription>
-                Manage your subscription and billing preferences
-              </CardDescription>
+              <CardDescription>Manage your subscription and billing preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -374,10 +380,15 @@ export const BillingDashboard: React.FC = () => {
                   <div>
                     <h4 className="font-medium">Billing Cycle</h4>
                     <p className="text-sm text-gray-600">
-                      {formatDate(billingSummary.currentCycle.startDate)} - {formatDate(billingSummary.currentCycle.endDate)}
+                      {formatDate(billingSummary.currentCycle.startDate)} -{' '}
+                      {formatDate(billingSummary.currentCycle.endDate)}
                     </p>
                   </div>
-                  <Badge variant={billingSummary.currentCycle.status === 'active' ? 'default' : 'secondary'}>
+                  <Badge
+                    variant={
+                      billingSummary.currentCycle.status === 'active' ? 'default' : 'secondary'
+                    }
+                  >
                     {billingSummary.currentCycle.status}
                   </Badge>
                 </div>
@@ -399,9 +410,7 @@ export const BillingDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Email Notifications</h4>
-                  <p className="text-sm text-gray-600">
-                    Receive billing alerts and usage warnings
-                  </p>
+                  <p className="text-sm text-gray-600">Receive billing alerts and usage warnings</p>
                 </div>
                 <Button variant="outline">Configure</Button>
               </div>
@@ -409,9 +418,7 @@ export const BillingDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Auto-renewal</h4>
-                  <p className="text-sm text-gray-600">
-                    Automatically renew your subscription
-                  </p>
+                  <p className="text-sm text-gray-600">Automatically renew your subscription</p>
                 </div>
                 <Button variant="outline">Manage</Button>
               </div>

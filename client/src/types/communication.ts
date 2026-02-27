@@ -48,7 +48,15 @@ export interface EmailTemplate {
   subject: string;
   content: string;
   htmlContent?: string;
-  category: 'follow-up' | 'proposal' | 'welcome' | 'newsletter' | 'meeting' | 'sales' | 'support' | 'other';
+  category:
+    | 'follow-up'
+    | 'proposal'
+    | 'welcome'
+    | 'newsletter'
+    | 'meeting'
+    | 'sales'
+    | 'support'
+    | 'other';
   variables: TemplateVariable[];
   isActive: boolean;
   usageCount: number;
@@ -146,7 +154,13 @@ export interface CallLog {
     duration: number;
   };
   notes: string;
-  outcome: 'interested' | 'not_interested' | 'callback' | 'meeting_scheduled' | 'no_contact' | 'other';
+  outcome:
+    | 'interested'
+    | 'not_interested'
+    | 'callback'
+    | 'meeting_scheduled'
+    | 'no_contact'
+    | 'other';
   nextSteps?: string;
   tags: string[];
   timestamp: Date;

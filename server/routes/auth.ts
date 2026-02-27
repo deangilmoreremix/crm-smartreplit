@@ -10,40 +10,57 @@ const router = Router();
 
 // Initialize Supabase client with service role key
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const serviceRoleKey =
+  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // DEV BYPASS EMAILS - Development users who can bypass auth
+// These should ONLY be used in development environments
 const DEV_BYPASS_EMAILS = [
   'dev@smartcrm.local',
-  'dean@smartcrm.vip',
-  'dean@videoremix.io',
-  'samuel@videoremix.io',
-  'victor@videoremix.io'
 ];
+
+// Check if we're in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+/**
+ * isDevelopmentEnvironment - Check if running in development
+ * More robust check including common dev hostnames
+ */
+function isDevelopmentEnvironment(hostname?: string): boolean {
+  if (!isDevelopment) return false;
+  
+  const devHosts = ['localhost', '127.0.0.1', 'replit.dev', 'replit.app', 'dev.'];
+  const checkHost = hostname || 'localhost';
+  return devHosts.some(host => checkHost.includes(host));
+}
 
 /**
  * requireAuth Middleware
  * Checks if user is authenticated via session
+ * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
  */
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const userId = (req.session as any)?.userId;
-  
-  // Check for dev bypass in development
-  if (process.env.NODE_ENV === 'development' && !userId) {
-    // Allow dev bypass for development
-    (req as any).user = {
-      id: 'dev-user-12345',
-      email: 'dev@smartcrm.local',
-      role: 'super_admin',
-      productTier: 'super_admin'
-    };
-    return next();
+  const hostname = req.get('host') || '';
+
+  // Check for dev bypass ONLY in development with explicit emails
+  if (isDevelopment && isDevelopmentEnvironment(hostname)) {
+    const userEmail = (req.session as any)?.userEmail;
+    if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
+      (req as any).user = {
+        id: 'dev-user-12345',
+        email: userEmail,
+        role: 'super_admin',
+        productTier: 'super_admin',
+      };
+      return next();
+    }
   }
-  
+
   if (!userId) {
     return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
   }
-  
+
   // Attach user ID to request for downstream handlers
   (req as any).userId = userId;
   next();
@@ -52,57 +69,51 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 /**
  * requireAdmin Middleware
  * Checks if user is a super admin
+ * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
  */
 export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req.session as any)?.userId;
-    
-    // Check for dev bypass in development
-    if (process.env.NODE_ENV === 'development') {
-      // Allow dev bypass for development
-      (req as any).user = {
-        id: 'dev-user-12345',
-        email: 'dev@smartcrm.local',
-        role: 'super_admin',
-        productTier: 'super_admin'
-      };
-      return next();
+    const hostname = req.get('host') || '';
+
+    // Check for dev bypass ONLY in development with explicit emails
+    if (isDevelopment && isDevelopmentEnvironment(hostname)) {
+      const userEmail = (req.session as any)?.userEmail;
+      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
+        (req as any).user = {
+          id: 'dev-user-12345',
+          email: userEmail,
+          role: 'super_admin',
+          productTier: 'super_admin',
+        };
+        return next();
+      }
     }
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
     }
-    
+
     // Check if user is admin by looking up their profile
     if (!supabaseUrl || !serviceRoleKey) {
-      // Fallback: check session data
-      const userEmail = (req.session as any)?.userEmail;
-      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-        return next();
-      }
       return res.status(500).json({ error: 'Supabase not configured' });
     }
-    
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('role, product_tier')
       .eq('id', userId)
       .single();
-    
+
     if (error || !profile) {
-      // Check if user is in dev bypass list
-      const userEmail = (req.session as any)?.userEmail;
-      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-        return next();
-      }
       return res.status(403).json({ error: 'Forbidden - User not found' });
     }
-    
+
     if (profile.role !== 'super_admin') {
       return res.status(403).json({ error: 'Forbidden - Admin access required' });
     }
-    
+
     (req as any).user = profile;
     next();
   } catch (error) {
@@ -114,74 +125,77 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
 /**
  * requireProductTier Middleware
  * Checks if user has required product tier (ai_communication or higher)
+ * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
  */
 export const requireProductTier = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req.session as any)?.userId;
-    
-    // Check for dev bypass in development
-    if (process.env.NODE_ENV === 'development') {
-      (req as any).user = {
-        id: 'dev-user-12345',
-        email: 'dev@smartcrm.local',
-        role: 'super_admin',
-        productTier: 'super_admin'
-      };
-      return next();
+    const hostname = req.get('host') || '';
+
+    // Check for dev bypass ONLY in development with explicit emails
+    if (isDevelopment && isDevelopmentEnvironment(hostname)) {
+      const userEmail = (req.session as any)?.userEmail;
+      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
+        (req as any).user = {
+          id: 'dev-user-12345',
+          email: userEmail,
+          role: 'super_admin',
+          productTier: 'super_admin',
+        };
+        return next();
+      }
     }
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
     }
-    
+
     // Required tiers (in order of access): basic -> starter -> professional -> enterprise -> ai_communication -> super_admin
     // wl_user role also gets basic access
-    const requiredTiers = ['ai_communication', 'enterprise', 'professional', 'starter', 'super_admin', 'wl_user', 'basic'];
-    
+    const requiredTiers = [
+      'ai_communication',
+      'enterprise',
+      'professional',
+      'starter',
+      'super_admin',
+      'wl_user',
+      'basic',
+    ];
+
     if (!supabaseUrl || !serviceRoleKey) {
-      // Fallback for development
-      const userEmail = (req.session as any)?.userEmail;
-      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-        return next();
-      }
       return res.status(500).json({ error: 'Supabase not configured' });
     }
-    
+
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('product_tier, role')
       .eq('id', userId)
       .single();
-    
+
     if (error || !profile) {
-      // Check if user is in dev bypass list
-      const userEmail = (req.session as any)?.userEmail;
-      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-        return next();
-      }
       return res.status(403).json({ error: 'Forbidden - User profile not found' });
     }
-    
+
     const userTier = profile.product_tier || profile.role;
-    
+
     // super_admin bypasses all tier checks
     if (userTier === 'super_admin') {
       (req as any).user = profile;
       return next();
     }
-    
+
     // Check if user has required tier
     const hasAccess = requiredTiers.includes(userTier);
-    
+
     if (!hasAccess) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Forbidden - Product tier upgrade required',
         requiredTier: 'ai_communication',
-        currentTier: userTier
+        currentTier: userTier,
       });
     }
-    
+
     (req as any).user = profile;
     next();
   } catch (error) {
@@ -193,79 +207,83 @@ export const requireProductTier = async (req: Request, res: Response, next: Next
 /**
  * requireTier Middleware
  * Checks if user has specific tier (flexible tier checking)
+ * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
  */
 export const requireTier = (requiredTier: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = (req.session as any)?.userId;
-      
-      // Check for dev bypass in development
-      if (process.env.NODE_ENV === 'development') {
-        (req as any).user = {
-          id: 'dev-user-12345',
-          email: 'dev@smartcrm.local',
-          role: 'super_admin',
-          productTier: 'super_admin'
-        };
-        return next();
+      const hostname = req.get('host') || '';
+
+      // Check for dev bypass ONLY in development with explicit emails
+      if (isDevelopment && isDevelopmentEnvironment(hostname)) {
+        const userEmail = (req.session as any)?.userEmail;
+        if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
+          (req as any).user = {
+            id: 'dev-user-12345',
+            email: userEmail,
+            role: 'super_admin',
+            productTier: 'super_admin',
+          };
+          return next();
+        }
       }
-      
+
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
       }
-      
+
       if (!supabaseUrl || !serviceRoleKey) {
-        const userEmail = (req.session as any)?.userEmail;
-        if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-          return next();
-        }
         return res.status(500).json({ error: 'Supabase not configured' });
       }
-      
+
       const supabase = createClient(supabaseUrl, serviceRoleKey);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('product_tier, role')
         .eq('id', userId)
         .single();
-      
+
       if (error || !profile) {
-        const userEmail = (req.session as any)?.userEmail;
-        if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-          return next();
-        }
         return res.status(403).json({ error: 'Forbidden - User profile not found' });
       }
-      
+
       const userTier = profile.product_tier || profile.role;
-      
+
       // super_admin bypasses all tier checks
       if (userTier === 'super_admin') {
         (req as any).user = profile;
         return next();
       }
-      
+
       // Check for exact tier match or higher
-      const tierHierarchy = ['basic', 'starter', 'professional', 'enterprise', 'ai_communication', 'wl_user'];
+      const tierHierarchy = [
+        'basic',
+        'starter',
+        'professional',
+        'enterprise',
+        'ai_communication',
+        'wl_user',
+      ];
       const userTierIndex = tierHierarchy.indexOf(userTier);
       const requiredTierIndex = tierHierarchy.indexOf(requiredTier);
-      
+
       // Also check for special roles
       if (userTier === requiredTier) {
         (req as any).user = profile;
         return next();
       }
-      
+
       // Allow access if user tier is higher in hierarchy
       if (userTierIndex >= requiredTierIndex && userTierIndex >= 0) {
         (req as any).user = profile;
         return next();
       }
-      
-      return res.status(403).json({ 
+
+      return res.status(403).json({
         error: 'Forbidden - Tier upgrade required',
         requiredTier,
-        currentTier: userTier
+        currentTier: userTier,
       });
     } catch (error) {
       console.error('Tier check error:', error);
@@ -277,7 +295,7 @@ export const requireTier = (requiredTier: string) => {
 /**
  * POST /api/auth/invite
  * Send a user invitation email
- * 
+ *
  * Body: { "email": "user@example.com" }
  */
 router.post('/invite', async (req: Request, res: Response) => {
@@ -309,8 +327,8 @@ router.post('/invite', async (req: Request, res: Response) => {
       success: true,
       message: `Invitation sent to ${email}`,
       data: {
-        user: (data as any).user
-      }
+        user: (data as any).user,
+      },
     });
   } catch (err: any) {
     console.error('Unexpected error:', err);
@@ -334,7 +352,7 @@ router.get('/users', async (req: Request, res: Response) => {
 
     const { data, error } = await supabase.auth.admin.listUsers({
       page,
-      perPage
+      perPage,
     });
 
     if (error) {
@@ -346,8 +364,8 @@ router.get('/users', async (req: Request, res: Response) => {
       success: true,
       data: {
         users: data.users,
-        total: data.total
-      }
+        total: data.total,
+      },
     });
   } catch (err: any) {
     console.error('Unexpected error:', err);
@@ -378,7 +396,7 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      message: `User ${id} deleted successfully`
+      message: `User ${id} deleted successfully`,
     });
   } catch (err: any) {
     console.error('Unexpected error:', err);
@@ -418,7 +436,7 @@ router.patch('/users/:id', async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: { user: data.user }
+      data: { user: data.user },
     });
   } catch (err: any) {
     console.error('Unexpected error:', err);

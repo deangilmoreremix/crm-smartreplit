@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Shield,
   Clock,
-  Gift
+  Gift,
 } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -66,8 +66,8 @@ const CreditPurchasePage: React.FC = () => {
             'Use for Any AI Tool',
             'Priority Processing',
             'Advanced AI Models Access',
-            'Real-time Usage Tracking'
-          ]
+            'Real-time Usage Tracking',
+          ],
         }));
 
         // Add a popular flag to the middle package
@@ -110,18 +110,15 @@ const CreditPurchasePage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12">
         <div className="container mx-auto px-4 max-w-2xl">
           <div className="text-center mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => setShowCheckout(false)}
-              className="mb-4"
-            >
+            <Button variant="ghost" onClick={() => setShowCheckout(false)} className="mb-4">
               ← Back to Packages
             </Button>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Purchase {selectedPackage.displayName}
             </h1>
             <p className="text-gray-600">
-              {selectedPackage.credits + (selectedPackage.bonusCredits || 0)} Credits for {formatPrice(selectedPackage.basePriceCents)}
+              {selectedPackage.credits + (selectedPackage.bonusCredits || 0)} Credits for{' '}
+              {formatPrice(selectedPackage.basePriceCents)}
             </p>
           </div>
 
@@ -150,8 +147,8 @@ const CreditPurchasePage: React.FC = () => {
               <Sparkles className="h-8 w-8 text-yellow-500 ml-3" />
             </div>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Supercharge your productivity with generous AI credit packages.
-              Get bonus credits and unlock unlimited potential with our advanced AI tools.
+              Supercharge your productivity with generous AI credit packages. Get bonus credits and
+              unlock unlimited potential with our advanced AI tools.
             </p>
           </div>
         </div>
@@ -186,9 +183,7 @@ const CreditPurchasePage: React.FC = () => {
             <Card
               key={pkg.id}
               className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl ${
-                pkg.popular
-                  ? 'ring-2 ring-blue-500 shadow-lg scale-105'
-                  : 'hover:shadow-lg'
+                pkg.popular ? 'ring-2 ring-blue-500 shadow-lg scale-105' : 'hover:shadow-lg'
               }`}
             >
               {pkg.popular && (
@@ -202,9 +197,7 @@ const CreditPurchasePage: React.FC = () => {
                 <CardTitle className="text-2xl font-bold text-gray-900">
                   {pkg.displayName}
                 </CardTitle>
-                <CardDescription className="text-gray-600">
-                  {pkg.description}
-                </CardDescription>
+                <CardDescription className="text-gray-600">{pkg.description}</CardDescription>
 
                 <div className="mt-4">
                   <div className="text-4xl font-bold text-gray-900">
@@ -255,9 +248,7 @@ const CreditPurchasePage: React.FC = () => {
         {/* Trust Indicators */}
         <div className="text-center mt-16">
           <div className="bg-white rounded-xl p-8 shadow-lg max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
-              Why Choose Our AI Credits?
-            </h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Why Choose Our AI Credits?</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">25%</div>
@@ -287,21 +278,18 @@ const CreditPurchasePage: React.FC = () => {
           <div className="space-y-4">
             <Card>
               <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  What can I use AI credits for?
-                </h4>
+                <h4 className="font-semibold text-gray-900 mb-2">What can I use AI credits for?</h4>
                 <p className="text-gray-600">
-                  AI credits can be used for any of our AI tools including the AI Assistant, Vision Analyzer,
-                  Image Generator, Function Assistant, and all other AI-powered features in the platform.
+                  AI credits can be used for any of our AI tools including the AI Assistant, Vision
+                  Analyzer, Image Generator, Function Assistant, and all other AI-powered features
+                  in the platform.
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Do credits expire?
-                </h4>
+                <h4 className="font-semibold text-gray-900 mb-2">Do credits expire?</h4>
                 <p className="text-gray-600">
                   No, your AI credits never expire. You can use them whenever you're ready.
                 </p>
@@ -314,7 +302,8 @@ const CreditPurchasePage: React.FC = () => {
                   Can I share credits with my team?
                 </h4>
                 <p className="text-gray-600">
-                  Credits are tied to your account. Team members use their own credits for AI operations.
+                  Credits are tied to your account. Team members use their own credits for AI
+                  operations.
                 </p>
               </CardContent>
             </Card>

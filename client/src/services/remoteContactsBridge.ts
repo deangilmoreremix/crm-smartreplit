@@ -71,7 +71,7 @@ export class RemoteContactsBridge {
     const message: RemoteContactMessage = {
       type,
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     console.log('📤 Bridge sending message:', message);
@@ -87,8 +87,8 @@ export class RemoteContactsBridge {
         canCreate: true,
         canUpdate: true,
         canDelete: true,
-        canSync: true
-      }
+        canSync: true,
+      },
     });
   }
 
@@ -123,8 +123,8 @@ export class RemoteContactsBridge {
         { path: '/contacts', name: 'Contacts' },
         { path: '/deals', name: 'Deals' },
         { path: '/tasks', name: 'Tasks' },
-        { path: '/calendar', name: 'Calendar' }
-      ]
+        { path: '/calendar', name: 'Calendar' },
+      ],
     });
   }
 
@@ -142,15 +142,15 @@ export class RemoteContactsBridge {
         canChat: true,
         canAnalyze: true,
         canSuggest: true,
-        canSocialResearch: true
-      }
+        canSocialResearch: true,
+      },
     });
   }
 
   sendAssistantResponse(contactId: string, response: any) {
     this.sendMessage('ASSISTANT_RESPONSE', {
       contactId,
-      response
+      response,
     });
   }
 
@@ -158,7 +158,7 @@ export class RemoteContactsBridge {
     this.sendMessage('ASSISTANT_REQUEST', {
       contactId,
       action,
-      data
+      data,
     });
   }
 

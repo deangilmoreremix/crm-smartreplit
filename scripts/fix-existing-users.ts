@@ -31,8 +31,8 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 // Super admin emails
@@ -41,7 +41,7 @@ const SUPER_ADMIN_EMAILS = [
   'victor@videoremix.io',
   'samuel@videoremix.io',
   'dean@smartcrm.vip',
-  'jvzoo@gmail.com'
+  'jvzoo@gmail.com',
 ];
 
 async function fixExistingUsers() {
@@ -55,17 +55,15 @@ async function fixExistingUsers() {
     console.log(`📊 Found ${authData.users.length} total users in auth.users`);
 
     // Get all existing profiles
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id');
+    const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id');
 
     if (profilesError) throw profilesError;
 
-    const existingProfileIds = new Set(profiles?.map(p => p.id) || []);
+    const existingProfileIds = new Set(profiles?.map((p) => p.id) || []);
     console.log(`📊 Found ${existingProfileIds.size} existing profiles\n`);
 
     // Find users without profiles
-    const usersWithoutProfiles = authData.users.filter(u => !existingProfileIds.has(u.id));
+    const usersWithoutProfiles = authData.users.filter((u) => !existingProfileIds.has(u.id));
     console.log(`⚠️  Found ${usersWithoutProfiles.length} users without profiles\n`);
 
     if (usersWithoutProfiles.length === 0) {
@@ -80,25 +78,23 @@ async function fixExistingUsers() {
     for (const user of usersWithoutProfiles) {
       const email = user.email || '';
       const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
-      const role = isSuperAdmin ? 'super_admin' : (user.user_metadata?.role || 'regular_user');
+      const role = isSuperAdmin ? 'super_admin' : user.user_metadata?.role || 'regular_user';
       const username = user.user_metadata?.username || email.split('@')[0] || 'user';
       const firstName = user.user_metadata?.first_name || '';
       const lastName = user.user_metadata?.last_name || '';
 
-      const { error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          username: username,
-          first_name: firstName,
-          last_name: lastName,
-          role: role,
-          avatar_url: user.user_metadata?.avatar_url || null,
-          app_context: user.user_metadata?.app_context || 'smartcrm',
-          email_template_set: user.user_metadata?.email_template_set || 'smartcrm',
-          created_at: user.created_at || new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      const { error: insertError } = await supabase.from('profiles').insert({
+        id: user.id,
+        username: username,
+        first_name: firstName,
+        last_name: lastName,
+        role: role,
+        avatar_url: user.user_metadata?.avatar_url || null,
+        app_context: user.user_metadata?.app_context || 'smartcrm',
+        email_template_set: user.user_metadata?.email_template_set || 'smartcrm',
+        created_at: user.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
       if (insertError) {
         console.error(`❌ Failed to create profile for ${email}:`, insertError.message);
@@ -116,9 +112,7 @@ async function fixExistingUsers() {
 
     // Verify the fix
     console.log('\n🔍 Verifying fix...');
-    const { data: verifyProfiles } = await supabase
-      .from('profiles')
-      .select('id');
+    const { data: verifyProfiles } = await supabase.from('profiles').select('id');
 
     const newProfileCount = verifyProfiles?.length || 0;
     console.log(`   Profiles before: ${existingProfileIds.size}`);
@@ -131,7 +125,6 @@ async function fixExistingUsers() {
       console.log(`\n⚠️  ${failed} profiles failed to create. Check errors above.`);
       process.exit(1);
     }
-
   } catch (error) {
     console.error('❌ Error:', error);
     process.exit(1);

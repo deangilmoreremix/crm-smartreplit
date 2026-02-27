@@ -9,7 +9,7 @@ Your role-based email routing system is now active and working! Here's how to co
 ✅ **Database Trigger**: Auto-role assignment system active  
 ✅ **Webhook Handler**: `/api/auth-webhook` endpoint working  
 ✅ **Role-Based Templates**: 3 email templates created  
-✅ **Testing Complete**: All user types routing correctly  
+✅ **Testing Complete**: All user types routing correctly
 
 ## Supabase Dashboard Configuration
 
@@ -17,7 +17,7 @@ Your role-based email routing system is now active and working! Here's how to co
 
 1. **Go to**: https://supabase.com/dashboard/project/YOUR_PROJECT_REF/auth/settings
 2. **Update Site URL**: `https://smart-crm.videoremix.io`
-3. **Set Redirect URLs**: 
+3. **Set Redirect URLs**:
    - `https://smart-crm.videoremix.io/auth/callback`
    - `https://smart-crm.videoremix.io/dashboard`
 
@@ -40,16 +40,19 @@ Your role-based email routing system is now active and working! Here's how to co
 Upload these 3 templates based on user role:
 
 #### Template 1: Admin Welcome (super_admin)
+
 - **Template Type**: Confirmation
 - **Subject**: `Welcome to SmartCRM Admin`
 - **Content**: Use `email-templates/admin-welcome.html`
 
 #### Template 2: Premium Welcome (wl_user)
-- **Template Type**: Confirmation  
+
+- **Template Type**: Confirmation
 - **Subject**: `Welcome to SmartCRM Premium`
 - **Content**: Use `email-templates/premium-welcome.html`
 
-#### Template 3: Basic Welcome (regular_user)  
+#### Template 3: Basic Welcome (regular_user)
+
 - **Template Type**: Confirmation
 - **Subject**: `Welcome to SmartCRM`
 - **Content**: Use `email-templates/basic-welcome.html`
@@ -67,16 +70,14 @@ Upload these 3 templates based on user role:
 ## Role-Based Email Logic
 
 ### Super Admins (Auto-detected)
+
 ```javascript
 // These emails automatically get super_admin role
-const SUPER_ADMIN_EMAILS = [
-  'dean@videoremix.io',
-  'victor@videoremix.io', 
-  'samuel@videoremix.io'
-];
+const SUPER_ADMIN_EMAILS = ['dean@videoremix.io', 'victor@videoremix.io', 'samuel@videoremix.io'];
 ```
 
 ### WL Users (Existing Users)
+
 ```javascript
 // Users with explicit wl_user role in metadata
 metadata: {
@@ -86,6 +87,7 @@ metadata: {
 ```
 
 ### Regular Users (Default)
+
 ```javascript
 // New users without specific role assignment
 metadata: {
@@ -97,6 +99,7 @@ metadata: {
 ## Testing Your Configuration
 
 ### Test 1: Super Admin Email
+
 ```bash
 curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_ANON_KEY" \
@@ -112,6 +115,7 @@ curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
 ```
 
 ### Test 2: WL User Email
+
 ```bash
 curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_ANON_KEY" \
@@ -121,13 +125,14 @@ curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
     "password": "testpassword123",
     "data": {
       "role": "wl_user",
-      "firstName": "Premium", 
+      "firstName": "Premium",
       "lastName": "User"
     }
   }'
 ```
 
-### Test 3: Regular User Email  
+### Test 3: Regular User Email
+
 ```bash
 curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_ANON_KEY" \
@@ -161,19 +166,25 @@ Each template receives these variables automatically:
 ## Troubleshooting
 
 ### Issue: Webhook not firing
-**Solution**: 
+
+**Solution**:
+
 1. Check webhook URL is publicly accessible
 2. Verify webhook is enabled in Supabase
 3. Check server logs for webhook errors
 
 ### Issue: Wrong email template sent
+
 **Solution**:
+
 1. Verify user metadata contains correct role
 2. Check template routing logic in webhook handler
 3. Test role assignment with direct API calls
 
 ### Issue: Emails not sending
+
 **Solution**:
+
 1. Verify SMTP configuration in Supabase
 2. Check email provider rate limits
 3. Test with different email addresses
@@ -188,7 +199,7 @@ Each template receives these variables automatically:
 ## Maintenance
 
 - **Template Updates**: Modify templates in Supabase dashboard
-- **Role Changes**: Update role logic in `server/email-routing.ts`  
+- **Role Changes**: Update role logic in `server/email-routing.ts`
 - **New User Types**: Add new templates and routing logic
 
 Your email routing system is now fully configured and ready for production! 🚀

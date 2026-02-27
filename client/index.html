@@ -1,12 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no"
+    />
     <title>SmartCRM - AI-Powered Sales Platform</title>
     <style>
       /* Ensure full-screen display */
-      html, body {
+      html,
+      body {
         height: 100vh;
         width: 100vw;
         margin: 0;
@@ -14,20 +18,20 @@
         overflow-x: hidden;
         position: relative;
       }
-      
+
       #root {
         height: 100vh;
         width: 100vw;
         display: flex;
         flex-direction: column;
       }
-      
+
       /* Hide any replit banners or overlays */
       .replit-banner,
       .replit-dev-banner,
-      [class*="replit"],
-      [id*="replit"],
-      iframe[src*="replit"] {
+      [class*='replit'],
+      [id*='replit'],
+      iframe[src*='replit'] {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
@@ -38,9 +42,10 @@
         width: 0 !important;
         height: 0 !important;
       }
-      
+
       /* Force full screen */
-      body, html {
+      body,
+      html {
         overflow-x: hidden !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -53,7 +58,7 @@
       }
 
       // Polyfills for CommonJS modules in browser environment
-      (function() {
+      (function () {
         if (typeof window === 'undefined') return;
 
         // CommonJS module system shim
@@ -64,11 +69,11 @@
         window.module = module;
         window.exports = exports;
 
-        window.require = function(id) {
+        window.require = function (id) {
           if (modules[id]) return modules[id];
 
           // Handle common Node.js modules
-          switch(id) {
+          switch (id) {
             case 'react':
             case 'react-dom':
             case 'react/jsx-runtime':
@@ -76,64 +81,78 @@
             case 'process':
               return { env: {}, browser: true, version: '12.0.0' };
             case 'buffer':
-              return { Buffer: window.Buffer || function() {} };
+              return { Buffer: window.Buffer || function () {} };
             case 'util':
               return {
-                inherits: function(ctor, superCtor) {
+                inherits: function (ctor, superCtor) {
                   if (!ctor || !superCtor || !superCtor.prototype) return;
                   ctor.super_ = superCtor;
                   ctor.prototype = Object.create(superCtor.prototype, {
-                    constructor: { value: ctor, enumerable: false, writable: true, configurable: true }
+                    constructor: {
+                      value: ctor,
+                      enumerable: false,
+                      writable: true,
+                      configurable: true,
+                    },
                   });
-                }
+                },
               };
             case 'events':
-              return { EventEmitter: function() {} };
+              return { EventEmitter: function () {} };
             case 'stream':
               return {};
             case 'debug':
               // Return a no-op debug function
-              return function(namespace) {
-                return function() {}; // no-op debug function
+              return function (namespace) {
+                return function () {}; // no-op debug function
               };
             case 'inherits':
-              return function(ctor, superCtor) {
+              return function (ctor, superCtor) {
                 if (!ctor || !superCtor || !superCtor.prototype) return;
                 ctor.super_ = superCtor;
                 ctor.prototype = Object.create(superCtor.prototype, {
-                  constructor: { value: ctor, enumerable: false, writable: true, configurable: true }
+                  constructor: {
+                    value: ctor,
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                  },
                 });
               };
             case 'hat':
-              return function() { return Math.random().toString(36).substr(2, 9); };
+              return function () {
+                return Math.random().toString(36).substr(2, 9);
+              };
             case 'once':
-              return function(fn) {
+              return function (fn) {
                 var called = false;
-                return function() {
+                return function () {
                   if (called) return;
                   called = true;
                   return fn && typeof fn === 'function' ? fn.apply(this, arguments) : undefined;
                 };
               };
             case 'is-typedarray':
-              return function(obj) {
-                return obj instanceof Uint8Array ||
-                       obj instanceof Uint8ClampedArray ||
-                       obj instanceof Uint16Array ||
-                       obj instanceof Uint32Array ||
-                       obj instanceof Int8Array ||
-                       obj instanceof Int16Array ||
-                       obj instanceof Int32Array ||
-                       obj instanceof Float32Array ||
-                       obj instanceof Float64Array;
+              return function (obj) {
+                return (
+                  obj instanceof Uint8Array ||
+                  obj instanceof Uint8ClampedArray ||
+                  obj instanceof Uint16Array ||
+                  obj instanceof Uint32Array ||
+                  obj instanceof Int8Array ||
+                  obj instanceof Int16Array ||
+                  obj instanceof Int32Array ||
+                  obj instanceof Float32Array ||
+                  obj instanceof Float64Array
+                );
               };
             case 'typedarray-to-buffer':
-              return function(arr) {
+              return function (arr) {
                 return arr.buffer.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
               };
             case 'extend.js':
             case 'extend':
-              return function(target) {
+              return function (target) {
                 if (!target) return target;
                 for (var i = 1; i < arguments.length; i++) {
                   var source = arguments[i];
@@ -155,15 +174,21 @@
 
         // Additional Node.js globals
         window.process = window.process || { env: {}, browser: true };
-        window.Buffer = window.Buffer || function() { return {}; };
+        window.Buffer =
+          window.Buffer ||
+          function () {
+            return {};
+          };
         window.global = window.global || window;
       })();
 
       // Remove any replit banners on load
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', function () {
         const removeReplitElements = () => {
-          const banners = document.querySelectorAll('.replit-banner, .replit-dev-banner, [class*="replit"]');
-          banners.forEach(banner => {
+          const banners = document.querySelectorAll(
+            '.replit-banner, .replit-dev-banner, [class*="replit"]'
+          );
+          banners.forEach((banner) => {
             banner.style.display = 'none';
             banner.remove();
           });

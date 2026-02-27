@@ -7,11 +7,23 @@ import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { Users, Settings, Palette, Mail, UserPlus, Crown, Building2, Globe, Phone, Link } from 'lucide-react';
+import {
+  Users,
+  Settings,
+  Palette,
+  Mail,
+  UserPlus,
+  Crown,
+  Building2,
+  Globe,
+  Phone,
+  Link,
+} from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
 const CompanyAdminDashboard: React.FC = () => {
-  const { currentCompany, companyUsers, inviteUser, updateCompany, updateWhitelabelConfig } = useCompany();
+  const { currentCompany, companyUsers, inviteUser, updateCompany, updateWhitelabelConfig } =
+    useCompany();
   const { config: whitelabelConfig, updateConfig } = useWhitelabel();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('user');
@@ -35,7 +47,7 @@ const CompanyAdminDashboard: React.FC = () => {
       toast({
         title: 'Error',
         description: 'Please enter an email address',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -46,13 +58,13 @@ const CompanyAdminDashboard: React.FC = () => {
       setInviteEmail('');
       toast({
         title: 'Success',
-        description: 'Invitation sent successfully!'
+        description: 'Invitation sent successfully!',
       });
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to send invitation',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     } finally {
       setIsInviting(false);
@@ -64,13 +76,13 @@ const CompanyAdminDashboard: React.FC = () => {
       await updateCompany(updates);
       toast({
         title: 'Success',
-        description: 'Company updated successfully!'
+        description: 'Company updated successfully!',
       });
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to update company',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -80,13 +92,13 @@ const CompanyAdminDashboard: React.FC = () => {
       await updateWhitelabelConfig(updates);
       toast({
         title: 'Success',
-        description: 'Branding updated successfully!'
+        description: 'Branding updated successfully!',
       });
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to update branding',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -108,7 +120,7 @@ const CompanyAdminDashboard: React.FC = () => {
               <p className="text-gray-600 mt-1">Company Administration Dashboard</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-lg border">
               <div className="flex items-center">
@@ -119,33 +131,39 @@ const CompanyAdminDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-4 rounded-lg border">
               <div className="flex items-center">
                 <Crown className="h-8 w-8 text-purple-600" />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600">Subscription</p>
-                  <p className="text-lg font-bold text-gray-900 capitalize">{currentCompany.subscription_tier}</p>
+                  <p className="text-lg font-bold text-gray-900 capitalize">
+                    {currentCompany.subscription_tier}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-4 rounded-lg border">
               <div className="flex items-center">
                 <Globe className="h-8 w-8 text-green-600" />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600">Domain</p>
-                  <p className="text-lg font-bold text-gray-900">{currentCompany.domain || 'Not set'}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {currentCompany.domain || 'Not set'}
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white p-4 rounded-lg border">
               <div className="flex items-center">
                 <Mail className="h-8 w-8 text-orange-600" />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-600">Support Email</p>
-                  <p className="text-lg font-bold text-gray-900">{currentCompany.support_email || 'Not set'}</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    {currentCompany.support_email || 'Not set'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -187,10 +205,7 @@ const CompanyAdminDashboard: React.FC = () => {
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
-                  <Button 
-                    onClick={handleInviteUser} 
-                    disabled={isInviting || !inviteEmail.trim()}
-                  >
+                  <Button onClick={handleInviteUser} disabled={isInviting || !inviteEmail.trim()}>
                     {isInviting ? 'Sending...' : 'Invite'}
                     <UserPlus className="h-4 w-4 ml-2" />
                   </Button>
@@ -199,7 +214,10 @@ const CompanyAdminDashboard: React.FC = () => {
                 {/* Users List */}
                 <div className="space-y-2">
                   {companyUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center space-x-3">
                         {user.profiles?.avatar_url ? (
                           <img
@@ -251,7 +269,7 @@ const CompanyAdminDashboard: React.FC = () => {
                     onChange={(e) => updateConfig({ companyName: e.target.value })}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">Logo URL</label>
                   <Input
@@ -277,7 +295,7 @@ const CompanyAdminDashboard: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Secondary Color</label>
                     <div className="flex gap-2">
@@ -315,7 +333,7 @@ const CompanyAdminDashboard: React.FC = () => {
                     placeholder="Brief description of your company"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">Industry</label>
                   <Input
@@ -344,7 +362,7 @@ const CompanyAdminDashboard: React.FC = () => {
                       placeholder="support@yourcompany.com"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Support Phone</label>
                     <Input
@@ -375,7 +393,7 @@ const CompanyAdminDashboard: React.FC = () => {
                     placeholder="Welcome to our platform"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">Hero Subtitle</label>
                   <Input

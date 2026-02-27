@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { 
-  Plus, 
-  Calendar, 
-  User, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  Plus,
+  Calendar,
+  User,
+  AlertCircle,
+  CheckCircle2,
   Clock,
   MessageSquare,
   Paperclip,
@@ -13,7 +13,7 @@ import {
   Search,
   Phone,
   FileText,
-  Settings
+  Settings,
 } from 'lucide-react';
 import { useTaskStore } from '../store/taskStore';
 import { Task } from '../types/task';
@@ -47,13 +47,13 @@ const priorityColors = {
 
 const typeIcons = {
   'follow-up': Clock,
-  'meeting': Calendar,
-  'call': Phone,
-  'email': MessageSquare,
-  'proposal': FileText,
-  'research': Search,
-  'administrative': Settings,
-  'other': Plus,
+  meeting: Calendar,
+  call: Phone,
+  email: MessageSquare,
+  proposal: FileText,
+  research: Search,
+  administrative: Settings,
+  other: Plus,
 };
 
 interface TaskCardProps {
@@ -64,8 +64,7 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
   const isOverdue = task.dueDate && task.dueDate < new Date() && task.status !== 'completed';
-  const isDueToday = task.dueDate && 
-    task.dueDate.toDateString() === new Date().toDateString();
+  const isDueToday = task.dueDate && task.dueDate.toDateString() === new Date().toDateString();
 
   const TypeIcon = typeIcons[task.type] || Plus;
 
@@ -90,21 +89,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
                   {task.priority.toUpperCase()}
                 </Badge>
               </div>
-              {task.attachments.length > 0 && (
-                <Paperclip className="h-4 w-4 text-gray-400" />
-              )}
+              {task.attachments.length > 0 && <Paperclip className="h-4 w-4 text-gray-400" />}
             </div>
 
             {/* Title */}
-            <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
-              {task.title}
-            </h3>
+            <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{task.title}</h3>
 
             {/* Description */}
             {task.description && (
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                {task.description}
-              </p>
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
             )}
 
             {/* Subtasks Progress */}
@@ -113,7 +106,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                   <span>Subtasks</span>
                   <span>
-                    {task.subtasks.filter(s => s.status === 'completed').length}/
+                    {task.subtasks.filter((s) => s.status === 'completed').length}/
                     {task.subtasks.length}
                   </span>
                 </div>
@@ -122,9 +115,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
                     className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
                     style={{
                       width: `${
-                        (task.subtasks.filter(s => s.status === 'completed').length / 
-                         task.subtasks.length) * 100
-                      }%`
+                        (task.subtasks.filter((s) => s.status === 'completed').length /
+                          task.subtasks.length) *
+                        100
+                      }%`,
                     }}
                   />
                 </div>
@@ -135,9 +129,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
             {task.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
                 {task.tags.slice(0, 3).map((tag) => (
-                  <Badge 
-                    key={tag} 
-                    variant="secondary" 
+                  <Badge
+                    key={tag}
+                    variant="secondary"
                     className="text-xs bg-gray-100 text-gray-600"
                   >
                     {tag}
@@ -163,15 +157,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
 
               {/* Due Date */}
               {task.dueDate && (
-                <div className={`flex items-center space-x-1 ${
-                  isOverdue ? 'text-red-600' : isDueToday ? 'text-orange-600' : 'text-gray-500'
-                }`}>
+                <div
+                  className={`flex items-center space-x-1 ${
+                    isOverdue ? 'text-red-600' : isDueToday ? 'text-orange-600' : 'text-gray-500'
+                  }`}
+                >
                   {isOverdue && <AlertCircle className="h-3 w-3" />}
                   <Calendar className="h-3 w-3" />
                   <span>
-                    {task.dueDate.toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {task.dueDate.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
                     })}
                   </span>
                 </div>
@@ -193,7 +189,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onClick }) => {
 };
 
 interface ColumnHeaderProps {
-  column: typeof statusColumns[0];
+  column: (typeof statusColumns)[0];
   taskCount: number;
   onAddTask: () => void;
 }
@@ -220,15 +216,9 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({ column, taskCount, onAddTas
 );
 
 export const TaskKanbanBoard: React.FC = () => {
-  const { 
-    getFilteredTasks, 
-    updateTask, 
-    filters, 
-    setFilters,
-    setSelectedTask,
-    selectedTask 
-  } = useTaskStore();
-  
+  const { getFilteredTasks, updateTask, filters, setFilters, setSelectedTask, selectedTask } =
+    useTaskStore();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -248,10 +238,7 @@ export const TaskKanbanBoard: React.FC = () => {
 
     if (!destination) return;
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
       return;
     }
 
@@ -277,7 +264,7 @@ export const TaskKanbanBoard: React.FC = () => {
   };
 
   const getTasksByStatus = (status: Task['status']) => {
-    return tasks.filter(task => task.status === status);
+    return tasks.filter((task) => task.status === status);
   };
 
   return (
@@ -288,7 +275,7 @@ export const TaskKanbanBoard: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Task Board</h1>
           <p className="text-gray-600">Manage and track your tasks</p>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           {/* Search */}
           <div className="relative">
@@ -315,9 +302,7 @@ export const TaskKanbanBoard: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem className="font-medium">
-                Priority
-              </DropdownMenuItem>
+              <DropdownMenuItem className="font-medium">Priority</DropdownMenuItem>
               {(['low', 'medium', 'high', 'urgent'] as const).map((priority) => (
                 <DropdownMenuCheckboxItem
                   key={priority}
@@ -328,7 +313,7 @@ export const TaskKanbanBoard: React.FC = () => {
                       setFilters({
                         priorities: checked
                           ? [...priorities, priority]
-                          : priorities.filter(p => p !== priority)
+                          : priorities.filter((p) => p !== priority),
                       });
                     }
                   }}
@@ -336,25 +321,25 @@ export const TaskKanbanBoard: React.FC = () => {
                   <span className="capitalize">{priority}</span>
                 </DropdownMenuCheckboxItem>
               ))}
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuCheckboxItem
                 checked={filters?.isOverdue || false}
                 onCheckedChange={(checked) => setFilters && setFilters({ isOverdue: checked })}
               >
                 Overdue Tasks
               </DropdownMenuCheckboxItem>
-              
+
               <DropdownMenuCheckboxItem
                 checked={filters?.isDueToday || false}
                 onCheckedChange={(checked) => setFilters && setFilters({ isDueToday: checked })}
               >
                 Due Today
               </DropdownMenuCheckboxItem>
-              
+
               <DropdownMenuSeparator />
-              
+
               <DropdownMenuItem onClick={() => setFilters && setFilters({})}>
                 Clear All Filters
               </DropdownMenuItem>
@@ -375,7 +360,7 @@ export const TaskKanbanBoard: React.FC = () => {
           <div className="grid grid-cols-4 gap-6 h-full">
             {statusColumns.map((column) => {
               const columnTasks = getTasksByStatus(column.id);
-              
+
               return (
                 <div key={column.id} className="flex flex-col h-full">
                   <ColumnHeader
@@ -383,15 +368,13 @@ export const TaskKanbanBoard: React.FC = () => {
                     taskCount={columnTasks.length}
                     onAddTask={() => handleAddTask(column.id)}
                   />
-                  
+
                   <Droppable droppableId={column.id}>
                     {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex-1 p-4 rounded-b-lg transition-colors ${
-                          column.color
-                        } ${
+                        className={`flex-1 p-4 rounded-b-lg transition-colors ${column.color} ${
                           snapshot.isDraggingOver ? 'bg-opacity-50' : ''
                         }`}
                         style={{ minHeight: '500px' }}
@@ -405,7 +388,7 @@ export const TaskKanbanBoard: React.FC = () => {
                           />
                         ))}
                         {provided.placeholder}
-                        
+
                         {columnTasks.length === 0 && (
                           <div className="flex flex-col items-center justify-center h-32 text-gray-400">
                             <CheckCircle2 className="h-8 w-8 mb-2" />

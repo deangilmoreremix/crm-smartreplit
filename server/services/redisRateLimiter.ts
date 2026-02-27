@@ -19,7 +19,7 @@ export class RedisRateLimiter {
       reconnectOnError: (err) => {
         console.warn('Redis connection error:', err.message);
         return err.message.includes('READONLY');
-      }
+      },
     });
 
     this.redis.on('error', (err) => {
@@ -74,9 +74,8 @@ export class RedisRateLimiter {
         allowed,
         remaining,
         resetTime,
-        totalRequests: requestCount
+        totalRequests: requestCount,
       };
-
     } catch (error) {
       console.error('Redis rate limit check failed:', error);
 
@@ -85,7 +84,10 @@ export class RedisRateLimiter {
     }
   }
 
-  async getUsageStats(key: string, windowMs: number): Promise<{
+  async getUsageStats(
+    key: string,
+    windowMs: number
+  ): Promise<{
     currentRequests: number;
     remainingRequests: number;
     resetTime: number;
@@ -103,7 +105,8 @@ export class RedisRateLimiter {
 
       const results = await pipeline.exec();
 
-      if (!results) return { currentRequests: 0, remainingRequests: 0, resetTime: now + windowMs, windowStart };
+      if (!results)
+        return { currentRequests: 0, remainingRequests: 0, resetTime: now + windowMs, windowStart };
 
       const currentRequests = results[1][1] as number;
       const resetTime = now + windowMs;
@@ -112,9 +115,8 @@ export class RedisRateLimiter {
         currentRequests,
         remainingRequests: Math.max(0, 100 - currentRequests), // Assuming 100 max for stats
         resetTime,
-        windowStart
+        windowStart,
       };
-
     } catch (error) {
       console.error('Redis usage stats failed:', error);
       return { currentRequests: 0, remainingRequests: 100, resetTime: now + windowMs, windowStart };
@@ -162,7 +164,7 @@ export class RedisRateLimiter {
         allowed: false,
         remaining: 0,
         resetTime: current.resetTime,
-        totalRequests: current.count
+        totalRequests: current.count,
       };
     } else {
       current.count++;
@@ -174,7 +176,7 @@ export class RedisRateLimiter {
       allowed: true,
       remaining: maxRequests - current.count,
       resetTime: current.resetTime,
-      totalRequests: current.count
+      totalRequests: current.count,
     };
   }
 
@@ -184,7 +186,10 @@ export class RedisRateLimiter {
       await this.redis.ping();
       return true;
     } catch (error: unknown) {
-      console.warn('Redis health check failed:', error instanceof Error ? error.message : String(error));
+      console.warn(
+        'Redis health check failed:',
+        error instanceof Error ? error.message : String(error)
+      );
       return false;
     }
   }

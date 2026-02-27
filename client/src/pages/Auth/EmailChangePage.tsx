@@ -14,8 +14,11 @@ export default function EmailChangePage() {
     const handleEmailChange = async () => {
       try {
         // Get the session from URL hash parameters
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError || !session) {
           // Try to handle hash-based tokens from email links
           const hash = window.location.hash;
@@ -72,7 +75,8 @@ export default function EmailChangePage() {
               Email Updated Successfully!
             </h2>
             <p className="text-green-700 dark:text-green-300 mb-4">
-              Your email address has been successfully updated. You will be redirected to your dashboard shortly.
+              Your email address has been successfully updated. You will be redirected to your
+              dashboard shortly.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
@@ -96,9 +100,7 @@ export default function EmailChangePage() {
             <h2 className="text-xl font-semibold text-red-900 dark:text-red-100 mb-2">
               Email Change Failed
             </h2>
-            <p className="text-red-700 dark:text-red-300 mb-4">
-              {error}
-            </p>
+            <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/dashboard')}

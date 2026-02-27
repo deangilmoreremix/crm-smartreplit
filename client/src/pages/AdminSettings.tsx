@@ -13,7 +13,7 @@ const AdminSettings: React.FC = () => {
     emailNotifications: true,
     maintenanceMode: false,
     allowSignups: true,
-    requireEmailVerification: true
+    requireEmailVerification: true,
   });
 
   const handleSave = () => {
@@ -32,15 +32,15 @@ const AdminSettings: React.FC = () => {
           id: 'siteName',
           label: 'Site Name',
           type: 'text',
-          value: settings.siteName
+          value: settings.siteName,
         },
         {
           id: 'siteUrl',
           label: 'Site URL',
           type: 'text',
-          value: settings.siteUrl
-        }
-      ]
+          value: settings.siteUrl,
+        },
+      ],
     },
     {
       title: 'Email Settings',
@@ -50,9 +50,9 @@ const AdminSettings: React.FC = () => {
           id: 'emailNotifications',
           label: 'Enable Email Notifications',
           type: 'checkbox',
-          value: settings.emailNotifications
-        }
-      ]
+          value: settings.emailNotifications,
+        },
+      ],
     },
     {
       title: 'Security Settings',
@@ -62,15 +62,15 @@ const AdminSettings: React.FC = () => {
           id: 'requireEmailVerification',
           label: 'Require Email Verification',
           type: 'checkbox',
-          value: settings.requireEmailVerification
+          value: settings.requireEmailVerification,
         },
         {
           id: 'allowSignups',
           label: 'Allow New Signups',
           type: 'checkbox',
-          value: settings.allowSignups
-        }
-      ]
+          value: settings.allowSignups,
+        },
+      ],
     },
     {
       title: 'System Settings',
@@ -80,10 +80,10 @@ const AdminSettings: React.FC = () => {
           id: 'maintenanceMode',
           label: 'Maintenance Mode',
           type: 'checkbox',
-          value: settings.maintenanceMode
-        }
-      ]
-    }
+          value: settings.maintenanceMode,
+        },
+      ],
+    },
   ];
 
   return (
@@ -140,7 +140,9 @@ const AdminSettings: React.FC = () => {
                         type="checkbox"
                         id={setting.id}
                         checked={setting.value as boolean}
-                        onChange={(e) => setSettings({ ...settings, [setting.id]: e.target.checked })}
+                        onChange={(e) =>
+                          setSettings({ ...settings, [setting.id]: e.target.checked })
+                        }
                         className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                         data-testid={`input-${setting.id}`}
                       />

@@ -5,24 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useCommunicationStore } from '../store/communicationStore';
-import { 
-  Mail, 
-  Phone, 
-  MessageSquare, 
+import {
+  Mail,
+  Phone,
+  MessageSquare,
   Calendar,
   TrendingUp,
   Clock,
   CheckCircle,
-  Plus
+  Plus,
 } from 'lucide-react';
 
 export default function Communication() {
-  const {
-    emails,
-    callLogs,
-    communicationLogs,
-    analytics
-  } = useCommunicationStore();
+  const { emails, callLogs, communicationLogs, analytics } = useCommunicationStore();
 
   const [activeTab, setActiveTab] = useState('email');
 
@@ -39,27 +34,37 @@ export default function Communication() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const getCommTypeIcon = (type: string) => {
     switch (type) {
-      case 'email': return <Mail className="w-4 h-4" />;
-      case 'call': return <Phone className="w-4 h-4" />;
-      case 'meeting': return <Calendar className="w-4 h-4" />;
-      case 'text': return <MessageSquare className="w-4 h-4" />;
-      default: return <MessageSquare className="w-4 h-4" />;
+      case 'email':
+        return <Mail className="w-4 h-4" />;
+      case 'call':
+        return <Phone className="w-4 h-4" />;
+      case 'meeting':
+        return <Calendar className="w-4 h-4" />;
+      case 'text':
+        return <MessageSquare className="w-4 h-4" />;
+      default:
+        return <MessageSquare className="w-4 h-4" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'missed': return 'bg-red-100 text-red-800';
-      case 'cancelled': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'missed':
+        return 'bg-red-100 text-red-800';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -87,29 +92,27 @@ export default function Communication() {
           <div className="space-y-4">
             {recentCalls.map((call) => (
               <div key={call.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                <div className={`p-2 rounded-full ${
-                  call.direction === 'outbound' ? 'bg-blue-100' : 'bg-green-100'
-                }`}>
-                  <Phone className={`w-4 h-4 ${
-                    call.direction === 'outbound' ? 'text-blue-600' : 'text-green-600'
-                  }`} />
+                <div
+                  className={`p-2 rounded-full ${
+                    call.direction === 'outbound' ? 'bg-blue-100' : 'bg-green-100'
+                  }`}
+                >
+                  <Phone
+                    className={`w-4 h-4 ${
+                      call.direction === 'outbound' ? 'text-blue-600' : 'text-green-600'
+                    }`}
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium">{call.phoneNumber}</span>
-                    <Badge className={getStatusColor(call.status)}>
-                      {call.status}
-                    </Badge>
-                    <Badge variant="outline">
-                      {call.direction}
-                    </Badge>
+                    <Badge className={getStatusColor(call.status)}>{call.status}</Badge>
+                    <Badge variant="outline">{call.direction}</Badge>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">
                     Duration: {Math.floor(call.duration / 60)}m {call.duration % 60}s
                   </p>
-                  {call.notes && (
-                    <p className="text-sm text-gray-700 truncate">{call.notes}</p>
-                  )}
+                  {call.notes && <p className="text-sm text-gray-700 truncate">{call.notes}</p>}
                   <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                     <span>{formatDate(call.timestamp)}</span>
                     {call.outcome && (
@@ -145,20 +148,18 @@ export default function Communication() {
           <div className="space-y-4">
             {recentCommunications.map((comm) => (
               <div key={comm.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                <div className={`p-2 rounded-full ${
-                  comm.direction === 'outbound' ? 'bg-blue-100' : 'bg-green-100'
-                }`}>
+                <div
+                  className={`p-2 rounded-full ${
+                    comm.direction === 'outbound' ? 'bg-blue-100' : 'bg-green-100'
+                  }`}
+                >
                   {getCommTypeIcon(comm.type)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium capitalize">{comm.type}</span>
-                    <Badge className={getStatusColor(comm.status)}>
-                      {comm.status}
-                    </Badge>
-                    <Badge variant="outline">
-                      {comm.direction}
-                    </Badge>
+                    <Badge className={getStatusColor(comm.status)}>{comm.status}</Badge>
+                    <Badge variant="outline">{comm.direction}</Badge>
                   </div>
                   {comm.subject && (
                     <h4 className="font-medium text-gray-900 mb-1">{comm.subject}</h4>
@@ -166,9 +167,7 @@ export default function Communication() {
                   <p className="text-sm text-gray-700 line-clamp-2">{comm.content}</p>
                   <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                     <span>{formatDate(comm.timestamp)}</span>
-                    {comm.duration && (
-                      <span>{comm.duration} min</span>
-                    )}
+                    {comm.duration && <span>{comm.duration} min</span>}
                     {comm.tags.map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         {tag}
@@ -197,9 +196,7 @@ export default function Communication() {
             <div className="text-2xl font-bold">
               {emails.length + callLogs.length + communicationLogs.length}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Across all channels
-            </p>
+            <p className="text-xs text-muted-foreground">Across all channels</p>
           </CardContent>
         </Card>
 
@@ -210,15 +207,15 @@ export default function Communication() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {communicationLogs.filter(c => {
-                const weekAgo = new Date();
-                weekAgo.setDate(weekAgo.getDate() - 7);
-                return new Date(c.timestamp) > weekAgo;
-              }).length}
+              {
+                communicationLogs.filter((c) => {
+                  const weekAgo = new Date();
+                  weekAgo.setDate(weekAgo.getDate() - 7);
+                  return new Date(c.timestamp) > weekAgo;
+                }).length
+              }
             </div>
-            <p className="text-xs text-muted-foreground">
-              Communications this week
-            </p>
+            <p className="text-xs text-muted-foreground">Communications this week</p>
           </CardContent>
         </Card>
 
@@ -228,12 +225,8 @@ export default function Communication() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(analytics.replyRate * 100).toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Email response rate
-            </p>
+            <div className="text-2xl font-bold">{(analytics.replyRate * 100).toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground">Email response rate</p>
           </CardContent>
         </Card>
 
@@ -244,9 +237,7 @@ export default function Communication() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2.3h</div>
-            <p className="text-xs text-muted-foreground">
-              Average response time
-            </p>
+            <p className="text-xs text-muted-foreground">Average response time</p>
           </CardContent>
         </Card>
       </div>
@@ -306,11 +297,15 @@ export default function Communication() {
           </TabsContent>
 
           <TabsContent value="email">
-            <div data-testid="video-email"><EmailDashboard /></div>
+            <div data-testid="video-email">
+              <EmailDashboard />
+            </div>
           </TabsContent>
 
           <TabsContent value="calls">
-            <div data-testid="voip-dialer"><CallsList /></div>
+            <div data-testid="voip-dialer">
+              <CallsList />
+            </div>
           </TabsContent>
 
           <TabsContent value="meetings">

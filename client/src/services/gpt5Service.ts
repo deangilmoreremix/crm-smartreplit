@@ -30,43 +30,46 @@ export class GPT5Service {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userMetrics, timeOfDay, recentActivity })
+        body: JSON.stringify({ userMetrics, timeOfDay, recentActivity }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Smart greeting error:', error);
       return {
         greeting: `Good ${timeOfDay}! You have ${userMetrics.totalDeals} deals worth $${userMetrics.totalValue.toLocaleString()} in your pipeline.`,
-        insight: 'Network error occurred. Please check your connection.'
+        insight: 'Network error occurred. Please check your connection.',
       };
     }
   }
 
   /**
-   * GPT-5 Expert-Level KPI Analysis  
+   * GPT-5 Expert-Level KPI Analysis
    * 94.6% AIME mathematical accuracy with high reasoning effort
    */
-  async analyzeKPITrends(historicalData: any, currentMetrics: any, chartImages: string[] = [], videoData: string[] = []) {
+  async analyzeKPITrends(
+    historicalData: any,
+    currentMetrics: any,
+    chartImages: string[] = [],
+    videoData: string[] = []
+  ) {
     try {
       const response = await fetch('/api/openai/kpi-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ historicalData, currentMetrics, chartImages, videoData })
+        body: JSON.stringify({ historicalData, currentMetrics, chartImages, videoData }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('KPI analysis error:', error);
       return {
         summary: 'Your KPI trends show steady performance. Network error occurred.',
-        recommendations: ['Check network connection', 'Retry analysis']
+        recommendations: ['Check network connection', 'Retry analysis'],
       };
     }
   }
@@ -82,12 +85,11 @@ export class GPT5Service {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ dealData, contactHistory, marketContext })
+        body: JSON.stringify({ dealData, contactHistory, marketContext }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Deal intelligence error:', error);
       return {
@@ -97,7 +99,7 @@ export class GPT5Service {
         recommendations: ['Check connection and retry'],
         confidence_level: 'low',
         estimated_close_days: 30,
-        value_optimization: 0
+        value_optimization: 0,
       };
     }
   }
@@ -113,12 +115,11 @@ export class GPT5Service {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ businessData, marketContext, objectives })
+        body: JSON.stringify({ businessData, marketContext, objectives }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Business intelligence error:', error);
       return {
@@ -126,7 +127,10 @@ export class GPT5Service {
         competitive_advantages: ['AI integration', 'Customer-centric approach'],
         risk_factors: ['Market competition', 'Economic uncertainty'],
         growth_opportunities: ['Market expansion', 'Product diversification'],
-        strategic_recommendations: ['Invest in AI capabilities', 'Strengthen customer relationships']
+        strategic_recommendations: [
+          'Invest in AI capabilities',
+          'Strengthen customer relationships',
+        ],
       };
     }
   }
@@ -142,12 +146,11 @@ export class GPT5Service {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ systemMetrics, userBehavior, businessGoals })
+        body: JSON.stringify({ systemMetrics, userBehavior, businessGoals }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Performance optimization error:', error);
       return {
@@ -155,7 +158,7 @@ export class GPT5Service {
         efficiency_gain: 40,
         recommended_actions: ['Basic workflow improvements'],
         expected_roi: '20% productivity gain',
-        implementation_timeline: '2-4 weeks'
+        implementation_timeline: '2-4 weeks',
       };
     }
   }
@@ -164,25 +167,28 @@ export class GPT5Service {
    * GPT-5 Advanced Content Generation
    * Uses context-free grammar and reasoning effort parameters
    */
-  async generateAdvancedContent(contentType: string, parameters: any, reasoning_effort: 'minimal' | 'low' | 'medium' | 'high' = 'medium') {
+  async generateAdvancedContent(
+    contentType: string,
+    parameters: any,
+    reasoning_effort: 'minimal' | 'low' | 'medium' | 'high' = 'medium'
+  ) {
     try {
       const response = await fetch('/api/openai/advanced-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ contentType, parameters, reasoning_effort })
+        body: JSON.stringify({ contentType, parameters, reasoning_effort }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Advanced content generation error:', error);
       return {
         content: 'AI content generation temporarily unavailable. Please try again.',
         reasoning_quality: 'fallback',
-        confidence: 0.5
+        confidence: 0.5,
       };
     }
   }
@@ -191,26 +197,30 @@ export class GPT5Service {
    * GPT-5 Multimodal Analysis
    * 74.9% SWE-bench coding accuracy with image processing
    */
-  async analyzeMultimodal(textData: any, images: string[] = [], charts: string[] = [], documents: string[] = []) {
+  async analyzeMultimodal(
+    textData: any,
+    images: string[] = [],
+    charts: string[] = [],
+    documents: string[] = []
+  ) {
     try {
       const response = await fetch('/api/openai/multimodal-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ textData, images, charts, documents })
+        body: JSON.stringify({ textData, images, charts, documents }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Multimodal analysis error:', error);
       return {
         text_insights: ['Analysis temporarily unavailable'],
         visual_insights: ['Image analysis not available'],
         combined_insights: ['Multimodal analysis failed'],
-        confidence_score: 0.3
+        confidence_score: 0.3,
       };
     }
   }
@@ -219,19 +229,22 @@ export class GPT5Service {
    * GPT-5 Predictive Analytics
    * Advanced forecasting with 94.6% AIME mathematical accuracy
    */
-  async generatePredictiveAnalytics(historicalData: any, forecastPeriod: number = 3, analysisType: string = 'sales') {
+  async generatePredictiveAnalytics(
+    historicalData: any,
+    forecastPeriod: number = 3,
+    analysisType: string = 'sales'
+  ) {
     try {
       const response = await fetch('/api/openai/predictive-analytics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ historicalData, forecastPeriod, analysisType })
+        body: JSON.stringify({ historicalData, forecastPeriod, analysisType }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Predictive analytics error:', error);
       return {
@@ -239,7 +252,7 @@ export class GPT5Service {
         confidence_intervals: { low: 0.7, high: 0.9 },
         key_factors: ['Historical trends', 'Market conditions'],
         accuracy_score: 0.6,
-        forecast_period: forecastPeriod
+        forecast_period: forecastPeriod,
       };
     }
   }
@@ -248,19 +261,23 @@ export class GPT5Service {
    * GPT-5 Strategic Planning Assistant
    * Expert-level strategic business planning
    */
-  async generateStrategicPlan(businessContext: any, goals: any, constraints: any, timeframe: string = '12 months') {
+  async generateStrategicPlan(
+    businessContext: any,
+    goals: any,
+    constraints: any,
+    timeframe: string = '12 months'
+  ) {
     try {
       const response = await fetch('/api/openai/strategic-planning', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ businessContext, goals, constraints, timeframe })
+        body: JSON.stringify({ businessContext, goals, constraints, timeframe }),
       });
 
       const result = await response.json();
       return result;
-
     } catch (error) {
       console.error('Strategic planning error:', error);
       return {
@@ -268,7 +285,7 @@ export class GPT5Service {
         action_items: ['Conduct market research', 'Optimize operations'],
         milestones: ['Q1: Market analysis', 'Q2: Implementation'],
         risk_mitigation: ['Regular performance reviews', 'Contingency planning'],
-        success_metrics: ['Revenue growth', 'Customer retention']
+        success_metrics: ['Revenue growth', 'Customer retention'],
       };
     }
   }

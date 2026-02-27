@@ -6,14 +6,14 @@ interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  message = 'Loading...', 
-  size = 'md' 
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  message = 'Loading...',
+  size = 'md',
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-8 h-8',
-    lg: 'w-12 h-12'
+    lg: 'w-12 h-12',
   };
 
   return (
@@ -39,7 +39,7 @@ export const AIToolLoadingSkeleton: React.FC = () => {
       {/* Form skeleton */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg space-y-6">
         <div className="w-40 h-5 bg-gray-300 dark:bg-gray-600 rounded"></div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <div className="w-32 h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>

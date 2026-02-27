@@ -7,6 +7,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 ## What Was Implemented
 
 ### 1. WebSocket Signaling Server (`server/signaling-server.ts`)
+
 - Real-time signaling using WebSocket (ws package)
 - Room-based architecture for call management
 - Handles SDP offers/answers and ICE candidate exchange
@@ -14,6 +15,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 - Connection tracking and participant management
 
 ### 2. Updated VideoCallContext (`client/src/contexts/VideoCallContext.tsx`)
+
 - WebSocket client integration
 - Automatic WebSocket connection on component mount
 - Real signaling message exchange (offer, answer, ICE candidates)
@@ -21,6 +23,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 - Proper room joining/leaving
 
 ### 3. Server Integration (`server/index.ts`)
+
 - WebSocket server mounted on `/signaling` path
 - Runs alongside Express server on same port (5000)
 - Automatic initialization on server start
@@ -60,6 +63,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 ## Technical Details
 
 ### WebSocket Connection
+
 - **Protocol:** WebSocket (ws/wss)
 - **Path:** `/signaling`
 - **Port:** Same as web server (5000)
@@ -68,6 +72,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 ### Signaling Flow
 
 1. **User initiates call:**
+
    ```
    User A → Join Room → WebSocket Server
    User A → Create Peer (initiator) → Generate Offer
@@ -75,6 +80,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
    ```
 
 2. **User receives call:**
+
    ```
    User B → Receive Offer → Create Peer (non-initiator)
    User B → Generate Answer → Send to WebSocket Server → User A
@@ -90,14 +96,17 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 ### WebRTC Configuration
 
 **STUN Servers:**
+
 - Google STUN (5 servers for redundancy)
 - Used for NAT traversal
 
 **TURN Server:**
+
 - OpenRelay public TURN server
 - Fallback for restrictive networks
 
 **Media Constraints:**
+
 - **Video:** 1280x720 @ 30fps (ideal)
 - **Audio:** 48kHz stereo with echo cancellation
 
@@ -115,11 +124,13 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 ## Troubleshooting
 
 ### "WebSocket not connected" Error
+
 - Check that the server is running (`npm run dev`)
 - Verify the WebSocket path is `/signaling`
 - Check browser console for connection errors
 
 ### Video/Audio Not Working
+
 1. **Check Browser Permissions:**
    - Allow camera/microphone access when prompted
    - Check browser settings (chrome://settings/content)
@@ -135,6 +146,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
    - Try on a different network if issues persist
 
 ### Peer Connection Fails
+
 1. **Check ICE Candidates:**
    - Open browser console
    - Look for "🧊 Received ICE candidate" messages
@@ -145,6 +157,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
    - For enterprise networks, may need dedicated TURN server
 
 ### No Remote Stream
+
 1. **Verify Both Peers Connected:**
    - Check "✅ Joined room" messages in both consoles
    - Ensure both are in the same room
@@ -156,6 +169,7 @@ The video calling component now uses **real WebSocket-based signaling** for peer
 ## Browser Console Messages
 
 ### ✅ Success Indicators:
+
 ```
 ✅ WebSocket connected to signaling server
 📞 Joined call room: [room-id]
@@ -167,6 +181,7 @@ Peer connected successfully
 ```
 
 ### ❌ Error Indicators:
+
 ```
 ❌ WebSocket error
 WebSocket not connected, cannot send signal
@@ -201,13 +216,16 @@ Ice connection failed
 ## Production Deployment Notes
 
 ### Environment Variables
+
 No additional environment variables required - WebSocket uses same port as web server.
 
 ### HTTPS/WSS
+
 - In production (HTTPS), WebSocket automatically upgrades to WSS
 - Certificate applies to both HTTP and WebSocket connections
 
 ### Scaling Considerations
+
 - Current implementation: Single server, in-memory room management
 - For multi-server deployments:
   - Use Redis for room state sharing

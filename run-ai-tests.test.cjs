@@ -20,10 +20,10 @@ class AITestRunner {
         passed: 0,
         failed: 0,
         skipped: 0,
-        duration: 0
+        duration: 0,
       },
       coverage: null,
-      recommendations: []
+      recommendations: [],
     };
   }
 
@@ -34,7 +34,7 @@ class AITestRunner {
       arch: process.arch,
       cwd: process.cwd(),
       testUrl: process.env.TEST_BASE_URL || 'http://localhost:3000',
-      skipExpensive: process.env.SKIP_EXPENSIVE_TESTS === 'true'
+      skipExpensive: process.env.SKIP_EXPENSIVE_TESTS === 'true',
     };
   }
 
@@ -64,10 +64,11 @@ class AITestRunner {
       this.testResults.summary.duration = duration;
 
       console.log(`\n✅ Test execution completed in ${duration}ms`);
-      console.log(`📊 Results: ${this.testResults.summary.passed}/${this.testResults.summary.total} tests passed`);
+      console.log(
+        `📊 Results: ${this.testResults.summary.passed}/${this.testResults.summary.total} tests passed`
+      );
 
       return this.testResults.summary.failed === 0;
-
     } catch (error) {
       console.error('❌ Test runner failed:', error.message);
       this.testResults.summary.error = error.message;
@@ -79,9 +80,12 @@ class AITestRunner {
     console.log('🔍 Checking server health...');
 
     try {
-      const response = await fetch(`${process.env.TEST_BASE_URL || 'http://localhost:3000'}/api/health`, {
-        timeout: 5000
-      });
+      const response = await fetch(
+        `${process.env.TEST_BASE_URL || 'http://localhost:3000'}/api/health`,
+        {
+          timeout: 5000,
+        }
+      );
 
       if (response.ok) {
         console.log('✅ Server is healthy');
@@ -103,7 +107,7 @@ class AITestRunner {
     return new Promise((resolve, reject) => {
       const testProcess = spawn('node', ['ai-production-readiness.test.cjs'], {
         stdio: ['inherit', 'pipe', 'pipe'],
-        env: { ...process.env, NODE_ENV: 'test' }
+        env: { ...process.env, NODE_ENV: 'test' },
       });
 
       let output = '';
@@ -152,12 +156,14 @@ class AITestRunner {
         console.log('   Running tests with coverage...');
         execSync('nyc --reporter=lcov --reporter=text node ai-production-readiness.test.cjs', {
           stdio: 'inherit',
-          timeout: 300000 // 5 minutes
+          timeout: 300000, // 5 minutes
         });
 
         // Read coverage report
         if (fs.existsSync('coverage/coverage-summary.json')) {
-          const coverageData = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+          const coverageData = JSON.parse(
+            fs.readFileSync('coverage/coverage-summary.json', 'utf8')
+          );
           this.testResults.coverage = coverageData;
           console.log('✅ Coverage report generated');
         }
@@ -219,7 +225,7 @@ class AITestRunner {
       this.testResults.recommendations.push({
         type: 'critical',
         message: `${summary.failed} tests failed. Review error logs and fix issues before production deployment.`,
-        action: 'Fix failing tests and re-run test suite'
+        action: 'Fix failing tests and re-run test suite',
       });
     }
 
@@ -227,7 +233,7 @@ class AITestRunner {
       this.testResults.recommendations.push({
         type: 'warning',
         message: `Test success rate is below 80%. Current rate: ${((summary.passed / summary.total) * 100).toFixed(1)}%`,
-        action: 'Improve test reliability and coverage'
+        action: 'Improve test reliability and coverage',
       });
     }
 
@@ -235,7 +241,7 @@ class AITestRunner {
       this.testResults.recommendations.push({
         type: 'info',
         message: `${summary.skipped} tests were skipped. Review skipped tests to ensure adequate coverage.`,
-        action: 'Configure API keys or enable skipped test scenarios'
+        action: 'Configure API keys or enable skipped test scenarios',
       });
     }
 
@@ -243,8 +249,9 @@ class AITestRunner {
     if (this.testResults.output && this.testResults.output.includes('API key')) {
       this.testResults.recommendations.push({
         type: 'setup',
-        message: 'AI API keys not configured. Configure OpenAI and Google AI API keys for full testing.',
-        action: 'Set OPENAI_API_KEY and GOOGLE_AI_API_KEY environment variables'
+        message:
+          'AI API keys not configured. Configure OpenAI and Google AI API keys for full testing.',
+        action: 'Set OPENAI_API_KEY and GOOGLE_AI_API_KEY environment variables',
       });
     }
 
@@ -252,7 +259,7 @@ class AITestRunner {
       this.testResults.recommendations.push({
         type: 'performance',
         message: 'Rate limiting detected. Ensure production environment can handle expected load.',
-        action: 'Review rate limiting configuration and scaling requirements'
+        action: 'Review rate limiting configuration and scaling requirements',
       });
     }
   }
@@ -261,7 +268,7 @@ class AITestRunner {
     const report = {
       ...this.testResults,
       generatedAt: new Date().toISOString(),
-      success: this.testResults.summary.failed === 0
+      success: this.testResults.summary.failed === 0,
     };
 
     // Write JSON report
@@ -355,16 +362,17 @@ class AITestRunner {
   cleanupOldReports() {
     try {
       const files = fs.readdirSync('.');
-      const oldReports = files.filter(file =>
-        file.startsWith('ai-test-report-') ||
-        file.startsWith('ai-test-summary-') ||
-        file.startsWith('ai-test-results-')
+      const oldReports = files.filter(
+        (file) =>
+          file.startsWith('ai-test-report-') ||
+          file.startsWith('ai-test-summary-') ||
+          file.startsWith('ai-test-results-')
       );
 
       // Keep only last 10 reports
       if (oldReports.length > 10) {
         const toDelete = oldReports.sort().slice(0, -10);
-        toDelete.forEach(file => {
+        toDelete.forEach((file) => {
           fs.unlinkSync(file);
           console.log(`🗑️  Cleaned up old report: ${file}`);
         });
@@ -482,7 +490,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Run if called directly
 if (typeof require !== 'undefined' && require.main === module) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('Test runner execution failed:', error);
     process.exit(1);
   });

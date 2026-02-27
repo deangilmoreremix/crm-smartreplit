@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, DollarSign, Zap, Clock, TrendingUp } from 'lucide-react';
+import { BarChart3, DollarSign, Zap, Clock } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { AI_MODELS } from '../services/aiModels';
 
@@ -20,7 +20,7 @@ interface AIModelUsageStatsProps {
 const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
   usage = [],
   timeframe = 'month',
-  className = ''
+  className = '',
 }) => {
   const { isDark } = useTheme();
 
@@ -31,22 +31,22 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
       requests: 145,
       tokensUsed: 87500,
       cost: 8.75,
-      avgResponseTime: 1.2
+      avgResponseTime: 1.2,
     },
     {
       modelId: 'gemma-2-9b-it',
       requests: 89,
       tokensUsed: 42300,
       cost: 3.45,
-      avgResponseTime: 0.8
+      avgResponseTime: 0.8,
     },
     {
       modelId: 'gemini-2.5-flash-8b',
       requests: 67,
       tokensUsed: 33200,
-      cost: 2.10,
-      avgResponseTime: 0.6
-    }
+      cost: 2.1,
+      avgResponseTime: 0.6,
+    },
   ];
 
   const stats = usage.length > 0 ? usage : demoUsage;
@@ -58,7 +58,7 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 2
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -76,13 +76,17 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
     <div className={`space-y-6 ${className}`}>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className={`p-4 rounded-xl border ${
-          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`p-4 rounded-xl border ${
+            isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+          }`}
+        >
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
-              isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
-            }`}>
+            <div
+              className={`p-2 rounded-lg ${
+                isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
+              }`}
+            >
               <DollarSign size={16} />
             </div>
             <div>
@@ -96,13 +100,17 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border ${
-          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`p-4 rounded-xl border ${
+            isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+          }`}
+        >
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
-              isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-            }`}>
+            <div
+              className={`p-2 rounded-lg ${
+                isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+              }`}
+            >
               <Zap size={16} />
             </div>
             <div>
@@ -116,19 +124,21 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border ${
-          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`p-4 rounded-xl border ${
+            isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+          }`}
+        >
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
-              isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
-            }`}>
+            <div
+              className={`p-2 rounded-lg ${
+                isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+              }`}
+            >
               <BarChart3 size={16} />
             </div>
             <div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Tokens Used
-              </p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Tokens Used</p>
               <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {formatNumber(totalTokens)}
               </p>
@@ -136,13 +146,17 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
           </div>
         </div>
 
-        <div className={`p-4 rounded-xl border ${
-          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`p-4 rounded-xl border ${
+            isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+          }`}
+        >
           <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${
-              isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
-            }`}>
+            <div
+              className={`p-2 rounded-lg ${
+                isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600'
+              }`}
+            >
               <Clock size={16} />
             </div>
             <div>
@@ -150,7 +164,10 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
                 Avg Response
               </p>
               <p className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {(stats.reduce((sum, stat) => sum + stat.avgResponseTime, 0) / stats.length).toFixed(1)}s
+                {(
+                  stats.reduce((sum, stat) => sum + stat.avgResponseTime, 0) / stats.length
+                ).toFixed(1)}
+                s
               </p>
             </div>
           </div>
@@ -158,15 +175,17 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
       </div>
 
       {/* Model Usage Breakdown */}
-      <div className={`rounded-xl border ${
-        isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
-      } overflow-hidden`}>
+      <div
+        className={`rounded-xl border ${
+          isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'
+        } overflow-hidden`}
+      >
         <div className="p-4 border-b border-white/10">
           <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Model Usage Breakdown
           </h3>
         </div>
-        
+
         <div className="divide-y divide-white/10">
           {stats.map((stat) => {
             const model = AI_MODELS[stat.modelId];
@@ -179,11 +198,17 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
               <div key={stat.modelId} className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${
-                      model.family === 'gemini' 
-                        ? (isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600')
-                        : (isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600')
-                    }`}>
+                    <div
+                      className={`p-2 rounded-lg ${
+                        model.family === 'gemini'
+                          ? isDark
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-blue-100 text-blue-600'
+                          : isDark
+                            ? 'bg-orange-500/20 text-orange-400'
+                            : 'bg-orange-100 text-orange-600'
+                      }`}
+                    >
                       <BarChart3 size={16} />
                     </div>
                     <div>
@@ -195,7 +220,7 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="text-right">
                     <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {formatCurrency(stat.cost)}
@@ -208,17 +233,13 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
 
                 <div className="grid grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Requests
-                    </p>
+                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>Requests</p>
                     <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {formatNumber(stat.requests)}
                     </p>
                   </div>
                   <div>
-                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                      Tokens
-                    </p>
+                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-1`}>Tokens</p>
                     <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {formatNumber(stat.tokensUsed)}
                     </p>
@@ -235,8 +256,10 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
 
                 {/* Usage Progress Bar */}
                 <div className="mt-3">
-                  <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
-                    <div 
+                  <div
+                    className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}
+                  >
+                    <div
                       className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${usagePercent}%` }}
                     />

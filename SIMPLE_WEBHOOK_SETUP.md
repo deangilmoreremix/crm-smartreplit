@@ -3,30 +3,39 @@
 ## What You See vs What You Need to Do
 
 ### 1. **Webhook Type Section**
+
 **What you see:** Dropdown with "HTTP Request" and "Supabase Edge Functions"  
 **What to select:** HTTP Request ✅ (you already did this)
 
 ### 2. **Basic Configuration Section**
+
 **What you see:**
+
 - Method: POST ✅ (already correct)
 - URL: Your Replit URL ✅ (already correct)
 - Timeout: ${WEBHOOK_TIMEOUT:-5000}ms ✅ (already correct)
 
 ### 3. **Table and Events Section** (This is what you're missing!)
+
 **What you'll see:** A section that asks:
+
 - **"Table"**: Dropdown menu → Select `auth.users`
 - **"Events"**: Checkboxes → Check only `INSERT`
 
 ### 4. **HTTP Headers Section**
+
 **What you see:**
+
 ```
 Content-type: application/json ✅ (already correct)
 ```
 
 ### 5. **Request Body Section** (This is the important part!)
+
 **What you'll see:** A large text box labeled "Request Body" or "Payload"
 
 **Copy and paste this exactly:**
+
 ```json
 {
   "type": "INSERT",
@@ -53,6 +62,7 @@ Content-type: application/json ✅ (already correct)
 ## What This Does:
 
 When someone signs up for SmartCRM:
+
 1. Supabase creates the user in `auth.users` table
 2. This triggers the webhook (because we selected INSERT events)
 3. Supabase sends the user data to your Replit app

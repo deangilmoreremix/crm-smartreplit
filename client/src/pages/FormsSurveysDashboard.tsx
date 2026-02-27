@@ -5,7 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
@@ -32,7 +38,7 @@ import {
   TrendingUp,
   Copy,
   Download,
-  Share
+  Share,
 } from 'lucide-react';
 
 interface Form {
@@ -100,10 +106,9 @@ export default function FormsSurveysDashboard() {
     setIsOptimizing(true);
     try {
       const result = await gpt5Communication.optimizeContent(
-        `Form: ${form.title}, Description: ${form.description}, Fields: ${form.fields.map(f => f.label).join(', ')}`,
+        `Form: ${form.title}, Description: ${form.description}, Fields: ${form.fields.map((f) => f.label).join(', ')}`,
         'form-optimization'
       );
-      console.log('Form optimization:', result);
     } catch (error) {
       console.error('Failed to optimize form:', error);
     } finally {
@@ -113,10 +118,14 @@ export default function FormsSurveysDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'draft': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'archived': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'published':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'archived':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -137,7 +146,7 @@ export default function FormsSurveysDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Form Optimizer'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = stats ? (
@@ -155,15 +164,21 @@ export default function FormsSurveysDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Responses</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(stats.averageCompletionRate * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(stats.averageCompletionRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Completion</div>
       </div>
     </div>
   ) : null;
 
-  const filteredForms = forms.filter(form => {
-    if (searchQuery && !form.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !form.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const filteredForms = forms.filter((form) => {
+    if (
+      searchQuery &&
+      !form.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !form.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+      return false;
     if (filterStatus !== 'all' && form.status !== filterStatus) return false;
     return true;
   });
@@ -222,7 +237,7 @@ export default function FormsSurveysDashboard() {
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
-                {filteredForms.map(form => (
+                {filteredForms.map((form) => (
                   <GlassCard
                     key={form.id}
                     className="p-4 cursor-pointer hover:border-blue-300"
@@ -230,24 +245,30 @@ export default function FormsSurveysDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          form.status === 'published' ? 'bg-green-100' :
-                          form.status === 'draft' ? 'bg-yellow-100' : 'bg-gray-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            form.status === 'published'
+                              ? 'bg-green-100'
+                              : form.status === 'draft'
+                                ? 'bg-yellow-100'
+                                : 'bg-gray-100'
+                          }`}
+                        >
                           <FileText className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="font-medium">{form.title}</div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400">{form.description}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {form.description}
+                          </div>
                           <div className="text-xs text-gray-500">
-                            {form.responses} responses • {Math.round(form.completionRate * 100)}% completion
+                            {form.responses} responses • {Math.round(form.completionRate * 100)}%
+                            completion
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(form.status)}>
-                          {form.status}
-                        </Badge>
+                        <Badge className={getStatusColor(form.status)}>{form.status}</Badge>
                         <div className="flex gap-1 ml-2">
                           <Button variant="outline" size="sm">
                             <Eye className="h-4 w-4" />
@@ -325,19 +346,28 @@ export default function FormsSurveysDashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Response Rate</span>
-                    <span className="font-semibold">{Math.round((stats.totalResponses / (stats.totalForms * 100)) * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round((stats.totalResponses / (stats.totalForms * 100)) * 100)}%
+                    </span>
                   </div>
-                  <Progress value={(stats.totalResponses / (stats.totalForms * 100)) * 100} className="h-2" />
+                  <Progress
+                    value={(stats.totalResponses / (stats.totalForms * 100)) * 100}
+                    className="h-2"
+                  />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">AI Optimization Score</span>
-                    <span className="font-semibold">{Math.round(stats.aiOptimizationScore * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(stats.aiOptimizationScore * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.aiOptimizationScore * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth</span>
-                    <span className="font-semibold text-green-600">+{Math.round(stats.monthlyGrowth * 100)}%</span>
+                    <span className="font-semibold text-green-600">
+                      +{Math.round(stats.monthlyGrowth * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.monthlyGrowth * 100} className="h-2" />
                 </div>
@@ -541,39 +571,64 @@ export default function FormsSurveysDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Title</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Title
+                  </Label>
                   <div className="font-medium">{selectedForm.title}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedForm.status)}>
                     {selectedForm.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Responses</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Responses
+                  </Label>
                   <div className="font-medium">{selectedForm.responses}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Completion Rate</Label>
-                  <div className="font-medium">{Math.round(selectedForm.completionRate * 100)}%</div>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Completion Rate
+                  </Label>
+                  <div className="font-medium">
+                    {Math.round(selectedForm.completionRate * 100)}%
+                  </div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Description</Label>
-                <div className="text-sm text-gray-700 dark:text-gray-300">{selectedForm.description}</div>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Description
+                </Label>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {selectedForm.description}
+                </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Form Fields</Label>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Form Fields
+                </Label>
                 <div className="space-y-2">
-                  {selectedForm.fields.map(field => (
-                    <div key={field.id} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  {selectedForm.fields.map((field) => (
+                    <div
+                      key={field.id}
+                      className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded"
+                    >
                       <span className="text-sm">{field.label}</span>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">{field.type}</Badge>
-                        {field.required && <Badge variant="secondary" className="text-xs">Required</Badge>}
+                        <Badge variant="outline" className="text-xs">
+                          {field.type}
+                        </Badge>
+                        {field.required && (
+                          <Badge variant="secondary" className="text-xs">
+                            Required
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -589,12 +644,15 @@ export default function FormsSurveysDashboard() {
                   <div className="space-y-3">
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                       <div className="text-sm text-purple-800 dark:text-purple-200">
-                        <strong>Predicted Completion Rate:</strong> {Math.round(selectedForm.gpt5Optimization.predictedCompletionRate * 100)}%
+                        <strong>Predicted Completion Rate:</strong>{' '}
+                        {Math.round(selectedForm.gpt5Optimization.predictedCompletionRate * 100)}%
                       </div>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Suggested Additional Fields:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Suggested Additional Fields:
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         {selectedForm.gpt5Optimization.suggestedFields.map((field, index) => (
                           <Badge key={index} variant="outline" className="text-xs">

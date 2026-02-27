@@ -5,7 +5,28 @@ import InteractiveGoalCard from '../../components/InteractiveGoalCardComplete';
 import GoalExecutionModal from '../../components/GoalExecutionModalComplete';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Brain, Info, Lightbulb, ArrowLeft, Sparkles, Zap, Target, Users, BarChart3, Bot, Activity, Search, Filter, Grid3X3, List, Play, Eye, Clock, TrendingUp, ChevronDown } from 'lucide-react';
+import {
+  Brain,
+  Info,
+  Lightbulb,
+  ArrowLeft,
+  Sparkles,
+  Zap,
+  Target,
+  Users,
+  BarChart3,
+  Bot,
+  Activity,
+  Search,
+  Filter,
+  Grid3X3,
+  List,
+  Play,
+  Eye,
+  Clock,
+  TrendingUp,
+  ChevronDown,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Define context type
@@ -27,9 +48,9 @@ const AIGoalsPageFixed: React.FC = () => {
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
   const [executingGoals, setExecutingGoals] = useState<Set<string>>(new Set());
-  
+
   const navigate = useNavigate();
-  
+
   // Get context from session storage
   const [context, setContext] = useState<AIGoalContext | null>(() => {
     try {
@@ -41,20 +62,26 @@ const AIGoalsPageFixed: React.FC = () => {
   });
 
   // Filter goals based on current filters
-  const filteredGoals = GOALS.filter(goal => {
+  const filteredGoals = GOALS.filter((goal) => {
     const matchesCategory = selectedCategory === 'all' || goal.category === selectedCategory;
-    const matchesComplexity = selectedComplexity === 'all' || goal.complexity === selectedComplexity;
-    
+    const matchesComplexity =
+      selectedComplexity === 'all' || goal.complexity === selectedComplexity;
+
     // Map complexity to priority for filtering
-    const priority = goal.complexity === 'Advanced' ? 'High' : 
-                    goal.complexity === 'Intermediate' ? 'Medium' : 'Low';
+    const priority =
+      goal.complexity === 'Advanced'
+        ? 'High'
+        : goal.complexity === 'Intermediate'
+          ? 'Medium'
+          : 'Low';
     const matchesPriority = selectedPriority === 'all' || priority === selectedPriority;
-    
-    const matchesSearch = searchQuery === '' || 
+
+    const matchesSearch =
+      searchQuery === '' ||
       goal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       goal.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       goal.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesCategory && matchesComplexity && matchesPriority && matchesSearch;
   });
 
@@ -64,7 +91,7 @@ const AIGoalsPageFixed: React.FC = () => {
   };
 
   const handleGoalExecute = (goal: Goal) => {
-    setExecutingGoals(prev => new Set([...prev, goal.id]));
+    setExecutingGoals((prev) => new Set([...prev, goal.id]));
     handleGoalSelected(goal);
   };
 
@@ -78,9 +105,8 @@ const AIGoalsPageFixed: React.FC = () => {
   };
 
   const handleGoalComplete = (results: any) => {
-    console.log('Goal completed:', selectedGoal?.title, results);
     if (selectedGoal) {
-      setExecutingGoals(prev => {
+      setExecutingGoals((prev) => {
         const newSet = new Set(prev);
         newSet.delete(selectedGoal.id);
         return newSet;
@@ -92,7 +118,7 @@ const AIGoalsPageFixed: React.FC = () => {
 
   const getCategoryCount = (category: string) => {
     if (category === 'all') return GOALS.length;
-    return GOALS.filter(goal => goal.category === category).length;
+    return GOALS.filter((goal) => goal.category === category).length;
   };
 
   const priorityLevels = ['all', 'High', 'Medium', 'Low'];
@@ -104,7 +130,7 @@ const AIGoalsPageFixed: React.FC = () => {
       <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 dark:from-indigo-800 dark:via-purple-800 dark:to-blue-800">
         <div className="absolute inset-0 bg-black/20 dark:bg-black/40"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent dark:via-white/5"></div>
-        
+
         <div className="relative px-6 py-12">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between">
@@ -113,19 +139,17 @@ const AIGoalsPageFixed: React.FC = () => {
                   <Brain className="h-8 w-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-bold text-white mb-2">
-                    AI Goals Platform
-                  </h1>
+                  <h1 className="text-4xl font-bold text-white mb-2">AI Goals Platform</h1>
                   <p className="text-xl text-white/90 dark:text-white/80">
                     Intelligent business automation through multi-agent AI coordination
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => navigate('/dashboard')}
                   className="bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm hover:bg-white/70 dark:hover:bg-slate-700/70 transition-all duration-300"
                 >
@@ -134,7 +158,7 @@ const AIGoalsPageFixed: React.FC = () => {
                 </Button>
               </div>
             </div>
-            
+
             {/* Mode Toggle */}
             <div className="flex items-center gap-4 mt-6">
               <div className="flex items-center gap-2">
@@ -143,7 +167,9 @@ const AIGoalsPageFixed: React.FC = () => {
                   <button
                     onClick={() => setRealMode(false)}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      !realMode ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-white/70 hover:text-white'
+                      !realMode
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     🎭 Demo Mode
@@ -151,22 +177,28 @@ const AIGoalsPageFixed: React.FC = () => {
                   <button
                     onClick={() => setRealMode(true)}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      realMode ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm' : 'text-white/70 hover:text-white'
+                      realMode
+                        ? 'bg-white dark:bg-slate-700 text-green-600 dark:text-green-400 shadow-sm'
+                        : 'text-white/70 hover:text-white'
                     }`}
                   >
                     🚀 Live Mode
                   </button>
                 </div>
               </div>
-              
+
               {realMode ? (
                 <div className="flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-lg backdrop-blur-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-green-700 dark:text-green-300 font-medium">Real AI execution enabled</span>
+                  <span className="text-sm text-green-700 dark:text-green-300 font-medium">
+                    Real AI execution enabled
+                  </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-lg backdrop-blur-sm">
-                  <span className="text-sm text-blue-700 dark:text-blue-300">Demo mode - Click Live Mode for real execution</span>
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
+                    Demo mode - Click Live Mode for real execution
+                  </span>
                 </div>
               )}
             </div>
@@ -189,7 +221,8 @@ const AIGoalsPageFixed: React.FC = () => {
                       Context-Aware AI Execution
                     </h3>
                     <p className="text-blue-800 dark:text-blue-200">
-                      Ready to execute AI goals with intelligent context detection for {context.type}: {context.name || context.title}
+                      Ready to execute AI goals with intelligent context detection for{' '}
+                      {context.type}: {context.name || context.title}
                     </p>
                   </div>
                 </div>
@@ -210,15 +243,17 @@ const AIGoalsPageFixed: React.FC = () => {
                 <div className="text-sm text-blue-700 dark:text-blue-300">Active Agents</div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700/50">
               <CardContent className="p-4 text-center">
                 <Target className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-900 dark:text-green-100">{GOALS.length}</div>
+                <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  {GOALS.length}
+                </div>
                 <div className="text-sm text-green-700 dark:text-green-300">Available Goals</div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700/50">
               <CardContent className="p-4 text-center">
                 <BarChart3 className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
@@ -226,7 +261,7 @@ const AIGoalsPageFixed: React.FC = () => {
                 <div className="text-sm text-purple-700 dark:text-purple-300">Categories</div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-700/50">
               <CardContent className="p-4 text-center">
                 <TrendingUp className="h-8 w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
@@ -242,7 +277,6 @@ const AIGoalsPageFixed: React.FC = () => {
       <div className="px-6 pb-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-white/50 dark:border-slate-700/50 shadow-2xl p-8">
-            
             {/* Search and Filters */}
             <div className="mb-8 space-y-6">
               {/* Search Bar */}
@@ -265,14 +299,18 @@ const AIGoalsPageFixed: React.FC = () => {
                 >
                   <Filter className="h-4 w-4" />
                   Filters
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded-lg transition-colors ${
-                      viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 hover:bg-gray-200'
+                      viewMode === 'grid'
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
                     <Grid3X3 className="h-4 w-4" />
@@ -280,7 +318,9 @@ const AIGoalsPageFixed: React.FC = () => {
                   <button
                     onClick={() => setViewMode('list')}
                     className={`p-2 rounded-lg transition-colors ${
-                      viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 hover:bg-gray-200'
+                      viewMode === 'list'
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
                     <List className="h-4 w-4" />
@@ -293,13 +333,15 @@ const AIGoalsPageFixed: React.FC = () => {
                 <div className="grid md:grid-cols-3 gap-6 p-6 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
                   {/* Priority Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Priority
+                    </label>
                     <select
                       value={selectedPriority}
                       onChange={(e) => setSelectedPriority(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 outline-none"
                     >
-                      {priorityLevels.map(priority => (
+                      {priorityLevels.map((priority) => (
                         <option key={priority} value={priority}>
                           {priority === 'all' ? 'All Priorities' : priority}
                         </option>
@@ -309,13 +351,15 @@ const AIGoalsPageFixed: React.FC = () => {
 
                   {/* Complexity Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Complexity</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Complexity
+                    </label>
                     <select
                       value={selectedComplexity}
                       onChange={(e) => setSelectedComplexity(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 outline-none"
                     >
-                      {complexityLevels.map(complexity => (
+                      {complexityLevels.map((complexity) => (
                         <option key={complexity} value={complexity}>
                           {complexity === 'all' ? 'All Complexities' : complexity}
                         </option>
@@ -325,14 +369,16 @@ const AIGoalsPageFixed: React.FC = () => {
 
                   {/* Category Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Category
+                    </label>
                     <select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500/20 outline-none"
                     >
                       <option value="all">All Categories</option>
-                      {GOAL_CATEGORIES.map(category => (
+                      {GOAL_CATEGORIES.map((category) => (
                         <option key={category} value={category}>
                           {category} ({getCategoryCount(category)})
                         </option>
@@ -350,7 +396,7 @@ const AIGoalsPageFixed: React.FC = () => {
                 {selectedCategory !== 'all' && ` in ${selectedCategory}`}
                 {searchQuery && ` matching "${searchQuery}"`}
               </div>
-              
+
               {filteredGoals.length === 0 && (
                 <button
                   onClick={() => {
@@ -368,11 +414,11 @@ const AIGoalsPageFixed: React.FC = () => {
             </div>
 
             {/* Goals Grid */}
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1'
-            }`}>
+            <div
+              className={`grid gap-6 ${
+                viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
+              }`}
+            >
               {filteredGoals.map((goal) => (
                 <InteractiveGoalCard
                   key={goal.id}
@@ -389,7 +435,9 @@ const AIGoalsPageFixed: React.FC = () => {
             {filteredGoals.length === 0 && (
               <div className="text-center py-12">
                 <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No goals found</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  No goals found
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Try adjusting your search terms or filters to find what you're looking for.
                 </p>
@@ -409,7 +457,7 @@ const AIGoalsPageFixed: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Goal Execution Modal */}
       {showExecutionModal && selectedGoal && (
         <GoalExecutionModal

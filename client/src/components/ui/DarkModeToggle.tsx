@@ -11,17 +11,8 @@ export const DarkModeToggle: React.FC = () => {
   };
 
   return (
-    <ModernButton
-      onClick={toggleDarkMode}
-      variant="ghost"
-      size="sm"
-      className="p-2"
-    >
-      {isDark ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
+    <ModernButton onClick={toggleDarkMode} variant="ghost" size="sm" className="p-2">
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </ModernButton>
   );
 };

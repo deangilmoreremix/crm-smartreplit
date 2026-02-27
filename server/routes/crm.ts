@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express } from 'express';
 import { eq, and, desc } from 'drizzle-orm';
 import {
   contacts,
@@ -15,7 +15,7 @@ import {
   insertCommunicationSchema,
   insertNoteSchema,
   updateNoteSchema,
-  insertDocumentSchema
+  insertDocumentSchema,
 } from '../../shared/schema.js';
 import { requireAuth, requireProductTier } from './auth';
 
@@ -23,29 +23,30 @@ import { requireAuth, requireProductTier } from './auth';
 const checkAuth = (req: any): { userId: string | null; isAuthenticated: boolean } => {
   const userId = req.session?.userId;
   const authHeader = req.headers.authorization;
-  
+  const hostname = req.headers.host || '';
+  const isDevHost = hostname.includes('localhost') || hostname.includes('replit.dev') || hostname.includes('127.0.0.1');
+
   // Check for session first
   if (userId) {
     return { userId, isAuthenticated: true };
   }
-  
-  // In development, also check for Bearer tokens
-  if (process.env.NODE_ENV === 'development' && authHeader?.startsWith('Bearer ')) {
+
+  // In development, also check for Bearer tokens - but ONLY with time-based tokens
+  if (process.env.NODE_ENV === 'development' && isDevHost && authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    if (token === 'dev-bypass-token') {
-      // Set up dev user for this request
+    // Only accept time-based dev bypass tokens in development
+    if (token.startsWith('dev-bypass-token-')) {
       req.user = {
         id: 'dev-user-12345',
         email: 'dev@smartcrm.local',
         username: 'dev@smartcrm.local',
         role: 'super_admin',
-        productTier: 'super_admin'
+        productTier: 'super_admin',
       };
-      console.log('✅ Dev bypass auth granted via Bearer token');
       return { userId: 'dev-user-12345', isAuthenticated: true };
     }
   }
-  
+
   return { userId: null, isAuthenticated: false };
 };
 
@@ -57,29 +58,27 @@ export function registerCRMRoutes(app: Express): void {
     try {
       const userId = req.session?.userId;
       const authHeader = req.headers.authorization;
-      
+
       // Check for session first
       if (userId) {
         // Session exists, proceed
       } else if (authHeader?.startsWith('Bearer ')) {
-        // Handle Bearer token authentication for development
+        // Handle Bearer token authentication for development - ONLY time-based tokens
         const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-        if (token === 'dev-bypass-token') {
+        // Only accept time-based dev bypass tokens in development
+        if (token.startsWith('dev-bypass-token-')) {
           // Set up dev user for this request
           req.user = {
             id: 'dev-user-12345',
             email: 'dev@smartcrm.local',
             username: 'dev@smartcrm.local',
             role: 'super_admin',
-            productTier: 'super_admin'
+            productTier: 'super_admin',
           };
-          console.log('✅ Dev bypass auth granted via Bearer token for contacts');
         } else {
-          console.log('❌ Invalid Bearer token for contacts');
           return res.status(401).json({ error: 'Not authenticated' });
         }
       } else {
-        console.log('📞 Contacts: No session userId or valid Bearer token, returning 401');
         return res.status(401).json({ error: 'Not authenticated' });
       }
 
@@ -134,13 +133,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertContactSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newContact] = await db
-        .insert(contacts)
-        .values(validatedData)
-        .returning();
+      const [newContact] = await db.insert(contacts).values(validatedData).returning();
 
       res.status(201).json(newContact);
     } catch (error: any) {
@@ -178,7 +174,7 @@ export function registerCRMRoutes(app: Express): void {
         .set({
           ...req.body,
           profileId: userId,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
         .returning();
@@ -278,13 +274,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertDealSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newDeal] = await db
-        .insert(deals)
-        .values(validatedData)
-        .returning();
+      const [newDeal] = await db.insert(deals).values(validatedData).returning();
 
       res.status(201).json(newDeal);
     } catch (error: any) {
@@ -322,7 +315,7 @@ export function registerCRMRoutes(app: Express): void {
         .set({
           ...req.body,
           profileId: userId,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)))
         .returning();
@@ -422,13 +415,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertTaskSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newTask] = await db
-        .insert(tasks)
-        .values(validatedData)
-        .returning();
+      const [newTask] = await db.insert(tasks).values(validatedData).returning();
 
       res.status(201).json(newTask);
     } catch (error: any) {
@@ -469,7 +459,7 @@ export function registerCRMRoutes(app: Express): void {
         .set({
           ...validatedData,
           profileId: userId, // Explicitly set to prevent privilege escalation
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId))) // Double-check ownership
         .returning();
@@ -573,13 +563,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertAppointmentSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newAppointment] = await db
-        .insert(appointments)
-        .values(validatedData)
-        .returning();
+      const [newAppointment] = await db.insert(appointments).values(validatedData).returning();
 
       res.status(201).json(newAppointment);
     } catch (error: any) {
@@ -620,7 +607,7 @@ export function registerCRMRoutes(app: Express): void {
         .set({
           ...validatedData,
           profileId: userId, // Explicitly set to prevent privilege escalation
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId))) // Double-check ownership
         .returning();
@@ -698,13 +685,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertCommunicationSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newCommunication] = await db
-        .insert(communications)
-        .values(validatedData)
-        .returning();
+      const [newCommunication] = await db.insert(communications).values(validatedData).returning();
 
       res.status(201).json(newCommunication);
     } catch (error: any) {
@@ -797,13 +781,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertNoteSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newNote] = await db
-        .insert(notes)
-        .values(validatedData)
-        .returning();
+      const [newNote] = await db.insert(notes).values(validatedData).returning();
 
       res.status(201).json(newNote);
     } catch (error: any) {
@@ -844,7 +825,7 @@ export function registerCRMRoutes(app: Express): void {
         .set({
           ...validatedData,
           profileId: userId, // Explicitly set to prevent privilege escalation
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(and(eq(notes.id, noteId), eq(notes.profileId, userId))) // Double-check ownership
         .returning();
@@ -922,13 +903,10 @@ export function registerCRMRoutes(app: Express): void {
       const { db } = await import('../db');
       const validatedData = insertDocumentSchema.parse({
         ...req.body,
-        profileId: userId
+        profileId: userId,
       });
 
-      const [newDocument] = await db
-        .insert(documents)
-        .values(validatedData)
-        .returning();
+      const [newDocument] = await db.insert(documents).values(validatedData).returning();
 
       res.status(201).json(newDocument);
     } catch (error: any) {

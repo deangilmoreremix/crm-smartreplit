@@ -29,7 +29,7 @@ export default function ConfirmPage() {
           const { error: confirmError } = await supabase.auth.verifyOtp({
             token,
             type: 'email',
-            email: email || ''
+            email: email || '',
           });
 
           if (confirmError) {
@@ -42,13 +42,12 @@ export default function ConfirmPage() {
           setTimeout(() => {
             navigate('/dashboard');
           }, 2000);
-
         } else if (type === 'recovery') {
           // Password recovery confirmation
           const { error: recoveryError } = await supabase.auth.verifyOtp({
             token,
             type: 'recovery',
-            email: email || ''
+            email: email || '',
           });
 
           if (recoveryError) {
@@ -59,13 +58,12 @@ export default function ConfirmPage() {
 
           // Redirect to reset password page
           navigate('/auth/reset-password');
-
         } else if (type === 'email_change') {
           // Email change confirmation
           const { error: emailChangeError } = await supabase.auth.verifyOtp({
             token,
             type: 'email_change',
-            email: email || ''
+            email: email || '',
           });
 
           if (emailChangeError) {
@@ -78,11 +76,9 @@ export default function ConfirmPage() {
           setTimeout(() => {
             navigate('/dashboard');
           }, 2000);
-
         } else {
           setError('Unknown confirmation type. Please contact support.');
         }
-
       } catch (err) {
         console.error('Confirmation error:', err);
         setError('An unexpected error occurred. Please try again.');
@@ -120,7 +116,8 @@ export default function ConfirmPage() {
               Email Confirmed!
             </h2>
             <p className="text-green-700 dark:text-green-300 mb-4">
-              Your email address has been successfully confirmed. You will be redirected to your dashboard shortly.
+              Your email address has been successfully confirmed. You will be redirected to your
+              dashboard shortly.
             </p>
             <button
               onClick={() => navigate('/dashboard')}
@@ -144,9 +141,7 @@ export default function ConfirmPage() {
             <h2 className="text-xl font-semibold text-red-900 dark:text-red-100 mb-2">
               Confirmation Failed
             </h2>
-            <p className="text-red-700 dark:text-red-300 mb-4">
-              {error}
-            </p>
+            <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
             <div className="space-y-3">
               <button
                 onClick={() => navigate('/auth/signin')}

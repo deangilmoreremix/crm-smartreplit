@@ -20,7 +20,7 @@ export default function SocialMediaGenerator() {
     tone: 'professional',
     keywords: '',
     callToAction: '',
-    variations: 3
+    variations: 3,
   });
   const [generatedPosts, setGeneratedPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,13 +30,13 @@ export default function SocialMediaGenerator() {
     { value: 'linkedin', label: 'LinkedIn', color: 'bg-blue-600' },
     { value: 'twitter', label: 'Twitter/X', color: 'bg-gray-800' },
     { value: 'facebook', label: 'Facebook', color: 'bg-blue-700' },
-    { value: 'instagram', label: 'Instagram', color: 'bg-pink-600' }
+    { value: 'instagram', label: 'Instagram', color: 'bg-pink-600' },
   ];
 
   const tones = ['professional', 'casual', 'engaging', 'promotional'];
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const generatePosts = async () => {
@@ -49,8 +49,11 @@ export default function SocialMediaGenerator() {
     const startTime = Date.now();
 
     try {
-      const keywords = formData.keywords 
-        ? formData.keywords.split(',').map(k => k.trim()).filter(k => k.length > 0)
+      const keywords = formData.keywords
+        ? formData.keywords
+            .split(',')
+            .map((k) => k.trim())
+            .filter((k) => k.length > 0)
         : [];
 
       // Generate multiple variations
@@ -61,13 +64,13 @@ export default function SocialMediaGenerator() {
           topic: formData.topic,
           tone: formData.tone,
           keywords: keywords.length > 0 ? keywords : undefined,
-          callToAction: formData.callToAction || undefined
+          callToAction: formData.callToAction || undefined,
         });
         variations.push({
           content: variation,
           id: i + 1,
           engagement: Math.floor(Math.random() * 100) + 50, // Mock engagement score
-          readability: Math.floor(Math.random() * 20) + 80,  // Mock readability score
+          readability: Math.floor(Math.random() * 20) + 80, // Mock readability score
         });
       }
 
@@ -79,18 +82,18 @@ export default function SocialMediaGenerator() {
         toolName: 'Social Media Generator',
         category: 'Content',
         executionTime: Date.now() - startTime,
-        success: true
+        success: true,
       });
     } catch (error) {
       console.error('Error generating social media posts:', error);
       alert('Failed to generate posts. Please try again.');
-      
+
       aiUsageTracker.trackUsage({
         toolId: 'social-media-generator',
         toolName: 'Social Media Generator',
         category: 'Content',
         executionTime: Date.now() - startTime,
-        success: false
+        success: false,
       });
     } finally {
       setIsLoading(false);
@@ -140,29 +143,34 @@ Readability Score: ${post.readability}/100
   };
 
   const getPlatformIcon = (platform: string) => {
-    const platformData = platforms.find(p => p.value === platform);
+    const platformData = platforms.find((p) => p.value === platform);
     return platformData ? platformData.color : 'bg-gray-600';
   };
 
   const getCharacterLimit = (platform: string) => {
     switch (platform) {
-      case 'twitter': return 280;
-      case 'linkedin': return 3000;
-      case 'facebook': return 63206;
-      case 'instagram': return 2200;
-      default: return 1000;
+      case 'twitter':
+        return 280;
+      case 'linkedin':
+        return 3000;
+      case 'facebook':
+        return 63206;
+      case 'instagram':
+        return 2200;
+      default:
+        return 1000;
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -175,14 +183,14 @@ Readability Score: ${post.readability}/100
       </motion.div>
 
       {/* Configuration Form */}
-      <motion.div 
+      <motion.div
         className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
       >
         <h3 className="text-lg font-semibold mb-4">Post Configuration</h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Platform Selection */}
           <motion.div
@@ -192,7 +200,7 @@ Readability Score: ${post.readability}/100
           >
             <label className="block text-sm font-medium mb-2">Platform *</label>
             <div className="grid grid-cols-2 gap-2">
-              {platforms.map(platform => (
+              {platforms.map((platform) => (
                 <button
                   key={platform.value}
                   onClick={() => handleInputChange('platform', platform.value)}
@@ -220,12 +228,12 @@ Readability Score: ${post.readability}/100
               value={formData.tone}
               onChange={(e) => handleInputChange('tone', e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             >
-              {tones.map(tone => (
+              {tones.map((tone) => (
                 <option key={tone} value={tone}>
                   {tone.charAt(0).toUpperCase() + tone.slice(1)}
                 </option>
@@ -242,8 +250,8 @@ Readability Score: ${post.readability}/100
               onChange={(e) => handleInputChange('keywords', e.target.value)}
               placeholder="Enter keywords separated by commas..."
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             />
@@ -258,8 +266,8 @@ Readability Score: ${post.readability}/100
               onChange={(e) => handleInputChange('callToAction', e.target.value)}
               placeholder="e.g., Visit our website, Book a meeting..."
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             />
@@ -275,8 +283,8 @@ Readability Score: ${post.readability}/100
             placeholder="Describe what you want to post about..."
             rows={3}
             className={`w-full p-3 rounded-lg border ${
-              isDark 
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+              isDark
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
             } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
           />
@@ -309,17 +317,23 @@ Readability Score: ${post.readability}/100
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Generated Posts</h3>
           {generatedPosts.map((post, index) => (
-            <div key={index} className={`p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+            <div
+              key={index}
+              className={`p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
+            >
               {/* Post Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-lg ${getPlatformIcon(formData.platform)} flex items-center justify-center mr-3`}>
+                  <div
+                    className={`w-8 h-8 rounded-lg ${getPlatformIcon(formData.platform)} flex items-center justify-center mr-3`}
+                  >
                     <Share2 className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <h4 className="font-semibold">Post Variation {index + 1}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1)} • {formData.tone}
+                      {formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1)} •{' '}
+                      {formData.tone}
                     </p>
                   </div>
                 </div>
@@ -361,21 +375,27 @@ Readability Score: ${post.readability}/100
                   <div className="text-xs text-gray-500">Readability</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-purple-600">{post.content?.length || 0}</div>
+                  <div className="text-lg font-bold text-purple-600">
+                    {post.content?.length || 0}
+                  </div>
                   <div className="text-xs text-gray-500">Characters</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-orange-600">{post.hashtags?.length || 0}</div>
+                  <div className="text-lg font-bold text-orange-600">
+                    {post.hashtags?.length || 0}
+                  </div>
                   <div className="text-xs text-gray-500">Hashtags</div>
                 </div>
               </div>
 
               {/* Post Content */}
-              <div className={`p-4 rounded-lg border ${
-                isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'
-              }`}>
+              <div
+                className={`p-4 rounded-lg border ${
+                  isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'
+                }`}
+              >
                 <p className="whitespace-pre-wrap mb-4">{post.content}</p>
-                
+
                 {post.hashtags && post.hashtags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {post.hashtags.map((hashtag: string, hashIndex: number) => (
@@ -391,12 +411,16 @@ Readability Score: ${post.readability}/100
                 )}
 
                 {post.callToAction && (
-                  <div className={`p-3 rounded border-l-4 border-blue-500 ${
-                    isDark ? 'bg-blue-900/20' : 'bg-blue-50'
-                  }`}>
+                  <div
+                    className={`p-3 rounded border-l-4 border-blue-500 ${
+                      isDark ? 'bg-blue-900/20' : 'bg-blue-50'
+                    }`}
+                  >
                     <div className="flex items-center mb-1">
                       <Target className="w-4 h-4 mr-2 text-blue-600" />
-                      <span className="font-medium text-blue-700 dark:text-blue-300">Call to Action</span>
+                      <span className="font-medium text-blue-700 dark:text-blue-300">
+                        Call to Action
+                      </span>
                     </div>
                     <p className="text-sm text-blue-600 dark:text-blue-400">{post.callToAction}</p>
                   </div>
@@ -409,7 +433,8 @@ Readability Score: ${post.readability}/100
                   <div className="flex items-center text-red-700 dark:text-red-300">
                     <TrendingUp className="w-4 h-4 mr-2" />
                     <span className="text-sm">
-                      Content exceeds {formData.platform} character limit ({post.content.length}/{getCharacterLimit(formData.platform)})
+                      Content exceeds {formData.platform} character limit ({post.content.length}/
+                      {getCharacterLimit(formData.platform)})
                     </span>
                   </div>
                 </div>

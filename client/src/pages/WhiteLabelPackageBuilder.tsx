@@ -226,7 +226,8 @@ const WhiteLabelPackageBuilder: React.FC = () => {
     setIsCreatingPackage(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Package created:', {
+      // TODO: Save to backend
+      console.log('Creating package:', {
         name: packageName,
         description: packageDescription,
         features: selectedFeatures,

@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 const UpgradePage = () => {
   const location = useLocation();
   const { user } = useAuth();
-  
+
   // Get the feature that was blocked (if passed via navigation state)
   const state = location.state as any;
   const requiredFeature = state?.requiredFeature || 'premium features';
@@ -24,9 +24,9 @@ const UpgradePage = () => {
         'Contacts Management',
         'Sales Pipeline',
         'Calendar & Scheduling',
-        'Task Management'
+        'Task Management',
       ],
-      color: 'from-blue-500 to-cyan-500'
+      color: 'from-blue-500 to-cyan-500',
     },
     {
       name: 'Sales Maximizer',
@@ -38,9 +38,9 @@ const UpgradePage = () => {
         'AI Goals & Planning',
         'AI Tools & Automation',
         'Advanced Analytics',
-        'Priority Support'
+        'Priority Support',
       ],
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-purple-500 to-pink-500',
     },
     {
       name: 'AI Boost Unlimited',
@@ -52,9 +52,9 @@ const UpgradePage = () => {
         'Unlimited AI Credits',
         'Advanced AI Features',
         'No Usage Limits',
-        'Premium Support'
+        'Premium Support',
       ],
-      color: 'from-indigo-500 to-purple-500'
+      color: 'from-indigo-500 to-purple-500',
     },
     {
       name: 'AI Communication',
@@ -67,9 +67,9 @@ const UpgradePage = () => {
         'Invoicing',
         'Lead Automation',
         'Circle Prospecting',
-        'Forms & Surveys'
+        'Forms & Surveys',
       ],
-      color: 'from-green-500 to-emerald-500'
+      color: 'from-green-500 to-emerald-500',
     },
     {
       name: 'SmartCRM Bundle',
@@ -82,11 +82,11 @@ const UpgradePage = () => {
         'All Communication Tools',
         'Advanced Automation',
         'Premium Support',
-        'Custom Integrations'
+        'Custom Integrations',
       ],
       color: 'from-yellow-500 to-orange-500',
-      popular: true
-    }
+      popular: true,
+    },
   ];
 
   return (
@@ -101,8 +101,8 @@ const UpgradePage = () => {
             Upgrade to Access {featureName}
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            To access {featureName}, please choose a plan below. 
-            All our tiers come with powerful features to supercharge your sales.
+            To access {featureName}, please choose a plan below. All our tiers come with powerful
+            features to supercharge your sales.
           </p>
         </div>
 
@@ -120,35 +120,45 @@ const UpgradePage = () => {
                   POPULAR
                 </div>
               )}
-              
+
               <div className={`h-2 bg-gradient-to-r ${tier.color}`} />
-              
+
               <div className="p-6">
-                <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${tier.color} rounded-xl mb-4`}>
+                <div
+                  className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${tier.color} rounded-xl mb-4`}
+                >
                   <tier.icon className="w-6 h-6 text-white" />
                 </div>
-                
+
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   {tier.name}
                 </h3>
-                
+
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-gray-900 dark:text-white">
                     {tier.price}
                   </span>
                 </div>
-                
+
                 <ul className="space-y-3 mb-6">
                   {tier.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start text-gray-600 dark:text-gray-300">
-                      <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-5 h-5 text-green-500 mr-2 mt-0.5 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
-                
+
                 <Button
                   className={`w-full bg-gradient-to-r ${tier.color} text-white hover:opacity-90`}
                   data-testid={`button-upgrade-${tier.tier}`}
@@ -171,10 +181,7 @@ const UpgradePage = () => {
                 Back to Dashboard
               </Button>
             </Link>
-            <Button 
-              variant="default"
-              data-testid="button-contact-sales"
-            >
+            <Button variant="default" data-testid="button-contact-sales">
               Contact Sales
             </Button>
           </div>

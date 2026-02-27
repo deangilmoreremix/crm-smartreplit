@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, Building, Globe, Briefcase, ArrowRight, RefreshCw, Check, Loader2, AlertTriangle } from 'lucide-react';
+import {
+  Brain,
+  Building,
+  Globe,
+  Briefcase,
+  ArrowRight,
+  RefreshCw,
+  Check,
+  Loader2,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface BusinessAnalysisForm {
   businessName: string;
@@ -20,7 +30,7 @@ const BusinessAnalysis: React.FC = () => {
   const [analysisResults, setAnalysisResults] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Form state
   const [businessName, setBusinessName] = useState('');
   const [industry, setIndustry] = useState('');
@@ -29,7 +39,7 @@ const BusinessAnalysis: React.FC = () => {
   const [twitterUrl, setTwitterUrl] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
-  
+
   // Mock previous analyses
   useEffect(() => {
     const mockAnalyses = [
@@ -39,9 +49,9 @@ const BusinessAnalysis: React.FC = () => {
         industry: 'Technology',
         website_url: 'https://techstartup.example.com',
         analysis_results: {
-          text: 'This technology startup shows strong potential in the SaaS market with innovative cloud solutions...'
+          text: 'This technology startup shows strong potential in the SaaS market with innovative cloud solutions...',
         },
-        created_at: new Date(Date.now() - 86400000).toISOString()
+        created_at: new Date(Date.now() - 86400000).toISOString(),
       },
       {
         id: '2',
@@ -49,14 +59,14 @@ const BusinessAnalysis: React.FC = () => {
         industry: 'Food Service',
         website_url: 'https://restaurant.example.com',
         analysis_results: {
-          text: 'This local restaurant has good online presence but could improve social media engagement...'
+          text: 'This local restaurant has good online presence but could improve social media engagement...',
         },
-        created_at: new Date(Date.now() - 172800000).toISOString()
-      }
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+      },
     ];
     setBusinessAnalyses(mockAnalyses);
   }, []);
-  
+
   const loadBusinessAnalyses = async () => {
     setIsLoading(true);
     setError(null);
@@ -64,19 +74,19 @@ const BusinessAnalysis: React.FC = () => {
       // In a real app, this would fetch from API
       // Using mock data from useEffect
     } catch (err) {
-      console.error("Error loading business analyses:", err);
+      console.error('Error loading business analyses:', err);
       setError('Failed to load business analyses');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAnalyzing(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const formData: BusinessAnalysisForm = {
         businessName,
@@ -86,10 +96,10 @@ const BusinessAnalysis: React.FC = () => {
           linkedin: linkedinUrl || undefined,
           twitter: twitterUrl || undefined,
           facebook: facebookUrl || undefined,
-          instagram: instagramUrl || undefined
-        }
+          instagram: instagramUrl || undefined,
+        },
       };
-      
+
       // Simulate AI analysis
       const analysisResult = `
 ## Business Analysis for ${businessName}
@@ -115,9 +125,9 @@ ${businessName} operates in the ${industry} sector, which presents both opportun
 ### Growth Opportunities
 The ${industry} industry is experiencing steady growth, making this an opportune time for strategic expansion and market penetration.
       `.trim();
-      
+
       setAnalysisResults(analysisResult);
-      
+
       // Save to mock state
       const newAnalysis = {
         id: Date.now().toString(),
@@ -128,10 +138,10 @@ The ${industry} industry is experiencing steady growth, making this an opportune
         analysis_results: { text: analysisResult },
         created_at: new Date().toISOString(),
       };
-      
+
       setBusinessAnalyses([newAnalysis, ...businessAnalyses]);
       setSuccess('Business analysis completed successfully!');
-      
+
       // Reset form
       setBusinessName('');
       setIndustry('');
@@ -140,7 +150,6 @@ The ${industry} industry is experiencing steady growth, making this an opportune
       setTwitterUrl('');
       setFacebookUrl('');
       setInstagramUrl('');
-      
     } catch (error) {
       console.error('Error generating analysis:', error);
       setError('Failed to generate business analysis. Please try again.');
@@ -166,7 +175,10 @@ The ${industry} industry is experiencing steady growth, making this an opportune
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="businessName"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Business Name *
               </label>
               <input
@@ -179,7 +191,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
                 placeholder="Enter business name"
               />
             </div>
-            
+
             <div>
               <label htmlFor="industry" className="block text-sm font-medium text-gray-700 mb-1">
                 Industry *
@@ -195,7 +207,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
               />
             </div>
           </div>
-          
+
           <div>
             <label htmlFor="websiteUrl" className="block text-sm font-medium text-gray-700 mb-1">
               Website URL *
@@ -210,9 +222,11 @@ The ${industry} industry is experiencing steady growth, making this an opportune
               placeholder="https://example.com"
             />
           </div>
-          
+
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Social Media Links (Optional)</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">
+              Social Media Links (Optional)
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="linkedinUrl" className="block text-xs text-gray-600 mb-1">
@@ -227,7 +241,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
                   placeholder="https://linkedin.com/company/..."
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="twitterUrl" className="block text-xs text-gray-600 mb-1">
                   Twitter
@@ -241,7 +255,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
                   placeholder="https://twitter.com/..."
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="facebookUrl" className="block text-xs text-gray-600 mb-1">
                   Facebook
@@ -255,7 +269,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
                   placeholder="https://facebook.com/..."
                 />
               </div>
-              
+
               <div>
                 <label htmlFor="instagramUrl" className="block text-xs text-gray-600 mb-1">
                   Instagram
@@ -271,7 +285,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
               </div>
             </div>
           </div>
-          
+
           <button
             type="submit"
             disabled={isAnalyzing || !businessName || !industry || !websiteUrl}
@@ -330,7 +344,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
             Previous Analyses
           </h3>
         </div>
-        
+
         {isLoading ? (
           <div className="p-8 text-center">
             <RefreshCw className="animate-spin h-8 w-8 mx-auto text-blue-600 mb-4" />
@@ -366,7 +380,7 @@ The ${industry} industry is experiencing steady growth, making this an opportune
                     {new Date(analysis.created_at).toLocaleDateString()}
                   </div>
                 </div>
-                
+
                 {analysis.analysis_results && (
                   <div className="mt-3 p-4 bg-gray-50 rounded-md">
                     <div className="text-sm text-gray-700 whitespace-pre-line line-clamp-4">

@@ -6,19 +6,21 @@ export const EdgeZones: React.FC = () => {
     { id: 'top-edge', position: 'top' },
     { id: 'bottom-edge', position: 'bottom' },
     { id: 'left-edge', position: 'left' },
-    { id: 'right-edge', position: 'right' }
+    { id: 'right-edge', position: 'right' },
   ];
 
   return (
     <>
-      {edgeZones.map(zone => (
+      {edgeZones.map((zone) => (
         <Droppable droppableId={zone.id} key={zone.id}>
           {(provided, snapshot) => (
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
               className={`fixed z-40 transition-all duration-200 ${
-                snapshot.isDraggingOver ? 'bg-blue-500/20 border-2 border-blue-500' : 'bg-transparent'
+                snapshot.isDraggingOver
+                  ? 'bg-blue-500/20 border-2 border-blue-500'
+                  : 'bg-transparent'
               }`}
               style={{
                 [zone.position]: 0,

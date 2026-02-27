@@ -5,15 +5,18 @@
 Add the `remote-pipeline-integration.js` file to your pipeline app at `https://cheery-syrniki-b5b6ca.netlify.app`.
 
 ### Option A: Include as Script Tag
+
 ```html
 <!-- Add this script tag to your index.html -->
 <script src="./remote-pipeline-integration.js"></script>
 ```
 
 ### Option B: Include Inline
+
 Copy the entire contents of `remote-pipeline-integration.js` and paste it in a `<script>` tag in your HTML.
 
 ### Option C: Import as Module
+
 ```javascript
 // If your app uses modules, import the bridge
 import './remote-pipeline-integration.js';
@@ -27,13 +30,14 @@ In the `remote-pipeline-integration.js` file, update the `allowedOrigins` array 
 const allowedOrigins = [
   'https://your-actual-crm-domain.replit.dev', // Replace with your CRM URL
   'http://localhost:5000',
-  'http://127.0.0.1:5000'
+  'http://127.0.0.1:5000',
 ];
 ```
 
 ## Step 3: Connect Your Pipeline Events
 
 ### When a deal is updated in your pipeline:
+
 ```javascript
 // Example: User drags a deal or edits deal details
 function onDealUpdate(dealData) {
@@ -42,6 +46,7 @@ function onDealUpdate(dealData) {
 ```
 
 ### When a deal is created:
+
 ```javascript
 // Example: User clicks "Add Deal" button
 function onDealCreate(newDeal) {
@@ -50,6 +55,7 @@ function onDealCreate(newDeal) {
 ```
 
 ### When a deal is moved between stages:
+
 ```javascript
 // Example: Drag and drop between columns
 function onDealMove(dealId, fromStage, toStage, position) {
@@ -58,6 +64,7 @@ function onDealMove(dealId, fromStage, toStage, position) {
 ```
 
 ### When a deal is deleted:
+
 ```javascript
 // Example: User clicks delete button
 function onDealDelete(dealId) {
@@ -73,7 +80,7 @@ The bridge automatically receives deal data from your CRM. You can access it thr
 // Listen for data updates
 window.addEventListener('crmDataUpdated', (event) => {
   const { deals, stages } = event.detail;
-  
+
   // Update your pipeline UI
   updatePipelineDisplay(deals, stages);
 });
@@ -91,7 +98,7 @@ Create these functions in your pipeline app to handle CRM data:
 // Update your pipeline display when CRM sends new data
 function updatePipelineDisplay(deals, stages) {
   // Your pipeline UI update logic here
-  deals.forEach(deal => {
+  deals.forEach((deal) => {
     updateDealCard(deal);
   });
 }
@@ -110,7 +117,7 @@ function updateDealCard(deal) {
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'USD',
   }).format(amount);
 }
 ```
@@ -144,16 +151,19 @@ function goToAnalytics() {
 ## Troubleshooting
 
 ### Connection Issues
+
 - Verify the script is loaded correctly
 - Check allowed origins match your CRM domain
 - Look for CORS errors in browser console
 
 ### Data Not Syncing
+
 - Check console for message logs
 - Verify event handlers are properly connected
 - Ensure deal data format matches expected structure
 
 ### UI Not Updating
+
 - Make sure `updatePipelineUI()` calls your actual update functions
 - Check that `crmDataUpdated` event listener is properly set up
 - Verify DOM selectors match your HTML structure
@@ -163,33 +173,33 @@ function goToAnalytics() {
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Pipeline Management</title>
-</head>
-<body>
-  <div id="pipeline-container">
-    <!-- Your pipeline UI here -->
-  </div>
+  <head>
+    <title>Pipeline Management</title>
+  </head>
+  <body>
+    <div id="pipeline-container">
+      <!-- Your pipeline UI here -->
+    </div>
 
-  <script src="./remote-pipeline-integration.js"></script>
-  <script>
-    // Your pipeline app code
-    window.addEventListener('crmDataUpdated', (event) => {
-      const { deals } = event.detail;
-      renderPipeline(deals);
-    });
+    <script src="./remote-pipeline-integration.js"></script>
+    <script>
+      // Your pipeline app code
+      window.addEventListener('crmDataUpdated', (event) => {
+        const { deals } = event.detail;
+        renderPipeline(deals);
+      });
 
-    function renderPipeline(deals) {
-      const container = document.getElementById('pipeline-container');
-      // Render your pipeline with CRM deals
-    }
+      function renderPipeline(deals) {
+        const container = document.getElementById('pipeline-container');
+        // Render your pipeline with CRM deals
+      }
 
-    // Connect your events to CRM bridge
-    function handleDealDrop(dealId, newStage) {
-      window.crmBridge.onDealMoved(dealId, oldStage, newStage);
-    }
-  </script>
-</body>
+      // Connect your events to CRM bridge
+      function handleDealDrop(dealId, newStage) {
+        window.crmBridge.onDealMoved(dealId, oldStage, newStage);
+      }
+    </script>
+  </body>
 </html>
 ```
 

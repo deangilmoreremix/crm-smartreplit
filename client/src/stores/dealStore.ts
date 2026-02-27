@@ -24,19 +24,24 @@ export const useDealStore = create<DealStore>((set) => ({
     try {
       const response = await api.get<Deal[]>('/api/deals');
       if (response.success && response.data) {
-        const dealsMap = response.data.reduce((acc, deal) => {
-          acc[deal.id.toString()] = {
-            ...deal,
-            createdAt: new Date(deal.createdAt),
-            updatedAt: new Date(deal.updatedAt),
-            dueDate: deal.dueDate ? new Date(deal.dueDate) : undefined,
-            closedAt: deal.closedAt ? new Date(deal.closedAt) : undefined,
-            nextFollowUp: deal.nextFollowUp ? new Date(deal.nextFollowUp) : undefined,
-            expectedCloseDate: deal.expectedCloseDate ? new Date(deal.expectedCloseDate) : undefined,
-            actualCloseDate: deal.actualCloseDate ? new Date(deal.actualCloseDate) : undefined,
-          };
-          return acc;
-        }, {} as Record<string, Deal>);
+        const dealsMap = response.data.reduce(
+          (acc, deal) => {
+            acc[deal.id.toString()] = {
+              ...deal,
+              createdAt: new Date(deal.createdAt),
+              updatedAt: new Date(deal.updatedAt),
+              dueDate: deal.dueDate ? new Date(deal.dueDate) : undefined,
+              closedAt: deal.closedAt ? new Date(deal.closedAt) : undefined,
+              nextFollowUp: deal.nextFollowUp ? new Date(deal.nextFollowUp) : undefined,
+              expectedCloseDate: deal.expectedCloseDate
+                ? new Date(deal.expectedCloseDate)
+                : undefined,
+              actualCloseDate: deal.actualCloseDate ? new Date(deal.actualCloseDate) : undefined,
+            };
+            return acc;
+          },
+          {} as Record<string, Deal>
+        );
         set({ deals: dealsMap, isLoading: false });
       } else {
         set({ error: response.error || 'Failed to fetch deals', isLoading: false });
@@ -56,13 +61,19 @@ export const useDealStore = create<DealStore>((set) => ({
           updatedAt: new Date(response.data.updatedAt),
           dueDate: response.data.dueDate ? new Date(response.data.dueDate) : undefined,
           closedAt: response.data.closedAt ? new Date(response.data.closedAt) : undefined,
-          nextFollowUp: response.data.nextFollowUp ? new Date(response.data.nextFollowUp) : undefined,
-          expectedCloseDate: response.data.expectedCloseDate ? new Date(response.data.expectedCloseDate) : undefined,
-          actualCloseDate: response.data.actualCloseDate ? new Date(response.data.actualCloseDate) : undefined,
+          nextFollowUp: response.data.nextFollowUp
+            ? new Date(response.data.nextFollowUp)
+            : undefined,
+          expectedCloseDate: response.data.expectedCloseDate
+            ? new Date(response.data.expectedCloseDate)
+            : undefined,
+          actualCloseDate: response.data.actualCloseDate
+            ? new Date(response.data.actualCloseDate)
+            : undefined,
         };
 
-        set(state => ({
-          deals: { ...state.deals, [newDeal.id.toString()]: newDeal }
+        set((state) => ({
+          deals: { ...state.deals, [newDeal.id.toString()]: newDeal },
         }));
 
         return newDeal;
@@ -86,16 +97,22 @@ export const useDealStore = create<DealStore>((set) => ({
           updatedAt: new Date(response.data.updatedAt),
           dueDate: response.data.dueDate ? new Date(response.data.dueDate) : undefined,
           closedAt: response.data.closedAt ? new Date(response.data.closedAt) : undefined,
-          nextFollowUp: response.data.nextFollowUp ? new Date(response.data.nextFollowUp) : undefined,
-          expectedCloseDate: response.data.expectedCloseDate ? new Date(response.data.expectedCloseDate) : undefined,
-          actualCloseDate: response.data.actualCloseDate ? new Date(response.data.actualCloseDate) : undefined,
+          nextFollowUp: response.data.nextFollowUp
+            ? new Date(response.data.nextFollowUp)
+            : undefined,
+          expectedCloseDate: response.data.expectedCloseDate
+            ? new Date(response.data.expectedCloseDate)
+            : undefined,
+          actualCloseDate: response.data.actualCloseDate
+            ? new Date(response.data.actualCloseDate)
+            : undefined,
         };
 
-        set(state => ({
+        set((state) => ({
           deals: {
             ...state.deals,
-            [id]: updatedDeal
-          }
+            [id]: updatedDeal,
+          },
         }));
       } else {
         set({ error: response.error || 'Failed to update deal' });
@@ -109,7 +126,7 @@ export const useDealStore = create<DealStore>((set) => ({
     try {
       const response = await api.delete(`/api/deals/${id}`);
       if (response.success) {
-        set(state => {
+        set((state) => {
           const { [id]: deleted, ...rest } = state.deals;
           return { deals: rest };
         });
@@ -119,5 +136,5 @@ export const useDealStore = create<DealStore>((set) => ({
     } catch (error) {
       set({ error: 'Failed to delete deal' });
     }
-  }
+  },
 }));

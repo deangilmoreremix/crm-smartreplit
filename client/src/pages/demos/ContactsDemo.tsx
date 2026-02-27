@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Building, 
+import {
+  Search,
+  Filter,
+  Plus,
+  Mail,
+  Phone,
+  MapPin,
+  Building,
   Star,
   ExternalLink,
   Eye,
@@ -14,7 +14,7 @@ import {
   MoreHorizontal,
   User,
   Calendar,
-  Activity
+  Activity,
 } from 'lucide-react';
 
 const ContactsDemo: React.FC = () => {
@@ -43,7 +43,7 @@ const ContactsDemo: React.FC = () => {
       avatar: 'SJ',
       rating: 5,
       tags: ['Enterprise', 'Decision Maker'],
-      notes: 'Very interested in our premium package. Follow up on contract terms.'
+      notes: 'Very interested in our premium package. Follow up on contract terms.',
     },
     {
       id: 2,
@@ -59,7 +59,7 @@ const ContactsDemo: React.FC = () => {
       avatar: 'MC',
       rating: 4,
       tags: ['Startup', 'Tech'],
-      notes: 'Interested in our basic plan. Needs demo of advanced features.'
+      notes: 'Interested in our basic plan. Needs demo of advanced features.',
     },
     {
       id: 3,
@@ -75,7 +75,7 @@ const ContactsDemo: React.FC = () => {
       avatar: 'ER',
       rating: 3,
       tags: ['Marketing', 'Large Company'],
-      notes: 'Initial interest shown. Waiting for budget approval next quarter.'
+      notes: 'Initial interest shown. Waiting for budget approval next quarter.',
     },
     {
       id: 4,
@@ -91,7 +91,7 @@ const ContactsDemo: React.FC = () => {
       avatar: 'DP',
       rating: 5,
       tags: ['Technical', 'High Value'],
-      notes: 'Ready to move forward. Reviewing final proposal this week.'
+      notes: 'Ready to move forward. Reviewing final proposal this week.',
     },
     {
       id: 5,
@@ -107,35 +107,42 @@ const ContactsDemo: React.FC = () => {
       avatar: 'LT',
       rating: 4,
       tags: ['Operations', 'Mid-Market'],
-      notes: 'Comparing with competitors. Emphasized our unique AI features.'
-    }
+      notes: 'Comparing with competitors. Emphasized our unique AI features.',
+    },
   ];
 
-  const filteredContacts = demoContacts.filter(contact => {
-    const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredContacts = demoContacts.filter((contact) => {
+    const matchesSearch =
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.email.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesFilter = selectedFilter === 'all' || contact.status === selectedFilter;
-    
+
     return matchesSearch && matchesFilter;
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'hot': return 'bg-red-100 text-red-800';
-      case 'warm': return 'bg-yellow-100 text-yellow-800';
-      case 'cold': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'hot':
+        return 'bg-red-100 text-red-800';
+      case 'warm':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cold':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const ContactCard = ({ contact, index }: { contact: any; index: number }) => (
     <div
       className={`bg-white rounded-lg shadow-md p-6 transition-all duration-500 hover:shadow-lg cursor-pointer border-l-4 ${
-        contact.status === 'hot' ? 'border-red-400' :
-        contact.status === 'warm' ? 'border-yellow-400' :
-        'border-blue-400'
+        contact.status === 'hot'
+          ? 'border-red-400'
+          : contact.status === 'warm'
+            ? 'border-yellow-400'
+            : 'border-blue-400'
       } ${animateContacts ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
       style={{ transitionDelay: `${index * 100}ms` }}
       onClick={() => setSelectedContact(selectedContact === contact.id ? null : contact.id)}
@@ -148,7 +155,9 @@ const ContactsDemo: React.FC = () => {
           <div className="flex-grow">
             <div className="flex items-center space-x-2 mb-1">
               <h3 className="text-lg font-semibold text-gray-900">{contact.name}</h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contact.status)}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(contact.status)}`}
+              >
                 {contact.status}
               </span>
             </div>
@@ -195,7 +204,10 @@ const ContactsDemo: React.FC = () => {
             <div className="space-y-2">
               <div className="flex flex-wrap gap-1">
                 {contact.tags.map((tag: string, tagIndex: number) => (
-                  <span key={tagIndex} className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                  <span
+                    key={tagIndex}
+                    className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full"
+                  >
                     {tag}
                   </span>
                 ))}
@@ -288,7 +300,9 @@ const ContactsDemo: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Hot Leads</p>
-              <p className="text-2xl font-bold text-red-600">{demoContacts.filter(c => c.status === 'hot').length}</p>
+              <p className="text-2xl font-bold text-red-600">
+                {demoContacts.filter((c) => c.status === 'hot').length}
+              </p>
             </div>
             <Activity className="w-8 h-8 text-red-600" />
           </div>
@@ -298,7 +312,10 @@ const ContactsDemo: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Value</p>
               <p className="text-2xl font-bold text-green-600">
-                ${demoContacts.reduce((sum, c) => sum + parseInt(c.dealValue.replace(/[^0-9]/g, '')), 0).toLocaleString()}
+                $
+                {demoContacts
+                  .reduce((sum, c) => sum + parseInt(c.dealValue.replace(/[^0-9]/g, '')), 0)
+                  .toLocaleString()}
               </p>
             </div>
             <Star className="w-8 h-8 text-yellow-600" />
@@ -309,7 +326,9 @@ const ContactsDemo: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Avg Rating</p>
               <p className="text-2xl font-bold text-purple-600">
-                {(demoContacts.reduce((sum, c) => sum + c.rating, 0) / demoContacts.length).toFixed(1)}
+                {(demoContacts.reduce((sum, c) => sum + c.rating, 0) / demoContacts.length).toFixed(
+                  1
+                )}
               </p>
             </div>
             <Star className="w-8 h-8 text-purple-600" />
@@ -329,7 +348,9 @@ const ContactsDemo: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold mb-2">Ready to Organize Your Contacts?</h3>
-            <p className="opacity-90">Import, manage, and engage with your contacts using AI-powered insights</p>
+            <p className="opacity-90">
+              Import, manage, and engage with your contacts using AI-powered insights
+            </p>
           </div>
           <div className="flex space-x-4">
             <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center">

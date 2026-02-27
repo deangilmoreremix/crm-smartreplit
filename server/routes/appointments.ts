@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express } from 'express';
 
 // In-memory storage for appointments (temporary until database schema is added)
 interface Appointment {
@@ -43,8 +43,8 @@ const appointments: Appointment[] = [
     gpt5Insights: {
       optimalTime: '10:00 AM',
       preparationNotes: ['Review product specs', 'Prepare demo script'],
-      followUpActions: ['Send follow-up email', 'Schedule technical review']
-    }
+      followUpActions: ['Send follow-up email', 'Schedule technical review'],
+    },
   },
   {
     id: '2',
@@ -56,8 +56,8 @@ const appointments: Appointment[] = [
     type: 'meeting',
     status: 'scheduled',
     priority: 'medium',
-    notes: 'Daily team sync'
-  }
+    notes: 'Daily team sync',
+  },
 ];
 
 const meetingStats: MeetingStats = {
@@ -65,7 +65,7 @@ const meetingStats: MeetingStats = {
   completedToday: 3,
   upcomingToday: 5,
   averageDuration: 45,
-  successRate: 0.85
+  successRate: 0.85,
 };
 
 export function registerAppointmentRoutes(app: Express): void {
@@ -123,7 +123,7 @@ export function registerAppointmentRoutes(app: Express): void {
         type: type || 'meeting',
         status: 'scheduled',
         priority: priority || 'medium',
-        notes
+        notes,
       };
 
       appointments.push(newAppointment);
@@ -148,7 +148,7 @@ export function registerAppointmentRoutes(app: Express): void {
       }
 
       const appointmentId = req.params.id;
-      const appointment = appointments.find(a => a.id === appointmentId);
+      const appointment = appointments.find((a) => a.id === appointmentId);
 
       if (!appointment) {
         return res.status(404).json({ error: 'Appointment not found' });
@@ -170,7 +170,7 @@ export function registerAppointmentRoutes(app: Express): void {
       }
 
       const appointmentId = req.params.id;
-      const appointmentIndex = appointments.findIndex(a => a.id === appointmentId);
+      const appointmentIndex = appointments.findIndex((a) => a.id === appointmentId);
 
       if (appointmentIndex === -1) {
         return res.status(404).json({ error: 'Appointment not found' });
@@ -178,7 +178,7 @@ export function registerAppointmentRoutes(app: Express): void {
 
       const updatedAppointment = {
         ...appointments[appointmentIndex],
-        ...req.body
+        ...req.body,
       };
 
       appointments[appointmentIndex] = updatedAppointment;
@@ -198,7 +198,7 @@ export function registerAppointmentRoutes(app: Express): void {
       }
 
       const appointmentId = req.params.id;
-      const appointmentIndex = appointments.findIndex(a => a.id === appointmentId);
+      const appointmentIndex = appointments.findIndex((a) => a.id === appointmentId);
 
       if (appointmentIndex === -1) {
         return res.status(404).json({ error: 'Appointment not found' });
@@ -232,13 +232,13 @@ export function registerAppointmentRoutes(app: Express): void {
         preparationNotes: [
           'Review attendee profiles and previous interactions',
           'Prepare agenda and key discussion points',
-          'Have relevant materials ready for reference'
+          'Have relevant materials ready for reference',
         ],
         followUpActions: [
           'Send meeting summary and action items',
           'Schedule follow-up if needed',
-          'Update CRM with meeting outcomes'
-        ]
+          'Update CRM with meeting outcomes',
+        ],
       };
 
       res.json(insights);

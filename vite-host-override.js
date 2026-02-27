@@ -8,10 +8,10 @@ console.log('🔧 Applying Vite server configuration override...');
 try {
   const serverVitePath = './server/vite.ts';
   let serverVite = readFileSync(serverVitePath, 'utf8');
-  
+
   // Create backup
   writeFileSync(`${serverVitePath}.backup-override`, serverVite);
-  
+
   // Check if custom config is already imported
   if (!serverVite.includes('custom-vite-config')) {
     // Add import at the top
@@ -20,32 +20,31 @@ try {
       `import viteConfig from "../vite.config";
 import { customViteServerConfig } from "./custom-vite-config";`
     );
-    
+
     // Modify the serverOptions to include our custom config
     serverVite = serverVite.replace(
       'const serverOptions = {',
       'const serverOptions = Object.assign({'
     );
-    
+
     serverVite = serverVite.replace(
       'middlewareMode: true,\n    hmr: { server },\n  };',
       `middlewareMode: true,
     hmr: { server },
   }, customViteServerConfig);`
     );
-    
+
     writeFileSync(serverVitePath, serverVite);
     console.log('✅ Server Vite configuration overridden successfully');
   } else {
     console.log('ℹ️  Custom configuration already applied');
   }
-  
 } catch (error) {
   console.error('❌ Error:', error.message);
-  
+
   // If we can't modify server/vite.ts, try a different approach
   console.log('🔧 Attempting alternative fix via environment variables...');
-  
+
   // Create a startup script that sets all necessary environment variables
   const startupScript = `#!/usr/bin/env node
 import { spawn } from 'child_process';

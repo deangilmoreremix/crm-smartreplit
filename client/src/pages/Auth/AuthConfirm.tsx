@@ -30,14 +30,8 @@ const AuthConfirm: React.FC<AuthConfirmProps> = () => {
         const accessToken = hashParams.get('access_token');
         const hashType = hashParams.get('type');
 
-        console.log('Auth confirmation:', {
-          pkce: { token_hash: token_hash?.slice(0, 10) + '...', type: typeParam },
-          implicit: { hasAccessToken: !!accessToken, type: hashType }
-        });
-
         // Handle implicit flow (hash-based) - Supabase automatically processes this
         if (accessToken || hashType) {
-          console.log('Detected implicit flow, waiting for Supabase to process session...');
           
           // Wait a moment for Supabase to process the hash
           await new Promise(resolve => setTimeout(resolve, 500));

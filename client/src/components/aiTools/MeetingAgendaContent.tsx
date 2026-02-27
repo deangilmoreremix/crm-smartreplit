@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { useGemini } from '../../services/geminiService';
 import AIToolContent from '../shared/AIToolContent';
-import { Calendar, Users, FileText, RefreshCw, Copy, Check, Plus, Trash2, Clock } from 'lucide-react';
+import {
+  Calendar,
+  Users,
+  FileText,
+  RefreshCw,
+  Copy,
+  Check,
+  Plus,
+  Trash2,
+  Clock,
+} from 'lucide-react';
 
 const MeetingAgendaContent: React.FC = () => {
   const [formData, setFormData] = useState({
     meetingPurpose: '',
     attendees: ['', ''],
     previousMeetingNotes: '',
-    meetingDuration: '30'
+    meetingDuration: '30',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -18,11 +28,13 @@ const MeetingAgendaContent: React.FC = () => {
 
   const gemini = useGemini();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -31,14 +43,14 @@ const MeetingAgendaContent: React.FC = () => {
     newAttendees[index] = value;
     setFormData({
       ...formData,
-      attendees: newAttendees
+      attendees: newAttendees,
     });
   };
 
   const addAttendee = () => {
     setFormData({
       ...formData,
-      attendees: [...formData.attendees, '']
+      attendees: [...formData.attendees, ''],
     });
   };
 
@@ -48,7 +60,7 @@ const MeetingAgendaContent: React.FC = () => {
     newAttendees.splice(index, 1);
     setFormData({
       ...formData,
-      attendees: newAttendees
+      attendees: newAttendees,
     });
   };
 
@@ -57,27 +69,29 @@ const MeetingAgendaContent: React.FC = () => {
     if (!formData.meetingPurpose) return;
 
     // Filter out empty attendees
-    const validAttendees = formData.attendees.filter(att => att.trim() !== '');
+    const validAttendees = formData.attendees.filter((att) => att.trim() !== '');
     if (validAttendees.length === 0) {
-      setError("Please add at least one attendee");
+      setError('Please add at least one attendee');
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const agenda = await gemini.generateMeetingAgenda(
         formData.meetingPurpose,
         validAttendees,
         formData.previousMeetingNotes || undefined
       );
-      
+
       setResult(agenda);
       setCopied(false);
     } catch (err) {
       console.error('Error generating meeting agenda:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the meeting agenda');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while generating the meeting agenda'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -100,9 +114,9 @@ const MeetingAgendaContent: React.FC = () => {
     'Quarterly Business Review',
     'Project Kickoff',
     'Status Update',
-    'Problem Solving Session'
+    'Problem Solving Session',
   ];
-  
+
   // Meeting durations
   const meetingDurations = [
     { value: '15', label: '15 minutes' },
@@ -110,7 +124,7 @@ const MeetingAgendaContent: React.FC = () => {
     { value: '45', label: '45 minutes' },
     { value: '60', label: '1 hour' },
     { value: '90', label: '1.5 hours' },
-    { value: '120', label: '2 hours' }
+    { value: '120', label: '2 hours' },
   ];
 
   return (
@@ -121,7 +135,8 @@ const MeetingAgendaContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-amber-800">Meeting Agenda Generator</h3>
             <p className="text-sm text-amber-700 mt-1">
-              Create structured, effective meeting agendas to keep your sales meetings focused and productive.
+              Create structured, effective meeting agendas to keep your sales meetings focused and
+              productive.
             </p>
           </div>
         </div>
@@ -136,7 +151,10 @@ const MeetingAgendaContent: React.FC = () => {
       >
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="meetingPurpose" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="meetingPurpose"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Meeting Purpose/Type
             </label>
             <div className="relative">
@@ -158,12 +176,10 @@ const MeetingAgendaContent: React.FC = () => {
               </datalist>
             </div>
           </div>
-          
+
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Attendees
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Attendees</label>
               <button
                 type="button"
                 onClick={addAttendee}
@@ -173,7 +189,7 @@ const MeetingAgendaContent: React.FC = () => {
                 Add Attendee
               </button>
             </div>
-            
+
             {formData.attendees.map((attendee, index) => (
               <div key={index} className="flex mb-2">
                 <div className="flex-grow flex items-center border border-gray-300 rounded-md overflow-hidden">
@@ -199,13 +215,16 @@ const MeetingAgendaContent: React.FC = () => {
                 )}
               </div>
             ))}
-            {error && formData.attendees.every(a => !a.trim()) && (
+            {error && formData.attendees.every((a) => !a.trim()) && (
               <p className="text-red-600 text-sm mt-1">Please add at least one attendee</p>
             )}
           </div>
-          
+
           <div>
-            <label htmlFor="meetingDuration" className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+            <label
+              htmlFor="meetingDuration"
+              className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
+            >
               <Clock className="h-4 w-4 mr-1 text-gray-500" />
               Meeting Duration
             </label>
@@ -216,14 +235,19 @@ const MeetingAgendaContent: React.FC = () => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
             >
-              {meetingDurations.map(duration => (
-                <option key={duration.value} value={duration.value}>{duration.label}</option>
+              {meetingDurations.map((duration) => (
+                <option key={duration.value} value={duration.value}>
+                  {duration.label}
+                </option>
               ))}
             </select>
           </div>
-          
+
           <div>
-            <label htmlFor="previousMeetingNotes" className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+            <label
+              htmlFor="previousMeetingNotes"
+              className="block text-sm font-medium text-gray-700 mb-1 flex items-center"
+            >
               <FileText className="h-4 w-4 mr-1 text-gray-500" />
               Previous Meeting Notes (Optional)
             </label>
@@ -237,11 +261,15 @@ const MeetingAgendaContent: React.FC = () => {
               onChange={handleChange}
             ></textarea>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isLoading || !formData.meetingPurpose.trim() || formData.attendees.every(a => !a.trim())}
+              disabled={
+                isLoading ||
+                !formData.meetingPurpose.trim() ||
+                formData.attendees.every((a) => !a.trim())
+              }
               className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 disabled:bg-amber-300 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
@@ -263,11 +291,11 @@ const MeetingAgendaContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

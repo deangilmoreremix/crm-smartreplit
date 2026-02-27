@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Target, 
-  DollarSign, 
-  Calendar, 
-  User, 
-  Building, 
+import {
+  Target,
+  DollarSign,
+  Calendar,
+  User,
+  Building,
   TrendingUp,
   ArrowRight,
   ExternalLink,
@@ -13,7 +13,7 @@ import {
   MoreHorizontal,
   Clock,
   Phone,
-  Mail
+  Mail,
 } from 'lucide-react';
 
 const PipelineDemo: React.FC = () => {
@@ -31,7 +31,7 @@ const PipelineDemo: React.FC = () => {
     { id: 'proposal', name: 'Proposal', color: 'bg-orange-500' },
     { id: 'negotiation', name: 'Negotiation', color: 'bg-purple-500' },
     { id: 'closed-won', name: 'Closed Won', color: 'bg-green-500' },
-    { id: 'closed-lost', name: 'Closed Lost', color: 'bg-red-500' }
+    { id: 'closed-lost', name: 'Closed Lost', color: 'bg-red-500' },
   ];
 
   const demoDeals = [
@@ -47,7 +47,7 @@ const PipelineDemo: React.FC = () => {
       daysInStage: 5,
       nextAction: 'Contract review meeting',
       notes: 'Very positive signals. Discussing final terms.',
-      avatar: 'AC'
+      avatar: 'AC',
     },
     {
       id: 2,
@@ -61,7 +61,7 @@ const PipelineDemo: React.FC = () => {
       daysInStage: 3,
       nextAction: 'Demo advanced features',
       notes: 'Interested in basic plan. Show ROI calculations.',
-      avatar: 'TS'
+      avatar: 'TS',
     },
     {
       id: 3,
@@ -75,7 +75,7 @@ const PipelineDemo: React.FC = () => {
       daysInStage: 12,
       nextAction: 'Budget confirmation call',
       notes: 'Waiting for Q1 budget approval.',
-      avatar: 'GS'
+      avatar: 'GS',
     },
     {
       id: 4,
@@ -89,7 +89,7 @@ const PipelineDemo: React.FC = () => {
       daysInStage: 2,
       nextAction: 'Final proposal review',
       notes: 'Ready to close. Final approval pending.',
-      avatar: 'IT'
+      avatar: 'IT',
     },
     {
       id: 5,
@@ -103,7 +103,7 @@ const PipelineDemo: React.FC = () => {
       daysInStage: 7,
       nextAction: 'Competitive analysis presentation',
       notes: 'Comparing with competitors. Emphasize unique features.',
-      avatar: 'SB'
+      avatar: 'SB',
     },
     {
       id: 6,
@@ -117,12 +117,12 @@ const PipelineDemo: React.FC = () => {
       daysInStage: 1,
       nextAction: 'Initial discovery call',
       notes: 'New lead from website. High potential.',
-      avatar: 'FC'
-    }
+      avatar: 'FC',
+    },
   ];
 
   const getStageDeals = (stageId: string) => {
-    return demoDeals.filter(deal => deal.stage === stageId);
+    return demoDeals.filter((deal) => deal.stage === stageId);
   };
 
   const getStageValue = (stageId: string) => {
@@ -162,12 +162,14 @@ const PipelineDemo: React.FC = () => {
         </div>
         <div className="text-right">
           <div className="font-semibold text-green-600 text-sm">${deal.value.toLocaleString()}</div>
-          <div className={`px-2 py-1 rounded-full text-xs font-medium ${getProbabilityColor(deal.probability)}`}>
+          <div
+            className={`px-2 py-1 rounded-full text-xs font-medium ${getProbabilityColor(deal.probability)}`}
+          >
             {deal.probability}%
           </div>
         </div>
       </div>
-      
+
       <div className="space-y-2 text-xs">
         <div className="flex items-center space-x-2 text-gray-600">
           <Calendar className="w-3 h-3" />
@@ -181,7 +183,7 @@ const PipelineDemo: React.FC = () => {
           <strong>Next:</strong> {deal.nextAction}
         </div>
       </div>
-      
+
       <div className="flex space-x-2 mt-3">
         <button className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-xs hover:bg-blue-700 transition-colors flex items-center justify-center">
           <Mail className="w-3 h-3 mr-1" />
@@ -226,7 +228,9 @@ const PipelineDemo: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Pipeline</p>
-              <p className="text-2xl font-bold text-gray-900">${totalPipelineValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                ${totalPipelineValue.toLocaleString()}
+              </p>
             </div>
             <DollarSign className="w-8 h-8 text-green-600" />
           </div>
@@ -244,7 +248,9 @@ const PipelineDemo: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Avg Deal Size</p>
-              <p className="text-2xl font-bold text-purple-600">${Math.round(avgDealSize).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-purple-600">
+                ${Math.round(avgDealSize).toLocaleString()}
+              </p>
             </div>
             <TrendingUp className="w-8 h-8 text-purple-600" />
           </div>
@@ -278,7 +284,7 @@ const PipelineDemo: React.FC = () => {
           {pipelineStages.map((stage) => {
             const stageDeals = getStageDeals(stage.id);
             const stageValue = getStageValue(stage.id);
-            
+
             return (
               <div key={stage.id} className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -290,9 +296,11 @@ const PipelineDemo: React.FC = () => {
                     {stageDeals.length}
                   </span>
                 </div>
-                
+
                 <div className="mb-4">
-                  <div className="text-lg font-bold text-green-600">${stageValue.toLocaleString()}</div>
+                  <div className="text-lg font-bold text-green-600">
+                    ${stageValue.toLocaleString()}
+                  </div>
                   <div className="text-xs text-gray-500">{stageDeals.length} deals</div>
                 </div>
 
@@ -356,7 +364,10 @@ const PipelineDemo: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold mb-2">Ready to Close More Deals?</h3>
-            <p className="opacity-90">Visualize your sales process and track every opportunity with our intelligent pipeline management</p>
+            <p className="opacity-90">
+              Visualize your sales process and track every opportunity with our intelligent pipeline
+              management
+            </p>
           </div>
           <div className="flex space-x-4">
             <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center">

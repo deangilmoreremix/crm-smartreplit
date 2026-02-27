@@ -8,10 +8,11 @@ const DevBypassPage = () => {
   useEffect(() => {
     const performDevBypass = async () => {
       // SECURITY: Only allow dev bypass on localhost and .replit.dev, NOT on .replit.app
-      const isDevelopmentEnvironment = (window.location.hostname.includes('localhost') || 
-                                       window.location.hostname.includes('replit.dev')) &&
-                                      !window.location.hostname.includes('replit.app');
-      
+      const isDevelopmentEnvironment =
+        (window.location.hostname.includes('localhost') ||
+          window.location.hostname.includes('replit.dev')) &&
+        !window.location.hostname.includes('replit.app');
+
       if (!isDevelopmentEnvironment) {
         console.error('🔒 Dev bypass blocked on production domain:', window.location.hostname);
         navigate('/signin', { replace: true });
@@ -25,9 +26,9 @@ const DevBypassPage = () => {
         const response = await fetch('/api/auth/dev-bypass', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({})
+          body: JSON.stringify({}),
         });
 
         if (!response.ok) {
@@ -40,11 +41,11 @@ const DevBypassPage = () => {
           // Store the dev session in localStorage
           localStorage.setItem('dev-user-session', JSON.stringify(data.user));
           localStorage.setItem('sb-supabase-auth-token', JSON.stringify(data.session));
-          
+
           // Also store in the format the auth context expects
           localStorage.setItem('smartcrm-dev-mode', 'true');
           localStorage.setItem('smartcrm-dev-user', JSON.stringify(data.user));
-          
+
           // Dev session stored successfully
 
           // Force immediate redirect with replace to avoid back button issues
@@ -52,7 +53,6 @@ const DevBypassPage = () => {
         } else {
           throw new Error('Invalid dev bypass response');
         }
-
       } catch (error) {
         console.error('Dev bypass failed:', error);
 
@@ -66,22 +66,19 @@ const DevBypassPage = () => {
           role: 'super_admin',
           productTier: 'super_admin',
           app_context: 'smartcrm',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         };
 
         const fallbackSession = {
           access_token: 'dev-bypass-token-fallback',
           refresh_token: 'dev-bypass-refresh-fallback',
-          expires_at: Date.now() + (24 * 60 * 60 * 1000),
-          user: fallbackUser
+          expires_at: Date.now() + 24 * 60 * 60 * 1000,
+          user: fallbackUser,
         };
 
         localStorage.setItem('dev-user-session', JSON.stringify(fallbackUser));
         localStorage.setItem('sb-supabase-auth-token', JSON.stringify(fallbackSession));
 
-        console.log('Fallback dev session created');
-
-        console.log('✅ Fallback dev session created');
         window.location.href = '/dashboard';
       }
     };
@@ -98,12 +95,8 @@ const DevBypassPage = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
           🚀 Setting up Development Access
         </h2>
-        <p className="text-gray-600 mb-4">
-          Bypassing authentication for development...
-        </p>
-        <div className="mt-4 text-sm text-green-600 font-medium">
-          Redirecting to dashboard...
-        </div>
+        <p className="text-gray-600 mb-4">Bypassing authentication for development...</p>
+        <div className="mt-4 text-sm text-green-600 font-medium">Redirecting to dashboard...</div>
       </div>
     </div>
   );

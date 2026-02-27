@@ -62,7 +62,7 @@ export class DemoRecorder {
     if (!this.page) throw new Error('Page not initialized');
 
     const videoPath = path.join(this.options.outputDir, `${name}.mp4`);
-    
+
     this.recorder = new PuppeteerScreenRecorder(this.page, {
       fps: this.options.fps,
       videoFrame: {
@@ -91,7 +91,7 @@ export class DemoRecorder {
   }
 
   async wait(ms: number) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async click(selector: string, waitAfter: number = 500) {
@@ -111,10 +111,10 @@ export class DemoRecorder {
   async scroll(distance: number, duration: number = 1000) {
     if (!this.page) throw new Error('Page not initialized');
     console.log(`📜 Scrolling ${distance}px`);
-    
+
     const steps = Math.ceil(duration / 16); // 60fps
     const stepDistance = distance / steps;
-    
+
     for (let i = 0; i < steps; i++) {
       await this.page.evaluate((step) => {
         window.scrollBy(0, step);
@@ -133,11 +133,11 @@ export class DemoRecorder {
   async captureScreenshot(name: string) {
     if (!this.page) throw new Error('Page not initialized');
     const screenshotPath = path.join(this.options.outputDir, 'frames', `${name}.png`);
-    
+
     if (!fs.existsSync(path.dirname(screenshotPath))) {
       fs.mkdirSync(path.dirname(screenshotPath), { recursive: true });
     }
-    
+
     await this.page.screenshot({ path: screenshotPath });
     this.screenshotFrames.push(screenshotPath);
     return screenshotPath;
@@ -149,13 +149,13 @@ export class DemoRecorder {
     }
 
     console.log(`🎨 Converting ${this.screenshotFrames.length} frames to GIF...`);
-    
+
     const gifPath = path.join(this.options.outputDir, `${name}.gif`);
     const encoder = new GIFEncoder(this.options.width, this.options.height);
-    
+
     const stream = fs.createWriteStream(gifPath);
     encoder.createReadStream().pipe(stream);
-    
+
     encoder.start();
     encoder.setRepeat(0); // Loop forever
     encoder.setDelay(1000 / this.options.fps); // Frame delay in ms

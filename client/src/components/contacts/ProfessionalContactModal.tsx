@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Save, 
-  User, 
+import {
+  X,
+  Save,
+  User,
   Brain,
   TrendingUp,
   Tag,
   Plus,
   Trash2,
   Clock,
-  RefreshCw // Added for random avatar
+  RefreshCw, // Added for random avatar
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../hooks/useContactStore';
@@ -29,7 +29,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
   isOpen,
   onClose,
   contact,
-  mode
+  mode,
 }) => {
   const { addContact, updateContact, analyzeContact, enrichContact } = useContactStore();
 
@@ -53,7 +53,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
     location: '',
     preferredContact: 'email',
     avatarSrc: '', // Initialize avatarSrc
-    isFavorite: false // Initialize isFavorite
+    isFavorite: false, // Initialize isFavorite
   });
 
   const [newTag, setNewTag] = useState('');
@@ -70,7 +70,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
         customFields: contact.customFields || {},
         tags: contact.tags || [],
         avatarSrc: contact.avatarSrc || contact.avatar || '', // Ensure avatarSrc is set
-        isFavorite: contact.isFavorite || false // Ensure isFavorite is set
+        isFavorite: contact.isFavorite || false, // Ensure isFavorite is set
       });
     } else if (mode === 'create') {
       setFormData({
@@ -93,7 +93,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
         location: '',
         preferredContact: 'email',
         avatarSrc: getRandomAvatar(), // Default to a random avatar for new contacts
-        isFavorite: false
+        isFavorite: false,
       });
     }
   }, [contact, mode]);
@@ -101,8 +101,9 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
   const handleSave = async () => {
     try {
       // Generate full name from first and last name
-      const fullName = `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || formData.name || '';
-      
+      const fullName =
+        `${formData.firstName || ''} ${formData.lastName || ''}`.trim() || formData.name || '';
+
       const contactData = {
         name: fullName,
         firstName: formData.firstName || fullName.split(' ')[0] || '',
@@ -123,7 +124,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
         location: formData.location || '',
         preferredContact: formData.preferredContact || 'email',
         avatarSrc: formData.avatarSrc || formData.avatar || '', // Include avatarSrc
-        isFavorite: formData.isFavorite || false // Include isFavorite
+        isFavorite: formData.isFavorite || false, // Include isFavorite
       };
 
       if (mode === 'create') {
@@ -131,7 +132,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
       } else if (contact) {
         updateContact(contact.id, contactData);
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Failed to save contact:', error);
@@ -140,7 +141,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
 
   const handleAnalyze = async () => {
     if (!contact) return;
-    
+
     setIsAnalyzing(true);
     try {
       await analyzeContact(contact.id);
@@ -153,7 +154,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
 
   const handleEnrich = async () => {
     if (!contact) return;
-    
+
     setIsEnriching(true);
     try {
       await enrichContact(contact.id);
@@ -166,36 +167,36 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
 
   const addTag = () => {
     if (newTag.trim() && !formData.tags?.includes(newTag.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...(prev.tags || []), newTag.trim()]
+        tags: [...(prev.tags || []), newTag.trim()],
       }));
       setNewTag('');
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags?.filter(tag => tag !== tagToRemove) || []
+      tags: prev.tags?.filter((tag) => tag !== tagToRemove) || [],
     }));
   };
 
   const addCustomField = () => {
     if (newCustomField.key.trim() && newCustomField.value.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         customFields: {
           ...prev.customFields,
-          [newCustomField.key]: newCustomField.value
-        }
+          [newCustomField.key]: newCustomField.value,
+        },
       }));
       setNewCustomField({ key: '', value: '' });
     }
   };
 
   const removeCustomField = (key: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const { [key]: removed, ...rest } = prev.customFields || {};
       return { ...prev, customFields: rest };
     });
@@ -211,7 +212,8 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
   if (!isOpen) return null;
 
   const isReadOnly = mode === 'view';
-  const title = mode === 'create' ? 'Add New Contact' : mode === 'edit' ? 'Edit Contact' : 'Contact Details';
+  const title =
+    mode === 'create' ? 'Add New Contact' : mode === 'edit' ? 'Edit Contact' : 'Contact Details';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -226,12 +228,15 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
               <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
               {contact && mode === 'view' && (
                 <p className="text-sm text-gray-600">
-                  Created {contact.createdAt ? formatDistanceToNow(new Date(contact.createdAt), { addSuffix: true }) : 'N/A'}
+                  Created{' '}
+                  {contact.createdAt
+                    ? formatDistanceToNow(new Date(contact.createdAt), { addSuffix: true })
+                    : 'N/A'}
                 </p>
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {contact && mode === 'view' && (
               <>
@@ -273,9 +278,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Avatar Management */}
                   <div className="col-span-full mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Avatar
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
                     <div className="flex items-center space-x-3">
                       <Avatar
                         src={formData.avatarSrc || formData.avatar}
@@ -287,14 +290,26 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                         <input
                           type="text"
                           value={formData.avatarSrc || formData.avatar || ''}
-                          onChange={(e) => setFormData(prev => ({ ...prev, avatarSrc: e.target.value, avatar: e.target.value }))}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              avatarSrc: e.target.value,
+                              avatar: e.target.value,
+                            }))
+                          }
                           disabled={isReadOnly}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                           placeholder="Enter avatar URL"
                         />
                         {!isReadOnly && (
                           <button
-                            onClick={() => setFormData(prev => ({ ...prev, avatarSrc: getRandomAvatar(), avatar: getRandomAvatar() }))}
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                avatarSrc: getRandomAvatar(),
+                                avatar: getRandomAvatar(),
+                              }))
+                            }
                             className="mt-2 px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
                           >
                             <RefreshCw size={14} className="inline mr-1" />
@@ -313,7 +328,9 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                     <input
                       type="text"
                       value={formData.firstName || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, firstName: e.target.value }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -325,32 +342,30 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                     <input
                       type="text"
                       value={formData.lastName || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, lastName: e.target.value }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                     <input
                       type="email"
                       value={formData.email || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                     <input
                       type="tel"
                       value={formData.phone || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -363,36 +378,36 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Professional Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
                     <input
                       type="text"
                       value={formData.company || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, company: e.target.value }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Position
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
                     <input
                       type="text"
                       value={formData.position || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, position: e.target.value }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Industry
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
                     <select
                       value={formData.industry || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, industry: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, industry: e.target.value }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     >
@@ -408,13 +423,13 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Location
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                     <input
                       type="text"
                       value={formData.location || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, location: e.target.value }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -427,7 +442,7 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Notes</h3>
                 <textarea
                   value={formData.notes || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                   disabled={isReadOnly}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
@@ -443,12 +458,12 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Status</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <select
                       value={formData.status || 'lead'}
-                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, status: e.target.value as any }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     >
@@ -464,7 +479,9 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                     </label>
                     <select
                       value={formData.interestLevel || 'medium'}
-                      onChange={(e) => setFormData(prev => ({ ...prev, interestLevel: e.target.value as any }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, interestLevel: e.target.value as any }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     >
@@ -475,13 +492,11 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Source
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
                     <input
                       type="text"
                       value={formData.source || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, source: e.target.value }))}
                       disabled={isReadOnly}
                       placeholder="e.g., LinkedIn, Website, Referral"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
@@ -489,12 +504,12 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                   </div>
                   {/* isFavorite Toggle */}
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700">
-                      Mark as Favorite
-                    </label>
+                    <label className="text-sm font-medium text-gray-700">Mark as Favorite</label>
                     <Switch
                       checked={formData.isFavorite || false}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isFavorite: checked }))}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, isFavorite: checked }))
+                      }
                       disabled={isReadOnly}
                     />
                   </div>
@@ -508,14 +523,17 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                   <h3 className="text-lg font-medium text-gray-900 mb-4">AI Insights</h3>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Contact Score</span>
-                    <span className={`text-2xl font-bold ${getScoreColor(contact.aiScore || contact.score)}`}>
+                    <span
+                      className={`text-2xl font-bold ${getScoreColor(contact.aiScore || contact.score)}`}
+                    >
                       {contact.aiScore || contact.score}/100
                     </span>
                   </div>
                   {contact.lastContact && (
                     <div className="mt-3 flex items-center text-sm text-gray-600">
                       <Clock size={14} className="mr-1" />
-                      Last contact: {formatDistanceToNow(new Date(contact.lastContact), { addSuffix: true })}
+                      Last contact:{' '}
+                      {formatDistanceToNow(new Date(contact.lastContact), { addSuffix: true })}
                     </div>
                   )}
                 </div>
@@ -526,48 +544,48 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Social Profiles</h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      LinkedIn
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
                     <input
                       type="url"
                       value={formData.socialProfiles?.linkedin || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        socialProfiles: { ...prev.socialProfiles, linkedin: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          socialProfiles: { ...prev.socialProfiles, linkedin: e.target.value },
+                        }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                       placeholder="https://linkedin.com/in/..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Twitter
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Twitter</label>
                     <input
                       type="url"
                       value={formData.socialProfiles?.twitter || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        socialProfiles: { ...prev.socialProfiles, twitter: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          socialProfiles: { ...prev.socialProfiles, twitter: e.target.value },
+                        }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                       placeholder="https://twitter.com/..."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
                     <input
                       type="url"
                       value={formData.socialProfiles?.website || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        socialProfiles: { ...prev.socialProfiles, website: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          socialProfiles: { ...prev.socialProfiles, website: e.target.value },
+                        }))
+                      }
                       disabled={isReadOnly}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                       placeholder="https://..."
@@ -629,7 +647,9 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                       <input
                         type="text"
                         value={newCustomField.key}
-                        onChange={(e) => setNewCustomField(prev => ({ ...prev, key: e.target.value }))}
+                        onChange={(e) =>
+                          setNewCustomField((prev) => ({ ...prev, key: e.target.value }))
+                        }
                         placeholder="Field name..."
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -637,7 +657,9 @@ const ProfessionalContactModal: React.FC<ProfessionalContactModalProps> = ({
                         <input
                           type="text"
                           value={newCustomField.value}
-                          onChange={(e) => setNewCustomField(prev => ({ ...prev, value: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCustomField((prev) => ({ ...prev, value: e.target.value }))
+                          }
                           placeholder="Field value..."
                           className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />

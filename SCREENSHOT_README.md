@@ -20,6 +20,7 @@ This system uses Playwright to automatically capture high-quality screenshots of
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies (Already Done)
+
 ```bash
 npm install --save-dev @playwright/test ts-node typescript
 npx playwright install
@@ -27,12 +28,15 @@ sudo npx playwright install-deps  # May require sudo
 ```
 
 ### 2. Run Test (Verify Everything Works)
+
 ```bash
 npx tsx scripts/screenshots/test-screenshot.ts
 ```
+
 This will create `screenshots/test-screenshot.png` to verify Playwright is working.
 
 ### 3. Run Full Screenshot Suite
+
 ```bash
 npx tsx scripts/screenshots/screenshot.runner.ts
 ```
@@ -40,15 +44,18 @@ npx tsx scripts/screenshots/screenshot.runner.ts
 ## 📋 Configuration
 
 ### Viewports
+
 - **Desktop**: 1440x900
 - **Tablet**: 834x1112
 - **Mobile**: 390x844
 
 ### Themes
+
 - Light mode
 - Dark mode
 
 ### Pages Captured
+
 - **FE_Dashboard**: Main dashboard with KPI cards, recent activity, tasks funnel
 - **FE_Contacts**: Contacts list, contact cards, AI insights panel
 - **FE_Pipeline**: Pipeline board, deal cards, pipeline stats
@@ -113,6 +120,7 @@ The system uses `data-testid` attributes to capture specific components. Add the
 ## ⚙️ Customization
 
 ### Adding New Pages
+
 Edit `shots.targets.json` and add to the `pages` array:
 
 ```json
@@ -127,6 +135,7 @@ Edit `shots.targets.json` and add to the `pages` array:
 ```
 
 ### Authentication
+
 If you need login automation, update the `auth` section in `shots.targets.json`:
 
 ```json
@@ -142,6 +151,7 @@ If you need login automation, update the `auth` section in `shots.targets.json`:
 ```
 
 ### Custom Viewports
+
 Add new viewports in the `viewports` section:
 
 ```json
@@ -155,12 +165,14 @@ Add new viewports in the `viewports` section:
 ### Common Issues
 
 1. **Browser Launch Fails**
+
    ```bash
    # Install system dependencies
    sudo npx playwright install-deps
    ```
 
 2. **TypeScript Errors**
+
    ```bash
    # Use ts-node with proper config
    npx ts-node --esm screenshot.runner.ts
@@ -194,6 +206,7 @@ Add new viewports in the `viewports` section:
 ## 📞 Support
 
 If you encounter issues:
+
 1. Run the test script first: `node test-screenshot.cjs`
 2. Check browser console for errors
 3. Verify URLs in `shots.targets.json` are accessible

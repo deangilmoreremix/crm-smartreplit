@@ -2,7 +2,17 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  type: 'call' | 'email' | 'meeting' | 'follow-up' | 'proposal' | 'demo' | 'contract' | 'research' | 'administrative' | 'other';
+  type:
+    | 'call'
+    | 'email'
+    | 'meeting'
+    | 'follow-up'
+    | 'proposal'
+    | 'demo'
+    | 'contract'
+    | 'research'
+    | 'administrative'
+    | 'other';
   status: 'pending' | 'in-progress' | 'completed' | 'cancelled' | 'overdue';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignedUserId?: string;
@@ -31,7 +41,15 @@ export interface Task {
   parentTaskId?: string; // for subtasks
   // Legacy compatibility
   completed: boolean;
-  category: 'follow-up' | 'proposal' | 'meeting' | 'call' | 'email' | 'research' | 'administrative' | 'other';
+  category:
+    | 'follow-up'
+    | 'proposal'
+    | 'meeting'
+    | 'call'
+    | 'email'
+    | 'research'
+    | 'administrative'
+    | 'other';
   assigneeId?: string;
   relatedTo?: {
     type: 'contact' | 'deal';
@@ -85,7 +103,18 @@ export interface RecurringPattern {
 
 export interface Activity {
   id: string;
-  type: 'task_created' | 'task_completed' | 'task_updated' | 'call_made' | 'email_sent' | 'meeting_held' | 'note_added' | 'deal_moved' | 'contact_updated' | 'file_uploaded' | 'reminder_sent';
+  type:
+    | 'task_created'
+    | 'task_completed'
+    | 'task_updated'
+    | 'call_made'
+    | 'email_sent'
+    | 'meeting_held'
+    | 'note_added'
+    | 'deal_moved'
+    | 'contact_updated'
+    | 'file_uploaded'
+    | 'reminder_sent';
   title: string;
   description?: string;
   entityType: 'task' | 'deal' | 'contact' | 'company' | 'lead';
@@ -206,7 +235,16 @@ export interface TaskStats {
 export interface TaskFilters {
   status: 'all' | 'completed' | 'pending' | 'overdue';
   priority: 'all' | 'low' | 'medium' | 'high' | 'urgent';
-  category: 'all' | 'follow-up' | 'proposal' | 'meeting' | 'call' | 'email' | 'research' | 'administrative' | 'other';
+  category:
+    | 'all'
+    | 'follow-up'
+    | 'proposal'
+    | 'meeting'
+    | 'call'
+    | 'email'
+    | 'research'
+    | 'administrative'
+    | 'other';
   assignee: string;
 }
 

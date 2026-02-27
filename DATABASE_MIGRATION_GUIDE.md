@@ -1,6 +1,7 @@
 # Database Migration Guide: Neon to Supabase PostgreSQL
 
 ## Overview
+
 This guide will help you migrate your application database from Neon (Replit-hosted) to Supabase PostgreSQL.
 
 ---
@@ -90,19 +91,17 @@ Replace the current content with:
 ```typescript
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import * as schema from "../shared/schema";
+import * as schema from '../shared/schema';
 
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  throw new Error('DATABASE_URL must be set. Did you forget to provision a database?');
 }
 
-export const pool = new Pool({ 
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // Required for Supabase
-  }
+    rejectUnauthorized: false, // Required for Supabase
+  },
 });
 
 export const db = drizzle({ client: pool, schema });
@@ -122,16 +121,19 @@ npm uninstall @neondatabase/serverless
 In your Netlify dashboard, update the `DATABASE_URL` environment variable:
 
 **Old Value (Neon):**
+
 ```
 postgresql://neondb_owner:npg_m3wCI0Kcuzxh@ep-lucky-pond-adj1appn.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
 **New Value (Supabase):**
+
 ```
 postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
 ```
 
 Replace:
+
 - `[YOUR-PASSWORD]` with your Supabase database password
 - `[PROJECT-REF]` with your Supabase project reference
 
@@ -140,6 +142,7 @@ Replace:
 ## Step 6: Test the Migration
 
 1. **Run database migrations** (if using Drizzle):
+
    ```bash
    npm run db:push
    ```
@@ -149,6 +152,7 @@ Replace:
    - Verify tables and data are present
 
 3. **Test the application locally**:
+
    ```bash
    npm run dev
    ```
@@ -160,20 +164,24 @@ Replace:
 ## Troubleshooting
 
 ### Issue: "Connection refused" or timeout
+
 - Make sure you're using the correct Supabase host
 - Verify your Supabase project is active
 - Check that your IP is not blocked (Supabase has IP restrictions)
 
 ### Issue: "Permission denied"
+
 - Make sure you're using the `postgres` user (not `supabase_admin`)
 - Verify the password is correct
 
 ### Issue: Missing tables after import
+
 - Check the `database_backup.sql` file was created successfully
 - Ensure the import command completed without errors
 - Check Supabase SQL Editor logs for errors
 
 ### Issue: SSL errors
+
 - The updated `server/db.ts` includes SSL configuration
 - Supabase requires SSL connections
 
@@ -196,6 +204,7 @@ Replace:
 ## Security Notes
 
 ⚠️ **Important**: After migration:
+
 1. **Rotate your Supabase database password** in the Supabase Dashboard
 2. **Never commit database credentials** to your repository
 3. **Use Netlify environment variables** for all sensitive data
@@ -206,6 +215,7 @@ Replace:
 ## Need Help?
 
 If you encounter issues:
+
 1. Check Supabase documentation: https://supabase.com/docs
 2. Verify your connection string format
 3. Check Netlify deploy logs for errors

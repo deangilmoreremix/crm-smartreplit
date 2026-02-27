@@ -5,18 +5,19 @@
 
 // Admin configuration
 export const DEV_BYPASS_EMAILS = (
-  process.env.DEV_BYPASS_EMAILS || 'dev@smartcrm.local,dean@smartcrm.vip,dean@videoremix.io,samuel@videoremix.io,victor@videoremix.io'
+  process.env.DEV_BYPASS_EMAILS ||
+  'dev@smartcrm.local,dean@smartcrm.vip,dean@videoremix.io,samuel@videoremix.io,victor@videoremix.io'
 ).split(',');
 
 // Product tier hierarchy - higher index = more access
 export const TIER_HIERARCHY = [
-  'ai_communication',      // Level 0 - Video Email, SMS, VoIP, Invoicing
-  'ai_boost_unlimited',    // Level 1 - Unlimited AI credits
-  'sales_maximizer',       // Level 2 - AI Goals and AI Tools
-  'smartcrm',              // Level 3 - Dashboard, Contacts, Pipeline, Calendar
-  'smartcrm_bundle',       // Level 4 - All tools except whitelabel
-  'whitelabel',            // Level 5 - All features including whitelabel
-  'super_admin'            // Level 6 - All features including admin
+  'ai_communication', // Level 0 - Video Email, SMS, VoIP, Invoicing
+  'ai_boost_unlimited', // Level 1 - Unlimited AI credits
+  'sales_maximizer', // Level 2 - AI Goals and AI Tools
+  'smartcrm', // Level 3 - Dashboard, Contacts, Pipeline, Calendar
+  'smartcrm_bundle', // Level 4 - All tools except whitelabel
+  'whitelabel', // Level 5 - All features including whitelabel
+  'super_admin', // Level 6 - All features including admin
 ] as const;
 
 // Get tier level (returns -1 if no tier/null)

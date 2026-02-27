@@ -3,13 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { useAnalyticsStore } from '../store/analyticsStore';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Users, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Users,
   Target,
   Calendar,
   Download,
@@ -18,7 +24,7 @@ import {
   Clock,
   BarChart3,
   PieChart,
-  LineChart
+  LineChart,
 } from 'lucide-react';
 
 export default function Analytics() {
@@ -34,7 +40,7 @@ export default function Analytics() {
     updateMetrics,
     generateInsights,
     generateForecast,
-    compareWithPrevious
+    compareWithPrevious,
   } = useAnalyticsStore();
 
   const [selectedMetric, setSelectedMetric] = useState('revenue');
@@ -64,7 +70,7 @@ export default function Analytics() {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
 
@@ -72,13 +78,13 @@ export default function Analytics() {
     return `${(value * 100).toFixed(1)}%`;
   };
 
-  const MetricCard = ({ 
-    title, 
-    value, 
-    icon, 
-    trend, 
-    trendValue, 
-    subtitle 
+  const MetricCard = ({
+    title,
+    value,
+    icon,
+    trend,
+    trendValue,
+    subtitle,
   }: {
     title: string;
     value: string | number;
@@ -96,11 +102,15 @@ export default function Analytics() {
         <div className="text-2xl font-bold">{value}</div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {trend && trendValue && (
-            <span className={`flex items-center gap-1 ${
-              trend === 'up' ? 'text-green-600' : 
-              trend === 'down' ? 'text-red-600' : 
-              'text-gray-600'
-            }`}>
+            <span
+              className={`flex items-center gap-1 ${
+                trend === 'up'
+                  ? 'text-green-600'
+                  : trend === 'down'
+                    ? 'text-red-600'
+                    : 'text-gray-600'
+              }`}
+            >
               {trend === 'up' && <TrendingUp className="w-3 h-3" />}
               {trend === 'down' && <TrendingDown className="w-3 h-3" />}
               {trendValue}
@@ -213,7 +223,9 @@ export default function Analytics() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span>Forecasted Revenue</span>
-                <span className="font-medium">{formatCurrency(salesMetrics.forecastedRevenue)}</span>
+                <span className="font-medium">
+                  {formatCurrency(salesMetrics.forecastedRevenue)}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span>Quota Attainment</span>
@@ -222,8 +234,8 @@ export default function Analytics() {
                 </Badge>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full" 
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
                   style={{ width: `${Math.min(salesMetrics.quotaAttainment * 100, 100)}%` }}
                 ></div>
               </div>
@@ -271,7 +283,10 @@ export default function Analytics() {
         <CardContent>
           <div className="space-y-4">
             {pipelineMetrics.dealsByStage.map((stage) => (
-              <div key={stage.stage} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={stage.stage}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div>
                   <h4 className="font-medium">{stage.stage}</h4>
                   <p className="text-sm text-gray-600">{stage.count} deals</p>
@@ -340,16 +355,22 @@ export default function Analytics() {
                 <div key={index} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{bottleneck.stage}</h4>
-                    <Badge variant="outline" className={
-                      bottleneck.severity === 'high' ? 'bg-red-100 text-red-800' :
-                      bottleneck.severity === 'medium' ? 'bg-orange-100 text-orange-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }>
+                    <Badge
+                      variant="outline"
+                      className={
+                        bottleneck.severity === 'high'
+                          ? 'bg-red-100 text-red-800'
+                          : bottleneck.severity === 'medium'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }
+                    >
                       {bottleneck.severity} severity
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-600 mb-3">
-                    Average time: {bottleneck.averageDays} days (threshold: {bottleneck.threshold} days)
+                    Average time: {bottleneck.averageDays} days (threshold: {bottleneck.threshold}{' '}
+                    days)
                   </p>
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Suggestions:</p>
@@ -400,21 +421,24 @@ export default function Analytics() {
                         {insight.type}
                       </Badge>
                     </div>
-                    <Badge className={
-                      insight.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                      insight.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                      insight.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-blue-100 text-blue-800'
-                    }>
+                    <Badge
+                      className={
+                        insight.severity === 'critical'
+                          ? 'bg-red-100 text-red-800'
+                          : insight.severity === 'high'
+                            ? 'bg-orange-100 text-orange-800'
+                            : insight.severity === 'medium'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-blue-100 text-blue-800'
+                      }
+                    >
                       {insight.severity}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-700 mb-3">{insight.description}</p>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-sm text-gray-600">Confidence:</span>
-                    <Badge variant="secondary">
-                      {formatPercent(insight.confidence)}
-                    </Badge>
+                    <Badge variant="secondary">{formatPercent(insight.confidence)}</Badge>
                   </div>
                   {insight.actionable && insight.suggestions.length > 0 && (
                     <div>
@@ -452,11 +476,7 @@ export default function Analytics() {
                   <SelectItem value="pipeline">Pipeline</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
-                size="sm" 
-                onClick={handleGenerateForecast}
-                disabled={isLoading}
-              >
+              <Button size="sm" onClick={handleGenerateForecast} disabled={isLoading}>
                 {isLoading ? 'Generating...' : 'Generate Forecast'}
               </Button>
             </div>
@@ -489,11 +509,15 @@ export default function Analytics() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Best Case</p>
-                      <p className="font-medium text-green-600">{formatCurrency(forecast.scenarioAnalysis.best)}</p>
+                      <p className="font-medium text-green-600">
+                        {formatCurrency(forecast.scenarioAnalysis.best)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Worst Case</p>
-                      <p className="font-medium text-red-600">{formatCurrency(forecast.scenarioAnalysis.worst)}</p>
+                      <p className="font-medium text-red-600">
+                        {formatCurrency(forecast.scenarioAnalysis.worst)}
+                      </p>
                     </div>
                   </div>
                   <div>

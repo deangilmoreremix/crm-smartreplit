@@ -35,7 +35,7 @@ class CacheManager {
     misses: 0,
     sets: 0,
     deletes: 0,
-    errors: 0
+    errors: 0,
   };
 
   constructor() {
@@ -44,14 +44,14 @@ class CacheManager {
       ttl: parseInt(process.env.CACHE_TTL || '300'), // 5 minutes default
       maxRetries: parseInt(process.env.CACHE_MAX_RETRIES || '3'),
       retryDelay: parseInt(process.env.CACHE_RETRY_DELAY || '1000'),
-      keyPrefix: process.env.CACHE_KEY_PREFIX || 'smartcrm:'
+      keyPrefix: process.env.CACHE_KEY_PREFIX || 'smartcrm:',
     };
 
     this.client = createClient({
       url: this.config.url,
       socket: {
         connectTimeout: 5000,
-        lazyConnect: true
+        lazyConnect: true,
       },
       retry_strategy: (options) => {
         if (options.error && options.error.code === 'ECONNREFUSED') {
@@ -66,7 +66,7 @@ class CacheManager {
           return undefined; // Stop retrying
         }
         return Math.min(options.attempt * this.config.retryDelay, 3000);
-      }
+      },
     });
 
     this.setupEventHandlers();
@@ -146,11 +146,7 @@ class CacheManager {
   /**
    * Set value in cache
    */
-  async set<T = any>(
-    key: string,
-    value: T,
-    ttl: number = this.config.ttl
-  ): Promise<boolean> {
+  async set<T = any>(key: string, value: T, ttl: number = this.config.ttl): Promise<boolean> {
     if (!this.isConnected) {
       return false;
     }
@@ -236,7 +232,7 @@ class CacheManager {
     }
 
     try {
-      const redisKeys = keys.map(key => this.getKey(key));
+      const redisKeys = keys.map((key) => this.getKey(key));
       const values = await this.client.mget(redisKeys);
 
       return values.map((value, index) => {
@@ -262,11 +258,7 @@ class CacheManager {
   /**
    * Set value only if key doesn't exist (atomic)
    */
-  async setnx<T = any>(
-    key: string,
-    value: T,
-    ttl: number = this.config.ttl
-  ): Promise<boolean> {
+  async setnx<T = any>(key: string, value: T, ttl: number = this.config.ttl): Promise<boolean> {
     if (!this.isConnected) {
       return false;
     }
@@ -274,7 +266,7 @@ class CacheManager {
     try {
       const result = await this.client.set(this.getKey(key), JSON.stringify(value), {
         NX: true,
-        EX: ttl
+        EX: ttl,
       });
       if (result) {
         this.stats.sets++;
@@ -357,7 +349,7 @@ class CacheManager {
 
     return {
       ...this.stats,
-      hitRate
+      hitRate,
     };
   }
 
@@ -376,7 +368,7 @@ class CacheManager {
       return {
         isHealthy: false,
         isConnected: false,
-        stats
+        stats,
       };
     }
 
@@ -388,13 +380,13 @@ class CacheManager {
         isHealthy: ping === 'PONG',
         isConnected: this.isConnected,
         stats,
-        info: this.parseRedisInfo(info)
+        info: this.parseRedisInfo(info),
       };
     } catch (error: any) {
       return {
         isHealthy: false,
         isConnected: this.isConnected,
-        stats
+        stats,
       };
     }
   }
@@ -436,7 +428,7 @@ class CacheManager {
       misses: 0,
       sets: 0,
       deletes: 0,
-      errors: 0
+      errors: 0,
     };
   }
 }
@@ -485,11 +477,11 @@ export class CacheKeys {
 
 // Cache TTL constants
 export const CACHE_TTL = {
-  SHORT: 60,      // 1 minute
-  MEDIUM: 300,    // 5 minutes
-  LONG: 3600,     // 1 hour
-  DAY: 86400,     // 1 day
-  WEEK: 604800    // 1 week
+  SHORT: 60, // 1 minute
+  MEDIUM: 300, // 5 minutes
+  LONG: 3600, // 1 hour
+  DAY: 86400, // 1 day
+  WEEK: 604800, // 1 week
 } as const;
 
 // Cache wrapper for functions
@@ -516,7 +508,7 @@ export async function invalidateTenantCache(tenantId: string): Promise<void> {
     `tenant:${tenantId}`,
     `theme:${tenantId}`,
     `assets:${tenantId}*`,
-    `analytics:${tenantId}*`
+    `analytics:${tenantId}*`,
   ];
 
   for (const pattern of patterns) {

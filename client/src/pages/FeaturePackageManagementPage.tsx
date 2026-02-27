@@ -5,19 +5,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Package, 
-  DollarSign, 
-  CheckCircle,
-  Save,
-  Loader2
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Package, DollarSign, CheckCircle, Save, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -45,7 +42,7 @@ export default function FeaturePackageManagementPage() {
     price: '',
     billingCycle: 'monthly',
     targetTier: '',
-    isActive: true
+    isActive: true,
   });
 
   const queryClient = useQueryClient();
@@ -61,10 +58,11 @@ export default function FeaturePackageManagementPage() {
   });
 
   const createPackageMutation = useMutation({
-    mutationFn: (packageData: any) => apiRequest('/api/feature-packages', {
-      method: 'POST',
-      body: packageData,
-    }),
+    mutationFn: (packageData: any) =>
+      apiRequest('/api/feature-packages', {
+        method: 'POST',
+        body: packageData,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/feature-packages'] });
       setIsCreateDialogOpen(false);
@@ -80,7 +78,7 @@ export default function FeaturePackageManagementPage() {
       price: '',
       billingCycle: 'monthly',
       targetTier: '',
-      isActive: true
+      isActive: true,
     });
   };
 
@@ -103,32 +101,32 @@ export default function FeaturePackageManagementPage() {
           whiteLabel: packageData.targetTier !== 'bronze',
           brandable: ['gold', 'platinum'].includes(packageData.targetTier || ''),
         },
-        userId
+        userId,
       };
 
       // Save to database and localStorage as fallback
       try {
         WLService.saveToLocalStorage(`feature-package-${packageData.id}`, featurePackageWLData);
-        
+
         toast({
-          title: "Feature package configuration saved!",
-          description: "Package settings have been saved successfully.",
+          title: 'Feature package configuration saved!',
+          description: 'Package settings have been saved successfully.',
         });
       } catch (dbError) {
         console.warn('Database save failed, using localStorage only:', dbError);
         WLService.saveToLocalStorage(`feature-package-${packageData.id}`, featurePackageWLData);
-        
+
         toast({
-          title: "Configuration saved locally",
-          description: "Package settings saved locally. Database sync will retry later.",
+          title: 'Configuration saved locally',
+          description: 'Package settings saved locally. Database sync will retry later.',
         });
       }
     } catch (error) {
       console.error('Failed to save feature package WL config:', error);
       toast({
-        title: "Save failed",
-        description: "Failed to save package configuration. Please try again.",
-        variant: "destructive"
+        title: 'Save failed',
+        description: 'Failed to save package configuration. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
@@ -138,7 +136,7 @@ export default function FeaturePackageManagementPage() {
   // Auto-save WL configuration when packages change
   useEffect(() => {
     if (packages && packages.length > 0) {
-      packages.forEach(pkg => {
+      packages.forEach((pkg) => {
         if (pkg.isActive) {
           WLService.saveToLocalStorage(`feature-package-${pkg.id}`, {
             packageId: pkg.id,
@@ -146,7 +144,7 @@ export default function FeaturePackageManagementPage() {
             features: pkg.features,
             targetTier: pkg.targetTier,
             lastModified: new Date().toISOString(),
-            userId
+            userId,
           });
         }
       });
@@ -157,30 +155,30 @@ export default function FeaturePackageManagementPage() {
     e.preventDefault();
     const submitData = {
       ...formData,
-      features: formData.features.filter(f => f.trim() !== ''),
-      price: formData.price || null
+      features: formData.features.filter((f) => f.trim() !== ''),
+      price: formData.price || null,
     };
     createPackageMutation.mutate(submitData);
   };
 
   const addFeatureField = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      features: [...prev.features, '']
+      features: [...prev.features, ''],
     }));
   };
 
   const updateFeature = (index: number, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      features: prev.features.map((f, i) => i === index ? value : f)
+      features: prev.features.map((f, i) => (i === index ? value : f)),
     }));
   };
 
   const removeFeature = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      features: prev.features.filter((_, i) => i !== index)
+      features: prev.features.filter((_, i) => i !== index),
     }));
   };
 
@@ -206,227 +204,237 @@ export default function FeaturePackageManagementPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="p-6 space-y-6 pb-20" data-testid="feature-package-management">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Feature Package Management</h1>
-          <p className="text-gray-600 mt-1">Create and manage feature packages for different partner tiers</p>
-        </div>
-        
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="create-package-button">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Package
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Feature Package</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Feature Package Management</h1>
+            <p className="text-gray-600 mt-1">
+              Create and manage feature packages for different partner tiers
+            </p>
+          </div>
+
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="create-package-button">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Package
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Feature Package</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Package Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="e.g., Professional CRM Package"
+                      required
+                      data-testid="package-name-input"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price (USD)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
+                      placeholder="29.99"
+                      data-testid="package-price-input"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="name">Package Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Professional CRM Package"
-                    required
-                    data-testid="package-name-input"
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    placeholder="Describe what this package includes..."
+                    rows={3}
+                    data-testid="package-description-input"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (USD)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                    placeholder="29.99"
-                    data-testid="package-price-input"
-                  />
+                  <Label>Features</Label>
+                  <div className="space-y-2">
+                    {formData.features.map((feature, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={feature}
+                          onChange={(e) => updateFeature(index, e.target.value)}
+                          placeholder="Enter feature description"
+                          data-testid={`feature-input-${index}`}
+                        />
+                        {formData.features.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => removeFeature(index)}
+                            data-testid={`remove-feature-${index}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addFeatureField}
+                      className="w-full"
+                      data-testid="add-feature-button"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Feature
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what this package includes..."
-                  rows={3}
-                  data-testid="package-description-input"
-                />
-              </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isActive"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, isActive: checked }))
+                    }
+                    data-testid="package-active-switch"
+                  />
+                  <Label htmlFor="isActive">Package is active</Label>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Features</Label>
-                <div className="space-y-2">
-                  {formData.features.map((feature, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={feature}
-                        onChange={(e) => updateFeature(index, e.target.value)}
-                        placeholder="Enter feature description"
-                        data-testid={`feature-input-${index}`}
-                      />
-                      {formData.features.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeFeature(index)}
-                          data-testid={`remove-feature-${index}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={addFeatureField}
-                    className="w-full"
-                    data-testid="add-feature-button"
+                    onClick={() => setIsCreateDialogOpen(false)}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Feature
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createPackageMutation.isPending}
+                    data-testid="submit-package-button"
+                  >
+                    {createPackageMutation.isPending ? 'Creating...' : 'Create Package'}
                   </Button>
                 </div>
-              </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                  data-testid="package-active-switch"
-                />
-                <Label htmlFor="isActive">Package is active</Label>
-              </div>
+        {/* Packages Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {packagesLoading ? (
+            Array.from({ length: 6 }, (_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : packages && packages.length > 0 ? (
+            packages.map((pkg) => (
+              <Card
+                key={pkg.id}
+                className={`relative ${!pkg.isActive ? 'opacity-60' : ''}`}
+                data-testid={`package-card-${pkg.id}`}
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg">{pkg.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Badge className={getTierBadgeColor(pkg.targetTier)}>
+                          {pkg.targetTier || 'All Tiers'}
+                        </Badge>
+                        {!pkg.isActive && <Badge variant="secondary">Inactive</Badge>}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(pkg.price)}
+                      </div>
+                      <div className="text-sm text-gray-500 capitalize">
+                        {pkg.billingCycle?.replace('_', ' ')}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {pkg.description && <p className="text-gray-600 mb-4">{pkg.description}</p>}
 
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createPackageMutation.isPending}
-                  data-testid="submit-package-button"
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Features:</h4>
+                    <ul className="space-y-1">
+                      {pkg.features.map((feature, index) => (
+                        <li key={index} className="text-sm flex items-center gap-2">
+                          <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t flex justify-between items-center">
+                    <div className="text-sm text-gray-500">
+                      Created {new Date(pkg.createdAt).toLocaleDateString()}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" data-testid={`edit-package-${pkg.id}`}>
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        data-testid={`delete-package-${pkg.id}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="col-span-full" data-testid="empty-packages-card">
+              <CardContent className="text-center py-12">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Feature Packages Yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Create your first feature package to start offering structured services to your
+                  partners.
+                </p>
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  data-testid="create-first-package-button"
                 >
-                  {createPackageMutation.isPending ? 'Creating...' : 'Create Package'}
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Package
                 </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Packages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {packagesLoading ? (
-          Array.from({ length: 6 }, (_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                </div>
               </CardContent>
             </Card>
-          ))
-        ) : packages && packages.length > 0 ? (
-          packages.map((pkg) => (
-            <Card key={pkg.id} className={`relative ${!pkg.isActive ? 'opacity-60' : ''}`} data-testid={`package-card-${pkg.id}`}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{pkg.name}</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Badge className={getTierBadgeColor(pkg.targetTier)}>
-                        {pkg.targetTier || 'All Tiers'}
-                      </Badge>
-                      {!pkg.isActive && (
-                        <Badge variant="secondary">Inactive</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(pkg.price)}
-                    </div>
-                    <div className="text-sm text-gray-500 capitalize">
-                      {pkg.billingCycle?.replace('_', ' ')}
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {pkg.description && (
-                  <p className="text-gray-600 mb-4">{pkg.description}</p>
-                )}
-                
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Features:</h4>
-                  <ul className="space-y-1">
-                    {pkg.features.map((feature, index) => (
-                      <li key={index} className="text-sm flex items-center gap-2">
-                        <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mt-4 pt-4 border-t flex justify-between items-center">
-                  <div className="text-sm text-gray-500">
-                    Created {new Date(pkg.createdAt).toLocaleDateString()}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      data-testid={`edit-package-${pkg.id}`}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700"
-                      data-testid={`delete-package-${pkg.id}`}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="col-span-full" data-testid="empty-packages-card">
-            <CardContent className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Feature Packages Yet</h3>
-              <p className="text-gray-600 mb-4">
-                Create your first feature package to start offering structured services to your partners.
-              </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)} data-testid="create-first-package-button">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Package
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+          )}
         </div>
       </div>
     </div>

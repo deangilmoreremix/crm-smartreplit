@@ -10,7 +10,7 @@ import {
   PieChart,
   Download,
   Filter,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 import { useDealStore } from '../store/dealStore';
 import { DealForecast, SalesMetrics } from '../types/deal';
@@ -32,12 +32,14 @@ interface QuarterlyForecast {
 }
 
 const RevenueForecasting: React.FC = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>(
+    'monthly'
+  );
   const [selectedView, setSelectedView] = useState<'chart' | 'table' | 'pipeline'>('chart');
   const [timeRange, setTimeRange] = useState<'3m' | '6m' | '12m'>('6m');
-  
+
   const { deals, getActivePipeline, getSalesMetrics, calculateForecast } = useDealStore();
-  
+
   const pipeline = getActivePipeline();
   const metrics = getSalesMetrics();
   const forecast = calculateForecast();
@@ -46,33 +48,36 @@ const RevenueForecasting: React.FC = () => {
   const forecastData: ForecastData[] = useMemo(() => {
     const months = [];
     const currentDate = new Date();
-    
+
     for (let i = 0; i < 6; i++) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() + i);
-      
+
       const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      
+
       // Calculate forecasts based on deals expected to close in this month
-      const monthDeals = deals.filter(deal => {
+      const monthDeals = deals.filter((deal) => {
         if (!deal.expectedCloseDate) return false;
         const dealMonth = deal.expectedCloseDate.getMonth();
         const dealYear = deal.expectedCloseDate.getFullYear();
         return dealMonth === date.getMonth() && dealYear === date.getFullYear();
       });
-      
+
       const totalValue = monthDeals.reduce((sum, deal) => sum + deal.value, 0);
-      const weightedValue = monthDeals.reduce((sum, deal) => sum + (deal.value * deal.probability / 100), 0);
-      
+      const weightedValue = monthDeals.reduce(
+        (sum, deal) => sum + (deal.value * deal.probability) / 100,
+        0
+      );
+
       months.push({
         month: monthName,
         conservative: weightedValue * 0.7,
         realistic: weightedValue,
         optimistic: weightedValue * 1.3,
-        actual: i === 0 ? totalValue * 0.8 : undefined // Simulate actual for current month
+        actual: i === 0 ? totalValue * 0.8 : undefined, // Simulate actual for current month
       });
     }
-    
+
     return months;
   }, [deals]);
 
@@ -81,34 +86,34 @@ const RevenueForecasting: React.FC = () => {
     const quarters = [];
     const currentDate = new Date();
     const currentQuarter = Math.floor(currentDate.getMonth() / 3);
-    
+
     for (let i = 0; i < 4; i++) {
-      const quarter = (currentQuarter + i) % 4 + 1;
+      const quarter = ((currentQuarter + i) % 4) + 1;
       const year = currentDate.getFullYear() + Math.floor((currentQuarter + i) / 4);
-      
+
       // Calculate quarter metrics
-      const target = 500000 + (i * 50000); // Example targets
+      const target = 500000 + i * 50000; // Example targets
       const pipelineValue = deals
-        .filter(deal => {
+        .filter((deal) => {
           if (!deal.expectedCloseDate) return false;
           const dealQuarter = Math.floor(deal.expectedCloseDate.getMonth() / 3) + 1;
           const dealYear = deal.expectedCloseDate.getFullYear();
           return dealQuarter === quarter && dealYear === year;
         })
         .reduce((sum, deal) => sum + deal.value, 0);
-      
+
       const forecastValue = pipelineValue * 0.6; // 60% close rate assumption
       const achievement = i === 0 ? 85 : 0; // Current quarter achievement
-      
+
       quarters.push({
         quarter: `Q${quarter} ${year}`,
         target,
         forecast: forecastValue,
         pipeline: pipelineValue,
-        achievement
+        achievement,
       });
     }
-    
+
     return quarters;
   }, [deals]);
 
@@ -142,25 +147,36 @@ const RevenueForecasting: React.FC = () => {
             <h4 className="font-medium text-gray-900 mb-4">Monthly Revenue Forecast</h4>
             <div className="space-y-3">
               {forecastData.map((data, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-white rounded border"
+                >
                   <div className="font-medium text-gray-900">{data.month}</div>
                   <div className="flex space-x-6 text-sm">
                     <div className="text-center">
                       <div className="text-xs text-gray-500">Conservative</div>
-                      <div className="font-medium text-red-600">{formatCurrency(data.conservative)}</div>
+                      <div className="font-medium text-red-600">
+                        {formatCurrency(data.conservative)}
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-gray-500">Realistic</div>
-                      <div className="font-medium text-blue-600">{formatCurrency(data.realistic)}</div>
+                      <div className="font-medium text-blue-600">
+                        {formatCurrency(data.realistic)}
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-gray-500">Optimistic</div>
-                      <div className="font-medium text-green-600">{formatCurrency(data.optimistic)}</div>
+                      <div className="font-medium text-green-600">
+                        {formatCurrency(data.optimistic)}
+                      </div>
                     </div>
                     {data.actual && (
                       <div className="text-center">
                         <div className="text-xs text-gray-500">Actual</div>
-                        <div className="font-medium text-gray-900">{formatCurrency(data.actual)}</div>
+                        <div className="font-medium text-gray-900">
+                          {formatCurrency(data.actual)}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -179,7 +195,10 @@ const RevenueForecasting: React.FC = () => {
             <h4 className="font-medium text-gray-900 mb-4">Quarterly Revenue Forecast</h4>
             <div className="space-y-3">
               {quarterlyData.map((data, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-white rounded border"
+                >
                   <div className="font-medium text-gray-900">{data.quarter}</div>
                   <div className="flex space-x-6 text-sm">
                     <div className="text-center">
@@ -188,11 +207,15 @@ const RevenueForecasting: React.FC = () => {
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-gray-500">Forecast</div>
-                      <div className="font-medium text-blue-600">{formatCurrency(data.forecast)}</div>
+                      <div className="font-medium text-blue-600">
+                        {formatCurrency(data.forecast)}
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="text-xs text-gray-500">Pipeline</div>
-                      <div className="font-medium text-green-600">{formatCurrency(data.pipeline)}</div>
+                      <div className="font-medium text-green-600">
+                        {formatCurrency(data.pipeline)}
+                      </div>
                     </div>
                     {data.achievement > 0 && (
                       <div className="text-center">
@@ -245,7 +268,9 @@ const RevenueForecasting: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Pipeline</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(forecast.totalPipeline)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(forecast.totalPipeline)}
+              </p>
             </div>
             <div className="p-3 bg-blue-50 rounded-full">
               <DollarSign className="h-6 w-6 text-blue-600" />
@@ -261,7 +286,9 @@ const RevenueForecasting: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Weighted Pipeline</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(forecast.weightedPipeline)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(forecast.weightedPipeline)}
+              </p>
             </div>
             <div className="p-3 bg-green-50 rounded-full">
               <Target className="h-6 w-6 text-green-600" />
@@ -277,7 +304,9 @@ const RevenueForecasting: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Win Rate</p>
-              <p className="text-2xl font-bold text-gray-900">{formatPercentage(metrics.winRate)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatPercentage(metrics.winRate)}
+              </p>
             </div>
             <div className="p-3 bg-purple-50 rounded-full">
               <TrendingUp className="h-6 w-6 text-purple-600" />
@@ -293,7 +322,9 @@ const RevenueForecasting: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Avg. Deal Size</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(metrics.averageDealSize)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(metrics.averageDealSize)}
+              </p>
             </div>
             <div className="p-3 bg-yellow-50 rounded-full">
               <BarChart3 className="h-6 w-6 text-yellow-600" />
@@ -332,7 +363,7 @@ const RevenueForecasting: React.FC = () => {
                 {[
                   { id: 'chart', icon: BarChart3, label: 'Chart' },
                   { id: 'table', icon: LineChart, label: 'Table' },
-                  { id: 'pipeline', icon: PieChart, label: 'Pipeline' }
+                  { id: 'pipeline', icon: PieChart, label: 'Pipeline' },
                 ].map((view) => (
                   <button
                     key={view.id}
@@ -412,9 +443,7 @@ const RevenueForecasting: React.FC = () => {
               <TrendingUp className="h-8 w-8 text-green-600" />
             </div>
             <h4 className="font-medium text-gray-900">Velocity</h4>
-            <p className="text-2xl font-bold text-green-600 mt-1">
-              {metrics.averageSalesCycle}d
-            </p>
+            <p className="text-2xl font-bold text-green-600 mt-1">{metrics.averageSalesCycle}d</p>
             <p className="text-sm text-gray-500">Avg. cycle time</p>
           </div>
 

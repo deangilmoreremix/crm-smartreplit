@@ -17,7 +17,7 @@ const ScrollAnimationWrapper: React.FC<ScrollAnimationWrapperProps> = ({
   delay = 0,
   threshold = 0.1,
   once = true,
-  className = ''
+  className = '',
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -37,10 +37,10 @@ const ScrollAnimationWrapper: React.FC<ScrollAnimationWrapperProps> = ({
           }
         }
       },
-      { 
+      {
         root: null,
         rootMargin: '0px',
-        threshold 
+        threshold,
       }
     );
 
@@ -63,7 +63,7 @@ const ScrollAnimationWrapper: React.FC<ScrollAnimationWrapperProps> = ({
     }
 
     let animationClasses = 'opacity-100 transform';
-    
+
     switch (animation) {
       case 'fade-up':
         animationClasses += isVisible ? ' translate-y-0' : ' translate-y-12';
@@ -83,17 +83,17 @@ const ScrollAnimationWrapper: React.FC<ScrollAnimationWrapperProps> = ({
       default:
         animationClasses += isVisible ? ' translate-y-0' : ' translate-y-12';
     }
-    
+
     return animationClasses;
   };
 
   return (
-    <div 
+    <div
       ref={ref}
       className={`${getAnimationClasses()} gpu-accelerated ${className}`}
-      style={{ 
+      style={{
         transition: `opacity ${duration}ms ease-out ${delay}ms, transform ${duration}ms ease-out ${delay}ms`,
-        willChange: 'opacity, transform'
+        willChange: 'opacity, transform',
       }}
     >
       {children}

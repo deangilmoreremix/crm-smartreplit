@@ -14,14 +14,14 @@ export const useApiStore = create<ApiStore>()(
     (set) => ({
       apiKeys: {
         openai: '',
-        google: ''
+        google: '',
       },
       setApiKey: (service, key) =>
         set((state) => ({
           apiKeys: {
             ...state.apiKeys,
-            [service]: key
-          }
+            [service]: key,
+          },
         })),
     }),
     {

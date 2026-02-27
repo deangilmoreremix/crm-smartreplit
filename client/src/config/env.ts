@@ -5,9 +5,10 @@
 
 // Environment detection
 const currentOrigin = window.location.origin;
-export const isDevelopment = currentOrigin.includes('localhost') ||
-                            currentOrigin.includes('replit.dev') ||
-                            currentOrigin.includes('replit.app');
+export const isDevelopment =
+  currentOrigin.includes('localhost') ||
+  currentOrigin.includes('replit.dev') ||
+  currentOrigin.includes('replit.app');
 
 // Production URLs - should be environment variables in production
 export const PRODUCTION_APP_URL = import.meta.env.VITE_APP_URL || 'https://app.smartcrm.vip';

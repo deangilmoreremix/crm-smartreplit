@@ -27,7 +27,7 @@ function testBasicEventSystem() {
       receivedEvent = event;
       console.log('📨 Event received:', event);
     },
-    priority: 10
+    priority: 10,
   });
 
   // Emit test event
@@ -35,7 +35,7 @@ function testBasicEventSystem() {
     type: 'MANUAL_TEST_EVENT',
     source: 'test-suite',
     data: { message: 'Manual test successful!', timestamp: Date.now() },
-    priority: 'medium'
+    priority: 'medium',
   });
 
   // Check after a short delay
@@ -61,20 +61,23 @@ function testApiClient() {
   }
 
   // Test health check
-  window.unifiedApiClient.request({
-    endpoint: '/api/health',
-    method: 'GET'
-  }).then(response => {
-    console.log('📡 Health check response:', response);
-    if (response.success !== undefined && response.timestamp) {
-      console.log('✅ PASSED: API client working correctly');
-    } else {
-      console.log('❌ FAILED: Invalid API response format');
-    }
-  }).catch(error => {
-    console.log('⚠️  API call failed (expected if server not running):', error.message);
-    console.log('✅ PASSED: API client handles errors gracefully');
-  });
+  window.unifiedApiClient
+    .request({
+      endpoint: '/api/health',
+      method: 'GET',
+    })
+    .then((response) => {
+      console.log('📡 Health check response:', response);
+      if (response.success !== undefined && response.timestamp) {
+        console.log('✅ PASSED: API client working correctly');
+      } else {
+        console.log('❌ FAILED: Invalid API response format');
+      }
+    })
+    .catch((error) => {
+      console.log('⚠️  API call failed (expected if server not running):', error.message);
+      console.log('✅ PASSED: API client handles errors gracefully');
+    });
 
   return true;
 }
@@ -89,24 +92,27 @@ function testAIIntegration() {
   }
 
   // Test AI request
-  window.unifiedApiClient.request({
-    endpoint: '/api/respond',
-    method: 'POST',
-    data: {
-      prompt: 'Hello, this is a test of the unified AI system',
-      useThinking: false
-    }
-  }).then(response => {
-    console.log('🤖 AI response:', response);
-    if (response.timestamp) {
-      console.log('✅ PASSED: AI integration working');
-    } else {
-      console.log('❌ FAILED: Invalid AI response');
-    }
-  }).catch(error => {
-    console.log('⚠️  AI request failed (expected if server not running):', error.message);
-    console.log('✅ PASSED: AI client handles errors gracefully');
-  });
+  window.unifiedApiClient
+    .request({
+      endpoint: '/api/respond',
+      method: 'POST',
+      data: {
+        prompt: 'Hello, this is a test of the unified AI system',
+        useThinking: false,
+      },
+    })
+    .then((response) => {
+      console.log('🤖 AI response:', response);
+      if (response.timestamp) {
+        console.log('✅ PASSED: AI integration working');
+      } else {
+        console.log('❌ FAILED: Invalid AI response');
+      }
+    })
+    .catch((error) => {
+      console.log('⚠️  AI request failed (expected if server not running):', error.message);
+      console.log('✅ PASSED: AI client handles errors gracefully');
+    });
 
   return true;
 }
@@ -146,9 +152,11 @@ function testSystemStats() {
 
   console.log('📊 System stats:', { queueStatus, handlerCount });
 
-  if (typeof queueStatus.queueLength === 'number' &&
-      typeof queueStatus.processing === 'boolean' &&
-      typeof handlerCount === 'number') {
+  if (
+    typeof queueStatus.queueLength === 'number' &&
+    typeof queueStatus.processing === 'boolean' &&
+    typeof handlerCount === 'number'
+  ) {
     console.log('✅ PASSED: System statistics working correctly');
   } else {
     console.log('❌ FAILED: Invalid system statistics');
@@ -172,9 +180,9 @@ function testRemoteAppSimulation() {
     source: 'test-remote-app',
     data: {
       capabilities: ['contacts', 'deals', 'ai'],
-      version: '1.0.0'
+      version: '1.0.0',
     },
-    priority: 'high'
+    priority: 'high',
   });
 
   // Simulate data sync
@@ -183,9 +191,9 @@ function testRemoteAppSimulation() {
     source: 'test-remote-app',
     data: {
       dataType: 'contacts',
-      filters: {}
+      filters: {},
     },
-    priority: 'high'
+    priority: 'high',
   });
 
   console.log('📱 Remote app events emitted');
@@ -204,7 +212,7 @@ function runAllTests() {
     testAIIntegration,
     testEventHistory,
     testSystemStats,
-    testRemoteAppSimulation
+    testRemoteAppSimulation,
   ];
 
   let completedTests = 0;

@@ -1,4 +1,3 @@
-
 const { createClient } = require('@supabase/supabase-js');
 
 // Get Supabase credentials from environment or use defaults
@@ -8,15 +7,11 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-servic
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
-const ADMIN_EMAILS = [
-  'victor@videoremix.io',
-  'samuel@videoremix.io', 
-  'dean@videoremix.io'
-];
+const ADMIN_EMAILS = ['victor@videoremix.io', 'samuel@videoremix.io', 'dean@videoremix.io'];
 
 async function checkAdminStatus() {
   console.log('🔍 Checking admin status for VideoRemix team...\n');
@@ -24,7 +19,7 @@ async function checkAdminStatus() {
   try {
     // Get all users from Supabase Auth
     const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-    
+
     if (authError) {
       console.error('❌ Error fetching auth users:', authError.message);
       return;
@@ -34,7 +29,10 @@ async function checkAdminStatus() {
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .in('username', ADMIN_EMAILS.map(email => email.split('@')[0]));
+      .in(
+        'username',
+        ADMIN_EMAILS.map((email) => email.split('@')[0])
+      );
 
     if (profileError) {
       console.log('⚠️ Could not fetch profiles (table may not exist):', profileError.message);
@@ -44,10 +42,10 @@ async function checkAdminStatus() {
 
     for (const email of ADMIN_EMAILS) {
       console.log(`--- ${email} ---`);
-      
+
       // Check in auth users
-      const authUser = authUsers.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      
+      const authUser = authUsers.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+
       if (authUser) {
         console.log(`✅ Auth User: Found (ID: ${authUser.id})`);
         console.log(`   Email Confirmed: ${authUser.email_confirmed_at ? '✅ Yes' : '❌ No'}`);
@@ -55,11 +53,11 @@ async function checkAdminStatus() {
         console.log(`   Created: ${authUser.created_at}`);
         console.log(`   Role in Metadata: ${authUser.user_metadata?.role || 'Not set'}`);
         console.log(`   App Context: ${authUser.user_metadata?.app_context || 'Not set'}`);
-        
+
         // Check profile
         const username = email.split('@')[0];
-        const profile = profiles?.find(p => p.username === username || p.id === authUser.id);
-        
+        const profile = profiles?.find((p) => p.username === username || p.id === authUser.id);
+
         if (profile) {
           console.log(`✅ Profile: Found (Role: ${profile.role})`);
         } else {
@@ -73,18 +71,20 @@ async function checkAdminStatus() {
     }
 
     // Summary
-    const foundUsers = ADMIN_EMAILS.filter(email => 
-      authUsers.users?.some(u => u.email?.toLowerCase() === email.toLowerCase())
+    const foundUsers = ADMIN_EMAILS.filter((email) =>
+      authUsers.users?.some((u) => u.email?.toLowerCase() === email.toLowerCase())
     );
-    
-    const confirmedUsers = ADMIN_EMAILS.filter(email => {
-      const user = authUsers.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+    const confirmedUsers = ADMIN_EMAILS.filter((email) => {
+      const user = authUsers.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
       return user?.email_confirmed_at;
     });
 
-    const adminRoleUsers = ADMIN_EMAILS.filter(email => {
-      const user = authUsers.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
-      const profile = profiles?.find(p => p.username === email.split('@')[0] || p.id === user?.id);
+    const adminRoleUsers = ADMIN_EMAILS.filter((email) => {
+      const user = authUsers.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+      const profile = profiles?.find(
+        (p) => p.username === email.split('@')[0] || p.id === user?.id
+      );
       return user?.user_metadata?.role === 'super_admin' || profile?.role === 'super_admin';
     });
 
@@ -102,7 +102,6 @@ async function checkAdminStatus() {
     if (adminRoleUsers.length < foundUsers.length) {
       console.log('\n🔧 Some users need admin role assignment');
     }
-
   } catch (error) {
     console.error('❌ Script error:', error);
   }

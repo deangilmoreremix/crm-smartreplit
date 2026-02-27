@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Grid3X3, 
-  List, 
-  Users, 
+import {
+  Plus,
+  Search,
+  Grid3X3,
+  List,
+  Users,
   Brain,
   Filter,
   Download,
@@ -22,7 +22,7 @@ import {
   Trash2,
   MessageSquare,
   Video,
-  Calendar
+  Calendar,
 } from 'lucide-react';
 import { useContactStore } from '../../hooks/useContactStore';
 import { Contact } from '../../types/contact';
@@ -62,7 +62,7 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
   className = '',
   maxHeight = '80vh',
   showHeader = true,
-  compactMode = false
+  compactMode = false,
 }) => {
   const {
     contacts,
@@ -80,7 +80,7 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
     updateContact,
     deleteContact,
     analyzeContact,
-    enrichContact
+    enrichContact,
   } = useContactStore();
 
   // Local state for embedded app
@@ -100,7 +100,7 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
     source: [],
     isFavorite: undefined,
     hasCustomFields: undefined,
-    lastContactDays: undefined
+    lastContactDays: undefined,
   });
 
   // Initialize contacts on mount
@@ -111,41 +111,43 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
   // Convert contacts object to array and apply filtering/sorting
   const contactsArray = useMemo(() => {
     let contactList = Array.isArray(contacts) ? contacts : Object.values(contacts || {});
-    
+
     // Apply search filter
     if (searchTerm) {
       contactList = searchContacts(searchTerm);
     }
 
     // Apply advanced filters
-    contactList = contactList.filter(contact => {
+    contactList = contactList.filter((contact) => {
       // Status filter
       if (activeFilters.status.length > 0 && !activeFilters.status.includes(contact.status)) {
         return false;
       }
-      
+
       // Interest level filter
-      if (activeFilters.interestLevel.length > 0 && 
-          contact.interestLevel && 
-          !activeFilters.interestLevel.includes(contact.interestLevel)) {
+      if (
+        activeFilters.interestLevel.length > 0 &&
+        contact.interestLevel &&
+        !activeFilters.interestLevel.includes(contact.interestLevel)
+      ) {
         return false;
       }
-      
+
       // Industry filter
-      if (activeFilters.industry.length > 0 && 
-          contact.industry && 
-          !activeFilters.industry.includes(contact.industry)) {
+      if (
+        activeFilters.industry.length > 0 &&
+        contact.industry &&
+        !activeFilters.industry.includes(contact.industry)
+      ) {
         return false;
       }
-      
+
       // Tags filter
       if (activeFilters.tags.length > 0 && contact.tags) {
-        const hasMatchingTag = activeFilters.tags.some(tag => 
-          contact.tags?.includes(tag)
-        );
+        const hasMatchingTag = activeFilters.tags.some((tag) => contact.tags?.includes(tag));
         if (!hasMatchingTag) return false;
       }
-      
+
       // Score range filter
       if (contact.aiScore !== undefined) {
         const score = contact.aiScore || 0;
@@ -153,10 +155,12 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
           return false;
         }
       }
-      
+
       // Favorite filter
-      if (activeFilters.isFavorite !== undefined && 
-          contact.isFavorite !== activeFilters.isFavorite) {
+      if (
+        activeFilters.isFavorite !== undefined &&
+        contact.isFavorite !== activeFilters.isFavorite
+      ) {
         return false;
       }
 
@@ -166,7 +170,7 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
     // Apply sorting
     contactList.sort((a, b) => {
       let valueA, valueB;
-      
+
       switch (sortBy) {
         case 'name':
           valueA = a.name || `${a.firstName} ${a.lastName}`;
@@ -190,12 +194,10 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
       }
 
       if (typeof valueA === 'string' && typeof valueB === 'string') {
-        return sortOrder === 'asc' 
-          ? valueA.localeCompare(valueB)
-          : valueB.localeCompare(valueA);
+        return sortOrder === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
       }
-      
-      return sortOrder === 'asc' 
+
+      return sortOrder === 'asc'
         ? (valueA as number) - (valueB as number)
         : (valueB as number) - (valueA as number);
     });
@@ -332,18 +334,20 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
               isOpen={showAdvancedFilter}
               onClose={() => setShowAdvancedFilter(false)}
               onApplyFilters={setActiveFilters}
-              onClearFilters={() => setActiveFilters({
-                status: [],
-                interestLevel: [],
-                industry: [],
-                tags: [],
-                scoreRange: { min: 0, max: 100 },
-                location: [],
-                source: [],
-                isFavorite: undefined,
-                hasCustomFields: undefined,
-                lastContactDays: undefined
-              })}
+              onClearFilters={() =>
+                setActiveFilters({
+                  status: [],
+                  interestLevel: [],
+                  industry: [],
+                  tags: [],
+                  scoreRange: { min: 0, max: 100 },
+                  location: [],
+                  source: [],
+                  isFavorite: undefined,
+                  hasCustomFields: undefined,
+                  lastContactDays: undefined,
+                })
+              }
               contacts={contactsArray}
               currentFilters={activeFilters}
             />
@@ -376,7 +380,9 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
         ) : (
           <div className="p-4">
             {viewMode === 'grid' ? (
-              <div className={`grid gap-4 ${compactMode ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+              <div
+                className={`grid gap-4 ${compactMode ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}
+              >
                 {contactsArray.map((contact) => (
                   <EnhancedContactCard
                     key={contact.id}
@@ -413,11 +419,15 @@ const EmbeddedContactsApp: React.FC<EmbeddedContactsAppProps> = ({
                     </div>
                     <div className="flex items-center space-x-2">
                       {contact.aiScore && (
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          contact.aiScore >= 80 ? 'bg-green-100 text-green-800' :
-                          contact.aiScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            contact.aiScore >= 80
+                              ? 'bg-green-100 text-green-800'
+                              : contact.aiScore >= 60
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                          }`}
+                        >
                           {contact.aiScore}
                         </span>
                       )}

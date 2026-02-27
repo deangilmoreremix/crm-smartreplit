@@ -17,7 +17,7 @@ interface State {
 
 class RemoteAppErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -48,11 +48,10 @@ class RemoteAppErrorBoundary extends Component<Props, State> {
         <Card className="w-full h-64 flex items-center justify-center border-red-200 bg-red-50">
           <CardContent className="text-center p-6">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <CardTitle className="text-red-800 mb-2">
-              {this.props.appName} Unavailable
-            </CardTitle>
+            <CardTitle className="text-red-800 mb-2">{this.props.appName} Unavailable</CardTitle>
             <p className="text-red-600 mb-4 max-w-md mx-auto">
-              The {this.props.appName} could not be loaded. This might be due to network issues or the remote service being temporarily unavailable.
+              The {this.props.appName} could not be loaded. This might be due to network issues or
+              the remote service being temporarily unavailable.
             </p>
             <div className="flex gap-3 justify-center">
               <Button
@@ -64,10 +63,7 @@ class RemoteAppErrorBoundary extends Component<Props, State> {
                 Try Again
               </Button>
               {this.props.appUrl && (
-                <Button
-                  onClick={this.handleOpenInNewTab}
-                  className="flex items-center gap-2"
-                >
+                <Button onClick={this.handleOpenInNewTab} className="flex items-center gap-2">
                   <ExternalLink className="h-4 w-4" />
                   Open in New Tab
                 </Button>

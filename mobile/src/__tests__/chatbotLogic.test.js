@@ -3,28 +3,28 @@ const getChatbotResponse = (input) => {
   // Contacts
   if (input.includes('contact') || input.includes('contacts')) {
     if (input.includes('add') || input.includes('create')) {
-      return "To add a contact:\n1. Tap the Contacts tab\n2. Press the + button\n3. Fill in name, email, phone\n4. Add company info\n5. Tap Save\n\nYour contact will appear in the list!";
+      return 'To add a contact:\n1. Tap the Contacts tab\n2. Press the + button\n3. Fill in name, email, phone\n4. Add company info\n5. Tap Save\n\nYour contact will appear in the list!';
     }
     if (input.includes('search') || input.includes('find')) {
-      return "To search contacts:\n• Use the search bar at the top\n• Filter by company, tags, or date\n• Sort by name, date added, or last contacted\n• Tap a contact to view details";
+      return 'To search contacts:\n• Use the search bar at the top\n• Filter by company, tags, or date\n• Sort by name, date added, or last contacted\n• Tap a contact to view details';
     }
-    return "Contacts are your customer database. You can:\n• View all contacts in a list\n• Add new contacts with details\n• Search and filter contacts\n• Import from CSV files\n• Export contact data\n• View contact activity history";
+    return 'Contacts are your customer database. You can:\n• View all contacts in a list\n• Add new contacts with details\n• Search and filter contacts\n• Import from CSV files\n• Export contact data\n• View contact activity history';
   }
 
   // Deals
   if (input.includes('deal') || input.includes('deals')) {
     if (input.includes('add') || input.includes('create')) {
-      return "To create a deal:\n1. Go to Deals tab\n2. Tap + button\n3. Enter deal name and value\n4. Select contact and stage\n5. Add description and notes\n6. Set close date\n7. Save the deal";
+      return 'To create a deal:\n1. Go to Deals tab\n2. Tap + button\n3. Enter deal name and value\n4. Select contact and stage\n5. Add description and notes\n6. Set close date\n7. Save the deal';
     }
     if (input.includes('stage') || input.includes('pipeline')) {
-      return "Deal stages typically include:\n• Prospect - Initial contact\n• Qualification - Needs assessment\n• Proposal - Sent quote/proposal\n• Negotiation - Terms discussion\n• Closed Won - Deal completed\n• Closed Lost - Deal lost\n\nDrag deals between stages to update progress.";
+      return 'Deal stages typically include:\n• Prospect - Initial contact\n• Qualification - Needs assessment\n• Proposal - Sent quote/proposal\n• Negotiation - Terms discussion\n• Closed Won - Deal completed\n• Closed Lost - Deal lost\n\nDrag deals between stages to update progress.';
     }
-    return "Deals track your sales pipeline:\n• Create deals with values and stages\n• Move deals through pipeline stages\n• Set and track close dates\n• Add notes, tasks, and reminders\n• View deal analytics and forecasts\n• Generate reports on pipeline health";
+    return 'Deals track your sales pipeline:\n• Create deals with values and stages\n• Move deals through pipeline stages\n• Set and track close dates\n• Add notes, tasks, and reminders\n• View deal analytics and forecasts\n• Generate reports on pipeline health';
   }
 
   // Dashboard
   if (input.includes('dashboard')) {
-    return "The Dashboard shows your key metrics:\n• Overview cards show key metrics\n• Recent activity feed\n• Quick action buttons\n• Charts for deals and revenue\n• Upcoming tasks and appointments\n• Performance indicators\n\nCustomize it in Settings to show what matters most to you.";
+    return 'The Dashboard shows your key metrics:\n• Overview cards show key metrics\n• Recent activity feed\n• Quick action buttons\n• Charts for deals and revenue\n• Upcoming tasks and appointments\n• Performance indicators\n\nCustomize it in Settings to show what matters most to you.';
   }
 
   // Settings
@@ -32,7 +32,7 @@ const getChatbotResponse = (input) => {
     if (input.includes('theme') || input.includes('dark')) {
       return "To change theme:\n1. Go to Settings tab\n2. Find 'Appearance' section\n3. Toggle between Light and Dark mode\n4. Changes apply immediately\n\nDark mode reduces eye strain in low light.";
     }
-    return "Settings let you customize the app:\n• Profile: Update your information\n• Notifications: Control alerts and reminders\n• Appearance: Theme and display options\n• Privacy: Data sharing preferences\n• Sync: Data synchronization settings\n• Help: App tutorials and support";
+    return 'Settings let you customize the app:\n• Profile: Update your information\n• Notifications: Control alerts and reminders\n• Appearance: Theme and display options\n• Privacy: Data sharing preferences\n• Sync: Data synchronization settings\n• Help: App tutorials and support';
   }
 
   // Authentication
@@ -60,7 +60,9 @@ const getChatbotResponse = (input) => {
 
 describe('Chatbot Logic Tests', () => {
   test('should respond to contact questions', () => {
-    expect(getChatbotResponse('How do contacts work?')).toContain('Contacts are your customer database');
+    expect(getChatbotResponse('How do contacts work?')).toContain(
+      'Contacts are your customer database'
+    );
     expect(getChatbotResponse('How do I add a contact?')).toContain('To add a contact:');
     expect(getChatbotResponse('How to search contacts?')).toContain('To search contacts:');
   });
@@ -72,11 +74,15 @@ describe('Chatbot Logic Tests', () => {
   });
 
   test('should respond to dashboard questions', () => {
-    expect(getChatbotResponse('What is the dashboard?')).toContain('The Dashboard shows your key metrics');
+    expect(getChatbotResponse('What is the dashboard?')).toContain(
+      'The Dashboard shows your key metrics'
+    );
   });
 
   test('should respond to settings questions', () => {
-    expect(getChatbotResponse('How do settings work?')).toContain('Settings let you customize the app');
+    expect(getChatbotResponse('How do settings work?')).toContain(
+      'Settings let you customize the app'
+    );
     expect(getChatbotResponse('How to change theme?')).toContain('To change theme:');
   });
 
@@ -110,7 +116,9 @@ describe('Chatbot Logic Tests', () => {
   });
 
   test('should handle partial matches', () => {
-    expect(getChatbotResponse('contact management')).toContain('Contacts are your customer database');
+    expect(getChatbotResponse('contact management')).toContain(
+      'Contacts are your customer database'
+    );
     expect(getChatbotResponse('deal tracking')).toContain('Deals track your sales pipeline');
     expect(getChatbotResponse('setting preferences')).toContain('Settings let you customize');
   });

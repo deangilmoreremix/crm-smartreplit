@@ -17,8 +17,8 @@ const child = spawn('tsx', ['server/index.ts'], {
     VITE_DEV_SERVER_ALLOWED_HOSTS: 'all',
     DANGEROUSLY_DISABLE_HOST_CHECK: 'true',
     DISABLE_HOST_CHECK: 'true',
-    HOST: '0.0.0.0'
-  }
+    HOST: '0.0.0.0',
+  },
 });
 
 child.on('exit', (code) => {

@@ -21,8 +21,8 @@ async function createJVZooAdmin() {
       role: 'super_admin',
       permissions: ['all'],
       app_context: 'smartcrm',
-      email_template_set: 'smartcrm'
-    }
+      email_template_set: 'smartcrm',
+    },
   });
 
   if (error) {

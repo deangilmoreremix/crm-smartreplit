@@ -3,28 +3,34 @@
 ## Account Types and Email Routing
 
 ### **1. Super Admin Accounts**
+
 **Email Addresses:**
+
 - dean@videoremix.io
-- victor@videoremix.io 
+- victor@videoremix.io
 - samuel@videoremix.io
 
 **Email Configuration:**
+
 - **Template Set**: SmartCRM Admin Templates
 - **App Context**: 'smartcrm'
 - **Role**: 'super_admin'
-- **Email Features**: 
+- **Email Features**:
   - Admin notifications
   - User management alerts
   - System status updates
   - All standard SmartCRM emails
 
 ### **2. WL Users (White Label Users)**
+
 **Who Gets This:**
+
 - All existing users (except super admins)
 - Users invited as WL Users
 - Premium/paid subscribers
 
 **Email Configuration:**
+
 - **Template Set**: SmartCRM Premium Templates
 - **App Context**: 'smartcrm'
 - **Role**: 'wl_user'
@@ -35,12 +41,15 @@
   - All standard SmartCRM emails
 
 ### **3. Regular Users**
+
 **Who Gets This:**
+
 - New users (default)
 - Free tier users
 - Basic CRM users
 
 **Email Configuration:**
+
 - **Template Set**: SmartCRM Basic Templates
 - **App Context**: 'smartcrm'
 - **Role**: 'regular_user'
@@ -59,6 +68,7 @@
 2. **Create Role-Based Templates:**
 
    **For Super Admins:**
+
    ```html
    <h2>Welcome to SmartCRM Admin</h2>
    <p>You now have full administrative access to SmartCRM.</p>
@@ -66,6 +76,7 @@
    ```
 
    **For WL Users:**
+
    ```html
    <h2>Welcome to SmartCRM Premium</h2>
    <p>You have access to all CRM features plus AI tools.</p>
@@ -73,6 +84,7 @@
    ```
 
    **For Regular Users:**
+
    ```html
    <h2>Welcome to SmartCRM</h2>
    <p>Get started with core CRM features.</p>
@@ -98,7 +110,7 @@ DECLARE
   user_role text;
 BEGIN
   user_email := NEW.email;
-  
+
   -- Determine role based on email
   IF user_email IN ('dean@videoremix.io', 'victor@videoremix.io', 'samuel@videoremix.io') THEN
     user_role := 'super_admin';
@@ -122,21 +134,21 @@ BEGIN
       '"basic"'
     );
   END IF;
-  
+
   -- Set app context
   NEW.raw_user_meta_data := jsonb_set(
     NEW.raw_user_meta_data,
     '{app_context}',
     '"smartcrm"'
   );
-  
+
   -- Set role
   NEW.raw_user_meta_data := jsonb_set(
     NEW.raw_user_meta_data,
     '{role}',
     to_jsonb(user_role)
   );
-  
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -151,6 +163,7 @@ CREATE TRIGGER trigger_set_email_routing
 ## Email Template Variables by Role
 
 ### Super Admin Template Variables:
+
 ```javascript
 {
   "user_role": "super_admin",
@@ -161,9 +174,10 @@ CREATE TRIGGER trigger_set_email_routing
 ```
 
 ### WL User Template Variables:
+
 ```javascript
 {
-  "user_role": "wl_user", 
+  "user_role": "wl_user",
   "access_level": "Premium CRM Access",
   "dashboard_url": "https://smart-crm.videoremix.io/dashboard",
   "features": ["Full CRM", "AI Tools", "Advanced Features", "Premium Support"]
@@ -171,10 +185,11 @@ CREATE TRIGGER trigger_set_email_routing
 ```
 
 ### Regular User Template Variables:
+
 ```javascript
 {
   "user_role": "regular_user",
-  "access_level": "Core CRM Access", 
+  "access_level": "Core CRM Access",
   "dashboard_url": "https://smart-crm.videoremix.io/dashboard",
   "features": ["Contacts", "Pipeline", "Calendar", "Communication", "CSV Import"]
 }
@@ -190,36 +205,36 @@ Set up a webhook endpoint to handle role-based email routing:
 // Webhook handler for role-based email routing
 app.post('/api/auth-webhook', async (req, res) => {
   const { type, record } = req.body;
-  
+
   if (type === 'INSERT' && record.table === 'auth.users') {
     const email = record.email;
     const role = record.raw_user_meta_data?.role;
     const templateType = record.raw_user_meta_data?.email_template_type;
-    
+
     // Send appropriate welcome email based on role
     switch (role) {
       case 'super_admin':
         await sendAdminWelcomeEmail(email, {
           adminDashboard: true,
-          userManagement: true
+          userManagement: true,
         });
         break;
-        
+
       case 'wl_user':
         await sendPremiumWelcomeEmail(email, {
           aiTools: true,
-          advancedFeatures: true
+          advancedFeatures: true,
         });
         break;
-        
+
       case 'regular_user':
         await sendBasicWelcomeEmail(email, {
-          coreFeatures: true
+          coreFeatures: true,
         });
         break;
     }
   }
-  
+
   res.json({ success: true });
 });
 ```
@@ -227,6 +242,7 @@ app.post('/api/auth-webhook', async (req, res) => {
 ## Testing Email Routing
 
 ### Test Super Admin Email:
+
 ```bash
 curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_ANON_KEY" \
@@ -242,13 +258,14 @@ curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
 ```
 
 ### Test WL User Email:
+
 ```bash
 curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test-wl@example.com",
-    "password": "testpassword", 
+    "password": "testpassword",
     "data": {
       "role": "wl_user",
       "app_context": "smartcrm"
@@ -257,6 +274,7 @@ curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
 ```
 
 ### Test Regular User Email:
+
 ```bash
 curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
   -H "apikey: YOUR_ANON_KEY" \
@@ -265,7 +283,7 @@ curl -X POST "https://YOUR_PROJECT_REF.supabase.co/auth/v1/signup" \
     "email": "test-regular@example.com",
     "password": "testpassword",
     "data": {
-      "role": "regular_user", 
+      "role": "regular_user",
       "app_context": "smartcrm"
     }
   }'

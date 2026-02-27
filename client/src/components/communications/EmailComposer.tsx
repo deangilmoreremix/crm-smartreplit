@@ -1,18 +1,18 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Send, 
-  Paperclip, 
-  Image, 
-  Smile, 
-  X, 
-  Brain, 
-  Save, 
+import {
+  Send,
+  Paperclip,
+  Image,
+  Smile,
+  X,
+  Brain,
+  Save,
   Eye,
   Users,
   Calendar,
   Zap,
   Clock,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../store/contactStore';
@@ -47,7 +47,7 @@ interface EmailMessage {
 
 const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
   const { contacts } = useContactStore();
-  
+
   const [emailData, setEmailData] = useState({
     to: selectedContact?.email || '',
     cc: '',
@@ -58,7 +58,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
     sendLater: false,
     scheduledTime: '',
     trackOpens: true,
-    trackClicks: true
+    trackClicks: true,
   });
 
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -66,7 +66,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Predefined email templates
@@ -85,7 +85,7 @@ Would you be open to a brief 15-minute call this week?
 
 Best regards,
 [Your Name]`,
-      category: 'cold_outreach'
+      category: 'cold_outreach',
     },
     {
       id: '2',
@@ -101,7 +101,7 @@ Please let me know if you have any questions or if you'd like to schedule a foll
 
 Best regards,
 [Your Name]`,
-      category: 'follow_up'
+      category: 'follow_up',
     },
     {
       id: '3',
@@ -122,18 +122,18 @@ Looking forward to our conversation.
 
 Best regards,
 [Your Name]`,
-      category: 'meeting_request'
-    }
+      category: 'meeting_request',
+    },
   ];
 
   const generateAIContent = async () => {
     if (!recipient) return;
-    
+
     setIsGeneratingAI(true);
     try {
       // Simulate AI content generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const aiSubject = `Personalized outreach for ${recipient.company || 'your business'}`;
       const aiBody = `Hi ${recipient.firstName || recipient.name.split(' ')[0]},
 
@@ -146,10 +146,10 @@ Would you be open to a brief conversation to explore potential synergies?
 Best regards,
 [Your Name]`;
 
-      setEmailData(prev => ({
+      setEmailData((prev) => ({
         ...prev,
         subject: aiSubject,
-        body: aiBody
+        body: aiBody,
       }));
     } catch (error) {
       console.error('Failed to generate AI content:', error);
@@ -160,10 +160,10 @@ Best regards,
 
   const applyTemplate = (template: EmailTemplate) => {
     if (!recipient) return;
-    
+
     let subject = template.subject;
     let body = template.body;
-    
+
     // Replace placeholders
     const replacements = {
       '{{firstName}}': recipient.firstName || recipient.name.split(' ')[0] || 'there',
@@ -171,36 +171,36 @@ Best regards,
       '{{company}}': recipient.company || 'your organization',
       '{{industry}}': recipient.industry || 'your field',
       '{{position}}': recipient.position || 'your role',
-      '{{topic}}': 'our discussion'
+      '{{topic}}': 'our discussion',
     };
-    
+
     Object.entries(replacements).forEach(([placeholder, value]) => {
       subject = subject.replace(new RegExp(placeholder, 'g'), value);
       body = body.replace(new RegExp(placeholder, 'g'), value);
     });
-    
-    setEmailData(prev => ({
+
+    setEmailData((prev) => ({
       ...prev,
       subject,
-      body
+      body,
     }));
-    
+
     setShowTemplates(false);
   };
 
   const handleFileAttachment = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    setAttachments(prev => [...prev, ...files]);
+    setAttachments((prev) => [...prev, ...files]);
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const saveDraft = async () => {
     try {
       // Simulate saving draft
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setIsDraftSaved(true);
       setTimeout(() => setIsDraftSaved(false), 2000);
     } catch (error) {
@@ -217,14 +217,13 @@ Best regards,
       }
 
       // Simulate sending email
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Log email activity to contact
       if (recipient) {
         // This would integrate with the contact store to log the email
-        console.log('Email sent to:', recipient.name);
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Failed to send email:', error);
@@ -236,10 +235,10 @@ Best regards,
       alert('Please select a time to schedule the email');
       return;
     }
-    
+
     try {
       // Simulate scheduling email
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       alert(`Email scheduled for ${new Date(emailData.scheduledTime).toLocaleString()}`);
       onClose();
     } catch (error) {
@@ -260,24 +259,34 @@ Best regards,
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
-                {mode === 'compose' ? 'Compose Email' : mode === 'reply' ? 'Reply' : 'Forward Email'}
+                {mode === 'compose'
+                  ? 'Compose Email'
+                  : mode === 'reply'
+                    ? 'Reply'
+                    : 'Forward Email'}
               </h2>
               {recipient && (
-                <p className="text-sm text-gray-600">To: {recipient.name} ({recipient.email})</p>
+                <p className="text-sm text-gray-600">
+                  To: {recipient.name} ({recipient.email})
+                </p>
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={saveDraft}
               className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                isDraftSaved 
+                isDraftSaved
                   ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {isDraftSaved ? <CheckCircle size={16} className="mr-1" /> : <Save size={16} className="mr-1" />}
+              {isDraftSaved ? (
+                <CheckCircle size={16} className="mr-1" />
+              ) : (
+                <Save size={16} className="mr-1" />
+              )}
               {isDraftSaved ? 'Saved' : 'Save Draft'}
             </button>
             <button
@@ -295,38 +304,32 @@ Best regards,
             {/* Recipients */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  To *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To *</label>
                 <input
                   type="email"
                   value={emailData.to}
-                  onChange={(e) => setEmailData(prev => ({ ...prev, to: e.target.value }))}
+                  onChange={(e) => setEmailData((prev) => ({ ...prev, to: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="recipient@example.com"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CC
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CC</label>
                 <input
                   type="email"
                   value={emailData.cc}
-                  onChange={(e) => setEmailData(prev => ({ ...prev, cc: e.target.value }))}
+                  onChange={(e) => setEmailData((prev) => ({ ...prev, cc: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="cc@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  BCC
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">BCC</label>
                 <input
                   type="email"
                   value={emailData.bcc}
-                  onChange={(e) => setEmailData(prev => ({ ...prev, bcc: e.target.value }))}
+                  onChange={(e) => setEmailData((prev) => ({ ...prev, bcc: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="bcc@example.com"
                 />
@@ -335,13 +338,11 @@ Best regards,
 
             {/* Subject */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subject *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
               <input
                 type="text"
                 value={emailData.subject}
-                onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
+                onChange={(e) => setEmailData((prev) => ({ ...prev, subject: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Email subject"
                 required
@@ -358,7 +359,7 @@ Best regards,
                 <Brain size={16} className="mr-1" />
                 {isGeneratingAI ? 'Generating...' : 'AI Generate'}
               </button>
-              
+
               <button
                 onClick={() => setShowTemplates(!showTemplates)}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
@@ -366,7 +367,7 @@ Best regards,
                 <Eye size={16} className="mr-1" />
                 Templates
               </button>
-              
+
               <button
                 onClick={() => setShowScheduler(!showScheduler)}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 bg-green-100 hover:bg-green-200 rounded-md transition-colors"
@@ -403,14 +404,18 @@ Best regards,
                   <input
                     type="datetime-local"
                     value={emailData.scheduledTime}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                    onChange={(e) =>
+                      setEmailData((prev) => ({ ...prev, scheduledTime: e.target.value }))
+                    }
                     className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <label className="flex items-center text-sm text-gray-700">
                     <input
                       type="checkbox"
                       checked={emailData.sendLater}
-                      onChange={(e) => setEmailData(prev => ({ ...prev, sendLater: e.target.checked }))}
+                      onChange={(e) =>
+                        setEmailData((prev) => ({ ...prev, sendLater: e.target.checked }))
+                      }
                       className="mr-2"
                     />
                     Send at scheduled time
@@ -421,12 +426,10 @@ Best regards,
 
             {/* Email Body */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Message *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
               <textarea
                 value={emailData.body}
-                onChange={(e) => setEmailData(prev => ({ ...prev, body: e.target.value }))}
+                onChange={(e) => setEmailData((prev) => ({ ...prev, body: e.target.value }))}
                 rows={12}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Write your message here..."
@@ -436,9 +439,7 @@ Best regards,
 
             {/* Attachments */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Attachments
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
               <div className="space-y-2">
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -454,11 +455,14 @@ Best regards,
                   onChange={handleFileAttachment}
                   className="hidden"
                 />
-                
+
                 {attachments.length > 0 && (
                   <div className="space-y-2">
                     {attachments.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded border"
+                      >
                         <span className="text-sm text-gray-700">{file.name}</span>
                         <button
                           onClick={() => removeAttachment(index)}
@@ -481,7 +485,9 @@ Best regards,
                   <label className="text-sm text-gray-700">Priority</label>
                   <select
                     value={emailData.priority}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, priority: e.target.value as any }))}
+                    onChange={(e) =>
+                      setEmailData((prev) => ({ ...prev, priority: e.target.value as any }))
+                    }
                     className="px-3 py-1 border border-gray-300 rounded text-sm"
                   >
                     <option value="low">Low</option>
@@ -489,23 +495,27 @@ Best regards,
                     <option value="high">High</option>
                   </select>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <label className="text-sm text-gray-700">Track email opens</label>
                   <input
                     type="checkbox"
                     checked={emailData.trackOpens}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, trackOpens: e.target.checked }))}
+                    onChange={(e) =>
+                      setEmailData((prev) => ({ ...prev, trackOpens: e.target.checked }))
+                    }
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <label className="text-sm text-gray-700">Track link clicks</label>
                   <input
                     type="checkbox"
                     checked={emailData.trackClicks}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, trackClicks: e.target.checked }))}
+                    onChange={(e) =>
+                      setEmailData((prev) => ({ ...prev, trackClicks: e.target.checked }))
+                    }
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </div>
@@ -520,7 +530,7 @@ Best regards,
             <Users size={16} />
             <span>Sending as: your-email@company.com</span>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <button
               onClick={onClose}
@@ -528,7 +538,7 @@ Best regards,
             >
               Cancel
             </button>
-            
+
             {emailData.sendLater && emailData.scheduledTime && (
               <button
                 onClick={scheduleEmail}
@@ -538,7 +548,7 @@ Best regards,
                 Schedule Email
               </button>
             )}
-            
+
             <button
               onClick={sendEmail}
               className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"

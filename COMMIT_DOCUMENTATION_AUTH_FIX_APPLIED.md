@@ -1,6 +1,7 @@
 # Commit Documentation: Auth Fix Applied
 
 ## Summary
+
 **fix: Apply auth trigger fix to enable user sign-up and sign-in**
 
 This commit applies the authentication trigger fix that enables automatic profile creation when users sign up via Supabase Auth.
@@ -8,10 +9,12 @@ This commit applies the authentication trigger fix that enables automatic profil
 ## Changes Made
 
 ### 1. Database Migration Applied
+
 - **File**: `supabase/migrations/20260129000001_fix_auth_trigger.sql`
 - **Purpose**: Creates the missing `on_auth_user_created` trigger on `auth.users` table
 
 ### 2. Auth Function Created
+
 - **Function**: `public.handle_new_user()`
 - **Purpose**: Automatically creates a profile record when a new user signs up
 - **Features**:
@@ -21,21 +24,23 @@ This commit applies the authentication trigger fix that enables automatic profil
   - Sets default `email_template_set` to 'smartcrm'
 
 ### 3. Update Trigger Created
+
 - **Trigger**: `on_auth_user_updated`
 - **Purpose**: Syncs profile changes when user metadata is updated
 
 ### 4. Scripts Created
+
 - `scripts/run-auth-fix.cjs` - Script to apply the auth fix
 - `scripts/test-auth.cjs` - Script to test authentication
 
 ## Files Modified
 
-| File | Change |
-|------|--------|
-| `supabase/migrations/20260129000001_fix_auth_trigger.sql` | Updated migration |
-| `attached_assets/supabase-email-templates/5-reset-password.html` | Email template fix |
-| `client/src/pages/Auth/ResetPassword.tsx` | Reset password page update |
-| `server/routes/auth.ts` | Auth route fixes |
+| File                                                             | Change                     |
+| ---------------------------------------------------------------- | -------------------------- |
+| `supabase/migrations/20260129000001_fix_auth_trigger.sql`        | Updated migration          |
+| `attached_assets/supabase-email-templates/5-reset-password.html` | Email template fix         |
+| `client/src/pages/Auth/ResetPassword.tsx`                        | Reset password page update |
+| `server/routes/auth.ts`                                          | Auth route fixes           |
 
 ## Verification
 
@@ -58,10 +63,10 @@ LIMIT 20;
 
 ## Results
 
-| Metric | Value |
-|--------|-------|
-| Profiles Created | 130 |
-| Auth Trigger | ✅ Exists |
+| Metric                | Value            |
+| --------------------- | ---------------- |
+| Profiles Created      | 130              |
+| Auth Trigger          | ✅ Exists        |
 | Email Confirmed Users | ✅ All confirmed |
 
 ## Rollback (if needed)
@@ -80,6 +85,7 @@ DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
 - `APPLY_PROFILE_SYNC_FIX.md` - Profile sync documentation
 
 ## Commit Details
+
 - **Date**: 2026-02-11
 - **Project**: SmartCRM (gadedbrnqzpfqtsdfzcg)
 - **Supabase URL**: https://gadedbrnqzpfqtsdfzcg.supabase.co

@@ -1,11 +1,11 @@
 /**
  * Supabase Edge Function: invite-user
- * 
+ *
  * This function is used to send user invitations via email.
  * It requires the service_role key and should only be called from the server.
- * 
+ *
  * Deploy with: supabase functions deploy invite-user
- * 
+ *
  * Usage:
  * POST /functions/v1/invite-user
  * Headers: Authorization: Bearer SERVICE_ROLE_KEY
@@ -19,7 +19,7 @@ serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -29,24 +29,30 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
     if (!serviceRoleKey) {
-      return new Response(JSON.stringify({ 
-        error: 'Service role key not configured' 
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Service role key not configured',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Parse request body
     const { email } = await req.json();
 
     if (!email || !email.includes('@')) {
-      return new Response(JSON.stringify({ 
-        error: 'Valid email is required' 
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Valid email is required',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Create Supabase client with service role
@@ -57,35 +63,43 @@ serve(async (req) => {
 
     if (error) {
       console.error('Invite error:', error);
-      return new Response(JSON.stringify({ 
-        error: error.message 
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     console.log('Invitation sent successfully:', email);
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: `Invitation sent to ${email}`,
-      data: {
-        user: data.user,
-        message: data.message
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Invitation sent to ${email}`,
+        data: {
+          user: data.user,
+          message: data.message,
+        },
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
       }
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-
+    );
   } catch (err) {
     console.error('Unexpected error:', err);
-    return new Response(JSON.stringify({ 
-      error: err.message || 'Internal server error' 
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: err.message || 'Internal server error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 });

@@ -76,10 +76,9 @@ export interface PredictiveAnalytics {
 }
 
 class ContactAIService {
-  
   async scoreContact(
-    contact: Contact, 
-    context?: { 
+    contact: Contact,
+    context?: {
       businessGoals?: string[];
       industryContext?: string;
       competitorInfo?: any;
@@ -90,27 +89,27 @@ class ContactAIService {
       priority: 'medium',
       data: {
         contact,
-        context
+        context,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         overall: response.result.score || 0,
         breakdown: response.result.breakdown || {
           fitScore: 0,
           engagementScore: 0,
           conversionProbability: 0,
-          urgencyScore: 0
+          urgencyScore: 0,
         },
         reasoning: response.result.reasoning || [],
         recommendations: response.result.recommendations || [],
-        nextBestActions: response.result.nextBestActions || []
+        nextBestActions: response.result.nextBestActions || [],
       };
     } catch (error) {
       logger.error('Contact scoring failed', error as Error, { contactId: contact.id });
@@ -133,16 +132,16 @@ class ContactAIService {
       data: {
         contact,
         insightTypes,
-        context
+        context,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return response.result.insights.map((insight: any) => ({
         id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         type: insight.type,
@@ -154,7 +153,7 @@ class ContactAIService {
         actionable: insight.actionable || false,
         suggestedActions: insight.suggestedActions || [],
         relatedContacts: insight.relatedContacts || [],
-        dataPoints: insight.dataPoints || []
+        dataPoints: insight.dataPoints || [],
       }));
     } catch (error) {
       logger.error('Contact insights generation failed', error as Error, { contactId: contact.id });
@@ -173,21 +172,21 @@ class ContactAIService {
       data: {
         contact,
         contactNetwork: allContacts,
-        analysisDepth: depth
+        analysisDepth: depth,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         contactId: contact.id,
         relationships: response.result.relationships || [],
         networkInsights: response.result.networkInsights || [],
-        influenceMap: response.result.influenceMap || {}
+        influenceMap: response.result.influenceMap || {},
       };
     } catch (error) {
       logger.error('Relationship analysis failed', error as Error, { contactId: contact.id });
@@ -206,25 +205,25 @@ class ContactAIService {
       data: {
         contact,
         interactionHistory,
-        timeframe
+        timeframe,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
       const response = await aiOrchestrator.executeImmediate(request);
-      
+
       return {
         contactId: contact.id,
         predictions: response.result.predictions || [],
         trendAnalysis: response.result.trendAnalysis || {
           engagementTrend: 'stable',
           responseTimeTrend: 'stable',
-          interestTrend: 'maintained'
+          interestTrend: 'maintained',
         },
-        optimalActions: response.result.optimalActions || []
+        optimalActions: response.result.optimalActions || [],
       };
     } catch (error) {
       logger.error('Predictive analytics failed', error as Error, { contactId: contact.id });
@@ -238,22 +237,29 @@ class ContactAIService {
   ): Promise<any> {
     const request: Omit<AIRequest, 'id'> = {
       type: 'contact_enrichment',
-      priority: enrichmentType === 'comprehensive' || enrichmentType === 'social_intelligence' ? 'high' : 'medium',
+      priority:
+        enrichmentType === 'comprehensive' || enrichmentType === 'social_intelligence'
+          ? 'high'
+          : 'medium',
       data: {
         contact,
         enrichmentLevel: enrichmentType,
-        includeSocialResearch: enrichmentType === 'social' || enrichmentType === 'social_intelligence',
-        socialResearchOptions: enrichmentType === 'social_intelligence' ? {
-          platforms: ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub', 'Medium'],
-          depth: 'comprehensive',
-          includePersonalityAnalysis: true,
-          includeEngagementMetrics: true,
-          includeProfessionalUpdates: true
-        } : undefined
+        includeSocialResearch:
+          enrichmentType === 'social' || enrichmentType === 'social_intelligence',
+        socialResearchOptions:
+          enrichmentType === 'social_intelligence'
+            ? {
+                platforms: ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub', 'Medium'],
+                depth: 'comprehensive',
+                includePersonalityAnalysis: true,
+                includeEngagementMetrics: true,
+                includeProfessionalUpdates: true,
+              }
+            : undefined,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
@@ -291,11 +297,11 @@ class ContactAIService {
       priority: 'medium',
       data: {
         contact,
-        socialProfiles: socialProfiles || contact.socialProfiles || []
+        socialProfiles: socialProfiles || contact.socialProfiles || [],
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
@@ -303,7 +309,7 @@ class ContactAIService {
       return response.result;
     } catch (error) {
       logger.error('Social intelligence scoring failed', error as Error, { contactId: contact.id });
-      
+
       // Return default intelligence data
       return {
         socialScore: 50,
@@ -312,16 +318,16 @@ class ContactAIService {
           averageEngagement: 0,
           influenceScore: 0,
           contentQuality: 0,
-          professionalPresence: 0
+          professionalPresence: 0,
         },
         personalityInsights: {
           communicationStyle: 'Unknown',
           professionalDemeanor: 'Unknown',
           decisionMakingStyle: 'Unknown',
-          riskTolerance: 'Unknown'
+          riskTolerance: 'Unknown',
         },
         actionableInsights: ['Gather more social media data for better insights'],
-        recommendedApproach: 'Standard professional outreach approach'
+        recommendedApproach: 'Standard professional outreach approach',
       };
     }
   }
@@ -353,11 +359,11 @@ class ContactAIService {
       priority: 'medium',
       data: {
         contact,
-        interactionHistory
+        interactionHistory,
       },
       context: {
-        contactId: contact.id
-      }
+        contactId: contact.id,
+      },
     };
 
     try {
@@ -374,16 +380,16 @@ class ContactAIService {
     insightType: 'scoring' | 'categorization' | 'opportunity_analysis' = 'scoring'
   ): Promise<Array<{ contactId: string; insights: any; error?: string }>> {
     const results = [];
-    
+
     // Process in batches of 5 to respect rate limits
     const batchSize = 5;
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize);
-      
+
       const batchPromises = batch.map(async (contact) => {
         try {
           let insights;
-          
+
           switch (insightType) {
             case 'scoring':
               insights = await this.scoreContact(contact);
@@ -395,57 +401,65 @@ class ContactAIService {
               insights = await this.generateInsights(contact, ['opportunity', 'prediction']);
               break;
           }
-          
+
           return { contactId: contact.id, insights };
         } catch (error) {
-          return { 
-            contactId: contact.id, 
-            insights: null, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
+          return {
+            contactId: contact.id,
+            insights: null,
+            error: error instanceof Error ? error.message : 'Unknown error',
           };
         }
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
-      
+
       // Small delay between batches
       if (i + batchSize < contacts.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
-    
+
     return results;
   }
 
   // Utility methods for contact analysis
   calculateEngagementScore(contact: Contact, interactions?: any[]): number {
     let score = 50; // Base score
-    
+
     // Adjust based on interest level
     switch (contact.interestLevel) {
-      case 'hot': score += 30; break;
-      case 'medium': score += 10; break;
-      case 'low': score -= 10; break;
-      case 'cold': score -= 20; break;
+      case 'hot':
+        score += 30;
+        break;
+      case 'medium':
+        score += 10;
+        break;
+      case 'low':
+        score -= 10;
+        break;
+      case 'cold':
+        score -= 20;
+        break;
     }
-    
+
     // Adjust based on AI score if available
     if (contact.aiScore) {
       score = (score + contact.aiScore) / 2;
     }
-    
+
     // Adjust based on interaction frequency
     if (interactions && interactions.length > 0) {
       score += Math.min(20, interactions.length * 2);
     }
-    
+
     return Math.max(0, Math.min(100, score));
   }
 
   generateQuickRecommendations(contact: Contact): string[] {
     const recommendations = [];
-    
+
     if (contact.interestLevel === 'hot') {
       recommendations.push('Schedule immediate follow-up call');
       recommendations.push('Send personalized proposal');
@@ -456,15 +470,15 @@ class ContactAIService {
       recommendations.push('Add to nurturing campaign');
       recommendations.push('Research company updates');
     }
-    
+
     if (!contact.phone) {
       recommendations.push('Find contact phone number');
     }
-    
+
     if (!contact.socialProfiles?.linkedin) {
       recommendations.push('Connect on LinkedIn');
     }
-    
+
     return recommendations;
   }
 }

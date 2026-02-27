@@ -33,10 +33,10 @@ const ForgotPassword = () => {
 
     try {
       const { error: resetError } = await auth.resetPassword(email);
-      
+
       if (resetError) {
         console.error('Error sending reset password email:', resetError);
-        
+
         // Handle rate limit error specifically
         if (resetError.status === 429 || resetError.message?.includes('rate_limit')) {
           setError('Too many password reset requests. Please wait 1 hour before trying again.');
@@ -50,7 +50,7 @@ const ForgotPassword = () => {
       setEmail('');
     } catch (error: any) {
       console.error('Error sending reset password email:', error);
-      
+
       // Handle rate limit error in catch block
       if (error.status === 429 || error.message?.includes('rate_limit')) {
         setError('Too many password reset requests. Please wait 1 hour before trying again.');
@@ -63,37 +63,45 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}>
+    <div
+      className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className={`text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
             Smart<span className="text-green-400">CRM</span>
           </h1>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Reset your password
-          </p>
+          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Reset your password</p>
         </div>
-        
-        <div className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}>
+
+        <div
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}
+        >
           {error && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}
+            >
               <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
               <span className={`text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border flex items-center space-x-2`}>
+            <div
+              className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'} border flex items-center space-x-2`}
+            >
               <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
               <span className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
                 Password reset link sent! Please check your email and follow the instructions.
               </span>
             </div>
           )}
-          
+
           <form onSubmit={handleResetPassword} className="space-y-6">
             <div>
-              <label className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}>
+              <label
+                className={`block text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -105,7 +113,7 @@ const ForgotPassword = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full px-3 py-2 pl-10 border rounded-lg ${
-                    isDark 
+                    isDark
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -119,7 +127,7 @@ const ForgotPassword = () => {
                 We'll send you a link to reset your password
               </p>
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
@@ -128,9 +136,25 @@ const ForgotPassword = () => {
             >
               {loading ? (
                 <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Sending Reset Link...
                 </span>
@@ -148,10 +172,7 @@ const ForgotPassword = () => {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Sign In
             </Link>
-            <Link
-              to="/"
-              className="text-blue-600 hover:text-blue-500"
-            >
+            <Link to="/" className="text-blue-600 hover:text-blue-500">
               Go Home
             </Link>
           </div>

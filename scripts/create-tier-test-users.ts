@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function createUser(email: string, password: string, name: string, tier: string) {
   console.log(`\n📧 Creating user: ${email}`);
-  
+
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -19,8 +19,8 @@ async function createUser(email: string, password: string, name: string, tier: s
       full_name: name,
       product_tier: tier,
       app_context: 'smartcrm',
-      email_template_set: 'smartcrm'
-    }
+      email_template_set: 'smartcrm',
+    },
   });
 
   if (error) {
@@ -43,12 +43,7 @@ async function createTestUsers() {
   console.log('║   Creating Test Users for Product Tier Testing        ║');
   console.log('╚════════════════════════════════════════════════════════╝\n');
 
-  await createUser(
-    'test-smartcrm@example.com',
-    'Test123!',
-    'SmartCRM User',
-    'smartcrm'
-  );
+  await createUser('test-smartcrm@example.com', 'Test123!', 'SmartCRM User', 'smartcrm');
 
   await createUser(
     'test-sales-maximizer@example.com',
@@ -57,30 +52,25 @@ async function createTestUsers() {
     'sales_maximizer'
   );
 
-  await createUser(
-    'test-ai-boost@example.com',
-    'Test123!',
-    'AI Boost User',
-    'ai_boost_unlimited'
-  );
+  await createUser('test-ai-boost@example.com', 'Test123!', 'AI Boost User', 'ai_boost_unlimited');
 
   console.log('\n\n╔════════════════════════════════════════════════════════╗');
   console.log('║              Test Users Created Successfully!          ║');
   console.log('╚════════════════════════════════════════════════════════╝\n');
-  
+
   console.log('🔐 Login Credentials:\n');
   console.log('1️⃣  SmartCRM Base Tier');
   console.log('   Email: test-smartcrm@example.com');
   console.log('   Password: Test123!');
   console.log('   Access: ✅ Dashboard, Contacts, Pipeline, Calendar');
   console.log('           ❌ AI Goals, AI Tools\n');
-  
+
   console.log('2️⃣  Sales Maximizer Tier');
   console.log('   Email: test-sales-maximizer@example.com');
   console.log('   Password: Test123!');
   console.log('   Access: ✅ Dashboard, Contacts, Pipeline, Calendar, AI Goals');
   console.log('           ❌ AI Tools\n');
-  
+
   console.log('3️⃣  AI Boost Unlimited');
   console.log('   Email: test-ai-boost@example.com');
   console.log('   Password: Test123!');

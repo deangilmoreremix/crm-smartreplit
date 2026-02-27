@@ -9,7 +9,7 @@ export const createSyncedStore = (storeName: string, store: any) => {
       type: `STORE_UPDATE_${storeName.toUpperCase()}`,
       source: 'crm',
       data: { storeName, state },
-      priority: 'medium'
+      priority: 'medium',
     });
   });
 
@@ -29,7 +29,7 @@ export const syncStoreWithRemote = (storeName: string, store: any) => {
       }
     },
     priority: 5,
-    filters: { type: `STORE_UPDATE_${storeName.toUpperCase()}` }
+    filters: { type: `STORE_UPDATE_${storeName.toUpperCase()}` },
   });
 
   return unsubscribe;
@@ -69,14 +69,14 @@ export const createSharedStore = (storeName: string, initialState: any) => {
     getState: () => currentState,
     setState: (newState: any) => {
       currentState = { ...currentState, ...newState };
-      listeners.forEach(listener => listener(currentState));
+      listeners.forEach((listener) => listener(currentState));
 
       // Broadcast to remote apps
       unifiedEventSystem.emit({
         type: `SHARED_STORE_UPDATE_${storeName.toUpperCase()}`,
         source: 'crm',
         data: { storeName, state: currentState },
-        priority: 'medium'
+        priority: 'medium',
       });
     },
     subscribe: (listener: (state: any) => void) => {
@@ -87,20 +87,23 @@ export const createSharedStore = (storeName: string, initialState: any) => {
           listeners.splice(index, 1);
         }
       };
-    }
+    },
   };
 
   // Listen for remote updates
   unifiedEventSystem.registerHandler({
     id: `shared-${storeName}-handler`,
     handler: (event: any) => {
-      if (event.type === `SHARED_STORE_UPDATE_${storeName.toUpperCase()}` && event.source !== 'crm') {
+      if (
+        event.type === `SHARED_STORE_UPDATE_${storeName.toUpperCase()}` &&
+        event.source !== 'crm'
+      ) {
         currentState = { ...currentState, ...event.data.state };
-        listeners.forEach(listener => listener(currentState));
+        listeners.forEach((listener) => listener(currentState));
       }
     },
     priority: 5,
-    filters: { type: `SHARED_STORE_UPDATE_${storeName.toUpperCase()}` }
+    filters: { type: `SHARED_STORE_UPDATE_${storeName.toUpperCase()}` },
   });
 
   return store;

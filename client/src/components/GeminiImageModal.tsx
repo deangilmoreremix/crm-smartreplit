@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // import { GoogleGenAI } from "@google/genai"; // Temporarily commented out until package is installed
 import {
   buildPrompt,
@@ -7,7 +7,7 @@ import {
   type FeatureKey,
   type FormatKey,
   SMARTCRM_STYLE,
-} from "../lib/promptTemplates";
+} from '../lib/promptTemplates';
 import {
   addHistory,
   clearHistory,
@@ -15,10 +15,10 @@ import {
   loadHistory,
   updateHistory,
   type HistoryEntry,
-} from "../lib/history";
-import { imageStorage } from "../services/imageStorageService";
+} from '../lib/history';
+import { imageStorage } from '../services/imageStorageService';
 
-const MODEL = "gemini-2.5-flash-image-preview";
+const MODEL = 'gemini-2.5-flash-image-preview';
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -26,17 +26,17 @@ type Props = { open: boolean; onClose: () => void };
 async function fileToDataUrl(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
   const base64 = btoa(String.fromCharCode(...Array.from(new Uint8Array(buf))));
-  return `data:${file.type || "image/png"};base64,${base64}`;
+  return `data:${file.type || 'image/png'};base64,${base64}`;
 }
 async function dataUrlToInlineData(dataUrl: string) {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   const ab = await blob.arrayBuffer();
   const base64 = btoa(String.fromCharCode(...Array.from(new Uint8Array(ab))));
-  return { inlineData: { mimeType: blob.type || "image/png", data: base64 } };
+  return { inlineData: { mimeType: blob.type || 'image/png', data: base64 } };
 }
 function downloadDataUrl(dataUrl: string, filename: string) {
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = dataUrl;
   a.download = filename;
   document.body.appendChild(a);
@@ -48,13 +48,11 @@ function uid() {
 }
 
 export default function GeminiImageModal({ open, onClose }: Props) {
-  const [feature, setFeature] = useState<FeatureKey>("Enhanced Contacts");
-  const [format, setFormat] = useState<FormatKey>("Poster");
-  const [benefit, setBenefit] = useState(FEATURE_BENEFITS["Enhanced Contacts"]);
-  const [aspect, setAspect] = useState(FORMAT_SCAFFOLDS["Poster"].aspect);
-  const [promptText, setPromptText] = useState(
-    buildPrompt("Enhanced Contacts", "Poster").text
-  );
+  const [feature, setFeature] = useState<FeatureKey>('Enhanced Contacts');
+  const [format, setFormat] = useState<FormatKey>('Poster');
+  const [benefit, setBenefit] = useState(FEATURE_BENEFITS['Enhanced Contacts']);
+  const [aspect, setAspect] = useState(FORMAT_SCAFFOLDS['Poster'].aspect);
+  const [promptText, setPromptText] = useState(buildPrompt('Enhanced Contacts', 'Poster').text);
 
   const [seeds, setSeeds] = useState<string[]>([]);
   const [variants, setVariants] = useState(2);
@@ -68,22 +66,29 @@ export default function GeminiImageModal({ open, onClose }: Props) {
   const [savedImages, setSavedImages] = useState<string[]>([]);
   const [storageAvailable, setStorageAvailable] = useState(false);
   const dropRef = useRef<HTMLDivElement | null>(null);
-  const ai = useMemo(() => ({
-    models: {
-      generateContent: async (options: any) => ({
-        candidates: [{
-          content: {
-            parts: [{
-              inlineData: {
-                data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", // 1x1 transparent PNG
-                mimeType: "image/png"
-              }
-            }]
-          }
-        }]
-      })
-    }
-  }), []);
+  const ai = useMemo(
+    () => ({
+      models: {
+        generateContent: async (options: any) => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 transparent PNG
+                      mimeType: 'image/png',
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      },
+    }),
+    []
+  );
 
   // init / reset
   useEffect(() => {
@@ -97,15 +102,15 @@ export default function GeminiImageModal({ open, onClose }: Props) {
         if (!open) return;
         const items = e.clipboardData?.items || [];
         const files = Array.from(items)
-          .filter((it) => it.kind === "file")
+          .filter((it) => it.kind === 'file')
           .map((it) => it.getAsFile())
           .filter(Boolean) as File[];
         if (!files.length) return;
         const urls = await Promise.all(files.map((f) => fileToDataUrl(f)));
         setSeeds((prev) => [...prev, ...urls]);
       };
-      document.addEventListener("paste", onPaste as any);
-      return () => document.removeEventListener("paste", onPaste as any);
+      document.addEventListener('paste', onPaste as any);
+      return () => document.removeEventListener('paste', onPaste as any);
     } else {
       setImages([]);
       setError(null);
@@ -133,37 +138,37 @@ export default function GeminiImageModal({ open, onClose }: Props) {
 
     const onDragOver = (e: DragEvent) => {
       e.preventDefault();
-      el.classList.add("ring-2", "ring-teal-500");
+      el.classList.add('ring-2', 'ring-teal-500');
     };
-    const onDragLeave = () => el.classList.remove("ring-2", "ring-teal-500");
+    const onDragLeave = () => el.classList.remove('ring-2', 'ring-teal-500');
     const onDrop = async (e: DragEvent) => {
       e.preventDefault();
-      el.classList.remove("ring-2", "ring-teal-500");
+      el.classList.remove('ring-2', 'ring-teal-500');
       const files = Array.from(e.dataTransfer?.files || []).filter((f) =>
-        f.type.startsWith("image/")
+        f.type.startsWith('image/')
       );
       if (!files.length) return;
       const urls = await Promise.all(files.map(fileToDataUrl));
       setSeeds((prev) => [...prev, ...urls]);
     };
 
-    el.addEventListener("dragover", onDragOver as any);
-    el.addEventListener("dragleave", onDragLeave as any);
-    el.addEventListener("drop", onDrop as any);
+    el.addEventListener('dragover', onDragOver as any);
+    el.addEventListener('dragleave', onDragLeave as any);
+    el.addEventListener('drop', onDrop as any);
     return () => {
-      el.removeEventListener("dragover", onDragOver as any);
-      el.removeEventListener("dragleave", onDragLeave as any);
-      el.removeEventListener("drop", onDrop as any);
+      el.removeEventListener('dragover', onDragOver as any);
+      el.removeEventListener('dragleave', onDragLeave as any);
+      el.removeEventListener('drop', onDrop as any);
     };
   }, [dropRef]);
 
   // file picker
   async function onChooseFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith("image/"));
+    const files = Array.from(e.target.files || []).filter((f) => f.type.startsWith('image/'));
     if (!files.length) return;
     const urls = await Promise.all(files.map(fileToDataUrl));
     setSeeds((prev) => [...prev, ...urls]);
-    e.currentTarget.value = "";
+    e.currentTarget.value = '';
   }
 
   // generate + write to history
@@ -201,17 +206,17 @@ export default function GeminiImageModal({ open, onClose }: Props) {
         const parts = res?.candidates?.[0]?.content?.parts || [];
         for (const p of parts) {
           if (p?.inlineData?.data) {
-            const mime = p.inlineData.mimeType || "image/png";
+            const mime = p.inlineData.mimeType || 'image/png';
             outs.push(`data:${mime};base64,${p.inlineData.data}`);
           }
         }
       }
-      if (!outs.length) throw new Error("No image returned. Try adjusting the prompt or seeds.");
+      if (!outs.length) throw new Error('No image returned. Try adjusting the prompt or seeds.');
       setImages(outs);
       setHistory(updateHistory(entry.id, { thumbs: outs.slice(0, 3) })); // store first 3 as thumbs
       setSelectedHistoryId(entry.id);
     } catch (err: any) {
-      setError(err?.message || "Generation failed");
+      setError(err?.message || 'Generation failed');
     } finally {
       setLoading(false);
     }
@@ -219,9 +224,9 @@ export default function GeminiImageModal({ open, onClose }: Props) {
 
   // re-run a history item
   function loadHistoryEntry(h: HistoryEntry, rerun = false) {
-    setFeature((h.feature as FeatureKey) || "Enhanced Contacts");
-    setFormat((h.format as FormatKey) || "Poster");
-    setAspect((h.aspect as any) || "1:1");
+    setFeature((h.feature as FeatureKey) || 'Enhanced Contacts');
+    setFormat((h.format as FormatKey) || 'Poster');
+    setAspect((h.aspect as any) || '1:1');
     setPromptText(h.promptText);
     setSeeds(h.seeds || []);
     setVariants(h.variants || 1);
@@ -249,10 +254,10 @@ export default function GeminiImageModal({ open, onClose }: Props) {
         promptText,
         feature,
         format,
-        aspectRatio: aspect
+        aspectRatio: aspect,
       });
 
-      setSavedImages(prev => [...prev, result.publicUrl]);
+      setSavedImages((prev) => [...prev, result.publicUrl]);
       alert(`Image saved to cloud! URL: ${result.publicUrl}`);
     } catch (error) {
       console.error('Failed to save image:', error);
@@ -271,19 +276,14 @@ export default function GeminiImageModal({ open, onClose }: Props) {
       const userId = 'demo-user'; // In real app, get from auth context
       const baseFilename = `gemini-batch-${Date.now()}`;
 
-      const results = await imageStorage.uploadImages(
-        images,
-        baseFilename,
-        userId,
-        {
-          promptText,
-          feature,
-          format,
-          aspectRatio: aspect
-        }
-      );
+      const results = await imageStorage.uploadImages(images, baseFilename, userId, {
+        promptText,
+        feature,
+        format,
+        aspectRatio: aspect,
+      });
 
-      const urls = results.map(r => r.publicUrl);
+      const urls = results.map((r) => r.publicUrl);
       setSavedImages(urls);
       alert(`${images.length} images saved to cloud successfully!`);
     } catch (error) {
@@ -325,7 +325,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
             {history.map((h) => (
               <div
                 key={h.id}
-                className={`rounded-lg border p-2 ${selectedHistoryId === h.id ? "border-teal-500" : ""}`}
+                className={`rounded-lg border p-2 ${selectedHistoryId === h.id ? 'border-teal-500' : ''}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
@@ -432,7 +432,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
                 min={1}
                 max={6}
                 value={variants}
-                onChange={(e) => setVariants(parseInt(e.target.value || "1", 10))}
+                onChange={(e) => setVariants(parseInt(e.target.value || '1', 10))}
                 className="rounded-lg border p-2"
               />
             </label>
@@ -460,9 +460,9 @@ export default function GeminiImageModal({ open, onClose }: Props) {
                 setPromptText(
                   [
                     SMARTCRM_STYLE.trim(),
-                    "Add stronger glow and more legible text placement. Keep composition clean.",
+                    'Add stronger glow and more legible text placement. Keep composition clean.',
                     promptText,
-                  ].join("\n")
+                  ].join('\n')
                 )
               }
               className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white"
@@ -471,7 +471,9 @@ export default function GeminiImageModal({ open, onClose }: Props) {
             </button>
             <button
               onClick={() =>
-                setPromptText(promptText + "\nMake it more photorealistic, premium lighting, crisp edges.")
+                setPromptText(
+                  promptText + '\nMake it more photorealistic, premium lighting, crisp edges.'
+                )
               }
               className="rounded-lg bg-gray-100 px-3 py-2 text-sm"
             >
@@ -479,7 +481,9 @@ export default function GeminiImageModal({ open, onClose }: Props) {
             </button>
             <button
               onClick={() =>
-                setPromptText(promptText + "\nAvoid: busy backgrounds, tiny unreadable text, harsh artifacts.")
+                setPromptText(
+                  promptText + '\nAvoid: busy backgrounds, tiny unreadable text, harsh artifacts.'
+                )
               }
               className="rounded-lg bg-gray-100 px-3 py-2 text-sm"
             >
@@ -501,11 +505,10 @@ export default function GeminiImageModal({ open, onClose }: Props) {
           </label>
 
           {/* Drag & Drop / seed zone */}
-          <div
-            ref={dropRef}
-            className="mt-4 rounded-xl border-2 border-dashed p-4 text-center"
-          >
-            <p className="text-sm font-medium">Drag & drop images here (or paste) to use as seeds</p>
+          <div ref={dropRef} className="mt-4 rounded-xl border-2 border-dashed p-4 text-center">
+            <p className="text-sm font-medium">
+              Drag & drop images here (or paste) to use as seeds
+            </p>
             <input
               type="file"
               accept="image/*"
@@ -546,7 +549,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
               disabled={loading}
               className="rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white disabled:opacity-50"
             >
-              {loading ? "Generating…" : "Generate"}
+              {loading ? 'Generating…' : 'Generate'}
             </button>
             {!!images.length && (
               <>
@@ -564,7 +567,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
                     disabled={savingToCloud}
                     className="rounded-lg bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
                   >
-                    {savingToCloud ? "Saving…" : "Save All to Cloud"}
+                    {savingToCloud ? 'Saving…' : 'Save All to Cloud'}
                   </button>
                 )}
                 <span className="text-xs text-gray-500">{images.length} variants</span>
@@ -572,9 +575,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
             )}
             {error && <span className="ml-2 text-sm text-red-600">{error}</span>}
             {savedImages.length > 0 && (
-              <span className="text-xs text-green-600">
-                ✓ {savedImages.length} saved to cloud
-              </span>
+              <span className="text-xs text-green-600">✓ {savedImages.length} saved to cloud</span>
             )}
           </div>
 
@@ -604,7 +605,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
                           disabled={savingToCloud}
                           className="flex-1 rounded bg-blue-600 px-2 py-1 text-xs text-white disabled:opacity-50"
                         >
-                          {savingToCloud ? "..." : "Save"}
+                          {savingToCloud ? '...' : 'Save'}
                         </button>
                       )}
                     </div>

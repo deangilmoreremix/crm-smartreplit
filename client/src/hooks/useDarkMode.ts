@@ -26,7 +26,7 @@ export const useDarkMode = (): UseDarkModeReturn => {
   useEffect(() => {
     // Apply or remove dark mode class to body
     const body = document.body;
-    
+
     if (isDarkMode) {
       body.classList.add('dark-mode');
     } else {
@@ -43,11 +43,8 @@ export const useDarkMode = (): UseDarkModeReturn => {
       themeColorMeta.setAttribute('name', 'theme-color');
       document.head.appendChild(themeColorMeta);
     }
-    
-    themeColorMeta.setAttribute(
-      'content', 
-      isDarkMode ? '#0f172a' : '#ffffff'
-    );
+
+    themeColorMeta.setAttribute('content', isDarkMode ? '#0f172a' : '#ffffff');
   }, [isDarkMode]);
 
   useEffect(() => {
@@ -58,7 +55,7 @@ export const useDarkMode = (): UseDarkModeReturn => {
 
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const handleChange = (e: MediaQueryListEvent) => {
       // Only update if user hasn't manually set a preference
       const savedTheme = localStorage.getItem('darkMode');
@@ -70,7 +67,7 @@ export const useDarkMode = (): UseDarkModeReturn => {
     // Use modern addEventListener method
     try {
       mediaQuery.addEventListener('change', handleChange);
-      
+
       return () => {
         mediaQuery.removeEventListener('change', handleChange);
       };
@@ -84,7 +81,7 @@ export const useDarkMode = (): UseDarkModeReturn => {
   }, []);
 
   const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode((prev) => !prev);
   };
 
   const setDarkMode = (isDark: boolean) => {
@@ -94,6 +91,6 @@ export const useDarkMode = (): UseDarkModeReturn => {
   return {
     isDarkMode,
     toggleDarkMode,
-    setDarkMode
+    setDarkMode,
   };
 };

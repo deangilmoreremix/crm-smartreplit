@@ -61,13 +61,13 @@ export class RemoteCalendarBridge {
       isConnected: false,
       lastSync: null,
       appointmentCount: 0,
-      connectionAttempts: 0
+      connectionAttempts: 0,
     };
-    
+
     // Store bound message handler for proper cleanup
     this.messageHandler = this.handleMessage.bind(this);
     window.addEventListener('message', this.messageHandler);
-    
+
     console.log('🔧 Calendar Bridge initialized for origin:', this.origin);
   }
 
@@ -81,10 +81,14 @@ export class RemoteCalendarBridge {
     const allowedOrigins = [
       'https://ai-calendar-applicat-qshp.bolt.host',
       'http://localhost:3000',
-      'http://127.0.0.1:3000'
+      'http://127.0.0.1:3000',
     ];
-    
-    if (!allowedOrigins.some(origin => event.origin.includes(origin.replace('https://', '').replace('http://', '')))) {
+
+    if (
+      !allowedOrigins.some((origin) =>
+        event.origin.includes(origin.replace('https://', '').replace('http://', ''))
+      )
+    ) {
       console.log('❌ Rejected message from unauthorized origin:', event.origin);
       return;
     }
@@ -101,23 +105,23 @@ export class RemoteCalendarBridge {
           this.updateStatus({ connectionAttempts: this.status.connectionAttempts + 1 });
           this.initializeCalendar();
           break;
-          
+
         case 'CRM_INIT_COMPLETE':
           this.updateStatus({
             isConnected: true,
             lastSync: new Date(),
-            appointmentCount: message.data?.appointmentsReceived || 0
+            appointmentCount: message.data?.appointmentsReceived || 0,
           });
           console.log('✅ Remote calendar initialized successfully');
           this.triggerCallback('REMOTE_READY');
           break;
-          
+
         case 'BRIDGE_READY':
           // Bridge code is loaded and ready
           this.updateStatus({ connectionAttempts: this.status.connectionAttempts + 1 });
           setTimeout(() => this.initializeCalendar(), 500);
           break;
-          
+
         case 'APPOINTMENT_CREATED':
         case 'APPOINTMENT_UPDATED':
         case 'APPOINTMENT_DELETED':
@@ -141,7 +145,7 @@ export class RemoteCalendarBridge {
         case 'NAVIGATE_TO_DASHBOARD':
           this.triggerCallback('NAVIGATE_TO_DASHBOARD');
           break;
-          
+
         default:
           console.log('📨 Unhandled calendar message type:', message.type);
       }
@@ -180,18 +184,18 @@ export class RemoteCalendarBridge {
         crmInfo: {
           name: 'SmartCRM Calendar Integration',
           version: '1.0.0',
-          features: ['appointments', 'calendar', 'moderation', 'navigation']
+          features: ['appointments', 'calendar', 'moderation', 'navigation'],
         },
         capabilities: {
           canCreateAppointments: true,
           canUpdateAppointments: true,
           canDeleteAppointments: true,
           canModerateCalendar: true,
-          canSync: true
-        }
+          canSync: true,
+        },
       },
       source: 'CRM_SYSTEM',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     console.log('📤 Initializing calendar with CRM data:', initMessage);
@@ -200,15 +204,21 @@ export class RemoteCalendarBridge {
     // Also try simple postMessage format in case the remote app expects a different format
     setTimeout(() => {
       if (this.iframe?.contentWindow) {
-        this.iframe.contentWindow.postMessage({
-          type: 'SET_THEME',
-          theme: 'light'
-        }, '*');
-        
-        this.iframe.contentWindow.postMessage({
-          type: 'INIT_CRM_BRIDGE',
-          data: initMessage.data
-        }, '*');
+        this.iframe.contentWindow.postMessage(
+          {
+            type: 'SET_THEME',
+            theme: 'light',
+          },
+          '*'
+        );
+
+        this.iframe.contentWindow.postMessage(
+          {
+            type: 'INIT_CRM_BRIDGE',
+            data: initMessage.data,
+          },
+          '*'
+        );
       }
     }, 500);
   }
@@ -228,7 +238,7 @@ export class RemoteCalendarBridge {
       type,
       data,
       source: 'CRM_SYSTEM',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     console.log('📤 Calendar bridge sending message:', message);
@@ -261,8 +271,8 @@ export class RemoteCalendarBridge {
         { path: '/appointments', name: 'Appointments' },
         { path: '/contacts', name: 'Contacts' },
         { path: '/pipeline', name: 'Pipeline' },
-        { path: '/tasks', name: 'Tasks' }
-      ]
+        { path: '/tasks', name: 'Tasks' },
+      ],
     });
   }
 

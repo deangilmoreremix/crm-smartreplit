@@ -2,23 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/use-toast';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  Save, 
-  Upload, 
-  Eye, 
-  EyeOff, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Save,
+  Upload,
+  Eye,
+  EyeOff,
   Shield,
   Bell,
   Globe,
   Trash2,
   AlertTriangle,
   CheckCircle,
-  Camera
+  Camera,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -26,7 +26,13 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Switch } from '../components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 interface UserProfile {
@@ -83,19 +89,19 @@ export default function UserProfilePage() {
     emailNotifications: true,
     pushNotifications: true,
     marketingEmails: false,
-    twoFactorEnabled: false
+    twoFactorEnabled: false,
   });
-  
+
   const [security, setSecurity] = useState<SecuritySettings>({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
-  
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
 
   useEffect(() => {
@@ -107,7 +113,7 @@ export default function UserProfilePage() {
   const loadUserProfile = async () => {
     try {
       setLoading(true);
-      
+
       // Get profile from your profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -120,8 +126,11 @@ export default function UserProfilePage() {
       }
 
       // Get user metadata from Supabase auth
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser();
+
       if (authError) throw authError;
 
       // Combine profile and auth data
@@ -145,15 +154,14 @@ export default function UserProfilePage() {
         emailNotifications: profileData?.emailNotifications ?? true,
         pushNotifications: profileData?.pushNotifications ?? true,
         marketingEmails: profileData?.marketingEmails ?? false,
-        twoFactorEnabled: authUser?.factors?.length > 0 || false
+        twoFactorEnabled: authUser?.factors?.length > 0 || false,
       });
-
     } catch (error: any) {
       console.error('Error loading profile:', error);
       toast({
-        title: "Error",
-        description: "Failed to load profile data",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to load profile data',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -165,26 +173,24 @@ export default function UserProfilePage() {
       setLoading(true);
 
       // Update profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: profile.id,
-          username: profile.username,
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          avatar: profile.avatar,
-          bio: profile.bio,
-          company: profile.company,
-          position: profile.position,
-          location: profile.location,
-          website: profile.website,
-          timezone: profile.timezone,
-          language: profile.language,
-          emailNotifications: profile.emailNotifications,
-          pushNotifications: profile.pushNotifications,
-          marketingEmails: profile.marketingEmails,
-          updatedAt: new Date().toISOString()
-        });
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: profile.id,
+        username: profile.username,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        avatar: profile.avatar,
+        bio: profile.bio,
+        company: profile.company,
+        position: profile.position,
+        location: profile.location,
+        website: profile.website,
+        timezone: profile.timezone,
+        language: profile.language,
+        emailNotifications: profile.emailNotifications,
+        pushNotifications: profile.pushNotifications,
+        marketingEmails: profile.marketingEmails,
+        updatedAt: new Date().toISOString(),
+      });
 
       if (profileError) throw profileError;
 
@@ -196,23 +202,22 @@ export default function UserProfilePage() {
           phone: profile.phone,
           avatar_url: profile.avatar,
           company: profile.company,
-          position: profile.position
-        }
+          position: profile.position,
+        },
       });
 
       if (authError) throw authError;
 
       toast({
-        title: "Success",
-        description: "Profile updated successfully",
+        title: 'Success',
+        description: 'Profile updated successfully',
       });
-
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to update profile',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -223,18 +228,18 @@ export default function UserProfilePage() {
     try {
       if (security.newPassword !== security.confirmPassword) {
         toast({
-          title: "Error",
-          description: "New passwords do not match",
-          variant: "destructive"
+          title: 'Error',
+          description: 'New passwords do not match',
+          variant: 'destructive',
         });
         return;
       }
 
       if (security.newPassword.length < 8) {
         toast({
-          title: "Error", 
-          description: "Password must be at least 8 characters long",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Password must be at least 8 characters long',
+          variant: 'destructive',
         });
         return;
       }
@@ -242,7 +247,7 @@ export default function UserProfilePage() {
       setLoading(true);
 
       const { error } = await supabase.auth.updateUser({
-        password: security.newPassword
+        password: security.newPassword,
       });
 
       if (error) throw error;
@@ -250,20 +255,19 @@ export default function UserProfilePage() {
       setSecurity({
         currentPassword: '',
         newPassword: '',
-        confirmPassword: ''
+        confirmPassword: '',
       });
 
       toast({
-        title: "Success",
-        description: "Password updated successfully",
+        title: 'Success',
+        description: 'Password updated successfully',
       });
-
     } catch (error: any) {
       console.error('Error updating password:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update password",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to update password',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -277,9 +281,9 @@ export default function UserProfilePage() {
 
       if (file.size > 2 * 1024 * 1024) {
         toast({
-          title: "Error",
-          description: "File size must be less than 2MB",
-          variant: "destructive"
+          title: 'Error',
+          description: 'File size must be less than 2MB',
+          variant: 'destructive',
         });
         return;
       }
@@ -298,24 +302,23 @@ export default function UserProfilePage() {
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
       // Update profile with new avatar URL
-      setProfile(prev => ({ ...prev, avatar: publicUrl }));
+      setProfile((prev) => ({ ...prev, avatar: publicUrl }));
 
       toast({
-        title: "Success",
-        description: "Avatar uploaded successfully",
+        title: 'Success',
+        description: 'Avatar uploaded successfully',
       });
-
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to upload avatar",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to upload avatar',
+        variant: 'destructive',
       });
     } finally {
       setUploading(false);
@@ -327,26 +330,24 @@ export default function UserProfilePage() {
       setLoading(true);
 
       const { data, error } = await supabase.auth.mfa.enroll({
-        factorType: 'totp'
+        factorType: 'totp',
       });
 
       if (error) throw error;
 
       // Show QR code or setup instructions
       toast({
-        title: "Two-Factor Authentication",
-        description: "Scan the QR code with your authenticator app",
+        title: 'Two-Factor Authentication',
+        description: 'Scan the QR code with your authenticator app',
       });
 
       // You would typically show a modal with the QR code here
-      console.log('2FA setup data:', data);
-
     } catch (error: any) {
       console.error('Error enabling 2FA:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to enable two-factor authentication",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to enable two-factor authentication',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -362,10 +363,7 @@ export default function UserProfilePage() {
       setLoading(true);
 
       // Delete user profile and related data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', profile.id);
+      const { error: profileError } = await supabase.from('profiles').delete().eq('id', profile.id);
 
       if (profileError) throw profileError;
 
@@ -373,16 +371,15 @@ export default function UserProfilePage() {
       await supabase.auth.signOut();
 
       toast({
-        title: "Account Deleted",
-        description: "Your account has been successfully deleted",
+        title: 'Account Deleted',
+        description: 'Your account has been successfully deleted',
       });
-
     } catch (error: any) {
       console.error('Error deleting account:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete account",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'Failed to delete account',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -405,14 +402,20 @@ export default function UserProfilePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your profile and account preferences</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            Manage your profile and account preferences
+          </p>
         </div>
         <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            profile.role === 'super_admin' ? 'bg-purple-100 text-purple-800' :
-            profile.role === 'wl_user' ? 'bg-blue-100 text-blue-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${
+              profile.role === 'super_admin'
+                ? 'bg-purple-100 text-purple-800'
+                : profile.role === 'wl_user'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-800'
+            }`}
+          >
             {profile.role.replace('_', ' ').toUpperCase()}
           </span>
         </div>
@@ -443,12 +446,19 @@ export default function UserProfilePage() {
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                     {profile.avatar ? (
-                      <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={profile.avatar}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <User className="h-8 w-8 text-gray-400" />
                     )}
                   </div>
-                  <label htmlFor="avatar-upload" className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 cursor-pointer hover:bg-blue-700">
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 cursor-pointer hover:bg-blue-700"
+                  >
                     <Camera className="h-3 w-3 text-white" />
                   </label>
                   <input
@@ -474,7 +484,7 @@ export default function UserProfilePage() {
                   <Input
                     id="firstName"
                     value={profile.firstName}
-                    onChange={(e) => setProfile(prev => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, firstName: e.target.value }))}
                     placeholder="John"
                   />
                 </div>
@@ -483,7 +493,7 @@ export default function UserProfilePage() {
                   <Input
                     id="lastName"
                     value={profile.lastName}
-                    onChange={(e) => setProfile(prev => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, lastName: e.target.value }))}
                     placeholder="Doe"
                   />
                 </div>
@@ -492,7 +502,7 @@ export default function UserProfilePage() {
                   <Input
                     id="username"
                     value={profile.username}
-                    onChange={(e) => setProfile(prev => ({ ...prev, username: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, username: e.target.value }))}
                     placeholder="johndoe"
                   />
                 </div>
@@ -505,14 +515,16 @@ export default function UserProfilePage() {
                     disabled
                     className="bg-gray-50"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed here. Use security settings.</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email cannot be changed here. Use security settings.
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone</Label>
                   <Input
                     id="phone"
                     value={profile.phone}
-                    onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, phone: e.target.value }))}
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
@@ -521,7 +533,7 @@ export default function UserProfilePage() {
                   <Input
                     id="location"
                     value={profile.location}
-                    onChange={(e) => setProfile(prev => ({ ...prev, location: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, location: e.target.value }))}
                     placeholder="New York, NY"
                   />
                 </div>
@@ -534,7 +546,7 @@ export default function UserProfilePage() {
                   <Input
                     id="company"
                     value={profile.company}
-                    onChange={(e) => setProfile(prev => ({ ...prev, company: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, company: e.target.value }))}
                     placeholder="Acme Corp"
                   />
                 </div>
@@ -543,7 +555,7 @@ export default function UserProfilePage() {
                   <Input
                     id="position"
                     value={profile.position}
-                    onChange={(e) => setProfile(prev => ({ ...prev, position: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, position: e.target.value }))}
                     placeholder="Sales Manager"
                   />
                 </div>
@@ -552,7 +564,7 @@ export default function UserProfilePage() {
                   <Input
                     id="website"
                     value={profile.website}
-                    onChange={(e) => setProfile(prev => ({ ...prev, website: e.target.value }))}
+                    onChange={(e) => setProfile((prev) => ({ ...prev, website: e.target.value }))}
                     placeholder="https://example.com"
                   />
                 </div>
@@ -564,7 +576,7 @@ export default function UserProfilePage() {
                 <Textarea
                   id="bio"
                   value={profile.bio}
-                  onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, bio: e.target.value }))}
                   placeholder="Tell us about yourself..."
                   rows={4}
                 />
@@ -585,9 +597,7 @@ export default function UserProfilePage() {
                 <Shield className="h-5 w-5" />
                 Password & Security
               </CardTitle>
-              <CardDescription>
-                Manage your password and security settings
-              </CardDescription>
+              <CardDescription>Manage your password and security settings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Change Password */}
@@ -600,15 +610,23 @@ export default function UserProfilePage() {
                       id="currentPassword"
                       type={showPasswords.current ? 'text' : 'password'}
                       value={security.currentPassword}
-                      onChange={(e) => setSecurity(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      onChange={(e) =>
+                        setSecurity((prev) => ({ ...prev, currentPassword: e.target.value }))
+                      }
                       placeholder="Enter current password"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                      onClick={() =>
+                        setShowPasswords((prev) => ({ ...prev, current: !prev.current }))
+                      }
                       className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                     >
-                      {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPasswords.current ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                   <div className="relative">
@@ -617,15 +635,21 @@ export default function UserProfilePage() {
                       id="newPassword"
                       type={showPasswords.new ? 'text' : 'password'}
                       value={security.newPassword}
-                      onChange={(e) => setSecurity(prev => ({ ...prev, newPassword: e.target.value }))}
+                      onChange={(e) =>
+                        setSecurity((prev) => ({ ...prev, newPassword: e.target.value }))
+                      }
                       placeholder="Enter new password"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                      onClick={() => setShowPasswords((prev) => ({ ...prev, new: !prev.new }))}
                       className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                     >
-                      {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPasswords.new ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                   <div className="relative">
@@ -634,15 +658,23 @@ export default function UserProfilePage() {
                       id="confirmPassword"
                       type={showPasswords.confirm ? 'text' : 'password'}
                       value={security.confirmPassword}
-                      onChange={(e) => setSecurity(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      onChange={(e) =>
+                        setSecurity((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                      }
                       placeholder="Confirm new password"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                      onClick={() =>
+                        setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))
+                      }
                       className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
                     >
-                      {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPasswords.confirm ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -655,7 +687,9 @@ export default function UserProfilePage() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <h3 className="font-medium">Two-Factor Authentication</h3>
-                  <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
+                  <p className="text-sm text-gray-500">
+                    Add an extra layer of security to your account
+                  </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   {profile.twoFactorEnabled ? (
@@ -680,15 +714,15 @@ export default function UserProfilePage() {
                 <AlertTriangle className="h-5 w-5" />
                 Danger Zone
               </CardTitle>
-              <CardDescription>
-                Irreversible and destructive actions
-              </CardDescription>
+              <CardDescription>Irreversible and destructive actions</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
                 <div>
                   <h3 className="font-medium text-red-900">Delete Account</h3>
-                  <p className="text-sm text-red-600">Permanently delete your account and all data</p>
+                  <p className="text-sm text-red-600">
+                    Permanently delete your account and all data
+                  </p>
                 </div>
                 <Button onClick={deleteAccount} variant="destructive" size="sm">
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -706,9 +740,7 @@ export default function UserProfilePage() {
                 <Bell className="h-5 w-5" />
                 Notification Preferences
               </CardTitle>
-              <CardDescription>
-                Choose how you want to be notified
-              </CardDescription>
+              <CardDescription>Choose how you want to be notified</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -719,7 +751,9 @@ export default function UserProfilePage() {
                   </div>
                   <Switch
                     checked={profile.emailNotifications}
-                    onCheckedChange={(checked) => setProfile(prev => ({ ...prev, emailNotifications: checked }))}
+                    onCheckedChange={(checked) =>
+                      setProfile((prev) => ({ ...prev, emailNotifications: checked }))
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -729,7 +763,9 @@ export default function UserProfilePage() {
                   </div>
                   <Switch
                     checked={profile.pushNotifications}
-                    onCheckedChange={(checked) => setProfile(prev => ({ ...prev, pushNotifications: checked }))}
+                    onCheckedChange={(checked) =>
+                      setProfile((prev) => ({ ...prev, pushNotifications: checked }))
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -739,7 +775,9 @@ export default function UserProfilePage() {
                   </div>
                   <Switch
                     checked={profile.marketingEmails}
-                    onCheckedChange={(checked) => setProfile(prev => ({ ...prev, marketingEmails: checked }))}
+                    onCheckedChange={(checked) =>
+                      setProfile((prev) => ({ ...prev, marketingEmails: checked }))
+                    }
                   />
                 </div>
               </div>
@@ -757,15 +795,16 @@ export default function UserProfilePage() {
                 <Globe className="h-5 w-5" />
                 Regional Preferences
               </CardTitle>
-              <CardDescription>
-                Set your language and timezone preferences
-              </CardDescription>
+              <CardDescription>Set your language and timezone preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="language">Language</Label>
-                  <Select value={profile.language} onValueChange={(value) => setProfile(prev => ({ ...prev, language: value }))}>
+                  <Select
+                    value={profile.language}
+                    onValueChange={(value) => setProfile((prev) => ({ ...prev, language: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -780,7 +819,10 @@ export default function UserProfilePage() {
                 </div>
                 <div>
                   <Label htmlFor="timezone">Timezone</Label>
-                  <Select value={profile.timezone} onValueChange={(value) => setProfile(prev => ({ ...prev, timezone: value }))}>
+                  <Select
+                    value={profile.timezone}
+                    onValueChange={(value) => setProfile((prev) => ({ ...prev, timezone: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>

@@ -8,7 +8,7 @@ export const useOpenAIEmbeddings = () => {
         },
         body: JSON.stringify({
           text: text,
-          model: "text-embedding-3-small",
+          model: 'text-embedding-3-small',
         }),
       });
 
@@ -27,9 +27,7 @@ export const useOpenAIEmbeddings = () => {
     try {
       // Create embeddings for query and documents
       const queryEmbedding = await createEmbedding(query);
-      const documentEmbeddings = await Promise.all(
-        documents.map(doc => createEmbedding(doc))
-      );
+      const documentEmbeddings = await Promise.all(documents.map((doc) => createEmbedding(doc)));
 
       // Calculate cosine similarity
       const similarities = documentEmbeddings.map((docEmb, index) => {
@@ -52,7 +50,7 @@ export const useOpenAIEmbeddings = () => {
         const embedding = await createEmbedding(text);
         embeddings.push({
           contactId: contact.id,
-          embedding
+          embedding,
         });
       } catch (error) {
         console.warn(`Failed to create embedding for contact ${contact.id}:`, error);
@@ -70,7 +68,7 @@ export const useOpenAIEmbeddings = () => {
         const embedding = await createEmbedding(text);
         embeddings.push({
           dealId: deal.id,
-          embedding
+          embedding,
         });
       } catch (error) {
         console.warn(`Failed to create embedding for deal ${deal.id}:`, error);
@@ -90,7 +88,7 @@ export const useOpenAIEmbeddings = () => {
         const similarity = cosineSimilarity(queryEmbedding, contactEmb.embedding);
         results.push({
           contact,
-          score: similarity
+          score: similarity,
         });
       }
     }
@@ -108,7 +106,7 @@ export const useOpenAIEmbeddings = () => {
         const similarity = cosineSimilarity(queryEmbedding, dealEmb.embedding);
         results.push({
           deal,
-          score: similarity
+          score: similarity,
         });
       }
     }
@@ -122,7 +120,7 @@ export const useOpenAIEmbeddings = () => {
     createContactEmbeddings,
     createDealEmbeddings,
     searchContacts,
-    searchDeals
+    searchDeals,
   };
 };
 

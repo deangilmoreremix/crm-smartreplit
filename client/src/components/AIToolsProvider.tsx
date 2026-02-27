@@ -1,27 +1,17 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import AIToolModal from './shared/AIToolModal';
-import { 
-  Brain, 
-  Mail, 
-  MessageSquare, 
-  FileText, 
-  Phone, 
-  Target, 
-  FileSearch, 
-  TrendingUp, 
-  BarChart3, 
+import {
+  Brain,
+  Mail,
+  MessageSquare,
+  FileText,
+  Phone,
+  Target,
+  FileSearch,
+  TrendingUp,
+  BarChart3,
   PieChart,
-  ChevronRight,
-  CheckCheck,
-  ArrowRight,
-  Play,
-  User,
-  Clock,
-  Star,
-  ExternalLink,
-  BarChart,
   Users,
-  Briefcase,
   Eye,
   Image,
   Mic,
@@ -34,12 +24,9 @@ import {
   Volume2,
   Reply,
   Calendar,
-  FileCode,
   FileJson,
-  X,
-  Hash
+  Hash,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import StreamingChat from '../components/aiTools/StreamingChat';
 import RealTimeFormValidation from '../components/aiTools/RealTimeFormValidation';
 import LiveDealAnalysis from '../components/aiTools/LiveDealAnalysis';
@@ -87,16 +74,15 @@ import AgentWorkflowChat from './aiTools/AgentWorkflowChat';
 import ReasoningContentGenerator from './aiTools/ReasoningContentGenerator';
 import ImageGallery from './ImageGallery';
 
-
-export type AIToolType = 
-  | 'email-analysis' 
+export type AIToolType =
+  | 'email-analysis'
   | 'meeting-summary'
   | 'proposal-generator'
   | 'call-script'
-  | 'subject-optimizer' 
-  | 'competitor-analysis' 
-  | 'market-trends' 
-  | 'sales-insights' 
+  | 'subject-optimizer'
+  | 'competitor-analysis'
+  | 'market-trends'
+  | 'sales-insights'
   | 'sales-forecast'
   | 'email-composer'
   | 'objection-handler'
@@ -180,299 +166,299 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
 
   // Get tool information based on type
   const getToolInfo = (tool: AIToolType | null) => {
-    switch(tool) {
+    switch (tool) {
       case 'email-analysis':
         return {
           title: 'Email Analysis',
           icon: <Mail size={24} />,
-          component: <EmailAnalysisContent />
+          component: <EmailAnalysisContent />,
         };
       case 'meeting-summary':
         return {
           title: 'Meeting Summarizer',
           icon: <MessageSquare size={24} />,
-          component: <MeetingSummaryContent />
+          component: <MeetingSummaryContent />,
         };
       case 'proposal-generator':
         return {
           title: 'Proposal Generator',
           icon: <FileText size={24} />,
-          component: null // Placeholder, actual component not provided
+          component: null, // Placeholder, actual component not provided
         };
       case 'call-script':
         return {
           title: 'Call Script Generator',
           icon: <Phone size={24} />,
-          component: <CallScriptContent />
+          component: <CallScriptContent />,
         };
       case 'subject-optimizer':
         return {
           title: 'Email Subject Line Optimizer',
           icon: <Target size={24} />,
-          component: <SubjectLineContent />
+          component: <SubjectLineContent />,
         };
       case 'competitor-analysis':
         return {
           title: 'Competitor Analysis',
           icon: <FileSearch size={24} />,
-          component: <CompetitorAnalysisContent />
+          component: <CompetitorAnalysisContent />,
         };
       case 'market-trends':
         return {
           title: 'Market Trend Analysis',
           icon: <TrendingUp size={24} />,
-          component: <MarketTrendContent />
+          component: <MarketTrendContent />,
         };
       case 'sales-insights':
         return {
           title: 'Sales Insights',
           icon: <Brain size={24} />,
-          component: <SalesInsightsContent />
+          component: <SalesInsightsContent />,
         };
       case 'sales-forecast':
         return {
           title: 'Sales Forecasting',
           icon: <PieChart size={24} />,
-          component: <SalesForecastContent />
+          component: <SalesForecastContent />,
         };
       case 'email-composer':
         return {
           title: 'Smart Email Composer',
           icon: <Mail size={24} />,
-          component: <EmailComposerContent />
+          component: <EmailComposerContent />,
         };
       case 'objection-handler':
         return {
           title: 'Objection Handler',
           icon: <Shield size={24} />,
-          component: <ObjectionHandlerContent />
+          component: <ObjectionHandlerContent />,
         };
       case 'customer-persona':
         return {
           title: 'Customer Persona Generator',
           icon: <Users size={24} />,
-          component: <CustomerPersonaContent />
+          component: <CustomerPersonaContent />,
         };
       case 'voice-tone-optimizer':
         return {
           title: 'Voice Tone Optimizer',
           icon: <Volume2 size={24} />,
-          component: <VoiceToneOptimizerContent />
+          component: <VoiceToneOptimizerContent />,
         };
       case 'email-response':
         return {
           title: 'Email Response Generator',
           icon: <Reply size={24} />,
-          component: <EmailResponseContent />
+          component: <EmailResponseContent />,
         };
       case 'visual-content-generator':
         return {
           title: 'Visual Content Generator',
           icon: <Image size={24} />,
-          component: <VisualContentGeneratorContent />
+          component: <VisualContentGeneratorContent />,
         };
       case 'meeting-agenda':
         return {
           title: 'Meeting Agenda Generator',
           icon: <Calendar size={24} />,
-          component: <MeetingAgendaContent />
+          component: <MeetingAgendaContent />,
         };
       // Advanced features
       case 'ai-assistant':
         return {
           title: 'AI Assistant',
           icon: <Brain size={24} />,
-          component: <AIAssistantChat />
+          component: <AIAssistantChat />,
         };
       case 'vision-analyzer':
         return {
           title: 'Vision Analyzer',
           icon: <Eye size={24} />,
-          component: <VisionAnalyzerContent />
+          component: <VisionAnalyzerContent />,
         };
       case 'image-generator':
         return {
           title: 'Image Generator',
           icon: <Image size={24} />,
-          component: <ImageGeneratorContent />
+          component: <ImageGeneratorContent />,
         };
       case 'speech-to-text':
         return {
           title: 'Speech to Text',
           icon: <Mic size={24} />,
-          component: null // Placeholder, actual component not provided
+          component: null, // Placeholder, actual component not provided
         };
       case 'semantic-search':
         return {
           title: 'Semantic Search',
           icon: <Search size={24} />,
-          component: <SemanticSearchContent />
+          component: <SemanticSearchContent />,
         };
       case 'json-tools':
         return {
           title: 'Structured Data Extraction',
           icon: <FileJson size={24} />,
-          component: null // Placeholder, actual component not provided
+          component: null, // Placeholder, actual component not provided
         };
       case 'streaming-chat':
         return {
           title: 'Real-time Chat',
           icon: <MessagesSquare size={24} />,
-          component: <StreamingChat />
+          component: <StreamingChat />,
         };
       case 'function-assistant':
         return {
           title: 'CRM Function Assistant',
           icon: <Zap size={24} />,
-          component: <FunctionAssistantContent />
+          component: <FunctionAssistantContent />,
         };
       // New real-time tools
       case 'form-validation':
         return {
           title: 'Real-time Form Validation',
           icon: <CheckCircle size={24} />,
-          component: <RealTimeFormValidation />
+          component: <RealTimeFormValidation />,
         };
       case 'live-deal-analysis':
         return {
           title: 'Live Deal Analysis',
           icon: <BarChart3 size={24} />,
-          component: <LiveDealAnalysis />
+          component: <LiveDealAnalysis />,
         };
       case 'instant-response':
         return {
           title: 'Instant Response Generator',
           icon: <Sparkles size={24} />,
-          component: <InstantAIResponseGenerator />
+          component: <InstantAIResponseGenerator />,
         };
       case 'document-analyzer-realtime':
         return {
           title: 'Real-time Document Analyzer',
           icon: <Eye size={24} />,
-          component: <DocumentAnalyzerRealtime />
+          component: <DocumentAnalyzerRealtime />,
         };
       case 'realtime-email-composer':
         return {
           title: 'Real-time Email Composer',
           icon: <Mail size={24} />,
-          component: <RealTimeEmailComposer />
+          component: <RealTimeEmailComposer />,
         };
       case 'voice-analysis-realtime':
         return {
           title: 'Real-time Voice Analysis',
           icon: <Mic size={24} />,
-          component: <VoiceAnalysisRealtime />
+          component: <VoiceAnalysisRealtime />,
         };
       case 'smart-search-realtime':
         return {
           title: 'Smart Search with Live Results',
           icon: <Search size={24} />,
-          component: <SmartSearchRealtime />
+          component: <SmartSearchRealtime />,
         };
       case 'auto-form-completer':
         return {
           title: 'AI-Powered Form Auto-completion',
           icon: <CheckCircle size={24} />,
-          component: <AutoFormCompleter />
+          component: <AutoFormCompleter />,
         };
       // Reasoning-based content generators
       case 'reasoning-email':
         return {
           title: 'AI Reasoning Email Generator',
           icon: <Mail size={24} />,
-          component: <ReasoningEmailGenerator />
+          component: <ReasoningEmailGenerator />,
         };
       case 'reasoning-proposal':
         return {
           title: 'AI Reasoning Proposal Generator',
           icon: <FileText size={24} />,
-          component: <ReasoningProposalGenerator />
+          component: <ReasoningProposalGenerator />,
         };
       case 'reasoning-script':
         return {
           title: 'AI Reasoning Call Script Generator',
           icon: <Phone size={24} />,
-          component: <ReasoningScriptGenerator />
+          component: <ReasoningScriptGenerator />,
         };
       case 'reasoning-objection':
         return {
           title: 'AI Reasoning Objection Handler',
           icon: <Shield size={24} />,
-          component: <ReasoningObjectionHandler />
+          component: <ReasoningObjectionHandler />,
         };
       case 'reasoning-social':
         return {
           title: 'AI Reasoning Social Content Generator',
           icon: <Hash size={24} />,
-          component: <ReasoningSocialContent />
+          component: <ReasoningSocialContent />,
         };
       // Updated cases based on the provided changes
       case 'agent-workflow':
         return {
           title: 'AI Agent Workflow',
           icon: <Users size={24} />, // Using Users icon as a placeholder
-          component: <AgentWorkflowChat />
+          component: <AgentWorkflowChat />,
         };
       case 'auto-form':
         return {
           title: 'AI Auto Form',
           icon: <CheckCircle size={24} />,
-          component: <AutoFormCompleter />
+          component: <AutoFormCompleter />,
         };
       case 'realtime-email':
         return {
           title: 'Real-time Email Composer',
           icon: <Mail size={24} />,
-          component: <RealTimeEmailComposer />
+          component: <RealTimeEmailComposer />,
         };
       case 'realtime-form-validation':
         return {
           title: 'Real-time Form Validation',
           icon: <CheckCircle size={24} />,
-          component: <RealTimeFormValidation />
+          component: <RealTimeFormValidation />,
         };
       case 'smart-search':
         return {
           title: 'Smart Search',
           icon: <Search size={24} />,
-          component: <SmartSearchRealtime />
+          component: <SmartSearchRealtime />,
         };
       case 'reasoning-content':
         return {
           title: 'AI Reasoning Content Generator',
           icon: <FileText size={24} />, // Using FileText icon as a placeholder
-          component: <ReasoningContentGenerator />
+          component: <ReasoningContentGenerator />,
         };
       case 'subject-line':
         return {
           title: 'Email Subject Line Optimizer',
           icon: <Target size={24} />,
-          component: <SubjectLineContent />
+          component: <SubjectLineContent />,
         };
       case 'voice-tone':
         return {
           title: 'Voice Tone Optimizer',
           icon: <Volume2 size={24} />,
-          component: <VoiceToneOptimizerContent />
+          component: <VoiceToneOptimizerContent />,
         };
       case 'visual-content':
         return {
           title: 'Visual Content Generator',
           icon: <Image size={24} />,
-          component: <VisualContentGeneratorContent />
+          component: <VisualContentGeneratorContent />,
         };
       case 'image-gallery':
         return {
           title: 'My Image Gallery',
           icon: <Image size={24} />,
-          component: <ImageGallery userId="demo-user" />
+          component: <ImageGallery userId="demo-user" />,
         };
 
       default:
         return {
           title: '',
           icon: <Brain size={24} />,
-          component: null // Default case for unknown tool types
+          component: null, // Default case for unknown tool types
         };
     }
   };

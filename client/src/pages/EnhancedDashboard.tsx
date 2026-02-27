@@ -12,14 +12,14 @@ import DealAnalytics from '../components/DealAnalytics';
 import HelpTooltip from '../components/ui/HelpTooltip';
 import { useEnhancedHelp } from '../contexts/EnhancedHelpContext';
 import GeminiImageModal from '../components/GeminiImageModal';
-import { 
-  BarChart3, 
-  TrendingUp, 
+import {
+  BarChart3,
+  TrendingUp,
   DollarSign,
-  Calendar, 
+  Calendar,
   Clock,
-  Zap, 
-  ChevronRight, 
+  Zap,
+  ChevronRight,
   AlertCircle,
   ArrowUpRight,
   ArrowDownRight,
@@ -39,7 +39,7 @@ import {
   Megaphone,
   FileText,
   Settings,
-  Palette
+  Palette,
 } from 'lucide-react';
 
 // Import AI tools components
@@ -48,42 +48,32 @@ import SmartSearchRealtime from '../components/aiTools/SmartSearchRealtime';
 import LiveDealAnalysis from '../components/aiTools/LiveDealAnalysis';
 
 // Import recharts components for data visualization
-import { 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  LineChart, 
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart,
   Line,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { 
-    deals, 
-    fetchDeals, 
-    isLoading,
-    stageValues,
-    totalPipelineValue 
-  } = useDealStore();
-  
-  const { 
-    contacts, 
-    fetchContacts, 
-    isLoading: contactsLoading 
-  } = useContactStore();
-  
+  const { deals, fetchDeals, isLoading, stageValues, totalPipelineValue } = useDealStore();
+
+  const { contacts, fetchContacts, isLoading: contactsLoading } = useContactStore();
+
   const { tasks, fetchTasks } = useTaskStore();
   const { fetchAppointments } = useAppointmentStore();
   const { openTool } = useAITools();
   const { showTours } = useEnhancedHelp();
-  
+
   const gemini = useGemini();
-  
+
   const [pipelineInsight, setPipelineInsight] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [timeframe, setTimeframe] = useState('month'); // 'week', 'month', 'quarter', 'year'
@@ -92,34 +82,34 @@ const Dashboard: React.FC = () => {
     activeSuggestions: 12,
     acceptedSuggestions: 8,
     efficiency: 32,
-    qualityScore: 87
+    qualityScore: 87,
   });
   const [showAvatarGenerator, setShowAvatarGenerator] = useState(false);
-  
+
   useEffect(() => {
     // Fetch all data when component mounts
     fetchDeals();
     fetchContacts();
     fetchTasks();
     fetchAppointments();
-    
+
     // Generate AI recommendations
     generateRecommendations();
-    
+
     // Set up timer to refresh data periodically
     const intervalId = setInterval(() => {
       fetchDeals();
       fetchContacts();
     }, 300000); // refresh every 5 minutes
-    
+
     return () => clearInterval(intervalId);
   }, []);
-  
+
   const generateRecommendations = async () => {
     try {
       // Use real AI to generate recommendations based on actual CRM data
       const contactsArray = Object.values(contacts);
-      
+
       const response = await fetch('/api/ai/business-analyzer', {
         method: 'POST',
         headers: {
@@ -128,7 +118,7 @@ const Dashboard: React.FC = () => {
         body: JSON.stringify({
           contacts: contactsArray,
           deals: deals,
-          tasks: tasks
+          tasks: tasks,
         }),
       });
 
@@ -137,11 +127,11 @@ const Dashboard: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       // Parse AI recommendations or use structured fallback
       let recommendations = [];
       const aiResponse = data.result || data.insights || data.content;
-      
+
       try {
         const aiResult = JSON.parse(aiResponse || '{}');
         recommendations = aiResult.recommendations || [];
@@ -155,11 +145,11 @@ const Dashboard: React.FC = () => {
             type: 'general',
             priority: 'medium',
             action: 'Review AI insights',
-            entityId: null
-          }
+            entityId: null,
+          },
         ];
       }
-      
+
       setAiRecommendations(recommendations);
     } catch (error) {
       console.error('Error generating recommendations:', error);
@@ -167,21 +157,21 @@ const Dashboard: React.FC = () => {
       setAiRecommendations([]);
     }
   };
-  
+
   // Generate AI insight for the pipeline using real data
   const generatePipelineInsight = async () => {
     setIsAnalyzing(true);
-    
+
     try {
       // Convert contacts object to array for API
       const contactsArray = Object.values(contacts);
-      
+
       // Prepare real data for the AI analysis
       const requestData = {
         contacts: contactsArray,
-        deals: deals
+        deals: deals,
       };
-      
+
       // Call the real AI sales insights API
       const response = await fetch('/api/ai/sales-insights', {
         method: 'POST',
@@ -190,16 +180,18 @@ const Dashboard: React.FC = () => {
         },
         body: JSON.stringify(requestData),
       });
-      
+
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setPipelineInsight(data.result || data.insights || data.content || data.message);
     } catch (error) {
       console.error('Error generating pipeline insight:', error);
-      setPipelineInsight('Unable to generate insights at this time. Please ensure your OpenAI API key is configured and try again.');
+      setPipelineInsight(
+        'Unable to generate insights at this time. Please ensure your OpenAI API key is configured and try again.'
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -213,43 +205,40 @@ const Dashboard: React.FC = () => {
     let totalAtRisk = 0;
     let totalValue = 0;
     let wonValue = 0;
-    
-    Object.values(deals).forEach(deal => {
+
+    Object.values(deals).forEach((deal) => {
       // Count active deals (not closed)
       if (deal.stage !== 'closed-won' && deal.stage !== 'closed-lost') {
         totalActiveDeals++;
         totalValue += deal.value;
-        
+
         // Deals closing this month
         if (deal.dueDate && deal.dueDate.getMonth() === now.getMonth()) {
           totalClosingThisMonth++;
         }
-        
+
         // Deals at risk (high priority or stalled)
-        if (
-          deal.priority === 'high' || 
-          (deal.daysInStage && deal.daysInStage > 14)
-        ) {
+        if (deal.priority === 'high' || (deal.daysInStage && deal.daysInStage > 14)) {
           totalAtRisk++;
         }
       }
-      
+
       // Count won deals value
       if (deal.stage === 'closed-won') {
         wonValue += deal.value;
       }
     });
-    
+
     return {
       totalActiveDeals,
       totalClosingThisMonth,
       totalAtRisk,
       totalValue,
       avgDealSize: totalActiveDeals > 0 ? totalValue / totalActiveDeals : 0,
-      wonValue
+      wonValue,
     };
   };
-  
+
   const metrics = calculateMetrics();
 
   // Prepare data for charts
@@ -260,7 +249,7 @@ const Dashboard: React.FC = () => {
       { stage: 'Proposal', value: stageValues.proposal || 0 },
       { stage: 'Negotiation', value: stageValues.negotiation || 0 },
     ];
-    
+
     // Deal probability distribution
     const dealProbability = [
       { range: '0-25%', count: 0 },
@@ -268,15 +257,15 @@ const Dashboard: React.FC = () => {
       { range: '51-75%', count: 0 },
       { range: '76-100%', count: 0 },
     ];
-    
-    Object.values(deals).forEach(deal => {
+
+    Object.values(deals).forEach((deal) => {
       const probability = deal.probability || 0;
       if (probability <= 25) dealProbability[0].count++;
       else if (probability <= 50) dealProbability[1].count++;
       else if (probability <= 75) dealProbability[2].count++;
       else dealProbability[3].count++;
     });
-    
+
     // Monthly trend data (simulated for demo)
     const monthlyTrend = [
       { month: 'Jan', deals: 15, value: 125000 },
@@ -286,78 +275,79 @@ const Dashboard: React.FC = () => {
       { month: 'May', deals: 25, value: 210000 },
       { month: 'Jun', deals: 30, value: 275000 },
     ];
-    
+
     return { pipelineByStage, dealProbability, monthlyTrend };
   };
-  
+
   const chartData = prepareChartData();
 
   // Get upcoming deals (sorting by dueDate)
   const getUpcomingDeals = () => {
     const activeDeals = Object.values(deals).filter(
-      deal => deal.stage !== 'closed-won' && deal.stage !== 'closed-lost'
+      (deal) => deal.stage !== 'closed-won' && deal.stage !== 'closed-lost'
     );
-    
+
     // Sort by due date (ascending)
     return activeDeals
-      .filter(deal => deal.dueDate)
+      .filter((deal) => deal.dueDate)
       .sort((a, b) => {
         if (!a.dueDate || !b.dueDate) return 0;
         return a.dueDate.getTime() - b.dueDate.getTime();
       })
       .slice(0, 5); // Get top 5
   };
-  
+
   // Get overdue and today's tasks
   const getImportantTasks = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    
+
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const overdueTasks = Object.values(tasks).filter(task => 
-      !task.completed && task.dueDate && task.dueDate < now
+
+    const overdueTasks = Object.values(tasks).filter(
+      (task) => !task.completed && task.dueDate && task.dueDate < now
     );
-    
-    const todayTasks = Object.values(tasks).filter(task => 
-      !task.completed && task.dueDate && 
-      task.dueDate >= now && task.dueDate < tomorrow
+
+    const todayTasks = Object.values(tasks).filter(
+      (task) => !task.completed && task.dueDate && task.dueDate >= now && task.dueDate < tomorrow
     );
-    
-    return [...overdueTasks, ...todayTasks].sort((a, b) => {
-      if (!a.dueDate || !b.dueDate) return 0;
-      return a.dueDate.getTime() - b.dueDate.getTime();
-    }).slice(0, 5);
+
+    return [...overdueTasks, ...todayTasks]
+      .sort((a, b) => {
+        if (!a.dueDate || !b.dueDate) return 0;
+        return a.dueDate.getTime() - b.dueDate.getTime();
+      })
+      .slice(0, 5);
   };
 
   const upcomingDeals = getUpcomingDeals();
   const importantTasks = getImportantTasks();
-  
+
   // Format currency values
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(value);
   };
-  
+
   // Format date
   const formatDate = (date?: Date) => {
     if (!date) return 'No date';
-    
+
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
-    
+
     if (date.toDateString() === today.toDateString()) return 'Today';
     if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
-    
+
     return date.toLocaleDateString(undefined, {
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -371,16 +361,18 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="mt-4 md:mt-0 flex space-x-3">
             <button
-              onClick={() => {/* Tour will auto-start when enabled */}}
+              onClick={() => {
+                /* Tour will auto-start when enabled */
+              }}
               className="px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md text-sm font-medium text-blue-700 transition-colors duration-200"
             >
               Take Tour
             </button>
             <div className="relative inline-block">
-              <select 
+              <select
                 className="appearance-none pl-3 pr-10 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 value={timeframe}
-                onChange={e => setTimeframe(e.target.value)}
+                onChange={(e) => setTimeframe(e.target.value)}
               >
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
@@ -394,9 +386,12 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </header>
-      
+
       {/* AI Insight Panel */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-xl shadow-sm p-6 border border-blue-100 mb-6" data-tour="ai-insights">
+      <div
+        className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-xl shadow-sm p-6 border border-blue-100 mb-6"
+        data-tour="ai-insights"
+      >
         <div className="flex items-start">
           <div className="flex-shrink-0 p-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg mr-4">
             <Brain size={24} />
@@ -404,7 +399,7 @@ const Dashboard: React.FC = () => {
           <div className="flex-1">
             <div className="flex justify-between items-start">
               <h2 className="text-lg font-semibold text-gray-900">AI Pipeline Intelligence</h2>
-              <button 
+              <button
                 onClick={generatePipelineInsight}
                 disabled={isAnalyzing}
                 className="text-xs text-blue-700 hover:text-blue-900"
@@ -412,7 +407,7 @@ const Dashboard: React.FC = () => {
                 {isAnalyzing ? 'Analyzing...' : pipelineInsight ? 'Refresh' : 'Generate Insight'}
               </button>
             </div>
-            
+
             {isAnalyzing ? (
               <div className="mt-2 flex items-center text-blue-700">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
@@ -421,14 +416,20 @@ const Dashboard: React.FC = () => {
             ) : pipelineInsight ? (
               <p className="mt-2 text-gray-700">{pipelineInsight}</p>
             ) : (
-              <p className="mt-2 text-gray-600">Generate AI-powered insights to understand your pipeline health and get strategic recommendations.</p>
+              <p className="mt-2 text-gray-600">
+                Generate AI-powered insights to understand your pipeline health and get strategic
+                recommendations.
+              </p>
             )}
           </div>
         </div>
       </div>
-      
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6" data-tour="stats-cards">
+      <div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"
+        data-tour="stats-cards"
+      >
         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center">
           <div className="rounded-full p-3 mr-4 bg-gradient-to-r from-blue-50 to-blue-100">
             <Briefcase className="h-6 w-6 text-blue-600" />
@@ -444,7 +445,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center">
           <div className="rounded-full p-3 mr-4 bg-gradient-to-r from-indigo-50 to-indigo-100">
             <DollarSign className="h-6 w-6 text-indigo-600" />
@@ -460,7 +461,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center">
           <div className="rounded-full p-3 mr-4 bg-gradient-to-r from-purple-50 to-purple-100">
             <Calendar className="h-6 w-6 text-purple-600" />
@@ -476,7 +477,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center">
           <div className="rounded-full p-3 mr-4 bg-gradient-to-r from-amber-50 to-amber-100">
             <AlertCircle className="h-6 w-6 text-amber-600" />
@@ -486,14 +487,13 @@ const Dashboard: React.FC = () => {
             <div className="flex items-baseline">
               <p className="text-2xl font-semibold">{metrics.totalAtRisk}</p>
               <p className="ml-2 text-xs text-amber-500 flex items-center">
-                <ArrowUpRight size={12} className="mr-0.5" />
-                2
+                <ArrowUpRight size={12} className="mr-0.5" />2
               </p>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* AI Performance Metrics */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-indigo-100 mb-6">
         <div className="flex items-center mb-4">
@@ -502,42 +502,54 @@ const Dashboard: React.FC = () => {
           </div>
           <h2 className="text-lg font-semibold">AI Enhancement Metrics</h2>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
             <p className="text-sm text-gray-500">Active Suggestions</p>
             <p className="text-2xl font-semibold mt-1">{aiMetrics.activeSuggestions}</p>
             <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
-              <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${aiMetrics.activeSuggestions * 5}%` }}></div>
+              <div
+                className="bg-blue-600 h-1.5 rounded-full"
+                style={{ width: `${aiMetrics.activeSuggestions * 5}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div>
             <p className="text-sm text-gray-500">Suggestions Accepted</p>
             <p className="text-2xl font-semibold mt-1">{aiMetrics.acceptedSuggestions}</p>
             <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
-              <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${aiMetrics.acceptedSuggestions * 10}%` }}></div>
+              <div
+                className="bg-green-500 h-1.5 rounded-full"
+                style={{ width: `${aiMetrics.acceptedSuggestions * 10}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div>
             <p className="text-sm text-gray-500">Efficiency Boost</p>
             <p className="text-2xl font-semibold mt-1">{aiMetrics.efficiency}%</p>
             <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
-              <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${aiMetrics.efficiency}%` }}></div>
+              <div
+                className="bg-purple-500 h-1.5 rounded-full"
+                style={{ width: `${aiMetrics.efficiency}%` }}
+              ></div>
             </div>
           </div>
-          
+
           <div>
             <p className="text-sm text-gray-500">AI Quality Score</p>
             <p className="text-2xl font-semibold mt-1">{aiMetrics.qualityScore}/100</p>
             <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
-              <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${aiMetrics.qualityScore}%` }}></div>
+              <div
+                className="bg-indigo-500 h-1.5 rounded-full"
+                style={{ width: `${aiMetrics.qualityScore}%` }}
+              ></div>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Connected Apps Section */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-100">
         <div className="flex items-center justify-between mb-6">
@@ -554,12 +566,12 @@ const Dashboard: React.FC = () => {
             View All <ExternalLink size={14} className="ml-1" />
           </button>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* FunnelCraft AI - Marketing Team */}
-          <a 
-            href="https://serene-valkyrie-fec320.netlify.app/" 
-            target="_blank" 
+          <a
+            href="https://serene-valkyrie-fec320.netlify.app/"
+            target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100"
           >
@@ -567,17 +579,22 @@ const Dashboard: React.FC = () => {
               <div className="p-2 rounded-lg bg-purple-100 text-purple-600 group-hover:bg-purple-200 transition-colors">
                 <Megaphone size={20} />
               </div>
-              <ExternalLink size={14} className="text-gray-400 group-hover:text-purple-600 transition-colors" />
+              <ExternalLink
+                size={14}
+                className="text-gray-400 group-hover:text-purple-600 transition-colors"
+              />
             </div>
             <h3 className="font-medium text-gray-900 mb-1">FunnelCraft AI</h3>
             <p className="text-sm text-gray-600 mb-2">Marketing Team</p>
-            <p className="text-xs text-gray-500">Create high-converting funnels with AI-powered optimization</p>
+            <p className="text-xs text-gray-500">
+              Create high-converting funnels with AI-powered optimization
+            </p>
           </a>
 
           {/* SmartCRM Closer - Outreach Team */}
-          <a 
-            href="https://stupendous-twilight-64389a.netlify.app/" 
-            target="_blank" 
+          <a
+            href="https://stupendous-twilight-64389a.netlify.app/"
+            target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100"
           >
@@ -585,17 +602,22 @@ const Dashboard: React.FC = () => {
               <div className="p-2 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-200 transition-colors">
                 <Users size={20} />
               </div>
-              <ExternalLink size={14} className="text-gray-400 group-hover:text-blue-600 transition-colors" />
+              <ExternalLink
+                size={14}
+                className="text-gray-400 group-hover:text-blue-600 transition-colors"
+              />
             </div>
             <h3 className="font-medium text-gray-900 mb-1">SmartCRM Closer</h3>
             <p className="text-sm text-gray-600 mb-2">Outreach Team</p>
-            <p className="text-xs text-gray-500">Advanced outreach automation and deal closing tools</p>
+            <p className="text-xs text-gray-500">
+              Advanced outreach automation and deal closing tools
+            </p>
           </a>
 
           {/* ContentAI - Content & Support Team */}
-          <a 
-            href="https://capable-mermaid-3c73fa.netlify.app/" 
-            target="_blank" 
+          <a
+            href="https://capable-mermaid-3c73fa.netlify.app/"
+            target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100"
           >
@@ -603,17 +625,22 @@ const Dashboard: React.FC = () => {
               <div className="p-2 rounded-lg bg-green-100 text-green-600 group-hover:bg-green-200 transition-colors">
                 <FileText size={20} />
               </div>
-              <ExternalLink size={14} className="text-gray-400 group-hover:text-green-600 transition-colors" />
+              <ExternalLink
+                size={14}
+                className="text-gray-400 group-hover:text-green-600 transition-colors"
+              />
             </div>
             <h3 className="font-medium text-gray-900 mb-1">ContentAI</h3>
             <p className="text-sm text-gray-600 mb-2">Content & Support</p>
-            <p className="text-xs text-gray-500">AI-powered content creation and support documentation</p>
+            <p className="text-xs text-gray-500">
+              AI-powered content creation and support documentation
+            </p>
           </a>
 
           {/* White-Label Platform Management */}
-          <a 
-            href="https://moonlit-tarsier-239e70.netlify.app" 
-            target="_blank" 
+          <a
+            href="https://moonlit-tarsier-239e70.netlify.app"
+            target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100"
           >
@@ -621,15 +648,20 @@ const Dashboard: React.FC = () => {
               <div className="p-2 rounded-lg bg-orange-100 text-orange-600 group-hover:bg-orange-200 transition-colors">
                 <Palette size={20} />
               </div>
-              <ExternalLink size={14} className="text-gray-400 group-hover:text-orange-600 transition-colors" />
+              <ExternalLink
+                size={14}
+                className="text-gray-400 group-hover:text-orange-600 transition-colors"
+              />
             </div>
             <h3 className="font-medium text-gray-900 mb-1">White-Label Platform</h3>
             <p className="text-sm text-gray-600 mb-2">Platform Management</p>
-            <p className="text-xs text-gray-500">Customize and manage your branded platform solutions</p>
+            <p className="text-xs text-gray-500">
+              Customize and manage your branded platform solutions
+            </p>
           </a>
         </div>
       </div>
-      
+
       {/* Main Content - 3-column grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* AI Chat and Tools column */}
@@ -643,14 +675,14 @@ const Dashboard: React.FC = () => {
               </h2>
             </div>
             <div className="h-80">
-              <StreamingChat 
-                systemPrompt="You are a helpful sales assistant that provides concise, actionable advice." 
-                initialMessage="How can I help with your sales today? Ask me about leads, deals, or general sales advice." 
+              <StreamingChat
+                systemPrompt="You are a helpful sales assistant that provides concise, actionable advice."
+                initialMessage="How can I help with your sales today? Ask me about leads, deals, or general sales advice."
                 placeholder="Ask something about your sales data..."
               />
             </div>
           </div>
-          
+
           {/* Quick Search */}
           <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50">
@@ -663,11 +695,11 @@ const Dashboard: React.FC = () => {
               <SmartSearchRealtime />
             </div>
           </div>
-          
+
           {/* AI Tools Card */}
           <AIToolsCard />
         </div>
-        
+
         {/* Middle column - Pipeline and deals */}
         <div className="space-y-6">
           {/* Deal Analysis */}
@@ -677,7 +709,10 @@ const Dashboard: React.FC = () => {
                 <Zap size={18} className="text-purple-600 mr-2" />
                 Deal Analysis
               </h2>
-              <Link to="/pipeline" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+              <Link
+                to="/pipeline"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+              >
                 View all deals <ChevronRight size={16} className="ml-1" />
               </Link>
             </div>
@@ -685,7 +720,7 @@ const Dashboard: React.FC = () => {
               <LiveDealAnalysis />
             </div>
           </div>
-          
+
           {/* AI Recommendations */}
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex justify-between items-center mb-4">
@@ -693,20 +728,22 @@ const Dashboard: React.FC = () => {
                 <Brain size={20} className="text-indigo-600 mr-2" />
                 AI Recommendations
               </h2>
-              <button className="text-sm text-blue-600 hover:text-blue-800">
-                View all
-              </button>
+              <button className="text-sm text-blue-600 hover:text-blue-800">View all</button>
             </div>
-            
+
             <div className="divide-y divide-gray-100">
               {aiRecommendations.map((rec) => (
                 <div key={rec.id} className="py-3 first:pt-0 last:pb-0">
                   <div className="flex items-start">
-                    <div className={`p-1.5 rounded-full ${
-                      rec.type === 'deal' ? 'bg-purple-100 text-purple-600' :
-                      rec.type === 'contact' ? 'bg-blue-100 text-blue-600' :
-                      'bg-green-100 text-green-600'
-                    } mr-3 mt-0.5`}>
+                    <div
+                      className={`p-1.5 rounded-full ${
+                        rec.type === 'deal'
+                          ? 'bg-purple-100 text-purple-600'
+                          : rec.type === 'contact'
+                            ? 'bg-blue-100 text-blue-600'
+                            : 'bg-green-100 text-green-600'
+                      } mr-3 mt-0.5`}
+                    >
                       {rec.type === 'deal' ? (
                         <Briefcase size={16} />
                       ) : rec.type === 'contact' ? (
@@ -728,7 +765,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Right column - Tasks and upcoming activity */}
         <div className="space-y-6">
           {/* Important Tasks */}
@@ -738,15 +775,21 @@ const Dashboard: React.FC = () => {
                 <CheckSquare size={20} className="text-indigo-600 mr-2" />
                 Important Tasks
               </h2>
-              <Link to="/tasks" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+              <Link
+                to="/tasks"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+              >
                 View all <ChevronRight size={16} className="ml-1" />
               </Link>
             </div>
-            
+
             {importantTasks.length > 0 ? (
               <div className="space-y-3">
-                {importantTasks.map(task => (
-                  <div key={task.id} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
+                {importantTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50"
+                  >
                     <div className="flex items-start space-x-3">
                       <input
                         type="checkbox"
@@ -755,24 +798,32 @@ const Dashboard: React.FC = () => {
                         readOnly
                       />
                       <div>
-                        <p className={`text-sm font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                        <p
+                          className={`text-sm font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-900'}`}
+                        >
                           {task.title}
                         </p>
                         <div className="flex items-center mt-1">
                           <Clock size={12} className="text-gray-400 mr-1" />
-                          <span className={`text-xs ${
-                            !task.completed && task.dueDate && task.dueDate < new Date() 
-                              ? 'text-red-600 font-medium' 
-                              : 'text-gray-500'
-                          }`}>
+                          <span
+                            className={`text-xs ${
+                              !task.completed && task.dueDate && task.dueDate < new Date()
+                                ? 'text-red-600 font-medium'
+                                : 'text-gray-500'
+                            }`}
+                          >
                             {formatDate(task.dueDate)}
                           </span>
                           {task.priority && (
-                            <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
-                              task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                              task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
+                            <span
+                              className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                                task.priority === 'high'
+                                  ? 'bg-red-100 text-red-800'
+                                  : task.priority === 'medium'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-green-100 text-green-800'
+                              }`}
+                            >
                               {task.priority}
                             </span>
                           )}
@@ -781,8 +832,11 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                
-                <Link to="/tasks" className="flex justify-center text-sm text-blue-600 hover:text-blue-800 py-2">
+
+                <Link
+                  to="/tasks"
+                  className="flex justify-center text-sm text-blue-600 hover:text-blue-800 py-2"
+                >
                   View all tasks
                 </Link>
               </div>
@@ -790,21 +844,28 @@ const Dashboard: React.FC = () => {
               <div className="text-center py-10">
                 <CheckSquare size={32} className="mx-auto text-gray-300 mb-3" />
                 <p className="text-gray-500">No urgent tasks</p>
-                <Link to="/tasks" className="mt-2 text-blue-600 hover:text-blue-800 text-sm inline-block">
+                <Link
+                  to="/tasks"
+                  className="mt-2 text-blue-600 hover:text-blue-800 text-sm inline-block"
+                >
                   Create a task
                 </Link>
               </div>
             )}
           </div>
-          
+
           {/* Upcoming Appointments */}
           <AppointmentWidget limit={3} />
-          
+
           {/* Quick Actions */}
-          <div id="quick-actions" className="bg-white rounded-xl shadow-sm p-6 border border-gray-100" data-tour="quick-actions">
+          <div
+            id="quick-actions"
+            className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
+            data-tour="quick-actions"
+          >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-              <HelpTooltip 
+              <HelpTooltip
                 content="These buttons let you quickly create new deals and contacts, or open AI tools for scheduling and email composition."
                 placement="left"
               />
@@ -882,7 +943,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* DealAnalytics Component */}
       <div data-tour="pipeline-overview">
         <DealAnalytics />

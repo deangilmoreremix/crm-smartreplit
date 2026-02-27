@@ -9,31 +9,39 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 async function checkUser() {
-  const { data: { users }, error } = await supabase.auth.admin.listUsers();
+  const {
+    data: { users },
+    error,
+  } = await supabase.auth.admin.listUsers();
 
   if (error) {
     console.error('Error:', error);
     return;
   }
 
-  const deanUser = users.find(u => u.email === 'dean@smartcrm.vip');
-  console.log('Dean user:', deanUser ? {
-    id: deanUser.id,
-    email: deanUser.email,
-    email_confirmed_at: deanUser.email_confirmed_at,
-    created_at: deanUser.created_at,
-    last_sign_in_at: deanUser.last_sign_in_at
-  } : 'Not found');
+  const deanUser = users.find((u) => u.email === 'dean@smartcrm.vip');
+  console.log(
+    'Dean user:',
+    deanUser
+      ? {
+          id: deanUser.id,
+          email: deanUser.email,
+          email_confirmed_at: deanUser.email_confirmed_at,
+          created_at: deanUser.created_at,
+          last_sign_in_at: deanUser.last_sign_in_at,
+        }
+      : 'Not found'
+  );
 
   if (deanUser) {
     // Set a password for the user
     const { error: updateError } = await supabase.auth.admin.updateUserById(deanUser.id, {
-      password: 'VideoRemix2025'
+      password: 'VideoRemix2025',
     });
     if (updateError) {
       console.error('Error updating password:', updateError);

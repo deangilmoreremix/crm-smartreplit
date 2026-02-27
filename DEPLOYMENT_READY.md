@@ -9,10 +9,12 @@ The deployment crash caused by missing puppeteer dependencies has been completel
 ## 🔧 What Was Fixed
 
 ### 1. Removed Stale Build Files
+
 - **Deleted** old `dist/` folder containing puppeteer dependencies from a removed demo-recorder module
 - **Cleaned** all stale compiled code that was causing crashes
 
 ### 2. Excluded Screenshot Tools from Production
+
 - **Moved** screenshot automation files to `scripts/screenshots/`
   - `screenshot.runner.ts`
   - `test-screenshot.ts`
@@ -21,11 +23,13 @@ The deployment crash caused by missing puppeteer dependencies has been completel
 - **Result**: Zero dev tools in production bundle
 
 ### 3. Created Proper Server Build Process
+
 - **Added** `scripts/build-server.mjs` to compile server for production
 - **Configured** esbuild to bundle `server/index.ts` → `dist/index.js`
 - **Automated** static files copy from `server/public/` → `dist/public/`
 
 ### 4. Updated Build Verification
+
 - **Fixed** `scripts/verify-dist.mjs` to check correct paths
 - **Validates** both client and server builds complete successfully
 
@@ -47,12 +51,14 @@ Production Build Structure:
 ## ✅ Verification Results
 
 ### No Puppeteer/Playwright in Production
+
 ```bash
 $ grep -r "puppeteer\|@playwright" dist/ server/public/ netlify/
 # Result: 0 matches ✅
 ```
 
 ### Server Starts Successfully
+
 ```
 Stripe not available - install stripe package if needed
 🚀 Starting server...
@@ -73,17 +79,20 @@ Stripe not available - install stripe package if needed
 ## 🚀 Deployment Commands
 
 ### Build for Production
+
 ```bash
 npm run build
 ```
 
 This runs:
+
 1. `npm run build:client` - Vite builds React app to `server/public/`
 2. `npm run build:functions` - esbuild compiles Netlify functions
 3. `node scripts/build-server.mjs` - esbuild compiles main server to `dist/index.js`
 4. `node scripts/verify-dist.mjs` - Verifies all builds succeeded
 
 ### Start Production Server
+
 ```bash
 npm start
 ```
@@ -95,6 +104,7 @@ Runs: `NODE_ENV=production node dist/index.js`
 ## 📝 Build Script Changes
 
 ### New File: `scripts/build-server.mjs`
+
 ```javascript
 import { build } from 'esbuild';
 import { cpSync } from 'fs';
@@ -106,7 +116,7 @@ await build({
   target: 'node20',
   format: 'esm',
   outfile: 'dist/index.js',
-  packages: 'external'
+  packages: 'external',
 });
 
 // Copy static files to dist/public for production
@@ -114,7 +124,9 @@ cpSync('server/public', 'dist/public', { recursive: true });
 ```
 
 ### Updated: `scripts/verify-dist.mjs`
+
 Now checks:
+
 - ✅ `server/public/` exists (client build)
 - ✅ `dist/index.js` exists (server build)
 
@@ -123,11 +135,13 @@ Now checks:
 ## 🔐 Production Dependencies
 
 ### ✅ Kept in devDependencies (Not Deployed)
+
 - `@playwright/test` - Screenshot automation only
 - `puppeteer` - Not used at all
 - Screenshot tools - In `scripts/` directory
 
 ### ✅ In Production Dependencies
+
 - All actual runtime dependencies
 - No dev/test tools
 - Clean, minimal bundle
@@ -137,6 +151,7 @@ Now checks:
 ## 📊 Bundle Analysis
 
 ### Before Fix:
+
 ```
 dist/index.js: 292KB
   ↳ Included: puppeteer imports ❌
@@ -144,6 +159,7 @@ dist/index.js: 292KB
 ```
 
 ### After Fix:
+
 ```
 dist/index.js: ~290KB (clean)
   ↳ Puppeteer references: 0 ✅
@@ -170,6 +186,7 @@ dist/index.js: ~290KB (clean)
 ## 🆘 Future Development
 
 ### For Screenshot Tools (Dev Only)
+
 ```bash
 # Run screenshot test
 npx tsx scripts/screenshots/test-screenshot.ts
@@ -181,7 +198,9 @@ npx tsx scripts/screenshots/screenshot.runner.ts
 These tools are **never bundled** into production.
 
 ### For Production Builds
+
 Just run:
+
 ```bash
 npm run build
 npm start
@@ -192,6 +211,7 @@ npm start
 ## 📞 Contact
 
 If deployment issues occur:
+
 1. Check that `npm run build` completes without errors
 2. Verify `dist/index.js` and `server/public/` exist
 3. Confirm no puppeteer references: `grep -r puppeteer dist/`

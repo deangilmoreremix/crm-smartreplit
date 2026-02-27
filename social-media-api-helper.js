@@ -1,4 +1,3 @@
-
 /**
  * Server-side API helper for GPT-5 Social Media Research
  * Use this for backend integrations
@@ -15,20 +14,20 @@ class SocialMediaAPIHelper {
     const requestBody = {
       model: 'gpt-4o',
       messages,
-      response_format: { type: "json_object" },
+      response_format: { type: 'json_object' },
       temperature: options.temperature || 0.3,
       max_tokens: options.maxTokens || 3000,
-      ...options
+      ...options,
     };
 
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -37,7 +36,6 @@ class SocialMediaAPIHelper {
 
       const data = await response.json();
       return JSON.parse(data.choices[0].message.content);
-
     } catch (error) {
       console.error('GPT-5 request failed:', error);
       throw error;
@@ -75,24 +73,24 @@ Provide actionable insights for business relationship building.`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'user', content: userPrompt },
     ];
 
     const tools = [
       {
-        type: "function",
+        type: 'function',
         function: {
-          name: "web_search",
-          description: "Search the web for social media profiles and professional information"
-        }
+          name: 'web_search',
+          description: 'Search the web for social media profiles and professional information',
+        },
       },
       {
-        type: "function", 
+        type: 'function',
         function: {
-          name: "profile_verification",
-          description: "Verify authenticity and accuracy of found social profiles"
-        }
-      }
+          name: 'profile_verification',
+          description: 'Verify authenticity and accuracy of found social profiles',
+        },
+      },
     ];
 
     return await this.makeGPT5Request(messages, { tools });
@@ -119,7 +117,7 @@ Focus on actionable insights for B2B sales and relationship management.`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'user', content: userPrompt },
     ];
 
     return await this.makeGPT5Request(messages);
@@ -132,7 +130,7 @@ Focus on actionable insights for B2B sales and relationship management.`;
 
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize);
-      
+
       const batchPromises = batch.map(async (contact) => {
         try {
           const result = await this.researchContactSocial(
@@ -142,10 +140,10 @@ Focus on actionable insights for B2B sales and relationship management.`;
           );
           return { contactId: contact.id, success: true, data: result };
         } catch (error) {
-          return { 
-            contactId: contact.id, 
-            success: false, 
-            error: error.message 
+          return {
+            contactId: contact.id,
+            success: false,
+            error: error.message,
           };
         }
       });
@@ -155,7 +153,7 @@ Focus on actionable insights for B2B sales and relationship management.`;
 
       // Delay between batches to respect rate limits
       if (i + batchSize < contacts.length) {
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
 
@@ -180,7 +178,7 @@ Analyze and provide:
 
     const messages = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
+      { role: 'user', content: userPrompt },
     ];
 
     return await this.makeGPT5Request(messages);
@@ -197,28 +195,27 @@ if (typeof require !== 'undefined') {
   // Example Express.js route handler
   const createExpressHandler = (apiKey) => {
     const helper = new SocialMediaAPIHelper(apiKey);
-    
+
     return async (req, res) => {
       try {
         const { contact, platforms, depth } = req.body;
-        
+
         if (!contact || !contact.name) {
           return res.status(400).json({ error: 'Contact name is required' });
         }
 
         const results = await helper.researchContactSocial(contact, platforms, depth);
-        
+
         res.json({
           success: true,
           data: results,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
-
       } catch (error) {
         console.error('Social research failed:', error);
         res.status(500).json({
           success: false,
-          error: error.message
+          error: error.message,
         });
       }
     };

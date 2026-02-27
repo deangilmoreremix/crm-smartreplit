@@ -45,13 +45,13 @@ const AutomationConfig = () => {
   };
 
   const handleSave = () => {
+    // TODO: Save to backend
     console.log('Saving automation config:', {
       automationId,
       isEnabled,
       schedule,
       timeOfDay,
     });
-    // TODO: Save to backend
   };
 
   return (

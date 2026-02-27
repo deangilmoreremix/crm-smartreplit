@@ -11,7 +11,7 @@ async function recordPipelineDemo() {
 
   try {
     const baseUrl = process.env.APP_URL || 'http://localhost:5000';
-    
+
     // Navigate to Pipeline page
     await recorder.navigate(`${baseUrl}/pipeline`);
     await recorder.wait(2000);
@@ -20,7 +20,7 @@ async function recordPipelineDemo() {
     await recorder.startRecording('pipeline-management');
 
     console.log('📸 Capturing Pipeline overview...');
-    
+
     // Pan across pipeline stages
     await recorder.scroll(300, 2000);
     await recorder.wait(1000);
@@ -47,7 +47,7 @@ async function recordPipelineDemo() {
 
     // Stop recording
     await recorder.stopRecording();
-    
+
     console.log('✅ Pipeline demo recorded successfully!');
   } catch (error) {
     console.error('❌ Error recording Pipeline demo:', error);

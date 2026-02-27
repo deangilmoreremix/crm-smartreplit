@@ -3,7 +3,13 @@ import { FileCheck, Users, BarChart3, TrendingUp } from 'lucide-react';
 
 export default function FormsSurveysDemo() {
   const forms = [
-    { id: 1, name: 'Customer Feedback Survey', responses: 234, completion: 87, created: '2024-01-10' },
+    {
+      id: 1,
+      name: 'Customer Feedback Survey',
+      responses: 234,
+      completion: 87,
+      created: '2024-01-10',
+    },
     { id: 2, name: 'Lead Capture Form', responses: 456, completion: 92, created: '2024-01-05' },
     { id: 3, name: 'Product Interest Form', responses: 189, completion: 78, created: '2024-01-15' },
     { id: 4, name: 'Event Registration', responses: 312, completion: 95, created: '2024-01-12' },
@@ -14,7 +20,7 @@ export default function FormsSurveysDemo() {
       <DemoBanner feature="Forms & Surveys" />
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Forms & Surveys Demo</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <FileCheck className="w-8 h-8 text-blue-600 mb-2" />
@@ -46,7 +52,7 @@ export default function FormsSurveysDemo() {
             </button>
           </div>
           <div className="space-y-4">
-            {forms.map(form => (
+            {forms.map((form) => (
               <div key={form.id} className="border rounded-lg p-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex-grow">
@@ -63,7 +69,10 @@ export default function FormsSurveysDemo() {
                       <span>Created: {new Date(form.created).toLocaleDateString()}</span>
                     </div>
                     <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${form.completion}%` }}></div>
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${form.completion}%` }}
+                      ></div>
                     </div>
                   </div>
                   <div className="ml-4">

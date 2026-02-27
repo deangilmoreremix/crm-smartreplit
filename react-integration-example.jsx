@@ -13,30 +13,30 @@ function YourPipelineComponent() {
     const checkBridge = () => {
       if (window.crmBridge) {
         setCrmBridge(window.crmBridge);
-        
+
         // Override the bridge methods to update React state
         window.crmBridge.updateLocalDeals = (newDeals) => {
           setDeals(newDeals);
         };
 
         window.crmBridge.updateLocalDeal = (dealId, updates) => {
-          setDeals(prev => prev.map(deal => 
-            deal.id === dealId ? { ...deal, ...updates } : deal
-          ));
+          setDeals((prev) =>
+            prev.map((deal) => (deal.id === dealId ? { ...deal, ...updates } : deal))
+          );
         };
 
         window.crmBridge.addLocalDeal = (deal) => {
-          setDeals(prev => [...prev, deal]);
+          setDeals((prev) => [...prev, deal]);
         };
 
         window.crmBridge.removeLocalDeal = (dealId) => {
-          setDeals(prev => prev.filter(deal => deal.id !== dealId));
+          setDeals((prev) => prev.filter((deal) => deal.id !== dealId));
         };
 
         window.crmBridge.moveLocalDeal = (dealId, newStage, position) => {
-          setDeals(prev => prev.map(deal => 
-            deal.id === dealId ? { ...deal, stage: newStage } : deal
-          ));
+          setDeals((prev) =>
+            prev.map((deal) => (deal.id === dealId ? { ...deal, stage: newStage } : deal))
+          );
         };
 
         window.crmBridge.updateConnectionStatus = (connected, crmInfo) => {
@@ -48,7 +48,8 @@ function YourPipelineComponent() {
             deals: deals,
             stages: ['Lead', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'],
             totalValue: deals.reduce((sum, deal) => sum + (deal.value || 0), 0),
-            activeDeals: deals.filter(d => !['Closed Won', 'Closed Lost'].includes(d.stage)).length
+            activeDeals: deals.filter((d) => !['Closed Won', 'Closed Lost'].includes(d.stage))
+              .length,
           };
         };
 
@@ -67,12 +68,12 @@ function YourPipelineComponent() {
     const dealWithId = {
       ...newDeal,
       id: Date.now().toString(), // Generate ID
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    
+
     // Update local state
-    setDeals(prev => [...prev, dealWithId]);
-    
+    setDeals((prev) => [...prev, dealWithId]);
+
     // Notify CRM
     if (crmBridge) {
       crmBridge.notifyDealCreated(dealWithId);
@@ -82,13 +83,11 @@ function YourPipelineComponent() {
   // Example: Handle updating a deal in your app
   const handleUpdateDeal = (dealId, updates) => {
     // Update local state
-    setDeals(prev => prev.map(deal => 
-      deal.id === dealId ? { ...deal, ...updates } : deal
-    ));
-    
+    setDeals((prev) => prev.map((deal) => (deal.id === dealId ? { ...deal, ...updates } : deal)));
+
     // Notify CRM
     if (crmBridge) {
-      const updatedDeal = deals.find(d => d.id === dealId);
+      const updatedDeal = deals.find((d) => d.id === dealId);
       if (updatedDeal) {
         crmBridge.notifyDealUpdated({ ...updatedDeal, ...updates });
       }
@@ -97,16 +96,14 @@ function YourPipelineComponent() {
 
   // Example: Handle moving a deal between stages
   const handleMoveDeal = (dealId, newStage) => {
-    const deal = deals.find(d => d.id === dealId);
+    const deal = deals.find((d) => d.id === dealId);
     if (!deal) return;
-    
+
     const oldStage = deal.stage;
-    
+
     // Update local state
-    setDeals(prev => prev.map(d => 
-      d.id === dealId ? { ...d, stage: newStage } : d
-    ));
-    
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? { ...d, stage: newStage } : d)));
+
     // Notify CRM
     if (crmBridge) {
       crmBridge.notifyDealMoved(dealId, oldStage, newStage);
@@ -123,13 +120,16 @@ function YourPipelineComponent() {
           <span style={{ color: 'gray' }}>🔶 Standalone Mode</span>
         )}
         {connectionStatus.crmInfo && (
-          <span> - {connectionStatus.crmInfo.name} v{connectionStatus.crmInfo.version}</span>
+          <span>
+            {' '}
+            - {connectionStatus.crmInfo.name} v{connectionStatus.crmInfo.version}
+          </span>
         )}
       </div>
 
       {/* Your pipeline UI here */}
       <div className="deals-list">
-        {deals.map(deal => (
+        {deals.map((deal) => (
           <div key={deal.id} className="deal-card">
             <h3>{deal.title}</h3>
             <p>Value: ${deal.value}</p>
@@ -145,12 +145,16 @@ function YourPipelineComponent() {
       </div>
 
       {/* Add new deal button */}
-      <button onClick={() => handleCreateDeal({
-        title: 'New Deal',
-        value: 5000,
-        stage: 'Lead',
-        contactName: 'Test Contact'
-      })}>
+      <button
+        onClick={() =>
+          handleCreateDeal({
+            title: 'New Deal',
+            value: 5000,
+            stage: 'Lead',
+            contactName: 'Test Contact',
+          })
+        }
+      >
         Add New Deal
       </button>
     </div>

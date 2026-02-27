@@ -1,4 +1,3 @@
-
 // Hook disabled - ElevenLabs integration removed
 export const useVoiceAgent = (config: any) => {
   return {
@@ -9,6 +8,6 @@ export const useVoiceAgent = (config: any) => {
     connect: () => {},
     disconnect: () => {},
     retry: () => {},
-    agentId: ''
+    agentId: '',
   };
 };

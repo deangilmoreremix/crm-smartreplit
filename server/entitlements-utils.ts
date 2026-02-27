@@ -1,11 +1,11 @@
-import { DateTime } from "luxon";
-import { Entitlement, InsertEntitlement } from "../shared/schema";
-import { db } from "./db";
-import { entitlements } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { DateTime } from 'luxon';
+import { Entitlement, InsertEntitlement } from '../shared/schema';
+import { db } from './db';
+import { entitlements } from '../shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Compute revocation boundaries in America/New_York, then convert to UTC
-const ZONE = "America/New_York";
+const ZONE = 'America/New_York';
 
 export function startOfNextMonthUTC(nowISO: string): string {
   const dt = DateTime.fromISO(nowISO, { zone: ZONE }).startOf('month').plus({ months: 1 });
@@ -36,7 +36,7 @@ export interface UpsertEntitlementParams {
 
 export async function upsertEntitlement(params: UpsertEntitlementParams): Promise<Entitlement> {
   const now = new Date().toISOString();
-  
+
   // Check if entitlement exists
   const existing = await db
     .select()
@@ -64,7 +64,7 @@ export async function upsertEntitlement(params: UpsertEntitlementParams): Promis
       })
       .where(eq(entitlements.userId, params.userId))
       .returning();
-    
+
     return updated;
   } else {
     // Create new entitlement
@@ -85,7 +85,7 @@ export async function upsertEntitlement(params: UpsertEntitlementParams): Promis
         currency: params.currency ?? 'USD',
       })
       .returning();
-    
+
     return created;
   }
 }
@@ -131,10 +131,7 @@ export async function handleSuccessfulPurchase(
   });
 }
 
-export async function handleInvoicePaid(
-  userId: string,
-  productType: ProductType
-) {
+export async function handleInvoicePaid(userId: string, productType: ProductType) {
   const now = new Date().toISOString();
   let revokeAt: string | null = null;
 
@@ -154,12 +151,9 @@ export async function handleInvoicePaid(
   });
 }
 
-export async function handlePaymentFailure(
-  userId: string,
-  productType: ProductType
-) {
+export async function handlePaymentFailure(userId: string, productType: ProductType) {
   const now = new Date().toISOString();
-  
+
   // Get existing entitlement
   const existing = await db
     .select()
@@ -189,10 +183,7 @@ export async function handlePaymentFailure(
   }
 }
 
-export async function handleCancellation(
-  userId: string,
-  productType: ProductType
-) {
+export async function handleCancellation(userId: string, productType: ProductType) {
   const existing = await db
     .select()
     .from(entitlements)
@@ -219,10 +210,7 @@ export async function handleCancellation(
   }
 }
 
-export async function handleRefund(
-  userId: string,
-  productType: ProductType
-) {
+export async function handleRefund(userId: string, productType: ProductType) {
   // One-time (lifetime) should not revoke at all
   if (productType === 'lifetime') {
     return; // ignore refunds for lifetime
@@ -250,10 +238,11 @@ export async function getUserEntitlement(userId: string): Promise<Entitlement | 
 
 export function isUserActive(entitlement: Entitlement | null): boolean {
   if (!entitlement) return false;
-  
+
   const now = Date.now();
-  const isActive = entitlement.status === 'active' && 
+  const isActive =
+    entitlement.status === 'active' &&
     (!entitlement.revokeAt || new Date(entitlement.revokeAt).getTime() > now);
-  
+
   return isActive;
 }

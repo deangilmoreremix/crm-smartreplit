@@ -28,7 +28,7 @@ interface WhitelabelProviderProps {
 
 export const WhitelabelProvider: React.FC<WhitelabelProviderProps> = ({
   children,
-  config: defaultConfig
+  config: defaultConfig,
 }) => {
   const [config, setConfig] = useState<WhitelabelConfig>(defaultConfig);
   const [loading, setLoading] = useState(true);
@@ -85,9 +85,5 @@ export const WhitelabelProvider: React.FC<WhitelabelProviderProps> = ({
     resetToDefault,
   };
 
-  return (
-    <WhitelabelContext.Provider value={value}>
-      {children}
-    </WhitelabelContext.Provider>
-  );
+  return <WhitelabelContext.Provider value={value}>{children}</WhitelabelContext.Provider>;
 };

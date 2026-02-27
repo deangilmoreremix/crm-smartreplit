@@ -6,19 +6,19 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useCommunicationStore } from '../store/communicationStore';
 import EmailComposer from './EmailComposer';
-import { 
-  Mail, 
-  Send, 
-  Clock, 
-  Eye, 
-  Reply, 
-  Search, 
+import {
+  Mail,
+  Send,
+  Clock,
+  Eye,
+  Reply,
+  Search,
   Filter,
   Plus,
   MoreHorizontal,
   TrendingUp,
   Users,
-  MessageSquare
+  MessageSquare,
 } from 'lucide-react';
 import { Email } from '../types/communication';
 
@@ -35,7 +35,7 @@ export default function EmailDashboard() {
     setFilter,
     clearFilters,
     markAsRead,
-    deleteEmail
+    deleteEmail,
   } = useCommunicationStore();
 
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -70,29 +70,41 @@ export default function EmailDashboard() {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const getStatusIcon = (status: Email['status']) => {
     switch (status) {
-      case 'draft': return <Clock className="w-4 h-4 text-gray-500" />;
-      case 'sent': return <Send className="w-4 h-4 text-blue-500" />;
-      case 'delivered': return <Mail className="w-4 h-4 text-green-500" />;
-      case 'read': return <Eye className="w-4 h-4 text-purple-500" />;
-      case 'replied': return <Reply className="w-4 h-4 text-indigo-500" />;
-      case 'failed': return <Mail className="w-4 h-4 text-red-500" />;
-      default: return <Mail className="w-4 h-4 text-gray-500" />;
+      case 'draft':
+        return <Clock className="w-4 h-4 text-gray-500" />;
+      case 'sent':
+        return <Send className="w-4 h-4 text-blue-500" />;
+      case 'delivered':
+        return <Mail className="w-4 h-4 text-green-500" />;
+      case 'read':
+        return <Eye className="w-4 h-4 text-purple-500" />;
+      case 'replied':
+        return <Reply className="w-4 h-4 text-indigo-500" />;
+      case 'failed':
+        return <Mail className="w-4 h-4 text-red-500" />;
+      default:
+        return <Mail className="w-4 h-4 text-gray-500" />;
     }
   };
 
   const getPriorityColor = (priority: Email['priority']) => {
     switch (priority) {
-      case 'urgent': return 'bg-red-100 text-red-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'normal': return 'bg-gray-100 text-gray-800';
-      case 'low': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'normal':
+        return 'bg-gray-100 text-gray-800';
+      case 'low':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -116,13 +128,8 @@ export default function EmailDashboard() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {getStatusIcon(email.status)}
-                  <span className="text-sm text-gray-600">
-                    {email.fromAddress}
-                  </span>
-                  <Badge 
-                    variant="secondary" 
-                    className={getPriorityColor(email.priority)}
-                  >
+                  <span className="text-sm text-gray-600">{email.fromAddress}</span>
+                  <Badge variant="secondary" className={getPriorityColor(email.priority)}>
                     {email.priority}
                   </Badge>
                   {email.tags.map((tag) => (
@@ -131,18 +138,12 @@ export default function EmailDashboard() {
                     </Badge>
                   ))}
                 </div>
-                <h3 className="font-medium text-gray-900 truncate">
-                  {email.subject}
-                </h3>
-                <p className="text-sm text-gray-600 truncate mt-1">
-                  {email.content}
-                </p>
+                <h3 className="font-medium text-gray-900 truncate">{email.subject}</h3>
+                <p className="text-sm text-gray-600 truncate mt-1">{email.content}</p>
                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                   <span>{formatDate(email.createdAt)}</span>
                   {email.attachments.length > 0 && (
-                    <span className="flex items-center gap-1">
-                      📎 {email.attachments.length}
-                    </span>
+                    <span className="flex items-center gap-1">📎 {email.attachments.length}</span>
                   )}
                   {email.trackingEnabled && (
                     <span className="flex items-center gap-1">
@@ -221,12 +222,8 @@ export default function EmailDashboard() {
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {(analytics.openRate * 100).toFixed(1)}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {analytics.totalOpened} emails opened
-              </p>
+              <div className="text-2xl font-bold">{(analytics.openRate * 100).toFixed(1)}%</div>
+              <p className="text-xs text-muted-foreground">{analytics.totalOpened} emails opened</p>
             </CardContent>
           </Card>
 
@@ -236,9 +233,7 @@ export default function EmailDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {(analytics.clickRate * 100).toFixed(1)}%
-              </div>
+              <div className="text-2xl font-bold">{(analytics.clickRate * 100).toFixed(1)}%</div>
               <p className="text-xs text-muted-foreground">
                 {analytics.totalClicked} emails clicked
               </p>
@@ -251,9 +246,7 @@ export default function EmailDashboard() {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {(analytics.replyRate * 100).toFixed(1)}%
-              </div>
+              <div className="text-2xl font-bold">{(analytics.replyRate * 100).toFixed(1)}%</div>
               <p className="text-xs text-muted-foreground">
                 {analytics.totalReplied} emails replied
               </p>
@@ -288,15 +281,9 @@ export default function EmailDashboard() {
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="mb-4">
-                    <TabsTrigger value="inbox">
-                      Inbox ({filteredEmails.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="sent">
-                      Sent ({sentEmails.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="drafts">
-                      Drafts ({draftEmails.length})
-                    </TabsTrigger>
+                    <TabsTrigger value="inbox">Inbox ({filteredEmails.length})</TabsTrigger>
+                    <TabsTrigger value="sent">Sent ({sentEmails.length})</TabsTrigger>
+                    <TabsTrigger value="drafts">Drafts ({draftEmails.length})</TabsTrigger>
                     <TabsTrigger value="scheduled">
                       Scheduled ({scheduledEmails.length})
                     </TabsTrigger>
@@ -338,9 +325,7 @@ export default function EmailDashboard() {
                           {selectedEmail.priority}
                         </Badge>
                       </div>
-                      <h3 className="font-medium text-lg">
-                        {selectedEmail.subject}
-                      </h3>
+                      <h3 className="font-medium text-lg">{selectedEmail.subject}</h3>
                       <div className="text-sm text-gray-600 mt-1">
                         <p>From: {selectedEmail.fromAddress}</p>
                         <p>To: {selectedEmail.toAddresses.join(', ')}</p>
@@ -388,18 +373,15 @@ export default function EmailDashboard() {
                     )}
 
                     <div className="border-t pt-4 flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleReply(selectedEmail)}
-                      >
+                      <Button size="sm" onClick={() => handleReply(selectedEmail)}>
                         <Reply className="w-4 h-4 mr-2" />
                         Reply
                       </Button>
                       <Button variant="outline" size="sm">
                         Forward
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => deleteEmail(selectedEmail.id)}
                       >
@@ -429,17 +411,19 @@ export default function EmailDashboard() {
                 <div className="flex justify-between text-sm">
                   <span>Unread</span>
                   <span className="font-medium">
-                    {emails.filter(e => e.status !== 'read' && e.status !== 'replied').length}
+                    {emails.filter((e) => e.status !== 'read' && e.status !== 'replied').length}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Today's Emails</span>
                   <span className="font-medium">
-                    {emails.filter(e => {
-                      const today = new Date();
-                      const emailDate = new Date(e.createdAt);
-                      return emailDate.toDateString() === today.toDateString();
-                    }).length}
+                    {
+                      emails.filter((e) => {
+                        const today = new Date();
+                        const emailDate = new Date(e.createdAt);
+                        return emailDate.toDateString() === today.toDateString();
+                      }).length
+                    }
                   </span>
                 </div>
               </CardContent>

@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Calendar,
-  Building2,
-  Tag,
-  Star,
-  Target,
-  MapPin,
-  Sliders
-} from 'lucide-react';
+import { X, Calendar, Building2, Tag, Star, Target, MapPin, Sliders } from 'lucide-react';
 import Select from 'react-select';
 import { Contact } from '../../types/contact';
 
@@ -40,25 +31,27 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
   onApplyFilters,
   onClearFilters,
   contacts,
-  currentFilters
+  currentFilters,
 }) => {
-  const [filters, setFilters] = useState<FilterCriteria>(currentFilters || {
-    status: [],
-    interestLevel: [],
-    industry: [],
-    tags: [],
-    scoreRange: { min: 0, max: 100 },
-    location: [],
-    source: [],
-    isFavorite: undefined,
-    hasCustomFields: undefined,
-    lastContactDays: undefined
-  });
+  const [filters, setFilters] = useState<FilterCriteria>(
+    currentFilters || {
+      status: [],
+      interestLevel: [],
+      industry: [],
+      tags: [],
+      scoreRange: { min: 0, max: 100 },
+      location: [],
+      source: [],
+      isFavorite: undefined,
+      hasCustomFields: undefined,
+      lastContactDays: undefined,
+    }
+  );
 
   // Extract unique values from contacts for filter options
   const getUniqueStringValues = (key: 'industry' | 'location') => {
     const values = contacts
-      .map(contact => contact[key])
+      .map((contact) => contact[key])
       .filter((value): value is string => typeof value === 'string')
       .filter((value, index, self) => self.indexOf(value) === index);
     return values;
@@ -66,14 +59,14 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
 
   const getUniqueTags = () => {
     const allTags = contacts
-      .flatMap(contact => contact.tags || [])
+      .flatMap((contact) => contact.tags || [])
       .filter((tag, index, self) => self.indexOf(tag) === index);
     return allTags;
   };
 
   const getUniqueSources = () => {
     const allSources = contacts
-      .flatMap(contact => contact.sources || [contact.source].filter(Boolean))
+      .flatMap((contact) => contact.sources || [contact.source].filter(Boolean))
       .filter((source): source is string => typeof source === 'string')
       .filter((source, index, self) => self.indexOf(source) === index);
     return allSources;
@@ -83,14 +76,14 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
     { value: 'lead', label: 'Lead', color: 'purple' },
     { value: 'prospect', label: 'Prospect', color: 'blue' },
     { value: 'customer', label: 'Customer', color: 'green' },
-    { value: 'churned', label: 'Churned', color: 'red' }
+    { value: 'churned', label: 'Churned', color: 'red' },
   ];
 
   const interestLevelOptions = [
     { value: 'hot', label: 'Hot', color: 'red' },
     { value: 'medium', label: 'Medium', color: 'yellow' },
     { value: 'low', label: 'Low', color: 'blue' },
-    { value: 'cold', label: 'Cold', color: 'gray' }
+    { value: 'cold', label: 'Cold', color: 'gray' },
   ];
 
   const handleApply = () => {
@@ -109,14 +102,14 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
       source: [],
       isFavorite: undefined,
       hasCustomFields: undefined,
-      lastContactDays: undefined
+      lastContactDays: undefined,
     };
     setFilters(emptyFilters);
     onClearFilters();
   };
 
   const updateFilter = (key: keyof FilterCriteria, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const customSelectStyles = {
@@ -125,18 +118,18 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
       borderColor: '#d1d5db',
       '&:hover': { borderColor: '#9ca3af' },
       boxShadow: 'none',
-      minHeight: '38px'
+      minHeight: '38px',
     }),
     multiValue: (provided: any) => ({
       ...provided,
       backgroundColor: '#f3f4f6',
-      borderRadius: '6px'
+      borderRadius: '6px',
     }),
     multiValueLabel: (provided: any) => ({
       ...provided,
       color: '#374151',
-      fontSize: '14px'
-    })
+      fontSize: '14px',
+    }),
   };
 
   if (!isOpen) return null;
@@ -169,8 +162,13 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
               <Select
                 isMulti
                 options={statusOptions}
-                value={statusOptions.filter(option => filters.status.includes(option.value))}
-                onChange={(selected) => updateFilter('status', selected.map(s => s.value))}
+                value={statusOptions.filter((option) => filters.status.includes(option.value))}
+                onChange={(selected) =>
+                  updateFilter(
+                    'status',
+                    selected.map((s) => s.value)
+                  )
+                }
                 placeholder="Select statuses..."
                 styles={customSelectStyles}
                 className="text-sm"
@@ -186,8 +184,15 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
               <Select
                 isMulti
                 options={interestLevelOptions}
-                value={interestLevelOptions.filter(option => filters.interestLevel.includes(option.value))}
-                onChange={(selected) => updateFilter('interestLevel', selected.map(s => s.value))}
+                value={interestLevelOptions.filter((option) =>
+                  filters.interestLevel.includes(option.value)
+                )}
+                onChange={(selected) =>
+                  updateFilter(
+                    'interestLevel',
+                    selected.map((s) => s.value)
+                  )
+                }
                 placeholder="Select interest levels..."
                 styles={customSelectStyles}
                 className="text-sm"
@@ -202,9 +207,17 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
               </label>
               <Select
                 isMulti
-                options={getUniqueStringValues('industry').map(industry => ({ value: industry, label: industry }))}
-                value={filters.industry.map(industry => ({ value: industry, label: industry }))}
-                onChange={(selected) => updateFilter('industry', selected.map(s => s.value))}
+                options={getUniqueStringValues('industry').map((industry) => ({
+                  value: industry,
+                  label: industry,
+                }))}
+                value={filters.industry.map((industry) => ({ value: industry, label: industry }))}
+                onChange={(selected) =>
+                  updateFilter(
+                    'industry',
+                    selected.map((s) => s.value)
+                  )
+                }
                 placeholder="Select industries..."
                 styles={customSelectStyles}
                 className="text-sm"
@@ -219,9 +232,14 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
               </label>
               <Select
                 isMulti
-                options={getUniqueTags().map(tag => ({ value: tag, label: tag }))}
-                value={filters.tags.map(tag => ({ value: tag, label: tag }))}
-                onChange={(selected) => updateFilter('tags', selected.map(s => s.value))}
+                options={getUniqueTags().map((tag) => ({ value: tag, label: tag }))}
+                value={filters.tags.map((tag) => ({ value: tag, label: tag }))}
+                onChange={(selected) =>
+                  updateFilter(
+                    'tags',
+                    selected.map((s) => s.value)
+                  )
+                }
                 placeholder="Select tags..."
                 styles={customSelectStyles}
                 className="text-sm"
@@ -230,46 +248,53 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
 
             {/* Score Range */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                AI Score Range
-              </label>
+              <label className="text-sm font-medium text-gray-700">AI Score Range</label>
               <div className="flex items-center space-x-3">
                 <input
                   type="range"
                   min="0"
                   max="100"
                   value={filters.scoreRange.min}
-                  onChange={(e) => updateFilter('scoreRange', { ...filters.scoreRange, min: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    updateFilter('scoreRange', {
+                      ...filters.scoreRange,
+                      min: parseInt(e.target.value),
+                    })
+                  }
                   className="flex-1"
                 />
-                <span className="text-sm text-gray-600 w-12">
-                  {filters.scoreRange.min}
-                </span>
+                <span className="text-sm text-gray-600 w-12">{filters.scoreRange.min}</span>
                 <span className="text-sm text-gray-400">to</span>
                 <input
                   type="range"
                   min="0"
                   max="100"
                   value={filters.scoreRange.max}
-                  onChange={(e) => updateFilter('scoreRange', { ...filters.scoreRange, max: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    updateFilter('scoreRange', {
+                      ...filters.scoreRange,
+                      max: parseInt(e.target.value),
+                    })
+                  }
                   className="flex-1"
                 />
-                <span className="text-sm text-gray-600 w-12">
-                  {filters.scoreRange.max}
-                </span>
+                <span className="text-sm text-gray-600 w-12">{filters.scoreRange.max}</span>
               </div>
             </div>
 
             {/* Source Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Source
-              </label>
+              <label className="text-sm font-medium text-gray-700">Source</label>
               <Select
                 isMulti
-                options={getUniqueSources().map(source => ({ value: source, label: source }))}
-                value={filters.source.map(source => ({ value: source, label: source }))}
-                onChange={(selected) => updateFilter('source', selected.map(s => s.value))}
+                options={getUniqueSources().map((source) => ({ value: source, label: source }))}
+                value={filters.source.map((source) => ({ value: source, label: source }))}
+                onChange={(selected) =>
+                  updateFilter(
+                    'source',
+                    selected.map((s) => s.value)
+                  )
+                }
                 placeholder="Select sources..."
                 styles={customSelectStyles}
                 className="text-sm"
@@ -284,7 +309,12 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
               </label>
               <select
                 value={filters.lastContactDays || ''}
-                onChange={(e) => updateFilter('lastContactDays', e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={(e) =>
+                  updateFilter(
+                    'lastContactDays',
+                    e.target.value ? parseInt(e.target.value) : undefined
+                  )
+                }
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Any time</option>
@@ -303,9 +333,17 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
               </label>
               <Select
                 isMulti
-                options={getUniqueStringValues('location').map(location => ({ value: location, label: location }))}
-                value={filters.location.map(location => ({ value: location, label: location }))}
-                onChange={(selected) => updateFilter('location', selected.map(s => s.value))}
+                options={getUniqueStringValues('location').map((location) => ({
+                  value: location,
+                  label: location,
+                }))}
+                value={filters.location.map((location) => ({ value: location, label: location }))}
+                onChange={(selected) =>
+                  updateFilter(
+                    'location',
+                    selected.map((s) => s.value)
+                  )
+                }
                 placeholder="Select locations..."
                 styles={customSelectStyles}
                 className="text-sm"
@@ -333,7 +371,9 @@ const AdvancedContactFilter: React.FC<AdvancedContactFilterProps> = ({
                 type="checkbox"
                 id="customFields"
                 checked={filters.hasCustomFields === true}
-                onChange={(e) => updateFilter('hasCustomFields', e.target.checked ? true : undefined)}
+                onChange={(e) =>
+                  updateFilter('hasCustomFields', e.target.checked ? true : undefined)
+                }
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="customFields" className="ml-2 text-sm text-gray-700">

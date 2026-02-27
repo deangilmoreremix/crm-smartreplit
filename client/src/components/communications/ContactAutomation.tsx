@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  Zap, 
-  Clock, 
-  Brain, 
-  Target, 
-  Mail, 
-  Phone, 
-  Calendar, 
+import {
+  Zap,
+  Clock,
+  Brain,
+  Target,
+  Mail,
+  Phone,
+  Calendar,
   Bell,
   Settings,
   Play,
@@ -19,7 +19,7 @@ import {
   TrendingUp,
   CheckCircle,
   AlertTriangle,
-  BarChart3
+  BarChart3,
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../store/contactStore';
@@ -29,7 +29,12 @@ interface AutomationRule {
   name: string;
   description: string;
   trigger: {
-    type: 'contact_added' | 'contact_updated' | 'score_changed' | 'time_based' | 'activity_completed';
+    type:
+      | 'contact_added'
+      | 'contact_updated'
+      | 'score_changed'
+      | 'time_based'
+      | 'activity_completed';
     conditions: Record<string, any>;
   };
   actions: AutomationAction[];
@@ -42,7 +47,13 @@ interface AutomationRule {
 }
 
 interface AutomationAction {
-  type: 'send_email' | 'schedule_call' | 'update_field' | 'add_tag' | 'create_task' | 'send_notification';
+  type:
+    | 'send_email'
+    | 'schedule_call'
+    | 'update_field'
+    | 'add_tag'
+    | 'create_task'
+    | 'send_notification';
   config: Record<string, any>;
 }
 
@@ -56,7 +67,7 @@ interface AutomationStats {
 
 const ContactAutomation: React.FC = () => {
   const { contacts, updateContact } = useContactStore();
-  
+
   const [automationRules, setAutomationRules] = useState<AutomationRule[]>([
     {
       id: '1',
@@ -64,23 +75,23 @@ const ContactAutomation: React.FC = () => {
       description: 'Send welcome email to new leads and schedule follow-up',
       trigger: {
         type: 'contact_added',
-        conditions: { status: 'lead' }
+        conditions: { status: 'lead' },
       },
       actions: [
         {
           type: 'send_email',
-          config: { templateId: 'welcome_lead', delay: 0 }
+          config: { templateId: 'welcome_lead', delay: 0 },
         },
         {
           type: 'create_task',
-          config: { title: 'Follow up with new lead', delay: 24 }
-        }
+          config: { title: 'Follow up with new lead', delay: 24 },
+        },
       ],
       isActive: true,
       successCount: 45,
       failureCount: 2,
       createdAt: new Date('2024-01-01'),
-      nextRun: new Date(Date.now() + 3600000)
+      nextRun: new Date(Date.now() + 3600000),
     },
     {
       id: '2',
@@ -88,22 +99,22 @@ const ContactAutomation: React.FC = () => {
       description: 'Auto-tag and notify when contact score exceeds 80',
       trigger: {
         type: 'score_changed',
-        conditions: { scoreThreshold: 80 }
+        conditions: { scoreThreshold: 80 },
       },
       actions: [
         {
           type: 'add_tag',
-          config: { tag: 'High Priority' }
+          config: { tag: 'High Priority' },
         },
         {
           type: 'send_notification',
-          config: { message: 'High-value contact identified', recipient: 'sales_team' }
-        }
+          config: { message: 'High-value contact identified', recipient: 'sales_team' },
+        },
       ],
       isActive: true,
       successCount: 12,
       failureCount: 0,
-      createdAt: new Date('2024-01-05')
+      createdAt: new Date('2024-01-05'),
     },
     {
       id: '3',
@@ -111,65 +122,58 @@ const ContactAutomation: React.FC = () => {
       description: 'Re-engage contacts with no activity in 30 days',
       trigger: {
         type: 'time_based',
-        conditions: { inactiveDays: 30 }
+        conditions: { inactiveDays: 30 },
       },
       actions: [
         {
           type: 'send_email',
-          config: { templateId: 'reengagement', delay: 0 }
+          config: { templateId: 'reengagement', delay: 0 },
         },
         {
           type: 'update_field',
-          config: { field: 'tags', value: 'Re-engagement Campaign' }
-        }
+          config: { field: 'tags', value: 'Re-engagement Campaign' },
+        },
       ],
       isActive: false,
       successCount: 8,
       failureCount: 1,
-      createdAt: new Date('2024-01-10')
-    }
+      createdAt: new Date('2024-01-10'),
+    },
   ]);
 
   const [showCreateRule, setShowCreateRule] = useState(false);
   const [selectedRule, setSelectedRule] = useState<AutomationRule | null>(null);
   const [stats] = useState<AutomationStats>({
     totalRules: automationRules.length,
-    activeRules: automationRules.filter(r => r.isActive).length,
+    activeRules: automationRules.filter((r) => r.isActive).length,
     totalExecutions: automationRules.reduce((sum, r) => sum + r.successCount + r.failureCount, 0),
     successRate: 95.2,
-    timeSaved: 24.5
+    timeSaved: 24.5,
   });
 
   const toggleRuleStatus = (ruleId: string) => {
-    setAutomationRules(prev => 
-      prev.map(rule => 
-        rule.id === ruleId 
-          ? { ...rule, isActive: !rule.isActive }
-          : rule
-      )
+    setAutomationRules((prev) =>
+      prev.map((rule) => (rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule))
     );
   };
 
   const deleteRule = (ruleId: string) => {
     if (confirm('Are you sure you want to delete this automation rule?')) {
-      setAutomationRules(prev => prev.filter(rule => rule.id !== ruleId));
+      setAutomationRules((prev) => prev.filter((rule) => rule.id !== ruleId));
     }
   };
 
   const runManuallyNow = async (rule: AutomationRule) => {
     try {
       // Simulate manual execution
-      console.log('Running automation rule:', rule.name);
-      
+
       // Update success count
-      setAutomationRules(prev =>
-        prev.map(r =>
-          r.id === rule.id
-            ? { ...r, successCount: r.successCount + 1, lastRun: new Date() }
-            : r
+      setAutomationRules((prev) =>
+        prev.map((r) =>
+          r.id === rule.id ? { ...r, successCount: r.successCount + 1, lastRun: new Date() } : r
         )
       );
-      
+
       alert(`Automation rule "${rule.name}" executed successfully!`);
     } catch (error) {
       console.error('Failed to execute rule:', error);
@@ -179,24 +183,37 @@ const ContactAutomation: React.FC = () => {
 
   const getTriggerIcon = (triggerType: string) => {
     switch (triggerType) {
-      case 'contact_added': return <Users className="h-4 w-4 text-green-600" />;
-      case 'contact_updated': return <Edit className="h-4 w-4 text-blue-600" />;
-      case 'score_changed': return <Target className="h-4 w-4 text-purple-600" />;
-      case 'time_based': return <Clock className="h-4 w-4 text-orange-600" />;
-      case 'activity_completed': return <CheckCircle className="h-4 w-4 text-indigo-600" />;
-      default: return <Zap className="h-4 w-4 text-gray-600" />;
+      case 'contact_added':
+        return <Users className="h-4 w-4 text-green-600" />;
+      case 'contact_updated':
+        return <Edit className="h-4 w-4 text-blue-600" />;
+      case 'score_changed':
+        return <Target className="h-4 w-4 text-purple-600" />;
+      case 'time_based':
+        return <Clock className="h-4 w-4 text-orange-600" />;
+      case 'activity_completed':
+        return <CheckCircle className="h-4 w-4 text-indigo-600" />;
+      default:
+        return <Zap className="h-4 w-4 text-gray-600" />;
     }
   };
 
   const getActionIcon = (actionType: string) => {
     switch (actionType) {
-      case 'send_email': return <Mail className="h-3 w-3 text-blue-500" />;
-      case 'schedule_call': return <Phone className="h-3 w-3 text-green-500" />;
-      case 'create_task': return <Calendar className="h-3 w-3 text-orange-500" />;
-      case 'send_notification': return <Bell className="h-3 w-3 text-purple-500" />;
-      case 'add_tag': return <Target className="h-3 w-3 text-indigo-500" />;
-      case 'update_field': return <Edit className="h-3 w-3 text-gray-500" />;
-      default: return <Zap className="h-3 w-3 text-gray-500" />;
+      case 'send_email':
+        return <Mail className="h-3 w-3 text-blue-500" />;
+      case 'schedule_call':
+        return <Phone className="h-3 w-3 text-green-500" />;
+      case 'create_task':
+        return <Calendar className="h-3 w-3 text-orange-500" />;
+      case 'send_notification':
+        return <Bell className="h-3 w-3 text-purple-500" />;
+      case 'add_tag':
+        return <Target className="h-3 w-3 text-indigo-500" />;
+      case 'update_field':
+        return <Edit className="h-3 w-3 text-gray-500" />;
+      default:
+        return <Zap className="h-3 w-3 text-gray-500" />;
     }
   };
 
@@ -284,26 +301,29 @@ const ContactAutomation: React.FC = () => {
                       {getTriggerIcon(rule.trigger.type)}
                       <h4 className="text-lg font-medium text-gray-900">{rule.name}</h4>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      rule.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        rule.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
                       {rule.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  
+
                   <p className="text-gray-600 mt-1">{rule.description}</p>
-                  
+
                   {/* Trigger Details */}
                   <div className="mt-3">
                     <div className="text-sm text-gray-600">
-                      <span className="font-medium">Trigger:</span> {rule.trigger.type.replace('_', ' ')}
+                      <span className="font-medium">Trigger:</span>{' '}
+                      {rule.trigger.type.replace('_', ' ')}
                       {rule.trigger.conditions && (
                         <span className="ml-2 text-gray-500">
-                          ({Object.entries(rule.trigger.conditions).map(([key, value]) => 
-                            `${key}: ${value}`
-                          ).join(', ')})
+                          (
+                          {Object.entries(rule.trigger.conditions)
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join(', ')}
+                          )
                         </span>
                       )}
                     </div>
@@ -357,7 +377,7 @@ const ContactAutomation: React.FC = () => {
                     <Play size={14} className="mr-1" />
                     Run Now
                   </button>
-                  
+
                   <button
                     onClick={() => toggleRuleStatus(rule.id)}
                     className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -378,7 +398,7 @@ const ContactAutomation: React.FC = () => {
                       </>
                     )}
                   </button>
-                  
+
                   <button
                     onClick={() => setSelectedRule(rule)}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
@@ -386,7 +406,7 @@ const ContactAutomation: React.FC = () => {
                     <Edit size={14} className="mr-1" />
                     Edit
                   </button>
-                  
+
                   <button
                     onClick={() => deleteRule(rule.id)}
                     className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
@@ -465,7 +485,8 @@ const ContactAutomation: React.FC = () => {
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Create Automation Rule</h3>
             <p className="text-gray-600">
-              Automation rule creation interface would be implemented here with form fields for triggers, conditions, and actions.
+              Automation rule creation interface would be implemented here with form fields for
+              triggers, conditions, and actions.
             </p>
             <div className="mt-6 flex justify-end space-x-3">
               <button

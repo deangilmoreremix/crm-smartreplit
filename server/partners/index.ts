@@ -14,7 +14,7 @@ export const handler = async (event: any, context: any) => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   };
 
   if (httpMethod === 'OPTIONS') {
@@ -82,7 +82,12 @@ export const handler = async (event: any, context: any) => {
     }
 
     // POST /api/partners/onboard - Partner onboarding
-    if (pathParts.length === 2 && pathParts[0] === 'partners' && pathParts[1] === 'onboard' && httpMethod === 'POST') {
+    if (
+      pathParts.length === 2 &&
+      pathParts[0] === 'partners' &&
+      pathParts[1] === 'onboard' &&
+      httpMethod === 'POST'
+    ) {
       const { brandingConfig, ...partnerData } = JSON.parse(body);
 
       const newPartner = await storage.createPartner({
@@ -90,7 +95,7 @@ export const handler = async (event: any, context: any) => {
         brandingConfig,
         status: 'pending',
         tier: 'bronze',
-        profileId: 'dev-user-12345'
+        profileId: 'dev-user-12345',
       });
 
       return {
@@ -99,13 +104,18 @@ export const handler = async (event: any, context: any) => {
         body: JSON.stringify({
           success: true,
           partner: newPartner,
-          message: 'Partner application submitted successfully'
-        })
+          message: 'Partner application submitted successfully',
+        }),
       };
     }
 
     // POST /api/partners/:id/approve - Approve partner
-    if (pathParts.length === 3 && pathParts[0] === 'partners' && pathParts[2] === 'approve' && httpMethod === 'POST') {
+    if (
+      pathParts.length === 3 &&
+      pathParts[0] === 'partners' &&
+      pathParts[2] === 'approve' &&
+      httpMethod === 'POST'
+    ) {
       const partnerId = pathParts[1];
 
       // Mock approval - in real implementation, update partner status
@@ -115,13 +125,18 @@ export const handler = async (event: any, context: any) => {
         body: JSON.stringify({
           id: partnerId,
           status: 'active',
-          approvedAt: new Date().toISOString()
-        })
+          approvedAt: new Date().toISOString(),
+        }),
       };
     }
 
     // GET /api/partners/pending - Get pending partners
-    if (pathParts.length === 2 && pathParts[0] === 'partners' && pathParts[1] === 'pending' && httpMethod === 'GET') {
+    if (
+      pathParts.length === 2 &&
+      pathParts[0] === 'partners' &&
+      pathParts[1] === 'pending' &&
+      httpMethod === 'GET'
+    ) {
       if (!supabase) {
         const pendingPartners = [
           {
@@ -130,8 +145,8 @@ export const handler = async (event: any, context: any) => {
             contact_email: 'contact@techcorp.com',
             subdomain: 'techcorp',
             created_at: new Date().toISOString(),
-            status: 'pending'
-          }
+            status: 'pending',
+          },
         ];
         return { statusCode: 200, headers, body: JSON.stringify(pendingPartners) };
       }
@@ -147,7 +162,12 @@ export const handler = async (event: any, context: any) => {
     }
 
     // GET /api/partners/active - Get active partners
-    if (pathParts.length === 2 && pathParts[0] === 'partners' && pathParts[1] === 'active' && httpMethod === 'GET') {
+    if (
+      pathParts.length === 2 &&
+      pathParts[0] === 'partners' &&
+      pathParts[1] === 'active' &&
+      httpMethod === 'GET'
+    ) {
       if (!supabase) {
         const activePartners = [
           {
@@ -156,8 +176,8 @@ export const handler = async (event: any, context: any) => {
             contact_email: 'admin@salesforceplus.com',
             subdomain: 'salesforceplus',
             created_at: new Date(Date.now() - 604800000).toISOString(),
-            status: 'active'
-          }
+            status: 'active',
+          },
         ];
         return { statusCode: 200, headers, body: JSON.stringify(activePartners) };
       }
@@ -173,7 +193,12 @@ export const handler = async (event: any, context: any) => {
     }
 
     // GET /api/partners/:partnerId/stats - Get partner stats with calculations
-    if (pathParts.length === 3 && pathParts[0] === 'partners' && pathParts[2] === 'stats' && httpMethod === 'GET') {
+    if (
+      pathParts.length === 3 &&
+      pathParts[0] === 'partners' &&
+      pathParts[2] === 'stats' &&
+      httpMethod === 'GET'
+    ) {
       const partnerId = pathParts[1];
 
       if (!supabase) {
@@ -182,7 +207,7 @@ export const handler = async (event: any, context: any) => {
           active_customers: 38,
           total_revenue: 14200,
           monthly_revenue: 14200,
-          customer_growth_rate: 23
+          customer_growth_rate: 23,
         };
         return { statusCode: 200, headers, body: JSON.stringify(stats) };
       }
@@ -208,7 +233,7 @@ export const handler = async (event: any, context: any) => {
         if (customersError) throw customersError;
 
         const totalCustomers = customers?.length || 0;
-        const activeCustomers = customers?.filter(c => c.status === 'active').length || 0;
+        const activeCustomers = customers?.filter((c) => c.status === 'active').length || 0;
         const totalRevenue = customers?.reduce((sum, c) => sum + (c.monthly_revenue || 0), 0) || 0;
 
         const calculatedStats = {
@@ -216,7 +241,7 @@ export const handler = async (event: any, context: any) => {
           active_customers: activeCustomers,
           total_revenue: totalRevenue,
           monthly_revenue: totalRevenue,
-          customer_growth_rate: 0
+          customer_growth_rate: 0,
         };
 
         return { statusCode: 200, headers, body: JSON.stringify(calculatedStats) };
@@ -226,7 +251,12 @@ export const handler = async (event: any, context: any) => {
     }
 
     // GET /api/partners/:partnerId/customers - Get partner customers
-    if (pathParts.length === 3 && pathParts[0] === 'partners' && pathParts[2] === 'customers' && httpMethod === 'GET') {
+    if (
+      pathParts.length === 3 &&
+      pathParts[0] === 'partners' &&
+      pathParts[2] === 'customers' &&
+      httpMethod === 'GET'
+    ) {
       const partnerId = pathParts[1];
 
       if (!supabase) {
@@ -239,8 +269,8 @@ export const handler = async (event: any, context: any) => {
             plan: 'enterprise',
             monthly_revenue: 299,
             created_at: '2024-01-15T00:00:00Z',
-            last_active: '2024-06-28T00:00:00Z'
-          }
+            last_active: '2024-06-28T00:00:00Z',
+          },
         ];
         return { statusCode: 200, headers, body: JSON.stringify(customers) };
       }
@@ -256,7 +286,12 @@ export const handler = async (event: any, context: any) => {
     }
 
     // POST /api/partners/:partnerId/customers - Create customer for partner
-    if (pathParts.length === 3 && pathParts[0] === 'partners' && pathParts[2] === 'customers' && httpMethod === 'POST') {
+    if (
+      pathParts.length === 3 &&
+      pathParts[0] === 'partners' &&
+      pathParts[2] === 'customers' &&
+      httpMethod === 'POST'
+    ) {
       const partnerId = pathParts[1];
       const { companyName, contactEmail, plan } = JSON.parse(body);
 
@@ -268,7 +303,7 @@ export const handler = async (event: any, context: any) => {
         plan: plan || 'basic',
         monthly_revenue: plan === 'enterprise' ? 299 : plan === 'pro' ? 149 : 49,
         created_at: new Date().toISOString(),
-        last_active: new Date().toISOString()
+        last_active: new Date().toISOString(),
       };
 
       return { statusCode: 200, headers, body: JSON.stringify(newCustomer) };
@@ -278,15 +313,14 @@ export const handler = async (event: any, context: any) => {
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: 'Partner endpoint not found' })
+      body: JSON.stringify({ error: 'Partner endpoint not found' }),
     };
-
   } catch (error: any) {
     console.error('Partners function error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message })
+      body: JSON.stringify({ error: 'Internal server error', message: error.message }),
     };
   }
 };

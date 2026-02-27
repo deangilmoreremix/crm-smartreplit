@@ -179,7 +179,19 @@ export interface MobileFormConfig {
 
 export interface MobileFormField {
   id: string;
-  type: 'text' | 'email' | 'phone' | 'number' | 'select' | 'multiselect' | 'date' | 'time' | 'datetime' | 'textarea' | 'file' | 'camera';
+  type:
+    | 'text'
+    | 'email'
+    | 'phone'
+    | 'number'
+    | 'select'
+    | 'multiselect'
+    | 'date'
+    | 'time'
+    | 'datetime'
+    | 'textarea'
+    | 'file'
+    | 'camera';
   label: string;
   placeholder?: string;
   required: boolean;

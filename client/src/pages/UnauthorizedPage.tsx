@@ -16,25 +16,27 @@ export default function UnauthorizedPage() {
               <Shield className="h-8 w-8 text-red-600 dark:text-red-400" />
             </div>
           </div>
-          
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Access Denied
-          </h1>
-          
+
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Access Denied</h1>
+
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             You don't have permission to access this page. Your current role is{' '}
-            <span className="font-semibold text-purple-600 dark:text-purple-400">
-              {role}
-            </span>.
+            <span className="font-semibold text-purple-600 dark:text-purple-400">{role}</span>.
           </p>
 
           <div className="space-y-4">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               <p className="mb-2">Required permissions for different areas:</p>
               <ul className="text-left space-y-1">
-                <li>• <strong>Super Admin:</strong> Full platform management</li>
-                <li>• <strong>Reseller:</strong> Partner management and analytics</li>
-                <li>• <strong>User:</strong> Basic CRM features</li>
+                <li>
+                  • <strong>Super Admin:</strong> Full platform management
+                </li>
+                <li>
+                  • <strong>Reseller:</strong> Partner management and analytics
+                </li>
+                <li>
+                  • <strong>User:</strong> Basic CRM features
+                </li>
               </ul>
             </div>
 
@@ -45,20 +47,16 @@ export default function UnauthorizedPage() {
                   Back to Dashboard
                 </Link>
               </Button>
-              
+
               <Button asChild>
-                <Link to="/contact-support">
-                  Request Access
-                </Link>
+                <Link to="/contact-support">Request Access</Link>
               </Button>
             </div>
           </div>
 
           {user && (
             <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Signed in as: {user.email}
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as: {user.email}</p>
             </div>
           )}
         </div>

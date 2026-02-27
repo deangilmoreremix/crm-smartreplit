@@ -49,7 +49,7 @@ export class ImageStorageService {
         .from(this.bucket)
         .upload(filePath, blob, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
         });
 
       if (uploadError) {
@@ -57,9 +57,9 @@ export class ImageStorageService {
       }
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(this.bucket)
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(this.bucket).getPublicUrl(filePath);
 
       // Create database record
       const imageRecord: StoredImage = {
@@ -73,7 +73,7 @@ export class ImageStorageService {
         format: metadata?.format || '',
         aspectRatio: metadata?.aspectRatio || '',
         createdAt: new Date(),
-        metadata
+        metadata,
       };
 
       // Save metadata to database (if you want to track images in a table)
@@ -110,30 +110,29 @@ export class ImageStorageService {
   async getUserImages(userId: string): Promise<StoredImage[]> {
     try {
       // List files in user's directory
-      const { data: files, error } = await supabase.storage
-        .from(this.bucket)
-        .list(userId, {
-          limit: 100,
-          sortBy: { column: 'created_at', order: 'desc' }
-        });
+      const { data: files, error } = await supabase.storage.from(this.bucket).list(userId, {
+        limit: 100,
+        sortBy: { column: 'created_at', order: 'desc' },
+      });
 
       if (error) {
         throw new Error(`Failed to list images: ${error.message}`);
       }
 
       // Convert to StoredImage format
-      const images: StoredImage[] = files.map(file => ({
+      const images: StoredImage[] = files.map((file) => ({
         id: file.id || crypto.randomUUID(),
         userId,
         filename: file.name,
         storagePath: `${userId}/${file.name}`,
-        publicUrl: supabase.storage.from(this.bucket).getPublicUrl(`${userId}/${file.name}`).data.publicUrl,
+        publicUrl: supabase.storage.from(this.bucket).getPublicUrl(`${userId}/${file.name}`).data
+          .publicUrl,
         promptText: '',
         feature: '',
         format: '',
         aspectRatio: '',
         createdAt: new Date(file.created_at),
-        metadata: file.metadata
+        metadata: file.metadata,
       }));
 
       return images;
@@ -148,9 +147,7 @@ export class ImageStorageService {
    */
   async deleteImage(storagePath: string): Promise<void> {
     try {
-      const { error } = await supabase.storage
-        .from(this.bucket)
-        .remove([storagePath]);
+      const { error } = await supabase.storage.from(this.bucket).remove([storagePath]);
 
       if (error) {
         throw new Error(`Delete failed: ${error.message}`);
@@ -169,21 +166,19 @@ export class ImageStorageService {
    */
   private async saveImageMetadata(image: StoredImage): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('user_generated_images')
-        .insert({
-          id: image.id,
-          user_id: image.userId,
-          filename: image.filename,
-          storage_path: image.storagePath,
-          public_url: image.publicUrl,
-          prompt_text: image.promptText,
-          feature: image.feature,
-          format: image.format,
-          aspect_ratio: image.aspectRatio,
-          metadata: image.metadata,
-          created_at: image.createdAt.toISOString()
-        });
+      const { error } = await supabase.from('user_generated_images').insert({
+        id: image.id,
+        user_id: image.userId,
+        filename: image.filename,
+        storage_path: image.storagePath,
+        public_url: image.publicUrl,
+        prompt_text: image.promptText,
+        feature: image.feature,
+        format: image.format,
+        aspect_ratio: image.aspectRatio,
+        metadata: image.metadata,
+        created_at: image.createdAt.toISOString(),
+      });
 
       if (error) {
         console.warn('Failed to save image metadata:', error);
@@ -217,9 +212,7 @@ export class ImageStorageService {
    */
   async isStorageAvailable(): Promise<boolean> {
     try {
-      const { data, error } = await supabase.storage
-        .from(this.bucket)
-        .list('', { limit: 1 });
+      const { data, error } = await supabase.storage.from(this.bucket).list('', { limit: 1 });
 
       return !error;
     } catch {

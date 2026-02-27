@@ -75,7 +75,7 @@ class CRMBridge {
       type,
       data,
       source: 'REMOTE_PIPELINE',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     try {
@@ -93,7 +93,7 @@ class CRMBridge {
       this.sendToCRM('REMOTE_READY', {
         appName: 'Remote Pipeline',
         version: '1.0.0',
-        capabilities: ['deals', 'pipeline', 'analytics']
+        capabilities: ['deals', 'pipeline', 'analytics'],
       });
     }, 1000);
   }
@@ -102,14 +102,14 @@ class CRMBridge {
   handleCRMInit(data) {
     console.log('🚀 CRM connected with data:', data);
     this.isConnected = true;
-    
+
     const { pipelineData, crmInfo } = data;
-    
+
     // Update your app with CRM data
     if (pipelineData) {
       this.updateLocalPipeline(pipelineData);
     }
-    
+
     // Show connection status in your UI
     this.updateConnectionStatus(true, crmInfo);
   }
@@ -117,7 +117,7 @@ class CRMBridge {
   // Handle deals synchronization from CRM
   handleDealsSync(deals) {
     console.log('🔄 Syncing deals from CRM:', deals);
-    
+
     // Update your local state with CRM deals
     this.updateLocalDeals(deals);
   }
@@ -125,7 +125,7 @@ class CRMBridge {
   // Handle individual deal updates from CRM
   handleDealUpdate(dealId, updates) {
     console.log('✏️ Deal updated from CRM:', dealId, updates);
-    
+
     // Update specific deal in your local state
     this.updateLocalDeal(dealId, updates);
   }
@@ -133,7 +133,7 @@ class CRMBridge {
   // Handle new deal creation from CRM
   handleDealCreate(deal) {
     console.log('🆕 New deal from CRM:', deal);
-    
+
     // Add deal to your local state
     this.addLocalDeal(deal);
   }
@@ -141,7 +141,7 @@ class CRMBridge {
   // Handle deal deletion from CRM
   handleDealDelete(dealId) {
     console.log('🗑️ Deal deleted in CRM:', dealId);
-    
+
     // Remove deal from your local state
     this.removeLocalDeal(dealId);
   }
@@ -149,7 +149,7 @@ class CRMBridge {
   // Handle deal stage movement from CRM
   handleDealMove(dealId, newStage, position) {
     console.log('↔️ Deal moved in CRM:', dealId, 'to', newStage);
-    
+
     // Update deal stage in your local state
     this.moveLocalDeal(dealId, newStage, position);
   }
@@ -157,10 +157,10 @@ class CRMBridge {
   // Send current pipeline data to CRM
   sendPipelineData() {
     console.log('📊 CRM requested pipeline data');
-    
+
     // Get your current pipeline data
     const pipelineData = this.getCurrentPipelineData();
-    
+
     this.sendToCRM('PIPELINE_DATA_RESPONSE', pipelineData);
   }
 
@@ -183,7 +183,7 @@ class CRMBridge {
   updateLocalDeal(dealId, updates) {
     // TODO: Implement this method to update a specific deal
     // Example:
-    // setDeals(prev => prev.map(deal => 
+    // setDeals(prev => prev.map(deal =>
     //   deal.id === dealId ? { ...deal, ...updates } : deal
     // ));
     console.log('📝 TODO: Update local deal:', dealId, updates);
@@ -206,7 +206,7 @@ class CRMBridge {
   moveLocalDeal(dealId, newStage, position) {
     // TODO: Implement this method to move a deal between stages
     // Example:
-    // setDeals(prev => prev.map(deal => 
+    // setDeals(prev => prev.map(deal =>
     //   deal.id === dealId ? { ...deal, stage: newStage } : deal
     // ));
     console.log('📝 TODO: Move local deal:', dealId, 'to', newStage);
@@ -233,7 +233,7 @@ class CRMBridge {
       deals: [],
       stages: ['Lead', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'],
       totalValue: 0,
-      activeDeals: 0
+      activeDeals: 0,
     };
   }
 
@@ -263,7 +263,7 @@ class CRMBridge {
   getConnectionStatus() {
     return {
       connected: this.isConnected,
-      parentOrigin: this.parentOrigin
+      parentOrigin: this.parentOrigin,
     };
   }
 }

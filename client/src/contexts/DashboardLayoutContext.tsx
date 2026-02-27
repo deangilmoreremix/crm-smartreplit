@@ -42,14 +42,14 @@ const defaultSectionOrder = [
   'gpt5-deal-intelligence-section',
   'ai-smart-features-hub',
   'sales-pipeline-deal-analytics',
-  'customer-lead-management', 
+  'customer-lead-management',
   'activities-communications',
   'integrations-system',
   'contacts-section',
   'pipeline-section',
   'white-label-section',
   'product-research-section',
-  'ai-analytics-section'
+  'ai-analytics-section',
 ];
 
 // Updated sectionConfigs with GPT-5 enhanced sections
@@ -61,7 +61,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Complete GPT-5 powered business intelligence suite',
     icon: 'Brain',
     component: null,
-    color: 'from-indigo-600 to-purple-600'
+    color: 'from-indigo-600 to-purple-600',
   },
   'gpt5-smart-kpi-section': {
     id: 'gpt5-smart-kpi-section',
@@ -69,7 +69,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Expert-level performance metrics with AI insights',
     icon: 'BarChart3',
     component: null,
-    color: 'from-blue-600 to-indigo-600'
+    color: 'from-blue-600 to-indigo-600',
   },
   'gpt5-analytics-section': {
     id: 'gpt5-analytics-section',
@@ -77,7 +77,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Multimodal business intelligence and forecasting',
     icon: 'TrendingUp',
     component: null,
-    color: 'from-purple-600 to-pink-600'
+    color: 'from-purple-600 to-pink-600',
   },
   'gpt5-deal-intelligence-section': {
     id: 'gpt5-deal-intelligence-section',
@@ -85,9 +85,9 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Expert deal analysis and win probability scoring',
     icon: 'Target',
     component: null,
-    color: 'from-green-600 to-teal-600'
+    color: 'from-green-600 to-teal-600',
   },
-  
+
   // New main sections
   'executive-overview-section': {
     id: 'executive-overview-section',
@@ -95,7 +95,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'High-level dashboard with KPIs and quick actions',
     icon: 'BarChart3',
     component: null,
-    color: 'from-blue-500 to-green-500'
+    color: 'from-blue-500 to-green-500',
   },
   'ai-smart-features-hub': {
     id: 'ai-smart-features-hub',
@@ -103,7 +103,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'AI-powered insights and tools for enhanced productivity',
     icon: 'Brain',
     component: null,
-    color: 'from-purple-500 to-indigo-500'
+    color: 'from-purple-500 to-indigo-500',
   },
   'sales-pipeline-deal-analytics': {
     id: 'sales-pipeline-deal-analytics',
@@ -111,7 +111,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Comprehensive pipeline management and performance metrics',
     icon: 'BarChart3',
     component: null,
-    color: 'from-green-500 to-emerald-500'
+    color: 'from-green-500 to-emerald-500',
   },
   'customer-lead-management': {
     id: 'customer-lead-management',
@@ -119,7 +119,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Contact profiles and lead nurturing tools',
     icon: 'Users',
     component: null,
-    color: 'from-blue-500 to-cyan-500'
+    color: 'from-blue-500 to-cyan-500',
   },
   'activities-communications': {
     id: 'activities-communications',
@@ -127,7 +127,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Task management and communication tracking',
     icon: 'CheckSquare',
     component: null,
-    color: 'from-orange-500 to-red-500'
+    color: 'from-orange-500 to-red-500',
   },
   'integrations-system': {
     id: 'integrations-system',
@@ -135,9 +135,9 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Connected apps and system settings',
     icon: 'Grid3X3',
     component: null,
-    color: 'from-gray-500 to-gray-700'
+    color: 'from-gray-500 to-gray-700',
   },
-  
+
   // Original sections (kept for backward compatibility)
   'kpi-cards-section': {
     id: 'kpi-cards-section',
@@ -145,7 +145,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'High-level business metrics overview',
     icon: 'BarChart3',
     component: null,
-    color: 'from-blue-500 to-green-500'
+    color: 'from-blue-500 to-green-500',
   },
   'quick-actions-section': {
     id: 'quick-actions-section',
@@ -153,7 +153,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Fast access to common tasks',
     icon: 'Zap',
     component: null,
-    color: 'from-green-500 to-teal-500'
+    color: 'from-green-500 to-teal-500',
   },
   'automations-section': {
     id: 'automations-section',
@@ -161,7 +161,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Set it and forget it - automated workflows',
     icon: 'Repeat',
     component: null,
-    color: 'from-violet-500 to-purple-500'
+    color: 'from-violet-500 to-purple-500',
   },
   'ai-insights-section': {
     id: 'ai-insights-section',
@@ -169,7 +169,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'AI-powered analysis and recommendations',
     icon: 'Brain',
     component: null,
-    color: 'from-purple-500 to-indigo-500'
+    color: 'from-purple-500 to-indigo-500',
   },
   'metrics-cards-section': {
     id: 'metrics-cards-section',
@@ -177,7 +177,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Overview of critical business metrics',
     icon: 'BarChart3',
     component: null,
-    color: 'from-green-500 to-blue-500'
+    color: 'from-green-500 to-blue-500',
   },
   'pipeline-section': {
     id: 'pipeline-section',
@@ -185,7 +185,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Comprehensive deal performance and pipeline health',
     icon: 'BarChart3',
     component: null,
-    color: 'from-green-500 to-emerald-500'
+    color: 'from-green-500 to-emerald-500',
   },
   'contacts-section': {
     id: 'contacts-section',
@@ -193,7 +193,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Manage and nurture your prospect relationships',
     icon: 'Users',
     component: null,
-    color: 'from-blue-500 to-cyan-500'
+    color: 'from-blue-500 to-cyan-500',
   },
   'interaction-history-section': {
     id: 'interaction-history-section',
@@ -201,7 +201,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Recent contact interactions and communications',
     icon: 'MessageSquare',
     component: null,
-    color: 'from-purple-500 to-blue-500'
+    color: 'from-purple-500 to-blue-500',
   },
   'tasks-section': {
     id: 'tasks-section',
@@ -209,7 +209,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Manage your daily activities and appointments',
     icon: 'CheckSquare',
     component: null,
-    color: 'from-orange-500 to-red-500'
+    color: 'from-orange-500 to-red-500',
   },
   'customer-profile-section': {
     id: 'customer-profile-section',
@@ -217,7 +217,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Detailed customer information and insights',
     icon: 'User',
     component: null,
-    color: 'from-blue-500 to-indigo-500'
+    color: 'from-blue-500 to-indigo-500',
   },
   'recent-activity-section': {
     id: 'recent-activity-section',
@@ -225,7 +225,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Latest actions and events in your CRM',
     icon: 'Clock',
     component: null,
-    color: 'from-gray-500 to-gray-600'
+    color: 'from-gray-500 to-gray-600',
   },
   'tasks-and-funnel-section': {
     id: 'tasks-and-funnel-section',
@@ -233,7 +233,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Task management and sales pipeline visualization',
     icon: 'Target',
     component: null,
-    color: 'from-amber-500 to-orange-500'
+    color: 'from-amber-500 to-orange-500',
   },
   'apps-section': {
     id: 'apps-section',
@@ -241,7 +241,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Access your entire business toolkit',
     icon: 'Grid3X3',
     component: null,
-    color: 'from-purple-500 to-indigo-500'
+    color: 'from-purple-500 to-indigo-500',
   },
   'charts-section': {
     id: 'charts-section',
@@ -249,7 +249,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Visualization of key sales metrics',
     icon: 'BarChart3',
     component: null,
-    color: 'from-blue-500 to-teal-500'
+    color: 'from-blue-500 to-teal-500',
   },
   'analytics-section': {
     id: 'analytics-section',
@@ -257,7 +257,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Detailed charts and performance metrics',
     icon: 'BarChart3',
     component: null,
-    color: 'from-indigo-500 to-purple-500'
+    color: 'from-indigo-500 to-purple-500',
   },
   'white-label-section': {
     id: 'white-label-section',
@@ -265,7 +265,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Comprehensive white label solutions and customization tools',
     icon: 'Palette',
     component: null,
-    color: 'from-indigo-500 to-purple-500'
+    color: 'from-indigo-500 to-purple-500',
   },
   'product-research-section': {
     id: 'product-research-section',
@@ -273,7 +273,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Advanced product research and market analysis tools',
     icon: 'Search',
     component: null,
-    color: 'from-teal-500 to-cyan-500'
+    color: 'from-teal-500 to-cyan-500',
   },
   'ai-analytics-section': {
     id: 'ai-analytics-section',
@@ -281,8 +281,8 @@ const sectionConfigs: Record<string, SectionConfig> = {
     description: 'Advanced AI-powered analytics and insights',
     icon: 'BarChart3',
     component: null,
-    color: 'from-emerald-500 to-green-500'
-  }
+    color: 'from-emerald-500 to-green-500',
+  },
 };
 
 export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -296,12 +296,12 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
           // Migration: Add automations-section and quick-actions-section if missing
           let migrated = [...parsed];
           let needsMigration = false;
-          
+
           // Add automations-section if missing (insert before quick-actions or after executive-overview)
           if (!migrated.includes('automations-section')) {
             const quickActionsIndex = migrated.indexOf('quick-actions-section');
             const executiveIndex = migrated.indexOf('executive-overview-section');
-            
+
             if (quickActionsIndex !== -1) {
               // Insert before quick-actions
               migrated.splice(quickActionsIndex, 0, 'automations-section');
@@ -314,7 +314,7 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
             }
             needsMigration = true;
           }
-          
+
           // Add quick-actions-section if missing (insert after automations)
           if (!migrated.includes('quick-actions-section')) {
             const automationsIndex = migrated.indexOf('automations-section');
@@ -330,13 +330,12 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
             }
             needsMigration = true;
           }
-          
+
           // Save migrated layout back to localStorage
           if (needsMigration) {
-            console.log('Migrating dashboard layout to include automations and quick actions');
             localStorage.setItem('dashboard-section-order', JSON.stringify(migrated));
           }
-          
+
           return migrated;
         }
       }
@@ -347,7 +346,7 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
 
     return [...defaultSectionOrder];
   });
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
@@ -373,17 +372,19 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
   };
 
   return (
-    <DashboardLayoutContext.Provider value={{
-      sectionOrder,
-      setSectionOrder,
-      isDragging,
-      setIsDragging,
-      draggedItem,
-      setDraggedItem,
-      getSectionConfig,
-      reorderSections,
-      resetToDefault
-    }}>
+    <DashboardLayoutContext.Provider
+      value={{
+        sectionOrder,
+        setSectionOrder,
+        isDragging,
+        setIsDragging,
+        draggedItem,
+        setDraggedItem,
+        getSectionConfig,
+        reorderSections,
+        resetToDefault,
+      }}
+    >
       {children}
     </DashboardLayoutContext.Provider>
   );

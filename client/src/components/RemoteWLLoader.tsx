@@ -45,13 +45,11 @@ const RemoteWLLoader: React.FC = () => {
       }
 
       const { type, data } = event.data;
-      
+
       switch (type) {
         case 'IFRAME_READY':
-          console.log('WL Iframe ready, theme will be sent by dedicated effect');
           break;
         case 'BUTTON_CLICK':
-          console.log('Button clicked in WL iframe:', data);
           break;
         case 'NAVIGATION_REQUEST':
           if (data?.url && typeof data.url === 'string' && data.url.startsWith('/')) {
@@ -69,15 +67,20 @@ const RemoteWLLoader: React.FC = () => {
   useEffect(() => {
     const iframe = iframeRef.current;
     if (iframe?.contentWindow && isConnected) {
-      iframe.contentWindow.postMessage({
-        type: 'SET_THEME',
-        theme: currentTheme
-      }, IFRAME_ORIGIN);
+      iframe.contentWindow.postMessage(
+        {
+          type: 'SET_THEME',
+          theme: currentTheme,
+        },
+        IFRAME_ORIGIN
+      );
     }
   }, [currentTheme, isConnected]);
 
   return (
-    <div className={`w-full h-full transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
+    <div
+      className={`w-full h-full transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-white'}`}
+    >
       <iframe
         ref={iframeRef}
         src={`${REMOTE_URL}?theme=${currentTheme}&mode=light&allowInteraction=true`}
@@ -89,14 +92,14 @@ const RemoteWLLoader: React.FC = () => {
           display: 'block',
           overflow: 'auto',
           backgroundColor: isDark ? '#1f2937' : '#ffffff',
-          transition: 'background-color 0.3s ease'
+          transition: 'background-color 0.3s ease',
         }}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; pointer-lock"
         allowFullScreen
         loading="lazy"
         title="White Label Platform"
         scrolling="yes"
-        sandbox="allow-scripts allow-forms allow-popups allow-pointer-lock allow-same-origin allow-top-navigation"
+        sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
       />
     </div>
   );

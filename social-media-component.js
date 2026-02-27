@@ -1,4 +1,3 @@
-
 /**
  * Social Media Research UI Component
  * Complete standalone component for GPT-5 social media research
@@ -11,7 +10,7 @@ class SocialMediaResearchComponent {
     this.socialService = new GPT5SocialResearchService(this.apiKey, options);
     this.currentContact = null;
     this.researchResults = null;
-    
+
     this.init();
   }
 
@@ -339,15 +338,15 @@ class SocialMediaResearchComponent {
         </div>
       </div>
     `;
-    
+
     this.populatePlatformSelector();
   }
 
   populatePlatformSelector() {
     const platformSelector = document.getElementById('platform-selector');
     const platforms = this.socialService.supportedPlatforms;
-    
-    platforms.forEach(platform => {
+
+    platforms.forEach((platform) => {
       const checkboxDiv = document.createElement('div');
       checkboxDiv.className = 'platform-checkbox';
       checkboxDiv.innerHTML = `
@@ -361,7 +360,7 @@ class SocialMediaResearchComponent {
   attachEventListeners() {
     const startButton = document.getElementById('start-research');
     const monitoringButton = document.getElementById('setup-monitoring');
-    
+
     startButton.addEventListener('click', () => this.startResearch());
     monitoringButton.addEventListener('click', () => this.setupMonitoring());
   }
@@ -369,39 +368,39 @@ class SocialMediaResearchComponent {
   async startResearch() {
     const button = document.getElementById('start-research');
     const originalText = button.textContent;
-    
+
     // Get form data
     const contact = {
       id: Date.now().toString(),
       name: document.getElementById('contact-name').value,
       email: document.getElementById('contact-email').value,
       company: document.getElementById('contact-company').value,
-      title: document.getElementById('contact-title').value
+      title: document.getElementById('contact-title').value,
     };
-    
+
     if (!contact.name) {
       alert('Please enter a contact name');
       return;
     }
-    
+
     const depth = document.getElementById('research-depth').value;
-    const selectedPlatforms = Array.from(document.querySelectorAll('#platform-selector input:checked'))
-      .map(input => input.value);
-    
+    const selectedPlatforms = Array.from(
+      document.querySelectorAll('#platform-selector input:checked')
+    ).map((input) => input.value);
+
     // Show loading state
     button.disabled = true;
     button.innerHTML = '<span class="loading-spinner"></span>Researching...';
-    
+
     try {
       this.currentContact = contact;
       this.researchResults = await this.socialService.researchContactSocialMedia(
-        contact, 
-        selectedPlatforms, 
+        contact,
+        selectedPlatforms,
         depth
       );
-      
+
       this.displayResults();
-      
     } catch (error) {
       console.error('Research failed:', error);
       alert('Research failed. Please try again.');
@@ -414,13 +413,13 @@ class SocialMediaResearchComponent {
   displayResults() {
     const resultsContainer = document.getElementById('results-container');
     resultsContainer.style.display = 'block';
-    
+
     // Display profiles
     this.displayProfiles();
     this.displayPersonalityInsights();
     this.displayEngagementMetrics();
     this.displayRecommendations();
-    
+
     // Scroll to results
     resultsContainer.scrollIntoView({ behavior: 'smooth' });
   }
@@ -428,13 +427,15 @@ class SocialMediaResearchComponent {
   displayProfiles() {
     const profilesList = document.getElementById('profiles-list');
     const profiles = this.researchResults.profiles;
-    
+
     if (profiles.length === 0) {
       profilesList.innerHTML = '<p>No social profiles found.</p>';
       return;
     }
-    
-    profilesList.innerHTML = profiles.map(profile => `
+
+    profilesList.innerHTML = profiles
+      .map(
+        (profile) => `
       <div class="profile-item">
         <div class="profile-icon">${profile.platform.charAt(0)}</div>
         <div class="profile-info">
@@ -444,15 +445,17 @@ class SocialMediaResearchComponent {
         </div>
         <div class="confidence-score">${profile.confidence}%</div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   displayPersonalityInsights() {
     const insightsDiv = document.getElementById('personality-insights');
     const insights = this.researchResults.personalityInsights;
-    
+
     let html = '';
-    
+
     if (insights.traits) {
       Object.entries(insights.traits).forEach(([key, value]) => {
         html += `
@@ -462,7 +465,7 @@ class SocialMediaResearchComponent {
         `;
       });
     }
-    
+
     if (insights.communicationStyle) {
       html += `
         <div class="insight-item">
@@ -470,16 +473,16 @@ class SocialMediaResearchComponent {
         </div>
       `;
     }
-    
+
     insightsDiv.innerHTML = html || '<p>No personality insights available.</p>';
   }
 
   displayEngagementMetrics() {
     const metricsDiv = document.getElementById('engagement-metrics');
     const metrics = this.researchResults.engagementMetrics;
-    
+
     let html = '';
-    
+
     if (metrics.averageEngagement) {
       html += `
         <div class="insight-item">
@@ -487,7 +490,7 @@ class SocialMediaResearchComponent {
         </div>
       `;
     }
-    
+
     if (metrics.bestPostingTimes) {
       html += `
         <div class="insight-item">
@@ -495,7 +498,7 @@ class SocialMediaResearchComponent {
         </div>
       `;
     }
-    
+
     if (metrics.preferredContentTypes) {
       html += `
         <div class="insight-item">
@@ -503,25 +506,25 @@ class SocialMediaResearchComponent {
         </div>
       `;
     }
-    
+
     metricsDiv.innerHTML = html || '<p>No engagement metrics available.</p>';
   }
 
   displayRecommendations() {
     const recommendationsDiv = document.getElementById('recommendations');
     const recommendations = this.researchResults.monitoringRecommendations;
-    
+
     if (recommendations.length === 0) {
       recommendationsDiv.innerHTML = '<p>No specific recommendations available.</p>';
       return;
     }
-    
+
     const html = `
       <ul class="recommendations-list">
-        ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+        ${recommendations.map((rec) => `<li>${rec}</li>`).join('')}
       </ul>
     `;
-    
+
     recommendationsDiv.innerHTML = html;
   }
 
@@ -530,29 +533,28 @@ class SocialMediaResearchComponent {
       alert('Please complete a research first');
       return;
     }
-    
+
     const button = document.getElementById('setup-monitoring');
     const originalText = button.textContent;
-    
+
     button.disabled = true;
     button.textContent = 'Setting up...';
-    
+
     try {
-      const platforms = this.researchResults.profiles.map(p => p.platform);
+      const platforms = this.researchResults.profiles.map((p) => p.platform);
       const alertTypes = ['job_change', 'new_content', 'engagement_spike'];
-      
+
       const result = await this.socialService.setupSocialMonitoring(
         this.currentContact.id,
         platforms,
         alertTypes
       );
-      
+
       if (result.success) {
         alert(`Monitoring setup successful! Monitoring ID: ${result.monitoringId}`);
         button.textContent = '✅ Monitoring Active';
         button.style.background = '#10b981';
       }
-      
     } catch (error) {
       console.error('Monitoring setup failed:', error);
       alert('Failed to set up monitoring. Please try again.');

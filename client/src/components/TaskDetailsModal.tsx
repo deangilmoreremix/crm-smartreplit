@@ -1,29 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import { Calendar } from './ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from './ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import {
@@ -136,7 +120,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   const handleDelete = async () => {
     if (!task) return;
-    
+
     setIsLoading(true);
     try {
       await deleteTask(task.id);
@@ -150,7 +134,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   const handleDuplicate = async () => {
     if (!task) return;
-    
+
     setIsLoading(true);
     try {
       await duplicateTask(task.id);
@@ -184,9 +168,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
     try {
       if (subtask.status === 'completed') {
-        await updateSubtask(task.id, subtask.id, { 
+        await updateSubtask(task.id, subtask.id, {
           status: 'pending',
-          completedDate: undefined 
+          completedDate: undefined,
         });
       } else {
         await completeSubtask(task.id, subtask.id);
@@ -223,7 +207,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     const currentTags = formData.tags || [];
     setFormData({
       ...formData,
-      tags: currentTags.filter(tag => tag !== tagToRemove),
+      tags: currentTags.filter((tag) => tag !== tagToRemove),
     });
   };
 
@@ -240,22 +224,33 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
-      case 'low': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'urgent': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusColor = (status: Task['status']) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'on-hold': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-gray-100 text-gray-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'on-hold':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -267,17 +262,13 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             <DialogTitle>
               {task ? (isEditing ? 'Edit Task' : 'Task Details') : 'Create New Task'}
             </DialogTitle>
-            
+
             {task && (
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}>
                   {isEditing ? 'Cancel' : 'Edit'}
                 </Button>
-                
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="sm">
@@ -382,7 +373,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       <Label htmlFor="type">Type</Label>
                       <Select
                         value={formData.type}
-                        onValueChange={(value) => setFormData({ ...formData, type: value as Task['type'] })}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, type: value as Task['type'] })
+                        }
                         disabled={!isEditing}
                       >
                         <SelectTrigger className="mt-1">
@@ -405,7 +398,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       <Label htmlFor="priority">Priority</Label>
                       <Select
                         value={formData.priority}
-                        onValueChange={(value) => setFormData({ ...formData, priority: value as Task['priority'] })}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, priority: value as Task['priority'] })
+                        }
                         disabled={!isEditing}
                       >
                         <SelectTrigger className="mt-1">
@@ -427,7 +422,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={formData.status}
-                      onValueChange={(value) => setFormData({ ...formData, status: value as Task['status'] })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, status: value as Task['status'] })
+                      }
                       disabled={!isEditing}
                     >
                       <SelectTrigger className="mt-1">
@@ -448,7 +445,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                     <Input
                       id="assignee"
                       value={formData.assignedUserName || ''}
-                      onChange={(e) => setFormData({ ...formData, assignedUserName: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, assignedUserName: e.target.value })
+                      }
                       disabled={!isEditing}
                       className="mt-1"
                       placeholder="Enter assignee name"
@@ -465,10 +464,11 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                           disabled={!isEditing}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.dueDate ? 
-                            format(formData.dueDate, 'PPP') : 
+                          {formData.dueDate ? (
+                            format(formData.dueDate, 'PPP')
+                          ) : (
                             <span>Pick a date</span>
-                          }
+                          )}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
@@ -491,10 +491,12 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       id="estimatedDuration"
                       type="number"
                       value={formData.estimatedDuration || ''}
-                      onChange={(e) => setFormData({ 
-                        ...formData, 
-                        estimatedDuration: e.target.value ? Number(e.target.value) : undefined 
-                      })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          estimatedDuration: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
                       disabled={!isEditing}
                       className="mt-1"
                     />
@@ -522,7 +524,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       </Badge>
                     ))}
                   </div>
-                  
+
                   {isEditing && (
                     <div className="flex items-center space-x-2">
                       <Input
@@ -551,7 +553,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       {task.status.replace('-', ' ').toUpperCase()}
                     </Badge>
                   </div>
-                  
+
                   {task.createdAt && (
                     <div className="text-sm text-gray-500">
                       Created {format(task.createdAt, 'PPP')}
@@ -585,22 +587,21 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                       className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                     >
                       <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => handleToggleSubtask(subtask)}
-                          disabled={!isEditing}
-                        >
+                        <button onClick={() => handleToggleSubtask(subtask)} disabled={!isEditing}>
                           {subtask.status === 'completed' ? (
                             <CheckCircle2 className="h-5 w-5 text-green-600" />
                           ) : (
                             <Circle className="h-5 w-5 text-gray-400" />
                           )}
                         </button>
-                        
-                        <span className={`${
-                          subtask.status === 'completed' 
-                            ? 'line-through text-gray-500' 
-                            : 'text-gray-900'
-                        }`}>
+
+                        <span
+                          className={`${
+                            subtask.status === 'completed'
+                              ? 'line-through text-gray-500'
+                              : 'text-gray-900'
+                          }`}
+                        >
                           {subtask.title}
                         </span>
                       </div>
@@ -631,7 +632,10 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             <TabsContent value="activity" className="mt-6">
               <div className="space-y-4">
                 {activities.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+                  <div
+                    key={activity.id}
+                    className="flex items-start space-x-3 p-3 border rounded-lg"
+                  >
                     <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-sm font-medium">{activity.title}</p>
@@ -710,11 +714,8 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             Cancel
           </Button>
           {isEditing && (
-            <Button 
-              onClick={handleSave} 
-              disabled={!formData.title?.trim() || isLoading}
-            >
-              {isLoading ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
+            <Button onClick={handleSave} disabled={!formData.title?.trim() || isLoading}>
+              {isLoading ? 'Saving...' : task ? 'Update Task' : 'Create Task'}
             </Button>
           )}
         </DialogFooter>

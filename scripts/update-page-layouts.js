@@ -47,7 +47,7 @@ const pagesToUpdate = [
   'client/src/pages/PartnerOnboardingPage.tsx',
 
   // Analytics Page (1 total)
-  'client/src/pages/AnalyticsDashboard.tsx'
+  'client/src/pages/AnalyticsDashboard.tsx',
 ];
 
 function updatePageLayout(filePath) {
@@ -76,7 +76,9 @@ function updatePageLayout(filePath) {
 
     // Extract title and description from existing header
     const titleMatch = content.match(/<h1[^>]*>([^<]+)<\/h1>/);
-    const descriptionMatch = content.match(/<p[^>]*className="[^"]*text-gray-[^"]*"[^>]*>([^<]+)<\/p>/);
+    const descriptionMatch = content.match(
+      /<p[^>]*className="[^"]*text-gray-[^"]*"[^>]*>([^<]+)<\/p>/
+    );
 
     const title = titleMatch ? titleMatch[1].trim() : 'Page Title';
     const description = descriptionMatch ? descriptionMatch[1].trim() : null;
@@ -86,7 +88,8 @@ function updatePageLayout(filePath) {
     const actions = actionMatch ? actionMatch[0] : null;
 
     // Replace the main container structure
-    const containerPattern = /<div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 bg-white dark:bg-gray-900"[^>]*>\s*<div className="max-w-7xl mx-auto space-y-8">\s*<!-- Header -->\s*<div className="flex items-center justify-between">\s*<div>\s*<h1[^>]*>([\s\S]*?)<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>\s*<\/div>\s*(<div[^>]*>[\s\S]*?<\/div>)?\s*<\/div>/;
+    const containerPattern =
+      /<div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 pt-24 bg-white dark:bg-gray-900"[^>]*>\s*<div className="max-w-7xl mx-auto space-y-8">\s*<!-- Header -->\s*<div className="flex items-center justify-between">\s*<div>\s*<h1[^>]*>([\s\S]*?)<\/h1>\s*<p[^>]*>([\s\S]*?)<\/p>\s*<\/div>\s*(<div[^>]*>[\s\S]*?<\/div>)?\s*<\/div>/;
 
     const replacement = `<PageLayout
       title="${title.replace(/"/g, '\\"')}"
@@ -97,15 +100,11 @@ function updatePageLayout(filePath) {
     content = content.replace(containerPattern, replacement);
 
     // Fix closing tags
-    content = content.replace(
-      /<\/div>\s*<\/div>\s*\);\s*};$/,
-      '</PageLayout>\n  );\n};'
-    );
+    content = content.replace(/<\/div>\s*<\/div>\s*\);\s*};$/, '</PageLayout>\n  );\n};');
 
     // Write back to file
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(`   ✅ Successfully updated ${filePath}`);
-
   } catch (error) {
     console.error(`   ❌ Error updating ${filePath}:`, error.message);
   }

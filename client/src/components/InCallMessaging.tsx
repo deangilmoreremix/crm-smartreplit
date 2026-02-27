@@ -16,10 +16,10 @@ interface InCallMessagingProps {
   remoteParticipantName: string;
 }
 
-const InCallMessaging: React.FC<InCallMessagingProps> = ({ 
-  isVisible, 
-  onClose, 
-  remoteParticipantName 
+const InCallMessaging: React.FC<InCallMessagingProps> = ({
+  isVisible,
+  onClose,
+  remoteParticipantName,
 }) => {
   const { peer } = useVideoCall();
   const { isDark } = useTheme();
@@ -47,9 +47,9 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
               id: Date.now().toString(),
               sender: 'remote',
               content: messageData.content,
-              timestamp: new Date()
+              timestamp: new Date(),
             };
-            setMessages(prev => [...prev, newMessage]);
+            setMessages((prev) => [...prev, newMessage]);
           }
         } catch (error) {
           console.error('Error parsing message data:', error);
@@ -64,7 +64,6 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
       peer.on('close', () => {
         setIsConnected(false);
       });
-
     } catch (error) {
       console.error('Error setting up data channel:', error);
     }
@@ -78,7 +77,7 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
       const messageData = {
         type: 'chat',
         content: inputValue.trim(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       peer.send(JSON.stringify(messageData));
@@ -88,10 +87,10 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
         id: Date.now().toString(),
         sender: 'user',
         content: inputValue.trim(),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
       setInputValue('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -109,14 +108,17 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className={`fixed right-4 top-20 w-80 h-96 ${
-      isDark ? 'bg-gray-900/95' : 'bg-white/95'
-    } backdrop-blur-xl border ${
-      isDark ? 'border-white/20' : 'border-gray-200'
-    } rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col`}>
-      
+    <div
+      className={`fixed right-4 top-20 w-80 h-96 ${
+        isDark ? 'bg-gray-900/95' : 'bg-white/95'
+      } backdrop-blur-xl border ${
+        isDark ? 'border-white/20' : 'border-gray-200'
+      } rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col`}
+    >
       {/* Header */}
-      <div className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}>
+      <div
+        className={`p-4 border-b ${isDark ? 'border-white/10' : 'border-gray-200'} flex items-center justify-between`}
+      >
         <div className="flex items-center space-x-2">
           <MessageSquare size={18} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
           <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -135,7 +137,9 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
 
       {/* Connection Status */}
       {!isConnected && (
-        <div className={`p-3 border-b ${isDark ? 'border-white/10 bg-yellow-500/20' : 'border-gray-200 bg-yellow-50'}`}>
+        <div
+          className={`p-3 border-b ${isDark ? 'border-white/10 bg-yellow-500/20' : 'border-gray-200 bg-yellow-50'}`}
+        >
           <p className={`text-xs ${isDark ? 'text-yellow-300' : 'text-yellow-700'}`}>
             Setting up messaging connection...
           </p>
@@ -146,7 +150,10 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 ? (
           <div className="text-center py-8">
-            <MessageSquare size={32} className={`mx-auto mb-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+            <MessageSquare
+              size={32}
+              className={`mx-auto mb-2 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}
+            />
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               No messages yet. Start the conversation!
             </p>
@@ -157,20 +164,28 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[80%] ${
-                message.sender === 'user' 
-                  ? 'bg-blue-500 text-white' 
-                  : (isDark ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-900')
-              } rounded-lg px-3 py-2`}>
+              <div
+                className={`max-w-[80%] ${
+                  message.sender === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : isDark
+                      ? 'bg-gray-700 text-white'
+                      : 'bg-gray-200 text-gray-900'
+                } rounded-lg px-3 py-2`}
+              >
                 <p className="text-sm">{message.content}</p>
-                <p className={`text-xs mt-1 ${
-                  message.sender === 'user' 
-                    ? 'text-blue-100' 
-                    : (isDark ? 'text-gray-400' : 'text-gray-500')
-                }`}>
-                  {message.timestamp.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                <p
+                  className={`text-xs mt-1 ${
+                    message.sender === 'user'
+                      ? 'text-blue-100'
+                      : isDark
+                        ? 'text-gray-400'
+                        : 'text-gray-500'
+                  }`}
+                >
+                  {message.timestamp.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
                   })}
                 </p>
               </div>
@@ -188,11 +203,11 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={isConnected ? "Type a message..." : "Connecting..."}
+            placeholder={isConnected ? 'Type a message...' : 'Connecting...'}
             disabled={!isConnected}
             className={`flex-1 px-3 py-2 rounded-lg border text-sm ${
-              isDark 
-                ? 'bg-gray-800 border-white/10 text-white placeholder-gray-400' 
+              isDark
+                ? 'bg-gray-800 border-white/10 text-white placeholder-gray-400'
                 : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
             } focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50`}
           />
@@ -204,7 +219,7 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
             <Send size={16} />
           </button>
         </div>
-        
+
         {/* Quick Reactions */}
         <div className="flex items-center space-x-2 mt-2">
           <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Quick:</span>
@@ -212,7 +227,7 @@ const InCallMessaging: React.FC<InCallMessagingProps> = ({
             <button
               key={emoji}
               onClick={() => {
-                setInputValue(prev => prev + emoji);
+                setInputValue((prev) => prev + emoji);
               }}
               disabled={!isConnected}
               className={`text-sm hover:bg-white/10 rounded px-1 py-0.5 transition-colors disabled:opacity-50`}

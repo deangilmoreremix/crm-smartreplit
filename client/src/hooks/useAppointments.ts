@@ -17,7 +17,9 @@ export type Appointment = {
 };
 
 type CreateAppointmentData = Omit<Appointment, 'id' | 'profileId' | 'createdAt' | 'updatedAt'>;
-type UpdateAppointmentData = Partial<Omit<Appointment, 'id' | 'profileId' | 'createdAt' | 'updatedAt'>>;
+type UpdateAppointmentData = Partial<
+  Omit<Appointment, 'id' | 'profileId' | 'createdAt' | 'updatedAt'>
+>;
 
 export function useAppointments() {
   return useQuery<Appointment[]>({

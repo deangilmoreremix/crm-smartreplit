@@ -20,18 +20,15 @@ export class SignalingServer {
   private userConnections: Map<WebSocket, { userId: string; roomId: string }> = new Map();
 
   constructor(server: Server) {
-    this.wss = new WebSocketServer({ 
+    this.wss = new WebSocketServer({
       server,
-      path: '/signaling'
+      path: '/signaling',
     });
 
     this.wss.on('connection', this.handleConnection.bind(this));
-    console.log('✅ WebSocket signaling server initialized on /signaling');
   }
 
   private handleConnection(ws: WebSocket) {
-    console.log('📞 New WebSocket connection');
-
     ws.on('message', (message: string) => {
       try {
         const data: SignalingMessage = JSON.parse(message.toString());
@@ -53,8 +50,6 @@ export class SignalingServer {
   }
 
   private handleMessage(ws: WebSocket, message: SignalingMessage) {
-    console.log('📨 Received message:', message.type, 'room:', message.roomId);
-
     switch (message.type) {
       case 'join-room':
         this.handleJoinRoom(ws, message);
@@ -74,7 +69,7 @@ export class SignalingServer {
 
   private handleJoinRoom(ws: WebSocket, message: SignalingMessage) {
     const { roomId, userId } = message;
-    
+
     if (!roomId || !userId) {
       this.sendError(ws, 'Missing roomId or userId');
       return;
@@ -88,7 +83,7 @@ export class SignalingServer {
     if (!room) {
       room = {
         id: roomId,
-        participants: new Map()
+        participants: new Map(),
       };
       this.rooms.set(roomId, room);
       console.log(`🏠 Created new room: ${roomId}`);
@@ -98,21 +93,27 @@ export class SignalingServer {
     room.participants.set(userId, ws);
     this.userConnections.set(ws, { userId, roomId });
 
-    console.log(`👤 User ${userId} joined room ${roomId}. Total participants: ${room.participants.size}`);
+    console.log(
+      `👤 User ${userId} joined room ${roomId}. Total participants: ${room.participants.size}`
+    );
 
     // Notify user of successful join
     this.send(ws, {
       type: 'joined-room',
       roomId,
       userId,
-      participants: Array.from(room.participants.keys()).filter(id => id !== userId)
+      participants: Array.from(room.participants.keys()).filter((id) => id !== userId),
     });
 
     // Notify other participants
-    this.broadcastToRoom(roomId, {
-      type: 'user-joined',
+    this.broadcastToRoom(
+      roomId,
+      {
+        type: 'user-joined',
+        userId,
+      },
       userId
-    }, userId);
+    );
   }
 
   private handleLeaveRoom(ws: WebSocket) {
@@ -121,16 +122,20 @@ export class SignalingServer {
 
     const { userId, roomId } = connection;
     const room = this.rooms.get(roomId);
-    
+
     if (room) {
       room.participants.delete(userId);
       console.log(`👋 User ${userId} left room ${roomId}. Remaining: ${room.participants.size}`);
 
       // Notify other participants
-      this.broadcastToRoom(roomId, {
-        type: 'user-left',
+      this.broadcastToRoom(
+        roomId,
+        {
+          type: 'user-left',
+          userId,
+        },
         userId
-      }, userId);
+      );
 
       // Clean up empty rooms
       if (room.participants.size === 0) {
@@ -151,7 +156,7 @@ export class SignalingServer {
 
     const { userId, roomId } = connection;
     const room = this.rooms.get(roomId);
-    
+
     if (!room) {
       this.sendError(ws, 'Room not found');
       return;
@@ -164,17 +169,21 @@ export class SignalingServer {
         this.send(recipientWs, {
           type: message.type,
           sender: userId,
-          data: message.data
+          data: message.data,
         });
         console.log(`📤 Sent ${message.type} from ${userId} to ${message.recipient}`);
       }
     } else {
       // Broadcast to all other participants
-      this.broadcastToRoom(roomId, {
-        type: message.type,
-        sender: userId,
-        data: message.data
-      }, userId);
+      this.broadcastToRoom(
+        roomId,
+        {
+          type: message.type,
+          sender: userId,
+          data: message.data,
+        },
+        userId
+      );
       console.log(`📢 Broadcast ${message.type} from ${userId} to room ${roomId}`);
     }
   }
@@ -204,7 +213,7 @@ export class SignalingServer {
   private sendError(ws: WebSocket, error: string) {
     this.send(ws, {
       type: 'error',
-      error
+      error,
     });
   }
 

@@ -87,21 +87,23 @@ class AIAutomationEngine {
     logger.info('Generating automation suggestions', { contactCount: contacts.length });
 
     const suggestions: AutomationSuggestion[] = [];
-    
+
     // Analyze contact patterns for automation opportunities
     const patterns = this.analyzeContactPatterns(contacts);
-    
+
     // Generate suggestions based on patterns
     suggestions.push(...this.suggestNewRules(patterns, contacts));
     suggestions.push(...this.suggestRuleOptimizations(existingRules, patterns));
     suggestions.push(...this.suggestRuleConsolidation(existingRules));
-    
+
     // Score and prioritize suggestions
-    const scoredSuggestions = suggestions.map(s => ({
-      ...s,
-      score: this.calculateSuggestionScore(s, patterns)
-    })).sort((a, b) => b.score - a.score);
-    
+    const scoredSuggestions = suggestions
+      .map((s) => ({
+        ...s,
+        score: this.calculateSuggestionScore(s, patterns),
+      }))
+      .sort((a, b) => b.score - a.score);
+
     this.suggestions = scoredSuggestions.slice(0, 10); // Keep top 10
     return this.suggestions;
   }
@@ -121,19 +123,19 @@ class AIAutomationEngine {
 
     const analysis = this.analyzeRulePerformance(rule, performanceData);
     const optimizations = this.generateOptimizations(rule, analysis);
-    
+
     const optimizedRule: AutomationRule = {
       ...rule,
       ...optimizations.ruleChanges,
       aiOptimized: true,
       optimizationSuggestions: optimizations.suggestions,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     return {
       optimizedRule,
       improvements: optimizations.improvements,
-      estimatedImpact: optimizations.estimatedImpact
+      estimatedImpact: optimizations.estimatedImpact,
     };
   }
 
@@ -148,25 +150,25 @@ class AIAutomationEngine {
     confidence: number;
   }> {
     // Simulate rule execution to predict impact
-    const affectedContacts = contacts.filter(contact => 
+    const affectedContacts = contacts.filter((contact) =>
       this.wouldRuleTrigger(rule, contact)
     ).length;
 
     // Estimate executions based on trigger frequency
     const estimatedExecutions = this.estimateExecutionFrequency(rule, affectedContacts);
-    
+
     // Calculate time savings
     const timesSaved = this.calculateTimeSavings(rule, estimatedExecutions);
-    
+
     // Identify potential issues
     const potentialIssues = this.identifyPotentialIssues(rule, contacts);
-    
+
     return {
       affectedContacts,
       estimatedExecutions,
       timesSaved,
       potentialIssues,
-      confidence: this.calculatePredictionConfidence(rule, contacts)
+      confidence: this.calculatePredictionConfidence(rule, contacts),
     };
   }
 
@@ -177,13 +179,13 @@ class AIAutomationEngine {
     businessGoals: string[]
   ): AutomationRule {
     const baseRule = this.getBaseRuleTemplate(purpose);
-    
+
     // Customize based on criteria and goals
     const customizedRule = this.customizeRule(baseRule, contactCriteria, businessGoals);
-    
+
     // Apply AI optimizations
     const optimizedRule = this.applyAIOptimizations(customizedRule);
-    
+
     return optimizedRule;
   }
 
@@ -209,8 +211,9 @@ class AIAutomationEngine {
     } else {
       rule.performance.failureCount++;
     }
-    
-    const executionTime = new Date(execution.completedAt).getTime() - new Date(execution.triggeredAt).getTime();
+
+    const executionTime =
+      new Date(execution.completedAt).getTime() - new Date(execution.triggeredAt).getTime();
     rule.performance.avgExecutionTime = (rule.performance.avgExecutionTime + executionTime) / 2;
     rule.performance.lastTriggered = execution.triggeredAt;
 
@@ -219,7 +222,7 @@ class AIAutomationEngine {
       ruleId,
       execution,
       outcome: execution.outcome,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     this.savePerformanceHistory();
@@ -233,7 +236,7 @@ class AIAutomationEngine {
       statusDistribution: this.getDistribution(contacts, 'status'),
       sourceDistribution: this.getDistribution(contacts, 'sources'),
       commonActions: this.identifyCommonActions(contacts),
-      timePatterns: this.analyzeTimePatterns(contacts)
+      timePatterns: this.analyzeTimePatterns(contacts),
     };
 
     return patterns;
@@ -252,12 +255,12 @@ class AIAutomationEngine {
         reasoning: [
           `${patterns.interestLevelDistribution.hot} hot leads detected`,
           'Immediate response critical for hot leads',
-          'Automation ensures no delays'
+          'Automation ensures no delays',
         ],
         estimatedImpact: {
           efficiency: 40,
           coverage: patterns.interestLevelDistribution.hot,
-          timesSaved: 2
+          timesSaved: 2,
         },
         confidence: 90,
         suggestedRule: {
@@ -266,18 +269,19 @@ class AIAutomationEngine {
           conditions: [{ field: 'interestLevel', operator: 'equals', value: 'hot' }],
           actions: [
             { type: 'task', config: { title: 'Immediate follow-up required', priority: 'high' } },
-            { type: 'notification', config: { message: 'Hot lead assigned', channel: 'email' } }
-          ]
+            { type: 'notification', config: { message: 'Hot lead assigned', channel: 'email' } },
+          ],
         },
         priority: 'high',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     }
 
     // Industry-specific nurturing
-    const topIndustry = Object.entries(patterns.industryDistribution)
-      .sort(([,a], [,b]) => b - a)[0];
-    
+    const topIndustry = Object.entries(patterns.industryDistribution).sort(
+      ([, a], [, b]) => b - a
+    )[0];
+
     if (topIndustry && topIndustry[1] > 10) {
       suggestions.push({
         id: `suggestion_industry_${Date.now()}`,
@@ -287,16 +291,16 @@ class AIAutomationEngine {
         reasoning: [
           `${topIndustry[1]} contacts in ${topIndustry[0]} industry`,
           'Industry-specific content improves engagement',
-          'Automated nurturing maintains consistency'
+          'Automated nurturing maintains consistency',
         ],
         estimatedImpact: {
           efficiency: 25,
           coverage: topIndustry[1],
-          timesSaved: 3
+          timesSaved: 3,
         },
         confidence: 80,
         priority: 'medium',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     }
 
@@ -308,10 +312,10 @@ class AIAutomationEngine {
     patterns: any
   ): AutomationSuggestion[] {
     return existingRules
-      .filter(rule => rule.performance.triggerCount > 10)
-      .map(rule => {
+      .filter((rule) => rule.performance.triggerCount > 10)
+      .map((rule) => {
         const successRate = rule.performance.successCount / rule.performance.triggerCount;
-        
+
         if (successRate < 0.7) {
           return {
             id: `opt_${rule.id}_${Date.now()}`,
@@ -321,17 +325,17 @@ class AIAutomationEngine {
             reasoning: [
               `Low success rate: ${Math.round(successRate * 100)}%`,
               'Conditions may be too broad or narrow',
-              'Actions may need adjustment'
+              'Actions may need adjustment',
             ],
             estimatedImpact: {
               efficiency: 30,
               coverage: rule.performance.triggerCount,
-              timesSaved: 1
+              timesSaved: 1,
             },
             confidence: 75,
             affectedRuleIds: [rule.id],
             priority: successRate < 0.5 ? 'high' : 'medium',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           };
         }
         return null;
@@ -341,7 +345,7 @@ class AIAutomationEngine {
 
   private suggestRuleConsolidation(rules: AutomationRule[]): AutomationSuggestion[] {
     const suggestions: AutomationSuggestion[] = [];
-    
+
     // Find rules with similar triggers and conditions
     for (let i = 0; i < rules.length; i++) {
       for (let j = i + 1; j < rules.length; j++) {
@@ -354,53 +358,53 @@ class AIAutomationEngine {
             reasoning: [
               'Similar trigger conditions',
               'Overlapping target contacts',
-              'Consolidation reduces complexity'
+              'Consolidation reduces complexity',
             ],
             estimatedImpact: {
               efficiency: 20,
               coverage: 0,
-              timesSaved: 0.5
+              timesSaved: 0.5,
             },
             confidence: 85,
             affectedRuleIds: [rules[i].id, rules[j].id],
             priority: 'low',
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           });
         }
       }
     }
-    
+
     return suggestions;
   }
 
   private calculateSuggestionScore(suggestion: AutomationSuggestion, patterns: any): number {
     let score = suggestion.confidence;
-    
+
     // Boost score based on impact
     score += suggestion.estimatedImpact.efficiency * 0.5;
     score += suggestion.estimatedImpact.timesSaved * 10;
-    
+
     // Adjust based on priority
     if (suggestion.priority === 'high') score += 20;
     else if (suggestion.priority === 'medium') score += 10;
-    
+
     return score;
   }
 
   private getDistribution(contacts: Contact[], field: keyof Contact): Record<string, number> {
     const distribution: Record<string, number> = {};
-    
-    contacts.forEach(contact => {
+
+    contacts.forEach((contact) => {
       const value = contact[field];
       if (Array.isArray(value)) {
-        value.forEach(v => {
+        value.forEach((v) => {
           distribution[v] = (distribution[v] || 0) + 1;
         });
       } else if (value) {
         distribution[String(value)] = (distribution[String(value)] || 0) + 1;
       }
     });
-    
+
     return distribution;
   }
 
@@ -411,7 +415,7 @@ class AIAutomationEngine {
       'schedule_call',
       'send_proposal',
       'add_to_nurturing',
-      'update_score'
+      'update_score',
     ];
   }
 
@@ -420,16 +424,16 @@ class AIAutomationEngine {
     return {
       peakInteractionHours: ['10AM', '2PM', '4PM'],
       bestFollowUpDelay: '2-3 days',
-      optimalSequenceTiming: 'Every 5-7 days'
+      optimalSequenceTiming: 'Every 5-7 days',
     };
   }
 
   private wouldRuleTrigger(rule: Partial<AutomationRule>, contact: Contact): boolean {
     if (!rule.conditions) return false;
-    
-    return rule.conditions.every(condition => {
+
+    return rule.conditions.every((condition) => {
       const contactValue = (contact as any)[condition.field];
-      
+
       switch (condition.operator) {
         case 'equals':
           return contactValue === condition.value;
@@ -445,7 +449,10 @@ class AIAutomationEngine {
     });
   }
 
-  private estimateExecutionFrequency(rule: Partial<AutomationRule>, affectedContacts: number): number {
+  private estimateExecutionFrequency(
+    rule: Partial<AutomationRule>,
+    affectedContacts: number
+  ): number {
     // Estimate how often this rule would execute
     if (rule.trigger?.type === 'contact_created') {
       return affectedContacts * 0.1; // 10% of affected contacts per week
@@ -463,25 +470,28 @@ class AIAutomationEngine {
 
   private identifyPotentialIssues(rule: Partial<AutomationRule>, contacts: Contact[]): string[] {
     const issues = [];
-    
+
     if (rule.conditions && rule.conditions.length === 0) {
       issues.push('No conditions specified - rule may trigger too frequently');
     }
-    
+
     if (rule.actions && rule.actions.length > 5) {
       issues.push('Too many actions may cause delays or failures');
     }
-    
+
     return issues;
   }
 
-  private calculatePredictionConfidence(rule: Partial<AutomationRule>, contacts: Contact[]): number {
+  private calculatePredictionConfidence(
+    rule: Partial<AutomationRule>,
+    contacts: Contact[]
+  ): number {
     // Calculate confidence in predictions based on rule complexity and data quality
     let confidence = 80; // Base confidence
-    
+
     if (rule.conditions && rule.conditions.length > 0) confidence += 10;
     if (contacts.length > 100) confidence += 10;
-    
+
     return Math.min(95, confidence);
   }
 
@@ -494,19 +504,19 @@ class AIAutomationEngine {
         actions: [
           { type: 'email', config: { template: 'welcome_email' }, delay: 0 },
           { type: 'email', config: { template: 'nurturing_email_1' }, delay: 172800000 }, // 2 days
-          { type: 'task', config: { title: 'Follow up call' }, delay: 604800000 } // 7 days
-        ]
+          { type: 'task', config: { title: 'Follow up call' }, delay: 604800000 }, // 7 days
+        ],
       },
       follow_up: {
         name: 'Follow-up Reminder',
         trigger: { type: 'interaction', config: {} },
         conditions: [{ field: 'interestLevel', operator: 'equals', value: 'medium' }],
         actions: [
-          { type: 'task', config: { title: 'Follow up required' }, delay: 259200000 } // 3 days
-        ]
-      }
+          { type: 'task', config: { title: 'Follow up required' }, delay: 259200000 }, // 3 days
+        ],
+      },
     };
-    
+
     return templates[purpose as keyof typeof templates] || templates.lead_nurturing;
   }
 
@@ -517,18 +527,18 @@ class AIAutomationEngine {
   ): Partial<AutomationRule> {
     // Customize rule based on specific criteria and business goals
     const customized = { ...rule };
-    
+
     // Add criteria as conditions
     Object.entries(criteria).forEach(([field, value]) => {
       if (customized.conditions) {
         customized.conditions.push({
           field,
           operator: 'equals',
-          value
+          value,
         });
       }
     });
-    
+
     return customized;
   }
 
@@ -546,14 +556,14 @@ class AIAutomationEngine {
         triggerCount: 0,
         successCount: 0,
         failureCount: 0,
-        avgExecutionTime: 0
+        avgExecutionTime: 0,
       },
       aiOptimized: true,
       optimizationSuggestions: [],
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     return optimized;
   }
 
@@ -562,7 +572,7 @@ class AIAutomationEngine {
       successRate: rule.performance.successCount / rule.performance.triggerCount,
       avgExecutionTime: rule.performance.avgExecutionTime,
       failurePatterns: this.identifyFailurePatterns(performanceData),
-      optimizationOpportunities: this.identifyOptimizationOpportunities(rule, performanceData)
+      optimizationOpportunities: this.identifyOptimizationOpportunities(rule, performanceData),
     };
   }
 
@@ -571,22 +581,27 @@ class AIAutomationEngine {
       ruleChanges: {},
       suggestions: ['Consider adjusting timing', 'Review condition specificity'],
       improvements: ['Improved success rate', 'Reduced execution time'],
-      estimatedImpact: 25
+      estimatedImpact: 25,
     };
   }
 
   private identifyFailurePatterns(performanceData: any[]): any[] {
-    return performanceData.filter(p => p.outcome === 'failure');
+    return performanceData.filter((p) => p.outcome === 'failure');
   }
 
-  private identifyOptimizationOpportunities(rule: AutomationRule, performanceData: any[]): string[] {
+  private identifyOptimizationOpportunities(
+    rule: AutomationRule,
+    performanceData: any[]
+  ): string[] {
     return ['Timing optimization', 'Condition refinement'];
   }
 
   private rulesAreSimilar(rule1: AutomationRule, rule2: AutomationRule): boolean {
     // Check if rules have similar triggers and conditions
-    return rule1.trigger.type === rule2.trigger.type &&
-           rule1.conditions.length === rule2.conditions.length;
+    return (
+      rule1.trigger.type === rule2.trigger.type &&
+      rule1.conditions.length === rule2.conditions.length
+    );
   }
 
   private initializeDefaultRules(): void {
@@ -600,18 +615,18 @@ class AIAutomationEngine {
         conditions: [{ field: 'interestLevel', operator: 'equals', value: 'hot' }],
         actions: [
           { type: 'task', config: { title: 'Call hot lead immediately', priority: 'urgent' } },
-          { type: 'notification', config: { message: 'Hot lead alert', channel: 'email' } }
+          { type: 'notification', config: { message: 'Hot lead alert', channel: 'email' } },
         ],
         isActive: true,
         performance: { triggerCount: 0, successCount: 0, failureCount: 0, avgExecutionTime: 0 },
         aiOptimized: false,
         optimizationSuggestions: [],
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
+        updatedAt: new Date().toISOString(),
+      },
     ];
 
-    defaultRules.forEach(rule => {
+    defaultRules.forEach((rule) => {
       this.automationRules.set(rule.id, rule);
     });
   }
@@ -629,7 +644,10 @@ class AIAutomationEngine {
 
   private savePerformanceHistory(): void {
     try {
-      localStorage.setItem('automation_performance_history', JSON.stringify(this.performanceHistory.slice(-1000)));
+      localStorage.setItem(
+        'automation_performance_history',
+        JSON.stringify(this.performanceHistory.slice(-1000))
+      );
     } catch (error) {
       logger.warn('Failed to save automation performance history', error);
     }
@@ -655,17 +673,21 @@ class AIAutomationEngine {
     totalExecutions: number;
   } {
     const rules = Array.from(this.automationRules.values());
-    const activeRules = rules.filter(r => r.isActive).length;
+    const activeRules = rules.filter((r) => r.isActive).length;
     const totalExecutions = rules.reduce((sum, r) => sum + r.performance.triggerCount, 0);
-    const avgSuccessRate = rules.length > 0
-      ? rules.reduce((sum, r) => sum + (r.performance.successCount / Math.max(1, r.performance.triggerCount)), 0) / rules.length
-      : 0;
+    const avgSuccessRate =
+      rules.length > 0
+        ? rules.reduce(
+            (sum, r) => sum + r.performance.successCount / Math.max(1, r.performance.triggerCount),
+            0
+          ) / rules.length
+        : 0;
 
     return {
       totalRules: rules.length,
       activeRules,
       avgSuccessRate,
-      totalExecutions
+      totalExecutions,
     };
   }
 }

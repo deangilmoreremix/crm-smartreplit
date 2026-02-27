@@ -9,7 +9,7 @@ const AgencyApp: React.FC = () => (
     className="w-full h-full border-0"
     title="AI Agency Suite"
     allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-navigation allow-top-navigation"
+    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
   />
 );
 

@@ -19,7 +19,7 @@ const CallScriptContent: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -32,7 +32,9 @@ const CallScriptContent: React.FC = () => {
     try {
       const prompt = `Create a personalized sales call script to ${formData.callPurpose} for ${formData.prospectName} at ${formData.companyName}, a company in the ${formData.industry} industry.`;
       const script = await openai.generateScript(prompt); // <- replace with your actual function
-      const reason = await openai.generateReasoning(`Explain the strategy behind the call script for: ${formData.callPurpose}`);
+      const reason = await openai.generateReasoning(
+        `Explain the strategy behind the call script for: ${formData.callPurpose}`
+      );
       setResult(script);
       setReasoning(reason);
     } catch (err: any) {
@@ -64,26 +66,57 @@ const CallScriptContent: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="flex items-center gap-2">
               <User size={18} /> Prospect Name
-              <input type="text" name="prospectName" className="input-modern" value={formData.prospectName} onChange={handleChange} required />
+              <input
+                type="text"
+                name="prospectName"
+                className="input-modern"
+                value={formData.prospectName}
+                onChange={handleChange}
+                required
+              />
             </label>
 
             <label className="flex items-center gap-2">
               <Building size={18} /> Company Name
-              <input type="text" name="companyName" className="input-modern" value={formData.companyName} onChange={handleChange} required />
+              <input
+                type="text"
+                name="companyName"
+                className="input-modern"
+                value={formData.companyName}
+                onChange={handleChange}
+                required
+              />
             </label>
 
             <label className="flex items-center gap-2">
               <Tag size={18} /> Industry
-              <input type="text" name="industry" className="input-modern" value={formData.industry} onChange={handleChange} />
+              <input
+                type="text"
+                name="industry"
+                className="input-modern"
+                value={formData.industry}
+                onChange={handleChange}
+              />
             </label>
 
             <label className="flex items-center gap-2">
               <Phone size={18} /> Purpose of Call
-              <input type="text" name="callPurpose" className="input-modern" value={formData.callPurpose} onChange={handleChange} required />
+              <input
+                type="text"
+                name="callPurpose"
+                className="input-modern"
+                value={formData.callPurpose}
+                onChange={handleChange}
+                required
+              />
             </label>
           </div>
 
-          <button type="submit" className="btn-primary flex items-center gap-2" disabled={isLoading}>
+          <button
+            type="submit"
+            className="btn-primary flex items-center gap-2"
+            disabled={isLoading}
+          >
             {isLoading ? <RefreshCw className="animate-spin" size={16} /> : null}
             {isLoading ? 'Generating...' : 'Generate Call Script'}
           </button>
@@ -94,7 +127,11 @@ const CallScriptContent: React.FC = () => {
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="text-indigo-700 font-medium">Generated Script</h4>
-                <button type="button" className="btn-secondary text-sm flex items-center gap-1" onClick={handleCopy}>
+                <button
+                  type="button"
+                  className="btn-secondary text-sm flex items-center gap-1"
+                  onClick={handleCopy}
+                >
                   <Copy size={14} /> Copy
                 </button>
               </div>

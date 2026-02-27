@@ -4,9 +4,9 @@ const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'your_supabase_anon_k
 
 const headers = {
   'Content-Type': 'application/json',
-  'apikey': SUPABASE_KEY,
-  'Authorization': `Bearer ${SUPABASE_KEY}`,
-  'Prefer': 'return=representation'
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  Prefer: 'return=representation',
 };
 
 async function testContactsFunction() {
@@ -17,7 +17,7 @@ async function testContactsFunction() {
     console.log('📋 Testing GET /contacts...');
     const getResponse = await fetch(`${SUPABASE_URL}/functions/v1/contacts`, {
       method: 'GET',
-      headers
+      headers,
     });
 
     if (getResponse.ok) {
@@ -44,7 +44,7 @@ async function testDealsFunction() {
     console.log('📋 Testing GET /deals...');
     const getResponse = await fetch(`${SUPABASE_URL}/functions/v1/deals`, {
       method: 'GET',
-      headers
+      headers,
     });
 
     if (getResponse.ok) {
@@ -71,7 +71,7 @@ async function testDatabaseTables() {
     console.log('📋 Testing contacts table...');
     const contactsResponse = await fetch(`${SUPABASE_URL}/rest/v1/contacts?limit=1`, {
       method: 'GET',
-      headers
+      headers,
     });
 
     if (contactsResponse.ok) {
@@ -84,7 +84,7 @@ async function testDatabaseTables() {
     console.log('📋 Testing deals table...');
     const dealsResponse = await fetch(`${SUPABASE_URL}/rest/v1/deals?limit=1`, {
       method: 'GET',
-      headers
+      headers,
     });
 
     if (dealsResponse.ok) {
@@ -92,7 +92,6 @@ async function testDatabaseTables() {
     } else {
       console.log('❌ Deals table missing or inaccessible');
     }
-
   } catch (error) {
     console.log('❌ Database test error:', error.message);
   }

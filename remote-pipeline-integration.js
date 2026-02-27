@@ -1,7 +1,7 @@
 // Remote Pipeline Integration Code
 // Add this JavaScript to your remote pipeline app (https://cheery-syrniki-b5b6ca.netlify.app)
 
-(function() {
+(function () {
   'use strict';
 
   // CRM Pipeline Bridge for Remote App
@@ -13,12 +13,12 @@
       this.isInitialized = false;
       this.connectionAttempts = 0;
       this.maxConnectionAttempts = 5;
-      
+
       // Listen for messages from parent CRM
       window.addEventListener('message', this.handleCRMMessage.bind(this));
-      
+
       console.log('🔗 Pipeline Bridge initialized in remote app');
-      
+
       // Notify parent CRM that we're ready with retry logic
       this.notifyParentReady();
     }
@@ -31,10 +31,10 @@
 
       this.connectionAttempts++;
       console.log(`🔄 Connection attempt ${this.connectionAttempts}/${this.maxConnectionAttempts}`);
-      
-      this.sendToCRM('REMOTE_READY', { 
+
+      this.sendToCRM('REMOTE_READY', {
         timestamp: Date.now(),
-        attempt: this.connectionAttempts
+        attempt: this.connectionAttempts,
       });
 
       // Retry if not connected within 2 seconds
@@ -50,12 +50,12 @@
       const allowedOrigins = [
         'http://localhost:5000',
         'http://127.0.0.1:5000',
-        'https://localhost:5000'
+        'https://localhost:5000',
       ];
-      
+
       // Allow any replit.dev domain for development
       const isReplitDomain = event.origin && event.origin.includes('.replit.dev');
-      
+
       if (!allowedOrigins.includes(event.origin) && !isReplitDomain) {
         console.warn('❌ Message from unauthorized origin:', event.origin);
         return;
@@ -107,14 +107,14 @@
       this.deals = data.pipelineData.deals || [];
       this.stages = data.pipelineData.stages || [];
       this.isInitialized = true;
-      
+
       // Update your pipeline UI with CRM data
       this.updatePipelineUI();
-      
+
       // Send confirmation back to CRM
       this.sendToCRM('CRM_INIT_COMPLETE', {
         dealsReceived: this.deals.length,
-        stagesReceived: this.stages.length
+        stagesReceived: this.stages.length,
       });
     }
 
@@ -126,7 +126,7 @@
 
     handleDealUpdate(data) {
       console.log('✏️ Deal update from CRM:', data);
-      const dealIndex = this.deals.findIndex(deal => deal.id === data.dealId);
+      const dealIndex = this.deals.findIndex((deal) => deal.id === data.dealId);
       if (dealIndex !== -1) {
         this.deals[dealIndex] = { ...this.deals[dealIndex], ...data.updates };
         this.updateDealInUI(data.dealId, data.updates);
@@ -137,7 +137,7 @@
       console.log('📝 New deal from CRM:', deal);
       const newDeal = {
         id: deal.id || Date.now().toString(),
-        ...deal
+        ...deal,
       };
       this.deals.push(newDeal);
       this.addDealToUI(newDeal);
@@ -145,13 +145,13 @@
 
     handleDealDelete(dealId) {
       console.log('🗑️ Delete deal from CRM:', dealId);
-      this.deals = this.deals.filter(deal => deal.id !== dealId);
+      this.deals = this.deals.filter((deal) => deal.id !== dealId);
       this.removeDealFromUI(dealId);
     }
 
     handleDealMove(data) {
       console.log('↔️ Move deal from CRM:', data);
-      const deal = this.deals.find(d => d.id === data.dealId);
+      const deal = this.deals.find((d) => d.id === data.dealId);
       if (deal) {
         deal.stage = data.newStage;
         this.updateDealStageInUI(data.dealId, data.newStage, data.position);
@@ -164,7 +164,7 @@
         type,
         data,
         source: 'REMOTE_PIPELINE',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       try {
@@ -178,27 +178,27 @@
     // Update your pipeline UI with CRM data
     updatePipelineUI() {
       console.log('🎨 Updating pipeline UI with', this.deals.length, 'deals');
-      
+
       // Example: Update deal counts in your UI
       if (window.updateDealCounts) {
         window.updateDealCounts(this.deals);
       }
-      
+
       // Example: Refresh pipeline columns
       if (window.refreshPipelineColumns) {
         window.refreshPipelineColumns(this.deals, this.stages);
       }
-      
+
       // Example: Update statistics
       const totalValue = this.deals.reduce((sum, deal) => sum + (deal.value || 0), 0);
-      const activeDeals = this.deals.filter(deal => !deal.stage.includes('closed'));
-      
+      const activeDeals = this.deals.filter((deal) => !deal.stage.includes('closed'));
+
       console.log('📊 Pipeline Stats:', {
         totalDeals: this.deals.length,
         totalValue: totalValue,
-        activeDeals: activeDeals.length
+        activeDeals: activeDeals.length,
       });
-      
+
       // Trigger your app's native update methods
       this.triggerAppUpdate();
     }
@@ -206,7 +206,7 @@
     updateDealInUI(dealId, updates) {
       // Update specific deal in your UI
       console.log('🔄 Updating deal in UI:', dealId, updates);
-      
+
       // Example implementation - replace with your actual UI update logic
       const dealElement = document.querySelector(`[data-deal-id="${dealId}"]`);
       if (dealElement) {
@@ -214,13 +214,13 @@
           const titleElement = dealElement.querySelector('.deal-title');
           if (titleElement) titleElement.textContent = updates.title;
         }
-        
+
         if (updates.value) {
           const valueElement = dealElement.querySelector('.deal-value');
           if (valueElement) valueElement.textContent = this.formatCurrency(updates.value);
         }
       }
-      
+
       this.triggerAppUpdate();
     }
 
@@ -249,19 +249,21 @@
     // Helper method to trigger your app's update mechanism
     triggerAppUpdate() {
       // Dispatch custom event that your app can listen to
-      window.dispatchEvent(new CustomEvent('crmDataUpdated', {
-        detail: {
-          deals: this.deals,
-          stages: this.stages,
-          timestamp: Date.now()
-        }
-      }));
-      
+      window.dispatchEvent(
+        new CustomEvent('crmDataUpdated', {
+          detail: {
+            deals: this.deals,
+            stages: this.stages,
+            timestamp: Date.now(),
+          },
+        })
+      );
+
       // Call your app's refresh/update methods
       if (window.refreshPipeline) {
         window.refreshPipeline();
       }
-      
+
       if (window.updatePipelineState) {
         window.updatePipelineState(this.deals);
       }
@@ -285,7 +287,7 @@
         dealId,
         oldStage,
         newStage,
-        position
+        position,
       });
     }
 
@@ -298,7 +300,7 @@
     formatCurrency(amount) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'USD'
+        currency: 'USD',
       }).format(amount);
     }
 
@@ -308,19 +310,19 @@
         stages: this.stages,
         statistics: {
           totalValue: this.deals.reduce((sum, deal) => sum + (deal.value || 0), 0),
-          activeDeals: this.deals.filter(deal => !deal.stage.includes('closed')).length,
-          totalDeals: this.deals.length
-        }
+          activeDeals: this.deals.filter((deal) => !deal.stage.includes('closed')).length,
+          totalDeals: this.deals.length,
+        },
       });
     }
   }
 
   // Initialize the bridge
   const crmBridge = new CRMPipelineBridge();
-  
+
   // Make bridge available globally for your app to use
   window.crmBridge = crmBridge;
-  
+
   // Example: Listen for your app's events and sync with CRM
   window.addEventListener('crmDataUpdated', (event) => {
     console.log('📊 Pipeline data updated:', event.detail);

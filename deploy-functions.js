@@ -24,24 +24,23 @@ async function main() {
     // Read the function files
     const contactsCode = fs.readFileSync('supabase/functions/contacts/index.ts', 'utf8');
     const dealsCode = fs.readFileSync('supabase/functions/deals/index.ts', 'utf8');
-    
+
     console.log('🔍 Found function files:');
     console.log(`✓ contacts: ${contactsCode.length} characters`);
     console.log(`✓ deals: ${dealsCode.length} characters`);
-    
+
     console.log('\n📋 For deployment, please follow the manual steps:');
     console.log('1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT_REF/functions');
     console.log('2. Create function "contacts" with the contacts code');
     console.log('3. Create function "deals" with the deals code');
     console.log('4. Both functions are ready to deploy!');
-    
+
     // Show first 200 chars of each function for verification
     console.log('\n📝 Function previews:');
     console.log('CONTACTS:');
     console.log(contactsCode.substring(0, 200) + '...');
     console.log('\nDEALS:');
     console.log(dealsCode.substring(0, 200) + '...');
-    
   } catch (error) {
     console.error('Error:', error.message);
   }

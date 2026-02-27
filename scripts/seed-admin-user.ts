@@ -11,8 +11,8 @@ if (!supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 interface TestUser {
@@ -31,7 +31,7 @@ const testUsers: TestUser[] = [
     productTier: 'super_admin',
     role: 'super_admin',
     firstName: 'Dean',
-    lastName: 'Admin'
+    lastName: 'Admin',
   },
   {
     email: 'dean@videoremix.io',
@@ -39,7 +39,7 @@ const testUsers: TestUser[] = [
     productTier: 'super_admin',
     role: 'super_admin',
     firstName: 'Dean',
-    lastName: 'VideoRemix'
+    lastName: 'VideoRemix',
   },
   {
     email: 'test-whitelabel@smartcrm.test',
@@ -47,7 +47,7 @@ const testUsers: TestUser[] = [
     productTier: 'whitelabel',
     role: 'wl_user',
     firstName: 'Test',
-    lastName: 'Whitelabel'
+    lastName: 'Whitelabel',
   },
   {
     email: 'test-bundle@smartcrm.test',
@@ -55,7 +55,7 @@ const testUsers: TestUser[] = [
     productTier: 'smartcrm_bundle',
     role: 'user',
     firstName: 'Test',
-    lastName: 'Bundle'
+    lastName: 'Bundle',
   },
   {
     email: 'test-smartcrm@smartcrm.test',
@@ -63,7 +63,7 @@ const testUsers: TestUser[] = [
     productTier: 'smartcrm',
     role: 'user',
     firstName: 'Test',
-    lastName: 'SmartCRM'
+    lastName: 'SmartCRM',
   },
   {
     email: 'test-sales@smartcrm.test',
@@ -71,7 +71,7 @@ const testUsers: TestUser[] = [
     productTier: 'sales_maximizer',
     role: 'user',
     firstName: 'Test',
-    lastName: 'Sales'
+    lastName: 'Sales',
   },
   {
     email: 'test-aiboost@smartcrm.test',
@@ -79,7 +79,7 @@ const testUsers: TestUser[] = [
     productTier: 'ai_boost_unlimited',
     role: 'user',
     firstName: 'Test',
-    lastName: 'AIBoost'
+    lastName: 'AIBoost',
   },
   {
     email: 'test-aicomm@smartcrm.test',
@@ -87,7 +87,7 @@ const testUsers: TestUser[] = [
     productTier: 'ai_communication',
     role: 'user',
     firstName: 'Test',
-    lastName: 'AIComm'
+    lastName: 'AIComm',
   },
   {
     email: 'test-free@smartcrm.test',
@@ -95,8 +95,8 @@ const testUsers: TestUser[] = [
     productTier: null,
     role: 'user',
     firstName: 'Test',
-    lastName: 'FreeUser'
-  }
+    lastName: 'FreeUser',
+  },
 ];
 
 async function seedUsers() {
@@ -107,17 +107,17 @@ async function seedUsers() {
       console.log(`\n📧 Processing ${user.email}...`);
 
       const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers();
-      
+
       if (listError) {
         console.error(`  ❌ Error checking existing users: ${listError.message}`);
         continue;
       }
 
-      const existingUser = existingUsers.users.find(u => u.email === user.email);
+      const existingUser = existingUsers.users.find((u) => u.email === user.email);
 
       if (existingUser) {
         console.log(`  ⚠️ User already exists, updating...`);
-        
+
         const { error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
           password: user.password,
           email_confirm: true,
@@ -125,8 +125,8 @@ async function seedUsers() {
             first_name: user.firstName,
             last_name: user.lastName,
             product_tier: user.productTier,
-            role: user.role
-          }
+            role: user.role,
+          },
         });
 
         if (updateError) {
@@ -143,8 +143,8 @@ async function seedUsers() {
             first_name: user.firstName,
             last_name: user.lastName,
             product_tier: user.productTier,
-            role: user.role
-          }
+            role: user.role,
+          },
         });
 
         if (createError) {
@@ -163,7 +163,7 @@ async function seedUsers() {
   console.log('\n✨ Seeding complete!\n');
   console.log('Test accounts:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  testUsers.forEach(u => {
+  testUsers.forEach((u) => {
     console.log(`  ${u.email} / ${u.password} (${u.productTier || 'no tier'})`);
   });
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');

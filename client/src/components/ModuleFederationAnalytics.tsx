@@ -10,7 +10,7 @@ const LocalAnalyticsDashboard: React.FC = () => {
     revenue: { value: '$124,583', change: '+12.5%', trend: 'up', color: 'text-green-600' },
     users: { value: '8,492', change: '+8.3%', trend: 'up', color: 'text-blue-600' },
     conversion: { value: '3.24%', change: '-0.8%', trend: 'down', color: 'text-red-600' },
-    sessions: { value: '24,891', change: '+15.2%', trend: 'up', color: 'text-purple-600' }
+    sessions: { value: '24,891', change: '+15.2%', trend: 'up', color: 'text-purple-600' },
   };
 
   const chartData = [
@@ -18,7 +18,7 @@ const LocalAnalyticsDashboard: React.FC = () => {
     { month: 'Feb', revenue: 92000, users: 7200 },
     { month: 'Mar', revenue: 101000, users: 7800 },
     { month: 'Apr', revenue: 118000, users: 8200 },
-    { month: 'May', revenue: 124583, users: 8492 }
+    { month: 'May', revenue: 124583, users: 8492 },
   ];
 
   return (
@@ -30,9 +30,7 @@ const LocalAnalyticsDashboard: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Business Intelligence Dashboard
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              AI-Powered Analytics & Insights
-            </p>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">AI-Powered Analytics & Insights</p>
           </div>
           <div className="flex items-center gap-3">
             <select
@@ -51,7 +49,10 @@ const LocalAnalyticsDashboard: React.FC = () => {
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Object.entries(metrics).map(([key, data]) => (
-            <div key={key} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div
+              key={key}
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400 capitalize">
@@ -61,13 +62,9 @@ const LocalAnalyticsDashboard: React.FC = () => {
                     {data.value}
                   </p>
                 </div>
-                <div className={`text-lg ${data.color}`}>
-                  {data.trend === 'up' ? '↗' : '↘'}
-                </div>
+                <div className={`text-lg ${data.color}`}>{data.trend === 'up' ? '↗' : '↘'}</div>
               </div>
-              <p className={`text-sm mt-2 ${data.color}`}>
-                {data.change} from last period
-              </p>
+              <p className={`text-sm mt-2 ${data.color}`}>{data.change} from last period</p>
             </div>
           ))}
         </div>
@@ -128,7 +125,8 @@ const LocalAnalyticsDashboard: React.FC = () => {
                   Revenue Optimization Opportunity
                 </p>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Increasing email open rates by 15% could generate an additional $18,500 in monthly revenue.
+                  Increasing email open rates by 15% could generate an additional $18,500 in monthly
+                  revenue.
                 </p>
               </div>
             </div>
@@ -140,7 +138,8 @@ const LocalAnalyticsDashboard: React.FC = () => {
                   Customer Retention Alert
                 </p>
                 <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                  23 customers haven't logged in for 30+ days. Consider sending re-engagement campaigns.
+                  23 customers haven't logged in for 30+ days. Consider sending re-engagement
+                  campaigns.
                 </p>
               </div>
             </div>
@@ -152,7 +151,8 @@ const LocalAnalyticsDashboard: React.FC = () => {
                   Market Trend Analysis
                 </p>
                 <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                  Similar businesses in your sector are seeing 22% higher conversion rates with personalized onboarding.
+                  Similar businesses in your sector are seeing 22% higher conversion rates with
+                  personalized onboarding.
                 </p>
               </div>
             </div>
@@ -164,8 +164,8 @@ const LocalAnalyticsDashboard: React.FC = () => {
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <strong>Development Mode:</strong> This is a local analytics dashboard for testing.
-              In production, this would load via Module Federation from the remote analytics service.
+              <strong>Development Mode:</strong> This is a local analytics dashboard for testing. In
+              production, this would load via Module Federation from the remote analytics service.
             </p>
           </div>
         </div>
@@ -183,16 +183,16 @@ const AnalyticsFallback: React.FC = () => {
     if (!iframe) return;
 
     const handleLoad = () => {
-      console.log('✅ Analytics iframe loaded');
       try {
-        iframe.contentWindow?.postMessage({
-          type: 'SET_THEME',
-          theme: 'light',
-          mode: 'light'
-        }, '*');
-      } catch (err) {
-        console.log('Could not send theme message to iframe');
-      }
+        iframe.contentWindow?.postMessage(
+          {
+            type: 'SET_THEME',
+            theme: 'light',
+            mode: 'light',
+          },
+          '*'
+        );
+      } catch (err) {}
     };
 
     iframe.addEventListener('load', handleLoad);
@@ -246,61 +246,40 @@ class AnalyticsErrorBoundary extends React.Component<
 }
 
 const AnalyticsApp: React.FC = () => {
-  const [RemoteAnalytics, setRemoteAnalytics] = useState<React.ComponentType | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadRemote = async () => {
-      try {
-        setIsLoading(true);
-        console.log('🚀 Loading Module Federation Analytics...');
-        const module = await loadRemoteComponent(
-          'https://ai-analytics.smartcrm.vip',
-          'AnalyticsApp',
-          './AnalyticsApp'
-        );
-        
-        // Validate that we got a valid component
-        if (typeof module === 'function' || (typeof module === 'object' && module?.$$typeof)) {
-          setRemoteAnalytics(() => module);
-          console.log('✅ Module Federation Analytics loaded successfully');
-        } else {
-          throw new Error('Invalid module format received');
-        }
-      } catch (err) {
-        console.warn('❌ Module Federation failed, using iframe fallback:', err);
-        setError(err instanceof Error ? err.message : String(err));
-        setRemoteAnalytics(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Skip remote loading - remote modules are not available
+    // Show loading state briefly then show local dashboard
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
 
-    loadRemote();
+    return () => clearTimeout(timer);
   }, []);
 
-  // Show local analytics dashboard if module federation fails
-  if (error || !RemoteAnalytics) {
-    console.log('🔄 Module Federation failed, showing local analytics dashboard');
-    return <LocalAnalyticsDashboard />;
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Analytics Module...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Wrap remote component with error boundary to catch rendering errors
-  return (
-    <AnalyticsErrorBoundary>
-      <Suspense fallback={<LocalAnalyticsDashboard />}>
-        <RemoteAnalytics />
-      </Suspense>
-    </AnalyticsErrorBoundary>
-  );
+  // Show local analytics dashboard (remote modules not available)
+  return <LocalAnalyticsDashboard />;
 };
 
 interface ModuleFederationAnalyticsProps {
   showHeader?: boolean;
 }
 
-const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({ showHeader = false }) => {
+const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({
+  showHeader = false,
+}) => {
   return (
     <div className="h-full flex flex-col">
       {showHeader && (
@@ -309,7 +288,11 @@ const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({ s
             <h3 className="text-sm font-medium text-gray-900 dark:text-white">AI Analytics</h3>
             <div className="flex items-center text-green-600 text-xs">
               <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
               </svg>
               Module Federation
             </div>

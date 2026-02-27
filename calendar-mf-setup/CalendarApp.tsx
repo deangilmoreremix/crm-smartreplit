@@ -18,11 +18,11 @@ interface CalendarAppProps {
   onDataUpdate?: (data: any) => void;
 }
 
-const CalendarApp: React.FC<CalendarAppProps> = ({ 
-  theme = 'light', 
+const CalendarApp: React.FC<CalendarAppProps> = ({
+  theme = 'light',
   mode = 'light',
   sharedData = {},
-  onDataUpdate 
+  onDataUpdate,
 }) => {
   console.log('📅 CalendarApp loaded via Module Federation');
   console.log('🎨 Theme:', theme, 'Mode:', mode);
@@ -39,7 +39,7 @@ const CalendarApp: React.FC<CalendarAppProps> = ({
   return (
     <div className="w-full h-full" data-module-federation="calendar">
       {/* Replace YourMainApp with your actual component */}
-      <YourMainApp 
+      <YourMainApp
         theme={theme}
         mode={mode}
         appointments={sharedData?.appointments}

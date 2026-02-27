@@ -7,25 +7,29 @@ interface AnimatedFeatureIconProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-const AnimatedFeatureIcon: React.FC<AnimatedFeatureIconProps> = ({ 
-  icon, 
-  color, 
+const AnimatedFeatureIcon: React.FC<AnimatedFeatureIconProps> = ({
+  icon,
+  color,
   delay = 0,
-  size = 'md'
+  size = 'md',
 }) => {
   const sizeClasses = {
     sm: 'p-2',
     md: 'p-3',
-    lg: 'p-4'
+    lg: 'p-4',
   };
 
-  const animationClass = 
-    delay === 0 ? 'animate-float' : 
-    delay === 1 ? 'animate-float-delayed-1' : 
-    'animate-float-delayed-2';
+  const animationClass =
+    delay === 0
+      ? 'animate-float'
+      : delay === 1
+        ? 'animate-float-delayed-1'
+        : 'animate-float-delayed-2';
 
   return (
-    <div className={`rounded-full ${sizeClasses[size]} ${color} ${animationClass} shadow-md transform gpu-accelerated`}>
+    <div
+      className={`rounded-full ${sizeClasses[size]} ${color} ${animationClass} shadow-md transform gpu-accelerated`}
+    >
       {icon}
     </div>
   );

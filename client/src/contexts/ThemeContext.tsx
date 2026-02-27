@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 interface ThemeContextType {
   isDark: boolean;
-  toggleTheme: () => void; 
+  toggleTheme: () => void;
   isThemeChanging: boolean;
 }
 
@@ -40,26 +40,31 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const broadcastThemeToIframes = useCallback((theme: string) => {
     // Send message to all iframes
     const iframes = document.querySelectorAll('iframe');
-    iframes.forEach(iframe => {
+    iframes.forEach((iframe) => {
       try {
-        iframe.contentWindow?.postMessage({
-          type: 'WL_THEME_CHANGE',
-          theme: theme
-        }, '*');
+        iframe.contentWindow?.postMessage(
+          {
+            type: 'WL_THEME_CHANGE',
+            theme: theme,
+          },
+          '*'
+        );
       } catch (error) {
         // Ignore cross-origin errors
       }
     });
 
     // Also dispatch a custom event for any listening components
-    window.dispatchEvent(new CustomEvent('wl-theme-change', {
-      detail: { theme }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('wl-theme-change', {
+        detail: { theme },
+      })
+    );
   }, []);
 
   useEffect(() => {
     const theme = isDark ? 'dark' : 'light';
-    
+
     // Apply theme classes to both documentElement and body for maximum compatibility
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -68,14 +73,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark-mode');
     }
-    
+
     // Save to localStorage with both keys for compatibility
     localStorage.setItem('theme', theme);
     localStorage.setItem('darkMode', isDark.toString());
-    
+
     // Broadcast to iframes
     broadcastThemeToIframes(theme);
-    
+
     // Update meta theme-color for mobile browsers
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (!themeColorMeta) {
@@ -83,24 +88,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       themeColorMeta.setAttribute('name', 'theme-color');
       document.head.appendChild(themeColorMeta);
     }
-    
-    themeColorMeta.setAttribute(
-      'content', 
-      isDark ? '#0f172a' : '#ffffff'
-    );
+
+    themeColorMeta.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
   }, [isDark, broadcastThemeToIframes]);
 
   // Helper to handle theme transition state
   const handleThemeChange = useCallback(() => {
     setIsThemeChanging(true);
-    setIsDark(prev => !prev);
-    
+    setIsDark((prev) => !prev);
+
     // Reset the transition state after animation completes
     setTimeout(() => setIsThemeChanging(false), 300);
   }, []);
 
   const toggleTheme = () => {
-    setIsDark(prev => !prev);
+    setIsDark((prev) => !prev);
   };
 
   return (

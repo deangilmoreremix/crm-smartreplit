@@ -29,7 +29,7 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
   useEffect(() => {
     if (autofillProduct) {
       setProductInput(autofillProduct);
-      agent.loadPreviousDemo(autofillProduct).then(history => {
+      agent.loadPreviousDemo(autofillProduct).then((history) => {
         if (history) {
           setConversationHistory(history);
         }
@@ -41,7 +41,8 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
     let input = productInput;
     if (file) {
       const isPDF = file.type === 'application/pdf';
-      const isDOCX = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      const isDOCX =
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       if (isPDF) input = await agent.extractPDFSummary(file);
       else if (isDOCX) input = await agent.extractDocxSummary(file);
       setProductInput(input);
@@ -71,7 +72,7 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
 
   const handleObjection = async () => {
     if (!objectionInput.trim()) return;
-    
+
     const emotion = await agent.detectEmotion(objectionInput);
     const response = await agent.handleObjections(objectionInput);
     setObjections([...objections, `🙋‍♂️ ${objectionInput} (${emotion})\n🤖 ${response}`]);
@@ -80,10 +81,14 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
 
   const handleFollowUp = async () => {
     if (!userMessage.trim()) return;
-    
+
     const intent = await agent.detectIntent(userMessage);
     const reply = await agent.continueConversation(userMessage, conversationHistory);
-    const newHistory = [...conversationHistory, `User: ${userMessage} (${intent})`, `Agent: ${reply}`];
+    const newHistory = [
+      ...conversationHistory,
+      `User: ${userMessage} (${intent})`,
+      `Agent: ${reply}`,
+    ];
     setConversationHistory(newHistory);
     setUserMessage('');
     await agent.speakAgent(reply);
@@ -117,10 +122,10 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <input 
-            type="file" 
-            accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
-            onChange={(e) => setFile(e.target.files?.[0] || null)} 
+          <input
+            type="file"
+            accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
             className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
           <UploadCloud className="text-gray-400" />
@@ -154,7 +159,9 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
               <div>
                 <h4 className="font-semibold mt-4">🔎 Discovery Questions:</h4>
                 <ul className="list-disc pl-6">
-                  {qaFlow.map((q, i) => <li key={i}>{q}</li>)}
+                  {qaFlow.map((q, i) => (
+                    <li key={i}>{q}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -162,7 +169,9 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
               <div>
                 <h4 className="font-semibold mt-4">📌 Recommended Next Steps:</h4>
                 <ul className="list-disc pl-6">
-                  {recommendations.map((r, i) => <li key={i}>{r}</li>)}
+                  {recommendations.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -176,10 +185,14 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
                     if (e.key === 'Enter') handleObjection();
                   }}
                 />
-                <Button onClick={handleObjection} variant="outline">Handle</Button>
+                <Button onClick={handleObjection} variant="outline">
+                  Handle
+                </Button>
               </div>
               {objections.map((o, i) => (
-                <p key={i} className="text-sm whitespace-pre-line">{o}</p>
+                <p key={i} className="text-sm whitespace-pre-line">
+                  {o}
+                </p>
               ))}
             </div>
             <div className="mt-4">
@@ -196,11 +209,23 @@ const DemoAgentModal: React.FC<DemoAgentModalProps> = ({ isOpen, onClose, autofi
               </div>
               <div className="mt-4 space-y-2">
                 {conversationHistory.map((msg, i) => (
-                  <p key={i} className="text-sm whitespace-pre-line">{msg}</p>
+                  <p key={i} className="text-sm whitespace-pre-line">
+                    {msg}
+                  </p>
                 ))}
               </div>
-              <Button onClick={handleExportVideo} className="mt-4 w-full" disabled={isExportingVideo}>
-                {isExportingVideo ? 'Exporting Demo...' : <><Video className="inline mr-2" /> Export Demo as Video</>}
+              <Button
+                onClick={handleExportVideo}
+                className="mt-4 w-full"
+                disabled={isExportingVideo}
+              >
+                {isExportingVideo ? (
+                  'Exporting Demo...'
+                ) : (
+                  <>
+                    <Video className="inline mr-2" /> Export Demo as Video
+                  </>
+                )}
               </Button>
             </div>
           </div>

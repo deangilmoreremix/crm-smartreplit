@@ -12,8 +12,11 @@ export default function CallbackPage() {
     const handleAuthCallback = async () => {
       try {
         // Get the session from Supabase (this processes the URL hash tokens)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError) {
           console.error('Session error:', sessionError);
           setError('Authentication failed. Please try again.');
@@ -39,13 +42,13 @@ export default function CallbackPage() {
             // Super Admin emails get super_admin role automatically
             const superAdminEmails = [
               'dean@videoremix.io',
-              'victor@videoremix.io', 
-              'samuel@videoremix.io'
+              'victor@videoremix.io',
+              'samuel@videoremix.io',
             ];
-            
+
             const userEmail = session.user.email?.toLowerCase();
             let assignedRole = 'regular_user'; // Default role
-            
+
             if (userEmail && superAdminEmails.includes(userEmail)) {
               assignedRole = 'super_admin';
             } else if (session.user.user_metadata?.role) {
@@ -53,19 +56,17 @@ export default function CallbackPage() {
               assignedRole = session.user.user_metadata.role;
             }
 
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert([
-                {
-                  id: session.user.id,
-                  username: session.user.email?.split('@')[0],
-                  firstName: session.user.user_metadata?.first_name,
-                  lastName: session.user.user_metadata?.last_name,
-                  role: assignedRole,
-                  appContext: 'smartcrm',
-                  emailTemplateSet: 'smartcrm',
-                }
-              ]);
+            const { error: insertError } = await supabase.from('profiles').insert([
+              {
+                id: session.user.id,
+                username: session.user.email?.split('@')[0],
+                firstName: session.user.user_metadata?.first_name,
+                lastName: session.user.user_metadata?.last_name,
+                role: assignedRole,
+                appContext: 'smartcrm',
+                emailTemplateSet: 'smartcrm',
+              },
+            ]);
 
             if (insertError) {
               console.error('Profile creation error:', insertError);
@@ -98,9 +99,7 @@ export default function CallbackPage() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Completing Authentication
           </h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Please wait while we sign you in...
-          </p>
+          <p className="text-gray-600 dark:text-gray-300">Please wait while we sign you in...</p>
         </div>
       </div>
     );
@@ -114,9 +113,7 @@ export default function CallbackPage() {
             <h2 className="text-xl font-semibold text-red-900 dark:text-red-100 mb-2">
               Authentication Error
             </h2>
-            <p className="text-red-700 dark:text-red-300 mb-4">
-              {error}
-            </p>
+            <p className="text-red-700 dark:text-red-300 mb-4">{error}</p>
             <button
               onClick={() => navigate('/auth/signin')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"

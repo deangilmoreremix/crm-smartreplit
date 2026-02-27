@@ -1,6 +1,118 @@
 // server/openai/index.ts
 import OpenAI from "openai";
 
+// server/services/enhancedCache.ts
+var LRUCache = class {
+  constructor(maxSize = 1e4, defaultTTL = 5 * 60 * 1e3) {
+    this.cache = /* @__PURE__ */ new Map();
+    this.accessOrder = /* @__PURE__ */ new Set();
+    this.stats = {
+      hits: 0,
+      misses: 0,
+      evictions: 0,
+      sets: 0,
+      size: 0,
+      maxSizeReached: 0
+    };
+    this.maxSize = maxSize;
+    this.defaultTTL = defaultTTL;
+    if (typeof setInterval !== "undefined") {
+      setInterval(() => this.cleanup(), 5 * 60 * 1e3);
+    }
+  }
+  async get(key) {
+    const entry = this.cache.get(key);
+    if (entry && !this.isExpired(entry)) {
+      this.accessOrder.delete(key);
+      this.accessOrder.add(key);
+      this.stats.hits++;
+      return entry.value;
+    }
+    if (entry) {
+      this.cache.delete(key);
+      this.accessOrder.delete(key);
+    }
+    this.stats.misses++;
+    return null;
+  }
+  async set(key, value, ttl) {
+    this.stats.sets++;
+    const ttlMs = ttl ?? this.defaultTTL;
+    const entry = {
+      value,
+      expiresAt: Date.now() + ttlMs,
+      ttl: ttlMs,
+      accessCount: 0,
+      lastAccessed: Date.now()
+    };
+    const existing = this.cache.get(key);
+    if (existing) {
+      entry.accessCount = existing.accessCount + 1;
+    }
+    this.cache.set(key, entry);
+    this.accessOrder.delete(key);
+    this.accessOrder.add(key);
+    this.stats.size = this.cache.size;
+    this.evictIfNeeded();
+  }
+  async delete(key) {
+    const deleted = this.cache.delete(key);
+    this.accessOrder.delete(key);
+    this.stats.size = this.cache.size;
+    return deleted;
+  }
+  async clear() {
+    this.cache.clear();
+    this.accessOrder.clear();
+    this.stats.size = 0;
+  }
+  isExpired(entry) {
+    return Date.now() > entry.expiresAt;
+  }
+  evictIfNeeded() {
+    if (this.cache.size > this.maxSize) {
+      this.stats.maxSizeReached++;
+      const toEvict = Array.from(this.accessOrder).slice(
+        0,
+        Math.max(1, Math.floor(this.maxSize * 0.1))
+      );
+      for (const key of toEvict) {
+        this.cache.delete(key);
+        this.accessOrder.delete(key);
+        this.stats.evictions++;
+      }
+      this.stats.size = this.cache.size;
+    }
+  }
+  cleanup() {
+    const now = Date.now();
+    const toDelete = [];
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiresAt) {
+        toDelete.push(key);
+      }
+    }
+    for (const key of toDelete) {
+      this.cache.delete(key);
+      this.accessOrder.delete(key);
+    }
+    this.stats.size = this.cache.size;
+  }
+  getStats() {
+    const total = this.stats.hits + this.stats.misses;
+    const hitRate = total > 0 ? this.stats.hits / total * 100 : 0;
+    return {
+      ...this.stats,
+      hitRate: hitRate.toFixed(2) + "%",
+      memoryUsage: `${(this.cache.size * 0.2).toFixed(2)} KB`
+      // Rough estimate
+    };
+  }
+};
+var aiResponseCache = new LRUCache(5e3, 10 * 60 * 1e3);
+var userDataCache = new LRUCache(1e4, 30 * 60 * 1e3);
+var configCache = new LRUCache(1e3, 60 * 60 * 1e3);
+
 // server/services/redisRateLimiter.ts
 import Redis from "ioredis";
 var RedisRateLimiter = class {
@@ -62,7 +174,8 @@ var RedisRateLimiter = class {
       pipeline.zcard(redisKey);
       pipeline.zrange(redisKey, 0, -1, "WITHSCORES");
       const results = await pipeline.exec();
-      if (!results) return { currentRequests: 0, remainingRequests: 0, resetTime: now + windowMs, windowStart };
+      if (!results)
+        return { currentRequests: 0, remainingRequests: 0, resetTime: now + windowMs, windowStart };
       const currentRequests = results[1][1];
       const resetTime = now + windowMs;
       return {
@@ -129,7 +242,10 @@ var RedisRateLimiter = class {
       await this.redis.ping();
       return true;
     } catch (error) {
-      console.warn("Redis health check failed:", error instanceof Error ? error.message : String(error));
+      console.warn(
+        "Redis health check failed:",
+        error instanceof Error ? error.message : String(error)
+      );
       return false;
     }
   }
@@ -150,200 +266,6 @@ process.on("SIGINT", async () => {
   if (redisRateLimiter) {
     await redisRateLimiter.cleanup();
   }
-});
-
-// server/services/enhancedCache.ts
-var EnhancedLRUCache = class {
-  constructor(maxSize = 1e4, defaultTTL = 5 * 60 * 1e3) {
-    this.cache = /* @__PURE__ */ new Map();
-    this.accessOrder = /* @__PURE__ */ new Set();
-    this.stats = {
-      hits: 0,
-      misses: 0,
-      evictions: 0,
-      sets: 0,
-      size: 0,
-      maxSizeReached: 0,
-      redisHits: 0,
-      redisMisses: 0
-    };
-    this.maxSize = maxSize;
-    this.defaultTTL = defaultTTL;
-    try {
-      this.redis = getRedisRateLimiter();
-    } catch (error) {
-      console.warn("Redis not available for cache, using in-memory only");
-      this.redis = null;
-    }
-  }
-  async get(key) {
-    const localEntry = this.cache.get(key);
-    if (localEntry && !this.isExpired(localEntry)) {
-      this.accessOrder.delete(key);
-      this.accessOrder.add(key);
-      this.stats.hits++;
-      return localEntry.value;
-    }
-    if (this.redis) {
-      try {
-        const redisKey = `cache:${key}`;
-        const redisData = await this.redisGet(redisKey);
-        if (redisData) {
-          this.setLocal(key, redisData.value, redisData.ttl);
-          this.stats.redisHits++;
-          this.stats.hits++;
-          return redisData.value;
-        }
-        this.stats.redisMisses++;
-      } catch (error) {
-        console.warn("Redis cache get failed:", error instanceof Error ? error.message : String(error));
-      }
-    }
-    if (localEntry) {
-      this.cache.delete(key);
-      this.accessOrder.delete(key);
-    }
-    this.stats.misses++;
-    return null;
-  }
-  async set(key, value, ttl = this.defaultTTL) {
-    this.stats.sets++;
-    this.setLocal(key, value, ttl);
-    if (this.redis) {
-      try {
-        const redisKey = `cache:${key}`;
-        await this.redisSet(redisKey, { value, ttl }, ttl);
-      } catch (error) {
-        console.warn("Redis cache set failed:", error instanceof Error ? error.message : String(error));
-      }
-    }
-    this.evictIfNeeded();
-  }
-  setLocal(key, value, ttl) {
-    const entry = {
-      value,
-      expiresAt: Date.now() + ttl,
-      ttl,
-      accessCount: 0,
-      lastAccessed: Date.now()
-    };
-    const existing = this.cache.get(key);
-    if (existing) {
-      entry.accessCount = existing.accessCount + 1;
-    }
-    this.cache.set(key, entry);
-    this.accessOrder.delete(key);
-    this.accessOrder.add(key);
-    this.stats.size = this.cache.size;
-  }
-  evictIfNeeded() {
-    if (this.cache.size > this.maxSize) {
-      this.stats.maxSizeReached++;
-      const toEvict = Array.from(this.accessOrder).slice(0, Math.max(1, Math.floor(this.maxSize * 0.1)));
-      for (const key of toEvict) {
-        this.cache.delete(key);
-        this.accessOrder.delete(key);
-        this.stats.evictions++;
-      }
-      this.stats.size = this.cache.size;
-    }
-  }
-  async delete(key) {
-    const localDeleted = this.cache.delete(key);
-    this.accessOrder.delete(key);
-    if (this.redis) {
-      try {
-        await this.redisDel(`cache:${key}`);
-      } catch (error) {
-        console.warn("Redis cache delete failed:", error instanceof Error ? error.message : String(error));
-      }
-    }
-    this.stats.size = this.cache.size;
-    return localDeleted;
-  }
-  async clear() {
-    this.cache.clear();
-    this.accessOrder.clear();
-    this.stats.size = 0;
-    if (this.redis) {
-      try {
-        console.log("Redis cache clear not implemented - use Redis CLI");
-      } catch (error) {
-        console.warn("Redis cache clear failed:", error instanceof Error ? error.message : String(error));
-      }
-    }
-  }
-  isExpired(entry) {
-    return Date.now() > entry.expiresAt;
-  }
-  // Clean up expired entries
-  cleanup() {
-    const now = Date.now();
-    const toDelete = [];
-    for (const [key, entry] of this.cache.entries()) {
-      if (now > entry.expiresAt) {
-        toDelete.push(key);
-      }
-    }
-    for (const key of toDelete) {
-      this.cache.delete(key);
-      this.accessOrder.delete(key);
-    }
-    this.stats.size = this.cache.size;
-  }
-  getStats() {
-    const hitRate = this.stats.hits + this.stats.misses > 0 ? this.stats.hits / (this.stats.hits + this.stats.misses) * 100 : 0;
-    const redisHitRate = this.stats.redisHits + this.stats.redisMisses > 0 ? this.stats.redisHits / (this.stats.redisHits + this.stats.redisMisses) * 100 : 0;
-    return {
-      ...this.stats,
-      hitRate: hitRate.toFixed(2) + "%",
-      redisHitRate: redisHitRate.toFixed(2) + "%",
-      memoryUsage: this.calculateMemoryUsage(),
-      health: this.redis ? "distributed" : "local-only"
-    };
-  }
-  calculateMemoryUsage() {
-    const entrySize = 200;
-    const totalBytes = this.cache.size * entrySize;
-    return `${(totalBytes / 1024 / 1024).toFixed(2)} MB`;
-  }
-  // Redis helper methods
-  async redisGet(_key) {
-    if (!this.redis) return null;
-    try {
-      return null;
-    } catch (error) {
-      throw error;
-    }
-  }
-  async redisSet(_key, _data, _ttl) {
-    if (!this.redis) return;
-    try {
-    } catch (error) {
-      throw error;
-    }
-  }
-  async redisDel(_key) {
-    if (!this.redis) return;
-    try {
-    } catch (error) {
-      throw error;
-    }
-  }
-};
-var aiResponseCache = new EnhancedLRUCache(5e3, 10 * 60 * 1e3);
-var userDataCache = new EnhancedLRUCache(1e4, 30 * 60 * 1e3);
-var configCache = new EnhancedLRUCache(1e3, 60 * 60 * 1e3);
-setInterval(() => {
-  aiResponseCache.cleanup();
-  userDataCache.cleanup();
-  configCache.cleanup();
-}, 5 * 60 * 1e3);
-process.on("SIGTERM", () => {
-  console.log("Cache cleanup completed");
-});
-process.on("SIGINT", () => {
-  console.log("Cache cleanup completed");
 });
 
 // server/openai/index.ts
@@ -453,17 +375,22 @@ async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
   if (!googleAIKey) {
     throw new Error("Google AI API key not configured");
   }
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: prompt }]
-      }]
-    })
-  });
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ]
+      })
+    }
+  );
   if (!response.ok) {
     throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
   }
@@ -488,7 +415,12 @@ var handler = async (event, _context) => {
     const windowMs = 60 * 1e3;
     const maxRequests = 10;
     const rateLimiter = getRedisRateLimiter();
-    const rateLimitResult = await rateLimiter.checkLimit(`ai_requests_${userId}`, maxRequests, windowMs, clientIP);
+    const rateLimitResult = await rateLimiter.checkLimit(
+      `ai_requests_${userId}`,
+      maxRequests,
+      windowMs,
+      clientIP
+    );
     if (!rateLimitResult.allowed) {
       return {
         statusCode: 429,
@@ -568,7 +500,10 @@ var handler = async (event, _context) => {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: "OpenAI API key not configured", message: "Please configure OpenAI API key for embeddings" })
+          body: JSON.stringify({
+            error: "OpenAI API key not configured",
+            message: "Please configure OpenAI API key for embeddings"
+          })
         };
       }
       const response = await openai.embeddings.create({
@@ -588,7 +523,14 @@ var handler = async (event, _context) => {
       };
     }
     if (pathParts.length >= 3 && pathParts[0] === "openai" && pathParts[1] === "images" && pathParts[2] === "generate" && httpMethod === "POST") {
-      const { prompt, model = "dall-e-3", size = "1024x1024", quality = "standard", style = "vivid", n = 1 } = JSON.parse(body);
+      const {
+        prompt,
+        model = "dall-e-3",
+        size = "1024x1024",
+        quality = "standard",
+        style = "vivid",
+        n = 1
+      } = JSON.parse(body);
       if (!prompt) {
         return {
           statusCode: 400,
@@ -600,7 +542,10 @@ var handler = async (event, _context) => {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: "OpenAI API key not configured", message: "Please configure OpenAI API key for image generation" })
+          body: JSON.stringify({
+            error: "OpenAI API key not configured",
+            message: "Please configure OpenAI API key for image generation"
+          })
         };
       }
       const response = await openai.images.generate({
@@ -701,13 +646,16 @@ var handler = async (event, _context) => {
         const result = await aiCircuitBreaker.execute(async () => {
           const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
-            messages: [{
-              role: "system",
-              content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
-            }, {
-              role: "user",
-              content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
-            }],
+            messages: [
+              {
+                role: "system",
+                content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
+              },
+              {
+                role: "user",
+                content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
+              }
+            ],
             response_format: { type: "json_object" },
             temperature: 0.7,
             max_tokens: 200
@@ -737,7 +685,10 @@ var handler = async (event, _context) => {
           })
         };
       } catch (error) {
-        console.error("Smart greeting circuit breaker error:", error instanceof Error ? error.message : String(error));
+        console.error(
+          "Smart greeting circuit breaker error:",
+          error instanceof Error ? error.message : String(error)
+        );
         aiUsageTracker.trackUsage({
           userId: event.headers["x-user-id"] || "anonymous",
           endpoint: "smart-greeting",
@@ -775,13 +726,16 @@ var handler = async (event, _context) => {
       const { historicalData, currentMetrics } = JSON.parse(body);
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations."
-        }, {
-          role: "user",
-          content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
-        }],
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations."
+          },
+          {
+            role: "user",
+            content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
+          }
+        ],
         response_format: { type: "json_object" },
         temperature: 0.3,
         max_tokens: 800
@@ -827,7 +781,12 @@ var handler = async (event, _context) => {
       }
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",
-        messages: [{ role: "user", content: "Generate a business insight about CRM efficiency in exactly 1 sentence." }],
+        messages: [
+          {
+            role: "user",
+            content: "Generate a business insight about CRM efficiency in exactly 1 sentence."
+          }
+        ],
         max_tokens: 50
       });
       return {
@@ -943,12 +902,16 @@ Image URL: ${imageUrl}` : prompt
           headers,
           body: JSON.stringify({
             output_text: continuedResponse.choices[0].message.content,
-            output: [{
-              content: [{
-                type: "output_text",
-                text: continuedResponse.choices[0].message.content
-              }]
-            }],
+            output: [
+              {
+                content: [
+                  {
+                    type: "output_text",
+                    text: continuedResponse.choices[0].message.content
+                  }
+                ]
+              }
+            ],
             tool_calls: toolCalls,
             continued: true
           })
@@ -959,12 +922,16 @@ Image URL: ${imageUrl}` : prompt
         headers,
         body: JSON.stringify({
           output_text: response.choices[0].message.content,
-          output: [{
-            content: [{
-              type: "output_text",
-              text: response.choices[0].message.content
-            }]
-          }],
+          output: [
+            {
+              content: [
+                {
+                  type: "output_text",
+                  text: response.choices[0].message.content
+                }
+              ]
+            }
+          ],
           model: response.model,
           usage: response.usage
         })
@@ -980,7 +947,10 @@ Image URL: ${imageUrl}` : prompt
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: "Internal server error", message: error instanceof Error ? error.message : String(error) })
+      body: JSON.stringify({
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : String(error)
+      })
     };
   }
 };

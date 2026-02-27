@@ -6,16 +6,12 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 // Super Admin emails
-const SUPER_ADMIN_EMAILS = [
-  'dean@videoremix.io',
-  'victor@videoremix.io', 
-  'samuel@videoremix.io'
-];
+const SUPER_ADMIN_EMAILS = ['dean@videoremix.io', 'victor@videoremix.io', 'samuel@videoremix.io'];
 
 /**
  * Migrates existing users to new role structure
@@ -25,7 +21,7 @@ const SUPER_ADMIN_EMAILS = [
  */
 export async function migrateUserRoles() {
   console.log('🔄 Starting user role migration...');
-  
+
   try {
     // Get all existing users from profiles table
     const { data: users, error: fetchError } = await supabase
@@ -70,7 +66,7 @@ export async function migrateUserRoles() {
           oldRole: user.role,
           newRole: newRole,
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
-          username: user.username
+          username: user.username,
         });
       } else {
         alreadyCorrect++;
@@ -90,8 +86,10 @@ export async function migrateUserRoles() {
 
     // Show what will be updated
     console.log('🔄 Users to be updated:');
-    updates.forEach(update => {
-      console.log(`   ${update.name || update.username} (${update.username}): ${update.oldRole} → ${update.newRole}`);
+    updates.forEach((update) => {
+      console.log(
+        `   ${update.name || update.username} (${update.username}): ${update.oldRole} → ${update.newRole}`
+      );
     });
 
     // Perform the updates
@@ -121,7 +119,6 @@ export async function migrateUserRoles() {
     console.log(`\n🎉 Migration Complete!`);
     console.log(`   ✅ Successful: ${successCount}`);
     console.log(`   ❌ Failed: ${errorCount}`);
-
   } catch (error) {
     console.error('❌ Migration failed:', error);
     throw error;
@@ -141,7 +138,7 @@ export async function getUserRoleStats() {
     if (error) throw error;
 
     const stats: Record<string, number> = {};
-    users?.forEach(user => {
+    users?.forEach((user) => {
       stats[user.role || 'unknown'] = (stats[user.role || 'unknown'] || 0) + 1;
     });
 

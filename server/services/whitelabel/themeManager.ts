@@ -132,18 +132,18 @@ class ThemeManager {
         text: {
           primary: '#111827',
           secondary: '#6B7280',
-          disabled: '#9CA3AF'
+          disabled: '#9CA3AF',
         },
         success: '#10B981',
         warning: '#F59E0B',
         error: '#EF4444',
-        info: '#3B82F6'
+        info: '#3B82F6',
       },
       typography: {
         fontFamily: {
           primary: 'Inter, system-ui, sans-serif',
           secondary: 'Georgia, serif',
-          monospace: 'Fira Code, monospace'
+          monospace: 'Fira Code, monospace',
         },
         fontSize: {
           xs: '0.75rem',
@@ -152,20 +152,20 @@ class ThemeManager {
           lg: '1.125rem',
           xl: '1.25rem',
           '2xl': '1.5rem',
-          '3xl': '1.875rem'
+          '3xl': '1.875rem',
         },
         fontWeight: {
           light: 300,
           normal: 400,
           medium: 500,
           semibold: 600,
-          bold: 700
+          bold: 700,
         },
         lineHeight: {
           tight: 1.25,
           normal: 1.5,
-          relaxed: 1.75
-        }
+          relaxed: 1.75,
+        },
       },
       spacing: {
         xs: '0.25rem',
@@ -173,7 +173,7 @@ class ThemeManager {
         md: '1rem',
         lg: '1.5rem',
         xl: '2rem',
-        '2xl': '3rem'
+        '2xl': '3rem',
       },
       borderRadius: {
         none: '0',
@@ -181,27 +181,27 @@ class ThemeManager {
         md: '0.375rem',
         lg: '0.5rem',
         xl: '0.75rem',
-        full: '9999px'
+        full: '9999px',
       },
       shadows: {
         sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-        xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+        xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
       },
       animations: {
         duration: {
           fast: '150ms',
           normal: '300ms',
-          slow: '500ms'
+          slow: '500ms',
         },
         easing: {
           linear: 'linear',
           easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
           easeOut: 'cubic-bezier(0, 0, 0.2, 1)',
-          easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)'
-        }
-      }
+          easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        },
+      },
     };
   }
 
@@ -219,9 +219,9 @@ class ThemeManager {
         text: {
           primary: '#F9FAFB',
           secondary: '#D1D5DB',
-          disabled: '#6B7280'
-        }
-      }
+          disabled: '#6B7280',
+        },
+      },
     };
   }
 
@@ -241,10 +241,7 @@ class ThemeManager {
 
     try {
       // Deactivate other themes for this tenant
-      await supabase
-        .from('themes')
-        .update({ is_active: false })
-        .eq('tenant_id', tenantId);
+      await supabase.from('themes').update({ is_active: false }).eq('tenant_id', tenantId);
 
       // Create new theme
       const { data, error } = await supabase
@@ -257,7 +254,7 @@ class ThemeManager {
           config,
           created_by: createdBy,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -267,11 +264,10 @@ class ThemeManager {
       }
 
       return this.mapDatabaseToTheme(data);
-
     } catch (error: any) {
       await errorLogger.logError('Theme creation failed', error, {
         tenantId,
-        themeName: name
+        themeName: name,
       });
       throw error;
     }
@@ -317,7 +313,7 @@ class ThemeManager {
       throw new Error(`Failed to list themes: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToTheme(d));
+    return (data || []).map((d) => this.mapDatabaseToTheme(d));
   }
 
   /**
@@ -329,7 +325,7 @@ class ThemeManager {
     }
 
     const dbUpdates: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (updates.name) dbUpdates.name = updates.name;
@@ -337,7 +333,7 @@ class ThemeManager {
     if (updates.config) dbUpdates.config = updates.config;
     if (updates.isActive !== undefined) {
       dbUpdates.is_active = updates.isActive;
-      
+
       // If activating this theme, deactivate others
       if (updates.isActive) {
         const theme = await this.getTheme(themeId);
@@ -371,10 +367,7 @@ class ThemeManager {
       throw new Error('Supabase not configured');
     }
 
-    const { error } = await supabase
-      .from('themes')
-      .delete()
-      .eq('id', themeId);
+    const { error } = await supabase.from('themes').delete().eq('id', themeId);
 
     if (error) {
       throw new Error(`Failed to delete theme: ${error.message}`);
@@ -389,11 +382,7 @@ class ThemeManager {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
-      .from('themes')
-      .select('*')
-      .eq('id', themeId)
-      .single();
+    const { data, error } = await supabase.from('themes').select('*').eq('id', themeId).single();
 
     if (error || !data) {
       throw new Error('Theme not found');
@@ -543,21 +532,21 @@ body {
             success: config.colors.success,
             warning: config.colors.warning,
             error: config.colors.error,
-            info: config.colors.info
+            info: config.colors.info,
           },
           fontFamily: {
             sans: [config.typography.fontFamily.primary],
             serif: [config.typography.fontFamily.secondary],
-            mono: [config.typography.fontFamily.monospace]
+            mono: [config.typography.fontFamily.monospace],
           },
           fontSize: config.typography.fontSize,
           fontWeight: config.typography.fontWeight,
           lineHeight: config.typography.lineHeight,
           spacing: config.spacing,
           borderRadius: config.borderRadius,
-          boxShadow: config.shadows
-        }
-      }
+          boxShadow: config.shadows,
+        },
+      },
     };
   }
 
@@ -581,7 +570,7 @@ body {
       config.colors.success,
       config.colors.warning,
       config.colors.error,
-      config.colors.info
+      config.colors.info,
     ];
 
     colorFields.forEach((color, index) => {
@@ -607,7 +596,7 @@ body {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -634,21 +623,21 @@ body {
    * Export theme as JSON
    */
   exportTheme(theme: Theme): string {
-    return JSON.stringify({
-      name: theme.name,
-      description: theme.description,
-      config: theme.config
-    }, null, 2);
+    return JSON.stringify(
+      {
+        name: theme.name,
+        description: theme.description,
+        config: theme.config,
+      },
+      null,
+      2
+    );
   }
 
   /**
    * Import theme from JSON
    */
-  async importTheme(
-    tenantId: string,
-    themeJson: string,
-    createdBy: string
-  ): Promise<Theme> {
+  async importTheme(tenantId: string, themeJson: string, createdBy: string): Promise<Theme> {
     try {
       const parsed = JSON.parse(themeJson);
 
@@ -669,10 +658,9 @@ body {
         createdBy,
         parsed.description
       );
-
     } catch (error: any) {
       await errorLogger.logError('Theme import failed', error, {
-        tenantId
+        tenantId,
       });
       throw error;
     }
@@ -686,12 +674,12 @@ body {
       {
         name: 'Default Light',
         description: 'Clean and professional light theme',
-        config: this.getDefaultTheme()
+        config: this.getDefaultTheme(),
       },
       {
         name: 'Default Dark',
         description: 'Modern dark theme for reduced eye strain',
-        config: this.getDarkTheme()
+        config: this.getDarkTheme(),
       },
       {
         name: 'Ocean Blue',
@@ -702,9 +690,9 @@ body {
             ...this.getDefaultTheme().colors,
             primary: '#0EA5E9',
             secondary: '#06B6D4',
-            accent: '#3B82F6'
-          }
-        }
+            accent: '#3B82F6',
+          },
+        },
       },
       {
         name: 'Forest Green',
@@ -715,9 +703,9 @@ body {
             ...this.getDefaultTheme().colors,
             primary: '#10B981',
             secondary: '#059669',
-            accent: '#34D399'
-          }
-        }
+            accent: '#34D399',
+          },
+        },
       },
       {
         name: 'Sunset Orange',
@@ -728,9 +716,9 @@ body {
             ...this.getDefaultTheme().colors,
             primary: '#F97316',
             secondary: '#EA580C',
-            accent: '#FB923C'
-          }
-        }
+            accent: '#FB923C',
+          },
+        },
       },
       {
         name: 'Royal Purple',
@@ -741,10 +729,10 @@ body {
             ...this.getDefaultTheme().colors,
             primary: '#8B5CF6',
             secondary: '#7C3AED',
-            accent: '#A78BFA'
-          }
-        }
-      }
+            accent: '#A78BFA',
+          },
+        },
+      },
     ];
   }
 
@@ -762,7 +750,7 @@ body {
       previewUrl: data.preview_url,
       createdBy: data.created_by,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 }

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { unifiedEventSystem } from '../services/unifiedEventSystem';
 import { unifiedApiClient } from '../services/unifiedApiClient';
@@ -57,7 +56,7 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     tasks: [],
     analytics: {},
     user: null,
-    settings: {}
+    settings: {},
   });
 
   // Setup unified event system integration
@@ -68,13 +67,13 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       switch (type) {
         case 'REMOTE_APP_READY':
-          setApps(prev => ({
+          setApps((prev) => ({
             ...prev,
             [source]: {
               ...prev[source],
               status: 'ready',
-              lastSync: Date.now()
-            }
+              lastSync: Date.now(),
+            },
           }));
           break;
 
@@ -95,57 +94,60 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       id: 'remote-app-context',
       handler: handleCrossAppEvent,
       priority: 10,
-      filters: { type: 'REMOTE_APP_*' }
+      filters: { type: 'REMOTE_APP_*' },
     });
 
     return unsubscribe;
   }, []);
 
-  const handleDataSyncRequest = useCallback(async (sourceApp: string, request: any) => {
-    const { dataType, filters } = request;
+  const handleDataSyncRequest = useCallback(
+    async (sourceApp: string, request: any) => {
+      const { dataType, filters } = request;
 
-    try {
-      let data;
-      switch (dataType) {
-        case 'contacts':
-          const contactsResponse = await unifiedApiClient.request({ endpoint: '/api/contacts' });
-          data = contactsResponse.success ? contactsResponse.data : [];
-          break;
-        case 'deals':
-          const dealsResponse = await unifiedApiClient.request({ endpoint: '/api/deals' });
-          data = dealsResponse.success ? dealsResponse.data : [];
-          break;
-        case 'tasks':
-          const tasksResponse = await unifiedApiClient.request({ endpoint: '/api/tasks' });
-          data = tasksResponse.success ? tasksResponse.data : [];
-          break;
-        default:
-          data = sharedData[dataType as keyof typeof sharedData] || [];
+      try {
+        let data;
+        switch (dataType) {
+          case 'contacts':
+            const contactsResponse = await unifiedApiClient.request({ endpoint: '/api/contacts' });
+            data = contactsResponse.success ? contactsResponse.data : [];
+            break;
+          case 'deals':
+            const dealsResponse = await unifiedApiClient.request({ endpoint: '/api/deals' });
+            data = dealsResponse.success ? dealsResponse.data : [];
+            break;
+          case 'tasks':
+            const tasksResponse = await unifiedApiClient.request({ endpoint: '/api/tasks' });
+            data = tasksResponse.success ? tasksResponse.data : [];
+            break;
+          default:
+            data = sharedData[dataType as keyof typeof sharedData] || [];
+        }
+
+        // Send data back to requesting app
+        unifiedEventSystem.emitTo(sourceApp, {
+          type: 'DATA_SYNC_RESPONSE',
+          source: 'crm',
+          data: { requestId: request.id, dataType, data },
+          priority: 'high',
+        });
+      } catch (error: any) {
+        unifiedEventSystem.emitTo(sourceApp, {
+          type: 'DATA_SYNC_ERROR',
+          source: 'crm',
+          data: { requestId: request.id, error: error.message },
+          priority: 'high',
+        });
       }
-
-      // Send data back to requesting app
-      unifiedEventSystem.emitTo(sourceApp, {
-        type: 'DATA_SYNC_RESPONSE',
-        source: 'crm',
-        data: { requestId: request.id, dataType, data },
-        priority: 'high'
-      });
-    } catch (error: any) {
-      unifiedEventSystem.emitTo(sourceApp, {
-        type: 'DATA_SYNC_ERROR',
-        source: 'crm',
-        data: { requestId: request.id, error: error.message },
-        priority: 'high'
-      });
-    }
-  }, [sharedData]);
+    },
+    [sharedData]
+  );
 
   const handleAIRequest = useCallback(async (sourceApp: string, request: any) => {
     try {
       const response = await unifiedApiClient.request({
         endpoint: '/api/respond',
         method: 'POST',
-        data: request
+        data: request,
       });
 
       unifiedEventSystem.emitTo(sourceApp, {
@@ -155,22 +157,22 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           requestId: request.id,
           success: response.success,
           result: response.data,
-          error: response.error
+          error: response.error,
         },
-        priority: 'high'
+        priority: 'high',
       });
     } catch (error: any) {
       unifiedEventSystem.emitTo(sourceApp, {
         type: 'AI_ERROR',
         source: 'crm',
         data: { requestId: request.id, error: error.message },
-        priority: 'high'
+        priority: 'high',
       });
     }
   }, []);
 
   const registerApp = useCallback((id: string, title: string, src: string) => {
-    setApps(prev => ({
+    setApps((prev) => ({
       ...prev,
       [id]: {
         id,
@@ -178,13 +180,13 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         src,
         lastRefreshed: Date.now(),
         autoRefreshEnabled: false,
-        refreshInterval: 300 // 5 minutes default
-      }
+        refreshInterval: 300, // 5 minutes default
+      },
     }));
   }, []);
 
   const unregisterApp = useCallback((id: string) => {
-    setApps(prev => {
+    setApps((prev) => {
       const newApps = { ...prev };
       delete newApps[id];
       return newApps;
@@ -197,70 +199,80 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       type: 'APP_REFRESH',
       source: 'crm',
       data: { timestamp: Date.now() },
-      priority: 'high'
+      priority: 'high',
     });
 
     // Also trigger legacy event for backward compatibility
     window.dispatchEvent(new CustomEvent('refreshRemoteApp', { detail: { id } }));
 
-    setApps(prev => ({
+    setApps((prev) => ({
       ...prev,
       [id]: {
         ...prev[id],
-        lastRefreshed: Date.now()
-      }
+        lastRefreshed: Date.now(),
+      },
     }));
   }, []);
 
   const refreshAllApps = useCallback(() => {
-    Object.keys(apps).forEach(id => {
+    Object.keys(apps).forEach((id) => {
       refreshApp(id);
     });
   }, [apps, refreshApp]);
 
   const syncDataToAllApps = useCallback((dataType: string, data: any) => {
     // Dispatch to all registered remote apps
-    window.dispatchEvent(new CustomEvent('syncToRemoteApps', { 
-      detail: { dataType, data, timestamp: Date.now() } 
-    }));
+    window.dispatchEvent(
+      new CustomEvent('syncToRemoteApps', {
+        detail: { dataType, data, timestamp: Date.now() },
+      })
+    );
   }, []);
 
-  const broadcastToRemoteApps = useCallback((eventType: string, data: any) => {
-    Object.keys(apps).forEach(appId => {
-      window.dispatchEvent(new CustomEvent('remoteAppMessage', {
-        detail: {
-          targetApp: appId,
-          eventType,
-          data,
-          timestamp: Date.now()
-        }
-      }));
-    });
-  }, [apps]);
+  const broadcastToRemoteApps = useCallback(
+    (eventType: string, data: any) => {
+      Object.keys(apps).forEach((appId) => {
+        window.dispatchEvent(
+          new CustomEvent('remoteAppMessage', {
+            detail: {
+              targetApp: appId,
+              eventType,
+              data,
+              timestamp: Date.now(),
+            },
+          })
+        );
+      });
+    },
+    [apps]
+  );
 
   const toggleAutoRefresh = useCallback((id: string) => {
-    setApps(prev => ({
+    setApps((prev) => ({
       ...prev,
       [id]: {
         ...prev[id],
-        autoRefreshEnabled: !prev[id].autoRefreshEnabled
-      }
+        autoRefreshEnabled: !prev[id].autoRefreshEnabled,
+      },
     }));
   }, []);
 
   const setRefreshInterval = useCallback((id: string, interval: number) => {
-    setApps(prev => ({
+    setApps((prev) => ({
       ...prev,
       [id]: {
         ...prev[id],
-        refreshInterval: interval
-      }
+        refreshInterval: interval,
+      },
     }));
   }, []);
 
-  const getAppStatus = useCallback((id: string) => {
-    return apps[id];
-  }, [apps]);
+  const getAppStatus = useCallback(
+    (id: string) => {
+      return apps[id];
+    },
+    [apps]
+  );
 
   // Enhanced methods for unified communication
   const syncDataToApp = useCallback((appId: string, dataType: string, data: any) => {
@@ -268,38 +280,50 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       type: 'DATA_SYNC',
       source: 'crm',
       data: { dataType, data },
-      priority: 'high'
+      priority: 'high',
     });
   }, []);
 
-  const broadcastToAllApps = useCallback((eventType: string, data: any) => {
-    Object.keys(apps).forEach(appId => {
-      unifiedEventSystem.emitTo(appId, {
-        type: eventType,
-        source: 'crm',
-        data,
-        priority: 'medium'
+  const broadcastToAllApps = useCallback(
+    (eventType: string, data: any) => {
+      Object.keys(apps).forEach((appId) => {
+        unifiedEventSystem.emitTo(appId, {
+          type: eventType,
+          source: 'crm',
+          data,
+          priority: 'medium',
+        });
       });
-    });
-  }, [apps]);
+    },
+    [apps]
+  );
 
-  const updateSharedData = useCallback((dataType: string, data: any) => {
-    setSharedData(prev => ({
-      ...prev,
-      [dataType]: data
-    }));
+  const updateSharedData = useCallback(
+    (dataType: string, data: any) => {
+      setSharedData((prev) => ({
+        ...prev,
+        [dataType]: data,
+      }));
 
-    // Broadcast update to all apps
-    broadcastToAllApps('SHARED_DATA_UPDATE', { dataType, data });
-  }, [broadcastToAllApps]);
+      // Broadcast update to all apps
+      broadcastToAllApps('SHARED_DATA_UPDATE', { dataType, data });
+    },
+    [broadcastToAllApps]
+  );
 
-  const requestAI = useCallback(async (appId: string, request: any) => {
-    return handleAIRequest(appId, request);
-  }, [handleAIRequest]);
+  const requestAI = useCallback(
+    async (appId: string, request: any) => {
+      return handleAIRequest(appId, request);
+    },
+    [handleAIRequest]
+  );
 
-  const getSharedData = useCallback((dataType: string) => {
-    return sharedData[dataType as keyof typeof sharedData];
-  }, [sharedData]);
+  const getSharedData = useCallback(
+    (dataType: string) => {
+      return sharedData[dataType as keyof typeof sharedData];
+    },
+    [sharedData]
+  );
 
   const value = {
     apps,
@@ -318,12 +342,8 @@ export const RemoteAppProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     broadcastToAllApps,
     updateSharedData,
     requestAI,
-    getSharedData
+    getSharedData,
   };
 
-  return (
-    <RemoteAppContext.Provider value={value}>
-      {children}
-    </RemoteAppContext.Provider>
-  );
+  return <RemoteAppContext.Provider value={value}>{children}</RemoteAppContext.Provider>;
 };

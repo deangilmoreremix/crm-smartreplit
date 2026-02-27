@@ -48,12 +48,12 @@ class UnifiedApiClient {
       baseURL: '',
       defaultHeaders: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json',
       },
       timeout: 30000,
       retries: 3,
       cacheEnabled: true,
-      cacheSize: 100
+      cacheSize: 100,
     };
 
     this.setupInterceptors();
@@ -74,7 +74,7 @@ class UnifiedApiClient {
       timeout = this.config.timeout,
       retries = this.config.retries,
       cache = this.config.cacheEnabled,
-      cacheTTL = 300000 // 5 minutes default
+      cacheTTL = 300000, // 5 minutes default
     } = request;
 
     const url = endpoint.startsWith('http') ? endpoint : `${this.config.baseURL}${endpoint}`;
@@ -88,7 +88,7 @@ class UnifiedApiClient {
           success: true,
           data: cachedData,
           timestamp: Date.now(),
-          cached: true
+          cached: true,
         };
       }
     }
@@ -118,9 +118,9 @@ class UnifiedApiClient {
             endpoint,
             method,
             statusCode: response.statusCode,
-            attempt: attempt + 1
+            attempt: attempt + 1,
           },
-          priority: 'low'
+          priority: 'low',
         });
 
         return response;
@@ -141,9 +141,9 @@ class UnifiedApiClient {
               endpoint,
               method,
               attempt: attempt + 1,
-              error: error.message
+              error: error.message,
             },
-            priority: 'medium'
+            priority: 'medium',
           });
         }
       }
@@ -154,7 +154,7 @@ class UnifiedApiClient {
       success: false,
       error: lastError?.message || 'Request failed after all retries',
       statusCode: (lastError as any)?.statusCode,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Emit error event
@@ -165,9 +165,9 @@ class UnifiedApiClient {
         endpoint,
         method,
         error: errorResponse.error,
-        statusCode: errorResponse.statusCode
+        statusCode: errorResponse.statusCode,
       },
-      priority: 'high'
+      priority: 'high',
     });
 
     return errorResponse;
@@ -187,7 +187,7 @@ class UnifiedApiClient {
     const requestOptions: RequestInit = {
       method,
       headers: mergedHeaders,
-      signal: controller.signal
+      signal: controller.signal,
     };
 
     if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
@@ -212,7 +212,7 @@ class UnifiedApiClient {
         const errorText = await response.text();
         throw {
           message: `HTTP ${response.status}: ${errorText}`,
-          statusCode: response.status
+          statusCode: response.status,
         };
       }
 
@@ -229,7 +229,7 @@ class UnifiedApiClient {
         data: responseData,
         statusCode: response.status,
         headers: responseHeaders,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     } catch (error: any) {
       clearTimeout(timeoutId);
@@ -263,15 +263,16 @@ class UnifiedApiClient {
   private setCache(key: string, data: any, ttl: number): void {
     // Clean up old entries if cache is full
     if (this.cache.size >= this.config.cacheSize) {
-      const oldestKey = Array.from(this.cache.entries())
-        .sort(([, a], [, b]) => a.timestamp - b.timestamp)[0][0];
+      const oldestKey = Array.from(this.cache.entries()).sort(
+        ([, a], [, b]) => a.timestamp - b.timestamp
+      )[0][0];
       this.cache.delete(oldestKey);
     }
 
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
@@ -300,7 +301,7 @@ class UnifiedApiClient {
           devSession: !!devSession,
           devToken: !!devToken,
           devMode,
-          endpoint: request.endpoint
+          endpoint: request.endpoint,
         });
 
         if ((devSession && devToken) || devMode === 'true') {
@@ -309,7 +310,7 @@ class UnifiedApiClient {
           console.log('🔑 Using dev bypass token for request');
           request.headers = {
             ...request.headers,
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           };
         } else {
           // Check for regular auth token
@@ -318,7 +319,7 @@ class UnifiedApiClient {
             console.log('🔑 Using regular auth token for request');
             request.headers = {
               ...request.headers,
-              Authorization: `Bearer ${authToken}`
+              Authorization: `Bearer ${authToken}`,
             };
           } else {
             console.log('⚠️ No auth token found for request');
@@ -339,7 +340,7 @@ class UnifiedApiClient {
   getCacheStats(): { size: number; maxSize: number } {
     return {
       size: this.cache.size,
-      maxSize: this.config.cacheSize
+      maxSize: this.config.cacheSize,
     };
   }
 
@@ -367,5 +368,5 @@ export const api = {
     unifiedApiClient.request<T>({ ...config, endpoint, method: 'PATCH', data }),
 
   delete: <T = any>(endpoint: string, config?: Partial<ApiRequest>) =>
-    unifiedApiClient.request<T>({ ...config, endpoint, method: 'DELETE' })
+    unifiedApiClient.request<T>({ ...config, endpoint, method: 'DELETE' }),
 };

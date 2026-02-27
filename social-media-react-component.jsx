@@ -1,11 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 
-const SocialMediaResearch = ({ 
-  apiKey, 
-  mockMode = true, 
+const SocialMediaResearch = ({
+  apiKey,
+  mockMode = true,
   onResults = null,
-  defaultContact = null 
+  defaultContact = null,
 }) => {
   const containerRef = useRef(null);
   const componentRef = useRef(null);
@@ -16,20 +15,17 @@ const SocialMediaResearch = ({
     const checkScriptsLoaded = () => {
       if (window.SocialMediaResearchComponent && window.GPT5SocialResearchService) {
         // Initialize the component
-        componentRef.current = new window.SocialMediaResearchComponent(
-          containerRef.current.id,
-          {
-            apiKey,
-            mockMode,
-            baseUrl: 'https://api.openai.com/v1'
-          }
-        );
+        componentRef.current = new window.SocialMediaResearchComponent(containerRef.current.id, {
+          apiKey,
+          mockMode,
+          baseUrl: 'https://api.openai.com/v1',
+        });
 
         setIsLoaded(true);
 
         // Research default contact if provided
         if (defaultContact) {
-          componentRef.current.researchContact(defaultContact).then(results => {
+          componentRef.current.researchContact(defaultContact).then((results) => {
             if (onResults) {
               onResults(results);
             }
@@ -75,7 +71,7 @@ const SocialMediaResearch = ({
   }, [isLoaded]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       id={`social-research-${Math.random().toString(36).substr(2, 9)}`}
       style={{ width: '100%', minHeight: '600px' }}
@@ -99,13 +95,13 @@ const ExampleUsage = () => {
       name: 'Sarah Johnson',
       email: 'sarah@techcorp.com',
       company: 'TechCorp Solutions',
-      title: 'Marketing Director'
+      title: 'Marketing Director',
     };
 
     if (socialResearchRef.current) {
       socialResearchRef.current.researchContact(contact, {
         platforms: ['LinkedIn', 'Twitter', 'Instagram'],
-        depth: 'comprehensive'
+        depth: 'comprehensive',
       });
     }
   };
@@ -113,8 +109,8 @@ const ExampleUsage = () => {
   return (
     <div style={{ padding: '20px' }}>
       <h1>Social Media Research Integration</h1>
-      
-      <button 
+
+      <button
         onClick={manualResearch}
         style={{
           background: '#667eea',
@@ -123,7 +119,7 @@ const ExampleUsage = () => {
           border: 'none',
           borderRadius: '6px',
           cursor: 'pointer',
-          marginBottom: '20px'
+          marginBottom: '20px',
         }}
       >
         Research Sample Contact
@@ -137,11 +133,19 @@ const ExampleUsage = () => {
       />
 
       {results && (
-        <div style={{ marginTop: '20px', padding: '20px', background: '#f9fafb', borderRadius: '8px' }}>
+        <div
+          style={{ marginTop: '20px', padding: '20px', background: '#f9fafb', borderRadius: '8px' }}
+        >
           <h3>Research Results Summary:</h3>
-          <p><strong>Profiles Found:</strong> {results.profiles.length}</p>
-          <p><strong>Confidence Score:</strong> {results.confidenceScore}%</p>
-          <p><strong>Last Researched:</strong> {results.lastResearched.toLocaleDateString()}</p>
+          <p>
+            <strong>Profiles Found:</strong> {results.profiles.length}
+          </p>
+          <p>
+            <strong>Confidence Score:</strong> {results.confidenceScore}%
+          </p>
+          <p>
+            <strong>Last Researched:</strong> {results.lastResearched.toLocaleDateString()}
+          </p>
         </div>
       )}
     </div>

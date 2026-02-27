@@ -16,7 +16,7 @@ const StructuredAIResult: React.FC<StructuredAIResultProps> = ({
   isLoading = false,
   error = null,
   onCopy,
-  copySuccess = false
+  copySuccess = false,
 }) => {
   const handleCopy = () => {
     if (data && onCopy) {

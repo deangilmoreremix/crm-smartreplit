@@ -25,7 +25,7 @@ interface LogEntry {
 class LoggerService {
   private logs: LogEntry[] = [];
   private maxLogs = 1000;
-  
+
   private createLogEntry(
     level: LogEntry['level'],
     message: string,
@@ -42,14 +42,16 @@ class LoggerService {
         sessionId: this.getSessionId(),
         ...context,
       },
-      error: error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      } : undefined,
+      error: error
+        ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }
+        : undefined,
     };
   }
-  
+
   private getSessionId(): string {
     // Generate or retrieve session ID
     let sessionId = sessionStorage.getItem('smartcrm_session_id');
@@ -59,30 +61,29 @@ class LoggerService {
     }
     return sessionId;
   }
-  
+
   private addLog(entry: LogEntry): void {
     this.logs.push(entry);
-    
+
     // Keep only recent logs
     if (this.logs.length > this.maxLogs) {
       this.logs = this.logs.slice(-this.maxLogs);
     }
-    
+
     // Console logging in development
     if (import.meta.env.DEV || import.meta.env.VITE_ENV === 'development') {
-      const logMethod = entry.level === 'error' ? 'error' : 
-                      entry.level === 'warn' ? 'warn' : 'log';
+      const logMethod = entry.level === 'error' ? 'error' : entry.level === 'warn' ? 'warn' : 'log';
       console[logMethod](`[${entry.level.toUpperCase()}]`, entry.message, entry.data || '');
-      
+
       if (entry.error) {
         console.error('Error details:', entry.error);
       }
     }
-    
+
     // Send to remote logging service if configured
     this.sendToRemoteLogger(entry);
   }
-  
+
   private async sendToRemoteLogger(entry: LogEntry): Promise<void> {
     // Implementation would send logs to external service
     // For now, just store locally
@@ -90,34 +91,34 @@ class LoggerService {
       const storedLogs = localStorage.getItem('smartcrm_logs');
       const logs = storedLogs ? JSON.parse(storedLogs) : [];
       logs.push(entry);
-      
+
       // Keep only last 100 logs in localStorage
       if (logs.length > 100) {
         logs.splice(0, logs.length - 100);
       }
-      
+
       localStorage.setItem('smartcrm_logs', JSON.stringify(logs));
     } catch (error) {
       console.error('Failed to store log:', error);
     }
   }
-  
+
   debug(message: string, data?: any, context?: LogEntry['context']): void {
     this.addLog(this.createLogEntry('debug', message, data, context));
   }
-  
+
   info(message: string, data?: any, context?: LogEntry['context']): void {
     this.addLog(this.createLogEntry('info', message, data, context));
   }
-  
+
   warn(message: string, data?: any, context?: LogEntry['context']): void {
     this.addLog(this.createLogEntry('warn', message, data, context));
   }
-  
+
   error(message: string, error?: Error, data?: any, context?: LogEntry['context']): void {
     this.addLog(this.createLogEntry('error', message, data, context, error));
   }
-  
+
   // API-specific logging methods
   apiRequest(method: string, url: string, data?: any, context?: LogEntry['context']): void {
     this.info(`API Request: ${method} ${url}`, data, {
@@ -125,46 +126,52 @@ class LoggerService {
       operation: 'api_request',
     });
   }
-  
-  apiResponse(method: string, url: string, status: number, data?: any, context?: LogEntry['context']): void {
+
+  apiResponse(
+    method: string,
+    url: string,
+    status: number,
+    data?: any,
+    context?: LogEntry['context']
+  ): void {
     const level = status >= 400 ? 'error' : status >= 300 ? 'warn' : 'info';
-    this.addLog(this.createLogEntry(
-      level,
-      `API Response: ${method} ${url} - ${status}`,
-      data,
-      { ...context, operation: 'api_response' }
-    ));
+    this.addLog(
+      this.createLogEntry(level, `API Response: ${method} ${url} - ${status}`, data, {
+        ...context,
+        operation: 'api_response',
+      })
+    );
   }
-  
+
   apiError(method: string, url: string, error: Error, context?: LogEntry['context']): void {
     this.error(`API Error: ${method} ${url}`, error, undefined, {
       ...context,
-      operation: 'api_error'
+      operation: 'api_error',
     });
-    
+
     // In development mode, also log to console for better visibility
     if (import.meta.env.DEV || import.meta.env.VITE_ENV === 'development') {
       console.error(`API Error: ${method} ${url}`, error);
     }
   }
-  
+
   // Get logs for debugging
   getLogs(level?: LogEntry['level'], limit = 50): LogEntry[] {
     let filteredLogs = this.logs;
-    
+
     if (level) {
-      filteredLogs = this.logs.filter(log => log.level === level);
+      filteredLogs = this.logs.filter((log) => log.level === level);
     }
-    
+
     return filteredLogs.slice(-limit);
   }
-  
+
   // Clear logs
   clearLogs(): void {
     this.logs = [];
     localStorage.removeItem('smartcrm_logs');
   }
-  
+
   // Export logs for analysis
   exportLogs(): string {
     return JSON.stringify(this.logs, null, 2);

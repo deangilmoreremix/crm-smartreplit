@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
-import { Phone, User, Clock, BarChart2, RefreshCw, Send, MessageSquare, Mic, MicOff, Volume2, VolumeX, PhoneOff, Play, Pause, MousePointer } from 'lucide-react';
+import {
+  Phone,
+  User,
+  Clock,
+  BarChart2,
+  RefreshCw,
+  Send,
+  MessageSquare,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  PhoneOff,
+  Play,
+  Pause,
+  MousePointer,
+} from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 
@@ -17,7 +33,9 @@ interface CallLog {
 }
 
 const PhoneSystem: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dialer' | 'logs' | 'voicemail' | 'settings'>('dialer');
+  const [activeTab, setActiveTab] = useState<'dialer' | 'logs' | 'voicemail' | 'settings'>(
+    'dialer'
+  );
   const [dialerNumber, setDialerNumber] = useState('');
   const [isCallInProgress, setIsCallInProgress] = useState(false);
   const [callStatus, setCallStatus] = useState<string | null>(null);
@@ -28,7 +46,7 @@ const PhoneSystem: React.FC = () => {
   const [callTimer, setCallTimer] = useState<NodeJS.Timeout | null>(null);
   const [recordingPlayback, setRecordingPlayback] = useState<string | null>(null);
   const [isPlayingRecording, setIsPlayingRecording] = useState(false);
-  
+
   // Call logs data
   const [callLogs] = useState<CallLog[]>([
     {
@@ -40,7 +58,7 @@ const PhoneSystem: React.FC = () => {
       duration: 325, // 5:25
       status: 'completed',
       notes: 'Discussed proposal details. Follow up next week.',
-      recordingUrl: 'https://example.com/recording1.mp3'
+      recordingUrl: 'https://example.com/recording1.mp3',
     },
     {
       id: '2',
@@ -50,7 +68,7 @@ const PhoneSystem: React.FC = () => {
       startTime: new Date(Date.now() - 172800000), // 2 days ago
       duration: 0,
       status: 'missed',
-      notes: 'Left a voicemail about scheduling a demo'
+      notes: 'Left a voicemail about scheduling a demo',
     },
     {
       id: '3',
@@ -60,7 +78,7 @@ const PhoneSystem: React.FC = () => {
       startTime: new Date(Date.now() - 259200000), // 3 days ago
       duration: 183, // 3:03
       status: 'completed',
-      recordingUrl: 'https://example.com/recording2.mp3'
+      recordingUrl: 'https://example.com/recording2.mp3',
     },
     {
       id: '4',
@@ -71,26 +89,27 @@ const PhoneSystem: React.FC = () => {
       duration: 0,
       status: 'voicemail',
       notes: 'Asked about pricing options',
-      recordingUrl: 'https://example.com/voicemail1.mp3'
-    }
+      recordingUrl: 'https://example.com/voicemail1.mp3',
+    },
   ]);
-  
+
   // Voicemail data
-  const voicemails = callLogs.filter(log => log.status === 'voicemail');
-  
+  const voicemails = callLogs.filter((log) => log.status === 'voicemail');
+
   // Handle dialer input
   const handleDialerInput = (value: string) => {
-    if (dialerNumber.length < 14) { // Limit to standard phone number length
+    if (dialerNumber.length < 14) {
+      // Limit to standard phone number length
       setDialerNumber(dialerNumber + value);
     }
   };
-  
+
   const handleBackspace = () => {
     if (dialerNumber.length > 0) {
       setDialerNumber(dialerNumber.slice(0, -1));
     }
   };
-  
+
   const formatPhoneNumber = (number: string) => {
     if (number.length <= 3) {
       return number;
@@ -100,38 +119,38 @@ const PhoneSystem: React.FC = () => {
       return `(${number.slice(0, 3)}) ${number.slice(3, 6)}-${number.slice(6)}`;
     }
   };
-  
+
   const startCall = () => {
     if (dialerNumber.trim().length === 0) return;
-    
+
     // Use the system dialer to initiate the call
     window.location.href = `tel:${dialerNumber.replace(/\D/g, '')}`;
-    
+
     // In a real implementation, we might also log the call attempt
     // For the demo, we'll also show the in-app calling UI
     setIsCallInProgress(true);
     setCallStatus('Calling...');
-    
+
     // Simulate call connecting
     setTimeout(() => {
       setCallStatus('Connected');
       setCallDuration(0);
-      
+
       // Start timer
       const timerId = setInterval(() => {
-        setCallDuration(prev => prev + 1);
+        setCallDuration((prev) => prev + 1);
       }, 1000);
-      
+
       setCallTimer(timerId);
     }, 2000);
   };
-  
+
   const endCall = () => {
     if (callTimer) {
       clearInterval(callTimer);
       setCallTimer(null);
     }
-    
+
     setIsCallInProgress(false);
     setCallStatus(null);
     setCallDuration(0);
@@ -139,31 +158,31 @@ const PhoneSystem: React.FC = () => {
     setIsOnHold(false);
     setIsSpeakerOn(false);
   };
-  
+
   const toggleMute = () => {
     setIsMuted(!isMuted);
   };
-  
+
   const toggleHold = () => {
     setIsOnHold(!isOnHold);
   };
-  
+
   const toggleSpeaker = () => {
     setIsSpeakerOn(!isSpeakerOn);
   };
-  
+
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   const formatCallDuration = (duration: number) => {
     const minutes = Math.floor(duration / 60);
     const seconds = duration % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
-  
+
   const playRecording = (url: string) => {
     if (recordingPlayback === url && isPlayingRecording) {
       setIsPlayingRecording(false);
@@ -171,7 +190,7 @@ const PhoneSystem: React.FC = () => {
     } else {
       setRecordingPlayback(url);
       setIsPlayingRecording(true);
-      
+
       // Simulate playback (in real app, would use audio player)
       setTimeout(() => {
         setIsPlayingRecording(false);
@@ -204,14 +223,13 @@ const PhoneSystem: React.FC = () => {
         </div>
       }
     >
-
       {/* Tab Content */}
       {activeTab === 'dialer' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Dialer */}
           <GlassCard className="p-6">
             <h2 className="text-xl font-semibold mb-4">Dialer</h2>
-            
+
             <div className="mb-6">
               <input
                 type="text"
@@ -221,7 +239,7 @@ const PhoneSystem: React.FC = () => {
                 placeholder="Enter phone number"
               />
             </div>
-            
+
             {/* Keypad */}
             <div className="grid grid-cols-3 gap-3 mb-6">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((digit) => (
@@ -235,7 +253,7 @@ const PhoneSystem: React.FC = () => {
                 </button>
               ))}
             </div>
-            
+
             {/* Action Buttons */}
             <div className="flex justify-center space-x-4 mb-4">
               <ModernButton
@@ -246,7 +264,7 @@ const PhoneSystem: React.FC = () => {
               >
                 <RefreshCw size={20} />
               </ModernButton>
-              
+
               <ModernButton
                 onClick={startCall}
                 disabled={dialerNumber.length === 0 || isCallInProgress}
@@ -263,7 +281,7 @@ const PhoneSystem: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4">
               {isCallInProgress ? 'Active Call' : 'Call Controls'}
             </h2>
-            
+
             {isCallInProgress ? (
               <div className="text-center">
                 <div className="mb-4">
@@ -275,7 +293,7 @@ const PhoneSystem: React.FC = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex justify-center space-x-4 mb-6">
                   <ModernButton
                     onClick={toggleMute}
@@ -284,7 +302,7 @@ const PhoneSystem: React.FC = () => {
                   >
                     {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
                   </ModernButton>
-                  
+
                   <ModernButton
                     onClick={toggleSpeaker}
                     variant={isSpeakerOn ? 'primary' : 'outline'}
@@ -293,7 +311,7 @@ const PhoneSystem: React.FC = () => {
                     {isSpeakerOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
                   </ModernButton>
                 </div>
-                
+
                 <ModernButton
                   onClick={endCall}
                   variant="primary"
@@ -318,19 +336,22 @@ const PhoneSystem: React.FC = () => {
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold">Call History</h2>
           </div>
-          
+
           <div className="divide-y divide-gray-200">
             {callLogs.map((log) => (
               <div key={log.id} className="p-6 flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className={`p-2 rounded-full ${
-                    log.direction === 'inbound' ? 'bg-green-100' : 'bg-blue-100'
-                  }`}>
-                    <Phone size={16} className={
-                      log.direction === 'inbound' ? 'text-green-600' : 'text-blue-600'
-                    } />
+                  <div
+                    className={`p-2 rounded-full ${
+                      log.direction === 'inbound' ? 'bg-green-100' : 'bg-blue-100'
+                    }`}
+                  >
+                    <Phone
+                      size={16}
+                      className={log.direction === 'inbound' ? 'text-green-600' : 'text-blue-600'}
+                    />
                   </div>
-                  
+
                   <div>
                     <div className="font-medium">{log.contactName}</div>
                     <div className="text-sm text-gray-600">{log.phoneNumber}</div>
@@ -339,13 +360,17 @@ const PhoneSystem: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
-                  <div className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                    log.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    log.status === 'missed' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <div
+                    className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      log.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : log.status === 'missed'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
                     {log.status}
                   </div>
                   {log.duration > 0 && (
@@ -380,7 +405,7 @@ const PhoneSystem: React.FC = () => {
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold">Voicemails ({voicemails.length})</h2>
           </div>
-          
+
           <div className="divide-y divide-gray-200">
             {voicemails.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
@@ -393,7 +418,8 @@ const PhoneSystem: React.FC = () => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium">{voicemail.contactName}</div>
                     <div className="text-sm text-gray-600">
-                      {voicemail.startTime.toLocaleDateString()} {voicemail.startTime.toLocaleTimeString()}
+                      {voicemail.startTime.toLocaleDateString()}{' '}
+                      {voicemail.startTime.toLocaleTimeString()}
                     </div>
                   </div>
                   <div className="text-sm text-gray-600 mb-2">{voicemail.phoneNumber}</div>
@@ -425,7 +451,7 @@ const PhoneSystem: React.FC = () => {
       {activeTab === 'settings' && (
         <GlassCard className="p-6">
           <h2 className="text-xl font-semibold mb-6">Phone Settings</h2>
-          
+
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -438,11 +464,9 @@ const PhoneSystem: React.FC = () => {
                 <option value="+33">+33 (France)</option>
               </select>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Call Recording
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Call Recording</label>
               <div className="space-y-2">
                 <label className="flex items-center">
                   <input type="checkbox" className="rounded border-gray-300" defaultChecked />
@@ -454,7 +478,7 @@ const PhoneSystem: React.FC = () => {
                 </label>
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Ringtone Volume

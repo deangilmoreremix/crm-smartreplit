@@ -84,6 +84,7 @@ __export(schema_exports, {
   insertUserGeneratedImageSchema: () => insertUserGeneratedImageSchema,
   insertUserUsageLimitSchema: () => insertUserUsageLimitSchema,
   insertUserWLSettingsSchema: () => insertUserWLSettingsSchema,
+  insertWebhookEventSchema: () => insertWebhookEventSchema,
   insertWhiteLabelPackageSchema: () => insertWhiteLabelPackageSchema,
   notes: () => notes,
   notesRelations: () => notesRelations,
@@ -127,9 +128,21 @@ __export(schema_exports, {
   userUsageLimits: () => userUsageLimits,
   userUsageLimitsRelations: () => userUsageLimitsRelations,
   userWLSettings: () => userWLSettings,
+  webhookEvents: () => webhookEvents,
   whiteLabelPackages: () => whiteLabelPackages
 });
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, uuid } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  decimal,
+  json,
+  varchar,
+  uuid
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm";
@@ -163,6 +176,8 @@ var profiles = pgTable("profiles", {
   // Track which app the user came from
   emailTemplateSet: text("email_template_set").default("smartcrm"),
   // Control which email templates to use
+  version: integer("version").default(1),
+  // Optimistic locking version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
@@ -184,6 +199,10 @@ var contacts = pgTable("contacts", {
   tags: text("tags").array(),
   notes: text("notes"),
   status: text("status").default("active"),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
+  version: integer("version").default(1),
+  // Optimistic locking version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   profileId: uuid("profile_id").references(() => profiles.id)
@@ -198,6 +217,10 @@ var deals = pgTable("deals", {
   actualCloseDate: timestamp("actual_close_date"),
   description: text("description"),
   status: text("status").default("open"),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
+  version: integer("version").default(1),
+  // Optimistic locking version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   contactId: integer("contact_id").references(() => contacts.id),
@@ -211,6 +234,10 @@ var tasks = pgTable("tasks", {
   priority: text("priority").default("medium"),
   dueDate: timestamp("due_date"),
   completedAt: timestamp("completed_at"),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
+  version: integer("version").default(1),
+  // Optimistic locking version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   contactId: integer("contact_id").references(() => contacts.id),
@@ -226,6 +253,10 @@ var appointments = pgTable("appointments", {
   location: text("location"),
   type: text("type").default("meeting"),
   status: text("status").default("scheduled"),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
+  version: integer("version").default(1),
+  // Optimistic locking version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   contactId: integer("contact_id").references(() => contacts.id),
@@ -657,23 +688,27 @@ var featurePackages = pgTable("feature_packages", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
-var partnerMetrics = pgTable("partner_metrics", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid("partner_id").references(() => partners.id).notNull(),
-  month: integer("month").notNull(),
-  year: integer("year").notNull(),
-  newCustomers: integer("new_customers").default(0),
-  totalCustomers: integer("total_customers").default(0),
-  monthlyRevenue: decimal("monthly_revenue", { precision: 10, scale: 2 }).default("0.00"),
-  totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).default("0.00"),
-  commissionsEarned: decimal("commissions_earned", { precision: 10, scale: 2 }).default("0.00"),
-  conversionRate: decimal("conversion_rate", { precision: 5, scale: 2 }).default("0.00"),
-  churnRate: decimal("churn_rate", { precision: 5, scale: 2 }).default("0.00"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  partnerMonthYearIdx: sql`CREATE UNIQUE INDEX IF NOT EXISTS partner_month_year_idx ON ${table} (partner_id, month, year)`
-}));
+var partnerMetrics = pgTable(
+  "partner_metrics",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    partnerId: uuid("partner_id").references(() => partners.id).notNull(),
+    month: integer("month").notNull(),
+    year: integer("year").notNull(),
+    newCustomers: integer("new_customers").default(0),
+    totalCustomers: integer("total_customers").default(0),
+    monthlyRevenue: decimal("monthly_revenue", { precision: 10, scale: 2 }).default("0.00"),
+    totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }).default("0.00"),
+    commissionsEarned: decimal("commissions_earned", { precision: 10, scale: 2 }).default("0.00"),
+    conversionRate: decimal("conversion_rate", { precision: 5, scale: 2 }).default("0.00"),
+    churnRate: decimal("churn_rate", { precision: 5, scale: 2 }).default("0.00"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow()
+  },
+  (table) => ({
+    partnerMonthYearIdx: sql`CREATE UNIQUE INDEX IF NOT EXISTS partner_month_year_idx ON ${table} (partner_id, month, year)`
+  })
+);
 var partnersRelations = relations(partners, ({ one, many }) => ({
   profile: one(profiles, {
     fields: [partners.profileId],
@@ -943,44 +978,52 @@ var features = pgTable("features", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
-var userFeatures = pgTable("user_features", {
-  id: serial("id").primaryKey(),
-  profileId: uuid("profile_id").references(() => profiles.id).notNull(),
-  featureId: integer("feature_id").references(() => features.id).notNull(),
-  enabled: boolean("enabled").notNull().default(true),
-  expiresAt: timestamp("expires_at"),
-  // Optional expiration for temporary access
-  grantedBy: uuid("granted_by").references(() => profiles.id),
-  // Admin who granted access
-  grantedAt: timestamp("granted_at").defaultNow(),
-  metadata: json("metadata")
-  // Feature-specific metadata like usage limits
-}, (table) => {
-  return {
-    // Unique constraint: one record per user per feature
-    uniqueUserFeature: {
-      name: "unique_user_feature",
-      columns: [table.profileId, table.featureId]
-    }
-  };
-});
-var tierFeatures = pgTable("tier_features", {
-  id: serial("id").primaryKey(),
-  productTier: text("product_tier").notNull(),
-  // 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited'
-  featureId: integer("feature_id").references(() => features.id).notNull(),
-  includedByDefault: boolean("included_by_default").default(true),
-  metadata: json("metadata"),
-  createdAt: timestamp("created_at").defaultNow()
-}, (table) => {
-  return {
-    // Unique constraint: one record per tier per feature
-    uniqueTierFeature: {
-      name: "unique_tier_feature",
-      columns: [table.productTier, table.featureId]
-    }
-  };
-});
+var userFeatures = pgTable(
+  "user_features",
+  {
+    id: serial("id").primaryKey(),
+    profileId: uuid("profile_id").references(() => profiles.id).notNull(),
+    featureId: integer("feature_id").references(() => features.id).notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    expiresAt: timestamp("expires_at"),
+    // Optional expiration for temporary access
+    grantedBy: uuid("granted_by").references(() => profiles.id),
+    // Admin who granted access
+    grantedAt: timestamp("granted_at").defaultNow(),
+    metadata: json("metadata")
+    // Feature-specific metadata like usage limits
+  },
+  (table) => {
+    return {
+      // Unique constraint: one record per user per feature
+      uniqueUserFeature: {
+        name: "unique_user_feature",
+        columns: [table.profileId, table.featureId]
+      }
+    };
+  }
+);
+var tierFeatures = pgTable(
+  "tier_features",
+  {
+    id: serial("id").primaryKey(),
+    productTier: text("product_tier").notNull(),
+    // 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited'
+    featureId: integer("feature_id").references(() => features.id).notNull(),
+    includedByDefault: boolean("included_by_default").default(true),
+    metadata: json("metadata"),
+    createdAt: timestamp("created_at").defaultNow()
+  },
+  (table) => {
+    return {
+      // Unique constraint: one record per tier per feature
+      uniqueTierFeature: {
+        name: "unique_tier_feature",
+        columns: [table.productTier, table.featureId]
+      }
+    };
+  }
+);
 var featureUsage = pgTable("feature_usage", {
   id: serial("id").primaryKey(),
   profileId: uuid("profile_id").references(() => profiles.id).notNull(),
@@ -1051,6 +1094,8 @@ var usageEvents = pgTable("usage_events", {
   metadata: json("metadata").default("{}"),
   billingCycleId: uuid("billing_cycle_id"),
   stripeSubscriptionItemId: text("stripe_subscription_item_id"),
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
   createdAt: timestamp("created_at").defaultNow()
 });
 var billingCycles = pgTable("billing_cycles", {
@@ -1070,24 +1115,28 @@ var billingCycles = pgTable("billing_cycles", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
-var userUsageLimits = pgTable("user_usage_limits", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").notNull(),
-  tenantId: uuid("tenant_id"),
-  featureName: text("feature_name").notNull(),
-  limitValue: decimal("limit_value", { precision: 12, scale: 4 }),
-  usedValue: decimal("used_value", { precision: 12, scale: 4 }).default("0"),
-  resetDate: timestamp("reset_date"),
-  billingCycleId: uuid("billing_cycle_id").references(() => billingCycles.id),
-  isHardLimit: boolean("is_hard_limit").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  uniqueUserFeature: {
-    name: "unique_user_feature_limit",
-    columns: [table.userId, table.featureName, table.billingCycleId]
-  }
-}));
+var userUsageLimits = pgTable(
+  "user_usage_limits",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: uuid("user_id").notNull(),
+    tenantId: uuid("tenant_id"),
+    featureName: text("feature_name").notNull(),
+    limitValue: decimal("limit_value", { precision: 12, scale: 4 }),
+    usedValue: decimal("used_value", { precision: 12, scale: 4 }).default("0"),
+    resetDate: timestamp("reset_date"),
+    billingCycleId: uuid("billing_cycle_id").references(() => billingCycles.id),
+    isHardLimit: boolean("is_hard_limit").default(false),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow()
+  },
+  (table) => ({
+    uniqueUserFeature: {
+      name: "unique_user_feature_limit",
+      columns: [table.userId, table.featureName, table.billingCycleId]
+    }
+  })
+);
 var billingNotifications = pgTable("billing_notifications", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid("user_id").notNull(),
@@ -1154,6 +1203,8 @@ var userCredits = pgTable("user_credits", {
   usedCredits: decimal("used_credits", { precision: 12, scale: 4 }).default("0"),
   availableCredits: decimal("available_credits", { precision: 12, scale: 4 }).default("0"),
   lastPurchaseAt: timestamp("last_purchase_at"),
+  version: integer("version").default(1),
+  // Optimistic locking version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
@@ -1172,6 +1223,8 @@ var creditTransactions = pgTable("credit_transactions", {
   // Link to Stripe if purchased
   usageEventId: uuid("usage_event_id"),
   // Link to usage event if deducted for usage
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
   createdAt: timestamp("created_at").defaultNow()
 });
 var userCreditsRelations = relations(userCredits, ({ one, many }) => ({
@@ -1213,21 +1266,25 @@ var aiFeatureDefinitions = pgTable("ai_feature_definitions", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
-var aiResellerPricing = pgTable("ai_reseller_pricing", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
-  featureKey: text("feature_key").notNull(),
-  retailCreditCost: integer("retail_credit_cost").notNull(),
-  wholesaleCreditCost: integer("wholesale_credit_cost").notNull(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
-}, (table) => ({
-  uniqueResellerFeature: {
-    name: "unique_reseller_feature",
-    columns: [table.resellerId, table.featureKey]
-  }
-}));
+var aiResellerPricing = pgTable(
+  "ai_reseller_pricing",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+    featureKey: text("feature_key").notNull(),
+    retailCreditCost: integer("retail_credit_cost").notNull(),
+    wholesaleCreditCost: integer("wholesale_credit_cost").notNull(),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow()
+  },
+  (table) => ({
+    uniqueResellerFeature: {
+      name: "unique_reseller_feature",
+      columns: [table.resellerId, table.featureKey]
+    }
+  })
+);
 var aiFeatureUsage = pgTable("ai_feature_usage", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid("user_id").references(() => profiles.id).notNull(),
@@ -1295,16 +1352,19 @@ var resellerCreditsRelations = relations(resellerCredits, ({ one, many }) => ({
   }),
   transactions: many(resellerCreditTransactions)
 }));
-var resellerCreditTransactionsRelations = relations(resellerCreditTransactions, ({ one }) => ({
-  reseller: one(profiles, {
-    fields: [resellerCreditTransactions.resellerId],
-    references: [profiles.id]
-  }),
-  endUser: one(profiles, {
-    fields: [resellerCreditTransactions.endUserId],
-    references: [profiles.id]
+var resellerCreditTransactionsRelations = relations(
+  resellerCreditTransactions,
+  ({ one }) => ({
+    reseller: one(profiles, {
+      fields: [resellerCreditTransactions.resellerId],
+      references: [profiles.id]
+    }),
+    endUser: one(profiles, {
+      fields: [resellerCreditTransactions.endUserId],
+      references: [profiles.id]
+    })
   })
-}));
+);
 var insertAIFeatureDefinitionSchema = createInsertSchema(aiFeatureDefinitions).omit({
   id: true,
   createdAt: true,
@@ -1324,8 +1384,24 @@ var insertResellerCreditsSchema = createInsertSchema(resellerCredits).omit({
   createdAt: true,
   updatedAt: true
 });
-var insertResellerCreditTransactionSchema = createInsertSchema(resellerCreditTransactions).omit({
+var insertResellerCreditTransactionSchema = createInsertSchema(
+  resellerCreditTransactions
+).omit({
   id: true,
+  createdAt: true
+});
+var webhookEvents = pgTable("webhook_events", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  source: text("source").notNull(),
+  // 'stripe', 'paypal', 'jvzoo', 'manual'
+  eventType: text("event_type").notNull(),
+  userId: uuid("user_id").references(() => profiles.id),
+  processedAt: timestamp("processed_at", { withTimezone: true }).defaultNow(),
+  payload: json("payload"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
+  processedAt: true,
   createdAt: true
 });
 
@@ -1338,9 +1414,7 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 neonConfig.webSocketConstructor = ws;
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?"
-  );
+  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
 }
 var pool = new Pool({ connectionString: process.env.DATABASE_URL });
 var db = drizzle({ client: pool, schema: schema_exports });
@@ -1448,7 +1522,10 @@ var DatabaseStorage = class {
   async getRevenueAnalytics() {
     const partners2 = await this.getPartners();
     const totalRevenue = partners2.reduce((sum, p) => sum + parseFloat(p.totalRevenue || "0"), 0);
-    const totalCommissions = partners2.reduce((sum, p) => sum + parseFloat(p.totalCommissions || "0"), 0);
+    const totalCommissions = partners2.reduce(
+      (sum, p) => sum + parseFloat(p.totalCommissions || "0"),
+      0
+    );
     const totalCustomers = partners2.reduce((sum, p) => sum + (p.customerCount || 0), 0);
     return {
       totalRevenue,
@@ -1754,15 +1831,15 @@ var MemStorage = class {
       }
     ];
     packages.forEach((pkg) => this.featurePackages.set(pkg.id, pkg));
-    console.log(`Initialized ${this.partnerTiers.size} partner tiers, ${this.partners.size} partners, ${this.featurePackages.size} feature packages`);
+    console.log(
+      `Initialized ${this.partnerTiers.size} partner tiers, ${this.partners.size} partners, ${this.featurePackages.size} feature packages`
+    );
   }
   async getProfile(id) {
     return this.profiles.get(id);
   }
   async getProfileByUsername(username) {
-    return Array.from(this.profiles.values()).find(
-      (profile) => profile.username === username
-    );
+    return Array.from(this.profiles.values()).find((profile) => profile.username === username);
   }
   async createProfile(insertProfile) {
     const profile = {
@@ -1883,7 +1960,9 @@ var MemStorage = class {
     );
   }
   async getPartnerTiers() {
-    return Array.from(this.partnerTiers.values()).sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    return Array.from(this.partnerTiers.values()).sort(
+      (a, b) => (a.priority || 0) - (b.priority || 0)
+    );
   }
   async getFeaturePackages() {
     return Array.from(this.featurePackages.values());
@@ -1908,7 +1987,10 @@ var MemStorage = class {
   async getRevenueAnalytics() {
     const partners2 = Array.from(this.partners.values());
     const totalRevenue = partners2.reduce((sum, p) => sum + parseFloat(p.totalRevenue || "0"), 0);
-    const totalCommissions = partners2.reduce((sum, p) => sum + parseFloat(p.totalCommissions || "0"), 0);
+    const totalCommissions = partners2.reduce(
+      (sum, p) => sum + parseFloat(p.totalCommissions || "0"),
+      0
+    );
     const totalCustomers = partners2.reduce((sum, p) => sum + (p.customerCount || 0), 0);
     return {
       totalRevenue,

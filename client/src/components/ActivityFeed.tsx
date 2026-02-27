@@ -29,13 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from './ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const activityIcons: Record<Activity['type'], React.ElementType> = {
   task_created: Plus,
@@ -113,18 +107,14 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ activity, showDate = true }
       <div className={`p-2 rounded-full ${colorClass}`}>
         <Icon className="h-4 w-4" />
       </div>
-      
+
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 mb-1">
-          {activity.title}
-        </p>
-        
+        <p className="text-sm font-medium text-gray-900 mb-1">{activity.title}</p>
+
         {activity.description && (
-          <p className="text-sm text-gray-600 mb-2">
-            {activity.description}
-          </p>
+          <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
         )}
-        
+
         <div className="flex items-center space-x-3 text-xs text-gray-500">
           <span>{activity.userName}</span>
           {showDate && (
@@ -166,18 +156,12 @@ const ActivityGroup: React.FC<ActivityGroupProps> = ({ date, activities }) => {
   return (
     <div className="space-y-1">
       <div className="sticky top-0 bg-white border-b border-gray-200 py-2 mb-2">
-        <h3 className="text-sm font-semibold text-gray-900">
-          {formatGroupDate(date)}
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-900">{formatGroupDate(date)}</h3>
       </div>
-      
+
       <div className="space-y-1">
         {activities.map((activity) => (
-          <ActivityItem 
-            key={activity.id} 
-            activity={activity} 
-            showDate={false}
-          />
+          <ActivityItem key={activity.id} activity={activity} showDate={false} />
         ))}
       </div>
     </div>
@@ -194,9 +178,9 @@ interface ActivityFilters {
 
 export const ActivityFeed: React.FC = () => {
   const { activities } = useTaskStore();
-  
+
   const [filters, setFilters] = useState<ActivityFilters>({
-    dateRange: 'week'
+    dateRange: 'week',
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [groupByDate, setGroupByDate] = useState(true);
@@ -208,32 +192,27 @@ export const ActivityFeed: React.FC = () => {
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(activity =>
-        activity.title.toLowerCase().includes(term) ||
-        activity.description?.toLowerCase().includes(term) ||
-        activity.userName.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        (activity) =>
+          activity.title.toLowerCase().includes(term) ||
+          activity.description?.toLowerCase().includes(term) ||
+          activity.userName.toLowerCase().includes(term)
       );
     }
 
     // Apply type filters
     if (filters.types?.length) {
-      filtered = filtered.filter(activity =>
-        filters.types!.includes(activity.type)
-      );
+      filtered = filtered.filter((activity) => filters.types!.includes(activity.type));
     }
 
     // Apply entity type filters
     if (filters.entityTypes?.length) {
-      filtered = filtered.filter(activity =>
-        filters.entityTypes!.includes(activity.entityType)
-      );
+      filtered = filtered.filter((activity) => filters.entityTypes!.includes(activity.entityType));
     }
 
     // Apply user filters
     if (filters.userIds?.length) {
-      filtered = filtered.filter(activity =>
-        filters.userIds!.includes(activity.userId)
-      );
+      filtered = filtered.filter((activity) => filters.userIds!.includes(activity.userId));
     }
 
     // Apply date range filter
@@ -255,15 +234,11 @@ export const ActivityFeed: React.FC = () => {
           cutoffDate = new Date(0);
       }
 
-      filtered = filtered.filter(activity =>
-        activity.createdAt >= cutoffDate
-      );
+      filtered = filtered.filter((activity) => activity.createdAt >= cutoffDate);
     }
 
     // Sort by date (newest first)
-    return filtered.sort((a, b) => 
-      b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }, [activities, searchTerm, filters]);
 
   // Group activities by date if enabled
@@ -273,8 +248,8 @@ export const ActivityFeed: React.FC = () => {
     }
 
     const groups: Record<string, Activity[]> = {};
-    
-    filteredActivities.forEach(activity => {
+
+    filteredActivities.forEach((activity) => {
       const dateKey = format(activity.createdAt, 'yyyy-MM-dd');
       if (!groups[dateKey]) {
         groups[dateKey] = [];
@@ -286,7 +261,7 @@ export const ActivityFeed: React.FC = () => {
   }, [filteredActivities, groupByDate]);
 
   const updateFilters = (newFilters: Partial<ActivityFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
   const clearFilters = () => {
@@ -295,9 +270,13 @@ export const ActivityFeed: React.FC = () => {
   };
 
   const getFilterCount = () => {
-    return Object.entries(filters).filter(([key, value]) => 
-      value && (Array.isArray(value) ? value.length > 0 : key !== 'dateRange' || value !== 'week')
-    ).length + (searchTerm ? 1 : 0);
+    return (
+      Object.entries(filters).filter(
+        ([key, value]) =>
+          value &&
+          (Array.isArray(value) ? value.length > 0 : key !== 'dateRange' || value !== 'week')
+      ).length + (searchTerm ? 1 : 0)
+    );
   };
 
   return (
@@ -309,7 +288,7 @@ export const ActivityFeed: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Activity Feed</h1>
             <p className="text-gray-600">Track all task and project activities</p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Select
               value={groupByDate ? 'grouped' : 'list'}
@@ -342,7 +321,9 @@ export const ActivityFeed: React.FC = () => {
           {/* Date Range */}
           <Select
             value={filters.dateRange}
-            onValueChange={(value) => updateFilters({ dateRange: value as ActivityFilters['dateRange'] })}
+            onValueChange={(value) =>
+              updateFilters({ dateRange: value as ActivityFilters['dateRange'] })
+            }
           >
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -362,16 +343,12 @@ export const ActivityFeed: React.FC = () => {
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
                 {getFilterCount() > 0 && (
-                  <Badge className="ml-2 bg-blue-100 text-blue-800">
-                    {getFilterCount()}
-                  </Badge>
+                  <Badge className="ml-2 bg-blue-100 text-blue-800">{getFilterCount()}</Badge>
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem className="font-medium">
-                Activity Type
-              </DropdownMenuItem>
+              <DropdownMenuItem className="font-medium">Activity Type</DropdownMenuItem>
               {Object.keys(activityIcons).map((type) => (
                 <DropdownMenuCheckboxItem
                   key={type}
@@ -381,19 +358,17 @@ export const ActivityFeed: React.FC = () => {
                     updateFilters({
                       types: checked
                         ? [...types, type as Activity['type']]
-                        : types.filter(t => t !== type)
+                        : types.filter((t) => t !== type),
                     });
                   }}
                 >
                   <span className="capitalize">{type.replace('_', ' ')}</span>
                 </DropdownMenuCheckboxItem>
               ))}
-              
+
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem className="font-medium">
-                Entity Type
-              </DropdownMenuItem>
+
+              <DropdownMenuItem className="font-medium">Entity Type</DropdownMenuItem>
               {(['task', 'deal', 'contact', 'calendar'] as const).map((entityType) => (
                 <DropdownMenuCheckboxItem
                   key={entityType}
@@ -403,19 +378,17 @@ export const ActivityFeed: React.FC = () => {
                     updateFilters({
                       entityTypes: checked
                         ? [...entityTypes, entityType]
-                        : entityTypes.filter(t => t !== entityType)
+                        : entityTypes.filter((t) => t !== entityType),
                     });
                   }}
                 >
                   <span className="capitalize">{entityType}</span>
                 </DropdownMenuCheckboxItem>
               ))}
-              
+
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem onClick={clearFilters}>
-                Clear All Filters
-              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={clearFilters}>Clear All Filters</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -430,8 +403,7 @@ export const ActivityFeed: React.FC = () => {
             <p className="text-sm text-center max-w-sm">
               {searchTerm || Object.keys(filters).length > 1
                 ? 'Try adjusting your search or filters'
-                : 'Activities will appear here as tasks are created and updated'
-              }
+                : 'Activities will appear here as tasks are created and updated'}
             </p>
           </div>
         ) : groupByDate ? (
@@ -439,13 +411,8 @@ export const ActivityFeed: React.FC = () => {
             {Object.entries(groupedActivities)
               .sort(([a], [b]) => b.localeCompare(a))
               .map(([dateKey, dayActivities]) => (
-                <ActivityGroup
-                  key={dateKey}
-                  date={new Date(dateKey)}
-                  activities={dayActivities}
-                />
-              ))
-            }
+                <ActivityGroup key={dateKey} date={new Date(dateKey)} activities={dayActivities} />
+              ))}
           </div>
         ) : (
           <div className="space-y-1">
@@ -462,13 +429,11 @@ export const ActivityFeed: React.FC = () => {
           <span>
             Showing {filteredActivities.length} of {activities.length} activities
           </span>
-          
+
           <div className="flex items-center space-x-4">
+            <span>{filteredActivities.filter((a) => isToday(a.createdAt)).length} today</span>
             <span>
-              {filteredActivities.filter(a => isToday(a.createdAt)).length} today
-            </span>
-            <span>
-              {filteredActivities.filter(a => isThisWeek(a.createdAt)).length} this week
+              {filteredActivities.filter((a) => isThisWeek(a.createdAt)).length} this week
             </span>
           </div>
         </div>

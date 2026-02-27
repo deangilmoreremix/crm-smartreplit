@@ -1,6 +1,29 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Shield, Users, Building2, DollarSign, Settings, CheckCircle, XCircle, Clock, Eye, Edit, Trash2, Plus } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from 'recharts';
+import {
+  Shield,
+  Users,
+  Building2,
+  DollarSign,
+  Settings,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+} from 'lucide-react';
 
 interface Tenant {
   id: string;
@@ -42,7 +65,9 @@ export default function SuperAdminDashboard() {
     whitelabelBranding: true,
     apiAccess: false,
   });
-  const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showToast, setShowToast] = useState<{ message: string; type: 'success' | 'error' } | null>(
+    null
+  );
 
   useEffect(() => {
     fetchAdminData();
@@ -74,8 +99,8 @@ export default function SuperAdminDashboard() {
   };
 
   const calculatePlatformStats = () => {
-    const partners = tenants.filter(t => t.type === 'partner');
-    const customers = tenants.filter(t => t.type === 'customer');
+    const partners = tenants.filter((t) => t.type === 'partner');
+    const customers = tenants.filter((t) => t.type === 'customer');
     const totalRevenue = tenants.reduce((sum, t) => sum + t.monthlyRevenue, 0);
 
     setStats({
@@ -207,13 +232,16 @@ export default function SuperAdminDashboard() {
   };
 
   const toggleFeatureFlag = (featureKey: keyof typeof featureFlags) => {
-    setFeatureFlags(prev => ({
+    setFeatureFlags((prev) => ({
       ...prev,
-      [featureKey]: !prev[featureKey]
+      [featureKey]: !prev[featureKey],
     }));
 
     // Here you would typically save to backend
-    showToastMessage(`${featureKey} ${!featureFlags[featureKey] ? 'enabled' : 'disabled'}`, 'success');
+    showToastMessage(
+      `${featureKey} ${!featureFlags[featureKey] ? 'enabled' : 'disabled'}`,
+      'success'
+    );
   };
 
   // Sample growth data
@@ -318,9 +346,7 @@ export default function SuperAdminDashboard() {
                 <div className="flex items-center">
                   <Users className="h-8 w-8 text-green-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                      Partners
-                    </p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Partners</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {stats?.totalPartners || 0}
                     </p>
@@ -396,12 +422,20 @@ export default function SuperAdminDashboard() {
               </h3>
               <div className="space-y-4">
                 {tenants.slice(0, 5).map((tenant) => (
-                  <div key={tenant.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div
+                    key={tenant.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  >
                     <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-3 ${
-                        tenant.status === 'active' ? 'bg-green-500' :
-                        tenant.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}></div>
+                      <div
+                        className={`w-3 h-3 rounded-full mr-3 ${
+                          tenant.status === 'active'
+                            ? 'bg-green-500'
+                            : tenant.status === 'pending'
+                              ? 'bg-yellow-500'
+                              : 'bg-red-500'
+                        }`}
+                      ></div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">{tenant.name}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -469,27 +503,39 @@ export default function SuperAdminDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            tenant.type === 'partner' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                          }`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              tenant.type === 'partner'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
                             {tenant.type}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            tenant.plan === 'enterprise' ? 'bg-purple-100 text-purple-800' :
-                            tenant.plan === 'pro' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              tenant.plan === 'enterprise'
+                                ? 'bg-purple-100 text-purple-800'
+                                : tenant.plan === 'pro'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
                             {tenant.plan}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            tenant.status === 'active' ? 'bg-green-100 text-green-800' :
-                            tenant.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              tenant.status === 'active'
+                                ? 'bg-green-100 text-green-800'
+                                : tenant.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                            }`}
+                          >
                             {tenant.status}
                           </span>
                         </td>
@@ -512,14 +558,14 @@ export default function SuperAdminDashboard() {
                               <Edit className="h-4 w-4" />
                               Edit
                             </button>
-                            <button 
+                            <button
                               onClick={() => suspendTenant(tenant.id)}
                               className="text-yellow-600 hover:text-yellow-900 flex items-center gap-1"
                             >
                               <XCircle className="h-4 w-4" />
                               Suspend
                             </button>
-                            <button 
+                            <button
                               onClick={() => deleteTenant(tenant.id)}
                               className="text-red-600 hover:text-red-900 flex items-center gap-1"
                             >
@@ -585,7 +631,7 @@ export default function SuperAdminDashboard() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex gap-2">
-                              <button 
+                              <button
                                 onClick={() => approvePartner(partner.id)}
                                 className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded flex items-center gap-1"
                               >
@@ -720,7 +766,10 @@ export default function SuperAdminDashboard() {
                   { name: 'White-label Branding', key: 'whitelabelBranding', enabled: true },
                   { name: 'API Access', key: 'apiAccess', enabled: false },
                 ].map((feature) => (
-                  <div key={feature.key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div
+                    key={feature.key}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  >
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">{feature.name}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -730,12 +779,16 @@ export default function SuperAdminDashboard() {
                     <button
                       onClick={() => toggleFeatureFlag(feature.key as keyof typeof featureFlags)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        featureFlags[feature.key as keyof typeof featureFlags] ? 'bg-blue-600' : 'bg-gray-200'
+                        featureFlags[feature.key as keyof typeof featureFlags]
+                          ? 'bg-blue-600'
+                          : 'bg-gray-200'
                       }`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          featureFlags[feature.key as keyof typeof featureFlags] ? 'translate-x-6' : 'translate-x-1'
+                          featureFlags[feature.key as keyof typeof featureFlags]
+                            ? 'translate-x-6'
+                            : 'translate-x-1'
                         }`}
                       />
                     </button>
@@ -750,11 +803,13 @@ export default function SuperAdminDashboard() {
       {/* Toast Notification */}
       {showToast && (
         <div className="fixed bottom-4 right-4 z-50">
-          <div className={`px-4 py-3 rounded-lg shadow-lg border ${
-            showToast.type === 'success'
-              ? 'bg-green-50 border-green-200 text-green-800'
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
+          <div
+            className={`px-4 py-3 rounded-lg shadow-lg border ${
+              showToast.type === 'success'
+                ? 'bg-green-50 border-green-200 text-green-800'
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
             <div className="flex items-center">
               <span className="text-sm font-medium">{showToast.message}</span>
             </div>
@@ -770,60 +825,72 @@ export default function SuperAdminDashboard() {
               Edit Tenant: {selectedTenant.name}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Tenant Name
-                 </label>
-                 <input
-                   type="text"
-                   value={editFormData.name || ''}
-                   onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                   placeholder="Enter tenant name"
-                 />
-               </div>
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Plan
-                 </label>
-                 <select
-                   value={editFormData.plan || selectedTenant.plan}
-                   onChange={(e) => setEditFormData(prev => ({ ...prev, plan: e.target.value as Tenant['plan'] }))}
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                 >
-                   <option value="basic">Basic</option>
-                   <option value="pro">Pro</option>
-                   <option value="enterprise">Enterprise</option>
-                 </select>
-               </div>
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Status
-                 </label>
-                 <select
-                   value={editFormData.status || selectedTenant.status}
-                   onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value as Tenant['status'] }))}
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                 >
-                   <option value="active">Active</option>
-                   <option value="suspended">Suspended</option>
-                   <option value="pending">Pending</option>
-                 </select>
-               </div>
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                   Monthly Revenue
-                 </label>
-                 <input
-                   type="number"
-                   value={editFormData.monthlyRevenue || selectedTenant.monthlyRevenue}
-                   onChange={(e) => setEditFormData(prev => ({ ...prev, monthlyRevenue: parseInt(e.target.value) || 0 }))}
-                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                   min="0"
-                   placeholder="0"
-                 />
-               </div>
-             </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tenant Name
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.name || ''}
+                  onChange={(e) => setEditFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter tenant name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Plan
+                </label>
+                <select
+                  value={editFormData.plan || selectedTenant.plan}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, plan: e.target.value as Tenant['plan'] }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="basic">Basic</option>
+                  <option value="pro">Pro</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Status
+                </label>
+                <select
+                  value={editFormData.status || selectedTenant.status}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      status: e.target.value as Tenant['status'],
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="active">Active</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="pending">Pending</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Monthly Revenue
+                </label>
+                <input
+                  type="number"
+                  value={editFormData.monthlyRevenue || selectedTenant.monthlyRevenue}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      monthlyRevenue: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+            </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowEditModal(false)}

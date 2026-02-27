@@ -19,14 +19,6 @@
   "ts-node": {
     "esm": false
   },
-  "include": [
-    "*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "client",
-    "server",
-    "scripts"
-  ]
+  "include": ["*.ts"],
+  "exclude": ["node_modules", "dist", "client", "server", "scripts"]
 }

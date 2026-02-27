@@ -8,12 +8,10 @@ const LandingHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
-  
+
   // Debug logging
-  console.log('LandingHeader component rendering');
 
   const { config } = useWhitelabel();
-  console.log('WhitelabelContext config:', config);
   // Track scroll position to change header style
   useEffect(() => {
     const handleScroll = () => {
@@ -31,7 +29,7 @@ const LandingHeader = () => {
   }, []);
 
   return (
-    <header 
+    <header
       className={`fixed w-full top-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-white shadow-md py-3' : 'bg-transparent py-5'
       }`}
@@ -41,7 +39,11 @@ const LandingHeader = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 text-2xl font-bold text-gray-900" data-testid="logo-link">
+          <Link
+            to="/"
+            className="flex items-center space-x-3 text-2xl font-bold text-gray-900"
+            data-testid="logo-link"
+          >
             {config.logoUrl && (
               <img
                 src={config.logoUrl}
@@ -52,7 +54,7 @@ const LandingHeader = () => {
             <span
               className="bg-clip-text text-transparent"
               style={{
-                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`,
               }}
             >
               {config.companyName || 'SmartCRM'}
@@ -62,39 +64,67 @@ const LandingHeader = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
             <div className="relative">
-              <button 
+              <button
                 className="flex items-center text-gray-700 hover:text-blue-600 transition-colors"
                 onClick={() => setFeaturesOpen(!featuresOpen)}
                 onBlur={() => setTimeout(() => setFeaturesOpen(false), 200)}
               >
-                Features <ChevronDown size={16} className={`ml-1 transition-transform ${featuresOpen ? 'rotate-180' : ''}`} />
+                Features{' '}
+                <ChevronDown
+                  size={16}
+                  className={`ml-1 transition-transform ${featuresOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {featuresOpen && (
                 <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 p-4 w-[580px] z-[100]">
                   <div className="grid grid-cols-2 gap-2">
-                    <Link to="/features/ai-tools" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/ai-tools"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       AI Sales Tools
                     </Link>
-                    <Link to="/features/contacts" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/contacts"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       Contact Management
                     </Link>
-                    <Link to="/features/pipeline" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/pipeline"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       Deal Pipeline
                     </Link>
-                    <Link to="/features/ai-assistant" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/ai-assistant"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       AI Assistant
                     </Link>
-                    <Link to="/features/vision-analyzer" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/vision-analyzer"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       Vision Analyzer
                     </Link>
-                    <Link to="/features/image-generator" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/image-generator"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       Image Generator
                     </Link>
-                    <Link to="/features/function-assistant" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/function-assistant"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       Function Assistant
                     </Link>
-                    <Link to="/features/speech-to-text" className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center">
+                    <Link
+                      to="/features/speech-to-text"
+                      className="p-2 hover:bg-gray-50 rounded-md text-gray-700 hover:text-blue-600 transition-colors flex items-center"
+                    >
                       Speech to Text
                     </Link>
                   </div>
@@ -102,13 +132,24 @@ const LandingHeader = () => {
               )}
             </div>
 
-            <HashLink smooth to="/#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <HashLink
+              smooth
+              to="/#pricing"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Pricing
             </HashLink>
-            <Link to="/voice-profiles" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <Link
+              to="/voice-profiles"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
               Voice Profiles
             </Link>
-            <HashLink smooth to="/#faq" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <HashLink
+              smooth
+              to="/#faq"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
               FAQ
             </HashLink>
             <Link to="/signin" className="text-gray-700 hover:text-blue-600 transition-colors">
@@ -118,7 +159,7 @@ const LandingHeader = () => {
               to="/signup"
               className="text-white px-6 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
               style={{
-                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`,
               }}
             >
               Get Started
@@ -126,15 +167,12 @@ const LandingHeader = () => {
           </nav>
 
           {/* Mobile Menu Button */}
-          <button 
-            className="lg:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+          <button className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="lg:hidden bg-white shadow-lg p-4 mt-3">
@@ -150,7 +188,7 @@ const LandingHeader = () => {
             <span
               className="text-lg font-bold bg-clip-text text-transparent"
               style={{
-                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`,
               }}
             >
               {config.companyName || 'SmartCRM'}
@@ -158,13 +196,22 @@ const LandingHeader = () => {
           </div>
 
           <nav className="flex flex-col space-y-4">
-            <Link to="/features/ai-tools" className="text-gray-700 hover:text-blue-600 transition-colors py-2">
+            <Link
+              to="/features/ai-tools"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2"
+            >
               AI Sales Tools
             </Link>
-            <Link to="/features/contacts" className="text-gray-700 hover:text-blue-600 transition-colors py-2">
+            <Link
+              to="/features/contacts"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2"
+            >
               Contact Management
             </Link>
-            <Link to="/features/pipeline" className="text-gray-700 hover:text-blue-600 transition-colors py-2">
+            <Link
+              to="/features/pipeline"
+              className="text-gray-700 hover:text-blue-600 transition-colors py-2"
+            >
               Deal Pipeline
             </Link>
             <Link to="/signin" className="text-gray-700 hover:text-blue-600 transition-colors py-2">
@@ -174,7 +221,7 @@ const LandingHeader = () => {
               to="/signup"
               className="text-white px-6 py-2 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg w-fit"
               style={{
-                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`
+                backgroundImage: `linear-gradient(to right, var(--wl-primary-color, #3B82F6), var(--wl-secondary-color, #6366F1))`,
               }}
             >
               Get Started

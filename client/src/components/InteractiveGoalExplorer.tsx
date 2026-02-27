@@ -3,12 +3,12 @@ import { Goal, GoalCategory, AIGoalContext } from '../types/goals';
 import { allGoals, goalCategories } from '../data/completeGoalsData';
 import InteractiveGoalCard from './InteractiveGoalCard';
 import GoalExecutionModal from './GoalExecutionModal';
-import { 
-  Target, 
-  Filter, 
-  Search, 
-  Zap, 
-  Star, 
+import {
+  Target,
+  Filter,
+  Search,
+  Zap,
+  Star,
   TrendingUp,
   ArrowRight,
   Play,
@@ -36,7 +36,7 @@ import {
   AlertCircle,
   Loader,
   Grid3X3,
-  List
+  List,
 } from 'lucide-react';
 
 interface InteractiveGoalExplorerProps {
@@ -54,7 +54,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   onOpenApiSetup,
   onGoalSelected,
   contextData,
-  className = ''
+  className = '',
 }) => {
   // State management
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -69,7 +69,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   const [expandedGoals, setExpandedGoals] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Live dashboard stats with real-time updates
   const [liveStats, setLiveStats] = useState({
     totalGoals: allGoals.length,
@@ -77,55 +77,66 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
     valueGenerated: 0,
     activeAgents: 0,
     executingNow: 0,
-    systemHealth: 98.7
+    systemHealth: 98.7,
   });
 
   // Update live stats based on execution state
   useEffect(() => {
     const valuePerGoal = 500000; // Base value per goal
     const agentsPerGoal = 3; // Average agents per goal
-    
-    setLiveStats(prev => ({
+
+    setLiveStats((prev) => ({
       ...prev,
       executingNow: executingGoals.size,
       completedToday: completedGoals.size,
-      valueGenerated: completedGoals.size * valuePerGoal + Array.from(executingGoals).reduce((sum, goalId) => {
-        const progress = executionProgress[goalId] || 0;
-        return sum + (valuePerGoal * progress / 100);
-      }, 0),
+      valueGenerated:
+        completedGoals.size * valuePerGoal +
+        Array.from(executingGoals).reduce((sum, goalId) => {
+          const progress = executionProgress[goalId] || 0;
+          return sum + (valuePerGoal * progress) / 100;
+        }, 0),
       activeAgents: executingGoals.size * agentsPerGoal,
-      systemHealth: Math.min(99.9, 98.7 + Math.random() * 1.2)
+      systemHealth: Math.min(99.9, 98.7 + Math.random() * 1.2),
     }));
   }, [executingGoals.size, completedGoals.size, executionProgress]);
 
   // Smart filtering combining multiple criteria
   const filteredGoals = useMemo(() => {
-    return allGoals.filter(goal => {
+    return allGoals.filter((goal) => {
       // Category filter
-      if (selectedCategory !== 'all' && 
-          goal.category.toLowerCase() !== selectedCategory.toLowerCase()) {
+      if (
+        selectedCategory !== 'all' &&
+        goal.category.toLowerCase() !== selectedCategory.toLowerCase()
+      ) {
         return false;
       }
-      
+
       // Priority filter
-      if (selectedPriority !== 'all' && 
-          goal.priority.toLowerCase() !== selectedPriority.toLowerCase()) {
+      if (
+        selectedPriority !== 'all' &&
+        goal.priority.toLowerCase() !== selectedPriority.toLowerCase()
+      ) {
         return false;
       }
-      
+
       // Complexity filter
-      if (selectedComplexity !== 'all' && 
-          goal.complexity.toLowerCase() !== selectedComplexity.toLowerCase()) {
+      if (
+        selectedComplexity !== 'all' &&
+        goal.complexity.toLowerCase() !== selectedComplexity.toLowerCase()
+      ) {
         return false;
       }
-      
+
       // Search term filter
-      if (searchTerm && !goal.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !goal.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !goal.businessImpact.toLowerCase().includes(searchTerm.toLowerCase())) {
+      if (
+        searchTerm &&
+        !goal.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !goal.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !goal.businessImpact.toLowerCase().includes(searchTerm.toLowerCase())
+      ) {
         return false;
       }
-      
+
       return true;
     });
   }, [selectedCategory, selectedPriority, selectedComplexity, searchTerm]);
@@ -133,7 +144,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   // Priority and complexity counts for filters
   const priorityCounts = useMemo(() => {
     const counts = { all: allGoals.length, high: 0, medium: 0, low: 0 };
-    allGoals.forEach(goal => {
+    allGoals.forEach((goal) => {
       counts[goal.priority.toLowerCase() as keyof typeof counts]++;
     });
     return counts;
@@ -141,7 +152,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
 
   const complexityCounts = useMemo(() => {
     const counts = { all: allGoals.length, simple: 0, intermediate: 0, advanced: 0 };
-    allGoals.forEach(goal => {
+    allGoals.forEach((goal) => {
       counts[goal.complexity.toLowerCase() as keyof typeof counts]++;
     });
     return counts;
@@ -152,30 +163,33 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
     setExecutingGoal(goal);
     setShowExecutionModal(true);
     onGoalSelected?.(goal);
-    
+
     if (!executingGoals.has(goal.id)) {
-      setExecutingGoals(prev => new Set([...Array.from(prev), goal.id]));
-      setExecutionProgress(prev => ({ ...prev, [goal.id]: 0 }));
-      
+      setExecutingGoals((prev) => new Set([...Array.from(prev), goal.id]));
+      setExecutionProgress((prev) => ({ ...prev, [goal.id]: 0 }));
+
       // Simulate execution progress
-      const progressInterval = setInterval(() => {
-        setExecutionProgress(prev => {
-          const currentProgress = prev[goal.id] || 0;
-          const newProgress = Math.min(100, currentProgress + Math.random() * 15 + 5);
-          
-          if (newProgress >= 100) {
-            clearInterval(progressInterval);
-            setExecutingGoals(prevSet => {
-              const newSet = new Set(prevSet);
-              newSet.delete(goal.id);
-              return newSet;
-            });
-            setCompletedGoals(prevSet => new Set([...Array.from(prevSet), goal.id]));
-          }
-          
-          return { ...prev, [goal.id]: newProgress };
-        });
-      }, realMode ? 2000 : 500);
+      const progressInterval = setInterval(
+        () => {
+          setExecutionProgress((prev) => {
+            const currentProgress = prev[goal.id] || 0;
+            const newProgress = Math.min(100, currentProgress + Math.random() * 15 + 5);
+
+            if (newProgress >= 100) {
+              clearInterval(progressInterval);
+              setExecutingGoals((prevSet) => {
+                const newSet = new Set(prevSet);
+                newSet.delete(goal.id);
+                return newSet;
+              });
+              setCompletedGoals((prevSet) => new Set([...Array.from(prevSet), goal.id]));
+            }
+
+            return { ...prev, [goal.id]: newProgress };
+          });
+        },
+        realMode ? 2000 : 500
+      );
     }
   };
 
@@ -185,7 +199,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   };
 
   const handleToggleDetails = (goalId: string) => {
-    setExpandedGoals(prev => {
+    setExpandedGoals((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(goalId)) {
         newSet.delete(goalId);
@@ -203,8 +217,8 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
 
   const handleExecutionComplete = (result: any) => {
     if (executingGoal) {
-      setCompletedGoals(prev => new Set([...Array.from(prev), executingGoal.id]));
-      setExecutingGoals(prev => {
+      setCompletedGoals((prev) => new Set([...Array.from(prev), executingGoal.id]));
+      setExecutingGoals((prev) => {
         const newSet = new Set(prev);
         newSet.delete(executingGoal.id);
         return newSet;
@@ -253,53 +267,67 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
       {/* Live System Dashboard */}
       <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-gray-200/50 dark:border-slate-700/50 shadow-xl p-6">
         <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Live System Dashboard</h3>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Live System Dashboard
+          </h3>
           <p className="text-gray-600 dark:text-gray-300">Real-time AI automation metrics</p>
         </div>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {/* Available Goals */}
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-4 text-center border border-blue-200/50 dark:border-blue-700/50">
             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
               {liveStats.totalGoals}
             </div>
-            <div className="text-sm font-medium text-blue-700 dark:text-blue-300">Available Goals</div>
+            <div className="text-sm font-medium text-blue-700 dark:text-blue-300">
+              Available Goals
+            </div>
             <div className="text-xs text-blue-500 dark:text-blue-400">Ready for execution</div>
           </div>
-          
+
           {/* Completed Today */}
           <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 text-center border border-green-200/50 dark:border-green-700/50">
             <div className="text-3xl font-bold text-green-600 dark:text-green-400">
               {liveStats.completedToday}
             </div>
-            <div className="text-sm font-medium text-green-700 dark:text-green-300">Completed Today</div>
+            <div className="text-sm font-medium text-green-700 dark:text-green-300">
+              Completed Today
+            </div>
             <div className="text-xs text-green-500 dark:text-green-400">Successfully achieved</div>
           </div>
-          
+
           {/* Value Generated */}
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 text-center border border-purple-200/50 dark:border-purple-700/50">
             <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
               {formatCurrency(liveStats.valueGenerated)}
             </div>
-            <div className="text-sm font-medium text-purple-700 dark:text-purple-300">Value Generated</div>
-            <div className="text-xs text-purple-500 dark:text-purple-400">Business impact today</div>
+            <div className="text-sm font-medium text-purple-700 dark:text-purple-300">
+              Value Generated
+            </div>
+            <div className="text-xs text-purple-500 dark:text-purple-400">
+              Business impact today
+            </div>
           </div>
-          
+
           {/* Active Agents */}
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-xl p-4 text-center border border-orange-200/50 dark:border-orange-700/50">
             <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
               {liveStats.activeAgents}
             </div>
-            <div className="text-sm font-medium text-orange-700 dark:text-orange-300">Active Agents</div>
+            <div className="text-sm font-medium text-orange-700 dark:text-orange-300">
+              Active Agents
+            </div>
             <div className="text-xs text-orange-500 dark:text-orange-400">Currently working</div>
           </div>
-          
+
           {/* System Health */}
           <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-xl p-4 text-center border border-teal-200/50 dark:border-teal-700/50">
             <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
               {liveStats.systemHealth.toFixed(1)}%
             </div>
-            <div className="text-sm font-medium text-teal-700 dark:text-teal-300">System Health</div>
+            <div className="text-sm font-medium text-teal-700 dark:text-teal-300">
+              System Health
+            </div>
             <div className="text-xs text-teal-500 dark:text-teal-400">
               <div className="flex items-center justify-center gap-1">
                 <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
@@ -335,7 +363,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
               Execute top 3 goals
             </span>
           </button>
-          
+
           <button
             onClick={() => handleQuickAction('quick-wins')}
             className="flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-700/50"
@@ -346,7 +374,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
               Simple goals first
             </span>
           </button>
-          
+
           <button
             onClick={() => handleQuickAction('sales-focus')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-700/50"
@@ -357,7 +385,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
               Revenue goals
             </span>
           </button>
-          
+
           <button
             onClick={() => handleQuickAction('demo-mode')}
             className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/30 transition-colors border border-purple-200 dark:border-purple-700/50"
@@ -393,8 +421,8 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
                   </span>
                 </div>
               </button>
-              
-              {goalCategories.map(category => (
+
+              {goalCategories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
@@ -417,7 +445,9 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
 
           {/* Priority Level */}
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Priority Level</h4>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Priority Level
+            </h4>
             <div className="space-y-2">
               {Object.entries(priorityCounts).map(([priority, count]) => (
                 <button
@@ -442,7 +472,9 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
 
           {/* Complexity Level */}
           <div>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Complexity Level</h4>
+            <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Complexity Level
+            </h4>
             <div className="space-y-2">
               {Object.entries(complexityCounts).map(([complexity, count]) => (
                 <button
@@ -481,7 +513,7 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
               {executingGoals.size} executing
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => {

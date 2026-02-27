@@ -1,13 +1,13 @@
 import { Goal, GoalCategory } from '../types/goals';
-import { 
-  Target, 
-  Users, 
-  MessageSquare, 
-  Zap, 
-  BarChart3, 
-  FileText, 
-  Shield, 
-  Brain 
+import {
+  Target,
+  Users,
+  MessageSquare,
+  Zap,
+  BarChart3,
+  FileText,
+  Shield,
+  Brain,
 } from 'lucide-react';
 
 export const goalCategories: GoalCategory[] = [
@@ -17,15 +17,15 @@ export const goalCategories: GoalCategory[] = [
     description: 'Automate your entire sales process from lead generation to closing',
     icon: Target,
     color: 'blue',
-    totalGoals: 14
+    totalGoals: 14,
   },
   {
     id: 'marketing',
-    name: 'Marketing Goals', 
+    name: 'Marketing Goals',
     description: 'Launch campaigns and nurture leads across multiple channels',
     icon: MessageSquare,
     color: 'purple',
-    totalGoals: 8
+    totalGoals: 8,
   },
   {
     id: 'relationship',
@@ -33,7 +33,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Build stronger relationships with intelligent conversation memory',
     icon: Users,
     color: 'green',
-    totalGoals: 8
+    totalGoals: 8,
   },
   {
     id: 'automation',
@@ -41,7 +41,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Create workflows that run your business while you sleep',
     icon: Zap,
     color: 'orange',
-    totalGoals: 8
+    totalGoals: 8,
   },
   {
     id: 'analytics',
@@ -49,7 +49,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Get insights and forecasts from your sales data',
     icon: BarChart3,
     color: 'red',
-    totalGoals: 4
+    totalGoals: 4,
   },
   {
     id: 'content',
@@ -57,7 +57,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Generate personalized content and communications',
     icon: FileText,
     color: 'teal',
-    totalGoals: 4
+    totalGoals: 4,
   },
   {
     id: 'admin',
@@ -65,7 +65,7 @@ export const goalCategories: GoalCategory[] = [
     description: 'Keep your data clean and organized automatically',
     icon: Shield,
     color: 'indigo',
-    totalGoals: 2
+    totalGoals: 2,
   },
   {
     id: 'ai-native',
@@ -73,8 +73,8 @@ export const goalCategories: GoalCategory[] = [
     description: 'Experience the future of AI-powered business automation',
     icon: Brain,
     color: 'pink',
-    totalGoals: 2
-  }
+    totalGoals: 2,
+  },
 ];
 
 export const allGoals: Goal[] = [
@@ -90,10 +90,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '15 minutes',
     businessImpact: 'Fill your pipeline with 50+ qualified leads per week',
     complexity: 'Intermediate',
-    realWorldExample: 'AI finds 50 SaaS prospects matching your ICP and adds them to your CRM with contact info',
+    realWorldExample:
+      'AI finds 50 SaaS prospects matching your ICP and adds them to your CRM with contact info',
     successMetrics: ['50+ leads per week', '90%+ data accuracy', '30% qualification rate'],
     prerequisite: ['LinkedIn Sales Navigator account', 'Target customer profile defined'],
-    roi: '300% ROI within 30 days'
+    roi: '300% ROI within 30 days',
   },
   {
     id: 'score-prioritize-leads',
@@ -109,7 +110,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI analyzes email opens, website visits, and engagement to rank your leads',
     successMetrics: ['80% accuracy', '5x better conversion', '50% time savings'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '400% increase in close rate'
+    roi: '400% increase in close rate',
   },
   {
     id: 'cold-outreach-no-writing',
@@ -125,7 +126,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI writes and sends personalized cold emails to 100 prospects daily',
     successMetrics: ['100+ emails daily', '25% response rate', '90% deliverability'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '10x cost savings vs hiring SDRs'
+    roi: '10x cost savings vs hiring SDRs',
   },
   {
     id: 'book-meetings-no-back-forth',
@@ -141,7 +142,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI handles scheduling, sends calendar invites, and sets up Zoom links',
     successMetrics: ['20+ meetings/week', '90% show rate', '0 scheduling conflicts'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '80% time savings on scheduling'
+    roi: '80% time savings on scheduling',
   },
   {
     id: 'follow-up-multiple-channels',
@@ -157,7 +158,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI follows up via email, LinkedIn, and phone across 7 touchpoints',
     successMetrics: ['7 touchpoints', '200% response increase', '0 leads forgotten'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '200% increase in pipeline velocity'
+    roi: '200% increase in pipeline velocity',
   },
   {
     id: 'handle-objections-ai',
@@ -170,10 +171,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '20 minutes',
     businessImpact: 'Convert 40% more objections into closed deals',
     complexity: 'Advanced',
-    realWorldExample: 'AI detects "too expensive" and responds with ROI calculator and case studies',
+    realWorldExample:
+      'AI detects "too expensive" and responds with ROI calculator and case studies',
     successMetrics: ['40% objection conversion', 'Sub-2min response time', '85% satisfaction'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '300% improvement in objection handling'
+    roi: '300% improvement in objection handling',
   },
   {
     id: 'close-deals-automatically',
@@ -189,7 +191,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI executes 9-step closing sequence from interest to signed contract',
     successMetrics: ['25% close rate increase', '50% faster sales cycles', '90% accuracy'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '500% ROI on closed deals'
+    roi: '500% ROI on closed deals',
   },
   {
     id: 'proposals-created-sent-ai',
@@ -202,10 +204,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Generate custom proposals 10x faster than manual creation',
     complexity: 'Advanced',
-    realWorldExample: 'AI creates custom proposals with pricing, terms, and case studies in minutes',
+    realWorldExample:
+      'AI creates custom proposals with pricing, terms, and case studies in minutes',
     successMetrics: ['10x faster creation', '95% accuracy', '60% acceptance rate'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '1000% time savings on proposals'
+    roi: '1000% time savings on proposals',
   },
   {
     id: 'revive-stale-deals',
@@ -221,7 +224,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI identifies dormant deals and launches targeted re-engagement campaigns',
     successMetrics: ['30% deal recovery', '$10k average value', '60 day revival cycle'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '2000% ROI on recovered deals'
+    roi: '2000% ROI on recovered deals',
   },
   {
     id: 'detect-high-close-potential',
@@ -237,7 +240,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI analyzes 50+ signals to predict which leads will close in next 7 days',
     successMetrics: ['90% prediction accuracy', '10x close probability', '50% faster cycles'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '800% increase in weekly closes'
+    roi: '800% increase in weekly closes',
   },
   {
     id: 'close-deals-sms-whatsapp',
@@ -253,7 +256,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI handles objections and closes deals via WhatsApp conversations',
     successMetrics: ['5x faster closing', '80% response rate', '40% close rate'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '400% increase in mobile closes'
+    roi: '400% increase in mobile closes',
   },
   {
     id: 'alerts-email-opens',
@@ -269,7 +272,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'Get Slack notification when prospect opens pricing email',
     successMetrics: ['60 second response time', '90% engagement tracking', '300% response rates'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '250% improvement in response timing'
+    roi: '250% improvement in response timing',
   },
   {
     id: 'qualify-leads-chatbot',
@@ -285,7 +288,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI chatbot qualifies website visitors and scores them automatically',
     successMetrics: ['100+ qualifications daily', '85% accuracy', '90% completion rate'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '600% increase in qualified leads'
+    roi: '600% increase in qualified leads',
   },
   {
     id: 'update-pipeline-voice',
@@ -301,7 +304,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'Say "Move Acme Corp to Negotiation stage" and watch it happen instantly',
     successMetrics: ['10x faster updates', '95% accuracy', '0 clicks required'],
     prerequisite: ['Basic CRM setup', 'API access'],
-    roi: '1000% time savings on CRM updates'
+    roi: '1000% time savings on CRM updates',
   },
 
   // MARKETING GOALS (8)
@@ -311,7 +314,11 @@ export const allGoals: Goal[] = [
     title: 'Launch multichannel campaigns',
     description: 'Create and execute coordinated campaigns across email, social, and ads',
     priority: 'High',
-    agentsRequired: ['Campaign Manager Agent', 'Content Creator Agent', 'Channel Coordinator Agent'],
+    agentsRequired: [
+      'Campaign Manager Agent',
+      'Content Creator Agent',
+      'Channel Coordinator Agent',
+    ],
     toolsNeeded: ['mailchimp', 'facebook_ads', 'linkedin', 'google_ads'],
     estimatedSetupTime: '45 minutes',
     businessImpact: 'Increase campaign reach by 300% and engagement by 150%',
@@ -319,7 +326,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI launches coordinated campaign across 6 channels generating 500+ leads',
     successMetrics: ['300% reach increase', '150% engagement boost', '200% lead generation'],
     prerequisite: ['Marketing platform access', 'Content assets', 'Target audience defined'],
-    roi: '400% ROI within 3 months'
+    roi: '400% ROI within 3 months',
   },
   {
     id: 'nurture-leads-sequences',
@@ -327,15 +334,23 @@ export const allGoals: Goal[] = [
     title: 'Nurture leads with sequences',
     description: 'Create personalized nurture sequences that adapt based on engagement',
     priority: 'High',
-    agentsRequired: ['Nurture Specialist Agent', 'Content Personalizer Agent', 'Engagement Tracker Agent'],
+    agentsRequired: [
+      'Nurture Specialist Agent',
+      'Content Personalizer Agent',
+      'Engagement Tracker Agent',
+    ],
     toolsNeeded: ['mailchimp', 'hubspot', 'activecampaign'],
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Convert 40% more leads to sales-qualified opportunities',
     complexity: 'Intermediate',
     realWorldExample: 'AI creates 12-email sequence that nurtures 1000 leads to 250 SQLs',
-    successMetrics: ['40% MQL to SQL conversion', '60% email engagement', '25% unsubscribe reduction'],
+    successMetrics: [
+      '40% MQL to SQL conversion',
+      '60% email engagement',
+      '25% unsubscribe reduction',
+    ],
     prerequisite: ['Email platform', 'Lead scoring system', 'Content library'],
-    roi: '350% improvement in lead conversion'
+    roi: '350% improvement in lead conversion',
   },
   {
     id: 'social-media-posting',
@@ -349,9 +364,13 @@ export const allGoals: Goal[] = [
     businessImpact: 'Maintain consistent social presence with 10x less effort',
     complexity: 'Simple',
     realWorldExample: 'AI posts 5 times daily across 4 platforms, increasing followers by 200%',
-    successMetrics: ['Daily posting consistency', '200% follower growth', '150% engagement increase'],
+    successMetrics: [
+      'Daily posting consistency',
+      '200% follower growth',
+      '150% engagement increase',
+    ],
     prerequisite: ['Social media accounts', 'Brand guidelines', 'Content strategy'],
-    roi: '500% time savings on social media'
+    roi: '500% time savings on social media',
   },
   {
     id: 'competitor-monitoring',
@@ -364,10 +383,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Stay ahead of competitors with real-time intelligence',
     complexity: 'Advanced',
-    realWorldExample: 'AI monitors 10 competitors and alerts when pricing changes or new campaigns launch',
-    successMetrics: ['Real-time alerts', 'Competitive advantage insights', '50% faster response to market changes'],
+    realWorldExample:
+      'AI monitors 10 competitors and alerts when pricing changes or new campaigns launch',
+    successMetrics: [
+      'Real-time alerts',
+      'Competitive advantage insights',
+      '50% faster response to market changes',
+    ],
     prerequisite: ['Competitor list', 'Monitoring criteria', 'Alert preferences'],
-    roi: '250% improvement in competitive positioning'
+    roi: '250% improvement in competitive positioning',
   },
   {
     id: 'content-for-website-blog',
@@ -380,10 +404,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '35 minutes',
     businessImpact: 'Publish 4x more content and increase organic traffic by 200%',
     complexity: 'Intermediate',
-    realWorldExample: 'AI writes 8 blog posts monthly, increasing organic traffic from 1k to 3k visits',
-    successMetrics: ['4x content production', '200% traffic increase', 'Top 10 rankings for 50+ keywords'],
+    realWorldExample:
+      'AI writes 8 blog posts monthly, increasing organic traffic from 1k to 3k visits',
+    successMetrics: [
+      '4x content production',
+      '200% traffic increase',
+      'Top 10 rankings for 50+ keywords',
+    ],
     prerequisite: ['Content management system', 'SEO tool access', 'Content strategy'],
-    roi: '300% increase in organic traffic value'
+    roi: '300% increase in organic traffic value',
   },
   {
     id: 'personalized-landing-pages',
@@ -391,15 +420,24 @@ export const allGoals: Goal[] = [
     title: 'Create personalized landing pages',
     description: 'Generate landing pages tailored to different customer segments and campaigns',
     priority: 'High',
-    agentsRequired: ['Landing Page Builder Agent', 'Personalization Engine Agent', 'A/B Test Manager Agent'],
+    agentsRequired: [
+      'Landing Page Builder Agent',
+      'Personalization Engine Agent',
+      'A/B Test Manager Agent',
+    ],
     toolsNeeded: ['unbounce', 'leadpages', 'optimizely'],
     estimatedSetupTime: '40 minutes',
     businessImpact: 'Increase landing page conversion rates by 180%',
     complexity: 'Advanced',
-    realWorldExample: 'AI creates 20 personalized landing pages, increasing conversions from 2% to 5.6%',
-    successMetrics: ['180% conversion increase', '20+ personalized variants', '95% statistical significance'],
+    realWorldExample:
+      'AI creates 20 personalized landing pages, increasing conversions from 2% to 5.6%',
+    successMetrics: [
+      '180% conversion increase',
+      '20+ personalized variants',
+      '95% statistical significance',
+    ],
     prerequisite: ['Landing page platform', 'Customer segmentation', 'Conversion tracking'],
-    roi: '400% improvement in campaign ROI'
+    roi: '400% improvement in campaign ROI',
   },
   {
     id: 'retargeting-campaigns',
@@ -415,7 +453,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI retargets 10,000 monthly visitors, converting 2,500 into 625 customers',
     successMetrics: ['25% visitor conversion', '300% ROAS', '50% lower CAC'],
     prerequisite: ['Pixel installation', 'Ad platform access', 'Creative assets'],
-    roi: '500% return on ad spend'
+    roi: '500% return on ad spend',
   },
   {
     id: 'influencer-outreach',
@@ -423,7 +461,11 @@ export const allGoals: Goal[] = [
     title: 'Automated influencer outreach',
     description: 'Find and contact relevant influencers for brand partnerships',
     priority: 'Low',
-    agentsRequired: ['Influencer Finder Agent', 'Outreach Specialist Agent', 'Relationship Manager Agent'],
+    agentsRequired: [
+      'Influencer Finder Agent',
+      'Outreach Specialist Agent',
+      'Relationship Manager Agent',
+    ],
     toolsNeeded: ['upfluence', 'grin', 'gmail'],
     estimatedSetupTime: '35 minutes',
     businessImpact: 'Connect with 100+ relevant influencers monthly',
@@ -431,7 +473,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI identifies and contacts 150 micro-influencers, securing 25 partnerships',
     successMetrics: ['100+ monthly outreach', '15% response rate', '10+ partnerships'],
     prerequisite: ['Influencer criteria', 'Outreach templates', 'Partnership terms'],
-    roi: '250% increase in brand mentions'
+    roi: '250% increase in brand mentions',
   },
 
   // RELATIONSHIP GOALS (8)
@@ -441,15 +483,20 @@ export const allGoals: Goal[] = [
     title: 'Monitor customer success metrics',
     description: 'Track customer health scores and proactively prevent churn',
     priority: 'High',
-    agentsRequired: ['Success Monitor Agent', 'Health Score Calculator Agent', 'Intervention Specialist Agent'],
+    agentsRequired: [
+      'Success Monitor Agent',
+      'Health Score Calculator Agent',
+      'Intervention Specialist Agent',
+    ],
     toolsNeeded: ['mixpanel', 'amplitude', 'intercom'],
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Reduce churn by 60% and increase retention rates',
     complexity: 'Intermediate',
-    realWorldExample: 'AI identifies at-risk customers 30 days early, preventing 60% of potential churn',
+    realWorldExample:
+      'AI identifies at-risk customers 30 days early, preventing 60% of potential churn',
     successMetrics: ['60% churn reduction', '30-day early warning', '90% intervention success'],
     prerequisite: ['Customer usage data', 'Health score criteria', 'Intervention playbooks'],
-    roi: '400% increase in customer lifetime value'
+    roi: '400% increase in customer lifetime value',
   },
   {
     id: 'personalized-onboarding',
@@ -457,15 +504,20 @@ export const allGoals: Goal[] = [
     title: 'Personalized customer onboarding',
     description: 'Create tailored onboarding experiences based on customer profile and goals',
     priority: 'High',
-    agentsRequired: ['Onboarding Specialist Agent', 'Progress Tracker Agent', 'Experience Optimizer Agent'],
+    agentsRequired: [
+      'Onboarding Specialist Agent',
+      'Progress Tracker Agent',
+      'Experience Optimizer Agent',
+    ],
     toolsNeeded: ['intercom', 'userflow', 'pendo'],
     estimatedSetupTime: '40 minutes',
     businessImpact: 'Increase activation rates by 150% and reduce time-to-value',
     complexity: 'Advanced',
-    realWorldExample: 'AI creates personalized onboarding for each customer type, boosting activation from 40% to 100%',
+    realWorldExample:
+      'AI creates personalized onboarding for each customer type, boosting activation from 40% to 100%',
     successMetrics: ['150% activation increase', '50% faster time-to-value', '95% completion rate'],
     prerequisite: ['Customer segmentation', 'Onboarding content', 'Success metrics'],
-    roi: '300% improvement in customer success'
+    roi: '300% improvement in customer success',
   },
   {
     id: 'support-ticket-routing',
@@ -478,10 +530,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '20 minutes',
     businessImpact: 'Reduce response time by 70% and improve resolution rates',
     complexity: 'Simple',
-    realWorldExample: 'AI routes 1000+ monthly tickets with 95% accuracy, reducing response time from 4 hours to 1 hour',
-    successMetrics: ['70% response time reduction', '95% routing accuracy', '40% faster resolution'],
+    realWorldExample:
+      'AI routes 1000+ monthly tickets with 95% accuracy, reducing response time from 4 hours to 1 hour',
+    successMetrics: [
+      '70% response time reduction',
+      '95% routing accuracy',
+      '40% faster resolution',
+    ],
     prerequisite: ['Support platform', 'Team structure', 'Ticket categories'],
-    roi: '200% improvement in support efficiency'
+    roi: '200% improvement in support efficiency',
   },
   {
     id: 'feedback-sentiment-analysis',
@@ -489,15 +546,28 @@ export const allGoals: Goal[] = [
     title: 'Analyze feedback sentiment',
     description: 'Extract insights from customer feedback across all channels',
     priority: 'Medium',
-    agentsRequired: ['Sentiment Analyzer Agent', 'Feedback Aggregator Agent', 'Insight Generator Agent'],
+    agentsRequired: [
+      'Sentiment Analyzer Agent',
+      'Feedback Aggregator Agent',
+      'Insight Generator Agent',
+    ],
     toolsNeeded: ['surveymonkey', 'typeform', 'trustpilot'],
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Identify improvement opportunities 5x faster',
     complexity: 'Intermediate',
-    realWorldExample: 'AI analyzes 500+ feedback pieces monthly, identifying 10 key improvement areas',
-    successMetrics: ['5x faster insight discovery', '95% sentiment accuracy', '80% actionable insights'],
-    prerequisite: ['Feedback collection systems', 'Sentiment scoring criteria', 'Action frameworks'],
-    roi: '250% improvement in customer satisfaction'
+    realWorldExample:
+      'AI analyzes 500+ feedback pieces monthly, identifying 10 key improvement areas',
+    successMetrics: [
+      '5x faster insight discovery',
+      '95% sentiment accuracy',
+      '80% actionable insights',
+    ],
+    prerequisite: [
+      'Feedback collection systems',
+      'Sentiment scoring criteria',
+      'Action frameworks',
+    ],
+    roi: '250% improvement in customer satisfaction',
   },
   {
     id: 'loyalty-program-automation',
@@ -505,15 +575,20 @@ export const allGoals: Goal[] = [
     title: 'Automate loyalty program management',
     description: 'Manage rewards, points, and customer loyalty campaigns automatically',
     priority: 'Low',
-    agentsRequired: ['Loyalty Manager Agent', 'Rewards Calculator Agent', 'Engagement Driver Agent'],
+    agentsRequired: [
+      'Loyalty Manager Agent',
+      'Rewards Calculator Agent',
+      'Engagement Driver Agent',
+    ],
     toolsNeeded: ['loyaltylion', 'smile', 'yotpo'],
     estimatedSetupTime: '35 minutes',
     businessImpact: 'Increase repeat purchases by 45% and customer lifetime value',
     complexity: 'Advanced',
-    realWorldExample: 'AI manages loyalty program for 5000 customers, increasing repeat purchases by 45%',
+    realWorldExample:
+      'AI manages loyalty program for 5000 customers, increasing repeat purchases by 45%',
     successMetrics: ['45% repeat purchase increase', '25% higher LTV', '80% program engagement'],
     prerequisite: ['Loyalty platform', 'Reward structure', 'Customer segments'],
-    roi: '300% increase in customer retention value'
+    roi: '300% increase in customer retention value',
   },
   {
     id: 'win-back-campaigns',
@@ -521,7 +596,11 @@ export const allGoals: Goal[] = [
     title: 'Automated win-back campaigns',
     description: 'Re-engage churned or inactive customers with targeted campaigns',
     priority: 'Medium',
-    agentsRequired: ['Win-back Specialist Agent', 'Campaign Designer Agent', 'Timing Optimizer Agent'],
+    agentsRequired: [
+      'Win-back Specialist Agent',
+      'Campaign Designer Agent',
+      'Timing Optimizer Agent',
+    ],
     toolsNeeded: ['mailchimp', 'klaviyo', 'braze'],
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Reactivate 20% of churned customers',
@@ -529,7 +608,7 @@ export const allGoals: Goal[] = [
     realWorldExample: 'AI wins back 200 out of 1000 churned customers with personalized campaigns',
     successMetrics: ['20% reactivation rate', '30% higher LTV', '15% lower re-churn rate'],
     prerequisite: ['Customer status tracking', 'Campaign templates', 'Incentive strategy'],
-    roi: '400% ROI on win-back investments'
+    roi: '400% ROI on win-back investments',
   },
   {
     id: 'upsell-crosssell-identification',
@@ -537,15 +616,24 @@ export const allGoals: Goal[] = [
     title: 'Identify upsell/cross-sell opportunities',
     description: 'Analyze customer behavior to suggest relevant additional products',
     priority: 'High',
-    agentsRequired: ['Opportunity Finder Agent', 'Recommendation Engine Agent', 'Timing Predictor Agent'],
+    agentsRequired: [
+      'Opportunity Finder Agent',
+      'Recommendation Engine Agent',
+      'Timing Predictor Agent',
+    ],
     toolsNeeded: ['hubspot', 'salesforce', 'amplitude'],
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Increase revenue per customer by 65%',
     complexity: 'Advanced',
-    realWorldExample: 'AI identifies upsell opportunities for 300 customers, generating $150k additional revenue',
-    successMetrics: ['65% revenue per customer increase', '85% recommendation relevance', '30% acceptance rate'],
+    realWorldExample:
+      'AI identifies upsell opportunities for 300 customers, generating $150k additional revenue',
+    successMetrics: [
+      '65% revenue per customer increase',
+      '85% recommendation relevance',
+      '30% acceptance rate',
+    ],
     prerequisite: ['Purchase history', 'Product catalog', 'Customer usage data'],
-    roi: '500% increase in account expansion'
+    roi: '500% increase in account expansion',
   },
   {
     id: 'referral-program-automation',
@@ -553,15 +641,24 @@ export const allGoals: Goal[] = [
     title: 'Automate referral programs',
     description: 'Manage customer referral campaigns and reward distribution',
     priority: 'Low',
-    agentsRequired: ['Referral Manager Agent', 'Reward Distributor Agent', 'Performance Tracker Agent'],
+    agentsRequired: [
+      'Referral Manager Agent',
+      'Reward Distributor Agent',
+      'Performance Tracker Agent',
+    ],
     toolsNeeded: ['referralcandy', 'friendbuy', 'extole'],
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Generate 40% of new customers through referrals',
     complexity: 'Intermediate',
-    realWorldExample: 'AI manages referral program generating 200 new customers monthly from existing base',
-    successMetrics: ['40% new customers from referrals', '25% referral participation', '3x viral coefficient'],
+    realWorldExample:
+      'AI manages referral program generating 200 new customers monthly from existing base',
+    successMetrics: [
+      '40% new customers from referrals',
+      '25% referral participation',
+      '3x viral coefficient',
+    ],
     prerequisite: ['Referral platform', 'Reward structure', 'Tracking system'],
-    roi: '300% lower customer acquisition cost'
+    roi: '300% lower customer acquisition cost',
   },
 
   // AUTOMATION GOALS (8)
@@ -571,15 +668,20 @@ export const allGoals: Goal[] = [
     title: 'Automate invoicing and payments',
     description: 'Generate invoices, send reminders, and process payments automatically',
     priority: 'High',
-    agentsRequired: ['Invoice Generator Agent', 'Payment Processor Agent', 'Reminder Manager Agent'],
+    agentsRequired: [
+      'Invoice Generator Agent',
+      'Payment Processor Agent',
+      'Reminder Manager Agent',
+    ],
     toolsNeeded: ['quickbooks', 'stripe', 'freshbooks'],
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Reduce payment delays by 80% and improve cash flow',
     complexity: 'Simple',
-    realWorldExample: 'AI automates invoicing for 500 clients, reducing payment time from 45 to 10 days',
+    realWorldExample:
+      'AI automates invoicing for 500 clients, reducing payment time from 45 to 10 days',
     successMetrics: ['80% payment delay reduction', '90% automation rate', '50% fewer disputes'],
     prerequisite: ['Accounting system', 'Payment gateway', 'Client database'],
-    roi: '200% improvement in cash flow'
+    roi: '200% improvement in cash flow',
   },
   {
     id: 'inventory-management',
@@ -587,15 +689,23 @@ export const allGoals: Goal[] = [
     title: 'Intelligent inventory management',
     description: 'Predict demand and automatically reorder products to prevent stockouts',
     priority: 'High',
-    agentsRequired: ['Demand Forecaster Agent', 'Inventory Optimizer Agent', 'Supplier Manager Agent'],
+    agentsRequired: [
+      'Demand Forecaster Agent',
+      'Inventory Optimizer Agent',
+      'Supplier Manager Agent',
+    ],
     toolsNeeded: ['tradegecko', 'cin7', 'brightpearl'],
     estimatedSetupTime: '45 minutes',
     businessImpact: 'Reduce stockouts by 85% and optimize inventory costs',
     complexity: 'Advanced',
     realWorldExample: 'AI manages inventory for 1000 SKUs, reducing stockouts from 15% to 2%',
-    successMetrics: ['85% stockout reduction', '30% inventory cost optimization', '95% demand accuracy'],
+    successMetrics: [
+      '85% stockout reduction',
+      '30% inventory cost optimization',
+      '95% demand accuracy',
+    ],
     prerequisite: ['Inventory system', 'Sales history', 'Supplier information'],
-    roi: '300% improvement in inventory efficiency'
+    roi: '300% improvement in inventory efficiency',
   },
   {
     id: 'employee-scheduling',
@@ -603,15 +713,24 @@ export const allGoals: Goal[] = [
     title: 'Automated employee scheduling',
     description: 'Create optimal work schedules based on availability and business needs',
     priority: 'Medium',
-    agentsRequired: ['Schedule Optimizer Agent', 'Availability Manager Agent', 'Workload Balancer Agent'],
+    agentsRequired: [
+      'Schedule Optimizer Agent',
+      'Availability Manager Agent',
+      'Workload Balancer Agent',
+    ],
     toolsNeeded: ['when2work', 'humanity', 'shiftboard'],
     estimatedSetupTime: '35 minutes',
     businessImpact: 'Reduce scheduling time by 90% and improve coverage',
     complexity: 'Intermediate',
-    realWorldExample: 'AI schedules 50 employees across 3 shifts, reducing manager time from 8 hours to 30 minutes weekly',
-    successMetrics: ['90% scheduling time reduction', '100% shift coverage', '80% employee satisfaction'],
+    realWorldExample:
+      'AI schedules 50 employees across 3 shifts, reducing manager time from 8 hours to 30 minutes weekly',
+    successMetrics: [
+      '90% scheduling time reduction',
+      '100% shift coverage',
+      '80% employee satisfaction',
+    ],
     prerequisite: ['Scheduling platform', 'Employee availability', 'Business requirements'],
-    roi: '400% improvement in operational efficiency'
+    roi: '400% improvement in operational efficiency',
   },
   {
     id: 'expense-management',
@@ -619,15 +738,24 @@ export const allGoals: Goal[] = [
     title: 'Automate expense management',
     description: 'Categorize expenses, detect duplicates, and streamline approval workflows',
     priority: 'Medium',
-    agentsRequired: ['Expense Categorizer Agent', 'Duplicate Detector Agent', 'Approval Router Agent'],
+    agentsRequired: [
+      'Expense Categorizer Agent',
+      'Duplicate Detector Agent',
+      'Approval Router Agent',
+    ],
     toolsNeeded: ['expensify', 'concur', 'ramp'],
     estimatedSetupTime: '20 minutes',
     businessImpact: 'Reduce expense processing time by 75%',
     complexity: 'Simple',
-    realWorldExample: 'AI processes 500 monthly expenses, reducing approval time from 5 days to 1 day',
-    successMetrics: ['75% processing time reduction', '95% categorization accuracy', '90% duplicate detection'],
+    realWorldExample:
+      'AI processes 500 monthly expenses, reducing approval time from 5 days to 1 day',
+    successMetrics: [
+      '75% processing time reduction',
+      '95% categorization accuracy',
+      '90% duplicate detection',
+    ],
     prerequisite: ['Expense management system', 'Approval workflows', 'Expense categories'],
-    roi: '250% improvement in finance efficiency'
+    roi: '250% improvement in finance efficiency',
   },
   {
     id: 'data-backup-monitoring',
@@ -640,10 +768,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Ensure 99.9% data availability and prevent loss',
     complexity: 'Intermediate',
-    realWorldExample: 'AI monitors backups for 20 systems, preventing 100% of potential data loss incidents',
-    successMetrics: ['99.9% data availability', '100% backup success rate', '0 data loss incidents'],
+    realWorldExample:
+      'AI monitors backups for 20 systems, preventing 100% of potential data loss incidents',
+    successMetrics: [
+      '99.9% data availability',
+      '100% backup success rate',
+      '0 data loss incidents',
+    ],
     prerequisite: ['Backup systems', 'Monitoring tools', 'Alert preferences'],
-    roi: '500% cost savings vs data recovery'
+    roi: '500% cost savings vs data recovery',
   },
   {
     id: 'contract-management',
@@ -656,10 +789,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '40 minutes',
     businessImpact: 'Never miss renewals and reduce contract risks by 70%',
     complexity: 'Advanced',
-    realWorldExample: 'AI manages 200 contracts, preventing 100% of missed renewals and reducing risk exposure',
+    realWorldExample:
+      'AI manages 200 contracts, preventing 100% of missed renewals and reducing risk exposure',
     successMetrics: ['100% renewal tracking', '70% risk reduction', '90% compliance rate'],
     prerequisite: ['Contract repository', 'Key date tracking', 'Compliance requirements'],
-    roi: '300% improvement in contract value'
+    roi: '300% improvement in contract value',
   },
   {
     id: 'quality-assurance-testing',
@@ -672,10 +806,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '50 minutes',
     businessImpact: 'Reduce testing time by 80% and catch 95% of bugs',
     complexity: 'Advanced',
-    realWorldExample: 'AI runs 1000 tests daily, catching bugs before users and reducing testing from 8 hours to 1 hour',
+    realWorldExample:
+      'AI runs 1000 tests daily, catching bugs before users and reducing testing from 8 hours to 1 hour',
     successMetrics: ['80% testing time reduction', '95% bug detection', '99% test coverage'],
     prerequisite: ['Testing framework', 'Test cases', 'Application access'],
-    roi: '400% improvement in software quality'
+    roi: '400% improvement in software quality',
   },
   {
     id: 'social-media-monitoring',
@@ -688,10 +823,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Respond to brand mentions 10x faster',
     complexity: 'Intermediate',
-    realWorldExample: 'AI monitors 1000 daily mentions, responding within 1 hour vs previous 10-hour delay',
+    realWorldExample:
+      'AI monitors 1000 daily mentions, responding within 1 hour vs previous 10-hour delay',
     successMetrics: ['10x faster response', '100% mention coverage', '85% positive sentiment'],
     prerequisite: ['Social monitoring tools', 'Response templates', 'Escalation rules'],
-    roi: '300% improvement in brand reputation'
+    roi: '300% improvement in brand reputation',
   },
 
   // ANALYTICS GOALS (4)
@@ -701,15 +837,23 @@ export const allGoals: Goal[] = [
     title: 'Predictive sales forecasting',
     description: 'Generate accurate sales forecasts using AI and historical data',
     priority: 'High',
-    agentsRequired: ['Forecast Modeler Agent', 'Trend Analyzer Agent', 'Performance Predictor Agent'],
+    agentsRequired: [
+      'Forecast Modeler Agent',
+      'Trend Analyzer Agent',
+      'Performance Predictor Agent',
+    ],
     toolsNeeded: ['tableau', 'power_bi', 'looker'],
     estimatedSetupTime: '60 minutes',
     businessImpact: 'Improve forecast accuracy by 85% and enable better planning',
     complexity: 'Advanced',
     realWorldExample: 'AI predicts quarterly sales within 3% accuracy vs previous 20% variance',
-    successMetrics: ['85% forecast accuracy improvement', '3% variance from actual', '90% confidence intervals'],
+    successMetrics: [
+      '85% forecast accuracy improvement',
+      '3% variance from actual',
+      '90% confidence intervals',
+    ],
     prerequisite: ['Historical sales data', 'Market indicators', 'Business intelligence tools'],
-    roi: '400% improvement in planning efficiency'
+    roi: '400% improvement in planning efficiency',
   },
   {
     id: 'customer-lifetime-value',
@@ -723,9 +867,13 @@ export const allGoals: Goal[] = [
     businessImpact: 'Optimize marketing spend and increase ROAS by 200%',
     complexity: 'Advanced',
     realWorldExample: 'AI calculates CLV for 10 segments, optimizing ad spend to achieve 5x ROAS',
-    successMetrics: ['200% ROAS improvement', '90% CLV prediction accuracy', '50% better targeting'],
+    successMetrics: [
+      '200% ROAS improvement',
+      '90% CLV prediction accuracy',
+      '50% better targeting',
+    ],
     prerequisite: ['Customer transaction data', 'Cohort analysis', 'Attribution tracking'],
-    roi: '300% improvement in marketing efficiency'
+    roi: '300% improvement in marketing efficiency',
   },
   {
     id: 'performance-dashboards',
@@ -733,15 +881,20 @@ export const allGoals: Goal[] = [
     title: 'Real-time performance dashboards',
     description: 'Create intelligent dashboards that adapt based on user role and priorities',
     priority: 'Medium',
-    agentsRequired: ['Dashboard Builder Agent', 'Metric Prioritizer Agent', 'Insight Generator Agent'],
+    agentsRequired: [
+      'Dashboard Builder Agent',
+      'Metric Prioritizer Agent',
+      'Insight Generator Agent',
+    ],
     toolsNeeded: ['tableau', 'power_bi', 'datadog'],
     estimatedSetupTime: '40 minutes',
     businessImpact: 'Make data-driven decisions 5x faster',
     complexity: 'Intermediate',
-    realWorldExample: 'AI creates personalized dashboards for 20 managers, reducing report time from 2 hours to 10 minutes',
+    realWorldExample:
+      'AI creates personalized dashboards for 20 managers, reducing report time from 2 hours to 10 minutes',
     successMetrics: ['5x faster decision making', '90% metric relevance', '80% usage adoption'],
     prerequisite: ['Data sources', 'Business metrics', 'User requirements'],
-    roi: '250% improvement in operational efficiency'
+    roi: '250% improvement in operational efficiency',
   },
   {
     id: 'churn-prediction-analysis',
@@ -754,10 +907,11 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '50 minutes',
     businessImpact: 'Reduce churn by 70% with early intervention',
     complexity: 'Advanced',
-    realWorldExample: 'AI predicts churn 60 days early with 92% accuracy, preventing $500k annual loss',
+    realWorldExample:
+      'AI predicts churn 60 days early with 92% accuracy, preventing $500k annual loss',
     successMetrics: ['70% churn reduction', '92% prediction accuracy', '60-day early warning'],
     prerequisite: ['Customer usage data', 'Behavioral indicators', 'Intervention strategies'],
-    roi: '500% improvement in customer retention'
+    roi: '500% improvement in customer retention',
   },
 
   // CONTENT GOALS (4)
@@ -772,10 +926,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '35 minutes',
     businessImpact: 'Increase organic traffic by 300% and search rankings',
     complexity: 'Intermediate',
-    realWorldExample: 'AI writes 20 SEO articles monthly, increasing organic traffic from 2k to 8k visits',
-    successMetrics: ['300% organic traffic increase', 'Top 10 rankings for 100+ keywords', '50% higher click-through rates'],
+    realWorldExample:
+      'AI writes 20 SEO articles monthly, increasing organic traffic from 2k to 8k visits',
+    successMetrics: [
+      '300% organic traffic increase',
+      'Top 10 rankings for 100+ keywords',
+      '50% higher click-through rates',
+    ],
     prerequisite: ['Content management system', 'SEO tools', 'Keyword strategy'],
-    roi: '400% increase in organic lead generation'
+    roi: '400% increase in organic lead generation',
   },
   {
     id: 'video-script-creation',
@@ -783,15 +942,24 @@ export const allGoals: Goal[] = [
     title: 'Automated video script creation',
     description: 'Generate engaging video scripts for marketing and training content',
     priority: 'Medium',
-    agentsRequired: ['Script Writer Agent', 'Engagement Optimizer Agent', 'Format Specialist Agent'],
+    agentsRequired: [
+      'Script Writer Agent',
+      'Engagement Optimizer Agent',
+      'Format Specialist Agent',
+    ],
     toolsNeeded: ['loom', 'vidyard', 'wistia'],
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Create video content 10x faster with higher engagement',
     complexity: 'Intermediate',
-    realWorldExample: 'AI creates scripts for 50 videos monthly, increasing engagement rates by 150%',
-    successMetrics: ['10x faster script creation', '150% engagement increase', '80% completion rates'],
+    realWorldExample:
+      'AI creates scripts for 50 videos monthly, increasing engagement rates by 150%',
+    successMetrics: [
+      '10x faster script creation',
+      '150% engagement increase',
+      '80% completion rates',
+    ],
     prerequisite: ['Video topics', 'Brand voice guidelines', 'Target audience'],
-    roi: '300% improvement in video marketing ROI'
+    roi: '300% improvement in video marketing ROI',
   },
   {
     id: 'email-newsletter-automation',
@@ -799,15 +967,20 @@ export const allGoals: Goal[] = [
     title: 'Automated newsletter creation',
     description: 'Generate personalized newsletters with relevant content for each subscriber',
     priority: 'Medium',
-    agentsRequired: ['Newsletter Curator Agent', 'Content Personalizer Agent', 'Engagement Tracker Agent'],
+    agentsRequired: [
+      'Newsletter Curator Agent',
+      'Content Personalizer Agent',
+      'Engagement Tracker Agent',
+    ],
     toolsNeeded: ['mailchimp', 'convertkit', 'beehiiv'],
     estimatedSetupTime: '25 minutes',
     businessImpact: 'Increase newsletter engagement by 200% and reduce creation time',
     complexity: 'Simple',
-    realWorldExample: 'AI creates personalized newsletters for 10k subscribers, boosting open rates from 15% to 35%',
+    realWorldExample:
+      'AI creates personalized newsletters for 10k subscribers, boosting open rates from 15% to 35%',
     successMetrics: ['200% engagement increase', '35% open rates', '90% time savings'],
     prerequisite: ['Email platform', 'Content sources', 'Subscriber segments'],
-    roi: '250% improvement in email marketing performance'
+    roi: '250% improvement in email marketing performance',
   },
   {
     id: 'product-description-generation',
@@ -815,15 +988,20 @@ export const allGoals: Goal[] = [
     title: 'Product description generation',
     description: 'Create compelling product descriptions that convert browsers to buyers',
     priority: 'High',
-    agentsRequired: ['Product Writer Agent', 'Conversion Optimizer Agent', 'Feature Highlighter Agent'],
+    agentsRequired: [
+      'Product Writer Agent',
+      'Conversion Optimizer Agent',
+      'Feature Highlighter Agent',
+    ],
     toolsNeeded: ['shopify', 'magento', 'woocommerce'],
     estimatedSetupTime: '20 minutes',
     businessImpact: 'Increase product page conversions by 120%',
     complexity: 'Simple',
-    realWorldExample: 'AI writes descriptions for 500 products, increasing conversion rates from 2% to 4.4%',
+    realWorldExample:
+      'AI writes descriptions for 500 products, increasing conversion rates from 2% to 4.4%',
     successMetrics: ['120% conversion increase', '500 products optimized', '85% less bounce rate'],
     prerequisite: ['Product catalog', 'Brand guidelines', 'Conversion tracking'],
-    roi: '300% improvement in e-commerce conversion'
+    roi: '300% improvement in e-commerce conversion',
   },
 
   // ADMIN GOALS (2)
@@ -838,10 +1016,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '30 minutes',
     businessImpact: 'Improve data quality by 95% and reduce duplicate costs',
     complexity: 'Simple',
-    realWorldExample: 'AI cleans 50k records, removing 8k duplicates and fixing 15k incomplete entries',
-    successMetrics: ['95% data quality improvement', '8k duplicates removed', '90% completeness rate'],
+    realWorldExample:
+      'AI cleans 50k records, removing 8k duplicates and fixing 15k incomplete entries',
+    successMetrics: [
+      '95% data quality improvement',
+      '8k duplicates removed',
+      '90% completeness rate',
+    ],
     prerequisite: ['CRM access', 'Data quality rules', 'Merge criteria'],
-    roi: '200% improvement in marketing efficiency'
+    roi: '200% improvement in marketing efficiency',
   },
   {
     id: 'compliance-monitoring',
@@ -854,10 +1037,15 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '45 minutes',
     businessImpact: 'Ensure 100% compliance and reduce audit risks',
     complexity: 'Advanced',
-    realWorldExample: 'AI monitors GDPR compliance across 20 systems, preventing potential $4M in fines',
-    successMetrics: ['100% compliance rate', '0 regulatory violations', '50% audit preparation time'],
+    realWorldExample:
+      'AI monitors GDPR compliance across 20 systems, preventing potential $4M in fines',
+    successMetrics: [
+      '100% compliance rate',
+      '0 regulatory violations',
+      '50% audit preparation time',
+    ],
     prerequisite: ['Compliance requirements', 'System access', 'Audit protocols'],
-    roi: '500% reduction in compliance risk'
+    roi: '500% reduction in compliance risk',
   },
 
   // AI-NATIVE GOALS (2)
@@ -867,15 +1055,24 @@ export const allGoals: Goal[] = [
     title: 'Autonomous business optimization',
     description: 'Let AI continuously optimize business processes and decision-making',
     priority: 'High',
-    agentsRequired: ['Business Optimizer Agent', 'Decision Engine Agent', 'Performance Monitor Agent'],
+    agentsRequired: [
+      'Business Optimizer Agent',
+      'Decision Engine Agent',
+      'Performance Monitor Agent',
+    ],
     toolsNeeded: ['advanced_analytics', 'decision_engine', 'optimization_platform'],
     estimatedSetupTime: '90 minutes',
     businessImpact: 'Achieve continuous 15% efficiency improvements across all operations',
     complexity: 'Advanced',
-    realWorldExample: 'AI optimizes entire business operations, improving efficiency by 15% monthly across 20 departments',
+    realWorldExample:
+      'AI optimizes entire business operations, improving efficiency by 15% monthly across 20 departments',
     successMetrics: ['15% monthly efficiency gains', '95% automation rate', '99% uptime'],
-    prerequisite: ['Complete business data integration', 'Advanced AI infrastructure', 'Executive approval'],
-    roi: '1000% improvement in operational excellence'
+    prerequisite: [
+      'Complete business data integration',
+      'Advanced AI infrastructure',
+      'Executive approval',
+    ],
+    roi: '1000% improvement in operational excellence',
   },
   {
     id: 'predictive-market-analysis',
@@ -888,11 +1085,16 @@ export const allGoals: Goal[] = [
     estimatedSetupTime: '75 minutes',
     businessImpact: 'Identify market opportunities 6 months before competitors',
     complexity: 'Advanced',
-    realWorldExample: 'AI predicts market shift toward sustainable products 8 months early, enabling first-mover advantage',
-    successMetrics: ['6-month market prediction accuracy', '85% opportunity identification', '200% competitive advantage'],
+    realWorldExample:
+      'AI predicts market shift toward sustainable products 8 months early, enabling first-mover advantage',
+    successMetrics: [
+      '6-month market prediction accuracy',
+      '85% opportunity identification',
+      '200% competitive advantage',
+    ],
     prerequisite: ['Market data access', 'Predictive AI models', 'Strategic planning integration'],
-    roi: '800% improvement in strategic positioning'
-  }
+    roi: '800% improvement in strategic positioning',
+  },
 ];
 
 export const GOALS = allGoals; // Compatibility export

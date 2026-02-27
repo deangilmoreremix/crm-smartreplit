@@ -59,7 +59,7 @@ export const useOnboarding = () => {
         route: '/settings',
         completed: completedSteps.has('profile_completion'),
         priority: 'high',
-        category: 'account'
+        category: 'account',
       });
     }
 
@@ -73,7 +73,7 @@ export const useOnboarding = () => {
         route: '/upgrade',
         completed: completedSteps.has('subscription_selection'),
         priority: 'high',
-        category: 'billing'
+        category: 'billing',
       });
     }
 
@@ -87,7 +87,7 @@ export const useOnboarding = () => {
         route: '/contacts',
         completed: completedSteps.has('first_contact_import'),
         priority: 'medium',
-        category: 'features'
+        category: 'features',
       });
     }
 
@@ -100,7 +100,7 @@ export const useOnboarding = () => {
         route: '/ai-tools',
         completed: completedSteps.has('ai_setup'),
         priority: 'medium',
-        category: 'features'
+        category: 'features',
       });
 
       steps.push({
@@ -111,7 +111,7 @@ export const useOnboarding = () => {
         route: '/ai-tools',
         completed: completedSteps.has('first_ai_interaction'),
         priority: 'low',
-        category: 'features'
+        category: 'features',
       });
     }
 
@@ -124,7 +124,7 @@ export const useOnboarding = () => {
         route: '/pipeline',
         completed: completedSteps.has('create_first_deal'),
         priority: 'medium',
-        category: 'features'
+        category: 'features',
       });
     }
 
@@ -138,11 +138,11 @@ export const useOnboarding = () => {
         route: '/admin',
         completed: completedSteps.has('admin_overview'),
         priority: 'low',
-        category: 'account'
+        category: 'account',
       });
     }
 
-    return steps.filter(step => !step.completed);
+    return steps.filter((step) => !step.completed);
   };
 
   const getNextStep = (): OnboardingStep | null => {
@@ -159,7 +159,7 @@ export const useOnboarding = () => {
   const getProgress = (): { completed: number; total: number; percentage: number } => {
     const allSteps = getOnboardingSteps().concat(
       // Include completed steps for total count
-      Array.from(completedSteps).map(id => ({ id } as any))
+      Array.from(completedSteps).map((id) => ({ id }) as any)
     );
 
     const completed = completedSteps.size;
@@ -182,6 +182,6 @@ export const useOnboarding = () => {
     progress: getProgress(),
     markStepCompleted,
     resetOnboarding,
-    isComplete: getOnboardingSteps().length === 0
+    isComplete: getOnboardingSteps().length === 0,
   };
 };

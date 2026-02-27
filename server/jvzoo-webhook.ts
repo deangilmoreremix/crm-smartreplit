@@ -1,43 +1,47 @@
-import { Request, Response } from "express";
-import crypto from "crypto";
-import { supabase } from "./supabase";
-import { ProductTier } from "../shared/schema";
-import { handleSuccessfulPurchase, upsertEntitlement, type ProductType } from "./entitlements-utils";
+import { Request, Response } from 'express';
+import crypto from 'crypto';
+import { supabase } from './supabase';
+import { ProductTier } from '../shared/schema';
+import {
+  handleSuccessfulPurchase,
+  upsertEntitlement,
+  type ProductType,
+} from './entitlements-utils';
 
 interface JVZooWebhookPayload {
-  ccustname: string;       // Customer name
-  ccustemail: string;      // Customer email
-  ctransaction: string;    // Transaction type (SALE, RFND, CGBK, INSF, etc.)
-  cproditem: string;       // Product item number
-  cprodtitle: string;      // Product title
+  ccustname: string; // Customer name
+  ccustemail: string; // Customer email
+  ctransaction: string; // Transaction type (SALE, RFND, CGBK, INSF, etc.)
+  cproditem: string; // Product item number
+  cprodtitle: string; // Product title
   ctransaffiliate: string; // Affiliate username
-  ctransamount: string;    // Transaction amount
-  ctransreceipt: string;   // Receipt/Transaction ID
-  cverify: string;         // Verification hash
-  ctransvendor: string;    // Vendor username
+  ctransamount: string; // Transaction amount
+  ctransreceipt: string; // Receipt/Transaction ID
+  cverify: string; // Verification hash
+  ctransvendor: string; // Vendor username
   [key: string]: any;
 }
 
 // Map JVZoo product IDs to product tiers (7-tier system)
 const PRODUCT_TIER_MAP: Record<string, ProductTier> = {
   // Add your actual JVZoo product IDs here
-  'super_admin': 'super_admin',
-  'whitelabel': 'whitelabel',
-  'smartcrm': 'smartcrm',
-  'sales_maximizer': 'sales_maximizer',
-  'ai_boost_unlimited': 'ai_boost_unlimited',
-  'ai_communication': 'ai_communication',
-  'smartcrm_bundle': 'smartcrm_bundle',
+  super_admin: 'super_admin',
+  whitelabel: 'whitelabel',
+  smartcrm: 'smartcrm',
+  sales_maximizer: 'sales_maximizer',
+  ai_boost_unlimited: 'ai_boost_unlimited',
+  ai_communication: 'ai_communication',
+  smartcrm_bundle: 'smartcrm_bundle',
 };
 
 export async function handleJVZooWebhook(req: Request, res: Response) {
   const payload = req.body as JVZooWebhookPayload;
-  
+
   console.log('📥 Received JVZoo webhook:', {
     email: payload.ccustemail,
     name: payload.ccustname,
     transaction: payload.ctransaction,
-    product: payload.cprodtitle
+    product: payload.cprodtitle,
   });
 
   // Verify webhook authenticity using JVZoo's verification hash
@@ -65,7 +69,7 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
 
     // Determine product tier from product ID or title (7-tier system)
     let productTier: ProductTier = 'smartcrm'; // default fallback
-    
+
     // Try to map from product item first
     if (PRODUCT_TIER_MAP[cproditem]) {
       productTier = PRODUCT_TIER_MAP[cproditem];
@@ -88,7 +92,9 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
         productTier = 'smartcrm';
       } else {
         // Log warning if no tier match found
-        console.warn(`⚠️ Unknown product detected, defaulting to 'smartcrm': ${cproditem} - ${cprodtitle}`);
+        console.warn(
+          `⚠️ Unknown product detected, defaulting to 'smartcrm': ${cproditem} - ${cprodtitle}`
+        );
       }
     }
 
@@ -112,18 +118,20 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
         if (!supabase) {
           throw new Error('Supabase not configured');
         }
-        
+
         const { data: usersData } = await supabase.auth.admin.listUsers();
-        const existingUser = usersData?.users?.find(u => u.email?.toLowerCase() === ccustemail.toLowerCase());
+        const existingUser = usersData?.users?.find(
+          (u) => u.email?.toLowerCase() === ccustemail.toLowerCase()
+        );
 
         if (existingUser) {
           // Update existing user's product tier AND role
           const { error: updateError } = await supabase
             .from('profiles')
-            .update({ 
+            .update({
               product_tier: productTier,
               role: userRole,
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('id', existingUser.id);
 
@@ -138,8 +146,8 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
             user_metadata: {
               product_tier: productTier,
               role: userRole,
-              product_tier_updated_at: new Date().toISOString()
-            }
+              product_tier_updated_at: new Date().toISOString(),
+            },
           });
 
           // Create/update entitlements record - JVZoo is lifetime purchase
@@ -147,7 +155,7 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
             await handleSuccessfulPurchase(existingUser.id, 'lifetime' as ProductType, {
               planName: cprodtitle,
               planAmount: payload.ctransamount,
-              currency: 'USD'
+              currency: 'USD',
             });
             console.log('✅ Entitlement created/updated for existing user:', existingUser.id);
           } catch (entErr) {
@@ -164,8 +172,8 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
               role: userRole,
               product_tier: productTier,
               app_context: 'smartcrm',
-              email_template_set: 'smartcrm'
-            }
+              email_template_set: 'smartcrm',
+            },
           });
 
           if (signUpError) {
@@ -181,7 +189,7 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
               await handleSuccessfulPurchase(newUser.user.id, 'lifetime' as ProductType, {
                 planName: cprodtitle,
                 planAmount: payload.ctransamount,
-                currency: 'USD'
+                currency: 'USD',
               });
               console.log('✅ Entitlement created for new user:', newUser.user.id);
             } catch (entErr) {
@@ -196,7 +204,7 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
             email: ccustemail,
             options: {
               redirectTo: `${currentOrigin}/auth/callback?setup=true`,
-            }
+            },
           });
 
           if (magicLinkError) {
@@ -212,19 +220,21 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
       case 'RFND': {
         // Refund - REVOKE ALL ACCESS (set productTier to null and deactivate entitlement)
         console.log('💸 Processing refund for:', ccustemail);
-        
+
         if (!supabase) {
           throw new Error('Supabase not configured');
         }
         const { data: refundUsersData } = await supabase.auth.admin.listUsers();
-        const user = refundUsersData?.users?.find(u => u.email?.toLowerCase() === ccustemail.toLowerCase());
+        const user = refundUsersData?.users?.find(
+          (u) => u.email?.toLowerCase() === ccustemail.toLowerCase()
+        );
         if (user) {
           await supabase
             .from('profiles')
-            .update({ 
+            .update({
               product_tier: null, // ZERO ACCESS - must repurchase
               role: 'regular_user',
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('id', user.id);
 
@@ -234,8 +244,8 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
               product_tier: null,
               role: 'regular_user',
               product_tier_updated_at: new Date().toISOString(),
-              refunded_at: new Date().toISOString()
-            }
+              refunded_at: new Date().toISOString(),
+            },
           });
 
           // Revoke entitlements - set status to 'refunded' with immediate revoke
@@ -251,7 +261,7 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
           } catch (entErr) {
             console.error('⚠️ Error revoking entitlement (non-blocking):', entErr);
           }
-          
+
           console.log('✅ REVOKED ALL ACCESS for refund:', ccustemail);
         }
         break;
@@ -260,19 +270,21 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
       case 'CGBK': {
         // Chargeback - REVOKE ALL ACCESS (set productTier to null and deactivate entitlement)
         console.log('⚠️ Processing chargeback for:', ccustemail);
-        
+
         if (!supabase) {
           throw new Error('Supabase not configured');
         }
         const { data: chargebackUsersData } = await supabase.auth.admin.listUsers();
-        const cbUser = chargebackUsersData?.users?.find(u => u.email?.toLowerCase() === ccustemail.toLowerCase());
+        const cbUser = chargebackUsersData?.users?.find(
+          (u) => u.email?.toLowerCase() === ccustemail.toLowerCase()
+        );
         if (cbUser) {
           await supabase
             .from('profiles')
-            .update({ 
+            .update({
               product_tier: null, // ZERO ACCESS - must repurchase
               role: 'regular_user',
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .eq('id', cbUser.id);
 
@@ -282,8 +294,8 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
               product_tier: null,
               role: 'regular_user',
               product_tier_updated_at: new Date().toISOString(),
-              chargeback_at: new Date().toISOString()
-            }
+              chargeback_at: new Date().toISOString(),
+            },
           });
 
           // Revoke entitlements - set status to 'refunded' (chargebacks treated same as refunds)
@@ -299,7 +311,7 @@ export async function handleJVZooWebhook(req: Request, res: Response) {
           } catch (entErr) {
             console.error('⚠️ Error revoking entitlement (non-blocking):', entErr);
           }
-          
+
           console.log('✅ REVOKED ALL ACCESS for chargeback:', ccustemail);
         }
         break;

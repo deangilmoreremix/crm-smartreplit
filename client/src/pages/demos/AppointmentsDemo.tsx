@@ -3,9 +3,30 @@ import { Calendar, Clock, Users, CheckCircle } from 'lucide-react';
 
 export default function AppointmentsDemo() {
   const appointments = [
-    { id: 1, title: 'Sales Demo - Acme Corp', client: 'Sarah Johnson', time: '10:00 AM', duration: '1 hour', status: 'confirmed' },
-    { id: 2, title: 'Follow-up Call - TechStart', client: 'Michael Chen', time: '2:00 PM', duration: '30 mins', status: 'confirmed' },
-    { id: 3, title: 'Discovery Meeting - Global Solutions', client: 'Emily Rodriguez', time: '4:00 PM', duration: '45 mins', status: 'pending' },
+    {
+      id: 1,
+      title: 'Sales Demo - Acme Corp',
+      client: 'Sarah Johnson',
+      time: '10:00 AM',
+      duration: '1 hour',
+      status: 'confirmed',
+    },
+    {
+      id: 2,
+      title: 'Follow-up Call - TechStart',
+      client: 'Michael Chen',
+      time: '2:00 PM',
+      duration: '30 mins',
+      status: 'confirmed',
+    },
+    {
+      id: 3,
+      title: 'Discovery Meeting - Global Solutions',
+      client: 'Emily Rodriguez',
+      time: '4:00 PM',
+      duration: '45 mins',
+      status: 'pending',
+    },
   ];
 
   return (
@@ -13,7 +34,7 @@ export default function AppointmentsDemo() {
       <DemoBanner feature="Appointments" />
       <div className="p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Appointments Demo</h1>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <Calendar className="w-8 h-8 text-blue-600 mb-2" />
@@ -45,7 +66,7 @@ export default function AppointmentsDemo() {
             </button>
           </div>
           <div className="space-y-4">
-            {appointments.map(apt => (
+            {appointments.map((apt) => (
               <div key={apt.id} className="border-l-4 border-blue-500 bg-blue-50 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -63,9 +84,13 @@ export default function AppointmentsDemo() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        apt.status === 'confirmed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
                       {apt.status}
                     </span>
                     <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">

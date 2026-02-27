@@ -1,6 +1,7 @@
 # SmartCRM API Documentation
 
 ## Overview
+
 Complete API reference for the SmartCRM White Label Platform. This documentation covers all REST endpoints, authentication, rate limiting, and integration patterns.
 
 **Base URL**: `https://your-domain.com/api`  
@@ -10,6 +11,7 @@ Complete API reference for the SmartCRM White Label Platform. This documentation
 ---
 
 ## Table of Contents
+
 1. [Authentication](#authentication)
 2. [Rate Limiting](#rate-limiting)
 3. [Error Handling](#error-handling)
@@ -24,9 +26,11 @@ Complete API reference for the SmartCRM White Label Platform. This documentation
 ## Authentication
 
 ### Session-Based Authentication
+
 SmartCRM uses session-based authentication with Supabase Auth.
 
 #### Sign Up
+
 ```http
 POST /api/auth/signup
 Content-Type: application/json
@@ -39,6 +43,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "user": {
@@ -54,6 +59,7 @@ Content-Type: application/json
 ```
 
 #### Sign In
+
 ```http
 POST /api/auth/signin
 Content-Type: application/json
@@ -65,6 +71,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "user": {
@@ -81,11 +88,13 @@ Content-Type: application/json
 ```
 
 #### Sign Out
+
 ```http
 POST /api/auth/signout
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "message": "Signed out successfully"
@@ -93,6 +102,7 @@ POST /api/auth/signout
 ```
 
 #### Password Reset
+
 ```http
 POST /api/auth/reset-password
 Content-Type: application/json
@@ -103,6 +113,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "message": "Password reset email sent"
@@ -115,16 +126,17 @@ Content-Type: application/json
 
 ### Rate Limit Tiers
 
-| Tier | Requests/Minute | Burst | Use Case |
-|------|-----------------|-------|----------|
-| **API** | 100 | 150 | General API calls |
-| **Auth** | 10 | 20 | Authentication endpoints |
-| **AI** | 10 | 15 | AI-powered features |
-| **Admin** | 50 | 75 | Admin operations |
-| **Upload** | 5 | 10 | File uploads |
-| **Webhook** | 30 | 50 | Webhook endpoints |
+| Tier        | Requests/Minute | Burst | Use Case                 |
+| ----------- | --------------- | ----- | ------------------------ |
+| **API**     | 100             | 150   | General API calls        |
+| **Auth**    | 10              | 20    | Authentication endpoints |
+| **AI**      | 10              | 15    | AI-powered features      |
+| **Admin**   | 50              | 75    | Admin operations         |
+| **Upload**  | 5               | 10    | File uploads             |
+| **Webhook** | 30              | 50    | Webhook endpoints        |
 
 ### Rate Limit Headers
+
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -132,7 +144,9 @@ X-RateLimit-Reset: 1640000000
 ```
 
 ### Rate Limit Exceeded
+
 **Response** (429 Too Many Requests):
+
 ```json
 {
   "error": "Rate limit exceeded",
@@ -147,6 +161,7 @@ X-RateLimit-Reset: 1640000000
 ## Error Handling
 
 ### Standard Error Response
+
 ```json
 {
   "error": "Error message",
@@ -161,30 +176,30 @@ X-RateLimit-Reset: 1640000000
 
 ### HTTP Status Codes
 
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created |
-| 400 | Bad Request | Invalid request data |
-| 401 | Unauthorized | Authentication required |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource not found |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
-| 503 | Service Unavailable | Service temporarily unavailable |
+| Code | Meaning               | Description                     |
+| ---- | --------------------- | ------------------------------- |
+| 200  | OK                    | Request successful              |
+| 201  | Created               | Resource created                |
+| 400  | Bad Request           | Invalid request data            |
+| 401  | Unauthorized          | Authentication required         |
+| 403  | Forbidden             | Insufficient permissions        |
+| 404  | Not Found             | Resource not found              |
+| 429  | Too Many Requests     | Rate limit exceeded             |
+| 500  | Internal Server Error | Server error                    |
+| 503  | Service Unavailable   | Service temporarily unavailable |
 
 ### Error Codes
 
-| Code | Description |
-|------|-------------|
-| `AUTH_REQUIRED` | Authentication required |
-| `INVALID_CREDENTIALS` | Invalid email or password |
-| `NO_PRODUCT_TIER` | Subscription required |
-| `SUBSCRIPTION_INACTIVE` | Subscription expired |
-| `RATE_LIMIT_EXCEEDED` | Too many requests |
-| `VALIDATION_ERROR` | Input validation failed |
-| `RESOURCE_NOT_FOUND` | Resource does not exist |
-| `PERMISSION_DENIED` | Insufficient permissions |
+| Code                    | Description               |
+| ----------------------- | ------------------------- |
+| `AUTH_REQUIRED`         | Authentication required   |
+| `INVALID_CREDENTIALS`   | Invalid email or password |
+| `NO_PRODUCT_TIER`       | Subscription required     |
+| `SUBSCRIPTION_INACTIVE` | Subscription expired      |
+| `RATE_LIMIT_EXCEEDED`   | Too many requests         |
+| `VALIDATION_ERROR`      | Input validation failed   |
+| `RESOURCE_NOT_FOUND`    | Resource does not exist   |
+| `PERMISSION_DENIED`     | Insufficient permissions  |
 
 ---
 
@@ -193,11 +208,13 @@ X-RateLimit-Reset: 1640000000
 ### Contacts
 
 #### List Contacts
+
 ```http
 GET /api/contacts?page=1&limit=50&search=john
 ```
 
 **Query Parameters**:
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 50, max: 100)
 - `search` (optional): Search query
@@ -205,6 +222,7 @@ GET /api/contacts?page=1&limit=50&search=john
 - `status` (optional): Filter by status
 
 **Response** (200 OK):
+
 ```json
 {
   "contacts": [
@@ -231,11 +249,13 @@ GET /api/contacts?page=1&limit=50&search=john
 ```
 
 #### Get Contact
+
 ```http
 GET /api/contacts/:id
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -272,6 +292,7 @@ GET /api/contacts/:id
 ```
 
 #### Create Contact
+
 ```http
 POST /api/contacts
 Content-Type: application/json
@@ -290,6 +311,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "uuid",
@@ -300,6 +322,7 @@ Content-Type: application/json
 ```
 
 #### Update Contact
+
 ```http
 PATCH /api/contacts/:id
 Content-Type: application/json
@@ -311,6 +334,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -322,6 +346,7 @@ Content-Type: application/json
 ```
 
 #### Delete Contact
+
 ```http
 DELETE /api/contacts/:id
 ```
@@ -333,11 +358,13 @@ DELETE /api/contacts/:id
 ### Deals
 
 #### List Deals
+
 ```http
 GET /api/deals?stage=negotiation&minValue=10000
 ```
 
 **Query Parameters**:
+
 - `page` (optional): Page number
 - `limit` (optional): Items per page
 - `stage` (optional): Filter by stage
@@ -346,6 +373,7 @@ GET /api/deals?stage=negotiation&minValue=10000
 - `contactId` (optional): Filter by contact
 
 **Response** (200 OK):
+
 ```json
 {
   "deals": [
@@ -379,6 +407,7 @@ GET /api/deals?stage=negotiation&minValue=10000
 ```
 
 #### Create Deal
+
 ```http
 POST /api/deals
 Content-Type: application/json
@@ -398,6 +427,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "uuid",
@@ -409,6 +439,7 @@ Content-Type: application/json
 ```
 
 #### Move Deal
+
 ```http
 PATCH /api/deals/:id/move
 Content-Type: application/json
@@ -420,6 +451,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -434,17 +466,20 @@ Content-Type: application/json
 ### Tasks
 
 #### List Tasks
+
 ```http
 GET /api/tasks?status=pending&assignedTo=me
 ```
 
 **Query Parameters**:
+
 - `status` (optional): Filter by status (pending, completed, overdue)
 - `assignedTo` (optional): Filter by assignee (me, userId)
 - `dueDate` (optional): Filter by due date
 - `priority` (optional): Filter by priority (low, medium, high)
 
 **Response** (200 OK):
+
 ```json
 {
   "tasks": [
@@ -477,6 +512,7 @@ GET /api/tasks?status=pending&assignedTo=me
 ```
 
 #### Create Task
+
 ```http
 POST /api/tasks
 Content-Type: application/json
@@ -495,6 +531,7 @@ Content-Type: application/json
 ```
 
 **Response** (201 Created):
+
 ```json
 {
   "id": "uuid",
@@ -505,11 +542,13 @@ Content-Type: application/json
 ```
 
 #### Complete Task
+
 ```http
 PATCH /api/tasks/:id/complete
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": "uuid",
@@ -525,6 +564,7 @@ PATCH /api/tasks/:id/complete
 ### AI Enrichment
 
 #### Enrich Contact
+
 ```http
 POST /api/ai/enrich-contact
 Content-Type: application/json
@@ -535,6 +575,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "contactId": "uuid",
@@ -550,10 +591,7 @@ Content-Type: application/json
       "linkedin": "https://linkedin.com/in/johndoe",
       "twitter": "@johndoe"
     },
-    "insights": [
-      "Recently promoted to CEO",
-      "Company raised Series B funding"
-    ]
+    "insights": ["Recently promoted to CEO", "Company raised Series B funding"]
   },
   "confidence": 0.95,
   "sources": ["LinkedIn", "Crunchbase", "Company Website"]
@@ -563,6 +601,7 @@ Content-Type: application/json
 ### AI Chat
 
 #### Send Message
+
 ```http
 POST /api/ai/chat
 Content-Type: application/json
@@ -577,14 +616,11 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "response": "You have 15 active deals this month with a total value of $500,000. Your top deal is 'Enterprise Deal' worth $75,000 in the negotiation stage.",
-  "suggestions": [
-    "View deal details",
-    "Create follow-up task",
-    "Generate proposal"
-  ],
+  "suggestions": ["View deal details", "Create follow-up task", "Generate proposal"],
   "usage": {
     "tokens": 150,
     "cost": 0.003
@@ -595,6 +631,7 @@ Content-Type: application/json
 ### AI Image Generation
 
 #### Generate Image
+
 ```http
 POST /api/ai/generate-image
 Content-Type: application/json
@@ -607,6 +644,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "imageUrl": "https://cdn.smartcrm.vip/images/uuid.png",
@@ -625,11 +663,13 @@ Content-Type: application/json
 ### Tenant Management
 
 #### Get Tenant Configuration
+
 ```http
 GET /api/white-label/config
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "tenant": {
@@ -657,6 +697,7 @@ GET /api/white-label/config
 ```
 
 #### Update Branding
+
 ```http
 PATCH /api/white-label/branding
 Content-Type: application/json
@@ -669,6 +710,7 @@ Content-Type: application/json
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "branding": {
@@ -686,6 +728,7 @@ Content-Type: application/json
 ### Webhook Events
 
 #### Available Events
+
 - `contact.created`
 - `contact.updated`
 - `contact.deleted`
@@ -700,6 +743,7 @@ Content-Type: application/json
 - `subscription.updated`
 
 #### Webhook Payload
+
 ```json
 {
   "event": "deal.won",
@@ -722,22 +766,22 @@ Content-Type: application/json
 ```
 
 #### Webhook Signature
+
 All webhooks include a signature header for verification:
+
 ```http
 X-SmartCRM-Signature: sha256=abc123...
 ```
 
 **Verification**:
+
 ```javascript
 const crypto = require('crypto');
 
 function verifyWebhook(payload, signature, secret) {
   const hmac = crypto.createHmac('sha256', secret);
   const digest = 'sha256=' + hmac.update(payload).digest('hex');
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(digest)
-  );
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
 }
 ```
 
@@ -748,29 +792,31 @@ function verifyWebhook(payload, signature, secret) {
 ### JavaScript/TypeScript SDK
 
 #### Installation
+
 ```bash
 npm install @smartcrm/sdk
 ```
 
 #### Usage
+
 ```typescript
 import { SmartCRM } from '@smartcrm/sdk';
 
 const crm = new SmartCRM({
   apiKey: 'your_api_key',
-  baseUrl: 'https://your-domain.com'
+  baseUrl: 'https://your-domain.com',
 });
 
 // List contacts
 const contacts = await crm.contacts.list({
   page: 1,
-  limit: 50
+  limit: 50,
 });
 
 // Create contact
 const contact = await crm.contacts.create({
   name: 'Jane Smith',
-  email: 'jane@example.com'
+  email: 'jane@example.com',
 });
 
 // AI enrichment
@@ -780,11 +826,13 @@ const enrichment = await crm.ai.enrichContact(contact.id);
 ### Python SDK
 
 #### Installation
+
 ```bash
 pip install smartcrm-sdk
 ```
 
 #### Usage
+
 ```python
 from smartcrm import SmartCRM
 
@@ -813,11 +861,13 @@ enrichment = crm.ai.enrich_contact(contact['id'])
 All list endpoints support pagination with consistent parameters:
 
 **Request**:
+
 ```http
 GET /api/contacts?page=2&limit=25
 ```
 
 **Response**:
+
 ```json
 {
   "data": [...],
@@ -837,19 +887,25 @@ GET /api/contacts?page=2&limit=25
 ## Filtering and Sorting
 
 ### Filtering
+
 Use query parameters for filtering:
+
 ```http
 GET /api/contacts?status=active&tags=vip,enterprise
 ```
 
 ### Sorting
+
 Use `sort` and `order` parameters:
+
 ```http
 GET /api/contacts?sort=createdAt&order=desc
 ```
 
 ### Search
+
 Use `search` parameter for full-text search:
+
 ```http
 GET /api/contacts?search=john+doe
 ```
@@ -859,21 +915,27 @@ GET /api/contacts?search=john+doe
 ## Best Practices
 
 ### 1. Use Pagination
+
 Always paginate large result sets to improve performance.
 
 ### 2. Handle Rate Limits
+
 Implement exponential backoff when rate limited.
 
 ### 3. Verify Webhooks
+
 Always verify webhook signatures to ensure authenticity.
 
 ### 4. Cache Responses
+
 Cache GET responses when appropriate to reduce API calls.
 
 ### 5. Use Batch Operations
+
 Use batch endpoints when creating/updating multiple resources.
 
 ### 6. Monitor Usage
+
 Track API usage to stay within rate limits and budget.
 
 ---
@@ -881,11 +943,13 @@ Track API usage to stay within rate limits and budget.
 ## Support
 
 ### Documentation
+
 - **Full Docs**: https://docs.smartcrm.vip
 - **API Reference**: https://api.smartcrm.vip/docs
 - **Changelog**: https://docs.smartcrm.vip/changelog
 
 ### Contact
+
 - **Email**: api-support@smartcrm.vip
 - **Discord**: https://discord.gg/smartcrm
 - **GitHub**: https://github.com/smartcrm/sdk

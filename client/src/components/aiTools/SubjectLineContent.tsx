@@ -9,7 +9,7 @@ const SubjectLineContent: React.FC = () => {
     audience: '',
     keyMessage: '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ const SubjectLineContent: React.FC = () => {
     { value: 'invitation', label: 'Invitation' },
     { value: 'newsletter', label: 'Newsletter' },
     { value: 'promotion', label: 'Promotion' },
-    { value: 'request', label: 'Request' }
+    { value: 'request', label: 'Request' },
   ];
 
   // Audience options
@@ -38,11 +38,13 @@ const SubjectLineContent: React.FC = () => {
     { value: 'customers', label: 'Existing Customers' },
   ];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -52,11 +54,11 @@ const SubjectLineContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Pass the API key if provided by user, otherwise the server will use its own
       const options = apiKey ? { apiKey } : undefined;
-      
+
       // Using the market trends function to simulate subject line generation
       const result = await edgeFunctionService.analyzeMarketTrends(
         formData.keyMessage,
@@ -64,7 +66,7 @@ const SubjectLineContent: React.FC = () => {
         formData.purpose,
         options
       );
-      
+
       // Format the result as subject line suggestions
       const formattedResult = `# Email Subject Line Suggestions
 
@@ -111,13 +113,17 @@ Based on your inputs:
       setShowApiKeyInput(false);
     } catch (err) {
       console.error('Error generating subject lines:', err);
-      
+
       // Check for specific OpenAI API key errors and provide appropriate guidance
       if (err instanceof Error) {
-        if (err.message.includes('OpenAI API Key is not defined') || 
-            err.message.includes('OpenAI API Key is not configured') ||
-            err.message.includes('OPENAI_API_KEY is not set')) {
-          setError('OpenAI API Key is not configured. Please enter your API key below to use this feature.');
+        if (
+          err.message.includes('OpenAI API Key is not defined') ||
+          err.message.includes('OpenAI API Key is not configured') ||
+          err.message.includes('OPENAI_API_KEY is not set')
+        ) {
+          setError(
+            'OpenAI API Key is not configured. Please enter your API key below to use this feature.'
+          );
           setShowApiKeyInput(true);
         } else {
           setError(err.message || 'An error occurred while generating subject lines');
@@ -139,9 +145,12 @@ Based on your inputs:
             <Mail className="text-rose-600 h-6 w-6" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-rose-800 mb-2">Email Subject Line Optimizer</h3>
+            <h3 className="text-lg font-semibold text-rose-800 mb-2">
+              Email Subject Line Optimizer
+            </h3>
             <p className="text-rose-700">
-              Generate high-converting email subject lines with performance predictions to maximize open rates and engagement.
+              Generate high-converting email subject lines with performance predictions to maximize
+              open rates and engagement.
             </p>
           </div>
         </div>
@@ -155,7 +164,8 @@ Based on your inputs:
             <div>
               <h3 className="font-medium text-yellow-800">API Key Required</h3>
               <p className="text-sm text-yellow-700 mt-1 mb-3">
-                Please enter your OpenAI API key to use this feature. Your key is not stored on our servers.
+                Please enter your OpenAI API key to use this feature. Your key is not stored on our
+                servers.
               </p>
               <div className="flex">
                 <input
@@ -173,7 +183,16 @@ Based on your inputs:
                 </button>
               </div>
               <p className="text-xs text-yellow-600 mt-2">
-                You can get your API key from the <a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI dashboard</a>.
+                You can get your API key from the{' '}
+                <a
+                  href="https://platform.openai.com/account/api-keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  OpenAI dashboard
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -186,12 +205,10 @@ Based on your inputs:
           <Target className="h-6 w-6 text-rose-600" />
           Subject Line Generator
         </h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Purpose
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Purpose</label>
             <select
               name="purpose"
               value={formData.purpose}
@@ -199,19 +216,19 @@ Based on your inputs:
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-rose-500 focus:border-rose-500"
               required
             >
-              <option value="" disabled>Select email purpose</option>
-              {purposeOptions.map(option => (
+              <option value="" disabled>
+                Select email purpose
+              </option>
+              {purposeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Target Audience
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
             <select
               name="audience"
               value={formData.audience}
@@ -219,15 +236,17 @@ Based on your inputs:
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-rose-500 focus:border-rose-500"
               required
             >
-              <option value="" disabled>Select target audience</option>
-              {audienceOptions.map(option => (
+              <option value="" disabled>
+                Select target audience
+              </option>
+              {audienceOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
-          
+
           <div>
             <label htmlFor="keyMessage" className="block text-sm font-medium text-gray-700 mb-2">
               Key Message or Offer
@@ -243,7 +262,7 @@ Based on your inputs:
               required
             ></textarea>
           </div>
-            
+
           <div className="flex justify-between items-center pt-4 border-t border-gray-200">
             <div className="flex gap-4">
               <div className="flex items-center text-xs text-gray-500">
@@ -257,7 +276,9 @@ Based on your inputs:
             </div>
             <button
               type="submit"
-              disabled={isLoading || !formData.purpose || !formData.audience || !formData.keyMessage}
+              disabled={
+                isLoading || !formData.purpose || !formData.audience || !formData.keyMessage
+              }
               className="bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 px-6 rounded-lg hover:from-rose-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3 font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {isLoading ? (
@@ -288,12 +309,7 @@ Based on your inputs:
       )}
 
       {/* Results Display */}
-      {result && (
-        <StructuredAIResult 
-          result={result} 
-          title="Email Subject Line Recommendations"
-        />
-      )}
+      {result && <StructuredAIResult result={result} title="Email Subject Line Recommendations" />}
     </div>
   );
 };

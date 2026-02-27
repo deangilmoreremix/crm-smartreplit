@@ -11,7 +11,7 @@ export type HistoryEntry = {
   note?: string;
 };
 
-const KEY = "gemini_image_history_v1";
+const KEY = 'gemini_image_history_v1';
 
 export function loadHistory(): HistoryEntry[] {
   try {

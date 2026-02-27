@@ -17,7 +17,14 @@ export interface AIAutomationRule {
 }
 
 export interface AutomationTrigger {
-  type: 'email_received' | 'deal_stage_change' | 'task_completed' | 'contact_created' | 'scheduled_time' | 'webhook' | 'api_call';
+  type:
+    | 'email_received'
+    | 'deal_stage_change'
+    | 'task_completed'
+    | 'contact_created'
+    | 'scheduled_time'
+    | 'webhook'
+    | 'api_call';
   config: Record<string, any>;
   schedule?: {
     type: 'once' | 'daily' | 'weekly' | 'monthly' | 'custom';
@@ -29,14 +36,30 @@ export interface AutomationTrigger {
 export interface AutomationCondition {
   id: string;
   field: string;
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'in' | 'not_in';
+  operator:
+    | 'equals'
+    | 'not_equals'
+    | 'contains'
+    | 'not_contains'
+    | 'greater_than'
+    | 'less_than'
+    | 'in'
+    | 'not_in';
   value: any;
   logicalOperator?: 'and' | 'or';
 }
 
 export interface AutomationAction {
   id: string;
-  type: 'send_email' | 'create_task' | 'update_deal' | 'add_tag' | 'webhook' | 'ai_analysis' | 'data_enrichment' | 'notification';
+  type:
+    | 'send_email'
+    | 'create_task'
+    | 'update_deal'
+    | 'add_tag'
+    | 'webhook'
+    | 'ai_analysis'
+    | 'data_enrichment'
+    | 'notification';
   config: Record<string, any>;
   delay?: number; // in minutes
   retryConfig?: {

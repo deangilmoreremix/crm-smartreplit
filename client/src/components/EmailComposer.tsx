@@ -26,16 +26,10 @@ export default function EmailComposer({
   draft,
   contactId,
   dealId,
-  replyToEmail
+  replyToEmail,
 }: EmailComposerProps) {
-  const {
-    sendEmail,
-    saveDraft,
-    scheduleEmail,
-    templates,
-    useTemplate,
-    generateAISuggestions
-  } = useCommunicationStore();
+  const { sendEmail, saveDraft, scheduleEmail, templates, useTemplate, generateAISuggestions } =
+    useCommunicationStore();
 
   const [formData, setFormData] = useState({
     fromAddress: 'user@company.com',
@@ -49,7 +43,7 @@ export default function EmailComposer({
     priority: 'normal' as const,
     tags: [] as string[],
     trackingEnabled: true,
-    scheduledAt: null as Date | null
+    scheduledAt: null as Date | null,
   });
 
   const [activeTab, setActiveTab] = useState('compose');
@@ -76,18 +70,18 @@ export default function EmailComposer({
         priority: draft.priority,
         tags: draft.tags,
         trackingEnabled: draft.trackingEnabled,
-        scheduledAt: draft.scheduledAt || null
+        scheduledAt: draft.scheduledAt || null,
       });
     }
 
     if (replyToEmail) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         toAddresses: [replyToEmail.fromAddress],
-        subject: replyToEmail.subject.startsWith('Re:') 
-          ? replyToEmail.subject 
+        subject: replyToEmail.subject.startsWith('Re:')
+          ? replyToEmail.subject
           : `Re: ${replyToEmail.subject}`,
-        content: `\n\n--- Original Message ---\nFrom: ${replyToEmail.fromAddress}\nDate: ${replyToEmail.createdAt.toLocaleString()}\nSubject: ${replyToEmail.subject}\n\n${replyToEmail.content}`
+        content: `\n\n--- Original Message ---\nFrom: ${replyToEmail.fromAddress}\nDate: ${replyToEmail.createdAt.toLocaleString()}\nSubject: ${replyToEmail.subject}\n\n${replyToEmail.content}`,
       }));
     }
 
@@ -104,7 +98,7 @@ export default function EmailComposer({
         dealId,
         attachments: [],
         linkTracking: [],
-        createdBy: 'current-user'
+        createdBy: 'current-user',
       });
       onClose();
     } catch (error) {
@@ -119,21 +113,24 @@ export default function EmailComposer({
       dealId,
       attachments: [],
       linkTracking: [],
-      createdBy: 'current-user'
+      createdBy: 'current-user',
     });
     onClose();
   };
 
   const handleSchedule = () => {
     if (formData.scheduledAt) {
-      scheduleEmail({
-        ...formData,
-        contactId,
-        dealId,
-        attachments: [],
-        linkTracking: [],
-        createdBy: 'current-user'
-      }, formData.scheduledAt);
+      scheduleEmail(
+        {
+          ...formData,
+          contactId,
+          dealId,
+          attachments: [],
+          linkTracking: [],
+          createdBy: 'current-user',
+        },
+        formData.scheduledAt
+      );
       onClose();
     }
   };
@@ -142,12 +139,12 @@ export default function EmailComposer({
     const templateData = useTemplate(templateId, {
       // Add variable substitution here
       contactName: 'Contact Name',
-      companyName: 'Company Name'
+      companyName: 'Company Name',
     });
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      ...templateData
+      ...templateData,
     }));
   };
 
@@ -159,26 +156,29 @@ export default function EmailComposer({
         {
           type: 'subject',
           suggestion: 'Personalize subject line with recipient name',
-          action: () => setFormData(prev => ({ ...prev, subject: `Hi [Name], ${prev.subject}` }))
+          action: () => setFormData((prev) => ({ ...prev, subject: `Hi [Name], ${prev.subject}` })),
         },
         {
           type: 'content',
           suggestion: 'Add a clear call-to-action',
-          action: () => setFormData(prev => ({ 
-            ...prev, 
-            content: prev.content + '\n\nWould you like to schedule a quick 15-minute call to discuss this further?' 
-          }))
+          action: () =>
+            setFormData((prev) => ({
+              ...prev,
+              content:
+                prev.content +
+                '\n\nWould you like to schedule a quick 15-minute call to discuss this further?',
+            })),
         },
         {
           type: 'timing',
           suggestion: 'Send on Tuesday at 2 PM for better engagement',
           action: () => {
             const tuesday2PM = new Date();
-            tuesday2PM.setDate(tuesday2PM.getDate() + (2 - tuesday2PM.getDay() + 7) % 7);
+            tuesday2PM.setDate(tuesday2PM.getDate() + ((2 - tuesday2PM.getDay() + 7) % 7));
             tuesday2PM.setHours(14, 0, 0, 0);
-            setFormData(prev => ({ ...prev, scheduledAt: tuesday2PM }));
-          }
-        }
+            setFormData((prev) => ({ ...prev, scheduledAt: tuesday2PM }));
+          },
+        },
       ];
       setAiSuggestions(suggestions);
     } finally {
@@ -189,11 +189,11 @@ export default function EmailComposer({
   const addEmailAddress = (type: 'to' | 'cc' | 'bcc', email: string) => {
     if (email && email.includes('@')) {
       const field = `${type}Addresses` as keyof typeof formData;
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [field]: [...(prev[field] as string[]), email]
+        [field]: [...(prev[field] as string[]), email],
       }));
-      
+
       if (type === 'to') setToInput('');
       if (type === 'cc') setCcInput('');
       if (type === 'bcc') setBccInput('');
@@ -202,26 +202,26 @@ export default function EmailComposer({
 
   const removeEmailAddress = (type: 'to' | 'cc' | 'bcc', index: number) => {
     const field = `${type}Addresses` as keyof typeof formData;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: (prev[field] as string[]).filter((_, i) => i !== index)
+      [field]: (prev[field] as string[]).filter((_, i) => i !== index),
     }));
   };
 
   const addTag = (tag: string) => {
     if (tag && !formData.tags.includes(tag)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, tag]
+        tags: [...prev.tags, tag],
       }));
       setTagInput('');
     }
   };
 
   const removeTag = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter((_, i) => i !== index)
+      tags: prev.tags.filter((_, i) => i !== index),
     }));
   };
 
@@ -250,7 +250,9 @@ export default function EmailComposer({
                 <Input
                   id="fromAddress"
                   value={formData.fromAddress}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fromAddress: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, fromAddress: e.target.value }))
+                  }
                 />
               </div>
               <div>
@@ -258,7 +260,7 @@ export default function EmailComposer({
                 <Input
                   id="fromName"
                   value={formData.fromName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, fromName: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, fromName: e.target.value }))}
                 />
               </div>
             </div>
@@ -329,7 +331,7 @@ export default function EmailComposer({
               <Input
                 id="subject"
                 value={formData.subject}
-                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                 placeholder="Email subject"
               />
             </div>
@@ -339,7 +341,9 @@ export default function EmailComposer({
               <Label htmlFor="priority">Priority</Label>
               <Select
                 value={formData.priority}
-                onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}
+                onValueChange={(value: any) =>
+                  setFormData((prev) => ({ ...prev, priority: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -369,12 +373,14 @@ export default function EmailComposer({
                   </Button>
                 </div>
               </div>
-              
+
               {isHtmlMode ? (
                 <Textarea
                   id="htmlContent"
                   value={formData.htmlContent}
-                  onChange={(e) => setFormData(prev => ({ ...prev, htmlContent: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, htmlContent: e.target.value }))
+                  }
                   placeholder="HTML content"
                   rows={12}
                   className="font-mono text-sm"
@@ -383,7 +389,7 @@ export default function EmailComposer({
                 <Textarea
                   id="content"
                   value={formData.content}
-                  onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
                   placeholder="Email content"
                   rows={12}
                 />
@@ -397,10 +403,7 @@ export default function EmailComposer({
                 {formData.tags.map((tag, index) => (
                   <Badge key={index} variant="outline">
                     {tag}
-                    <button
-                      onClick={() => removeTag(index)}
-                      className="ml-1 text-xs"
-                    >
+                    <button onClick={() => removeTag(index)} className="ml-1 text-xs">
                       ×
                     </button>
                   </Badge>
@@ -426,7 +429,9 @@ export default function EmailComposer({
                 <input
                   type="checkbox"
                   checked={formData.trackingEnabled}
-                  onChange={(e) => setFormData(prev => ({ ...prev, trackingEnabled: e.target.checked }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, trackingEnabled: e.target.checked }))
+                  }
                 />
                 Enable tracking
               </label>
@@ -435,34 +440,30 @@ export default function EmailComposer({
 
           <TabsContent value="templates" className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
-              {templates.filter(t => t.isActive).map((template) => (
-                <div
-                  key={template.id}
-                  className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleUseTemplate(template.id)}
-                >
-                  <h3 className="font-medium">{template.name}</h3>
-                  <p className="text-sm text-gray-600">{template.subject}</p>
-                  <Badge variant="outline" className="mt-2">
-                    {template.category}
-                  </Badge>
-                </div>
-              ))}
-              {templates.filter(t => t.isActive).length === 0 && (
-                <p className="text-gray-500 text-center py-8">
-                  No active templates found
-                </p>
+              {templates
+                .filter((t) => t.isActive)
+                .map((template) => (
+                  <div
+                    key={template.id}
+                    className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleUseTemplate(template.id)}
+                  >
+                    <h3 className="font-medium">{template.name}</h3>
+                    <p className="text-sm text-gray-600">{template.subject}</p>
+                    <Badge variant="outline" className="mt-2">
+                      {template.category}
+                    </Badge>
+                  </div>
+                ))}
+              {templates.filter((t) => t.isActive).length === 0 && (
+                <p className="text-gray-500 text-center py-8">No active templates found</p>
               )}
             </div>
           </TabsContent>
 
           <TabsContent value="ai" className="space-y-4">
             <div className="text-center">
-              <Button
-                onClick={handleGenerateAI}
-                disabled={isGeneratingAI}
-                className="mb-4"
-              >
+              <Button onClick={handleGenerateAI} disabled={isGeneratingAI} className="mb-4">
                 <Sparkles className="w-4 h-4 mr-2" />
                 {isGeneratingAI ? 'Generating...' : 'Get AI Suggestions'}
               </Button>
@@ -479,11 +480,7 @@ export default function EmailComposer({
                         </Badge>
                         <p className="text-sm">{suggestion.suggestion}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={suggestion.action}
-                        variant="outline"
-                      >
+                      <Button size="sm" onClick={suggestion.action} variant="outline">
                         Apply
                       </Button>
                     </div>
@@ -500,10 +497,12 @@ export default function EmailComposer({
                 id="scheduledAt"
                 type="datetime-local"
                 value={formData.scheduledAt ? formData.scheduledAt.toISOString().slice(0, 16) : ''}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  scheduledAt: e.target.value ? new Date(e.target.value) : null 
-                }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    scheduledAt: e.target.value ? new Date(e.target.value) : null,
+                  }))
+                }
               />
             </div>
 
@@ -531,7 +530,7 @@ export default function EmailComposer({
                         if (option.setHour !== undefined) {
                           date.setHours(option.setHour, 0, 0, 0);
                         }
-                        setFormData(prev => ({ ...prev, scheduledAt: date }));
+                        setFormData((prev) => ({ ...prev, scheduledAt: date }));
                       }}
                     >
                       {option.label}

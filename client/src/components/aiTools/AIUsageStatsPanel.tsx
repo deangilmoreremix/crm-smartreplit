@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { aiUsageTracker, type ToolMetrics, type CategoryMetrics } from '../../services/aiUsageTracker';
+import {
+  aiUsageTracker,
+  type ToolMetrics,
+  type CategoryMetrics,
+} from '../../services/aiUsageTracker';
 import { BarChart3, TrendingUp, Clock, Zap, Brain, Activity, Users, Target } from 'lucide-react';
 
 export default function AIUsageStatsPanel() {
@@ -12,7 +16,7 @@ export default function AIUsageStatsPanel() {
 
   useEffect(() => {
     loadUsageData();
-    
+
     // Refresh data every 30 seconds
     const interval = setInterval(loadUsageData, 30000);
     return () => clearInterval(interval);
@@ -106,12 +110,17 @@ export default function AIUsageStatsPanel() {
             {trendingTools.slice(0, 5).map((tool, index) => (
               <div key={tool.toolId} className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 ${
-                    index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                    index === 1 ? 'bg-gray-100 text-gray-800' :
-                    index === 2 ? 'bg-orange-100 text-orange-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 ${
+                      index === 0
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : index === 1
+                          ? 'bg-gray-100 text-gray-800'
+                          : index === 2
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
                     {index + 1}
                   </div>
                   <div>
@@ -143,9 +152,12 @@ export default function AIUsageStatsPanel() {
         {categoryMetrics.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {categoryMetrics.map((category) => (
-              <div key={category.category} className={`p-4 rounded-lg border ${
-                isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'
-              }`}>
+              <div
+                key={category.category}
+                className={`p-4 rounded-lg border ${
+                  isDark ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'
+                }`}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium">{category.category}</h4>
                   <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -185,9 +197,11 @@ export default function AIUsageStatsPanel() {
             {usageStats.recentUsage.slice(0, 5).map((usage: any, index: number) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className={`w-2 h-2 rounded-full mr-3 ${
-                    usage.success ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
+                  <div
+                    className={`w-2 h-2 rounded-full mr-3 ${
+                      usage.success ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  ></div>
                   <div>
                     <p className="font-medium">{usage.toolName}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -215,23 +229,29 @@ export default function AIUsageStatsPanel() {
           Performance Insights
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className={`p-4 rounded-lg ${
-            isDark ? 'bg-green-900/20 border-green-500' : 'bg-green-50 border-green-200'
-          } border`}>
+          <div
+            className={`p-4 rounded-lg ${
+              isDark ? 'bg-green-900/20 border-green-500' : 'bg-green-50 border-green-200'
+            } border`}
+          >
             <h4 className="font-medium text-green-700 dark:text-green-300 mb-2">Top Performer</h4>
             <p className="text-sm text-green-600 dark:text-green-400">
               {usageStats.topPerformingCategory} category leads with highest success rate
             </p>
           </div>
-          
-          <div className={`p-4 rounded-lg ${
-            isDark ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-200'
-          } border`}>
+
+          <div
+            className={`p-4 rounded-lg ${
+              isDark ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-200'
+            } border`}
+          >
             <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-2">Recommendation</h4>
             <p className="text-sm text-blue-600 dark:text-blue-400">
-              {usageStats.successRate > 90 ? 'Excellent performance!' : 
-               usageStats.successRate > 75 ? 'Good performance, room for improvement' :
-               'Consider optimizing tool configurations'}
+              {usageStats.successRate > 90
+                ? 'Excellent performance!'
+                : usageStats.successRate > 75
+                  ? 'Good performance, room for improvement'
+                  : 'Consider optimizing tool configurations'}
             </p>
           </div>
         </div>

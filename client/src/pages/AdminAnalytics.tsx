@@ -12,7 +12,7 @@ const AdminAnalytics: React.FC = () => {
       change: '+12%',
       trend: 'up',
       icon: Users,
-      color: 'blue'
+      color: 'blue',
     },
     {
       title: 'Active Sessions',
@@ -20,7 +20,7 @@ const AdminAnalytics: React.FC = () => {
       change: '+5%',
       trend: 'up',
       icon: Activity,
-      color: 'green'
+      color: 'green',
     },
     {
       title: 'API Calls Today',
@@ -28,7 +28,7 @@ const AdminAnalytics: React.FC = () => {
       change: '+8%',
       trend: 'up',
       icon: Database,
-      color: 'purple'
+      color: 'purple',
     },
     {
       title: 'Avg Response Time',
@@ -36,8 +36,8 @@ const AdminAnalytics: React.FC = () => {
       change: '-3%',
       trend: 'down',
       icon: Clock,
-      color: 'green'
-    }
+      color: 'green',
+    },
   ];
 
   return (
@@ -67,15 +67,22 @@ const AdminAnalytics: React.FC = () => {
               data-testid={`metric-${metric.title.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <div className="flex items-center justify-between mb-4">
-                <Icon className={`w-8 h-8 ${
-                  metric.color === 'blue' ? 'text-blue-600' :
-                  metric.color === 'green' ? 'text-green-600' :
-                  metric.color === 'purple' ? 'text-purple-600' :
-                  'text-gray-600'
-                }`} />
-                <div className={`flex items-center text-sm font-medium ${
-                  metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <Icon
+                  className={`w-8 h-8 ${
+                    metric.color === 'blue'
+                      ? 'text-blue-600'
+                      : metric.color === 'green'
+                        ? 'text-green-600'
+                        : metric.color === 'purple'
+                          ? 'text-purple-600'
+                          : 'text-gray-600'
+                  }`}
+                />
+                <div
+                  className={`flex items-center text-sm font-medium ${
+                    metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
                   <TrendingUp className="w-4 h-4 mr-1" />
                   {metric.change}
                 </div>
@@ -92,7 +99,9 @@ const AdminAnalytics: React.FC = () => {
       </div>
 
       {/* Placeholder for Charts */}
-      <div className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6`}>
+      <div
+        className={`${isDark ? 'bg-gray-800/50 border-white/10' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-6`}
+      >
         <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Usage Trends
         </h2>

@@ -64,7 +64,10 @@ const convertDbToStoreContact = (dbContact: DBContact): Contact => ({
 });
 
 // Convert store contact to DB contact format
-const convertStoreToDbContact = (contact: Omit<Contact, 'id'>, userId: string): Omit<DBContact, 'id' | 'created_at' | 'updated_at'> => ({
+const convertStoreToDbContact = (
+  contact: Omit<Contact, 'id'>,
+  userId: string
+): Omit<DBContact, 'id' | 'created_at' | 'updated_at'> => ({
   user_id: userId,
   name: contact.name,
   email: contact.email,
@@ -158,11 +161,14 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     set({ loading: true });
     try {
       const dbContacts = await databaseService.getContacts(user.id);
-      const contactsMap = dbContacts.reduce((acc, contact) => {
-        const storeContact = convertDbToStoreContact(contact);
-        acc[storeContact.id] = storeContact;
-        return acc;
-      }, {} as Record<string, Contact>);
+      const contactsMap = dbContacts.reduce(
+        (acc, contact) => {
+          const storeContact = convertDbToStoreContact(contact);
+          acc[storeContact.id] = storeContact;
+          return acc;
+        },
+        {} as Record<string, Contact>
+      );
 
       set({ contacts: contactsMap });
     } catch (error) {

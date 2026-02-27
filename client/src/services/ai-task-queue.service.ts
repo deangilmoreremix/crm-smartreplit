@@ -67,7 +67,7 @@ class AITaskQueueService {
     maxConcurrency: 3,
     batchTimeoutMs: 30000,
     retryDelayMs: 2000,
-    maxRetries: 3
+    maxRetries: 3,
   };
 
   constructor() {
@@ -76,10 +76,10 @@ class AITaskQueueService {
 
   private startProcessor(): void {
     if (this.isRunning) return;
-    
+
     this.isRunning = true;
     this.processQueue();
-    
+
     // Clean up completed tasks every 5 minutes
     setInterval(() => this.cleanup(), 300000);
   }
@@ -102,7 +102,6 @@ class AITaskQueueService {
 
         // Process batch
         await this.processBatch(batch);
-        
       } catch (error) {
         logger.error('Queue processor error', error as Error);
         await this.sleep(2000);
@@ -128,7 +127,7 @@ class AITaskQueueService {
 
     for (let i = 0; i < this.queue.length && batch.length < maxBatchSize; i++) {
       const task = this.queue[i];
-      
+
       // Check if task can be added to current batch
       if (this.canBatchWith(task, batch)) {
         batch.push(task);
@@ -142,30 +141,32 @@ class AITaskQueueService {
 
   private canBatchWith(task: QueuedTask, batch: QueuedTask[]): boolean {
     if (batch.length === 0) return true;
-    
+
     // Can batch tasks of the same type with similar priority
     const firstTask = batch[0];
-    return task.type === firstTask.type && 
-           task.priority === firstTask.priority &&
-           task.options.provider === firstTask.options.provider;
+    return (
+      task.type === firstTask.type &&
+      task.priority === firstTask.priority &&
+      task.options.provider === firstTask.options.provider
+    );
   }
 
   private async processBatch(batch: QueuedTask[]): Promise<void> {
     const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    logger.info('Processing AI task batch', { 
-      batchId, 
-      size: batch.length, 
-      type: batch[0]?.type 
+
+    logger.info('Processing AI task batch', {
+      batchId,
+      size: batch.length,
+      type: batch[0]?.type,
     });
 
     // Mark tasks as processing
-    batch.forEach(task => {
+    batch.forEach((task) => {
       task.status = 'processing';
       task.startedAt = new Date();
       task.progress = 0;
       this.processing.set(task.id, task);
-      
+
       if (task.callbacks.onProgress) {
         task.callbacks.onProgress(0);
       }
@@ -176,7 +177,7 @@ class AITaskQueueService {
       const canProceed = await this.checkRateLimits(batch);
       if (!canProceed) {
         // Requeue tasks
-        batch.forEach(task => {
+        batch.forEach((task) => {
           task.status = 'queued';
           this.processing.delete(task.id);
           this.queue.unshift(task);
@@ -186,21 +187,20 @@ class AITaskQueueService {
 
       // Process based on task type
       const results = await this.executeBatch(batch);
-      
+
       // Handle results
       results.forEach((result, index) => {
         const task = batch[index];
-        
+
         if (result.success) {
           this.completeTask(task, result.data);
         } else {
           this.failTask(task, result.error);
         }
       });
-
     } catch (error) {
       // Fail all tasks in batch
-      batch.forEach(task => {
+      batch.forEach((task) => {
         this.failTask(task, error instanceof Error ? error.message : 'Batch processing failed');
       });
     }
@@ -211,13 +211,11 @@ class AITaskQueueService {
       // Check rate limits for the provider that would be used
       const provider = batch[0]?.options.provider || 'auto';
       const endpoint = this.getEndpointForTaskType(batch[0]?.type);
-      
-      const rateCheck = await rateLimiter.checkLimit(
-        `ai_${provider}`,
-        'batch',
-        endpoint,
-        { maxRequests: 10, windowMs: 60000 }
-      );
+
+      const rateCheck = await rateLimiter.checkLimit(`ai_${provider}`, 'batch', endpoint, {
+        maxRequests: 10,
+        windowMs: 60000,
+      });
 
       return rateCheck.allowed;
     } catch (error) {
@@ -226,9 +224,11 @@ class AITaskQueueService {
     }
   }
 
-  private async executeBatch(batch: QueuedTask[]): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
+  private async executeBatch(
+    batch: QueuedTask[]
+  ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const taskType = batch[0].type;
-    
+
     // Progress tracking
     const updateProgress = (taskIndex: number, progress: number) => {
       const task = batch[taskIndex];
@@ -254,160 +254,160 @@ class AITaskQueueService {
           throw new Error(`Unknown task type: ${taskType}`);
       }
     } catch (error) {
-      return batch.map(() => ({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Execution failed' 
+      return batch.map(() => ({
+        success: false,
+        error: error instanceof Error ? error.message : 'Execution failed',
       }));
     }
   }
 
   private async executeContactScoring(
-    batch: QueuedTask[], 
+    batch: QueuedTask[],
     updateProgress: (index: number, progress: number) => void
   ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const results = [];
-    
+
     for (let i = 0; i < batch.length; i++) {
       const task = batch[i];
       updateProgress(i, 25);
-      
+
       try {
         // Simulate AI scoring API call
         await this.sleep(1000 + Math.random() * 1000);
         updateProgress(i, 75);
-        
+
         const score = this.generateMockScore(task.data.contact);
         updateProgress(i, 100);
-        
+
         results.push({ success: true, data: score });
       } catch (error) {
-        results.push({ 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Scoring failed' 
+        results.push({
+          success: false,
+          error: error instanceof Error ? error.message : 'Scoring failed',
         });
       }
     }
-    
+
     return results;
   }
 
   private async executeContactEnrichment(
-    batch: QueuedTask[], 
+    batch: QueuedTask[],
     updateProgress: (index: number, progress: number) => void
   ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const results = [];
-    
+
     for (let i = 0; i < batch.length; i++) {
       const task = batch[i];
       updateProgress(i, 30);
-      
+
       try {
         // Simulate AI enrichment API call
         await this.sleep(1500 + Math.random() * 1000);
         updateProgress(i, 80);
-        
+
         const enrichment = this.generateMockEnrichment(task.data.contact);
         updateProgress(i, 100);
-        
+
         results.push({ success: true, data: enrichment });
       } catch (error) {
-        results.push({ 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Enrichment failed' 
+        results.push({
+          success: false,
+          error: error instanceof Error ? error.message : 'Enrichment failed',
         });
       }
     }
-    
+
     return results;
   }
 
   private async executeInsightsGeneration(
-    batch: QueuedTask[], 
+    batch: QueuedTask[],
     updateProgress: (index: number, progress: number) => void
   ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const results = [];
-    
+
     for (let i = 0; i < batch.length; i++) {
       const task = batch[i];
       updateProgress(i, 20);
-      
+
       try {
         // Simulate AI insights generation
         await this.sleep(2000 + Math.random() * 1500);
         updateProgress(i, 90);
-        
+
         const insights = this.generateMockInsights(task.data.contact);
         updateProgress(i, 100);
-        
+
         results.push({ success: true, data: insights });
       } catch (error) {
-        results.push({ 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Insights generation failed' 
+        results.push({
+          success: false,
+          error: error instanceof Error ? error.message : 'Insights generation failed',
         });
       }
     }
-    
+
     return results;
   }
 
   private async executeEmailGeneration(
-    batch: QueuedTask[], 
+    batch: QueuedTask[],
     updateProgress: (index: number, progress: number) => void
   ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const results = [];
-    
+
     for (let i = 0; i < batch.length; i++) {
       const task = batch[i];
       updateProgress(i, 15);
-      
+
       try {
         // Simulate email generation
         await this.sleep(1800 + Math.random() * 1200);
         updateProgress(i, 85);
-        
+
         const email = this.generateMockEmail(task.data.contact, task.data.purpose);
         updateProgress(i, 100);
-        
+
         results.push({ success: true, data: email });
       } catch (error) {
-        results.push({ 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Email generation failed' 
+        results.push({
+          success: false,
+          error: error instanceof Error ? error.message : 'Email generation failed',
         });
       }
     }
-    
+
     return results;
   }
 
   private async executeAnalysis(
-    batch: QueuedTask[], 
+    batch: QueuedTask[],
     updateProgress: (index: number, progress: number) => void
   ): Promise<Array<{ success: boolean; data?: any; error?: string }>> {
     const results = [];
-    
+
     for (let i = 0; i < batch.length; i++) {
       const task = batch[i];
       updateProgress(i, 35);
-      
+
       try {
         // Simulate analysis
         await this.sleep(1200 + Math.random() * 800);
         updateProgress(i, 95);
-        
+
         const analysis = this.generateMockAnalysis(task.data);
         updateProgress(i, 100);
-        
+
         results.push({ success: true, data: analysis });
       } catch (error) {
-        results.push({ 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Analysis failed' 
+        results.push({
+          success: false,
+          error: error instanceof Error ? error.message : 'Analysis failed',
         });
       }
     }
-    
+
     return results;
   }
 
@@ -416,94 +416,92 @@ class AITaskQueueService {
     task.completedAt = new Date();
     task.progress = 100;
     task.result = result;
-    
+
     this.processing.delete(task.id);
     this.completed.push(task);
-    
+
     if (task.callbacks.onComplete) {
       task.callbacks.onComplete(result);
     }
-    
-    logger.debug('Task completed successfully', { 
-      taskId: task.id, 
+
+    logger.debug('Task completed successfully', {
+      taskId: task.id,
       type: task.type,
-      processingTime: task.completedAt.getTime() - (task.startedAt?.getTime() || 0)
+      processingTime: task.completedAt.getTime() - (task.startedAt?.getTime() || 0),
     });
   }
 
   private failTask(task: QueuedTask, error: string): void {
     task.attempts++;
-    
+
     // Retry if attempts haven't exceeded max
     if (task.attempts < this.config.maxRetries) {
       task.status = 'queued';
       this.processing.delete(task.id);
-      
+
       // Add delay before retry
       setTimeout(() => {
         this.queue.push(task);
       }, this.config.retryDelayMs * task.attempts);
-      
-      logger.info('Retrying failed task', { 
-        taskId: task.id, 
-        attempt: task.attempts, 
-        error 
+
+      logger.info('Retrying failed task', {
+        taskId: task.id,
+        attempt: task.attempts,
+        error,
       });
       return;
     }
-    
+
     // Max retries exceeded
     task.status = 'failed';
     task.completedAt = new Date();
     task.error = error;
-    
+
     this.processing.delete(task.id);
     this.failed.push(task);
-    
+
     if (task.callbacks.onError) {
       task.callbacks.onError(new Error(error));
     }
-    
-    logger.error('Task failed after max retries', new Error(error), { 
-      taskId: task.id, 
+
+    logger.error('Task failed after max retries', new Error(error), {
+      taskId: task.id,
       type: task.type,
-      attempts: task.attempts
+      attempts: task.attempts,
     });
   }
 
   private cleanup(): void {
     const oneHourAgo = new Date(Date.now() - 3600000);
-    
+
     // Remove old completed tasks
-    this.completed = this.completed.filter(task => 
-      task.completedAt && task.completedAt > oneHourAgo
+    this.completed = this.completed.filter(
+      (task) => task.completedAt && task.completedAt > oneHourAgo
     );
-    
+
     // Remove old failed tasks
-    this.failed = this.failed.filter(task => 
-      task.completedAt && task.completedAt > oneHourAgo
-    );
-    
+    this.failed = this.failed.filter((task) => task.completedAt && task.completedAt > oneHourAgo);
+
     logger.debug('Task queue cleanup completed', {
       completedTasks: this.completed.length,
-      failedTasks: this.failed.length
+      failedTasks: this.failed.length,
     });
   }
 
   private getEndpointForTaskType(taskType: string): string {
     const endpoints: Record<string, string> = {
-      'scoring': '/smart-score',
-      'enrichment': '/smart-enrichment',
-      'insights': '/ai-insights',
-      'email': '/email-composer',
-      'analysis': '/email-analyzer'
+      scoring: '/smart-score',
+      enrichment: '/smart-enrichment',
+      insights: '/ai-insights',
+      email: '/email-composer',
+      analysis: '/email-analyzer',
     };
-    
+
     return endpoints[taskType] || '/ai-generic';
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const timer = globalThis.setTimeout ? globalThis.setTimeout : setTimeout;
       timer(resolve, ms);
     });
@@ -517,11 +515,11 @@ class AITaskQueueService {
         fitScore: Math.floor(Math.random() * 30) + 70,
         engagementScore: Math.floor(Math.random() * 40) + 60,
         conversionProbability: Math.floor(Math.random() * 50) + 50,
-        urgencyScore: Math.floor(Math.random() * 30) + 40
+        urgencyScore: Math.floor(Math.random() * 30) + 40,
       },
       reasoning: [`Strong profile at ${contact.company}`, 'Good engagement indicators'],
       recommendations: ['Schedule follow-up call', 'Share case studies'],
-      nextBestActions: ['Email outreach', 'LinkedIn connection']
+      nextBestActions: ['Email outreach', 'LinkedIn connection'],
     };
   }
 
@@ -529,14 +527,14 @@ class AITaskQueueService {
     return {
       socialProfiles: {
         linkedin: `https://linkedin.com/in/${contact.firstName?.toLowerCase()}${contact.lastName?.toLowerCase()}`,
-        twitter: `https://twitter.com/${contact.firstName?.toLowerCase()}`
+        twitter: `https://twitter.com/${contact.firstName?.toLowerCase()}`,
       },
       additionalInfo: {
         jobLevel: 'Senior',
         departmentSize: '50-100',
-        decisionMakingPower: 'High'
+        decisionMakingPower: 'High',
       },
-      confidence: 85
+      confidence: 85,
     };
   }
 
@@ -547,15 +545,15 @@ class AITaskQueueService {
         title: 'High Conversion Potential',
         description: `${contact.name} shows strong indicators for conversion`,
         confidence: 85,
-        impact: 'high'
+        impact: 'high',
       },
       {
         type: 'recommendation',
         title: 'Optimal Outreach Timing',
         description: 'Best contacted on Tuesday-Thursday, 2-4 PM',
         confidence: 75,
-        impact: 'medium'
-      }
+        impact: 'medium',
+      },
     ];
   }
 
@@ -565,8 +563,8 @@ class AITaskQueueService {
       body: `Hi ${contact.firstName},\n\nI hope this email finds you well...`,
       personalization: {
         elements: ['company_name', 'industry', 'recent_news'],
-        confidence: 80
-      }
+        confidence: 80,
+      },
     };
   }
 
@@ -574,7 +572,7 @@ class AITaskQueueService {
     return {
       score: Math.floor(Math.random() * 30) + 70,
       insights: ['Good structure', 'Clear call to action'],
-      suggestions: ['Consider shorter subject line', 'Add more personalization']
+      suggestions: ['Consider shorter subject line', 'Add more personalization'],
     };
   }
 
@@ -596,55 +594,61 @@ class AITaskQueueService {
       options: {
         timeout: 30000,
         retries: this.config.maxRetries,
-        ...options
+        ...options,
       },
       callbacks,
       status: 'queued',
       progress: 0,
       createdAt: new Date(),
-      attempts: 0
+      attempts: 0,
     };
 
     this.queue.push(task);
-    
-    logger.info('Task added to AI queue', { 
-      taskId: task.id, 
-      type: task.type, 
-      priority: task.priority 
+
+    logger.info('Task added to AI queue', {
+      taskId: task.id,
+      type: task.type,
+      priority: task.priority,
     });
-    
+
     return task.id;
   }
 
   getTaskStatus(taskId: string): QueuedTask | null {
-    return this.processing.get(taskId) || 
-           this.completed.find(t => t.id === taskId) || 
-           this.failed.find(t => t.id === taskId) || 
-           this.queue.find(t => t.id === taskId) || 
-           null;
+    return (
+      this.processing.get(taskId) ||
+      this.completed.find((t) => t.id === taskId) ||
+      this.failed.find((t) => t.id === taskId) ||
+      this.queue.find((t) => t.id === taskId) ||
+      null
+    );
   }
 
   cancelTask(taskId: string): boolean {
-    const queueIndex = this.queue.findIndex(t => t.id === taskId);
+    const queueIndex = this.queue.findIndex((t) => t.id === taskId);
     if (queueIndex >= 0) {
       this.queue.splice(queueIndex, 1);
       logger.info('Task cancelled from queue', { taskId });
       return true;
     }
-    
+
     return false;
   }
 
   getMetrics(): QueueMetrics {
-    const total = this.queue.length + this.processing.size + this.completed.length + this.failed.length;
-    const recentCompleted = this.completed.filter(t => 
-      t.completedAt && t.completedAt > new Date(Date.now() - 3600000)
+    const total =
+      this.queue.length + this.processing.size + this.completed.length + this.failed.length;
+    const recentCompleted = this.completed.filter(
+      (t) => t.completedAt && t.completedAt > new Date(Date.now() - 3600000)
     );
-    
-    const avgProcessingTime = recentCompleted.length > 0 ? 
-      recentCompleted.reduce((sum, t) => 
-        sum + ((t.completedAt?.getTime() || 0) - (t.startedAt?.getTime() || 0)), 0
-      ) / recentCompleted.length : 0;
+
+    const avgProcessingTime =
+      recentCompleted.length > 0
+        ? recentCompleted.reduce(
+            (sum, t) => sum + ((t.completedAt?.getTime() || 0) - (t.startedAt?.getTime() || 0)),
+            0
+          ) / recentCompleted.length
+        : 0;
 
     return {
       totalTasks: total,
@@ -655,7 +659,7 @@ class AITaskQueueService {
       averageProcessingTime: avgProcessingTime,
       throughputPerMinute: recentCompleted.length,
       successRate: total > 0 ? this.completed.length / total : 0,
-      currentLoad: this.processing.size / this.config.maxConcurrency
+      currentLoad: this.processing.size / this.config.maxConcurrency,
     };
   }
 

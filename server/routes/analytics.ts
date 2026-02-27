@@ -20,31 +20,25 @@ router.post('/metrics', async (req: Request, res: Response) => {
     if (!tenantId || !metricType || metricValue === undefined) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'metricType', 'metricValue']
+        required: ['tenantId', 'metricType', 'metricValue'],
       });
     }
 
-    const metric = await analyticsEngine.recordMetric(
-      tenantId,
-      metricType,
-      metricValue,
-      metadata
-    );
+    const metric = await analyticsEngine.recordMetric(tenantId, metricType, metricValue, metadata);
 
     res.status(201).json({
       message: 'Metric recorded successfully',
-      metric
+      metric,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Metric recording failed', error, {
       endpoint: '/api/analytics/metrics',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to record metric',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -67,18 +61,17 @@ router.get('/metrics/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       metrics,
-      count: metrics.length
+      count: metrics.length,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get metrics', error, {
       endpoint: `/api/analytics/metrics/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to get metrics',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -94,7 +87,9 @@ router.get('/summary/:tenantId', async (req: Request, res: Response) => {
 
     // Default to last 30 days if not specified
     const end = endDate ? new Date(endDate as string) : new Date();
-    const start = startDate ? new Date(startDate as string) : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const start = startDate
+      ? new Date(startDate as string)
+      : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     const summary = await analyticsEngine.getAnalyticsSummary(tenantId, start, end);
 
@@ -103,19 +98,18 @@ router.get('/summary/:tenantId', async (req: Request, res: Response) => {
       period: {
         start: start.toISOString(),
         end: end.toISOString(),
-        days: Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
-      }
+        days: Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)),
+      },
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to get analytics summary', error, {
       endpoint: `/api/analytics/summary/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to get analytics summary',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -132,13 +126,13 @@ router.post('/reports', async (req: Request, res: Response) => {
     if (!tenantId || !name || !config || !schedule || !format) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['tenantId', 'name', 'config', 'schedule', 'format']
+        required: ['tenantId', 'name', 'config', 'schedule', 'format'],
       });
     }
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Authentication required'
+        error: 'Authentication required',
       });
     }
 
@@ -155,18 +149,17 @@ router.post('/reports', async (req: Request, res: Response) => {
 
     res.status(201).json({
       message: 'Report created successfully',
-      report
+      report,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Report creation failed', error, {
       endpoint: '/api/analytics/reports',
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to create report',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -183,18 +176,17 @@ router.get('/reports/:tenantId', async (req: Request, res: Response) => {
 
     res.json({
       reports,
-      count: reports.length
+      count: reports.length,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Failed to list reports', error, {
       endpoint: `/api/analytics/reports/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to list reports',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -214,26 +206,25 @@ router.post('/reports/:reportId/generate', async (req: Request, res: Response) =
       json: 'application/json',
       csv: 'text/csv',
       pdf: 'application/pdf',
-      excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     };
 
     res.setHeader('Content-Type', contentTypes[result.format] || 'application/json');
-    
+
     if (result.format === 'json') {
       res.json(result.data);
     } else {
       res.send(result.data);
     }
-
   } catch (error: any) {
     await errorLogger.logError('Report generation failed', error, {
       endpoint: `/api/analytics/reports/${req.params.reportId}/generate`,
-      method: 'POST'
+      method: 'POST',
     });
 
     res.status(500).json({
       error: 'Failed to generate report',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -251,18 +242,17 @@ router.put('/reports/:reportId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Report updated successfully',
-      report
+      report,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Report update failed', error, {
       endpoint: `/api/analytics/reports/${req.params.reportId}`,
-      method: 'PUT'
+      method: 'PUT',
     });
 
     res.status(500).json({
       error: 'Failed to update report',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -279,18 +269,17 @@ router.delete('/reports/:reportId', async (req: Request, res: Response) => {
 
     res.json({
       message: 'Report deleted successfully',
-      reportId
+      reportId,
     });
-
   } catch (error: any) {
     await errorLogger.logError('Report deletion failed', error, {
       endpoint: `/api/analytics/reports/${req.params.reportId}`,
-      method: 'DELETE'
+      method: 'DELETE',
     });
 
     res.status(500).json({
       error: 'Failed to delete report',
-      message: error.message
+      message: error.message,
     });
   }
 });
@@ -307,7 +296,7 @@ router.get('/export/:tenantId', async (req: Request, res: Response) => {
     if (!dataType || !format) {
       return res.status(400).json({
         error: 'Missing required parameters',
-        required: ['dataType', 'format']
+        required: ['dataType', 'format'],
       });
     }
 
@@ -317,40 +306,35 @@ router.get('/export/:tenantId', async (req: Request, res: Response) => {
     if (!validDataTypes.includes(dataType as string)) {
       return res.status(400).json({
         error: 'Invalid dataType',
-        validDataTypes
+        validDataTypes,
       });
     }
 
     if (!validFormats.includes(format as string)) {
       return res.status(400).json({
         error: 'Invalid format',
-        validFormats
+        validFormats,
       });
     }
 
-    const result = await analyticsEngine.exportData(
-      tenantId,
-      dataType as any,
-      format as any
-    );
+    const result = await analyticsEngine.exportData(tenantId, dataType as any, format as any);
 
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-    
+
     if (result.format === 'json') {
       res.json(result.data);
     } else {
       res.send(result.data);
     }
-
   } catch (error: any) {
     await errorLogger.logError('Data export failed', error, {
       endpoint: `/api/analytics/export/${req.params.tenantId}`,
-      method: 'GET'
+      method: 'GET',
     });
 
     res.status(500).json({
       error: 'Failed to export data',
-      message: error.message
+      message: error.message,
     });
   }
 });

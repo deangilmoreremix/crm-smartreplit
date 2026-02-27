@@ -36,12 +36,14 @@ class EnhancedGeminiService {
    * Check if API key is valid (not a placeholder)
    */
   private isValidApiKey(): boolean {
-    return this.apiKey && 
-           this.apiKey.length > 10 && 
-           !this.apiKey.includes('your_google_ai_api_key') &&
-           !this.apiKey.includes('placeholder') &&
-           !this.apiKey.startsWith('your_') &&
-           this.apiKey !== 'your_google_ai_api_key';
+    return (
+      this.apiKey &&
+      this.apiKey.length > 10 &&
+      !this.apiKey.includes('your_google_ai_api_key') &&
+      !this.apiKey.includes('placeholder') &&
+      !this.apiKey.startsWith('your_') &&
+      this.apiKey !== 'your_google_ai_api_key'
+    );
   }
 
   /**
@@ -50,13 +52,13 @@ class EnhancedGeminiService {
   private stripMarkdownCodeBlocks(content: string): string {
     // Remove markdown code blocks (```json...``` or ```...```)
     let cleaned = content.trim();
-    
+
     // Remove opening code block markers
     cleaned = cleaned.replace(/^```(?:json|javascript|js)?\s*/i, '');
-    
+
     // Remove closing code block markers
     cleaned = cleaned.replace(/\s*```\s*$/i, '');
-    
+
     // Remove any remaining leading/trailing whitespace
     return cleaned.trim();
   }
@@ -65,7 +67,12 @@ class EnhancedGeminiService {
    * Validate and clean customer ID for UUID compatibility
    */
   private validateCustomerId(customerId?: string): string | undefined {
-    if (!customerId || customerId === 'demo-customer-id' || customerId.includes('demo') || customerId.includes('placeholder')) {
+    if (
+      !customerId ||
+      customerId === 'demo-customer-id' ||
+      customerId.includes('demo') ||
+      customerId.includes('placeholder')
+    ) {
       return undefined;
     }
     return customerId;
@@ -82,9 +89,9 @@ class EnhancedGeminiService {
     } catch (error) {
       console.warn('Error loading available models, using fallback configurations:', error);
       // Get fallback models for Google AI
-      this.availableModels = supabaseAIService.getAllFallbackModels().filter(model => 
-        model.provider === 'gemini'
-      );
+      this.availableModels = supabaseAIService
+        .getAllFallbackModels()
+        .filter((model) => model.provider === 'gemini');
     }
   }
 
@@ -103,21 +110,23 @@ class EnhancedGeminiService {
    */
   async generateContent(request: GenerateContentRequest): Promise<GenerateContentResponse> {
     const startTime = Date.now();
-    
+
     if (!this.isValidApiKey()) {
-      throw new Error('Google AI API key is required and must be properly configured. Please check your environment variables.');
+      throw new Error(
+        'Google AI API key is required and must be properly configured. Please check your environment variables.'
+      );
     }
 
     // Get model configuration from database or fallback
     const modelId = request.model || 'gemini-2.5-flash';
     let modelConfig: AIModelConfig | null = null;
-    
+
     try {
       modelConfig = await supabaseAIService.getModelById(modelId);
     } catch (error) {
       console.warn(`Could not fetch model configuration for ${modelId} from database:`, error);
     }
-    
+
     if (!modelConfig) {
       // Use fallback configuration
       modelConfig = supabaseAIService.getFallbackModel(modelId);
@@ -133,28 +142,37 @@ class EnhancedGeminiService {
     }
 
     const url = `${this.baseUrl}/models/${modelConfig.model_name}:generateContent`;
-    
+
     const requestBody = {
-      contents: [{
-        parts: [{
-          text: request.prompt
-        }]
-      }],
+      contents: [
+        {
+          parts: [
+            {
+              text: request.prompt,
+            },
+          ],
+        },
+      ],
       generationConfig: {
         temperature: request.temperature || 0.7,
         maxOutputTokens: request.maxTokens || modelConfig.max_tokens || 4096,
         topP: 0.8,
-        topK: 10
-      }
+        topK: 10,
+      },
     };
 
     // Add system instruction if provided and supported
-    if (request.systemInstruction && modelConfig.capabilities && 
-        modelConfig.capabilities.includes('system-instructions')) {
+    if (
+      request.systemInstruction &&
+      modelConfig.capabilities &&
+      modelConfig.capabilities.includes('system-instructions')
+    ) {
       requestBody.systemInstruction = {
-        parts: [{
-          text: request.systemInstruction
-        }]
+        parts: [
+          {
+            text: request.systemInstruction,
+          },
+        ],
       };
     }
 
@@ -164,16 +182,18 @@ class EnhancedGeminiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(`Google AI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(
+          `Google AI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
+        );
       }
 
       const data = await response.json();
-      
+
       if (!data.candidates || data.candidates.length === 0) {
         throw new Error('No content generated');
       }
@@ -181,27 +201,27 @@ class EnhancedGeminiService {
       const candidate = data.candidates[0];
       let content = candidate.content?.parts?.[0]?.text || '';
       const responseTime = Date.now() - startTime;
-      
+
       // Always strip markdown code blocks from the content before returning
       content = this.stripMarkdownCodeBlocks(content);
-      
+
       const result: GenerateContentResponse = {
         content,
         model: modelId,
         usage: {
           promptTokens: data.usageMetadata?.promptTokenCount || 0,
           completionTokens: data.usageMetadata?.candidatesTokenCount || 0,
-          totalTokens: data.usageMetadata?.totalTokenCount || 0
+          totalTokens: data.usageMetadata?.totalTokenCount || 0,
         },
         finishReason: candidate.finishReason || 'completed',
-        responseTime
+        responseTime,
       };
 
       // Log usage to Supabase (gracefully handle failures)
       const validCustomerId = this.validateCustomerId(request.customerId);
       if (validCustomerId) {
         const cost = this.calculateCost(modelConfig, result.usage.totalTokens);
-        
+
         try {
           await supabaseAIService.logUsage({
             customer_id: validCustomerId,
@@ -210,7 +230,7 @@ class EnhancedGeminiService {
             tokens_used: result.usage.totalTokens,
             cost,
             response_time_ms: responseTime,
-            success: true
+            success: true,
           });
         } catch (logError) {
           console.warn('Failed to log AI usage (non-critical):', logError);
@@ -231,7 +251,7 @@ class EnhancedGeminiService {
             cost: 0,
             response_time_ms: Date.now() - startTime,
             success: false,
-            error_message: error instanceof Error ? error.message : 'Unknown error'
+            error_message: error instanceof Error ? error.message : 'Unknown error',
           });
         } catch (logError) {
           console.warn('Failed to log AI error usage (non-critical):', logError);
@@ -248,14 +268,14 @@ class EnhancedGeminiService {
    */
   private calculateCost(model: AIModelConfig, totalTokens: number): number {
     if (!model.pricing) return 0;
-    
+
     // Estimate input/output split (typically 70/30)
     const inputTokens = Math.floor(totalTokens * 0.7);
     const outputTokens = totalTokens - inputTokens;
-    
+
     const inputCost = (inputTokens / 1_000_000) * model.pricing.input_per_1m_tokens;
     const outputCost = (outputTokens / 1_000_000) * model.pricing.output_per_1m_tokens;
-    
+
     return inputCost + outputCost;
   }
 
@@ -287,10 +307,10 @@ class EnhancedGeminiService {
     if (!this.isValidApiKey()) {
       return {
         healthScore: 75,
-        keyInsights: ["API key not configured - unable to generate AI insights"],
-        bottlenecks: ["Please configure Google AI API key"],
-        opportunities: ["Set up API keys to enable AI analysis"],
-        forecastAccuracy: 0
+        keyInsights: ['API key not configured - unable to generate AI insights'],
+        bottlenecks: ['Please configure Google AI API key'],
+        opportunities: ['Set up API keys to enable AI analysis'],
+        forecastAccuracy: 0,
       };
     }
 
@@ -300,7 +320,8 @@ class EnhancedGeminiService {
         model: model || 'gemini-2.5-flash',
         customerId,
         featureUsed: 'business_analysis',
-        systemInstruction: "You are a CRM analytics expert. Provide concise, actionable insights in valid JSON format only. Do not wrap the JSON in markdown code blocks."
+        systemInstruction:
+          'You are a CRM analytics expert. Provide concise, actionable insights in valid JSON format only. Do not wrap the JSON in markdown code blocks.',
       });
 
       // Content is already stripped in generateContent, but parse safely
@@ -318,10 +339,10 @@ class EnhancedGeminiService {
       console.warn('Error generating insights:', error);
       return {
         healthScore: 0,
-        keyInsights: ["Unable to generate insights at this time."],
-        bottlenecks: ["Analysis service unavailable"],
-        opportunities: ["Manual review required"],
-        forecastAccuracy: 0
+        keyInsights: ['Unable to generate insights at this time.'],
+        bottlenecks: ['Analysis service unavailable'],
+        opportunities: ['Manual review required'],
+        forecastAccuracy: 0,
       };
     }
   }
@@ -329,17 +350,20 @@ class EnhancedGeminiService {
   /**
    * Generate email content
    */
-  async generateEmail(context: {
-    recipient: string;
-    purpose: string;
-    tone?: 'formal' | 'casual' | 'friendly';
-    context?: string;
-  }, customerId?: string, model?: string): Promise<{ subject: string; body: string }> {
-    
+  async generateEmail(
+    context: {
+      recipient: string;
+      purpose: string;
+      tone?: 'formal' | 'casual' | 'friendly';
+      context?: string;
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<{ subject: string; body: string }> {
     if (!this.isValidApiKey()) {
       return {
         subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Please configure Google AI API key to enable AI-generated content]\n\nBest regards`
+        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Please configure Google AI API key to enable AI-generated content]\n\nBest regards`,
       };
     }
 
@@ -364,7 +388,8 @@ class EnhancedGeminiService {
         model: model || 'gemma-2-9b-it',
         customerId,
         featureUsed: 'email-generation',
-        systemInstruction: "You are a professional email writing assistant. Write clear, engaging emails that drive action. Return only valid JSON without markdown formatting."
+        systemInstruction:
+          'You are a professional email writing assistant. Write clear, engaging emails that drive action. Return only valid JSON without markdown formatting.',
       });
 
       // Content is already stripped in generateContent, but parse safely
@@ -382,7 +407,7 @@ class EnhancedGeminiService {
       console.warn('Error generating email:', error);
       return {
         subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Generated content unavailable - please try again]\n\nBest regards`
+        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Generated content unavailable - please try again]\n\nBest regards`,
       };
     }
   }
@@ -390,15 +415,19 @@ class EnhancedGeminiService {
   /**
    * Generate business proposal
    */
-  async generateProposal(context: {
-    clientName: string;
-    companyName: string;
-    projectDescription: string;
-    requirements?: string[];
-    budget?: number;
-    timeline?: string;
-    deliverables?: string[];
-  }, customerId?: string, model?: string): Promise<string> {
+  async generateProposal(
+    context: {
+      clientName: string;
+      companyName: string;
+      projectDescription: string;
+      requirements?: string[];
+      budget?: number;
+      timeline?: string;
+      deliverables?: string[];
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<string> {
     try {
       if (!this.isValidApiKey()) {
         return `BUSINESS PROPOSAL
@@ -411,10 +440,10 @@ EXECUTIVE SUMMARY
 This proposal outlines our recommended approach for ${context.projectDescription}.
 
 REQUIREMENTS
-${context.requirements?.map(req => `• ${req}`).join('\n') || '• To be discussed'}
+${context.requirements?.map((req) => `• ${req}`).join('\n') || '• To be discussed'}
 
 DELIVERABLES
-${context.deliverables?.map(item => `• ${item}`).join('\n') || '• Comprehensive solution'}
+${context.deliverables?.map((item) => `• ${item}`).join('\n') || '• Comprehensive solution'}
 
 TIMELINE: ${context.timeline || 'To be determined'}
 BUDGET: ${context.budget ? `$${context.budget.toLocaleString()}` : 'Upon consultation'}
@@ -439,7 +468,7 @@ Generate a professional proposal with sections for Executive Summary, Project Ov
         temperature: 0.6,
         maxTokens: 2000,
         customerId,
-        featureUsed: 'proposal_generation'
+        featureUsed: 'proposal_generation',
       });
 
       return this.stripMarkdownCodeBlocks(response.content);
@@ -452,14 +481,18 @@ Generate a professional proposal with sections for Executive Summary, Project Ov
   /**
    * Generate call script
    */
-  async generateCallScript(context: {
-    purpose: 'cold_call' | 'follow_up' | 'discovery' | 'closing' | 'objection_handling';
-    contactName?: string;
-    companyName?: string;
-    industry?: string;
-    painPoints?: string[];
-    objectives?: string[];
-  }, customerId?: string, model?: string): Promise<string> {
+  async generateCallScript(
+    context: {
+      purpose: 'cold_call' | 'follow_up' | 'discovery' | 'closing' | 'objection_handling';
+      contactName?: string;
+      companyName?: string;
+      industry?: string;
+      painPoints?: string[];
+      objectives?: string[];
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<string> {
     try {
       const prompt = `Generate a professional sales call script for the following scenario:
 Purpose: ${context.purpose}
@@ -477,7 +510,7 @@ Create a structured script with opening, discovery questions, value proposition,
         temperature: 0.7,
         maxTokens: 1500,
         customerId,
-        featureUsed: 'call_script_generation'
+        featureUsed: 'call_script_generation',
       });
 
       return this.stripMarkdownCodeBlocks(response.content);
@@ -490,12 +523,16 @@ Create a structured script with opening, discovery questions, value proposition,
   /**
    * Analyze competitor information
    */
-  async analyzeCompetitor(context: {
-    competitorName: string;
-    industry: string;
-    ourCompany: string;
-    analysisType: 'strengths_weaknesses' | 'pricing' | 'market_position' | 'full_analysis';
-  }, customerId?: string, model?: string): Promise<any> {
+  async analyzeCompetitor(
+    context: {
+      competitorName: string;
+      industry: string;
+      ourCompany: string;
+      analysisType: 'strengths_weaknesses' | 'pricing' | 'market_position' | 'full_analysis';
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<any> {
     try {
       const prompt = `Analyze the competitor "${context.competitorName}" in the ${context.industry} industry compared to "${context.ourCompany}".
 Analysis Type: ${context.analysisType}
@@ -515,14 +552,14 @@ Format the response as structured data.`;
         temperature: 0.5,
         maxTokens: 2000,
         customerId,
-        featureUsed: 'competitor_analysis'
+        featureUsed: 'competitor_analysis',
       });
 
       return {
         competitor: context.competitorName,
         analysis: this.stripMarkdownCodeBlocks(response.content),
         timestamp: new Date().toISOString(),
-        analysisType: context.analysisType
+        analysisType: context.analysisType,
       };
     } catch (error) {
       console.error('Error analyzing competitor:', error);
@@ -533,11 +570,15 @@ Format the response as structured data.`;
   /**
    * Analyze market trends
    */
-  async analyzeMarketTrends(context: {
-    industry: string;
-    timeframe: '3months' | '6months' | '1year' | '2years';
-    focusAreas?: string[];
-  }, customerId?: string, model?: string): Promise<any> {
+  async analyzeMarketTrends(
+    context: {
+      industry: string;
+      timeframe: '3months' | '6months' | '1year' | '2years';
+      focusAreas?: string[];
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<any> {
     try {
       const prompt = `Analyze market trends for the ${context.industry} industry over the ${context.timeframe} timeframe.
 Focus Areas: ${context.focusAreas?.join(', ') || 'General market trends'}
@@ -556,7 +597,7 @@ Provide analysis on:
         temperature: 0.6,
         maxTokens: 2000,
         customerId,
-        featureUsed: 'market_analysis'
+        featureUsed: 'market_analysis',
       });
 
       return {
@@ -564,7 +605,7 @@ Provide analysis on:
         timeframe: context.timeframe,
         analysis: this.stripMarkdownCodeBlocks(response.content),
         timestamp: new Date().toISOString(),
-        focusAreas: context.focusAreas
+        focusAreas: context.focusAreas,
       };
     } catch (error) {
       console.error('Error analyzing market trends:', error);
@@ -575,20 +616,25 @@ Provide analysis on:
   /**
    * Predict customer churn risk
    */
-  async predictChurnRisk(context: {
-    customerId: string;
-    engagementData: {
-      lastContact: Date;
-      emailOpens: number;
-      websiteVisits: number;
-      supportTickets: number;
-      purchaseHistory: any[];
-    };
-    customerProfile: any;
-  }, customerId?: string, model?: string): Promise<any> {
+  async predictChurnRisk(
+    context: {
+      customerId: string;
+      engagementData: {
+        lastContact: Date;
+        emailOpens: number;
+        websiteVisits: number;
+        supportTickets: number;
+        purchaseHistory: any[];
+      };
+      customerProfile: any;
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<any> {
     try {
       const daysSinceContact = Math.floor(
-        (Date.now() - new Date(context.engagementData.lastContact).getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - new Date(context.engagementData.lastContact).getTime()) /
+          (1000 * 60 * 60 * 24)
       );
 
       const prompt = `Analyze customer churn risk based on the following data:
@@ -608,7 +654,7 @@ Provide a churn risk score (0-100) and specific recommendations to retain the cu
         temperature: 0.3,
         maxTokens: 1000,
         customerId,
-        featureUsed: 'churn_prediction'
+        featureUsed: 'churn_prediction',
       });
 
       // Extract risk score from response
@@ -621,7 +667,7 @@ Provide a churn risk score (0-100) and specific recommendations to retain the cu
         riskScore: Math.min(Math.max(riskScore, 0), 100),
         analysis: content,
         recommendations: content.split('recommendations:')[1] || 'Maintain regular contact',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error predicting churn risk:', error);
@@ -649,11 +695,11 @@ Text: "${text}"`;
         temperature: 0.3,
         maxTokens: 500,
         customerId,
-        featureUsed: 'sentiment_analysis'
+        featureUsed: 'sentiment_analysis',
       });
 
       const content = this.stripMarkdownCodeBlocks(response.content);
-      
+
       // Extract sentiment score
       const scoreMatch = content.match(/score.*?(-?\d*\.?\d+)/i);
       const sentimentScore = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
@@ -667,7 +713,7 @@ Text: "${text}"`;
         sentiment,
         score: Math.min(Math.max(sentimentScore, -1), 1),
         analysis: content,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error analyzing sentiment:', error);
@@ -678,13 +724,17 @@ Text: "${text}"`;
   /**
    * Generate social media post
    */
-  async generateSocialMediaPost(context: {
-    platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram';
-    topic: string;
-    tone: 'professional' | 'casual' | 'engaging' | 'promotional';
-    keywords?: string[];
-    callToAction?: string;
-  }, customerId?: string, model?: string): Promise<string> {
+  async generateSocialMediaPost(
+    context: {
+      platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram';
+      topic: string;
+      tone: 'professional' | 'casual' | 'engaging' | 'promotional';
+      keywords?: string[];
+      callToAction?: string;
+    },
+    customerId?: string,
+    model?: string
+  ): Promise<string> {
     try {
       const prompt = `Create a ${context.tone} social media post for ${context.platform}:
 Topic: ${context.topic}
@@ -705,7 +755,7 @@ Generate an engaging post that drives engagement and aligns with the platform's 
         temperature: 0.8,
         maxTokens: 300,
         customerId,
-        featureUsed: 'social_media_generation'
+        featureUsed: 'social_media_generation',
       });
 
       return this.stripMarkdownCodeBlocks(response.content);
@@ -731,28 +781,28 @@ export const enhancedGeminiService = new EnhancedGeminiService();
 // Export the hook for React components
 export const useEnhancedGemini = () => {
   return {
-    generateInsights: (data: any, customerId?: string, model?: string) => 
+    generateInsights: (data: any, customerId?: string, model?: string) =>
       enhancedGeminiService.generateInsights(data, customerId, model),
-    generateEmail: (context: any, customerId?: string, model?: string) => 
+    generateEmail: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.generateEmail(context, customerId, model),
-    generateProposal: (context: any, customerId?: string, model?: string) => 
+    generateProposal: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.generateProposal(context, customerId, model),
-    generateCallScript: (context: any, customerId?: string, model?: string) => 
+    generateCallScript: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.generateCallScript(context, customerId, model),
-    analyzeCompetitor: (context: any, customerId?: string, model?: string) => 
+    analyzeCompetitor: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.analyzeCompetitor(context, customerId, model),
-    analyzeMarketTrends: (context: any, customerId?: string, model?: string) => 
+    analyzeMarketTrends: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.analyzeMarketTrends(context, customerId, model),
-    predictChurnRisk: (context: any, customerId?: string, model?: string) => 
+    predictChurnRisk: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.predictChurnRisk(context, customerId, model),
-    analyzeSentiment: (text: string, customerId?: string, model?: string) => 
+    analyzeSentiment: (text: string, customerId?: string, model?: string) =>
       enhancedGeminiService.analyzeSentiment(text, customerId, model),
-    generateSocialMediaPost: (context: any, customerId?: string, model?: string) => 
+    generateSocialMediaPost: (context: any, customerId?: string, model?: string) =>
       enhancedGeminiService.generateSocialMediaPost(context, customerId, model),
-    generateContent: (request: GenerateContentRequest) => 
+    generateContent: (request: GenerateContentRequest) =>
       enhancedGeminiService.generateContent(request),
     getAvailableModels: () => enhancedGeminiService.getAvailableModels(),
-    getRecommendedModel: (useCase: string) => enhancedGeminiService.getRecommendedModel(useCase)
+    getRecommendedModel: (useCase: string) => enhancedGeminiService.getRecommendedModel(useCase),
   };
 };
 

@@ -1,5 +1,3 @@
-console.log('Loading billing.ts');
-
 import { Router, Request, Response } from 'express';
 import { requireAuth } from './auth';
 import { UsageTrackingService } from '../services/usageTrackingService';
@@ -23,10 +21,7 @@ router.use(requireAuth);
  */
 router.get('/plans', async (req: Request, res: Response) => {
   try {
-    const plans = await db
-      .select()
-      .from(usagePlans)
-      .where(eq(usagePlans.isActive, true));
+    const plans = await db.select().from(usagePlans).where(eq(usagePlans.isActive, true));
 
     res.json({ plans });
   } catch (error) {
@@ -36,34 +31,34 @@ router.get('/plans', async (req: Request, res: Response) => {
 });
 
 /**
-  * GET /api/billing/summary
-  * Get user's billing summary (credit balance and usage)
-  */
- router.get('/summary', async (req: Request, res: Response) => {
-   try {
-     const userId = (req as any).user.id;
+ * GET /api/billing/summary
+ * Get user's billing summary (credit balance and usage)
+ */
+router.get('/summary', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
 
-     // Get credit balance
-     const creditBalance = await CreditService.getCreditBalance(userId);
+    // Get credit balance
+    const creditBalance = await CreditService.getCreditBalance(userId);
 
-     // Get recent usage stats
-     const usageStats = await UsageTrackingService.getUsageStats(userId);
+    // Get recent usage stats
+    const usageStats = await UsageTrackingService.getUsageStats(userId);
 
-     // Get credit transaction history (last 10)
-     const transactions = await CreditService.getCreditTransactionHistory(userId, 10);
+    // Get credit transaction history (last 10)
+    const transactions = await CreditService.getCreditTransactionHistory(userId, 10);
 
-     const summary = {
-       credits: creditBalance,
-       usage: usageStats,
-       recentTransactions: transactions,
-     };
+    const summary = {
+      credits: creditBalance,
+      usage: usageStats,
+      recentTransactions: transactions,
+    };
 
-     res.json(summary);
-   } catch (error) {
-     console.error('Error fetching billing summary:', error);
-     res.status(500).json({ error: 'Failed to fetch billing summary' });
-   }
- });
+    res.json(summary);
+  } catch (error) {
+    console.error('Error fetching billing summary:', error);
+    res.status(500).json({ error: 'Failed to fetch billing summary' });
+  }
+});
 
 /**
  * GET /api/billing/usage
@@ -86,69 +81,66 @@ router.get('/usage', async (req: Request, res: Response) => {
 });
 
 /**
-  * GET /api/billing/credits
-  * Get user's credit balance
-  */
- router.get('/credits', async (req: Request, res: Response) => {
-   try {
-     const userId = (req as any).user.id;
-     const balance = await CreditService.getCreditBalance(userId);
-     res.json({ credits: balance });
-   } catch (error) {
-     console.error('Error fetching credit balance:', error);
-     res.status(500).json({ error: 'Failed to fetch credit balance' });
-   }
- });
+ * GET /api/billing/credits
+ * Get user's credit balance
+ */
+router.get('/credits', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const balance = await CreditService.getCreditBalance(userId);
+    res.json({ credits: balance });
+  } catch (error) {
+    console.error('Error fetching credit balance:', error);
+    res.status(500).json({ error: 'Failed to fetch credit balance' });
+  }
+});
 
 /**
  * GET /api/billing/credit-packages
  * Get available credit packages for purchase
  */
- router.get('/credit-packages', async (req: Request, res: Response) => {
-   try {
-     console.log('Credit packages endpoint called');
-     const packages = await CreditService.getCreditPackages();
-     console.log('Credit packages:', packages);
-     res.json({ packages, test: 'working' });
-   } catch (error) {
-     console.error('Error fetching credit packages:', error);
-     res.status(500).json({ error: 'Failed to fetch credit packages' });
-   }
- });
+router.get('/credit-packages', async (req: Request, res: Response) => {
+  try {
+    const packages = await CreditService.getCreditPackages();
+    res.json({ packages, test: 'working' });
+  } catch (error) {
+    console.error('Error fetching credit packages:', error);
+    res.status(500).json({ error: 'Failed to fetch credit packages' });
+  }
+});
 
- // Test route
- router.get('/test', async (req: Request, res: Response) => {
-   console.log('Billing test route called');
-   res.json({ message: 'Billing routes are working', timestamp: new Date().toISOString() });
- });
+// Test route
+router.get('/test', async (req: Request, res: Response) => {
+  res.json({ message: 'Billing routes are working', timestamp: new Date().toISOString() });
+});
 
 /**
-  * POST /api/billing/purchase-credits
-  * Purchase credits
-  */
- router.post('/purchase-credits', async (req: Request, res: Response) => {
-   try {
-     const userId = (req as any).user.id;
-     const { planId, stripePaymentMethodId } = req.body;
+ * POST /api/billing/purchase-credits
+ * Purchase credits
+ */
+router.post('/purchase-credits', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { planId, stripePaymentMethodId } = req.body;
 
-     if (!planId) {
-       return res.status(400).json({ error: 'Plan ID is required' });
-     }
+    if (!planId) {
+      return res.status(400).json({ error: 'Plan ID is required' });
+    }
 
-     // Here you would integrate with Stripe for payment processing
-     // For now, we'll simulate the purchase
-     const result = await CreditService.purchaseCredits({
-       userId,
-       planId,
-       stripeTransactionId: `simulated_${Date.now()}`, // In real implementation, this would come from Stripe
-     });
+    // Here you would integrate with Stripe for payment processing
+    // For now, we'll simulate the purchase
+    const result = await CreditService.purchaseCredits({
+      userId,
+      planId,
+      stripeTransactionId: `simulated_${Date.now()}`, // In real implementation, this would come from Stripe
+    });
 
-     res.json(result);
-   } catch (error) {
-     console.error('Error purchasing credits:', error);
-     res.status(500).json({ error: 'Failed to purchase credits' });
-   }
- });
+    res.json(result);
+  } catch (error) {
+    console.error('Error purchasing credits:', error);
+    res.status(500).json({ error: 'Failed to purchase credits' });
+  }
+});
 
 // Subscription endpoints removed - now using credit-based billing
 
@@ -163,10 +155,7 @@ router.get('/invoices', async (req: Request, res: Response) => {
     const billingCycles = await db
       .select()
       .from(billingCycles)
-      .where(and(
-        eq(billingCycles.userId, userId),
-        eq(billingCycles.status, 'completed')
-      ))
+      .where(and(eq(billingCycles.userId, userId), eq(billingCycles.status, 'completed')))
       .orderBy(billingCycles.endDate);
 
     const invoices = await Promise.all(
@@ -181,7 +170,7 @@ router.get('/invoices', async (req: Request, res: Response) => {
           status: cycle.status,
           stripeInvoiceId: cycle.stripeInvoiceId,
           invoicePdfUrl: cycle.invoicePdfUrl,
-          lineItems: invoice.lineItems
+          lineItems: invoice.lineItems,
         };
       })
     );

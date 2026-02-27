@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { useGemini } from '../../services/geminiService';
 import AIToolContent from '../shared/AIToolContent';
-import { User, Users, Building, RefreshCw, Copy, Plus, Trash2, Check, Download } from 'lucide-react';
+import {
+  User,
+  Users,
+  Building,
+  RefreshCw,
+  Copy,
+  Plus,
+  Trash2,
+  Check,
+  Download,
+} from 'lucide-react';
 
 const CustomerPersonaContent: React.FC = () => {
   const [formData, setFormData] = useState({
     industry: '',
     companySize: 'mid-market', // default value
-    painPoints: ['', '', '']
+    painPoints: ['', '', ''],
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +27,13 @@ const CustomerPersonaContent: React.FC = () => {
 
   const gemini = useGemini();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -30,14 +42,14 @@ const CustomerPersonaContent: React.FC = () => {
     newPainPoints[index] = value;
     setFormData({
       ...formData,
-      painPoints: newPainPoints
+      painPoints: newPainPoints,
     });
   };
 
   const addPainPoint = () => {
     setFormData({
       ...formData,
-      painPoints: [...formData.painPoints, '']
+      painPoints: [...formData.painPoints, ''],
     });
   };
 
@@ -46,7 +58,7 @@ const CustomerPersonaContent: React.FC = () => {
     newPainPoints.splice(index, 1);
     setFormData({
       ...formData,
-      painPoints: newPainPoints
+      painPoints: newPainPoints,
     });
   };
 
@@ -55,27 +67,31 @@ const CustomerPersonaContent: React.FC = () => {
     if (!formData.industry) return;
 
     // Filter out empty pain points
-    const validPainPoints = formData.painPoints.filter(point => point.trim() !== '');
+    const validPainPoints = formData.painPoints.filter((point) => point.trim() !== '');
     if (validPainPoints.length === 0) {
-      setError("Please add at least one pain point");
+      setError('Please add at least one pain point');
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const persona = await gemini.generateCustomerPersona(
         formData.industry,
         formData.companySize,
         validPainPoints
       );
-      
+
       setResult(persona);
       setCopied(false);
     } catch (err) {
       console.error('Error generating customer persona:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the customer persona');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while generating the customer persona'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -94,15 +110,23 @@ const CustomerPersonaContent: React.FC = () => {
     { value: 'small', label: 'Small Business (1-50 employees)' },
     { value: 'mid-market', label: 'Mid-Market (51-500 employees)' },
     { value: 'enterprise', label: 'Enterprise (501-5,000 employees)' },
-    { value: 'large-enterprise', label: 'Large Enterprise (5,000+ employees)' }
+    { value: 'large-enterprise', label: 'Large Enterprise (5,000+ employees)' },
   ];
 
   // Industry suggestions
   const industryOptions = [
-    'Software & Technology', 'Financial Services', 'Healthcare',
-    'Manufacturing', 'Retail', 'Education', 'Professional Services',
-    'Real Estate', 'Transportation', 'Energy & Utilities',
-    'Media & Entertainment', 'Telecommunications'
+    'Software & Technology',
+    'Financial Services',
+    'Healthcare',
+    'Manufacturing',
+    'Retail',
+    'Education',
+    'Professional Services',
+    'Real Estate',
+    'Transportation',
+    'Energy & Utilities',
+    'Media & Entertainment',
+    'Telecommunications',
   ];
 
   return (
@@ -113,7 +137,8 @@ const CustomerPersonaContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-emerald-800">Customer Persona Generator</h3>
             <p className="text-sm text-emerald-700 mt-1">
-              Create detailed, data-driven customer personas to better understand your target audience and personalize your sales approach.
+              Create detailed, data-driven customer personas to better understand your target
+              audience and personalize your sales approach.
             </p>
           </div>
         </div>
@@ -150,7 +175,7 @@ const CustomerPersonaContent: React.FC = () => {
               </datalist>
             </div>
           </div>
-          
+
           <div>
             <label htmlFor="companySize" className="block text-sm font-medium text-gray-700 mb-1">
               Company Size
@@ -162,12 +187,14 @@ const CustomerPersonaContent: React.FC = () => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
             >
-              {companySizes.map(size => (
-                <option key={size.value} value={size.value}>{size.label}</option>
+              {companySizes.map((size) => (
+                <option key={size.value} value={size.value}>
+                  {size.label}
+                </option>
               ))}
             </select>
           </div>
-          
+
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-gray-700">
@@ -182,7 +209,7 @@ const CustomerPersonaContent: React.FC = () => {
                 Add Pain Point
               </button>
             </div>
-            
+
             {formData.painPoints.map((painPoint, index) => (
               <div key={index} className="flex mb-2">
                 <input
@@ -203,15 +230,19 @@ const CustomerPersonaContent: React.FC = () => {
                 )}
               </div>
             ))}
-            {error && formData.painPoints.every(p => !p.trim()) && (
+            {error && formData.painPoints.every((p) => !p.trim()) && (
               <p className="text-red-600 text-sm mt-1">Please add at least one pain point</p>
             )}
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isLoading || !formData.industry.trim() || formData.painPoints.every(p => !p.trim())}
+              disabled={
+                isLoading ||
+                !formData.industry.trim() ||
+                formData.painPoints.every((p) => !p.trim())
+              }
               className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:bg-emerald-300 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
@@ -233,11 +264,11 @@ const CustomerPersonaContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

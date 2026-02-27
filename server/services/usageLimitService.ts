@@ -32,10 +32,9 @@ export class UsageLimitService {
       const limits = await db
         .select()
         .from(userUsageLimits)
-        .where(and(
-          eq(userUsageLimits.userId, userId),
-          eq(userUsageLimits.featureName, featureName)
-        ));
+        .where(
+          and(eq(userUsageLimits.userId, userId), eq(userUsageLimits.featureName, featureName))
+        );
 
       if (limits.length === 0) {
         // No limit set, allow unlimited usage
@@ -44,7 +43,7 @@ export class UsageLimitService {
           currentUsage: 0,
           limit: -1,
           percentage: 0,
-          isHardLimit: false
+          isHardLimit: false,
         };
       }
 
@@ -59,7 +58,7 @@ export class UsageLimitService {
           currentUsage,
           limit: maxLimit,
           percentage: 0,
-          isHardLimit: limit.isHardLimit
+          isHardLimit: limit.isHardLimit,
         };
       }
 
@@ -72,7 +71,7 @@ export class UsageLimitService {
         limit: maxLimit,
         percentage,
         isHardLimit: limit.isHardLimit,
-        resetDate: limit.resetDate ? new Date(limit.resetDate) : undefined
+        resetDate: limit.resetDate ? new Date(limit.resetDate) : undefined,
       };
     } catch (error) {
       console.error('Error checking usage limit:', error);
@@ -82,7 +81,7 @@ export class UsageLimitService {
         currentUsage: 0,
         limit: -1,
         percentage: 0,
-        isHardLimit: false
+        isHardLimit: false,
       };
     }
   }
@@ -102,7 +101,9 @@ export class UsageLimitService {
         return {
           allowed: false,
           reason: `Usage limit exceeded for ${featureName}. Current: ${limitCheck.currentUsage}, Limit: ${limitCheck.limit}`,
-          retryAfter: limitCheck.resetDate ? Math.ceil((limitCheck.resetDate.getTime() - Date.now()) / 1000) : undefined
+          retryAfter: limitCheck.resetDate
+            ? Math.ceil((limitCheck.resetDate.getTime() - Date.now()) / 1000)
+            : undefined,
         };
       }
 
@@ -140,27 +141,20 @@ export class UsageLimitService {
   static async setUserLimitsFromPlan(userId: string, planId: string): Promise<void> {
     try {
       // Get plan details
-      const plan = await db
-        .select()
-        .from(usagePlans)
-        .where(eq(usagePlans.id, planId))
-        .limit(1);
+      const plan = await db.select().from(usagePlans).where(eq(usagePlans.id, planId)).limit(1);
 
       if (plan.length === 0) {
         throw new Error(`Plan ${planId} not found`);
       }
 
       const planData = plan[0];
-      const limits = planData.limits as Record<string, any> || {};
+      const limits = (planData.limits as Record<string, any>) || {};
 
       // Get current billing cycle
       const currentCycle = await db
         .select()
         .from(billingCycles)
-        .where(and(
-          eq(billingCycles.userId, userId),
-          eq(billingCycles.status, 'active')
-        ))
+        .where(and(eq(billingCycles.userId, userId), eq(billingCycles.status, 'active')))
         .limit(1);
 
       const billingCycleId = currentCycle.length > 0 ? currentCycle[0].id : undefined;
@@ -169,9 +163,10 @@ export class UsageLimitService {
       const userLimits = Object.entries(limits).map(([featureName, limitConfig]) => ({
         userId,
         featureName,
-        limitValue: typeof limitConfig === 'number' ? limitConfig : parseFloat(limitConfig as string),
+        limitValue:
+          typeof limitConfig === 'number' ? limitConfig : parseFloat(limitConfig as string),
         isHardLimit: true, // Plans typically have hard limits
-        billingCycleId
+        billingCycleId,
       }));
 
       await UsageTrackingService.setUsageLimits(userLimits);
@@ -191,7 +186,7 @@ export class UsageLimitService {
         .set({
           usedValue: '0',
           resetDate: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(userUsageLimits.billingCycleId, billingCycleId));
     } catch (error) {
@@ -210,17 +205,18 @@ export class UsageLimitService {
         .from(userUsageLimits)
         .where(eq(userUsageLimits.userId, userId));
 
-      return limits.map(limit => ({
+      return limits.map((limit) => ({
         id: limit.id,
         featureName: limit.featureName,
         limitValue: parseFloat(limit.limitValue),
         usedValue: parseFloat(limit.usedValue),
-        percentage: parseFloat(limit.limitValue) > 0
-          ? (parseFloat(limit.usedValue) / parseFloat(limit.limitValue)) * 100
-          : 0,
+        percentage:
+          parseFloat(limit.limitValue) > 0
+            ? (parseFloat(limit.usedValue) / parseFloat(limit.limitValue)) * 100
+            : 0,
         isHardLimit: limit.isHardLimit,
         resetDate: limit.resetDate,
-        billingCycleId: limit.billingCycleId
+        billingCycleId: limit.billingCycleId,
       }));
     } catch (error) {
       console.error('Error getting user limits:', error);
@@ -243,12 +239,11 @@ export class UsageLimitService {
         .set({
           limitValue: newLimit.toString(),
           isHardLimit,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
-        .where(and(
-          eq(userUsageLimits.userId, userId),
-          eq(userUsageLimits.featureName, featureName)
-        ));
+        .where(
+          and(eq(userUsageLimits.userId, userId), eq(userUsageLimits.featureName, featureName))
+        );
     } catch (error) {
       console.error('Error updating user limit:', error);
       throw error;
@@ -275,7 +270,7 @@ export class UsageLimitService {
             percentage,
             used: limit.usedValue,
             limit: limit.limitValue,
-            message: `Critical: ${limit.featureName} usage at ${percentage.toFixed(1)}%`
+            message: `Critical: ${limit.featureName} usage at ${percentage.toFixed(1)}%`,
           });
         } else if (percentage >= 75) {
           warnings.push({
@@ -284,7 +279,7 @@ export class UsageLimitService {
             percentage,
             used: limit.usedValue,
             limit: limit.limitValue,
-            message: `Warning: ${limit.featureName} usage at ${percentage.toFixed(1)}%`
+            message: `Warning: ${limit.featureName} usage at ${percentage.toFixed(1)}%`,
           });
         }
       }
@@ -307,7 +302,7 @@ export class UsageLimitService {
     try {
       let whereConditions = [
         gte(userUsageLimits.updatedAt, startDate),
-        lte(userUsageLimits.updatedAt, endDate)
+        lte(userUsageLimits.updatedAt, endDate),
       ];
 
       if (featureName) {
@@ -320,7 +315,7 @@ export class UsageLimitService {
           totalUsers: sql<number>`count(distinct ${userUsageLimits.userId})`,
           avgUsage: sql<number>`avg(cast(${userUsageLimits.usedValue} as decimal))`,
           maxUsage: sql<number>`max(cast(${userUsageLimits.usedValue} as decimal))`,
-          totalLimit: sql<number>`sum(cast(${userUsageLimits.limitValue} as decimal))`
+          totalLimit: sql<number>`sum(cast(${userUsageLimits.limitValue} as decimal))`,
         })
         .from(userUsageLimits)
         .where(and(...whereConditions))
@@ -329,7 +324,7 @@ export class UsageLimitService {
       return {
         period: { startDate, endDate },
         analytics,
-        totalFeatures: analytics.length
+        totalFeatures: analytics.length,
       };
     } catch (error) {
       console.error('Error getting usage analytics:', error);

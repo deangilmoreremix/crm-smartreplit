@@ -7,6 +7,7 @@ The error "Entrypoint path does not exist" happens when Supabase tries to deploy
 ## Step-by-Step Fix:
 
 ### 1. Go to Supabase Dashboard
+
 https://supabase.com/dashboard/project/YOUR_PROJECT_REF/functions
 
 ### 2. Click on your existing "deals" function
@@ -16,18 +17,18 @@ https://supabase.com/dashboard/project/YOUR_PROJECT_REF/functions
 ### 4. Copy THIS EXACT CODE (from supabase/functions/deals/index.ts.final):
 
 ```typescript
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -40,12 +41,12 @@ serve(async (req) => {
           headers: { Authorization: req.headers.get('Authorization')! },
         },
       }
-    )
+    );
 
-    const { method } = req
-    const url = new URL(req.url)
-    const pathParts = url.pathname.split('/').filter(part => part !== '')
-    const dealId = pathParts[pathParts.length - 1]
+    const { method } = req;
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/').filter((part) => part !== '');
+    const dealId = pathParts[pathParts.length - 1];
 
     switch (method) {
       case 'GET':
@@ -53,47 +54,49 @@ serve(async (req) => {
         if (dealId && dealId !== 'deals' && !isNaN(parseInt(dealId))) {
           const { data, error } = await supabaseClient
             .from('deals')
-            .select('id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at')
+            .select(
+              'id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at'
+            )
             .eq('id', parseInt(dealId))
-            .single()
-            
-          if (error) throw error
-          
-          return new Response(
-            JSON.stringify({ deal: data }),
-            { 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200 
-            }
-          )
+            .single();
+
+          if (error) throw error;
+
+          return new Response(JSON.stringify({ deal: data }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
         } else {
           // List deals with optional filtering
-          const search = url.searchParams.get('search')
-          const stage = url.searchParams.get('stage')
-          const status = url.searchParams.get('status')
-          const limit = parseInt(url.searchParams.get('limit') || '50')
-          const offset = parseInt(url.searchParams.get('offset') || '0')
-          
+          const search = url.searchParams.get('search');
+          const stage = url.searchParams.get('stage');
+          const status = url.searchParams.get('status');
+          const limit = parseInt(url.searchParams.get('limit') || '50');
+          const offset = parseInt(url.searchParams.get('offset') || '0');
+
           let query = supabaseClient
             .from('deals')
-            .select('id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at', { count: 'exact' })
+            .select(
+              'id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at',
+              { count: 'exact' }
+            )
             .range(offset, offset + limit - 1)
-            .order('created_at', { ascending: false })
-          
+            .order('created_at', { ascending: false });
+
           if (search) {
-            query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
-          }
-          
-          if (stage && stage !== 'all') {
-            query = query.eq('stage', stage)
-          }
-          
-          if (status && status !== 'all') {
-            query = query.eq('status', status)
+            query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
           }
 
-          const { data, error, count } = await query
-          if (error) throw error
+          if (stage && stage !== 'all') {
+            query = query.eq('stage', stage);
+          }
+
+          if (status && status !== 'all') {
+            query = query.eq('status', status);
+          }
+
+          const { data, error, count } = await query;
+          if (error) throw error;
 
           return new Response(
             JSON.stringify({
@@ -101,19 +104,19 @@ serve(async (req) => {
               total: count || 0,
               limit,
               offset,
-              hasMore: (count || 0) > offset + limit
+              hasMore: (count || 0) > offset + limit,
             }),
-            { 
+            {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200 
+              status: 200,
             }
-          )
+          );
         }
 
       case 'POST':
         // Create a new deal - using exact database columns
-        const dealData = await req.json()
-        
+        const dealData = await req.json();
+
         const dbDeal = {
           title: dealData.title || 'Untitled Deal',
           description: dealData.description || '',
@@ -124,16 +127,18 @@ serve(async (req) => {
           expected_close_date: dealData.expectedCloseDate || null,
           contact_id: dealData.contactId || null,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
+          updated_at: new Date().toISOString(),
+        };
 
         const { data, error } = await supabaseClient
           .from('deals')
           .insert([dbDeal])
-          .select('id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at')
-          .single()
+          .select(
+            'id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at'
+          )
+          .single();
 
-        if (error) throw error
+        if (error) throw error;
 
         // Map back to frontend format
         const frontendDeal = {
@@ -149,46 +154,46 @@ serve(async (req) => {
           contactId: data.contact_id,
           profileId: data.profile_id,
           createdAt: data.created_at,
-          updatedAt: data.updated_at
-        }
+          updatedAt: data.updated_at,
+        };
 
-        return new Response(
-          JSON.stringify({ deal: frontendDeal }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 201 
-          }
-        )
+        return new Response(JSON.stringify({ deal: frontendDeal }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 201,
+        });
 
       case 'PATCH':
         // Update a deal
         if (!dealId || isNaN(parseInt(dealId))) {
-          throw new Error('Deal ID is required for updates')
+          throw new Error('Deal ID is required for updates');
         }
 
-        const updateData = await req.json()
+        const updateData = await req.json();
         const dbUpdateData = {
-          updated_at: new Date().toISOString()
-        }
+          updated_at: new Date().toISOString(),
+        };
 
         // Only update fields that exist and are provided
-        if (updateData.title !== undefined) dbUpdateData.title = updateData.title
-        if (updateData.description !== undefined) dbUpdateData.description = updateData.description
-        if (updateData.value !== undefined) dbUpdateData.value = updateData.value
-        if (updateData.stage !== undefined) dbUpdateData.stage = updateData.stage
-        if (updateData.status !== undefined) dbUpdateData.status = updateData.status
-        if (updateData.probability !== undefined) dbUpdateData.probability = updateData.probability
-        if (updateData.expectedCloseDate !== undefined) dbUpdateData.expected_close_date = updateData.expectedCloseDate
-        if (updateData.contactId !== undefined) dbUpdateData.contact_id = updateData.contactId
+        if (updateData.title !== undefined) dbUpdateData.title = updateData.title;
+        if (updateData.description !== undefined) dbUpdateData.description = updateData.description;
+        if (updateData.value !== undefined) dbUpdateData.value = updateData.value;
+        if (updateData.stage !== undefined) dbUpdateData.stage = updateData.stage;
+        if (updateData.status !== undefined) dbUpdateData.status = updateData.status;
+        if (updateData.probability !== undefined) dbUpdateData.probability = updateData.probability;
+        if (updateData.expectedCloseDate !== undefined)
+          dbUpdateData.expected_close_date = updateData.expectedCloseDate;
+        if (updateData.contactId !== undefined) dbUpdateData.contact_id = updateData.contactId;
 
         const { data: updateResult, error: updateError } = await supabaseClient
           .from('deals')
           .update(dbUpdateData)
           .eq('id', parseInt(dealId))
-          .select('id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at')
-          .single()
+          .select(
+            'id, title, description, value, stage, status, probability, expected_close_date, actual_close_date, contact_id, profile_id, created_at, updated_at'
+          )
+          .single();
 
-        if (updateError) throw updateError
+        if (updateError) throw updateError;
 
         // Map back to frontend format
         const updatedDeal = {
@@ -204,63 +209,53 @@ serve(async (req) => {
           contactId: updateResult.contact_id,
           profileId: updateResult.profile_id,
           createdAt: updateResult.created_at,
-          updatedAt: updateResult.updated_at
-        }
+          updatedAt: updateResult.updated_at,
+        };
 
-        return new Response(
-          JSON.stringify({ deal: updatedDeal }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        )
+        return new Response(JSON.stringify({ deal: updatedDeal }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
 
       case 'DELETE':
         // Delete a deal
         if (!dealId || isNaN(parseInt(dealId))) {
-          throw new Error('Deal ID is required for deletion')
+          throw new Error('Deal ID is required for deletion');
         }
 
         const { error: deleteError } = await supabaseClient
           .from('deals')
           .delete()
-          .eq('id', parseInt(dealId))
+          .eq('id', parseInt(dealId));
 
-        if (deleteError) throw deleteError
+        if (deleteError) throw deleteError;
 
-        return new Response(
-          JSON.stringify({ success: true }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        )
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
 
       default:
-        return new Response(
-          JSON.stringify({ error: `Method ${method} not allowed` }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 405 
-          }
-        )
+        return new Response(JSON.stringify({ error: `Method ${method} not allowed` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 405,
+        });
     }
-
   } catch (error) {
-    console.error('Edge function error:', error)
-    
+    console.error('Edge function error:', error);
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message,
-        details: error.details || null 
+        details: error.details || null,
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500,
       }
-    )
+    );
   }
-})
+});
 ```
 
 ### 5. Paste the code into the Supabase editor

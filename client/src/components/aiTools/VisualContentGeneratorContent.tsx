@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { useOpenAI } from '../../services/openaiLegacyService';
 import AIToolContent from '../shared/AIToolContent';
-import { Image, PlusCircle, Minus, RefreshCw, Download, Check, Copy, Palette, FileText, BarChart2 } from 'lucide-react';
+import {
+  Image,
+  PlusCircle,
+  Minus,
+  RefreshCw,
+  Download,
+  Check,
+  Copy,
+  Palette,
+  FileText,
+  BarChart2,
+} from 'lucide-react';
 
 const VisualContentGeneratorContent: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -10,9 +21,9 @@ const VisualContentGeneratorContent: React.FC = () => {
     keyPoints: ['', '', ''],
     primaryColor: '#3b82f6',
     secondaryColor: '#6366f1',
-    targetAudience: ''
+    targetAudience: '',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +31,13 @@ const VisualContentGeneratorContent: React.FC = () => {
 
   const openai = useOpenAI();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -33,14 +46,14 @@ const VisualContentGeneratorContent: React.FC = () => {
     newKeyPoints[index] = value;
     setFormData({
       ...formData,
-      keyPoints: newKeyPoints
+      keyPoints: newKeyPoints,
     });
   };
 
   const addKeyPoint = () => {
     setFormData({
       ...formData,
-      keyPoints: [...formData.keyPoints, '']
+      keyPoints: [...formData.keyPoints, ''],
     });
   };
 
@@ -49,7 +62,7 @@ const VisualContentGeneratorContent: React.FC = () => {
     newKeyPoints.splice(index, 1);
     setFormData({
       ...formData,
-      keyPoints: newKeyPoints
+      keyPoints: newKeyPoints,
     });
   };
 
@@ -57,30 +70,34 @@ const VisualContentGeneratorContent: React.FC = () => {
     e.preventDefault();
 
     // Filter out empty key points
-    const validKeyPoints = formData.keyPoints.filter(point => point.trim() !== '');
+    const validKeyPoints = formData.keyPoints.filter((point) => point.trim() !== '');
     if (validKeyPoints.length === 0) {
-      setError("Please add at least one key point");
+      setError('Please add at least one key point');
       return;
     }
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Add color scheme and audience to the content type for better results
       const enhancedType = `${formData.contentType} with a ${formData.primaryColor}/${formData.secondaryColor} color scheme for ${formData.targetAudience || 'a general business audience'}`;
-      
+
       const visualContent = await openai.generateVisualContentIdea(
         enhancedType,
         formData.industry || 'general business',
         validKeyPoints
       );
-      
+
       setResult(visualContent);
       setCopied(false);
     } catch (err) {
       console.error('Error generating visual content idea:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while generating the visual content idea');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while generating the visual content idea'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +119,7 @@ const VisualContentGeneratorContent: React.FC = () => {
     { value: 'data_visualization', label: 'Data Visualization' },
     { value: 'social_media_graphic', label: 'Social Media Graphic' },
     { value: 'presentation_slide', label: 'Presentation Slide' },
-    { value: 'one_pager', label: 'One-Page Sales Sheet' }
+    { value: 'one_pager', label: 'One-Page Sales Sheet' },
   ];
 
   return (
@@ -113,7 +130,8 @@ const VisualContentGeneratorContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-rose-800">Visual Content Generator</h3>
             <p className="text-sm text-rose-700 mt-1">
-              Generate professional visual content ideas for sales presentations, marketing materials, and client communications.
+              Generate professional visual content ideas for sales presentations, marketing
+              materials, and client communications.
             </p>
           </div>
         </div>
@@ -137,12 +155,14 @@ const VisualContentGeneratorContent: React.FC = () => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-rose-500 focus:border-rose-500"
             >
-              {contentTypes.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
+              {contentTypes.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
               ))}
             </select>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
@@ -158,7 +178,7 @@ const VisualContentGeneratorContent: React.FC = () => {
                 onChange={handleChange}
               />
             </div>
-            
+
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                 <BarChart2 className="h-4 w-4 mr-1 text-gray-500" />
@@ -174,7 +194,7 @@ const VisualContentGeneratorContent: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-gray-700">
@@ -189,7 +209,7 @@ const VisualContentGeneratorContent: React.FC = () => {
                 Add Key Point
               </button>
             </div>
-            
+
             {formData.keyPoints.map((keyPoint, index) => (
               <div key={index} className="flex items-center mb-2">
                 <input
@@ -210,11 +230,11 @@ const VisualContentGeneratorContent: React.FC = () => {
                 )}
               </div>
             ))}
-            {error && formData.keyPoints.every(p => !p.trim()) && (
+            {error && formData.keyPoints.every((p) => !p.trim()) && (
               <p className="text-red-600 text-sm mt-1">Please add at least one key point</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
               <Palette className="h-4 w-4 mr-1 text-gray-500" />
@@ -261,11 +281,11 @@ const VisualContentGeneratorContent: React.FC = () => {
               </div>
             </div>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isLoading || formData.keyPoints.every(p => !p.trim())}
+              disabled={isLoading || formData.keyPoints.every((p) => !p.trim())}
               className="inline-flex items-center px-4 py-2 bg-rose-600 text-white rounded-md hover:bg-rose-700 disabled:bg-rose-300 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
@@ -287,11 +307,11 @@ const VisualContentGeneratorContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

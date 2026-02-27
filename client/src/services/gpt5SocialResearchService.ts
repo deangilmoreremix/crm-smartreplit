@@ -1,4 +1,3 @@
-
 /**
  * GPT-5 Social Media Research Service
  * Advanced social media discovery using GPT-5's web research capabilities
@@ -65,7 +64,9 @@ class GPT5SocialResearchService {
 
   constructor() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    this.apiUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/gpt5-social-research` : '/api/gpt5-social-research';
+    this.apiUrl = supabaseUrl
+      ? `${supabaseUrl}/functions/v1/gpt5-social-research`
+      : '/api/gpt5-social-research';
 
     // API key availability is checked server-side
     console.log('GPT-5 Social Research Service initialized');
@@ -73,14 +74,26 @@ class GPT5SocialResearchService {
 
   private generateMockSocialData(contact: Contact): SocialResearchResult {
     const platforms = [
-      'LinkedIn', 'Twitter', 'Instagram', 'TikTok', 'YouTube', 'GitHub', 
-      'Medium', 'Facebook', 'Snapchat', 'Discord', 'Reddit', 'Pinterest',
-      'Behance', 'Dribbble', 'AngelList'
+      'LinkedIn',
+      'Twitter',
+      'Instagram',
+      'TikTok',
+      'YouTube',
+      'GitHub',
+      'Medium',
+      'Facebook',
+      'Snapchat',
+      'Discord',
+      'Reddit',
+      'Pinterest',
+      'Behance',
+      'Dribbble',
+      'AngelList',
     ];
 
     const mockProfiles: SocialPlatformProfile[] = platforms
       .slice(0, Math.floor(Math.random() * 8) + 3)
-      .map(platform => ({
+      .map((platform) => ({
         platform,
         username: `${contact.name.toLowerCase().replace(' ', '_')}_${platform.toLowerCase()}`,
         url: `https://${platform.toLowerCase()}.com/${contact.name.toLowerCase().replace(' ', '_')}`,
@@ -88,7 +101,7 @@ class GPT5SocialResearchService {
         followers: Math.floor(Math.random() * 10000) + 100,
         engagement: Math.floor(Math.random() * 100) + 10,
         lastActivity: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        confidence: Math.floor(Math.random() * 30) + 70
+        confidence: Math.floor(Math.random() * 30) + 70,
       }));
 
     return {
@@ -99,36 +112,39 @@ class GPT5SocialResearchService {
           'Communication Style': 'Direct and professional',
           'Leadership Approach': 'Collaborative',
           'Innovation Focus': 'Technology-driven',
-          'Risk Tolerance': 'Moderate'
+          'Risk Tolerance': 'Moderate',
         },
         communicationStyle: 'Professional, data-driven, responds well to detailed proposals',
         professionalDemeanor: 'Confident, analytical, values efficiency',
         interests: ['Technology', 'Innovation', 'Leadership', 'Industry Trends'],
-        expertise: ['Business Strategy', 'Team Leadership', 'Process Optimization']
+        expertise: ['Business Strategy', 'Team Leadership', 'Process Optimization'],
       },
       engagementMetrics: {
         averageEngagement: Math.floor(Math.random() * 50) + 20,
         bestPostingTimes: ['9:00 AM', '1:00 PM', '5:00 PM'],
         preferredContentTypes: ['Industry Insights', 'Case Studies', 'Professional Updates'],
-        responsePatterns: ['Responds within 2 hours during business days', 'Prefers LinkedIn messaging']
+        responsePatterns: [
+          'Responds within 2 hours during business days',
+          'Prefers LinkedIn messaging',
+        ],
       },
       professionalUpdates: {
         recentJobChanges: [],
         companyNews: [
-          { title: 'Company announces Q4 growth', date: new Date(), relevance: 'high' }
+          { title: 'Company announces Q4 growth', date: new Date(), relevance: 'high' },
         ],
         achievements: [
-          { title: 'Featured in industry publication', date: new Date(), platform: 'LinkedIn' }
+          { title: 'Featured in industry publication', date: new Date(), platform: 'LinkedIn' },
         ],
-        connections: []
+        connections: [],
       },
       monitoringRecommendations: [
         'Monitor for job change announcements',
         'Track company merger/acquisition news',
-        'Watch for industry conference participation'
+        'Watch for industry conference participation',
       ],
       confidenceScore: Math.floor(Math.random() * 30) + 70,
-      lastResearched: new Date()
+      lastResearched: new Date(),
     };
   }
 
@@ -154,27 +170,42 @@ class GPT5SocialResearchService {
             email: contact.email,
             company: contact.company,
             title: contact.title,
-            existingSocialProfiles: contact.socialProfiles
+            existingSocialProfiles: contact.socialProfiles,
           },
           researchParams: {
-            platforms: platforms.length > 0 ? platforms : [
-              'LinkedIn', 'Twitter', 'Instagram', 'TikTok', 'YouTube', 'GitHub',
-              'Medium', 'Facebook', 'Snapchat', 'Discord', 'Reddit', 'Pinterest',
-              'Behance', 'Dribbble', 'AngelList'
-            ],
+            platforms:
+              platforms.length > 0
+                ? platforms
+                : [
+                    'LinkedIn',
+                    'Twitter',
+                    'Instagram',
+                    'TikTok',
+                    'YouTube',
+                    'GitHub',
+                    'Medium',
+                    'Facebook',
+                    'Snapchat',
+                    'Discord',
+                    'Reddit',
+                    'Pinterest',
+                    'Behance',
+                    'Dribbble',
+                    'AngelList',
+                  ],
             depth,
             includeEngagementMetrics: true,
             includePersonalityAnalysis: true,
             includeProfessionalUpdates: true,
-            verifyProfiles: true
-          }
+            verifyProfiles: true,
+          },
         },
         {
           timeout: 60000,
           retries: 2,
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
         }
       );
 
@@ -200,17 +231,17 @@ class GPT5SocialResearchService {
         reasoning: [
           'Profile name matches contact information',
           'Professional background aligns with contact details',
-          'Account activity indicates legitimate profile'
-        ]
+          'Account activity indicates legitimate profile',
+        ],
       };
     }
 
     try {
-      const response = await httpClient.post<{ isValid: boolean; confidence: number; reasoning: string[] }>(
-        `${this.apiUrl}/validate-profile`,
-        { profile, contact },
-        { timeout: 30000 }
-      );
+      const response = await httpClient.post<{
+        isValid: boolean;
+        confidence: number;
+        reasoning: string[];
+      }>(`${this.apiUrl}/validate-profile`, { profile, contact }, { timeout: 30000 });
 
       return response.data as { isValid: boolean; confidence: number; reasoning: string[] };
     } catch (error) {
@@ -218,7 +249,7 @@ class GPT5SocialResearchService {
       return {
         isValid: true,
         confidence: 50,
-        reasoning: ['Validation service temporarily unavailable']
+        reasoning: ['Validation service temporarily unavailable'],
       };
     }
   }
@@ -241,23 +272,24 @@ class GPT5SocialResearchService {
           'Communication Style': 'Direct and concise',
           'Decision Making': 'Data-driven',
           'Risk Tolerance': 'Moderate to high',
-          'Leadership Style': 'Collaborative'
+          'Leadership Style': 'Collaborative',
         },
         communicationPreferences: [
           'Prefers email over phone calls',
           'Responds well to data and metrics',
-          'Values concise, well-structured proposals'
+          'Values concise, well-structured proposals',
         ],
-        optimalApproach: 'Lead with quantifiable benefits, provide detailed ROI analysis, follow up with case studies',
+        optimalApproach:
+          'Lead with quantifiable benefits, provide detailed ROI analysis, follow up with case studies',
         riskFactors: [
           'May delay decisions if insufficient data provided',
-          'Values long-term relationships over quick wins'
+          'Values long-term relationships over quick wins',
         ],
         opportunities: [
           'Active on LinkedIn - good for professional outreach',
           'Engages with industry content - share relevant insights',
-          'Recently promoted - may have new budget authority'
-        ]
+          'Recently promoted - may have new budget authority',
+        ],
       };
     }
 
@@ -268,7 +300,13 @@ class GPT5SocialResearchService {
         { timeout: 45000 }
       );
 
-      return response.data as { traits: Record<string, string>; communicationPreferences: string[]; optimalApproach: string; riskFactors: string[]; opportunities: string[]; };
+      return response.data as {
+        traits: Record<string, string>;
+        communicationPreferences: string[];
+        optimalApproach: string;
+        riskFactors: string[];
+        opportunities: string[];
+      };
     } catch (error) {
       console.error('Personality insights generation failed:', error);
       throw error;
@@ -285,7 +323,7 @@ class GPT5SocialResearchService {
     if (this.isMockMode) {
       return {
         success: true,
-        monitoringId: `monitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        monitoringId: `monitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       };
     }
 
@@ -313,8 +351,12 @@ class GPT5SocialResearchService {
           description: 'Updated job title to Senior Director',
           importance: 'high',
           actionable: true,
-          suggestedActions: ['Congratulate on promotion', 'Reassess budget authority', 'Update contact details'],
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+          suggestedActions: [
+            'Congratulate on promotion',
+            'Reassess budget authority',
+            'Update contact details',
+          ],
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         },
         {
           type: 'new_content',
@@ -324,8 +366,8 @@ class GPT5SocialResearchService {
           importance: 'medium',
           actionable: true,
           suggestedActions: ['Engage with the post', 'Share relevant solution content'],
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000)
-        }
+          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+        },
       ];
     }
 
@@ -355,16 +397,16 @@ class GPT5SocialResearchService {
     // Process in batches to respect rate limits
     for (let i = 0; i < contacts.length; i += batchSize) {
       const batch = contacts.slice(i, i + batchSize);
-      
+
       const batchPromises = batch.map(async (contact) => {
         try {
           const result = await this.researchContactSocialMedia(contact, platforms, depth);
           return { contactId: contact.id, result };
         } catch (error) {
-          return { 
-            contactId: contact.id, 
-            result: null, 
-            error: error instanceof Error ? error.message : 'Unknown error' 
+          return {
+            contactId: contact.id,
+            result: null,
+            error: error instanceof Error ? error.message : 'Unknown error',
           };
         }
       });
@@ -374,7 +416,7 @@ class GPT5SocialResearchService {
 
       // Delay between batches
       if (i + batchSize < contacts.length) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
 
@@ -384,9 +426,23 @@ class GPT5SocialResearchService {
   // Utility methods
   isPlatformSupported(platform: string): boolean {
     const supportedPlatforms = [
-      'LinkedIn', 'Twitter', 'Instagram', 'TikTok', 'YouTube', 'GitHub',
-      'Medium', 'Facebook', 'Snapchat', 'Discord', 'Reddit', 'Pinterest',
-      'Behance', 'Dribbble', 'AngelList', 'Clubhouse', 'Telegram'
+      'LinkedIn',
+      'Twitter',
+      'Instagram',
+      'TikTok',
+      'YouTube',
+      'GitHub',
+      'Medium',
+      'Facebook',
+      'Snapchat',
+      'Discord',
+      'Reddit',
+      'Pinterest',
+      'Behance',
+      'Dribbble',
+      'AngelList',
+      'Clubhouse',
+      'Telegram',
     ];
     return supportedPlatforms.includes(platform);
   }
@@ -398,13 +454,17 @@ class GPT5SocialResearchService {
       recommendations.push('Twitter', 'YouTube');
     }
 
-    if (contact.title?.toLowerCase().includes('creative') || 
-        contact.title?.toLowerCase().includes('design')) {
+    if (
+      contact.title?.toLowerCase().includes('creative') ||
+      contact.title?.toLowerCase().includes('design')
+    ) {
       recommendations.push('Instagram', 'Behance', 'Dribbble');
     }
 
-    if (contact.title?.toLowerCase().includes('developer') || 
-        contact.title?.toLowerCase().includes('engineer')) {
+    if (
+      contact.title?.toLowerCase().includes('developer') ||
+      contact.title?.toLowerCase().includes('engineer')
+    ) {
       recommendations.push('GitHub', 'Medium');
     }
 

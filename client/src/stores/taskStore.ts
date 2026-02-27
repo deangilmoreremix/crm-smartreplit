@@ -24,17 +24,20 @@ export const useTaskStore = create<TaskStore>((set) => ({
     try {
       const response = await api.get<Task[]>('/api/tasks');
       if (response.success && response.data) {
-        const tasksMap = response.data.reduce((acc, task) => {
-          acc[task.id.toString()] = {
-            ...task,
-            createdAt: new Date(task.createdAt),
-            updatedAt: new Date(task.updatedAt),
-            dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-            completedDate: task.completedDate ? new Date(task.completedDate) : undefined,
-            completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
-          };
-          return acc;
-        }, {} as Record<string, Task>);
+        const tasksMap = response.data.reduce(
+          (acc, task) => {
+            acc[task.id.toString()] = {
+              ...task,
+              createdAt: new Date(task.createdAt),
+              updatedAt: new Date(task.updatedAt),
+              dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+              completedDate: task.completedDate ? new Date(task.completedDate) : undefined,
+              completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
+            };
+            return acc;
+          },
+          {} as Record<string, Task>
+        );
         set({ tasks: tasksMap, isLoading: false });
       } else {
         set({ error: response.error || 'Failed to fetch tasks', isLoading: false });
@@ -53,12 +56,14 @@ export const useTaskStore = create<TaskStore>((set) => ({
           createdAt: new Date(response.data.createdAt),
           updatedAt: new Date(response.data.updatedAt),
           dueDate: response.data.dueDate ? new Date(response.data.dueDate) : undefined,
-          completedDate: response.data.completedDate ? new Date(response.data.completedDate) : undefined,
+          completedDate: response.data.completedDate
+            ? new Date(response.data.completedDate)
+            : undefined,
           completedAt: response.data.completedAt ? new Date(response.data.completedAt) : undefined,
         };
 
-        set(state => ({
-          tasks: { ...state.tasks, [newTask.id.toString()]: newTask }
+        set((state) => ({
+          tasks: { ...state.tasks, [newTask.id.toString()]: newTask },
         }));
 
         return newTask;
@@ -81,15 +86,17 @@ export const useTaskStore = create<TaskStore>((set) => ({
           createdAt: new Date(response.data.createdAt),
           updatedAt: new Date(response.data.updatedAt),
           dueDate: response.data.dueDate ? new Date(response.data.dueDate) : undefined,
-          completedDate: response.data.completedDate ? new Date(response.data.completedDate) : undefined,
+          completedDate: response.data.completedDate
+            ? new Date(response.data.completedDate)
+            : undefined,
           completedAt: response.data.completedAt ? new Date(response.data.completedAt) : undefined,
         };
 
-        set(state => ({
+        set((state) => ({
           tasks: {
             ...state.tasks,
-            [id]: updatedTask
-          }
+            [id]: updatedTask,
+          },
         }));
       } else {
         set({ error: response.error || 'Failed to update task' });
@@ -103,7 +110,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
     try {
       const response = await api.delete(`/api/tasks/${id}`);
       if (response.success) {
-        set(state => {
+        set((state) => {
           const { [id]: deleted, ...rest } = state.tasks;
           return { tasks: rest };
         });
@@ -113,5 +120,5 @@ export const useTaskStore = create<TaskStore>((set) => ({
     } catch (error) {
       set({ error: 'Failed to delete task' });
     }
-  }
+  },
 }));

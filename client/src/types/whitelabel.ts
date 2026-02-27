@@ -129,7 +129,8 @@ export const DEFAULT_WHITELABEL_CONFIG: WhitelabelConfig = {
   primaryColor: '#3B82F6',
   secondaryColor: '#6366F1',
   heroTitle: 'Transform Your Sales Process with AI',
-  heroSubtitle: 'Smart CRM combines powerful sales tools with advanced AI capabilities to streamline your workflow and boost your results.',
+  heroSubtitle:
+    'Smart CRM combines powerful sales tools with advanced AI capabilities to streamline your workflow and boost your results.',
   ctaButtons: [
     {
       id: 'trial',
@@ -137,7 +138,7 @@ export const DEFAULT_WHITELABEL_CONFIG: WhitelabelConfig = {
       url: '/dashboard',
       color: '#3B82F6',
       variant: 'primary',
-      enabled: true
+      enabled: true,
     },
     {
       id: 'demo',
@@ -145,8 +146,8 @@ export const DEFAULT_WHITELABEL_CONFIG: WhitelabelConfig = {
       url: '/dashboard',
       color: '#10B981',
       variant: 'secondary',
-      enabled: true
-    }
+      enabled: true,
+    },
   ],
   redirectMappings: {},
   showPricing: true,
@@ -176,5 +177,5 @@ export const DEFAULT_WHITELABEL_CONFIG: WhitelabelConfig = {
   // NEW: Advanced branding defaults
   faviconUrl: undefined,
   customCss: undefined,
-  fontFamily: undefined
+  fontFamily: undefined,
 };

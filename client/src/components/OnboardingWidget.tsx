@@ -17,19 +17,27 @@ export const OnboardingWidget: React.FC = () => {
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'account': return <User className="h-4 w-4" />;
-      case 'billing': return <CreditCard className="h-4 w-4" />;
-      case 'features': return <Zap className="h-4 w-4" />;
-      default: return <Settings className="h-4 w-4" />;
+      case 'account':
+        return <User className="h-4 w-4" />;
+      case 'billing':
+        return <CreditCard className="h-4 w-4" />;
+      case 'features':
+        return <Zap className="h-4 w-4" />;
+      default:
+        return <Settings className="h-4 w-4" />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -99,7 +107,10 @@ export const OnboardingWidget: React.FC = () => {
             <h4 className="text-sm font-medium text-blue-900">Upcoming Steps:</h4>
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {steps.slice(1, 4).map((step) => (
-                <div key={step.id} className="flex items-center justify-between p-2 bg-white/50 rounded border border-blue-100">
+                <div
+                  key={step.id}
+                  className="flex items-center justify-between p-2 bg-white/50 rounded border border-blue-100"
+                >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
                     {getCategoryIcon(step.category)}
                     <span className="text-sm text-blue-800 truncate">{step.title}</span>
@@ -125,7 +136,7 @@ export const OnboardingWidget: React.FC = () => {
             size="sm"
             onClick={() => {
               // Mark all steps as completed
-              steps.forEach(step => markStepCompleted(step.id));
+              steps.forEach((step) => markStepCompleted(step.id));
             }}
             className="w-full text-blue-600 hover:text-blue-800 hover:bg-blue-100"
           >

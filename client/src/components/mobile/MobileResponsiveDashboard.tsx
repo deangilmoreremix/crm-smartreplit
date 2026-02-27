@@ -3,12 +3,12 @@ import { useMobileStore } from '../../store/mobileStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { 
-  Smartphone, 
-  Tablet, 
-  Monitor, 
-  Wifi, 
-  WifiOff, 
+import {
+  Smartphone,
+  Tablet,
+  Monitor,
+  Wifi,
+  WifiOff,
   RotateCcw,
   Settings,
   Activity,
@@ -16,7 +16,7 @@ import {
   Download,
   Upload,
   Bell,
-  Hand
+  Hand,
 } from 'lucide-react';
 
 export default function MobileResponsiveDashboard() {
@@ -41,7 +41,7 @@ export default function MobileResponsiveDashboard() {
     getBreakpoint,
     isMobileSize,
     isTabletSize,
-    isDesktopSize
+    isDesktopSize,
   } = useMobileStore();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -63,7 +63,7 @@ export default function MobileResponsiveDashboard() {
       type: 'info',
       persistent: false,
       position: 'top',
-      duration: 3000
+      duration: 3000,
     });
   };
 
@@ -83,9 +83,7 @@ export default function MobileResponsiveDashboard() {
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
               {isOnline ? 'Online' : 'Offline'}
             </Badge>
-            <Badge variant="outline">
-              {currentBreakpoint.toUpperCase()}
-            </Badge>
+            <Badge variant="outline">{currentBreakpoint.toUpperCase()}</Badge>
           </div>
         </div>
 
@@ -94,9 +92,13 @@ export default function MobileResponsiveDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Device Type</CardTitle>
-              {isMobile ? <Smartphone className="h-4 w-4" /> : 
-               isTablet ? <Tablet className="h-4 w-4" /> : 
-               <Monitor className="h-4 w-4" />}
+              {isMobile ? (
+                <Smartphone className="h-4 w-4" />
+              ) : isTablet ? (
+                <Tablet className="h-4 w-4" />
+              ) : (
+                <Monitor className="h-4 w-4" />
+              )}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -124,9 +126,13 @@ export default function MobileResponsiveDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Sync Status</CardTitle>
-              {syncStatus.syncInProgress ? <Upload className="h-4 w-4 animate-spin" /> : 
-               offlineData.length > 0 ? <Download className="h-4 w-4" /> : 
-               <Activity className="h-4 w-4" />}
+              {syncStatus.syncInProgress ? (
+                <Upload className="h-4 w-4 animate-spin" />
+              ) : offlineData.length > 0 ? (
+                <Download className="h-4 w-4" />
+              ) : (
+                <Activity className="h-4 w-4" />
+              )}
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{syncStatus.pendingChanges}</div>
@@ -143,9 +149,7 @@ export default function MobileResponsiveDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold capitalize">{performanceMode}</div>
-              <p className="text-xs text-muted-foreground">
-                Performance mode
-              </p>
+              <p className="text-xs text-muted-foreground">Performance mode</p>
             </CardContent>
           </Card>
         </div>
@@ -157,7 +161,7 @@ export default function MobileResponsiveDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button 
+              <Button
                 onClick={handleRefresh}
                 disabled={refreshing || !isOnline}
                 className="flex items-center gap-2"
@@ -166,8 +170,8 @@ export default function MobileResponsiveDashboard() {
                 <RotateCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Syncing...' : 'Sync Data'}
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={testNotification}
                 variant="outline"
                 className="flex items-center gap-2"
@@ -176,8 +180,8 @@ export default function MobileResponsiveDashboard() {
                 <Bell className="w-4 h-4" />
                 Test Notification
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={() => setGesturesEnabled(!gesturesEnabled)}
                 variant="outline"
                 className="flex items-center gap-2"
@@ -186,8 +190,8 @@ export default function MobileResponsiveDashboard() {
                 <Hand className="w-4 h-4" />
                 {gesturesEnabled ? 'Disable' : 'Enable'} Gestures
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={detectDevice}
                 variant="outline"
                 className="flex items-center gap-2"
@@ -209,7 +213,7 @@ export default function MobileResponsiveDashboard() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {['sm', 'md', 'lg', 'xl'].map((bp) => (
-                  <div 
+                  <div
                     key={bp}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       currentBreakpoint === bp ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
@@ -222,13 +226,16 @@ export default function MobileResponsiveDashboard() {
                       {bp === 'lg' && '768px - 1024px'}
                       {bp === 'xl' && '> 1024px'}
                     </p>
-                    <Badge variant={currentBreakpoint === bp ? 'default' : 'outline'} className="mt-2">
+                    <Badge
+                      variant={currentBreakpoint === bp ? 'default' : 'outline'}
+                      className="mt-2"
+                    >
                       {currentBreakpoint === bp ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 ))}
               </div>
-              
+
               <div className="flex flex-wrap gap-2 mt-4">
                 <Badge variant={isMobileSize() ? 'default' : 'outline'}>
                   Mobile Size: {isMobileSize() ? 'Yes' : 'No'}
@@ -254,9 +261,11 @@ export default function MobileResponsiveDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {Object.entries(deviceInfo.capabilities).map(([capability, supported]) => (
                   <div key={capability} className="text-center">
-                    <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
-                      supported ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                    }`}>
+                    <div
+                      className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
+                        supported ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                      }`}
+                    >
                       {capability === 'touch' && <Hand className="w-5 h-5" />}
                       {capability === 'camera' && <Settings className="w-5 h-5" />}
                       {capability === 'location' && <Activity className="w-5 h-5" />}
@@ -292,17 +301,18 @@ export default function MobileResponsiveDashboard() {
                       variant={performanceMode === mode ? 'default' : 'outline'}
                       onClick={() => setPerformanceMode(mode)}
                     >
-                      {mode.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      {mode.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                     </Button>
                   ))}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-medium mb-2">Auto Mode</h4>
                   <p className="text-sm text-gray-600">
-                    Automatically adjusts performance based on device capabilities and battery level.
+                    Automatically adjusts performance based on device capabilities and battery
+                    level.
                   </p>
                 </div>
                 <div className="p-4 border rounded-lg">
@@ -352,7 +362,10 @@ export default function MobileResponsiveDashboard() {
             <CardContent>
               <div className="space-y-2">
                 {offlineData.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                  >
                     <div>
                       <span className="font-medium capitalize">{item.action}</span>
                       <span className="text-gray-500 ml-2">{item.type}</span>
@@ -383,35 +396,37 @@ export default function MobileResponsiveDashboard() {
               <div>
                 <h4 className="font-medium mb-2">Touch-Friendly Buttons</h4>
                 <div className="flex gap-2">
-                  <Button size="lg" className="touch-target">Large</Button>
+                  <Button size="lg" className="touch-target">
+                    Large
+                  </Button>
                   <Button size="sm">Small</Button>
                 </div>
               </div>
-              
+
               {/* Swipeable card demo */}
               <div>
                 <h4 className="font-medium mb-2">Swipeable Cards</h4>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm">
-                    👈 Swipe left or right on mobile devices
-                  </p>
+                  <p className="text-sm">👈 Swipe left or right on mobile devices</p>
                 </div>
               </div>
-              
+
               {/* Bottom sheet simulation */}
               <div>
                 <h4 className="font-medium mb-2">Mobile Modals</h4>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
-                  onClick={() => addNotification({
-                    title: 'Modal Simulation',
-                    message: 'On mobile, this would be a bottom sheet',
-                    type: 'info',
-                    persistent: false,
-                    position: 'bottom',
-                    duration: 3000
-                  })}
+                  onClick={() =>
+                    addNotification({
+                      title: 'Modal Simulation',
+                      message: 'On mobile, this would be a bottom sheet',
+                      type: 'info',
+                      persistent: false,
+                      position: 'bottom',
+                      duration: 3000,
+                    })
+                  }
                 >
                   Show Mobile Modal
                 </Button>
@@ -428,7 +443,7 @@ export default function MobileResponsiveDashboard() {
                 {/* Grid that changes based on screen size */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {[1, 2, 3, 4, 5, 6].map((num) => (
-                    <div 
+                    <div
                       key={num}
                       className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded text-center text-sm"
                     >
@@ -436,19 +451,19 @@ export default function MobileResponsiveDashboard() {
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Responsive text */}
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-xs sm:text-sm md:text-base lg:text-lg">
                     This text scales with screen size
                   </p>
                 </div>
-                
+
                 {/* Hidden on mobile */}
                 <div className="hidden md:block p-2 bg-yellow-100 rounded-lg">
                   <p className="text-sm">This is hidden on mobile devices</p>
                 </div>
-                
+
                 {/* Mobile only */}
                 <div className="block md:hidden p-2 bg-green-100 rounded-lg">
                   <p className="text-sm">This only shows on mobile devices</p>

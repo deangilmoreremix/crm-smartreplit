@@ -42,7 +42,7 @@ export default function BulkImportPage() {
     'dean@smartcrm.vip', // Production super admin
     'samuel@videoremix.io',
     'victor@videoremix.io',
-    'dev@smartcrm.local' // Dev bypass user
+    'dev@smartcrm.local', // Dev bypass user
   ];
 
   useEffect(() => {
@@ -50,22 +50,23 @@ export default function BulkImportPage() {
     const checkAdminAccess = () => {
       if (!user?.email) {
         toast({
-          title: "Access Denied",
-          description: "You must be logged in to access this page",
-          variant: "destructive"
+          title: 'Access Denied',
+          description: 'You must be logged in to access this page',
+          variant: 'destructive',
         });
         navigate('/dashboard');
         return;
       }
 
       const userEmail = user.email.toLowerCase();
-      const isAdmin = adminEmails.includes(userEmail) || user.role === 'admin' || user.role === 'super_admin';
+      const isAdmin =
+        adminEmails.includes(userEmail) || user.role === 'admin' || user.role === 'super_admin';
 
       if (!isAdmin) {
         toast({
-          title: "Admin Access Required",
-          description: "This page is restricted to system administrators only",
-          variant: "destructive"
+          title: 'Admin Access Required',
+          description: 'This page is restricted to system administrators only',
+          variant: 'destructive',
         });
         navigate('/dashboard');
         return;
@@ -99,9 +100,9 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
   const handleParseCSV = async () => {
     if (!csvContent.trim()) {
       toast({
-        title: "Error",
-        description: "Please paste your CSV data first",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please paste your CSV data first',
+        variant: 'destructive',
       });
       return;
     }
@@ -110,9 +111,9 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
     try {
       const response = await fetch('/api/bulk-import/parse-csv', {
         method: 'POST',
-        credentials: 'include',  // Include session cookies for authentication
+        credentials: 'include', // Include session cookies for authentication
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ csv_content: csvContent })
+        body: JSON.stringify({ csv_content: csvContent }),
       });
 
       const data = await response.json();
@@ -124,14 +125,14 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
       setParsedUsers(data.users);
       setStep('preview');
       toast({
-        title: "Success",
-        description: `Parsed ${data.users.length} users from CSV`
+        title: 'Success',
+        description: `Parsed ${data.users.length} users from CSV`,
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -145,12 +146,12 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
     try {
       const response = await fetch('/api/bulk-import/users', {
         method: 'POST',
-        credentials: 'include',  // Include session cookies for authentication
+        credentials: 'include', // Include session cookies for authentication
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           users: parsedUsers,
-          send_notifications: true
-        })
+          send_notifications: true,
+        }),
       });
 
       const data = await response.json();
@@ -162,14 +163,14 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
       setImportResult(data.result);
       setStep('complete');
       toast({
-        title: "Import Complete",
-        description: `Successfully imported ${data.result.success} users`
+        title: 'Import Complete',
+        description: `Successfully imported ${data.result.success} users`,
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error.message,
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -191,12 +192,17 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin: Bulk User Import</h1>
             <div className="flex items-center space-x-2 mt-1">
-              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">ADMIN ONLY</span>
+              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                ADMIN ONLY
+              </span>
               <span className="text-gray-500 text-sm">Logged in as: {user?.email}</span>
             </div>
           </div>
         </div>
-        <p className="text-gray-600">Import users for SmartCRM. All users get access to the complete suite of apps and features.</p>
+        <p className="text-gray-600">
+          Import users for SmartCRM. All users get access to the complete suite of apps and
+          features.
+        </p>
       </div>
 
       {/* Progress Steps */}
@@ -205,13 +211,18 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
           {['Upload CSV', 'Preview Users', 'Import Users', 'Complete'].map((stepName, index) => {
             const isActive = ['upload', 'preview', 'import', 'complete'][index] === step;
             const isCompleted = ['upload', 'preview', 'import', 'complete'].indexOf(step) > index;
-            
+
             return (
               <div key={stepName} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  isCompleted ? 'bg-green-500 text-white' : 
-                  isActive ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600'
-                }`}>
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    isCompleted
+                      ? 'bg-green-500 text-white'
+                      : isActive
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-300 text-gray-600'
+                  }`}
+                >
                   {isCompleted ? <CheckCircle className="w-5 h-5" /> : index + 1}
                 </div>
                 <span className={`ml-2 text-sm ${isActive ? 'text-blue-600' : 'text-gray-600'}`}>
@@ -241,17 +252,13 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
                 <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 mr-2" />
                 <div>
                   <strong className="text-blue-800">CSV Format Example:</strong>
-                  <pre className="mt-2 text-xs bg-white p-2 rounded border">
-                    {sampleCsv}
-                  </pre>
+                  <pre className="mt-2 text-xs bg-white p-2 rounded border">{sampleCsv}</pre>
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                CSV Data
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">CSV Data</label>
               <Textarea
                 placeholder="Paste your CSV data here..."
                 value={csvContent}
@@ -260,7 +267,7 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
               />
             </div>
 
-            <Button 
+            <Button
               onClick={handleParseCSV}
               disabled={isLoading || !csvContent.trim()}
               className="w-full"
@@ -278,16 +285,19 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
               <Users className="w-5 h-5" />
               Preview Users ({parsedUsers.length})
             </CardTitle>
-            <CardDescription>
-              Review the parsed users before importing
-            </CardDescription>
+            <CardDescription>Review the parsed users before importing</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="max-h-60 overflow-y-auto border rounded p-4">
               {parsedUsers.slice(0, 10).map((user, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-2 border-b last:border-b-0"
+                >
                   <div>
-                    <div className="font-medium">{user.first_name} {user.last_name}</div>
+                    <div className="font-medium">
+                      {user.first_name} {user.last_name}
+                    </div>
                     <div className="text-sm text-gray-600">{user.email}</div>
                     {user.company && <div className="text-xs text-gray-500">{user.company}</div>}
                   </div>
@@ -305,11 +315,7 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
               <Button variant="outline" onClick={() => setStep('upload')}>
                 Back to Upload
               </Button>
-              <Button 
-                onClick={handleBulkImport}
-                disabled={isLoading}
-                className="flex-1"
-              >
+              <Button onClick={handleBulkImport} disabled={isLoading} className="flex-1">
                 {isLoading ? 'Importing...' : `Import ${parsedUsers.length} Users`}
               </Button>
             </div>
@@ -324,9 +330,7 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
               <CheckCircle className="w-5 h-5 text-green-600" />
               Import Complete
             </CardTitle>
-            <CardDescription>
-              Your bulk user import has been completed
-            </CardDescription>
+            <CardDescription>Your bulk user import has been completed</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
@@ -352,10 +356,14 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
                     <div className="font-medium text-red-800">Import Errors:</div>
                     <ul className="mt-2 space-y-1">
                       {importResult.errors.slice(0, 5).map((error, index) => (
-                        <li key={index} className="text-sm text-red-700">• {error}</li>
+                        <li key={index} className="text-sm text-red-700">
+                          • {error}
+                        </li>
                       ))}
                       {importResult.errors.length > 5 && (
-                        <li className="text-sm text-red-700">... and {importResult.errors.length - 5} more errors</li>
+                        <li className="text-sm text-red-700">
+                          ... and {importResult.errors.length - 5} more errors
+                        </li>
                       )}
                     </ul>
                   </div>
@@ -370,7 +378,9 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
                   <strong className="text-green-800">What happens next:</strong>
                   <ul className="mt-2 space-y-1 text-sm text-green-700">
                     <li>• Users receive welcome emails with account access links</li>
-                    <li>• Emails use the "Confirm Reauthentication" template with SmartCRM branding</li>
+                    <li>
+                      • Emails use the "Confirm Reauthentication" template with SmartCRM branding
+                    </li>
                     <li>• Users set their password and access their dashboard immediately</li>
                     <li>• All support requests go to support@videoremix.io</li>
                   </ul>

@@ -33,7 +33,9 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
   useEffect(() => {
     // Get current user
     async function getCurrentUser() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUser(user);
       if (!user) {
         setLoading(false);
@@ -52,9 +54,9 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
     async function checkEntitlement() {
       try {
         const response = await fetch('/api/entitlements/check', {
-          credentials: 'include'
+          credentials: 'include',
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setEntitlement(data.entitlement);
@@ -86,7 +88,8 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
 
   // Check if user is active
   const now = Date.now();
-  const isActive = entitlement?.status === 'active' && 
+  const isActive =
+    entitlement?.status === 'active' &&
     (!entitlement?.revokeAt || new Date(entitlement.revokeAt).getTime() > now);
 
   if (isActive) {
@@ -100,7 +103,7 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
         title: 'No Active Subscription',
         description: 'You need an active subscription to access this feature.',
         icon: <CreditCard className="h-12 w-12 text-blue-500" />,
-        action: 'Subscribe Now'
+        action: 'Subscribe Now',
       };
     }
 
@@ -108,37 +111,39 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
       case 'past_due':
         return {
           title: 'Payment Required',
-          description: 'Your subscription payment is past due. Please update your payment method to continue.',
+          description:
+            'Your subscription payment is past due. Please update your payment method to continue.',
           icon: <AlertTriangle className="h-12 w-12 text-yellow-500" />,
-          action: 'Update Payment'
+          action: 'Update Payment',
         };
       case 'canceled':
         return {
           title: 'Subscription Canceled',
-          description: 'Your subscription has been canceled. Reactivate to continue using SmartCRM.',
+          description:
+            'Your subscription has been canceled. Reactivate to continue using SmartCRM.',
           icon: <AlertTriangle className="h-12 w-12 text-red-500" />,
-          action: 'Reactivate'
+          action: 'Reactivate',
         };
       case 'inactive':
         return {
           title: 'Access Expired',
           description: 'Your subscription access has expired. Renew to continue using SmartCRM.',
           icon: <Clock className="h-12 w-12 text-gray-500" />,
-          action: 'Renew Now'
+          action: 'Renew Now',
         };
       case 'refunded':
         return {
           title: 'Subscription Refunded',
           description: 'Your subscription has been refunded and access revoked.',
           icon: <AlertTriangle className="h-12 w-12 text-red-500" />,
-          action: 'Subscribe Again'
+          action: 'Subscribe Again',
         };
       default:
         return {
           title: 'Access Restricted',
           description: 'You do not have access to this feature.',
           icon: <AlertTriangle className="h-12 w-12 text-gray-500" />,
-          action: 'Get Access'
+          action: 'Get Access',
         };
     }
   };
@@ -149,27 +154,21 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            {statusInfo.icon}
-          </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            {statusInfo.title}
-          </CardTitle>
-          <CardDescription className="text-gray-600 mt-2">
-            {statusInfo.description}
-          </CardDescription>
+          <div className="flex justify-center mb-4">{statusInfo.icon}</div>
+          <CardTitle className="text-2xl font-bold text-gray-900">{statusInfo.title}</CardTitle>
+          <CardDescription className="text-gray-600 mt-2">{statusInfo.description}</CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {entitlement && (
             <div className="bg-gray-50 rounded-lg p-4 text-sm">
               <div className="grid grid-cols-2 gap-2">
                 <span className="font-medium">Plan:</span>
                 <span>{entitlement.planName || entitlement.productType || 'Unknown'}</span>
-                
+
                 <span className="font-medium">Status:</span>
                 <span className="capitalize">{entitlement.status}</span>
-                
+
                 {entitlement.revokeAt && (
                   <>
                     <span className="font-medium">Expires:</span>
@@ -179,18 +178,15 @@ export default function RequireActive({ children, fallbackPath = '/pricing' }: R
               </div>
             </div>
           )}
-          
+
           <div className="flex space-x-3">
-            <Button 
-              onClick={() => window.location.href = fallbackPath}
-              className="flex-1"
-            >
+            <Button onClick={() => (window.location.href = fallbackPath)} className="flex-1">
               {statusInfo.action}
             </Button>
-            
-            <Button 
+
+            <Button
               variant="outline"
-              onClick={() => window.location.href = '/support'}
+              onClick={() => (window.location.href = '/support')}
               className="flex-1"
             >
               Get Help

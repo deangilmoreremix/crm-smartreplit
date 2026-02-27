@@ -47,14 +47,16 @@ class OpenAIImageService {
   async generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
-      throw new Error('Image generation service is not available. Please check server configuration.');
+      throw new Error(
+        'Image generation service is not available. Please check server configuration.'
+      );
     }
 
     try {
       const response = await fetch('/api/openai/images/generate', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           prompt: options.prompt,
@@ -62,13 +64,15 @@ class OpenAIImageService {
           size: options.size || '1024x1024',
           quality: options.quality || 'standard',
           style: options.style || 'vivid',
-          n: options.n || 1
-        })
+          n: options.n || 1,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Image generation error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+        throw new Error(
+          `Image generation error: ${response.status} - ${errorData.error || 'Unknown error'}`
+        );
       }
 
       const data = await response.json();
@@ -84,7 +88,7 @@ class OpenAIImageService {
         model: options.model || 'dall-e-3',
         size: options.size || '1024x1024',
         quality: options.quality || 'standard',
-        style: options.style
+        style: options.style,
       };
 
       // Log usage if customer ID is provided
@@ -97,7 +101,7 @@ class OpenAIImageService {
             tokens_used: 1, // Count as 1 token for image generation
             cost: this.calculateImageCost(result.model, result.size),
             response_time_ms: 0,
-            success: true
+            success: true,
           });
         } catch (logError) {
           console.warn('Failed to log AI usage:', logError);
@@ -120,16 +124,16 @@ class OpenAIImageService {
       'dall-e-2': {
         '256x256': 0.016,
         '512x512': 0.018,
-        '1024x1024': 0.020
+        '1024x1024': 0.02,
       },
       'dall-e-3': {
-        '1024x1024': 0.040, // Standard quality
-        '1792x1024': 0.080,
-        '1024x1792': 0.080
-      }
+        '1024x1024': 0.04, // Standard quality
+        '1792x1024': 0.08,
+        '1024x1792': 0.08,
+      },
     };
 
-    return costs[model]?.[size] || 0.040; // Default to DALL-E 3 standard cost
+    return costs[model]?.[size] || 0.04; // Default to DALL-E 3 standard cost
   }
 
   /**
@@ -141,7 +145,9 @@ class OpenAIImageService {
   ): Promise<ImageGenerationResult> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
-      throw new Error('Image variation service is not available. Please check server configuration.');
+      throw new Error(
+        'Image variation service is not available. Please check server configuration.'
+      );
     }
 
     try {
@@ -152,12 +158,14 @@ class OpenAIImageService {
 
       const response = await fetch('/api/openai/images/variation', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Image variation error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+        throw new Error(
+          `Image variation error: ${response.status} - ${errorData.error || 'Unknown error'}`
+        );
       }
 
       const data = await response.json();
@@ -171,7 +179,7 @@ class OpenAIImageService {
         url: imageData.url,
         model: 'dall-e-2',
         size: options?.size || '1024x1024',
-        quality: 'standard'
+        quality: 'standard',
       };
     } catch (error) {
       console.error('Image variation failed:', error);
@@ -205,12 +213,14 @@ class OpenAIImageService {
 
       const response = await fetch('/api/openai/images/edit', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Image edit error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+        throw new Error(
+          `Image edit error: ${response.status} - ${errorData.error || 'Unknown error'}`
+        );
       }
 
       const data = await response.json();
@@ -224,7 +234,7 @@ class OpenAIImageService {
         url: imageData.url,
         model: 'dall-e-2',
         size: options?.size || '1024x1024',
-        quality: 'standard'
+        quality: 'standard',
       };
     } catch (error) {
       console.error('Image edit failed:', error);
@@ -247,9 +257,9 @@ export const useOpenAIImageGeneration = () => {
   };
 
   const editImage = async (
-    imageFile: File, 
-    maskFile: File | undefined, 
-    prompt: string, 
+    imageFile: File,
+    maskFile: File | undefined,
+    prompt: string,
     options?: Partial<ImageGenerationOptions>
   ) => {
     return openaiImageService.editImage(imageFile, maskFile, prompt, options);
@@ -258,7 +268,7 @@ export const useOpenAIImageGeneration = () => {
   return {
     generateImage,
     createVariation,
-    editImage
+    editImage,
   };
 };
 
@@ -267,7 +277,7 @@ export type { ImageGenerationOptions, ImageGenerationResult };
 // Alias for compatibility with existing components
 export const useOpenAIImage = () => {
   const generateImage = async (
-    prompt: string, 
+    prompt: string,
     size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024',
     quality: 'standard' | 'hd' = 'standard',
     style: 'vivid' | 'natural' = 'natural'
@@ -277,16 +287,16 @@ export const useOpenAIImage = () => {
       size,
       quality,
       style,
-      model: 'dall-e-3'
+      model: 'dall-e-3',
     });
-    
+
     return {
       url: result.url,
-      revisedPrompt: result.revised_prompt
+      revisedPrompt: result.revised_prompt,
     };
   };
 
   return {
-    generateImage
+    generateImage,
   };
 };

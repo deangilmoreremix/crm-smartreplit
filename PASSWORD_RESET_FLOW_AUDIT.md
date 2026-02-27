@@ -17,14 +17,14 @@ if (!isSupabaseConfigured()) {
 
 ## Supabase Dashboard Settings - VERIFIED ✅
 
-| Setting | Value | Status |
-|---------|-------|--------|
-| Site URL | `https://app.smartcrm.vip` | ✅ Correct |
-| Redirect URL | `https://app.smartcrm.vip/auth/callback` | ✅ Present |
+| Setting      | Value                                          | Status     |
+| ------------ | ---------------------------------------------- | ---------- |
+| Site URL     | `https://app.smartcrm.vip`                     | ✅ Correct |
+| Redirect URL | `https://app.smartcrm.vip/auth/callback`       | ✅ Present |
 | Redirect URL | `https://app.smartcrm.vip/auth/reset-password` | ✅ Present |
-| Redirect URL | `https://app.smartcrm.vip/auth/recovery` | ✅ Present |
-| Redirect URL | `https://app.smartcrm.vip/**` | ✅ Present |
-| Redirect URL | `http://localhost:5173` | ✅ Present |
+| Redirect URL | `https://app.smartcrm.vip/auth/recovery`       | ✅ Present |
+| Redirect URL | `https://app.smartcrm.vip/**`                  | ✅ Present |
+| Redirect URL | `http://localhost:5173`                        | ✅ Present |
 
 ---
 
@@ -57,16 +57,17 @@ useEffect(() => {
 
 ```javascript
 const supabaseIsConfigured = !!(
-  supabaseUrl &&                                    // VITE_SUPABASE_URL
-  supabaseAnonKey &&                                // VITE_SUPABASE_ANON_KEY
+  supabaseUrl && // VITE_SUPABASE_URL
+  supabaseAnonKey && // VITE_SUPABASE_ANON_KEY
   supabaseUrl !== 'undefined' &&
   supabaseAnonKey !== 'undefined' &&
-  supabaseUrl.includes('supabase.co') &&            // Must contain 'supabase.co'
-  !supabaseUrl.includes('placeholder')              // Must NOT contain 'placeholder'
+  supabaseUrl.includes('supabase.co') && // Must contain 'supabase.co'
+  !supabaseUrl.includes('placeholder') // Must NOT contain 'placeholder'
 );
 ```
 
 ### This returns `false` if ANY of these fail:
+
 - [ ] `VITE_SUPABASE_URL` is empty/undefined
 - [ ] `VITE_SUPABASE_ANON_KEY` is empty/undefined
 - [ ] URL doesn't contain `supabase.co`
@@ -80,12 +81,13 @@ const supabaseIsConfigured = !!(
 
 Go to **Netlify Dashboard → Site Settings → Environment Variables** and verify:
 
-| Variable | Value | Check |
-|----------|-------|-------|
-| `VITE_SUPABASE_URL` | `https://gadedbrnqzpfqtsdfzcg.supabase.co` | ✅ Present |
-| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOi...` (anon key) | ✅ Present |
+| Variable                 | Value                                      | Check      |
+| ------------------------ | ------------------------------------------ | ---------- |
+| `VITE_SUPABASE_URL`      | `https://gadedbrnqzpfqtsdfzcg.supabase.co` | ✅ Present |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOi...` (anon key)                 | ✅ Present |
 
 **Important:**
+
 1. Click each variable to edit
 2. Verify the value is correct (not blank, not "placeholder")
 3. **Save changes**
@@ -97,11 +99,15 @@ Open browser DevTools → Console on the reset page and run:
 
 ```javascript
 console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
-console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '***SET***' : 'NOT SET');
+console.log(
+  'VITE_SUPABASE_ANON_KEY:',
+  import.meta.env.VITE_SUPABASE_ANON_KEY ? '***SET***' : 'NOT SET'
+);
 console.log('Is Configured:', import.meta.env.VITE_SUPABASE_URL?.includes('supabase.co'));
 ```
 
 **Expected Output:**
+
 ```
 VITE_SUPABASE_URL: https://gadedbrnqzpfqtsdfzcg.supabase.co
 VITE_SUPABASE_ANON_KEY: ***SET***

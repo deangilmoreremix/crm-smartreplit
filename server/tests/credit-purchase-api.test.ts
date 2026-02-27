@@ -21,24 +21,30 @@ describe('Credit Purchase API Integration Tests', () => {
     baseUrl = `http://localhost:${port}`;
 
     // Create test user in database
-    await db.insert(profiles).values({
-      id: mockUser.id,
-      email: mockUser.email,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).onConflictDoNothing();
+    await db
+      .insert(profiles)
+      .values({
+        id: mockUser.id,
+        email: mockUser.email,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoNothing();
 
     // Ensure test credit packages exist
-    await db.insert(usagePlans).values({
-      planName: 'credit_pack_small',
-      displayName: '500 Credits Pack',
-      description: 'Test credit pack',
-      billingType: 'pay_per_use',
-      basePriceCents: 1000,
-      features: '{"credits": 500}',
-      limits: '{"credits": 500}',
-      isActive: true,
-    }).onConflictDoNothing();
+    await db
+      .insert(usagePlans)
+      .values({
+        planName: 'credit_pack_small',
+        displayName: '500 Credits Pack',
+        description: 'Test credit pack',
+        billingType: 'pay_per_use',
+        basePriceCents: 1000,
+        features: '{"credits": 500}',
+        limits: '{"credits": 500}',
+        isActive: true,
+      })
+      .onConflictDoNothing();
   });
 
   afterAll(async () => {
@@ -62,7 +68,7 @@ describe('Credit Purchase API Integration Tests', () => {
   const makeAuthRequest = async (method: string, url: string, body?: any) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Cookie': `session=${JSON.stringify({ user: mockUser })}`, // Mock session
+      Cookie: `session=${JSON.stringify({ user: mockUser })}`, // Mock session
     };
 
     const config: RequestInit = {

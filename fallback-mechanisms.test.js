@@ -17,40 +17,44 @@ let testResults = {
   total: 0,
   passed: 0,
   failed: 0,
-  tests: []
+  tests: [],
 };
 
 // Helper function to make HTTP requests
 function makeRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https:') ? https : http;
-    const req = protocol.request(url, {
-      method: options.method || 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'SmartCRM-Fallback-Test/1.0',
-        ...options.headers
+    const req = protocol.request(
+      url,
+      {
+        method: options.method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'SmartCRM-Fallback-Test/1.0',
+          ...options.headers,
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            const jsonData = data ? JSON.parse(data) : {};
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: jsonData,
+            });
+          } catch (e) {
+            resolve({
+              status: res.statusCode,
+              headers: res.headers,
+              data: data,
+            });
+          }
+        });
       }
-    }, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        try {
-          const jsonData = data ? JSON.parse(data) : {};
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: jsonData
-          });
-        } catch (e) {
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            data: data
-          });
-        }
-      });
-    });
+    );
 
     req.on('error', reject);
     req.setTimeout(30000, () => {
@@ -102,8 +106,8 @@ async function testAISmartGreetingFallback() {
       body: {
         userMetrics: { totalDeals: 15, totalValue: 75000 },
         timeOfDay: 'afternoon',
-        recentActivity: ['Closed a $25k deal', 'Added 3 new contacts']
-      }
+        recentActivity: ['Closed a $25k deal', 'Added 3 new contacts'],
+      },
     });
 
     if (response.status === 200) {
@@ -128,8 +132,8 @@ async function testKPIAnalysisFallback() {
       method: 'POST',
       body: {
         historicalData: [10000, 12000, 15000, 18000],
-        currentMetrics: { revenue: 20000, deals: 25, conversion: 0.15 }
-      }
+        currentMetrics: { revenue: 20000, deals: 25, conversion: 0.15 },
+      },
     });
 
     if (response.status === 200 && response.data.summary) {
@@ -151,8 +155,8 @@ async function testDealIntelligenceFallback() {
       body: {
         dealData: { value: 50000, stage: 'proposal', probability: 75 },
         contactHistory: ['Initial meeting positive', 'Follow-up scheduled'],
-        marketContext: 'Competitive market with high demand'
-      }
+        marketContext: 'Competitive market with high demand',
+      },
     });
 
     if (response.status === 200 && response.data.probability_score) {
@@ -174,8 +178,8 @@ async function testBusinessIntelligenceFallback() {
       body: {
         businessData: { industry: 'Technology', size: '50-100', revenue: 2000000 },
         marketContext: 'Growing SaaS market',
-        objectives: ['Increase market share', 'Improve customer retention']
-      }
+        objectives: ['Increase market share', 'Improve customer retention'],
+      },
     });
 
     if (response.status === 200 && response.data.market_insights) {
@@ -186,7 +190,10 @@ async function testBusinessIntelligenceFallback() {
       return { passed: false, message: `Unexpected response: ${response.status}` };
     }
   } catch (error) {
-    return { passed: false, message: `Business intelligence fallback test error: ${error.message}` };
+    return {
+      passed: false,
+      message: `Business intelligence fallback test error: ${error.message}`,
+    };
   }
 }
 
@@ -199,10 +206,10 @@ async function testAdvancedContentFallback() {
         parameters: {
           topic: 'CRM Best Practices',
           audience: 'Small business owners',
-          length: '800 words'
+          length: '800 words',
         },
-        reasoning_effort: 'medium'
-      }
+        reasoning_effort: 'medium',
+      },
     });
 
     if (response.status === 200 && response.data.content) {
@@ -225,8 +232,8 @@ async function testMultimodalAnalysisFallback() {
         textData: { summary: 'Q3 performance analysis', metrics: [85, 92, 78] },
         images: ['chart1.png', 'graph2.png'],
         charts: ['revenue_chart', 'growth_chart'],
-        documents: ['report.pdf']
-      }
+        documents: ['report.pdf'],
+      },
     });
 
     if (response.status === 200 && response.data.text_insights) {
@@ -248,8 +255,8 @@ async function testPredictiveAnalyticsFallback() {
       body: {
         historicalData: [10000, 12000, 15000, 18000, 22000],
         forecastPeriod: 6,
-        analysisType: 'revenue_forecast'
-      }
+        analysisType: 'revenue_forecast',
+      },
     });
 
     if (response.status === 200 && response.data.predictions) {
@@ -272,8 +279,8 @@ async function testStrategicPlanningFallback() {
         businessContext: 'Growing SaaS company with 50 employees',
         goals: ['Expand to new markets', 'Increase customer lifetime value'],
         constraints: ['Limited budget', 'Small team'],
-        timeframe: '12 months'
-      }
+        timeframe: '12 months',
+      },
     });
 
     if (response.status === 200 && response.data.strategic_objectives) {
@@ -295,8 +302,8 @@ async function testPerformanceOptimizationFallback() {
       body: {
         systemMetrics: { responseTime: 2.3, uptime: 99.5, throughput: 150 },
         userBehavior: { activeUsers: 450, sessionDuration: 25, bounceRate: 0.15 },
-        businessGoals: ['Improve user engagement', 'Reduce response time']
-      }
+        businessGoals: ['Improve user engagement', 'Reduce response time'],
+      },
     });
 
     if (response.status === 200 && response.data.optimization_score) {
@@ -307,7 +314,10 @@ async function testPerformanceOptimizationFallback() {
       return { passed: false, message: `Unexpected response: ${response.status}` };
     }
   } catch (error) {
-    return { passed: false, message: `Performance optimization fallback test error: ${error.message}` };
+    return {
+      passed: false,
+      message: `Performance optimization fallback test error: ${error.message}`,
+    };
   }
 }
 
@@ -334,8 +344,8 @@ async function testMessagingFallback() {
       body: {
         content: 'Test message',
         recipient: '+15551234567',
-        provider: 'twilio'
-      }
+        provider: 'twilio',
+      },
     });
 
     if (response.status === 200 && response.data.success) {
@@ -388,7 +398,7 @@ async function runAllFallbackTests() {
 
   // Detailed results
   console.log('\n📋 Detailed Results:');
-  testResults.tests.forEach(test => {
+  testResults.tests.forEach((test) => {
     const icon = test.passed ? '✅' : '❌';
     console.log(`${icon} ${test.name}: ${test.message}`);
   });
@@ -410,7 +420,7 @@ async function runAllFallbackTests() {
 
 // Run tests if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runAllFallbackTests().catch(error => {
+  runAllFallbackTests().catch((error) => {
     console.error('Fallback mechanisms test suite failed:', error);
     process.exit(1);
   });
@@ -428,5 +438,5 @@ export {
   testStrategicPlanningFallback,
   testPerformanceOptimizationFallback,
   testDatabaseFallback,
-  testMessagingFallback
+  testMessagingFallback,
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Brain, Sparkles, Target, TrendingUp, Users, Zap } from 'lucide-react';
@@ -23,7 +22,7 @@ const WhiteLabelAIEnhancer: React.FC = () => {
     { id: 'branding', label: 'Smart Branding', icon: Sparkles },
     { id: 'marketing', label: 'AI Marketing', icon: Target },
     { id: 'analytics', label: 'Predictive Analytics', icon: TrendingUp },
-    { id: 'automation', label: 'Automation', icon: Zap }
+    { id: 'automation', label: 'Automation', icon: Zap },
   ];
 
   useEffect(() => {
@@ -32,11 +31,12 @@ const WhiteLabelAIEnhancer: React.FC = () => {
       {
         id: '1',
         title: 'Dynamic Brand Color Optimization',
-        description: 'AI analyzes your target audience and suggests optimal color schemes for maximum engagement',
+        description:
+          'AI analyzes your target audience and suggests optimal color schemes for maximum engagement',
         category: 'branding',
         impact: 'high',
         implementation: 'Integrate color psychology AI model with brand customization',
-        estimatedROI: 25
+        estimatedROI: 25,
       },
       {
         id: '2',
@@ -45,7 +45,7 @@ const WhiteLabelAIEnhancer: React.FC = () => {
         category: 'marketing',
         impact: 'high',
         implementation: 'Deploy ML clustering algorithms for customer data analysis',
-        estimatedROI: 40
+        estimatedROI: 40,
       },
       {
         id: '3',
@@ -54,7 +54,7 @@ const WhiteLabelAIEnhancer: React.FC = () => {
         category: 'analytics',
         impact: 'high',
         implementation: 'Implement predictive models with automated email sequences',
-        estimatedROI: 60
+        estimatedROI: 60,
       },
       {
         id: '4',
@@ -63,21 +63,26 @@ const WhiteLabelAIEnhancer: React.FC = () => {
         category: 'automation',
         impact: 'medium',
         implementation: 'Integrate GPT-4 for automated content creation workflows',
-        estimatedROI: 30
-      }
+        estimatedROI: 30,
+      },
     ]);
   }, []);
 
-  const filteredEnhancements = activeCategory === 'all' 
-    ? enhancements 
-    : enhancements.filter(e => e.category === activeCategory);
+  const filteredEnhancements =
+    activeCategory === 'all'
+      ? enhancements
+      : enhancements.filter((e) => e.category === activeCategory);
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
-      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
-      case 'low': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
+      case 'high':
+        return 'text-red-600 bg-red-100 dark:bg-red-900/20';
+      case 'medium':
+        return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'low':
+        return 'text-green-600 bg-green-100 dark:bg-green-900/20';
+      default:
+        return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
     }
   };
 
@@ -126,15 +131,17 @@ const WhiteLabelAIEnhancer: React.FC = () => {
               <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {enhancement.title}
               </h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getImpactColor(enhancement.impact)}`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${getImpactColor(enhancement.impact)}`}
+              >
                 {enhancement.impact} impact
               </span>
             </div>
-            
+
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
               {enhancement.description}
             </p>
-            
+
             <div className="space-y-2 mb-4">
               <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                 Implementation:
@@ -143,11 +150,13 @@ const WhiteLabelAIEnhancer: React.FC = () => {
                 {enhancement.implementation}
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-green-600" />
-                <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   ROI: +{enhancement.estimatedROI}%
                 </span>
               </div>
@@ -161,7 +170,9 @@ const WhiteLabelAIEnhancer: React.FC = () => {
 
       {filteredEnhancements.length === 0 && (
         <div className="text-center py-8">
-          <Brain className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+          <Brain
+            className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}
+          />
           <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             No AI enhancements available for this category
           </p>

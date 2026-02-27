@@ -3,17 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import AIAutomationDashboard from '../components/AIAutomationDashboard';
-import { 
-  Bot, 
-  Brain, 
-  Zap, 
-  Settings,
-  Database,
-  Globe,
-  Shield,
-  Activity,
-  Plus
-} from 'lucide-react';
+import { Bot, Brain, Zap, Settings, Database, Globe, Shield, Activity, Plus } from 'lucide-react';
 
 export default function AIIntegration() {
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
@@ -29,7 +19,7 @@ export default function AIIntegration() {
         { name: 'Google Bard', status: 'available', type: 'text-generation' },
         { name: 'Stability AI', status: 'available', type: 'image-generation' },
         { name: 'Whisper API', status: 'available', type: 'speech-to-text' },
-      ]
+      ],
     },
     {
       name: 'CRM Integrations',
@@ -41,7 +31,7 @@ export default function AIIntegration() {
         { name: 'Pipedrive', status: 'available', type: 'crm' },
         { name: 'Zoho CRM', status: 'available', type: 'crm' },
         { name: 'Microsoft Dynamics', status: 'available', type: 'crm' },
-      ]
+      ],
     },
     {
       name: 'Communication Tools',
@@ -53,7 +43,7 @@ export default function AIIntegration() {
         { name: 'Twilio SMS', status: 'connected', type: 'sms' },
         { name: 'Slack', status: 'available', type: 'messaging' },
         { name: 'Microsoft Teams', status: 'available', type: 'messaging' },
-      ]
+      ],
     },
     {
       name: 'Data Enrichment',
@@ -65,7 +55,7 @@ export default function AIIntegration() {
         { name: 'Apollo.io', status: 'available', type: 'enrichment' },
         { name: 'Hunter.io', status: 'available', type: 'enrichment' },
         { name: 'LinkedIn Sales Navigator', status: 'available', type: 'enrichment' },
-      ]
+      ],
     },
     {
       name: 'Analytics & BI',
@@ -77,7 +67,7 @@ export default function AIIntegration() {
         { name: 'Tableau', status: 'available', type: 'bi' },
         { name: 'Power BI', status: 'available', type: 'bi' },
         { name: 'Looker', status: 'available', type: 'bi' },
-      ]
+      ],
     },
     {
       name: 'Security & Compliance',
@@ -89,8 +79,8 @@ export default function AIIntegration() {
         { name: 'Azure AD', status: 'available', type: 'auth' },
         { name: 'GDPR Compliance', status: 'enabled', type: 'compliance' },
         { name: 'SOC 2 Monitoring', status: 'enabled', type: 'compliance' },
-      ]
-    }
+      ],
+    },
   ];
 
   const IntegrationsTab = () => (
@@ -104,13 +94,12 @@ export default function AIIntegration() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {integrationCategories.reduce((sum, cat) => 
-                sum + cat.integrations.filter(i => i.status === 'connected').length, 0
+              {integrationCategories.reduce(
+                (sum, cat) => sum + cat.integrations.filter((i) => i.status === 'connected').length,
+                0
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Active integrations
-            </p>
+            <p className="text-xs text-muted-foreground">Active integrations</p>
           </CardContent>
         </Card>
 
@@ -121,13 +110,12 @@ export default function AIIntegration() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {integrationCategories.reduce((sum, cat) => 
-                sum + cat.integrations.filter(i => i.status === 'available').length, 0
+              {integrationCategories.reduce(
+                (sum, cat) => sum + cat.integrations.filter((i) => i.status === 'available').length,
+                0
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ready to connect
-            </p>
+            <p className="text-xs text-muted-foreground">Ready to connect</p>
           </CardContent>
         </Card>
 
@@ -138,9 +126,7 @@ export default function AIIntegration() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{integrationCategories.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Integration types
-            </p>
+            <p className="text-xs text-muted-foreground">Integration types</p>
           </CardContent>
         </Card>
 
@@ -153,9 +139,7 @@ export default function AIIntegration() {
             <div className="text-2xl font-bold">
               {integrationCategories.reduce((sum, cat) => sum + cat.integrations.length, 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              All integrations
-            </p>
+            <p className="text-xs text-muted-foreground">All integrations</p>
           </CardContent>
         </Card>
       </div>
@@ -180,37 +164,44 @@ export default function AIIntegration() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {category.integrations.map((integration) => (
-                    <div 
-                      key={integration.name} 
+                    <div
+                      key={integration.name}
                       className={`p-4 border rounded-lg transition-all cursor-pointer hover:border-blue-300 ${
                         selectedIntegration === integration.name ? 'border-blue-500 bg-blue-50' : ''
                       }`}
-                      onClick={() => setSelectedIntegration(
-                        selectedIntegration === integration.name ? null : integration.name
-                      )}
+                      onClick={() =>
+                        setSelectedIntegration(
+                          selectedIntegration === integration.name ? null : integration.name
+                        )
+                      }
                     >
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{integration.name}</h4>
-                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          integration.status === 'connected' 
-                            ? 'bg-green-100 text-green-800' 
-                            : integration.status === 'enabled'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <div
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            integration.status === 'connected'
+                              ? 'bg-green-100 text-green-800'
+                              : integration.status === 'enabled'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
                           {integration.status}
                         </div>
                       </div>
                       <p className="text-xs text-gray-600 capitalize mb-3">
                         {integration.type.replace('-', ' ')}
                       </p>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant={integration.status === 'connected' ? 'outline' : 'default'}
                         className="w-full"
                       >
-                        {integration.status === 'connected' ? 'Configure' : 
-                         integration.status === 'enabled' ? 'Manage' : 'Connect'}
+                        {integration.status === 'connected'
+                          ? 'Configure'
+                          : integration.status === 'enabled'
+                            ? 'Manage'
+                            : 'Connect'}
                       </Button>
                     </div>
                   ))}
@@ -252,11 +243,11 @@ export default function AIIntegration() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">AI Response Temperature</label>
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.1" 
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
                 defaultValue="0.7"
                 className="w-full"
               />
@@ -278,22 +269,45 @@ export default function AIIntegration() {
         <CardContent>
           <div className="space-y-4">
             {[
-              { name: 'Auto-generate insights', description: 'Automatically generate AI insights from data', enabled: true },
-              { name: 'Smart suggestions', description: 'Show AI-powered action suggestions', enabled: true },
-              { name: 'Auto-enrichment', description: 'Automatically enrich contact data', enabled: false },
-              { name: 'Workflow automation', description: 'Enable automated workflow execution', enabled: true },
-              { name: 'Email automation', description: 'AI-powered email responses and follow-ups', enabled: false },
+              {
+                name: 'Auto-generate insights',
+                description: 'Automatically generate AI insights from data',
+                enabled: true,
+              },
+              {
+                name: 'Smart suggestions',
+                description: 'Show AI-powered action suggestions',
+                enabled: true,
+              },
+              {
+                name: 'Auto-enrichment',
+                description: 'Automatically enrich contact data',
+                enabled: false,
+              },
+              {
+                name: 'Workflow automation',
+                description: 'Enable automated workflow execution',
+                enabled: true,
+              },
+              {
+                name: 'Email automation',
+                description: 'AI-powered email responses and follow-ups',
+                enabled: false,
+              },
             ].map((setting) => (
-              <div key={setting.name} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={setting.name}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div>
                   <h4 className="font-medium">{setting.name}</h4>
                   <p className="text-sm text-gray-600">{setting.description}</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     defaultChecked={setting.enabled}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
@@ -317,17 +331,22 @@ export default function AIIntegration() {
               { service: 'Clearbit API', status: 'configured', lastUsed: '1 hour ago' },
               { service: 'Twilio API', status: 'configured', lastUsed: '5 minutes ago' },
             ].map((api) => (
-              <div key={api.service} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={api.service}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <div>
                   <h4 className="font-medium">{api.service}</h4>
                   <p className="text-sm text-gray-600">Last used: {api.lastUsed}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    api.status === 'configured' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <div
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      api.status === 'configured'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {api.status === 'configured' ? 'Configured' : 'Not Configured'}
                   </div>
                   <Button size="sm" variant="outline">

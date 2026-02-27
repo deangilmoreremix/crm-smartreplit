@@ -105,7 +105,10 @@ class AIPredictiveAnalyticsService {
     contact: Contact,
     predictionTypes: PredictiveModel['type'][] = ['conversion', 'response_time', 'engagement']
   ): Promise<Prediction[]> {
-    logger.info('Generating predictions for contact', { contactId: contact.id, types: predictionTypes });
+    logger.info('Generating predictions for contact', {
+      contactId: contact.id,
+      types: predictionTypes,
+    });
 
     const predictions: Prediction[] = [];
 
@@ -120,7 +123,9 @@ class AIPredictiveAnalyticsService {
         const prediction = await this.generateSinglePrediction(contact, model);
         predictions.push(prediction);
       } catch (error) {
-        logger.error(`Failed to generate ${type} prediction`, error as Error, { contactId: contact.id });
+        logger.error(`Failed to generate ${type} prediction`, error as Error, {
+          contactId: contact.id,
+        });
       }
     }
 
@@ -148,7 +153,7 @@ class AIPredictiveAnalyticsService {
     const historicalData = this.generateHistoricalData(contact, timeframe, metrics);
 
     // Analyze trends
-    const trends = metrics.map(metric => this.analyzeSingleTrend(metric, historicalData[metric]));
+    const trends = metrics.map((metric) => this.analyzeSingleTrend(metric, historicalData[metric]));
 
     // Detect seasonality
     const seasonality = this.detectSeasonality(historicalData);
@@ -164,7 +169,7 @@ class AIPredictiveAnalyticsService {
       trends,
       seasonality,
       anomalies,
-      forecast
+      forecast,
     };
 
     // Cache the analysis
@@ -201,7 +206,7 @@ class AIPredictiveAnalyticsService {
       riskFactors,
       opportunities,
       recommendations,
-      nextReviewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+      nextReviewDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     };
   }
 
@@ -209,23 +214,25 @@ class AIPredictiveAnalyticsService {
   async predictConversionProbability(
     contact: Contact,
     timeframes: string[] = ['7d', '30d', '90d']
-  ): Promise<{
-    timeframe: string;
-    probability: number;
-    confidence: number;
-    keyFactors: string[];
-  }[]> {
+  ): Promise<
+    {
+      timeframe: string;
+      probability: number;
+      confidence: number;
+      keyFactors: string[];
+    }[]
+  > {
     const predictions = [];
 
     for (const timeframe of timeframes) {
       const probability = this.calculateConversionProbability(contact, timeframe);
       const factors = this.getConversionFactors(contact);
-      
+
       predictions.push({
         timeframe,
         probability,
         confidence: this.calculateConfidence(contact, factors),
-        keyFactors: factors.slice(0, 5) // Top 5 factors
+        keyFactors: factors.slice(0, 5), // Top 5 factors
       });
     }
 
@@ -244,13 +251,13 @@ class AIPredictiveAnalyticsService {
   }> {
     // Analyze historical response patterns
     const historicalResponses = this.getHistoricalResponseData(contact, communicationType);
-    
+
     // Calculate estimated response time
     const estimatedResponseTime = this.calculateAverageResponseTime(historicalResponses);
-    
+
     // Determine optimal send time
     const optimalSendTime = this.determineOptimalSendTime(contact, historicalResponses);
-    
+
     // Identify influencing factors
     const factors = this.getResponseTimeFactors(contact, communicationType);
 
@@ -258,7 +265,7 @@ class AIPredictiveAnalyticsService {
       estimatedResponseTime,
       confidence: this.calculateResponseTimeConfidence(historicalResponses),
       optimalSendTime,
-      factors
+      factors,
     };
   }
 
@@ -290,14 +297,14 @@ class AIPredictiveAnalyticsService {
     const variance = estimatedDealSize * 0.4; // 40% variance
     const range = {
       min: Math.max(0, estimatedDealSize - variance),
-      max: estimatedDealSize + variance
+      max: estimatedDealSize + variance,
     };
 
     return {
       estimatedDealSize: Math.round(estimatedDealSize),
       range: {
         min: Math.round(range.min),
-        max: Math.round(range.max)
+        max: Math.round(range.max),
       },
       confidence: this.calculateDealSizeConfidence(contact, context),
       factors: [
@@ -305,13 +312,16 @@ class AIPredictiveAnalyticsService {
         `Company factor: ${companyFactors.description}`,
         `Title influence: ${titleFactors.description}`,
         'Historical deal patterns',
-        'Market conditions'
-      ]
+        'Market conditions',
+      ],
     };
   }
 
   // Private Helper Methods
-  private async generateSinglePrediction(contact: Contact, model: PredictiveModel): Promise<Prediction> {
+  private async generateSinglePrediction(
+    contact: Contact,
+    model: PredictiveModel
+  ): Promise<Prediction> {
     const features = this.extractFeatures(contact, model.features);
     const value = this.runModel(model, features);
     const factors = this.analyzeFactors(contact, model);
@@ -327,18 +337,18 @@ class AIPredictiveAnalyticsService {
       factors,
       timeframe: this.getTimeframeForModel(model),
       createdAt: new Date().toISOString(),
-      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
     };
   }
 
   private getModelByType(type: PredictiveModel['type']): PredictiveModel | undefined {
-    return Array.from(this.models.values()).find(model => model.type === type);
+    return Array.from(this.models.values()).find((model) => model.type === type);
   }
 
   private extractFeatures(contact: Contact, requiredFeatures: string[]): Record<string, number> {
     const features: Record<string, number> = {};
 
-    requiredFeatures.forEach(feature => {
+    requiredFeatures.forEach((feature) => {
       switch (feature) {
         case 'ai_score':
           features[feature] = contact.aiScore || 0;
@@ -401,20 +411,20 @@ class AIPredictiveAnalyticsService {
         interest_level: 0.25,
         title_seniority: 0.2,
         engagement_history: 0.15,
-        source_quality: 0.1
+        source_quality: 0.1,
       },
       response_time: {
         interest_level: 0.4,
         engagement_history: 0.3,
         title_seniority: 0.2,
-        industry: 0.1
+        industry: 0.1,
       },
       deal_size: {
         company_size: 0.4,
         title_seniority: 0.3,
         industry: 0.2,
-        ai_score: 0.1
-      }
+        ai_score: 0.1,
+      },
     };
 
     return weights[model.type] || {};
@@ -461,8 +471,14 @@ class AIPredictiveAnalyticsService {
         type: 'conversion',
         accuracy: 85,
         lastTrained: new Date().toISOString(),
-        features: ['ai_score', 'interest_level', 'title_seniority', 'engagement_history', 'source_quality'],
-        performance: { precision: 0.82, recall: 0.78, f1Score: 0.80 }
+        features: [
+          'ai_score',
+          'interest_level',
+          'title_seniority',
+          'engagement_history',
+          'source_quality',
+        ],
+        performance: { precision: 0.82, recall: 0.78, f1Score: 0.8 },
       },
       {
         id: 'response_time_model_v1',
@@ -471,7 +487,7 @@ class AIPredictiveAnalyticsService {
         accuracy: 78,
         lastTrained: new Date().toISOString(),
         features: ['interest_level', 'engagement_history', 'title_seniority', 'industry'],
-        performance: { precision: 0.75, recall: 0.72, f1Score: 0.74 }
+        performance: { precision: 0.75, recall: 0.72, f1Score: 0.74 },
       },
       {
         id: 'deal_size_model_v1',
@@ -480,11 +496,11 @@ class AIPredictiveAnalyticsService {
         accuracy: 82,
         lastTrained: new Date().toISOString(),
         features: ['company_size', 'title_seniority', 'industry', 'ai_score'],
-        performance: { precision: 0.80, recall: 0.77, f1Score: 0.79 }
-      }
+        performance: { precision: 0.8, recall: 0.77, f1Score: 0.79 },
+      },
     ];
 
-    models.forEach(model => {
+    models.forEach((model) => {
       this.models.set(model.id, model);
     });
   }
@@ -521,7 +537,7 @@ class AIPredictiveAnalyticsService {
   private encodeSourceQuality(sources: string[]): number {
     if (!sources.length) return 0.3;
     const highQualitySources = ['Referral', 'LinkedIn', 'Webinar'];
-    const hasHighQuality = sources.some(s => highQualitySources.includes(s));
+    const hasHighQuality = sources.some((s) => highQualitySources.includes(s));
     return hasHighQuality ? 0.8 : 0.5;
   }
 
@@ -533,7 +549,7 @@ class AIPredictiveAnalyticsService {
       const daysSinceLastContact = Math.floor(
         (Date.now() - new Date(contact.lastConnected).getTime()) / (1000 * 60 * 60 * 24)
       );
-      score += Math.max(0, (14 - daysSinceLastContact) / 14 * 0.3);
+      score += Math.max(0, ((14 - daysSinceLastContact) / 14) * 0.3);
     }
 
     if (contact.aiScore) {
@@ -545,18 +561,22 @@ class AIPredictiveAnalyticsService {
 
   private isSeniorTitle(title: string): boolean {
     const seniorKeywords = ['ceo', 'cto', 'cfo', 'vp', 'director', 'president', 'founder'];
-    return seniorKeywords.some(keyword => title.toLowerCase().includes(keyword));
+    return seniorKeywords.some((keyword) => title.toLowerCase().includes(keyword));
   }
 
   // Additional helper methods for trend analysis, risk assessment, etc.
-  private generateHistoricalData(contact: Contact, timeframe: string, metrics: string[]): Record<string, any[]> {
+  private generateHistoricalData(
+    contact: Contact,
+    timeframe: string,
+    metrics: string[]
+  ): Record<string, any[]> {
     // Generate mock historical data for trend analysis
     const data: Record<string, any[]> = {};
-    
-    metrics.forEach(metric => {
+
+    metrics.forEach((metric) => {
       data[metric] = this.generateMetricHistory(contact, metric, timeframe);
     });
-    
+
     return data;
   }
 
@@ -564,15 +584,15 @@ class AIPredictiveAnalyticsService {
     // Generate mock time series data
     const points = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 180;
     const data = [];
-    
+
     for (let i = 0; i < points; i++) {
       const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
       data.push({
         date: date.toISOString().split('T')[0],
-        value: Math.random() * 100 + Math.sin(i / 10) * 20
+        value: Math.random() * 100 + Math.sin(i / 10) * 20,
       });
     }
-    
+
     return data.reverse();
   }
 
@@ -580,20 +600,20 @@ class AIPredictiveAnalyticsService {
     // Simple trend analysis
     const firstHalf = data.slice(0, Math.floor(data.length / 2));
     const secondHalf = data.slice(Math.floor(data.length / 2));
-    
+
     const firstAvg = firstHalf.reduce((sum, d) => sum + d.value, 0) / firstHalf.length;
     const secondAvg = secondHalf.reduce((sum, d) => sum + d.value, 0) / secondHalf.length;
-    
+
     const change = secondAvg - firstAvg;
     const direction = change > 5 ? 'increasing' : change < -5 ? 'decreasing' : 'stable';
-    
+
     return {
       metric,
       direction,
       strength: Math.abs(change) / firstAvg,
       significance: Math.abs(change) > 10 ? 'high' : Math.abs(change) > 5 ? 'medium' : 'low',
       dataPoints: data.length,
-      timeframe: '90d'
+      timeframe: '90d',
     };
   }
 
@@ -602,7 +622,7 @@ class AIPredictiveAnalyticsService {
     return {
       detected: Math.random() > 0.7,
       pattern: 'Weekly pattern detected',
-      confidence: 75
+      confidence: 75,
     };
   }
 
@@ -631,7 +651,7 @@ class AIPredictiveAnalyticsService {
         impact: 'high' as const,
         probability: 0.8,
         description: 'Contact shows minimal engagement',
-        mitigation: ['Re-engagement campaign', 'Different approach needed']
+        mitigation: ['Re-engagement campaign', 'Different approach needed'],
       });
     }
 
@@ -641,7 +661,7 @@ class AIPredictiveAnalyticsService {
         impact: 'medium' as const,
         probability: 0.6,
         description: 'Only email contact available',
-        mitigation: ['Find phone number', 'Use LinkedIn messaging']
+        mitigation: ['Find phone number', 'Use LinkedIn messaging'],
       });
     }
 
@@ -657,7 +677,7 @@ class AIPredictiveAnalyticsService {
         potential: 'high' as const,
         probability: 0.85,
         description: 'AI analysis indicates strong likelihood of conversion',
-        actions: ['Schedule demo', 'Send proposal', 'Connect decision makers']
+        actions: ['Schedule demo', 'Send proposal', 'Connect decision makers'],
       });
     }
 
@@ -666,10 +686,10 @@ class AIPredictiveAnalyticsService {
 
   private calculateRiskScore(factors: RiskAssessment['riskFactors']): number {
     if (factors.length === 0) return 20; // Low risk if no factors
-    
+
     const totalRisk = factors.reduce((sum, factor) => {
       const impactWeight = factor.impact === 'high' ? 0.4 : factor.impact === 'medium' ? 0.25 : 0.1;
-      return sum + (factor.probability * impactWeight * 100);
+      return sum + factor.probability * impactWeight * 100;
     }, 0);
 
     return Math.min(100, totalRisk);
@@ -702,9 +722,13 @@ class AIPredictiveAnalyticsService {
   }
 
   // Additional utility methods
-  private calculateModelConfidence(model: PredictiveModel, features: Record<string, number>): number {
+  private calculateModelConfidence(
+    model: PredictiveModel,
+    features: Record<string, number>
+  ): number {
     // Calculate confidence based on model accuracy and feature completeness
-    const featureCompleteness = Object.values(features).filter(v => v !== 0).length / Object.keys(features).length;
+    const featureCompleteness =
+      Object.values(features).filter((v) => v !== 0).length / Object.keys(features).length;
     return Math.round(model.accuracy * featureCompleteness);
   }
 
@@ -712,15 +736,15 @@ class AIPredictiveAnalyticsService {
     return [
       `Based on ${model.name} analysis`,
       `Using ${factors.length} key factors`,
-      `Model accuracy: ${model.accuracy}%`
+      `Model accuracy: ${model.accuracy}%`,
     ];
   }
 
   private analyzeFactors(contact: Contact, model: PredictiveModel): Prediction['factors'] {
-    return model.features.map(feature => ({
+    return model.features.map((feature) => ({
       factor: feature,
       impact: Math.random() * 2 - 1, // -1 to 1
-      weight: Math.random() // 0 to 1
+      weight: Math.random(), // 0 to 1
     }));
   }
 
@@ -730,9 +754,9 @@ class AIPredictiveAnalyticsService {
       response_time: '24-72 hours',
       deal_size: 'Deal closure',
       engagement: '7-30 days',
-      churn_risk: '60-180 days'
+      churn_risk: '60-180 days',
     };
-    
+
     return timeframes[model.type] || '30 days';
   }
 
@@ -750,12 +774,12 @@ class AIPredictiveAnalyticsService {
     return {
       totalModels: models.length,
       avgAccuracy: models.reduce((sum, m) => sum + m.accuracy, 0) / models.length,
-      modelBreakdown: models.map(m => ({
+      modelBreakdown: models.map((m) => ({
         name: m.name,
         type: m.type,
         accuracy: m.accuracy,
-        lastTrained: m.lastTrained
-      }))
+        lastTrained: m.lastTrained,
+      })),
     };
   }
 
@@ -765,7 +789,7 @@ class AIPredictiveAnalyticsService {
     return [
       { date: '2024-01-20', responseTime: 4.5 },
       { date: '2024-01-18', responseTime: 2.1 },
-      { date: '2024-01-15', responseTime: 6.8 }
+      { date: '2024-01-15', responseTime: 6.8 },
     ];
   }
 
@@ -784,32 +808,32 @@ class AIPredictiveAnalyticsService {
       'Historical response patterns',
       'Industry communication norms',
       'Contact seniority level',
-      'Communication channel preference'
+      'Communication channel preference',
     ];
   }
 
   private calculateResponseTimeConfidence(data: any[]): number {
     // Calculate confidence based on data quality and quantity
-    return Math.min(95, 60 + (data.length * 5));
+    return Math.min(95, 60 + data.length * 5);
   }
 
   // Deal size prediction helpers
   private getIndustryAverageDealSize(industry?: string): number {
     const averages: Record<string, number> = {
-      'Technology': 75000,
-      'Healthcare': 95000,
-      'Finance': 120000,
-      'Manufacturing': 85000,
-      'Retail': 45000,
-      'Education': 65000
+      Technology: 75000,
+      Healthcare: 95000,
+      Finance: 120000,
+      Manufacturing: 85000,
+      Retail: 45000,
+      Education: 65000,
     };
-    
+
     return averages[industry || 'Technology'] || 65000;
   }
 
   private analyzeCompanyFactors(contact: Contact): { multiplier: number; description: string } {
     if (!contact.company) return { multiplier: 1.0, description: 'Standard company size' };
-    
+
     const company = contact.company.toLowerCase();
     if (company.includes('corp') || company.includes('corporation')) {
       return { multiplier: 1.5, description: 'Large corporation' };
@@ -818,13 +842,13 @@ class AIPredictiveAnalyticsService {
     } else if (company.includes('llc')) {
       return { multiplier: 0.8, description: 'Small-medium company' };
     }
-    
+
     return { multiplier: 1.0, description: 'Standard company size' };
   }
 
   private analyzeTitleFactors(title: string): { multiplier: number; description: string } {
     if (!title) return { multiplier: 1.0, description: 'Standard role' };
-    
+
     const lower = title.toLowerCase();
     if (lower.includes('ceo') || lower.includes('cto') || lower.includes('founder')) {
       return { multiplier: 1.8, description: 'Executive level - high authority' };
@@ -833,28 +857,28 @@ class AIPredictiveAnalyticsService {
     } else if (lower.includes('manager')) {
       return { multiplier: 1.1, description: 'Management level - moderate influence' };
     }
-    
+
     return { multiplier: 0.9, description: 'Individual contributor' };
   }
 
   private calculateDealSizeConfidence(contact: Contact, context?: any): number {
     let confidence = 70; // Base confidence
-    
+
     if (contact.industry) confidence += 10;
     if (contact.title) confidence += 10;
     if (contact.company) confidence += 10;
     if (context?.previousDeals?.length > 0) confidence += 15;
-    
+
     return Math.min(95, confidence);
   }
 
   private calculateConfidence(contact: Contact, factors: string[]): number {
     let confidence = 60; // Base confidence
-    
+
     confidence += factors.length * 5; // More factors = higher confidence
     if (contact.aiScore) confidence += 15;
     if (contact.lastConnected) confidence += 10;
-    
+
     return Math.min(95, confidence);
   }
 }

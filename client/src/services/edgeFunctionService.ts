@@ -17,8 +17,8 @@ export async function generateCallScript(
       body: {
         contactInfo,
         callPurpose,
-        previousInteractions
-      }
+        previousInteractions,
+      },
     });
 
     if (error) {
@@ -39,18 +39,20 @@ export async function analyzeSentiment(text: string): Promise<{
 }> {
   try {
     const { data, error } = await supabase.functions.invoke('analyze-sentiment', {
-      body: { text }
+      body: { text },
     });
 
     if (error) {
       throw new Error(`Edge function error: ${error.message}`);
     }
 
-    return data || {
-      sentiment: 'neutral',
-      confidence: 0.5,
-      summary: 'Unable to analyze sentiment at this time.'
-    };
+    return (
+      data || {
+        sentiment: 'neutral',
+        confidence: 0.5,
+        summary: 'Unable to analyze sentiment at this time.',
+      }
+    );
   } catch (error) {
     console.error('Error calling sentiment analysis:', error);
     throw new Error('Failed to analyze sentiment. Please try again.');
@@ -60,7 +62,7 @@ export async function analyzeSentiment(text: string): Promise<{
 export async function draftEmailResponse(originalEmail: string, context?: string): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke('draft-email-response', {
-      body: { originalEmail, context }
+      body: { originalEmail, context },
     });
 
     if (error) {
@@ -78,7 +80,7 @@ export async function draftEmailResponse(originalEmail: string, context?: string
 export async function analyzeCustomerEmail(email: string): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke('analyze-customer-email', {
-      body: { email }
+      body: { email },
     });
     return data?.analysis || 'Unable to analyze email at this time.';
   } catch (error) {
@@ -90,7 +92,7 @@ export async function analyzeCustomerEmail(email: string): Promise<string> {
 export async function generateMeetingSummary(meeting: any): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke('generate-meeting-summary', {
-      body: { meeting }
+      body: { meeting },
     });
     return data?.summary || 'Unable to generate meeting summary at this time.';
   } catch (error) {
@@ -102,7 +104,7 @@ export async function generateMeetingSummary(meeting: any): Promise<string> {
 export async function analyzeMarketTrends(market: string): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke('analyze-market-trends', {
-      body: { market }
+      body: { market },
     });
     return data?.trends || 'Unable to analyze market trends at this time.';
   } catch (error) {
@@ -114,7 +116,7 @@ export async function analyzeMarketTrends(market: string): Promise<string> {
 export async function analyzeCompetitor(competitor: string): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke('analyze-competitor', {
-      body: { competitor }
+      body: { competitor },
     });
     return data?.analysis || 'Unable to analyze competitor at this time.';
   } catch (error) {
@@ -126,7 +128,7 @@ export async function analyzeCompetitor(competitor: string): Promise<string> {
 export async function generateSalesInsights(data: any): Promise<string> {
   try {
     const { data: result, error } = await supabase.functions.invoke('generate-sales-insights', {
-      body: { data }
+      body: { data },
     });
     return result?.insights || 'Unable to generate sales insights at this time.';
   } catch (error) {
@@ -138,7 +140,7 @@ export async function generateSalesInsights(data: any): Promise<string> {
 export async function generateSalesForecast(data: any): Promise<string> {
   try {
     const { data: result, error } = await supabase.functions.invoke('generate-sales-forecast', {
-      body: { data }
+      body: { data },
     });
     return result?.forecast || 'Unable to generate sales forecast at this time.';
   } catch (error) {

@@ -12,13 +12,13 @@ interface EmbeddableDashboardProps {
 const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
   apiUrl = '/api',
   tenantId,
-  className = ''
+  className = '',
 }) => {
   const [metrics, setMetrics] = useState({
     totalDeals: 0,
     totalValue: 0,
     activeContacts: 0,
-    conversionRate: 0
+    conversionRate: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +36,7 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
         totalDeals: 47,
         totalValue: 1250000,
         activeContacts: 234,
-        conversionRate: 23.5
+        conversionRate: 23.5,
       };
 
       // Simulate API delay
@@ -44,7 +44,6 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
         setMetrics(mockData);
         setLoading(false);
       }, 1000);
-
     } catch (err) {
       setError('Failed to load dashboard data');
       setLoading(false);
@@ -98,7 +97,10 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totalDeals}</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary" className="text-green-600">+12%</Badge> from last month
+              <Badge variant="secondary" className="text-green-600">
+                +12%
+              </Badge>{' '}
+              from last month
             </p>
           </CardContent>
         </Card>
@@ -109,11 +111,12 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ${(metrics.totalValue / 1000).toFixed(0)}k
-            </div>
+            <div className="text-2xl font-bold">${(metrics.totalValue / 1000).toFixed(0)}k</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary" className="text-green-600">+8%</Badge> from last month
+              <Badge variant="secondary" className="text-green-600">
+                +8%
+              </Badge>{' '}
+              from last month
             </p>
           </CardContent>
         </Card>
@@ -126,7 +129,10 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
           <CardContent>
             <div className="text-2xl font-bold">{metrics.activeContacts}</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary" className="text-blue-600">+5%</Badge> from last month
+              <Badge variant="secondary" className="text-blue-600">
+                +5%
+              </Badge>{' '}
+              from last month
             </p>
           </CardContent>
         </Card>
@@ -139,7 +145,10 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
           <CardContent>
             <div className="text-2xl font-bold">{metrics.conversionRate}%</div>
             <p className="text-xs text-muted-foreground">
-              <Badge variant="secondary" className="text-green-600">+2.1%</Badge> from last month
+              <Badge variant="secondary" className="text-green-600">
+                +2.1%
+              </Badge>{' '}
+              from last month
             </p>
           </CardContent>
         </Card>

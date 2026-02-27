@@ -9,7 +9,7 @@ import { getInitials } from '../../utils/avatars';
 const RecentActivity: React.FC = () => {
   const { isDark } = useTheme();
   const { contacts } = useContactStore();
-  
+
   // Updated upcomingDeals with contactId instead of direct avatar
   const upcomingDeals = [
     {
@@ -19,7 +19,7 @@ const RecentActivity: React.FC = () => {
       probability: '85%',
       dueDate: 'Tomorrow',
       contactId: '1', // Changed from contact+avatar to contactId
-      status: 'online'
+      status: 'online',
     },
     {
       id: 2,
@@ -28,7 +28,7 @@ const RecentActivity: React.FC = () => {
       probability: '60%',
       dueDate: 'Friday',
       contactId: '2',
-      status: 'offline'
+      status: 'offline',
     },
     {
       id: 3,
@@ -37,8 +37,8 @@ const RecentActivity: React.FC = () => {
       probability: '75%',
       dueDate: 'Next Week',
       contactId: '3',
-      status: 'online'
-    }
+      status: 'online',
+    },
   ];
 
   const [batchJobs, setBatchJobs] = React.useState([]);
@@ -51,11 +51,10 @@ const RecentActivity: React.FC = () => {
     //   const jobs = batchAPIService.getAllBatchJobs();
     //   setBatchJobs(jobs.slice(0, 2)); // Show latest 2 batch jobs
     // };
-    
     // // Background AI processing for all visible deals
     // const processDealsInBackground = async () => {
     //   const { aiOrchestrator } = await import('../../services/ai-orchestrator.service');
-    //   
+    //
     //   for (const deal of upcomingDeals) {
     //     // Generate insights without blocking UI
     //     try {
@@ -65,7 +64,7 @@ const RecentActivity: React.FC = () => {
     //         data: { dealId: deal.id, contactId: deal.contactId },
     //         options: { useCache: true }
     //       });
-    //       
+    //
     //       // Store insight ID for later retrieval
     //       setAIInsights(prev => new Map(prev.set(deal.id, insightId)));
     //     } catch (error) {
@@ -73,27 +72,34 @@ const RecentActivity: React.FC = () => {
     //     }
     //   }
     // };
-    
     // checkBatchJobs();
     // processDealsInBackground();
-    
     // const interval = setInterval(() => {
     //   checkBatchJobs();
     //   processDealsInBackground();
     // }, 30000);
-    
     // return () => clearInterval(interval);
   }, []);
 
   const recentActivities = [
-    ...batchJobs.map(job => ({
+    ...batchJobs.map((job) => ({
       type: 'batch_job',
-      icon: job.status === 'completed' ? CheckCircle : job.status === 'processing' ? TrendingUp : AlertCircle,
+      icon:
+        job.status === 'completed'
+          ? CheckCircle
+          : job.status === 'processing'
+            ? TrendingUp
+            : AlertCircle,
       title: `Batch ${job.type.replace('_', ' ')}`,
       description: `${job.itemCount} items - ${job.status}`,
       time: new Date(job.createdAt).toLocaleTimeString(),
-      color: job.status === 'completed' ? 'text-green-600' : job.status === 'processing' ? 'text-blue-600' : 'text-yellow-600',
-      assistantInsight: `Cost: $${job.estimatedCost.toFixed(4)} - 50% savings with overnight processing`
+      color:
+        job.status === 'completed'
+          ? 'text-green-600'
+          : job.status === 'processing'
+            ? 'text-blue-600'
+            : 'text-yellow-600',
+      assistantInsight: `Cost: $${job.estimatedCost.toFixed(4)} - 50% savings with overnight processing`,
     })),
     {
       type: 'deal',
@@ -102,8 +108,9 @@ const RecentActivity: React.FC = () => {
       description: 'TechCorp Solutions - $85,000',
       time: '2 hours ago',
       color: 'text-blue-600',
-      assistantInsight: 'Pipeline Bot: Deal velocity 23% above average. Recommend priority follow-up.',
-      assistantThreadId: 'thread_deal_techcorp_001'
+      assistantInsight:
+        'Pipeline Bot: Deal velocity 23% above average. Recommend priority follow-up.',
+      assistantThreadId: 'thread_deal_techcorp_001',
     },
     {
       type: 'task',
@@ -111,7 +118,7 @@ const RecentActivity: React.FC = () => {
       title: 'Task completed',
       description: 'Follow-up call with Innovation Labs',
       time: '4 hours ago',
-      color: 'text-green-600'
+      color: 'text-green-600',
     },
     {
       type: 'meeting',
@@ -119,7 +126,7 @@ const RecentActivity: React.FC = () => {
       title: 'Meeting scheduled',
       description: 'Product demo with Global Dynamics',
       time: '6 hours ago',
-      color: 'text-purple-600'
+      color: 'text-purple-600',
     },
     {
       type: 'alert',
@@ -127,8 +134,8 @@ const RecentActivity: React.FC = () => {
       title: 'Deal at risk',
       description: 'No activity on Enterprise Corp deal',
       time: '1 day ago',
-      color: 'text-yellow-600'
-    }
+      color: 'text-yellow-600',
+    },
   ];
 
   return (
@@ -136,8 +143,10 @@ const RecentActivity: React.FC = () => {
       {/* Upcoming Deals Section */}
       <div className={`${isDark ? 'bg-white/5' : 'bg-white'} backdrop-blur-xl rounded-2xl p-6`}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Upcoming Deals</h3>
-          <Link 
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Upcoming Deals
+          </h3>
+          <Link
             to="/deals"
             className={`flex items-center space-x-1 text-sm ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
           >
@@ -145,17 +154,17 @@ const RecentActivity: React.FC = () => {
             <ArrowRight size={14} />
           </Link>
         </div>
-        
+
         <div className="space-y-4">
           {upcomingDeals.map((deal) => {
             // Get contact data using contactId
             const contact = contacts[deal.contactId];
-            
+
             return (
-              <div 
-                key={deal.id} 
+              <div
+                key={deal.id}
                 className={`flex items-center justify-between p-4 ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50/80 hover:bg-gray-100/80'} rounded-xl transition-colors cursor-pointer`}
-                onClick={() => window.location.href = `/deals/${deal.id}`}
+                onClick={() => (window.location.href = `/deals/${deal.id}`)}
               >
                 <div className="flex items-center space-x-3">
                   {contact && (
@@ -168,27 +177,38 @@ const RecentActivity: React.FC = () => {
                     />
                   )}
                   <div>
-                    <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}>{deal.company}</h4>
+                    <h4
+                      className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}
+                    >
+                      {deal.company}
+                    </h4>
                     <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       {contact ? contact.name : 'Unknown Contact'}
                     </p>
                   </div>
                 </div>
                 <div className="text-right group">
-                  <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}>{deal.value}</p>
-                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{deal.probability} • {deal.dueDate}</p>
-                  
+                  <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}>
+                    {deal.value}
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {deal.probability} • {deal.dueDate}
+                  </p>
+
                   {/* AI Insights Tooltip - appears on hover */}
-                  <div className={`absolute right-0 top-full mt-2 w-72 p-3 rounded-lg shadow-lg z-50 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto ${
-                    isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-                  }`}>
+                  <div
+                    className={`absolute right-0 top-full mt-2 w-72 p-3 rounded-lg shadow-lg z-50 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto ${
+                      isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+                    }`}
+                  >
                     <div className="text-xs space-y-2">
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 rounded-full bg-green-400"></div>
                         <span className="font-medium">AI Risk Score: Low (15%)</span>
                       </div>
                       <p className="text-xs opacity-75">
-                        Strong engagement signals. Last contact 2 days ago. Recommend follow-up by Friday.
+                        Strong engagement signals. Last contact 2 days ago. Recommend follow-up by
+                        Friday.
                       </p>
                       <div className="flex items-center space-x-1 text-xs font-medium text-blue-400">
                         <span>🎯</span>
@@ -206,29 +226,48 @@ const RecentActivity: React.FC = () => {
       {/* Recent Activity Feed */}
       <div className={`${isDark ? 'bg-white/5' : 'bg-white'} backdrop-blur-xl rounded-2xl p-6`}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Recent Activity</h3>
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Recent Activity
+          </h3>
           <div className="flex items-center space-x-2">
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>24 completed</span>
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              24 completed
+            </span>
             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>•</span>
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>8 pending</span>
+            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              8 pending
+            </span>
           </div>
         </div>
-        
+
         <div className="space-y-4">
           {recentActivities.map((activity, index) => {
             const Icon = activity.icon;
             return (
-              <div key={index} className={`flex items-start space-x-3 p-3 ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50/80'} rounded-lg transition-colors`}>
-                <div className={`p-2 rounded-lg ${activity.color} ${isDark ? 'bg-opacity-10' : 'bg-opacity-10'}`}>
+              <div
+                key={index}
+                className={`flex items-start space-x-3 p-3 ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50/80'} rounded-lg transition-colors`}
+              >
+                <div
+                  className={`p-2 rounded-lg ${activity.color} ${isDark ? 'bg-opacity-10' : 'bg-opacity-10'}`}
+                >
                   <Icon className={`w-4 h-4 ${isDark ? activity.color : activity.color}`} />
                 </div>
                 <div className="flex-1">
-                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}>{activity.title}</h4>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{activity.description}</p>
+                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}>
+                    {activity.title}
+                  </h4>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {activity.description}
+                  </p>
                   {activity.assistantInsight && (
-                    <div className={`mt-2 p-2 rounded-md text-xs ${
-                      isDark ? 'bg-blue-400/10 border border-blue-400/20 text-blue-300' : 'bg-blue-50 border border-blue-200 text-blue-700'
-                    }`}>
+                    <div
+                      className={`mt-2 p-2 rounded-md text-xs ${
+                        isDark
+                          ? 'bg-blue-400/10 border border-blue-400/20 text-blue-300'
+                          : 'bg-blue-50 border border-blue-200 text-blue-700'
+                      }`}
+                    >
                       <div className="flex items-center space-x-1 mb-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
                         <span className="font-medium">Assistant Insight</span>
@@ -236,7 +275,9 @@ const RecentActivity: React.FC = () => {
                       {activity.assistantInsight}
                     </div>
                   )}
-                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>{activity.time}</p>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
+                    {activity.time}
+                  </p>
                 </div>
               </div>
             );

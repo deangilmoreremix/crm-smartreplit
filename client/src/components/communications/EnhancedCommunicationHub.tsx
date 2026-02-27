@@ -26,7 +26,7 @@ import {
   Frown,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../store/contactStore';
@@ -78,7 +78,7 @@ interface EnhancedCommunicationHubProps {
 
 const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
   selectedContact,
-  onContactSelect
+  onContactSelect,
 }) => {
   const { contacts } = useContactStore();
 
@@ -86,7 +86,9 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
   const [activeTab, setActiveTab] = useState('overview');
   const [activities, setActivities] = useState<CommunicationActivity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'email' | 'call' | 'meeting' | 'note' | 'sms' | 'video_email'>('all');
+  const [filterType, setFilterType] = useState<
+    'all' | 'email' | 'call' | 'meeting' | 'note' | 'sms' | 'video_email'
+  >('all');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [sentimentData, setSentimentData] = useState<any>(null);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
@@ -100,7 +102,7 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
       thumbnail: '/templates/sales-thumb.jpg',
       videoUrl: '/templates/sales-pitch.mp4',
       category: 'sales',
-      duration: 120
+      duration: 120,
     },
     {
       id: 'follow-up',
@@ -109,7 +111,7 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
       thumbnail: '/templates/followup-thumb.jpg',
       videoUrl: '/templates/follow-up.mp4',
       category: 'followup',
-      duration: 90
+      duration: 90,
     },
     {
       id: 'demo',
@@ -118,8 +120,8 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
       thumbnail: '/templates/demo-thumb.jpg',
       videoUrl: '/templates/demo.mp4',
       category: 'demo',
-      duration: 180
-    }
+      duration: 180,
+    },
   ]);
 
   // Communication templates
@@ -129,17 +131,18 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
       name: 'Welcome Email',
       type: 'email',
       category: 'onboarding',
-      content: 'Hi {{firstName}}, welcome to {{company}}! We\'re excited to have you on board.',
-      variables: ['firstName', 'company']
+      content: "Hi {{firstName}}, welcome to {{company}}! We're excited to have you on board.",
+      variables: ['firstName', 'company'],
     },
     {
       id: 'followup-sms',
       name: 'Follow-up SMS',
       type: 'sms',
       category: 'nurture',
-      content: 'Hi {{firstName}}, just checking in on our conversation from {{lastMeeting}}. Any questions?',
-      variables: ['firstName', 'lastMeeting']
-    }
+      content:
+        'Hi {{firstName}}, just checking in on our conversation from {{lastMeeting}}. Any questions?',
+      variables: ['firstName', 'lastMeeting'],
+    },
   ]);
 
   // Sample activities with enhanced data
@@ -150,13 +153,14 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
         type: 'email',
         contactId: '1',
         subject: 'Re: Enterprise Solutions Discussion',
-        content: 'Thank you for your interest in our enterprise solutions. I\'ve attached the detailed proposal for your review.',
+        content:
+          "Thank you for your interest in our enterprise solutions. I've attached the detailed proposal for your review.",
         timestamp: new Date('2024-01-20T10:30:00'),
         direction: 'outgoing',
         status: 'read',
         priority: 'high',
         sentiment: 'positive',
-        aiInsights: 'Strong engagement detected. High probability of conversion.'
+        aiInsights: 'Strong engagement detected. High probability of conversion.',
       },
       {
         id: '2',
@@ -167,7 +171,7 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
         direction: 'outgoing',
         status: 'delivered',
         duration: 25,
-        sentiment: 'positive'
+        sentiment: 'positive',
       },
       {
         id: '3',
@@ -177,19 +181,19 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
         timestamp: new Date('2024-01-19T15:00:00'),
         direction: 'incoming',
         status: 'read',
-        sentiment: 'positive'
+        sentiment: 'positive',
       },
       {
         id: '4',
         type: 'video_email',
         contactId: '2',
         subject: 'Product Demo',
-        content: 'Here\'s a personalized demo of our platform tailored to your needs.',
+        content: "Here's a personalized demo of our platform tailored to your needs.",
         timestamp: new Date('2024-01-18T09:00:00'),
         direction: 'outgoing',
         status: 'delivered',
-        sentiment: 'neutral'
-      }
+        sentiment: 'neutral',
+      },
     ];
     setActivities(sampleActivities);
   }, []);
@@ -200,14 +204,14 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
 
     setIsAnalyzing(true);
     try {
-      const messages = activities.map(a => a.content);
+      const messages = activities.map((a) => a.content);
       const analysis = await gpt5Service.analyzeSentiment(messages);
 
       setSentimentData({
         positive: analysis.filter((s: any) => s.sentiment === 'positive').length,
         neutral: analysis.filter((s: any) => s.sentiment === 'neutral').length,
         negative: analysis.filter((s: any) => s.sentiment === 'negative').length,
-        averageScore: analysis.reduce((sum: number, s: any) => sum + s.score, 0) / analysis.length
+        averageScore: analysis.reduce((sum: number, s: any) => sum + s.score, 0) / analysis.length,
       });
 
       // Generate AI suggestions
@@ -221,10 +225,11 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
   };
 
   // Filter activities
-  const filteredActivities = activities.filter(activity => {
+  const filteredActivities = activities.filter((activity) => {
     const matchesContact = !selectedContact || activity.contactId === selectedContact.id;
     const matchesType = filterType === 'all' || activity.type === filterType;
-    const matchesSearch = !searchTerm ||
+    const matchesSearch =
+      !searchTerm ||
       activity.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.subject?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -234,10 +239,14 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
   // Get sentiment icon
   const getSentimentIcon = (sentiment?: string) => {
     switch (sentiment) {
-      case 'positive': return <Heart className="h-4 w-4 text-green-500" />;
-      case 'neutral': return <Meh className="h-4 w-4 text-yellow-500" />;
-      case 'negative': return <Frown className="h-4 w-4 text-red-500" />;
-      default: return null;
+      case 'positive':
+        return <Heart className="h-4 w-4 text-green-500" />;
+      case 'neutral':
+        return <Meh className="h-4 w-4 text-yellow-500" />;
+      case 'negative':
+        return <Frown className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
     }
   };
 
@@ -323,14 +332,12 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
       <Card>
         <CardHeader>
           <CardTitle>Recent Communications</CardTitle>
-          <CardDescription>
-            Latest interactions across all channels
-          </CardDescription>
+          <CardDescription>Latest interactions across all channels</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {filteredActivities.slice(0, 5).map((activity) => {
-              const contact = Object.values(contacts).find(c => c.id === activity.contactId);
+              const contact = Object.values(contacts).find((c) => c.id === activity.contactId);
               return (
                 <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg">
                   <div className="p-2 bg-gray-100 rounded-lg">
@@ -419,13 +426,16 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
 
   // SMS Threading Tab
   const SMSThreadingTab = () => {
-    const smsActivities = activities.filter(a => a.type === 'sms');
-    const threadedSMS = smsActivities.reduce((threads, sms) => {
-      const key = sms.contactId;
-      if (!threads[key]) threads[key] = [];
-      threads[key].push(sms);
-      return threads;
-    }, {} as Record<string, CommunicationActivity[]>);
+    const smsActivities = activities.filter((a) => a.type === 'sms');
+    const threadedSMS = smsActivities.reduce(
+      (threads, sms) => {
+        const key = sms.contactId;
+        if (!threads[key]) threads[key] = [];
+        threads[key].push(sms);
+        return threads;
+      },
+      {} as Record<string, CommunicationActivity[]>
+    );
 
     return (
       <div className="space-y-6">
@@ -442,7 +452,7 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
 
         <div className="space-y-4">
           {Object.entries(threadedSMS).map(([contactId, messages]) => {
-            const contact = Object.values(contacts).find(c => c.id === contactId);
+            const contact = Object.values(contacts).find((c) => c.id === contactId);
             return (
               <Card key={contactId}>
                 <CardHeader>
@@ -463,11 +473,13 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
                         key={message.id}
                         className={`flex ${message.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`max-w-xs p-3 rounded-lg ${
-                          message.direction === 'outgoing'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}>
+                        <div
+                          className={`max-w-xs p-3 rounded-lg ${
+                            message.direction === 'outgoing'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          }`}
+                        >
                           <p className="text-sm">{message.content}</p>
                           <p className="text-xs opacity-70 mt-1">
                             {message.timestamp.toLocaleTimeString()}
@@ -511,12 +523,7 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              onClick={analyzeSentiment}
-              disabled={isAnalyzing}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={analyzeSentiment} disabled={isAnalyzing} variant="outline" size="sm">
               {isAnalyzing ? (
                 <RotateCcw className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -569,12 +576,16 @@ const EnhancedCommunicationHub: React.FC<EnhancedCommunicationHubProps> = ({
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center">
                         <Heart className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-green-600">{sentimentData.positive}</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {sentimentData.positive}
+                        </p>
                         <p className="text-sm text-gray-600">Positive</p>
                       </div>
                       <div className="text-center">
                         <Meh className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-yellow-600">{sentimentData.neutral}</p>
+                        <p className="text-2xl font-bold text-yellow-600">
+                          {sentimentData.neutral}
+                        </p>
                         <p className="text-sm text-gray-600">Neutral</p>
                       </div>
                       <div className="text-center">

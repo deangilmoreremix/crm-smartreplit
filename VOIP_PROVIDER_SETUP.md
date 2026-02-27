@@ -7,11 +7,13 @@ Your SmartCRM now supports pluggable VoIP providers, allowing users to configure
 ## Supported Providers
 
 ### 1. Twilio Video
+
 - **Website**: https://twilio.com
 - **Cost**: $0.008/minute + infrastructure fees
 - **Features**: Enterprise-grade, global infrastructure, recording, screen sharing
 
 ### 2. Daily.co
+
 - **Website**: https://daily.co
 - **Cost**: $0.004/minute
 - **Features**: Developer-friendly, real-time APIs, HIPAA compliant
@@ -81,16 +83,16 @@ Your SmartCRM now supports pluggable VoIP providers, allowing users to configure
 
 ## Features by Provider
 
-| Feature | Twilio | Daily.co | Custom WebRTC |
-|---------|--------|----------|----------------|
-| Video Calling | ✅ | ✅ | ✅ |
-| Audio Calling | ✅ | ✅ | ✅ |
-| Screen Sharing | ✅ | ✅ | ✅ |
-| Recording | ✅ | ✅ | ✅ |
-| Group Calls | ✅ | ✅ | ❌ |
-| HIPAA Compliant | ❌ | ✅ | ❌ |
-| Cost/Minute | $0.008 | $0.004 | $0 |
-| Setup Complexity | Medium | Easy | High |
+| Feature          | Twilio | Daily.co | Custom WebRTC |
+| ---------------- | ------ | -------- | ------------- |
+| Video Calling    | ✅     | ✅       | ✅            |
+| Audio Calling    | ✅     | ✅       | ✅            |
+| Screen Sharing   | ✅     | ✅       | ✅            |
+| Recording        | ✅     | ✅       | ✅            |
+| Group Calls      | ✅     | ✅       | ❌            |
+| HIPAA Compliant  | ❌     | ✅       | ❌            |
+| Cost/Minute      | $0.008 | $0.004   | $0            |
+| Setup Complexity | Medium | Easy     | High          |
 
 ## Troubleshooting
 
@@ -114,11 +116,13 @@ Your SmartCRM now supports pluggable VoIP providers, allowing users to configure
 ### Provider-Specific Issues
 
 #### Twilio Issues
+
 - **403 Forbidden**: Check API Key permissions
 - **Room creation failed**: Verify Account SID and Auth Token
 - **Recording failed**: Check recording permissions
 
 #### Daily.co Issues
+
 - **401 Unauthorized**: Verify API Key
 - **Room not found**: Check domain configuration
 - **Recording failed**: Verify recording is enabled in room properties
@@ -181,12 +185,14 @@ interface VoIPProvider {
 ## Cost Optimization
 
 ### Twilio Cost Optimization
+
 - Use the smallest room size needed
 - Disable recording when not required
 - Monitor usage in Twilio Console
 - Consider reserved instances for high usage
 
 ### Daily.co Cost Optimization
+
 - Use room properties to limit features when not needed
 - Implement call time limits
 - Monitor usage in Daily.co dashboard
@@ -213,6 +219,7 @@ interface VoIPProvider {
 ## Support
 
 For issues with:
+
 - **Twilio**: Check https://status.twilio.com and https://support.twilio.com
 - **Daily.co**: Check https://status.daily.co and their documentation
 - **SmartCRM VoIP**: Check application logs and contact support

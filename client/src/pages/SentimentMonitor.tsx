@@ -1,4 +1,3 @@
-
 import React from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
@@ -7,10 +6,10 @@ import { useContactStore } from '../hooks/useContactStore';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import Avatar from '../components/ui/Avatar';
-import { 
-  Heart, 
-  Frown, 
-  Smile, 
+import {
+  Heart,
+  Frown,
+  Smile,
   Meh,
   TrendingUp,
   TrendingDown,
@@ -19,7 +18,7 @@ import {
   BarChart3,
   Activity,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
 } from 'lucide-react';
 
 const SentimentMonitor: React.FC = () => {
@@ -39,7 +38,11 @@ const SentimentMonitor: React.FC = () => {
 
   // Get initials for avatar
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   };
 
   const sentimentInsights = [
@@ -48,69 +51,112 @@ const SentimentMonitor: React.FC = () => {
       insight: 'Customer satisfaction increased 15% this week',
       detail: 'Recent product updates driving positive feedback',
       sentiment: 'positive',
-      impact: 'High'
+      impact: 'High',
     },
     {
       type: 'Neutral Pattern',
       insight: 'Technical support conversations remain neutral',
       detail: 'Opportunities to improve support experience',
       sentiment: 'neutral',
-      impact: 'Medium'
+      impact: 'Medium',
     },
     {
       type: 'Negative Alert',
       insight: '3 customers expressed pricing concerns',
       detail: 'Consider value proposition refinement',
       sentiment: 'negative',
-      impact: 'Critical'
+      impact: 'Critical',
     },
     {
       type: 'Engagement Boost',
       insight: 'Video calls generate 40% more positive sentiment',
       detail: 'Prioritize face-to-face interactions',
       sentiment: 'positive',
-      impact: 'Strategic'
-    }
+      impact: 'Strategic',
+    },
   ];
 
   const recentSentimentActivity = [
-    { contact: 'Jane Doe', message: 'Love the new features!', sentiment: 'positive', score: 0.9, time: '5 min ago' },
-    { contact: 'Darlene Robertson', message: 'Need clarification on pricing', sentiment: 'neutral', score: 0.1, time: '15 min ago' },
-    { contact: 'Wade Warren', message: 'This is exactly what we needed', sentiment: 'positive', score: 0.8, time: '1 hour ago' },
-    { contact: 'Kathryn Murphy', message: 'Having some technical issues', sentiment: 'negative', score: -0.6, time: '2 hours ago' },
-    { contact: 'Jerome Bell', message: 'Thanks for the quick response', sentiment: 'positive', score: 0.7, time: '3 hours ago' }
+    {
+      contact: 'Jane Doe',
+      message: 'Love the new features!',
+      sentiment: 'positive',
+      score: 0.9,
+      time: '5 min ago',
+    },
+    {
+      contact: 'Darlene Robertson',
+      message: 'Need clarification on pricing',
+      sentiment: 'neutral',
+      score: 0.1,
+      time: '15 min ago',
+    },
+    {
+      contact: 'Wade Warren',
+      message: 'This is exactly what we needed',
+      sentiment: 'positive',
+      score: 0.8,
+      time: '1 hour ago',
+    },
+    {
+      contact: 'Kathryn Murphy',
+      message: 'Having some technical issues',
+      sentiment: 'negative',
+      score: -0.6,
+      time: '2 hours ago',
+    },
+    {
+      contact: 'Jerome Bell',
+      message: 'Thanks for the quick response',
+      sentiment: 'positive',
+      score: 0.7,
+      time: '3 hours ago',
+    },
   ];
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return Smile;
-      case 'negative': return Frown;
-      default: return Meh;
+      case 'positive':
+        return Smile;
+      case 'negative':
+        return Frown;
+      default:
+        return Meh;
     }
   };
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-500';
-      case 'negative': return 'text-red-500';
-      default: return 'text-yellow-500';
+      case 'positive':
+        return 'text-green-500';
+      case 'negative':
+        return 'text-red-500';
+      default:
+        return 'text-yellow-500';
     }
   };
 
   const getSentimentBadgeColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'bg-green-50 text-green-700 border-green-200';
-      case 'negative': return 'bg-red-50 text-red-700 border-red-200';
-      default: return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'positive':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'negative':
+        return 'bg-red-50 text-red-700 border-red-200';
+      default:
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
     }
   };
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'Critical': return 'bg-red-500/20 text-red-500';
-      case 'High': return 'bg-orange-500/20 text-orange-500';
-      case 'Strategic': return 'bg-blue-500/20 text-blue-500';
-      default: return 'bg-gray-500/20 text-gray-500';
+      case 'Critical':
+        return 'bg-red-500/20 text-red-500';
+      case 'High':
+        return 'bg-orange-500/20 text-orange-500';
+      case 'Strategic':
+        return 'bg-blue-500/20 text-blue-500';
+      default:
+        return 'bg-gray-500/20 text-gray-500';
     }
   };
 
@@ -137,9 +183,13 @@ const SentimentMonitor: React.FC = () => {
 
         {/* Sentiment Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Overall Sentiment
               </CardTitle>
               <Heart className="h-4 w-4 text-purple-500" />
@@ -155,9 +205,13 @@ const SentimentMonitor: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Positive Messages
               </CardTitle>
               <ThumbsUp className="h-4 w-4 text-green-500" />
@@ -173,9 +227,13 @@ const SentimentMonitor: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Neutral Messages
               </CardTitle>
               <Meh className="h-4 w-4 text-yellow-500" />
@@ -191,9 +249,13 @@ const SentimentMonitor: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <Card
+            className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <CardTitle
+                className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+              >
                 Negative Messages
               </CardTitle>
               <ThumbsDown className="h-4 w-4 text-red-500" />
@@ -223,47 +285,59 @@ const SentimentMonitor: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 w-24">
                   <Smile className="h-4 w-4 text-green-500" />
-                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Positive</span>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Positive
+                  </span>
                 </div>
                 <div className="flex-1 bg-gray-200 rounded-full h-3 relative">
-                  <div 
-                    className="bg-green-500 h-3 rounded-full" 
+                  <div
+                    className="bg-green-500 h-3 rounded-full"
                     style={{ width: `${(positiveCount / totalMessages) * 100}%` }}
                   ></div>
                 </div>
-                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} w-16 text-right`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} w-16 text-right`}
+                >
                   {positiveCount}
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 w-24">
                   <Meh className="h-4 w-4 text-yellow-500" />
-                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Neutral</span>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Neutral
+                  </span>
                 </div>
                 <div className="flex-1 bg-gray-200 rounded-full h-3 relative">
-                  <div 
-                    className="bg-yellow-500 h-3 rounded-full" 
+                  <div
+                    className="bg-yellow-500 h-3 rounded-full"
                     style={{ width: `${(neutralCount / totalMessages) * 100}%` }}
                   ></div>
                 </div>
-                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} w-16 text-right`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} w-16 text-right`}
+                >
                   {neutralCount}
                 </span>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 w-24">
                   <Frown className="h-4 w-4 text-red-500" />
-                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Negative</span>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Negative
+                  </span>
                 </div>
                 <div className="flex-1 bg-gray-200 rounded-full h-3 relative">
-                  <div 
-                    className="bg-red-500 h-3 rounded-full" 
+                  <div
+                    className="bg-red-500 h-3 rounded-full"
                     style={{ width: `${(negativeCount / totalMessages) * 100}%` }}
                   ></div>
                 </div>
-                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} w-16 text-right`}>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'} w-16 text-right`}
+                >
                   {negativeCount}
                 </span>
               </div>
@@ -283,12 +357,17 @@ const SentimentMonitor: React.FC = () => {
             {sentimentInsights.map((insight, index) => {
               const SentimentIcon = getSentimentIcon(insight.sentiment);
               return (
-                <div key={index} className={`p-4 rounded-lg border ${
-                  isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                }`}>
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <SentimentIcon className={`h-5 w-5 ${getSentimentColor(insight.sentiment)}`} />
+                      <SentimentIcon
+                        className={`h-5 w-5 ${getSentimentColor(insight.sentiment)}`}
+                      />
                       <div>
                         <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                           {insight.type}
@@ -324,19 +403,28 @@ const SentimentMonitor: React.FC = () => {
               {topContacts.map((contact) => {
                 const sentiments = ['positive', 'neutral', 'negative'];
                 const randomSentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
-                const score = randomSentiment === 'positive' ? Math.random() * 0.5 + 0.5 :
-                              randomSentiment === 'negative' ? Math.random() * -0.5 - 0.1 :
-                              Math.random() * 0.4 - 0.2;
-                
+                const score =
+                  randomSentiment === 'positive'
+                    ? Math.random() * 0.5 + 0.5
+                    : randomSentiment === 'negative'
+                      ? Math.random() * -0.5 - 0.1
+                      : Math.random() * 0.4 - 0.2;
+
                 return (
-                  <div 
-                    key={contact.id} 
+                  <div
+                    key={contact.id}
                     className={`flex items-center space-x-3 p-4 rounded-lg border ${
-                      randomSentiment === 'positive' 
-                        ? (isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200') :
-                      randomSentiment === 'negative' 
-                        ? (isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200') :
-                        (isDark ? 'bg-yellow-900/20 border-yellow-800' : 'bg-yellow-50 border-yellow-200')
+                      randomSentiment === 'positive'
+                        ? isDark
+                          ? 'bg-green-900/20 border-green-800'
+                          : 'bg-green-50 border-green-200'
+                        : randomSentiment === 'negative'
+                          ? isDark
+                            ? 'bg-red-900/20 border-red-800'
+                            : 'bg-red-50 border-red-200'
+                          : isDark
+                            ? 'bg-yellow-900/20 border-yellow-800'
+                            : 'bg-yellow-50 border-yellow-200'
                     }`}
                   >
                     <Avatar
@@ -345,18 +433,23 @@ const SentimentMonitor: React.FC = () => {
                       fallback={getInitials(contact.name)}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium text-sm truncate ${
-                        isDark ? 'text-white' : 'text-gray-900'
-                      }`}>
+                      <p
+                        className={`font-medium text-sm truncate ${
+                          isDark ? 'text-white' : 'text-gray-900'
+                        }`}
+                      >
                         {contact.name}
                       </p>
-                      <p className={`text-sm truncate ${
-                        isDark ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
+                      <p
+                        className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                      >
                         {contact.company || 'No company'}
                       </p>
                       <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline" className={`text-xs ${getSentimentBadgeColor(randomSentiment)}`}>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${getSentimentBadgeColor(randomSentiment)}`}
+                        >
                           {randomSentiment}
                         </Badge>
                         <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -384,34 +477,33 @@ const SentimentMonitor: React.FC = () => {
               const SentimentIcon = getSentimentIcon(activity.sentiment);
               return (
                 <div key={index} className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-full ${
-                    activity.sentiment === 'positive' 
-                      ? 'bg-green-500/20 text-green-500' :
-                    activity.sentiment === 'negative' 
-                      ? 'bg-red-500/20 text-red-500' :
-                      'bg-yellow-500/20 text-yellow-500'
-                  }`}>
+                  <div
+                    className={`p-2 rounded-full ${
+                      activity.sentiment === 'positive'
+                        ? 'bg-green-500/20 text-green-500'
+                        : activity.sentiment === 'negative'
+                          ? 'bg-red-500/20 text-red-500'
+                          : 'bg-yellow-500/20 text-yellow-500'
+                    }`}
+                  >
                     <SentimentIcon className="h-4 w-4" />
                   </div>
-                  <Avatar
-                    size="sm"
-                    fallback={getInitials(activity.contact)}
-                  />
+                  <Avatar size="sm" fallback={getInitials(activity.contact)} />
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium text-sm truncate ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}>
+                    <p
+                      className={`font-medium text-sm truncate ${
+                        isDark ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
                       {activity.contact}
                     </p>
-                    <p className={`text-sm truncate ${
-                      isDark ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
+                    <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       "{activity.message}" • {activity.time}
                     </p>
                   </div>
                   <div className="flex flex-col items-end">
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={`text-xs ${getSentimentBadgeColor(activity.sentiment)}`}
                     >
                       {activity.sentiment}

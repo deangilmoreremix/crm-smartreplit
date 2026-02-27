@@ -4,7 +4,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import AdvancedFeaturesDashboard from '../components/AdvancedFeaturesDashboard';
-import { 
+import {
   CheckCircle,
   Clock,
   Zap,
@@ -14,7 +14,7 @@ import {
   BarChart3,
   Users,
   Settings,
-  Globe
+  Globe,
 } from 'lucide-react';
 
 export default function SystemOverview() {
@@ -28,7 +28,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Contact Management', 'Basic Dashboard', 'User Authentication', 'Data Storage'],
-      icon: Database
+      icon: Database,
     },
     {
       id: 'phase2',
@@ -37,7 +37,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Pipeline Stages', 'Deal Cards', 'Sales Analytics', 'Forecasting'],
-      icon: BarChart3
+      icon: BarChart3,
     },
     {
       id: 'phase3',
@@ -46,7 +46,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Task Board', 'Calendar View', 'Activity Timeline', 'Reminders'],
-      icon: CheckCircle
+      icon: CheckCircle,
     },
     {
       id: 'phase4',
@@ -55,7 +55,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Email Composer', 'Templates', 'Communication Log', 'AI Suggestions'],
-      icon: Globe
+      icon: Globe,
     },
     {
       id: 'phase5',
@@ -64,7 +64,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Sales Reports', 'Pipeline Analytics', 'Performance Metrics', 'Custom Dashboards'],
-      icon: BarChart3
+      icon: BarChart3,
     },
     {
       id: 'phase6',
@@ -73,7 +73,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['AI Insights', 'Smart Suggestions', 'Automation Rules', 'Workflow Builder'],
-      icon: Zap
+      icon: Zap,
     },
     {
       id: 'phase7',
@@ -82,7 +82,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Responsive Design', 'Touch Gestures', 'Offline Support', 'Mobile Navigation'],
-      icon: Activity
+      icon: Activity,
     },
     {
       id: 'phase8',
@@ -91,7 +91,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['API Integrations', 'Webhook Management', 'Data Sync', 'Health Monitoring'],
-      icon: Settings
+      icon: Settings,
     },
     {
       id: 'phase9',
@@ -100,7 +100,7 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Advanced Search', 'Bulk Operations', 'Custom Fields', 'Data Export/Import'],
-      icon: Users
+      icon: Users,
     },
     {
       id: 'phase10',
@@ -109,8 +109,8 @@ export default function SystemOverview() {
       status: 'completed',
       completion: 100,
       features: ['Performance Monitoring', 'Security Audit', 'Compliance Tools', 'Optimization'],
-      icon: Shield
-    }
+      icon: Shield,
+    },
   ];
 
   const systemMetrics = {
@@ -123,10 +123,11 @@ export default function SystemOverview() {
     userSatisfaction: 94.8,
     dataProcessed: '2.4TB',
     activeUsers: 1247,
-    apiCalls: 45672
+    apiCalls: 45672,
   };
 
-  const completionPercentage = (systemMetrics.completedFeatures / systemMetrics.totalFeatures) * 100;
+  const completionPercentage =
+    (systemMetrics.completedFeatures / systemMetrics.totalFeatures) * 100;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -136,7 +137,9 @@ export default function SystemOverview() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">🎉 SmartCRM Development Complete!</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            🎉 SmartCRM Development Complete!
+          </h1>
           <p className="text-xl text-gray-600 mb-4">
             All 10 phases successfully implemented with 89 advanced features
           </p>
@@ -176,7 +179,9 @@ export default function SystemOverview() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600 mb-1">{systemMetrics.performance}%</div>
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {systemMetrics.performance}%
+              </div>
               <p className="text-sm text-gray-600">Score</p>
             </CardContent>
           </Card>
@@ -189,7 +194,9 @@ export default function SystemOverview() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600 mb-1">{systemMetrics.security}%</div>
+              <div className="text-2xl font-bold text-purple-600 mb-1">
+                {systemMetrics.security}%
+              </div>
               <p className="text-sm text-gray-600">Score</p>
             </CardContent>
           </Card>
@@ -202,7 +209,9 @@ export default function SystemOverview() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600 mb-1">{systemMetrics.userSatisfaction}%</div>
+              <div className="text-2xl font-bold text-orange-600 mb-1">
+                {systemMetrics.userSatisfaction}%
+              </div>
               <p className="text-sm text-gray-600">Rating</p>
             </CardContent>
           </Card>
@@ -212,21 +221,21 @@ export default function SystemOverview() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-xl">Development Journey - All Phases Complete</CardTitle>
-            <p className="text-gray-600">Comprehensive SmartCRM implementation across 10 strategic phases</p>
+            <p className="text-gray-600">
+              Comprehensive SmartCRM implementation across 10 strategic phases
+            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {phases.map((phase, index) => {
                 const IconComponent = phase.icon;
                 return (
-                  <div 
+                  <div
                     key={phase.id}
                     className={`p-4 border rounded-lg cursor-pointer transition-all hover:border-green-300 ${
                       selectedPhase === phase.id ? 'border-green-500 bg-green-50' : ''
                     }`}
-                    onClick={() => setSelectedPhase(
-                      selectedPhase === phase.id ? null : phase.id
-                    )}
+                    onClick={() => setSelectedPhase(selectedPhase === phase.id ? null : phase.id)}
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -234,18 +243,18 @@ export default function SystemOverview() {
                       </div>
                       <span className="text-sm font-medium text-green-600">Phase {index + 1}</span>
                     </div>
-                    
+
                     <h3 className="font-semibold mb-2">{phase.name}</h3>
                     <p className="text-sm text-gray-600 mb-3">{phase.description}</p>
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span>Progress</span>
                         <span className="font-medium text-green-600">{phase.completion}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full transition-all" 
+                        <div
+                          className="bg-green-500 h-2 rounded-full transition-all"
                           style={{ width: `${phase.completion}%` }}
                         ></div>
                       </div>
@@ -286,37 +295,40 @@ export default function SystemOverview() {
                   {
                     title: 'Complete CRM Foundation',
                     description: 'Full contact management, deal pipeline, and task tracking system',
-                    icon: Database
+                    icon: Database,
                   },
                   {
                     title: 'AI-Powered Intelligence',
                     description: 'Smart insights, automated suggestions, and workflow automation',
-                    icon: Zap
+                    icon: Zap,
                   },
                   {
                     title: 'Enterprise Security',
                     description: 'Advanced permissions, audit trails, and compliance tools',
-                    icon: Shield
+                    icon: Shield,
                   },
                   {
                     title: 'Mobile-First Design',
                     description: 'Responsive interface with touch gestures and offline support',
-                    icon: Activity
+                    icon: Activity,
                   },
                   {
                     title: 'Comprehensive Analytics',
                     description: 'Advanced reporting, forecasting, and business intelligence',
-                    icon: BarChart3
+                    icon: BarChart3,
                   },
                   {
                     title: 'Integration Ecosystem',
                     description: 'API management, webhooks, and external service connections',
-                    icon: Globe
-                  }
+                    icon: Globe,
+                  },
                 ].map((achievement) => {
                   const IconComponent = achievement.icon;
                   return (
-                    <div key={achievement.title} className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                    <div
+                      key={achievement.title}
+                      className="flex items-start gap-3 p-3 bg-green-50 rounded-lg"
+                    >
                       <div className="p-2 bg-green-100 rounded-lg">
                         <IconComponent className="w-4 h-4 text-green-600" />
                       </div>
@@ -345,7 +357,7 @@ export default function SystemOverview() {
                   { label: 'Store Actions', value: '234', color: 'text-indigo-600' },
                   { label: 'Type Definitions', value: '178', color: 'text-pink-600' },
                   { label: 'Test Cases', value: '145', color: 'text-teal-600' },
-                  { label: 'Documentation', value: '95%', color: 'text-red-600' }
+                  { label: 'Documentation', value: '95%', color: 'text-red-600' },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center p-3 border rounded-lg">
                     <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
@@ -380,10 +392,11 @@ export default function SystemOverview() {
                 </div>
                 <h3 className="font-semibold text-blue-900 mb-2">Ready for Production</h3>
                 <p className="text-sm text-blue-700">
-                  All core features implemented and tested. System is production-ready with comprehensive functionality.
+                  All core features implemented and tested. System is production-ready with
+                  comprehensive functionality.
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Users className="w-6 h-6 text-purple-600" />
@@ -393,7 +406,7 @@ export default function SystemOverview() {
                   Comprehensive documentation and user guides available for smooth team onboarding.
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Zap className="w-6 h-6 text-green-600" />
@@ -404,7 +417,7 @@ export default function SystemOverview() {
                 </p>
               </div>
             </div>
-            
+
             <div className="mt-6 text-center">
               <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                 🚀 Deploy to Production
@@ -419,8 +432,8 @@ export default function SystemOverview() {
             🎉 Congratulations! SmartCRM Development Complete!
           </h2>
           <p className="text-gray-700">
-            You now have a fully-featured, enterprise-grade CRM system with AI integration, 
-            mobile responsiveness, advanced analytics, and comprehensive security features.
+            You now have a fully-featured, enterprise-grade CRM system with AI integration, mobile
+            responsiveness, advanced analytics, and comprehensive security features.
           </p>
         </div>
       </div>

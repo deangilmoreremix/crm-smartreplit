@@ -1,21 +1,62 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { User, Session, AuthError, AuthChangeEvent, Subscription } from '@supabase/supabase-js';
+/**
+ * AuthContext - Centralized Authentication State Manager
+ *
+ * This provider handles:
+ * - Session management with Supabase
+ * - Tab synchronization (sign out in another tab)
+ * - Token refresh and expiration handling
+ * - Network offline/online detection
+ * - Deep link authentication
+ * - Loading states to prevent page flicker
+ *
+ * Exposes:
+ * - session: Current Supabase session
+ * - user: Current user object
+ * - loading: Initial loading state
+ * - isAuthenticated: Boolean for auth status
+ * - isSessionReady: Boolean for session resolution complete
+ */
+
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { User, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-// Constants
-const DEV_BYPASS_PASSWORD = import.meta.env.VITE_DEV_BYPASS_PASSWORD || 'dev-bypass-password-change-in-production';
-const ALLOWED_DEV_DOMAINS = ['localhost', '127.0.0.1', 'replit.dev', 'github.dev', 'app.github.dev'];
+// Dev bypass configuration - MUST be set via environment variable in production
+const DEV_BYPASS_PASSWORD = (import.meta as unknown as { env: Record<string, string> }).env.VITE_DEV_BYPASS_PASSWORD || '';
+const ALLOWED_DEV_DOMAINS = [
+  'localhost',
+  '127.0.0.1',
+  'replit.dev',
+  'github.dev',
+  'app.github.dev',
+];
 const APP_CONTEXT = 'smartcrm';
 const EMAIL_TEMPLATE_SET = 'smartcrm';
 
-// Retry tracking to prevent infinite loops
-const MAX_RETRY_ATTEMPTS = 3;
-const RETRY_COOLDOWN_MS = 5000;
-let retryCount = 0;
-let lastRetryTime = 0;
+// Session storage keys for cross-tab sync
+const SESSION_SYNC_KEY = 'smartcrm-session-sync';
+const SESSION_SYNC_EVENT = 'smartcrm-session-change';
 
 // Types
-type AuthSubscription = Subscription;
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  isSessionReady: boolean;
+  isAuthenticated: boolean;
+  authError: string | null;
+  isOffline: boolean;
+}
+
+interface AuthContextType extends AuthState {
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, options?: any) => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  refreshSession: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Utility functions
 const validateEmail = (email: string): boolean => {
@@ -23,56 +64,16 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-const shouldRetryAuth = (): boolean => {
-  const now = Date.now();
-  if (now - lastRetryTime < RETRY_COOLDOWN_MS) {
-    return false;
-  }
-  if (retryCount >= MAX_RETRY_ATTEMPTS) {
-    console.warn('Max auth retry attempts reached, stopping retries');
-    return false;
-  }
-  return true;
+const isDevelopmentEnvironment = (): boolean => {
+  return (
+    ALLOWED_DEV_DOMAINS.some(
+      (domain) =>
+        window.location.hostname === domain || window.location.hostname.endsWith('.' + domain)
+    ) &&
+    !window.location.hostname.includes('replit.app') &&
+    !window.location.hostname.includes('production')
+  );
 };
-
-const recordRetry = () => {
-  retryCount++;
-  lastRetryTime = Date.now();
-};
-
-const resetRetryCount = () => {
-  retryCount = 0;
-  lastRetryTime = 0;
-};
-
-const handleAuthError = (error: unknown, context: string): boolean => {
-  console.warn(`Auth warning in ${context}:`, error);
-  
-  // Check if it's a network error that should trigger retry
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    if (message.includes('fetch') || message.includes('network') || message.includes('connection') || message.includes('timeout') || message.includes('Failed to fetch')) {
-      if (shouldRetryAuth()) {
-        recordRetry();
-        console.log(`Auth retry ${retryCount}/${MAX_RETRY_ATTEMPTS} scheduled`);
-        return true; // Retry suggested
-      }
-    }
-  }
-  return false; // Don't retry
-};
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, options?: any) => Promise<{ error: AuthError | null }>;
-  signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -82,19 +83,145 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  // Core auth state
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSessionReady, setIsSessionReady] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const initialized = useRef(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
+  // Refs for cleanup and preventing race conditions
+  const initialized = useRef(false);
+  const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
+  const sessionCheckInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Derived state
+  const isAuthenticated = !!(user && session);
+
+  /**
+   * Handle session sync from other tabs
+   * This ensures sign out in one tab is reflected in all tabs
+   */
+  const handleStorageEvent = useCallback((event: StorageEvent) => {
+    if (event.key === SESSION_SYNC_KEY) {
+      try {
+        const syncData = JSON.parse(event.newValue || '{}');
+        if (syncData.type === 'signout') {
+          // Another tab signed out - clear local state
+          setUser(null);
+          setSession(null);
+          setAuthError(null);
+        } else if (syncData.type === 'signin' && syncData.session) {
+          // Another tab signed in - update local state
+          setSession(syncData.session);
+          setUser(syncData.session.user);
+        }
+      } catch {
+        // Invalid sync data, ignore
+      }
+    }
+  }, []);
+
+  /**
+   * Broadcast session change to other tabs
+   */
+  const broadcastSessionChange = useCallback(
+    (type: 'signin' | 'signout', session?: Session | null) => {
+      try {
+        localStorage.setItem(
+          SESSION_SYNC_KEY,
+          JSON.stringify({
+            type,
+            session: type === 'signin' ? session : null,
+            timestamp: Date.now(),
+          })
+        );
+        // Trigger storage event for other tabs
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key: SESSION_SYNC_KEY,
+            newValue: localStorage.getItem(SESSION_SYNC_KEY),
+          })
+        );
+      } catch {
+        // Storage not available, continue
+      }
+    },
+    []
+  );
+
+  /**
+   * Handle online/offline status
+   */
+  const handleOnlineStatus = useCallback(() => {
+    setIsOffline(!navigator.onLine);
+    if (navigator.onLine) {
+      // Coming back online - refresh session
+      refreshSession();
+    }
+  }, []);
+
+  /**
+   * Refresh the current session
+   */
+  const refreshSession = useCallback(async () => {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+      const {
+        data: { session: newSession },
+        error,
+      } = await supabase.auth.getSession();
+      if (error) {
+        console.warn('Session refresh warning:', error);
+        return;
+      }
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    } catch (error) {
+      console.warn('Session refresh failed:', error);
+    }
+  }, []);
+
+  /**
+   * Check for and handle expired sessions
+   */
+  const checkSessionExpiry = useCallback(() => {
+    if (!session) return;
+
+    const expiresAt = session.expires_at;
+    if (!expiresAt) return;
+
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = expiresAt - now;
+
+    // If session expires in less than 5 minutes, try to refresh
+    if (timeUntilExpiry < 300 && timeUntilExpiry > 0) {
+      supabase.auth.refreshSession().catch(() => {
+        // Refresh failed, session will expire naturally
+      });
+    }
+
+    // If session is already expired, clear state
+    if (timeUntilExpiry <= 0) {
+      setUser(null);
+      setSession(null);
+    }
+  }, [session]);
+
+  /**
+   * Initialize authentication state
+   */
   useEffect(() => {
     // Prevent duplicate initialization
     if (initialized.current) return;
     initialized.current = true;
-
-    let subscription: AuthSubscription | null = null;
 
     const initializeAuth = async () => {
       try {
@@ -102,26 +229,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!isSupabaseConfigured()) {
           console.warn('Supabase not configured, skipping auth initialization');
           setLoading(false);
+          setIsSessionReady(true);
           return;
         }
 
-        // Check for dev session in localStorage
-        const checkDevSession = () => {
-          // SECURITY: Only allow dev bypass on strictly allowed domains
-          const isDevelopmentEnvironment = ALLOWED_DEV_DOMAINS.some(domain =>
-            window.location.hostname === domain || window.location.hostname.endsWith('.' + domain)
-          ) && !window.location.hostname.includes('replit.app') && !window.location.hostname.includes('production');
-          
-          // Clear dev sessions if on production domain
-          if (!isDevelopmentEnvironment) {
-            localStorage.removeItem('dev-user-session');
-            localStorage.removeItem('sb-supabase-auth-token');
-            localStorage.removeItem('smartcrm-dev-mode');
-            localStorage.removeItem('smartcrm-dev-user');
-            console.log('🔒 Dev bypass disabled on production domain:', window.location.hostname);
-            return false;
-          }
-
+        // Check for dev session in development environments
+        if (isDevelopmentEnvironment()) {
           const devSession = localStorage.getItem('dev-user-session');
           const devToken = localStorage.getItem('sb-supabase-auth-token');
           const devMode = localStorage.getItem('smartcrm-dev-mode');
@@ -135,7 +248,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 userData = JSON.parse(devSession);
                 tokenData = JSON.parse(devToken);
               } else {
-                // Fallback dev user data
                 userData = {
                   id: 'dev-user-12345',
                   email: 'dev@smartcrm.local',
@@ -143,26 +255,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   firstName: 'Development',
                   lastName: 'User',
                   role: 'super_admin',
-                  productTier: 'dev_all_access', // Special tier that bypasses all restrictions
-                  app_context: APP_CONTEXT
+                  productTier: 'dev_all_access',
+                  app_context: APP_CONTEXT,
                 };
                 tokenData = {
                   access_token: 'dev-bypass-token',
                   refresh_token: 'dev-bypass-refresh',
-                  expires_at: Date.now() + (24 * 60 * 60 * 1000)
+                  expires_at: Date.now() + 24 * 60 * 60 * 1000,
                 };
               }
 
-              console.log('Using dev bypass session:', userData.email);
               setUser(userData);
               setSession({
                 user: userData,
                 access_token: tokenData.access_token || 'dev-bypass-token',
                 refresh_token: tokenData.refresh_token || 'dev-bypass-refresh',
-                expires_at: tokenData.expires_at || (Date.now() + 24 * 60 * 60 * 1000)
+                expires_at: tokenData.expires_at || Date.now() + 24 * 60 * 60 * 1000,
               } as any);
               setLoading(false);
-              return true;
+              setIsSessionReady(true);
+              return;
             } catch (error) {
               console.error('Invalid dev session data:', error);
               localStorage.removeItem('dev-user-session');
@@ -171,74 +283,112 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               localStorage.removeItem('smartcrm-dev-user');
             }
           }
-          return false;
-        };
-
-        // First check for dev session
-        if (checkDevSession()) {
-          return;
+        } else {
+          // Production - clear any dev sessions
+          localStorage.removeItem('dev-user-session');
+          localStorage.removeItem('sb-supabase-auth-token');
+          localStorage.removeItem('smartcrm-dev-mode');
+          localStorage.removeItem('smartcrm-dev-user');
         }
 
-        // Continue with normal Supabase auth if no dev session
-        const { data: { session: supabaseSession }, error: sessionError } = await supabase.auth.getSession();
+        // Get initial session
+        const {
+          data: { session: initialSession },
+          error: sessionError,
+        } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.warn('Auth session warning:', sessionError);
-          // Don't block the app, just log the warning
-          setAuthError(null); // Clear error to prevent blocking
-        } else {
-          setSession(supabaseSession);
-          setUser(supabaseSession?.user ?? null);
-          setAuthError(null);
-          resetRetryCount();
+          console.warn('Initial session check warning:', sessionError);
+          // Don't block - continue with null session
         }
 
-        // Set up auth state listener with error handling
-        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-          async (event: AuthChangeEvent, session: Session | null) => {
-            try {
-              console.log('Auth state changed:', event, session?.user?.id);
-              setSession(session);
-              setUser(session?.user ?? null);
-              setAuthError(null);
-              resetRetryCount();
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+        setAuthError(null);
 
-              // Handle different auth events
-              if (event === 'SIGNED_OUT') {
-                // Clear any cached data
+        // Set up auth state listener
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange(
+          async (event: AuthChangeEvent, newSession: Session | null) => {
+            // Handle different auth events
+            switch (event) {
+              case 'SIGNED_IN':
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+                broadcastSessionChange('signin', newSession);
+                break;
+
+              case 'SIGNED_OUT':
+                setUser(null);
+                setSession(null);
+                setAuthError(null);
+                broadcastSessionChange('signout');
+                // Clear cached data
                 localStorage.removeItem('supabase.auth.token');
                 localStorage.removeItem('smartcrm-auth-token');
-              }
-            } catch (stateError) {
-              console.warn('Auth state change warning:', stateError);
+                break;
+
+              case 'TOKEN_REFRESHED':
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+                break;
+
+              case 'USER_UPDATED':
+                setUser(newSession?.user ?? null);
+                setSession(newSession);
+                break;
+
+              case 'PASSWORD_RECOVERY':
+                // Handle password recovery - session will be set
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+                break;
+
+              default:
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
             }
           }
         );
 
-        subscription = authSubscription;
+        subscriptionRef.current = subscription;
+
+        // Set up periodic session check (every 60 seconds)
+        sessionCheckInterval.current = setInterval(checkSessionExpiry, 60000);
       } catch (error) {
-        const shouldRetry = handleAuthError(error, 'auth initialization');
-        if (!shouldRetry) {
-          // Set fallback auth state instead of blocking
-          setUser({ id: 'fallback-user', email: 'user@example.com' } as any);
-          setAuthError(null);
-        }
+        console.error('Auth initialization error:', error);
+        setAuthError(error instanceof Error ? error.message : 'Authentication error');
       } finally {
         setLoading(false);
+        setIsSessionReady(true);
       }
     };
 
     initializeAuth();
 
-    // Cleanup function
+    // Set up event listeners for cross-tab sync and online/offline
+    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
+
+    // Cleanup
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
       }
+      if (sessionCheckInterval.current) {
+        clearInterval(sessionCheckInterval.current);
+      }
+      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
     };
-  }, []);
+  }, [handleStorageEvent, handleOnlineStatus, broadcastSessionChange, checkSessionExpiry]);
 
-
+  /**
+   * Sign in with email and password
+   */
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -247,8 +397,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: { message: 'Invalid email format' } as AuthError };
       }
 
-      // Handle dev bypass special case
-      if (password === DEV_BYPASS_PASSWORD) {
+      // Handle dev bypass - ONLY if password matches env var AND we're in development
+      if (DEV_BYPASS_PASSWORD && password === DEV_BYPASS_PASSWORD && isDevelopmentEnvironment()) {
         const devSession = localStorage.getItem('dev-user-session');
         if (devSession) {
           const devUser = JSON.parse(devSession);
@@ -262,15 +412,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
       });
+
       return { error };
     } catch (error) {
-      handleAuthError(error, 'signIn');
       return { error: error as AuthError };
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Sign up with email and password
+   */
   const signUp = async (email: string, password: string, options?: any) => {
     try {
       setLoading(true);
@@ -287,19 +440,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             app_context: APP_CONTEXT,
             email_template_set: EMAIL_TEMPLATE_SET,
-            ...options?.data
-          }
-        }
+            ...options?.data,
+          },
+        },
       });
+
       return { error };
     } catch (error) {
-      handleAuthError(error, 'signUp');
       return { error: error as AuthError };
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Sign out - clears all auth data
+   */
   const signOut = async () => {
     try {
       setLoading(true);
@@ -310,18 +466,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('smartcrm-auth-token');
       localStorage.removeItem('supabase.auth.token');
 
-      // Clear any onboarding data
+      // Clear any user-specific data
       if (user?.id) {
         localStorage.removeItem(`onboarding-${user.id}`);
       }
 
+      // Sign out from Supabase
       await supabase.auth.signOut();
+
+      // Clear state
       setUser(null);
       setSession(null);
       setAuthError(null);
-      resetRetryCount();
+
+      // Broadcast to other tabs
+      broadcastSessionChange('signout');
     } catch (error) {
-      handleAuthError(error, 'signOut');
+      console.error('Sign out error:', error);
       // Still clear local state even if signOut fails
       setUser(null);
       setSession(null);
@@ -330,49 +491,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  /**
+   * Reset password for email
+   */
   const resetPassword = async (email: string) => {
     try {
-      // Determine the correct redirect URL based on current environment
       const currentOrigin = window.location.origin;
-      const isDevelopment = currentOrigin.includes('localhost') || 
-                           currentOrigin.includes('replit.dev') || 
-                           currentOrigin.includes('replit.app');
+      const isDev = isDevelopmentEnvironment();
 
-      const redirectUrl = isDevelopment 
+      const redirectUrl = isDev
         ? `${currentOrigin}/auth/reset-password`
         : 'https://app.smartcrm.vip/auth/reset-password';
-
-      console.log('AuthContext resetPassword with redirect URL:', redirectUrl);
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });
+
       return { error };
     } catch (error) {
-      handleAuthError(error, 'resetPassword');
       return { error: error as AuthError };
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     loading,
+    isSessionReady,
+    isAuthenticated,
+    authError,
+    isOffline,
     signIn,
     signUp,
     signOut,
     resetPassword,
+    refreshSession,
   };
 
-  // Don't show error state that blocks the entire app - just log it
-  if (authError && !loading) {
-    console.warn('Authentication warning:', authError);
-    // Continue showing the app instead of blocking it
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+/**
+ * Loading Gate Component
+ * Prevents page flicker by waiting for session resolution
+ */
+interface LoadingGateProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+export const AuthLoadingGate: React.FC<LoadingGateProps> = ({
+  children,
+  fallback = <DefaultLoadingFallback />,
+}) => {
+  const { isSessionReady } = useAuth();
+
+  if (!isSessionReady) {
+    return <>{fallback}</>;
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <>{children}</>;
 };
+
+const DefaultLoadingFallback: React.FC = () => (
+  <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading...</h2>
+      <p className="text-gray-600">Please wait while we initialize your session...</p>
+    </div>
+  </div>
+);
+
+export default AuthProvider;

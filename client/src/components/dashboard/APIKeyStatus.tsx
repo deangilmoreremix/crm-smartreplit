@@ -57,19 +57,27 @@ export function APIKeyStatus() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ready': return 'text-green-400';
-      case 'api_key_invalid': return 'text-red-400';
-      case 'needs_configuration': return 'text-yellow-400';
-      default: return 'text-gray-400';
+      case 'ready':
+        return 'text-green-400';
+      case 'api_key_invalid':
+        return 'text-red-400';
+      case 'needs_configuration':
+        return 'text-yellow-400';
+      default:
+        return 'text-gray-400';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'ready': return <CheckCircle className="h-5 w-5 text-green-400" />;
-      case 'api_key_invalid': return <AlertCircle className="h-5 w-5 text-red-400" />;
-      case 'needs_configuration': return <Settings className="h-5 w-5 text-yellow-400" />;
-      default: return <AlertCircle className="h-5 w-5 text-gray-400" />;
+      case 'ready':
+        return <CheckCircle className="h-5 w-5 text-green-400" />;
+      case 'api_key_invalid':
+        return <AlertCircle className="h-5 w-5 text-red-400" />;
+      case 'needs_configuration':
+        return <Settings className="h-5 w-5 text-yellow-400" />;
+      default:
+        return <AlertCircle className="h-5 w-5 text-gray-400" />;
     }
   };
 
@@ -96,14 +104,15 @@ export function APIKeyStatus() {
               {getStatusIcon(apiStatus.status)}
               <div>
                 <div className={`font-medium ${getStatusColor(apiStatus.status)}`}>
-                  {apiStatus.status === 'ready' ? 'Connected' : 
-                   apiStatus.status === 'api_key_invalid' ? 'Invalid API Key' :
-                   apiStatus.status === 'needs_configuration' ? 'Not Configured' : 
-                   'Unknown Status'}
+                  {apiStatus.status === 'ready'
+                    ? 'Connected'
+                    : apiStatus.status === 'api_key_invalid'
+                      ? 'Invalid API Key'
+                      : apiStatus.status === 'needs_configuration'
+                        ? 'Not Configured'
+                        : 'Unknown Status'}
                 </div>
-                <div className="text-sm text-white/60">
-                  Model: {apiStatus.model}
-                </div>
+                <div className="text-sm text-white/60">Model: {apiStatus.model}</div>
               </div>
             </div>
 
@@ -153,7 +162,9 @@ export function APIKeyStatus() {
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  onClick={() => window.open('https://platform.openai.com/account/api-keys', '_blank')}
+                  onClick={() =>
+                    window.open('https://platform.openai.com/account/api-keys', '_blank')
+                  }
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   OpenAI API Keys

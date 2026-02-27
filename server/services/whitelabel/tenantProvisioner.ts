@@ -110,7 +110,7 @@ class TenantProvisioner {
           parent_partner_id: config.parentPartnerId,
           trial_ends_at: config.plan === 'starter' ? this.getTrialEndDate() : null,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -138,10 +138,9 @@ class TenantProvisioner {
       }
 
       return tenant;
-
     } catch (error: any) {
       await errorLogger.logError('Tenant creation failed', error, {
-        subdomain: config.subdomain
+        subdomain: config.subdomain,
       });
       throw error;
     }
@@ -209,7 +208,7 @@ class TenantProvisioner {
         features: {},
         defaultSettings: {},
         onboardingSteps: this.getDefaultOnboardingSteps(),
-        isDefault: true
+        isDefault: true,
       };
     }
 
@@ -226,14 +225,12 @@ class TenantProvisioner {
 
     try {
       // Create white label configuration
-      await supabase
-        .from('white_label_configs')
-        .insert({
-          tenant_id: tenantId,
-          ...template.config,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      await supabase.from('white_label_configs').insert({
+        tenant_id: tenantId,
+        ...template.config,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
       // Set feature flags
       if (template.features && Object.keys(template.features).length > 0) {
@@ -241,18 +238,15 @@ class TenantProvisioner {
           tenant_id: tenantId,
           feature_key: feature,
           enabled,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         }));
 
-        await supabase
-          .from('tenant_features')
-          .insert(featureEntries);
+        await supabase.from('tenant_features').insert(featureEntries);
       }
-
     } catch (error: any) {
       await errorLogger.logError('Template application failed', error, {
         tenantId,
-        templateId: template.id
+        templateId: template.id,
       });
       throw error;
     }
@@ -269,21 +263,18 @@ class TenantProvisioner {
     try {
       const onboardingSteps = steps.length > 0 ? steps : this.getDefaultOnboardingSteps();
 
-      await supabase
-        .from('tenant_onboarding')
-        .insert({
-          tenant_id: tenantId,
-          current_step: 1,
-          total_steps: onboardingSteps.length,
-          completed_steps: [],
-          status: 'in_progress',
-          started_at: new Date().toISOString(),
-          metadata: { steps: onboardingSteps }
-        });
-
+      await supabase.from('tenant_onboarding').insert({
+        tenant_id: tenantId,
+        current_step: 1,
+        total_steps: onboardingSteps.length,
+        completed_steps: [],
+        status: 'in_progress',
+        started_at: new Date().toISOString(),
+        metadata: { steps: onboardingSteps },
+      });
     } catch (error: any) {
       await errorLogger.logError('Onboarding initialization failed', error, {
-        tenantId
+        tenantId,
       });
       // Don't throw - onboarding is not critical for tenant creation
     }
@@ -300,7 +291,7 @@ class TenantProvisioner {
         description: 'Get started with your new CRM platform',
         action: 'view_dashboard',
         completed: false,
-        order: 1
+        order: 1,
       },
       {
         id: 'branding',
@@ -308,7 +299,7 @@ class TenantProvisioner {
         description: 'Upload your logo and set your brand colors',
         action: 'configure_branding',
         completed: false,
-        order: 2
+        order: 2,
       },
       {
         id: 'domain',
@@ -316,7 +307,7 @@ class TenantProvisioner {
         description: 'Configure your custom domain for white label access',
         action: 'configure_domain',
         completed: false,
-        order: 3
+        order: 3,
       },
       {
         id: 'users',
@@ -324,7 +315,7 @@ class TenantProvisioner {
         description: 'Add users to your CRM instance',
         action: 'invite_users',
         completed: false,
-        order: 4
+        order: 4,
       },
       {
         id: 'data',
@@ -332,8 +323,8 @@ class TenantProvisioner {
         description: 'Import contacts, deals, and other data',
         action: 'import_data',
         completed: false,
-        order: 5
-      }
+        order: 5,
+      },
     ];
   }
 
@@ -344,17 +335,16 @@ class TenantProvisioner {
     try {
       // In production, integrate with email service (SendGrid, etc.)
       console.log(`Welcome email would be sent to: ${tenant.contactEmail}`);
-      
+
       // Log for monitoring
       await errorLogger.logInfo('Welcome email sent', {
         tenantId: tenant.id,
-        email: tenant.contactEmail
+        email: tenant.contactEmail,
       });
-
     } catch (error: any) {
       await errorLogger.logWarning('Welcome email failed', {
         tenantId: tenant.id,
-        error: error.message
+        error: error.message,
       });
       // Don't throw - email failure shouldn't block tenant creation
     }
@@ -374,7 +364,7 @@ class TenantProvisioner {
         const contacts = seedData.contacts.map((contact: any) => ({
           ...contact,
           profile_id: tenantId, // Link to tenant
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         }));
 
         await supabase.from('contacts').insert(contacts);
@@ -385,16 +375,15 @@ class TenantProvisioner {
         const deals = seedData.deals.map((deal: any) => ({
           ...deal,
           profile_id: tenantId,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         }));
 
         await supabase.from('deals').insert(deals);
       }
-
     } catch (error: any) {
       await errorLogger.logWarning('Initial data seeding failed', {
         tenantId,
-        error: error.message
+        error: error.message,
       });
       // Don't throw - seeding failure shouldn't block tenant creation
     }
@@ -417,11 +406,7 @@ class TenantProvisioner {
       throw new Error('Supabase not configured');
     }
 
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('id', tenantId)
-      .single();
+    const { data, error } = await supabase.from('tenants').select('*').eq('id', tenantId).single();
 
     if (error || !data) {
       throw new Error('Tenant not found');
@@ -448,9 +433,7 @@ class TenantProvisioner {
     const limit = Math.min(options.limit || 50, 100);
     const offset = (page - 1) * limit;
 
-    let query = supabase
-      .from('tenants')
-      .select('*', { count: 'exact' });
+    let query = supabase.from('tenants').select('*', { count: 'exact' });
 
     if (options.status) {
       query = query.eq('status', options.status);
@@ -472,7 +455,7 @@ class TenantProvisioner {
       throw new Error(`Failed to list tenants: ${error.message}`);
     }
 
-    const tenants = (data || []).map(d => this.mapDatabaseToTenant(d));
+    const tenants = (data || []).map((d) => this.mapDatabaseToTenant(d));
     const total = count || 0;
     const pages = Math.ceil(total / limit);
 
@@ -488,7 +471,7 @@ class TenantProvisioner {
     }
 
     const dbUpdates: any = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (updates.name) dbUpdates.name = updates.name;
@@ -524,14 +507,14 @@ class TenantProvisioner {
       .from('tenants')
       .update({
         status: 'suspended',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', tenantId);
 
     // Log suspension
     await errorLogger.logInfo('Tenant suspended', {
       tenantId,
-      reason
+      reason,
     });
   }
 
@@ -547,13 +530,13 @@ class TenantProvisioner {
       .from('tenants')
       .update({
         status: 'active',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', tenantId);
 
     // Log activation
     await errorLogger.logInfo('Tenant activated', {
-      tenantId
+      tenantId,
     });
   }
 
@@ -570,13 +553,13 @@ class TenantProvisioner {
       .from('tenants')
       .update({
         status: 'inactive',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', tenantId);
 
     // Log deletion
     await errorLogger.logInfo('Tenant deleted (soft)', {
-      tenantId
+      tenantId,
     });
   }
 
@@ -605,7 +588,7 @@ class TenantProvisioner {
       completedSteps: data.completed_steps || [],
       status: data.status,
       startedAt: new Date(data.started_at),
-      completedAt: data.completed_at ? new Date(data.completed_at) : undefined
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
     };
   }
 
@@ -630,7 +613,7 @@ class TenantProvisioner {
     // Update completed steps
     const completedSteps = completed
       ? [...status.completedSteps, stepId]
-      : status.completedSteps.filter(s => s !== stepId);
+      : status.completedSteps.filter((s) => s !== stepId);
 
     // Check if all steps completed
     const allCompleted = completedSteps.length === status.totalSteps;
@@ -641,7 +624,7 @@ class TenantProvisioner {
         completed_steps: completedSteps,
         current_step: completedSteps.length + 1,
         status: allCompleted ? 'completed' : 'in_progress',
-        completed_at: allCompleted ? new Date().toISOString() : null
+        completed_at: allCompleted ? new Date().toISOString() : null,
       })
       .eq('tenant_id', tenantId)
       .select()
@@ -658,7 +641,7 @@ class TenantProvisioner {
       completedSteps: data.completed_steps || [],
       status: data.status,
       startedAt: new Date(data.started_at),
-      completedAt: data.completed_at ? new Date(data.completed_at) : undefined
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
     };
   }
 
@@ -670,16 +653,13 @@ class TenantProvisioner {
       return [];
     }
 
-    const { data, error } = await supabase
-      .from('tenant_templates')
-      .select('*')
-      .order('name');
+    const { data, error } = await supabase.from('tenant_templates').select('*').order('name');
 
     if (error) {
       throw new Error(`Failed to list templates: ${error.message}`);
     }
 
-    return (data || []).map(d => this.mapDatabaseToTemplate(d));
+    return (data || []).map((d) => this.mapDatabaseToTemplate(d));
   }
 
   /**
@@ -701,7 +681,7 @@ class TenantProvisioner {
         onboarding_steps: template.onboardingSteps,
         is_default: template.isDefault,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -732,7 +712,7 @@ class TenantProvisioner {
       parentPartnerId: data.parent_partner_id,
       trialEndsAt: data.trial_ends_at ? new Date(data.trial_ends_at) : undefined,
       createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at)
+      updatedAt: new Date(data.updated_at),
     };
   }
 
@@ -748,7 +728,7 @@ class TenantProvisioner {
       features: data.features || {},
       defaultSettings: data.default_settings || {},
       onboardingSteps: data.onboarding_steps || [],
-      isDefault: data.is_default || false
+      isDefault: data.is_default || false,
     };
   }
 }

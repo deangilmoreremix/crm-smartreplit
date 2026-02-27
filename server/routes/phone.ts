@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express } from 'express';
 
 // In-memory storage for phone calls (temporary until database schema is added)
 interface Call {
@@ -34,22 +34,24 @@ const calls: Call[] = [
     duration: 245,
     status: 'completed',
     sentiment: 'positive',
-    transcript: 'Hello, I\'m calling about your product demo. I\'m very interested in learning more about your CRM solution.',
+    transcript:
+      "Hello, I'm calling about your product demo. I'm very interested in learning more about your CRM solution.",
     recording: '/api/recordings/call-1.mp3',
     gpt5Analysis: {
-      summary: 'Prospect is interested in product demo and wants to learn more about CRM capabilities.',
+      summary:
+        'Prospect is interested in product demo and wants to learn more about CRM capabilities.',
       keyPoints: ['Interested in product demo', 'Needs more information about CRM features'],
       actionItems: ['Schedule product demo', 'Send additional product information'],
-      sentimentScore: 0.85
-    }
+      sentimentScore: 0.85,
+    },
   },
   {
     id: '2',
     caller: '+1 (555) 987-6543',
     duration: 0,
     status: 'missed',
-    sentiment: 'neutral'
-  }
+    sentiment: 'neutral',
+  },
 ];
 
 const phoneStats: PhoneStats = {
@@ -58,7 +60,7 @@ const phoneStats: PhoneStats = {
   averageCallDuration: 185,
   callQuality: 0.92,
   customerSatisfaction: 0.88,
-  aiAccuracy: 0.94
+  aiAccuracy: 0.94,
 };
 
 export function registerPhoneRoutes(app: Express): void {
@@ -112,7 +114,7 @@ export function registerPhoneRoutes(app: Express): void {
         duration: duration || 0,
         status,
         sentiment: 'neutral',
-        transcript
+        transcript,
       };
 
       calls.push(newCall);
@@ -139,7 +141,7 @@ export function registerPhoneRoutes(app: Express): void {
       }
 
       const callId = req.params.id;
-      const call = calls.find(c => c.id === callId);
+      const call = calls.find((c) => c.id === callId);
 
       if (!call) {
         return res.status(404).json({ error: 'Call not found' });
@@ -161,7 +163,7 @@ export function registerPhoneRoutes(app: Express): void {
       }
 
       const callId = req.params.id;
-      const callIndex = calls.findIndex(c => c.id === callId);
+      const callIndex = calls.findIndex((c) => c.id === callId);
 
       if (callIndex === -1) {
         return res.status(404).json({ error: 'Call not found' });
@@ -169,7 +171,7 @@ export function registerPhoneRoutes(app: Express): void {
 
       const updatedCall = {
         ...calls[callIndex],
-        ...req.body
+        ...req.body,
       };
 
       calls[callIndex] = updatedCall;
@@ -189,7 +191,7 @@ export function registerPhoneRoutes(app: Express): void {
       }
 
       const callId = req.params.id;
-      const callIndex = calls.findIndex(c => c.id === callId);
+      const callIndex = calls.findIndex((c) => c.id === callId);
 
       if (callIndex === -1) {
         return res.status(404).json({ error: 'Call not found' });
@@ -207,14 +209,14 @@ export function registerPhoneRoutes(app: Express): void {
         keyPoints: [
           'Customer expressed interest in product features',
           'Discussed pricing and implementation timeline',
-          'Requested additional documentation'
+          'Requested additional documentation',
         ],
         actionItems: [
           'Send product brochure',
           'Schedule follow-up call',
-          'Prepare pricing proposal'
+          'Prepare pricing proposal',
         ],
-        sentimentScore: 0.75
+        sentimentScore: 0.75,
       };
 
       call.gpt5Analysis = analysis;
@@ -245,7 +247,7 @@ export function registerPhoneRoutes(app: Express): void {
         callId: crypto.randomUUID(),
         status: 'initiated',
         number,
-        type: type || 'voice'
+        type: type || 'voice',
       });
     } catch (error) {
       console.error('Error starting call:', error);

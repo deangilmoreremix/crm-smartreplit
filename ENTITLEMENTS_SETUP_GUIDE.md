@@ -7,12 +7,14 @@ The enhanced entitlements system provides comprehensive subscription management 
 ## Features Implemented
 
 ### 1. Database Schema
+
 - ✅ Entitlements table with product types (lifetime, monthly, yearly, payment_plan)
 - ✅ Revocation timestamps with timezone support
 - ✅ Invoice status tracking and delinquency counting
 - ✅ Stripe and Zaxaa integration fields
 
 ### 2. Backend Services
+
 - ✅ Entitlements utilities with Luxon timezone handling
 - ✅ Stripe webhook handler for subscription events
 - ✅ Zaxaa webhook handler for payment processing
@@ -20,11 +22,13 @@ The enhanced entitlements system provides comprehensive subscription management 
 - ✅ API endpoints for entitlements management
 
 ### 3. Frontend Components
+
 - ✅ RequireActive component for access control
 - ✅ EntitlementsPage for admin management
 - ✅ User-friendly status badges and messaging
 
 ### 4. Automated Enforcement
+
 - ✅ Supabase Edge Function for scheduled sweeper
 - ✅ Hourly cleanup of expired entitlements
 
@@ -65,6 +69,7 @@ supabase functions schedule create \
 ### 3. Webhook Configuration
 
 #### Stripe Webhooks:
+
 1. Go to Stripe Dashboard → Developers → Webhooks
 2. Add endpoint: `https://your-domain.replit.dev/api/webhooks/stripe`
 3. Select events:
@@ -75,6 +80,7 @@ supabase functions schedule create \
    - `charge.dispute.created`
 
 #### Zaxaa Webhooks:
+
 1. Configure in Zaxaa admin panel
 2. Set endpoint: `https://your-domain.replit.dev/api/webhooks/zaxaa`
 3. Include user_id and product_type in metadata
@@ -109,6 +115,7 @@ function ProtectedFeature() {
 ### 2. Manual Entitlement Creation
 
 Access the admin panel at `/entitlements` to:
+
 - View all user entitlements
 - Create new entitlements manually
 - Monitor subscription statuses
@@ -131,32 +138,38 @@ const hasAccess = isUserActive(entitlement);
 ## Webhook Event Handling
 
 ### Payment Success
+
 - Creates active entitlement
 - Sets appropriate revocation date
 - Resets delinquency count
 
 ### Payment Failure
+
 - Payment plans: immediate revocation
 - Subscriptions: grace period until natural expiration
 - Updates delinquency count
 
 ### Cancellation
+
 - Payment plans: immediate revocation
 - Subscriptions: access until natural expiration
 
 ### Refunds
+
 - Lifetime: no action (per policy)
 - Others: immediate revocation
 
 ## Revocation Logic
 
 ### America/New_York Timezone
+
 - Monthly: revokes at 12:00 AM ET first of next month
 - Yearly: revokes at 12:00 AM ET first of next year
 - Payment Plan: rolling monthly with immediate enforcement on failure
 - Lifetime: never revokes
 
 ### Scheduled Enforcement
+
 - Hourly sweeper checks for expired entitlements
 - Automatically flips status from active/past_due to inactive
 - Runs in Supabase Edge Functions for reliability
@@ -172,12 +185,14 @@ const hasAccess = isUserActive(entitlement);
 ## Monitoring & Troubleshooting
 
 ### Logs to Monitor
+
 - Webhook processing success/failure
 - Entitlement revocation events
 - Payment processing errors
 - Edge function execution
 
 ### Common Issues
+
 1. **Timezone mismatches**: Ensure Luxon uses America/New_York
 2. **Webhook signature failures**: Verify secret keys
 3. **Missing metadata**: Check payment session setup

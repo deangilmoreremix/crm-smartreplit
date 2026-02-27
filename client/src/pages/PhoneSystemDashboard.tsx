@@ -5,7 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Progress } from '../components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -42,7 +48,7 @@ import {
   Camera,
   Monitor,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 
 interface Call {
@@ -91,7 +97,9 @@ export default function PhoneSystemDashboard() {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-  const [callStatus, setCallStatus] = useState<'idle' | 'connecting' | 'ringing' | 'connected' | 'ended'>('idle');
+  const [callStatus, setCallStatus] = useState<
+    'idle' | 'connecting' | 'ringing' | 'connected' | 'ended'
+  >('idle');
   const [remoteNumber, setRemoteNumber] = useState('');
   const [dialNumber, setDialNumber] = useState('');
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
@@ -116,22 +124,24 @@ export default function PhoneSystemDashboard() {
       duration: 245,
       status: 'completed',
       sentiment: 'positive',
-      transcript: 'Hello, I\'m calling about your product demo. I\'m very interested in learning more about your CRM solution.',
+      transcript:
+        "Hello, I'm calling about your product demo. I'm very interested in learning more about your CRM solution.",
       recording: '/api/recordings/call-1.mp3',
       gpt5Analysis: {
-        summary: 'Prospect is interested in product demo and wants to learn more about CRM capabilities.',
+        summary:
+          'Prospect is interested in product demo and wants to learn more about CRM capabilities.',
         keyPoints: ['Interested in product demo', 'Needs more information about CRM features'],
         actionItems: ['Schedule product demo', 'Send additional product information'],
-        sentimentScore: 0.85
-      }
+        sentimentScore: 0.85,
+      },
     },
     {
       id: '2',
       caller: '+1 (555) 987-6543',
       duration: 0,
       status: 'missed',
-      sentiment: 'neutral'
-    }
+      sentiment: 'neutral',
+    },
   ];
 
   const mockStats: PhoneStats = {
@@ -140,19 +150,27 @@ export default function PhoneSystemDashboard() {
     averageCallDuration: 185,
     callQuality: 0.92,
     customerSatisfaction: 0.88,
-    aiAccuracy: 0.94
+    aiAccuracy: 0.94,
   };
 
-  const { data: calls = mockCalls, isLoading: callsLoading, error: callsError } = useQuery<Call[]>({
+  const {
+    data: calls = mockCalls,
+    isLoading: callsLoading,
+    error: callsError,
+  } = useQuery<Call[]>({
     queryKey: ['/api/phone/calls'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
-  const { data: stats = mockStats, isLoading: statsLoading, error: statsError } = useQuery<PhoneStats>({
+  const {
+    data: stats = mockStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery<PhoneStats>({
     queryKey: ['/api/phone/stats'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
   // Use mock data if API fails
@@ -165,7 +183,6 @@ export default function PhoneSystemDashboard() {
     setIsAnalyzing(true);
     try {
       const analysis = await gpt5Communication.analyzeContent(call.transcript, 'call-transcript');
-      console.log('Call analysis:', analysis);
       // In real implementation, this would update the call record
     } catch (error) {
       console.error('Failed to analyze call:', error);
@@ -176,20 +193,29 @@ export default function PhoneSystemDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'ongoing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-      case 'missed': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-      case 'voicemail': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'completed':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'ongoing':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+      case 'missed':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+      case 'voicemail':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'bg-green-100 text-green-800';
-      case 'neutral': return 'bg-yellow-100 text-yellow-800';
-      case 'negative': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'positive':
+        return 'bg-green-100 text-green-800';
+      case 'neutral':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'negative':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -199,9 +225,9 @@ export default function PhoneSystemDashboard() {
       const devices = await navigator.mediaDevices.enumerateDevices();
       setMediaDevices(devices);
 
-      const mics = devices.filter(device => device.kind === 'audioinput');
-      const speakers = devices.filter(device => device.kind === 'audiooutput');
-      const cameras = devices.filter(device => device.kind === 'videoinput');
+      const mics = devices.filter((device) => device.kind === 'audioinput');
+      const speakers = devices.filter((device) => device.kind === 'audiooutput');
+      const cameras = devices.filter((device) => device.kind === 'videoinput');
 
       if (mics.length > 0 && !selectedMic) setSelectedMic(mics[0].deviceId);
       if (speakers.length > 0 && !selectedSpeaker) setSelectedSpeaker(speakers[0].deviceId);
@@ -215,7 +241,7 @@ export default function PhoneSystemDashboard() {
     try {
       const constraints: MediaStreamConstraints = {
         audio: audio ? { deviceId: selectedMic ? { exact: selectedMic } : undefined } : false,
-        video: video ? { deviceId: selectedCamera ? { exact: selectedCamera } : undefined } : false
+        video: video ? { deviceId: selectedCamera ? { exact: selectedCamera } : undefined } : false,
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -236,8 +262,8 @@ export default function PhoneSystemDashboard() {
     const configuration: RTCConfiguration = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+        { urls: 'stun:stun1.l.google.com:19302' },
+      ],
     };
 
     peerConnectionRef.current = new RTCPeerConnection(configuration);
@@ -245,7 +271,6 @@ export default function PhoneSystemDashboard() {
     peerConnectionRef.current.onicecandidate = (event) => {
       if (event.candidate) {
         // Send ICE candidate to remote peer via signaling server
-        console.log('ICE candidate:', event.candidate);
       }
     };
 
@@ -257,7 +282,6 @@ export default function PhoneSystemDashboard() {
     };
 
     peerConnectionRef.current.onconnectionstatechange = () => {
-      console.log('Connection state:', peerConnectionRef.current?.connectionState);
       if (peerConnectionRef.current?.connectionState === 'connected') {
         setCallStatus('connected');
         setCallStartTime(new Date());
@@ -279,7 +303,7 @@ export default function PhoneSystemDashboard() {
       createPeerConnection();
 
       // Add tracks to peer connection
-      stream.getTracks().forEach(track => {
+      stream.getTracks().forEach((track) => {
         peerConnectionRef.current?.addTrack(track, stream);
       });
 
@@ -288,11 +312,9 @@ export default function PhoneSystemDashboard() {
       await peerConnectionRef.current!.setLocalDescription(offer);
 
       // Send offer to remote peer via signaling server
-      console.log('Call offer created:', offer);
 
       setIsCallActive(true);
       setCallStatus('ringing');
-
     } catch (error) {
       console.error('Error starting call:', error);
       setCallStatus('idle');
@@ -311,7 +333,7 @@ export default function PhoneSystemDashboard() {
       createPeerConnection();
 
       // Add tracks to peer connection
-      stream.getTracks().forEach(track => {
+      stream.getTracks().forEach((track) => {
         peerConnectionRef.current?.addTrack(track, stream);
       });
 
@@ -323,7 +345,6 @@ export default function PhoneSystemDashboard() {
       setCallStatus('connected');
       setCallStartTime(new Date());
       startCallTimer();
-
     } catch (error) {
       console.error('Error answering call:', error);
       setCallStatus('idle');
@@ -332,8 +353,8 @@ export default function PhoneSystemDashboard() {
 
   const endCall = () => {
     // Stop all tracks
-    localStreamRef.current?.getTracks().forEach(track => track.stop());
-    remoteStreamRef.current?.getTracks().forEach(track => track.stop());
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
 
     // Close peer connection
     peerConnectionRef.current?.close();
@@ -360,7 +381,7 @@ export default function PhoneSystemDashboard() {
   const toggleMute = () => {
     if (localStreamRef.current) {
       const audioTracks = localStreamRef.current.getAudioTracks();
-      audioTracks.forEach(track => {
+      audioTracks.forEach((track) => {
         track.enabled = isMuted;
       });
       setIsMuted(!isMuted);
@@ -373,12 +394,12 @@ export default function PhoneSystemDashboard() {
     try {
       if (isVideoEnabled) {
         // Turn off video
-        localStreamRef.current?.getVideoTracks().forEach(track => track.stop());
+        localStreamRef.current?.getVideoTracks().forEach((track) => track.stop());
         setIsVideoEnabled(false);
       } else {
         // Turn on video
         const videoStream = await getUserMedia(false, true);
-        videoStream.getVideoTracks().forEach(track => {
+        videoStream.getVideoTracks().forEach((track) => {
           peerConnectionRef.current?.addTrack(track, videoStream);
         });
         setIsVideoEnabled(true);
@@ -397,7 +418,7 @@ export default function PhoneSystemDashboard() {
 
   const startCallTimer = () => {
     callTimerRef.current = setInterval(() => {
-      setCallDuration(prev => prev + 1);
+      setCallDuration((prev) => prev + 1);
     }, 1000);
   };
 
@@ -440,7 +461,7 @@ export default function PhoneSystemDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isAnalyzing ? 'Analyzing...' : 'AI Analysis'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = stats ? (
@@ -450,15 +471,21 @@ export default function PhoneSystemDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Calls</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-green-600">{Math.round((displayStats.answeredCalls / displayStats.totalCalls) * 100)}%</div>
+        <div className="text-2xl font-bold text-green-600">
+          {Math.round((displayStats.answeredCalls / displayStats.totalCalls) * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Answer Rate</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{displayStats.averageCallDuration}m</div>
+        <div className="text-2xl font-bold text-purple-600">
+          {displayStats.averageCallDuration}m
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Duration</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">{Math.round(displayStats.customerSatisfaction * 100)}%</div>
+        <div className="text-2xl font-bold text-orange-600">
+          {Math.round(displayStats.customerSatisfaction * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Satisfaction</div>
       </div>
     </div>
@@ -500,24 +527,30 @@ export default function PhoneSystemDashboard() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${
-                          call.status === 'completed' ? 'bg-green-100' :
-                          call.status === 'missed' ? 'bg-red-100' :
-                          call.status === 'ongoing' ? 'bg-blue-100' : 'bg-yellow-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-full ${
+                            call.status === 'completed'
+                              ? 'bg-green-100'
+                              : call.status === 'missed'
+                                ? 'bg-red-100'
+                                : call.status === 'ongoing'
+                                  ? 'bg-blue-100'
+                                  : 'bg-yellow-100'
+                          }`}
+                        >
                           <Phone className="h-4 w-4" />
                         </div>
                         <div>
                           <div className="font-medium">{call.caller}</div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {call.duration > 0 ? `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}` : 'No answer'}
+                            {call.duration > 0
+                              ? `${Math.floor(call.duration / 60)}:${(call.duration % 60).toString().padStart(2, '0')}`
+                              : 'No answer'}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(call.status)}>
-                          {call.status}
-                        </Badge>
+                        <Badge className={getStatusColor(call.status)}>{call.status}</Badge>
                         {call.sentiment && (
                           <Badge className={getSentimentColor(call.sentiment)}>
                             {call.sentiment}
@@ -551,16 +584,15 @@ export default function PhoneSystemDashboard() {
               <div className="px-0 pb-0">
                 <div className="text-center py-8">
                   <div className="text-6xl font-bold text-blue-600 mb-2">
-                    {Math.floor(callDuration / 60)}:{(callDuration % 60).toString().padStart(2, '0')}
+                    {Math.floor(callDuration / 60)}:
+                    {(callDuration % 60).toString().padStart(2, '0')}
                   </div>
-                  <div className="text-gray-600 dark:text-gray-400 mb-6">
-                    +1 (555) 123-4567
-                  </div>
+                  <div className="text-gray-600 dark:text-gray-400 mb-6">+1 (555) 123-4567</div>
 
                   <div className="flex justify-center gap-4 mb-6">
                     <Button
                       size="lg"
-                      variant={isRecording ? "destructive" : "outline"}
+                      variant={isRecording ? 'destructive' : 'outline'}
                       onClick={() => setIsRecording(!isRecording)}
                     >
                       {isRecording ? <Square className="h-5 w-5" /> : <Play className="h-5 w-5" />}
@@ -592,7 +624,9 @@ export default function PhoneSystemDashboard() {
                 <div className="h-64 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 overflow-y-auto">
                   <div className="space-y-2 text-sm">
                     <div className="text-blue-600 font-medium">Caller:</div>
-                    <p className="text-gray-700 dark:text-gray-300">{transcript || 'Transcript will appear here during live calls...'}</p>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {transcript || 'Transcript will appear here during live calls...'}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 flex gap-2">
@@ -639,7 +673,7 @@ export default function PhoneSystemDashboard() {
                         key={digit}
                         variant="outline"
                         className="h-12 text-lg font-semibold"
-                        onClick={() => setDialNumber(prev => prev + digit.toString())}
+                        onClick={() => setDialNumber((prev) => prev + digit.toString())}
                       >
                         {digit}
                       </Button>
@@ -689,13 +723,20 @@ export default function PhoneSystemDashboard() {
                   {[
                     { name: 'John Smith', number: '+1 (555) 123-4567', type: 'Client' },
                     { name: 'Sarah Johnson', number: '+1 (555) 987-6543', type: 'Lead' },
-                    { name: 'Mike Davis', number: '+1 (555) 456-7890', type: 'Partner' }
+                    { name: 'Mike Davis', number: '+1 (555) 456-7890', type: 'Partner' },
                   ].map((contact, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
                       <div>
                         <div className="font-medium">{contact.name}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">{contact.number}</div>
-                        <Badge variant="outline" className="text-xs mt-1">{contact.type}</Badge>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {contact.number}
+                        </div>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {contact.type}
+                        </Badge>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -736,19 +777,25 @@ export default function PhoneSystemDashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Call Quality Score</span>
-                    <span className="font-semibold">{Math.round(displayStats.callQuality * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(displayStats.callQuality * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.callQuality * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">AI Analysis Accuracy</span>
-                    <span className="font-semibold">{Math.round(displayStats.aiAccuracy * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(displayStats.aiAccuracy * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.aiAccuracy * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Customer Satisfaction</span>
-                    <span className="font-semibold">{Math.round(stats.customerSatisfaction * 100)}%</span>
+                    <span className="font-semibold">
+                      {Math.round(stats.customerSatisfaction * 100)}%
+                    </span>
                   </div>
                   <Progress value={stats.customerSatisfaction * 100} className="h-2" />
                 </div>
@@ -890,11 +937,13 @@ export default function PhoneSystemDashboard() {
                         <SelectValue placeholder="Select microphone" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mediaDevices.filter(device => device.kind === 'audioinput').map(device => (
-                          <SelectItem key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
-                          </SelectItem>
-                        ))}
+                        {mediaDevices
+                          .filter((device) => device.kind === 'audioinput')
+                          .map((device) => (
+                            <SelectItem key={device.deviceId} value={device.deviceId}>
+                              {device.label || `Microphone ${device.deviceId.slice(0, 8)}`}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -909,11 +958,13 @@ export default function PhoneSystemDashboard() {
                         <SelectValue placeholder="Select speaker" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mediaDevices.filter(device => device.kind === 'audiooutput').map(device => (
-                          <SelectItem key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Speaker ${device.deviceId.slice(0, 8)}`}
-                          </SelectItem>
-                        ))}
+                        {mediaDevices
+                          .filter((device) => device.kind === 'audiooutput')
+                          .map((device) => (
+                            <SelectItem key={device.deviceId} value={device.deviceId}>
+                              {device.label || `Speaker ${device.deviceId.slice(0, 8)}`}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -928,20 +979,18 @@ export default function PhoneSystemDashboard() {
                         <SelectValue placeholder="Select camera" />
                       </SelectTrigger>
                       <SelectContent>
-                        {mediaDevices.filter(device => device.kind === 'videoinput').map(device => (
-                          <SelectItem key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
-                          </SelectItem>
-                        ))}
+                        {mediaDevices
+                          .filter((device) => device.kind === 'videoinput')
+                          .map((device) => (
+                            <SelectItem key={device.deviceId} value={device.deviceId}>
+                              {device.label || `Camera ${device.deviceId.slice(0, 8)}`}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <Button
-                    onClick={initializeMediaDevices}
-                    variant="outline"
-                    className="w-full"
-                  >
+                  <Button onClick={initializeMediaDevices} variant="outline" className="w-full">
                     <Settings className="h-4 w-4 mr-2" />
                     Refresh Devices
                   </Button>
@@ -1042,9 +1091,7 @@ export default function PhoneSystemDashboard() {
                 <div className="text-center p-4 border rounded-lg">
                   <Monitor className="h-8 w-8 mx-auto mb-2 text-purple-600" />
                   <div className="font-medium">Screen Share</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {'Available'}
-                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">{'Available'}</div>
                 </div>
               </div>
 
@@ -1056,7 +1103,8 @@ export default function PhoneSystemDashboard() {
                       Browser Permissions Required
                     </h4>
                     <p className="text-sm text-blue-700 dark:text-blue-200 mb-3">
-                      To use calling features, please ensure your browser has permission to access your microphone and camera.
+                      To use calling features, please ensure your browser has permission to access
+                      your microphone and camera.
                     </p>
                     <Button variant="outline" size="sm">
                       Check Permissions
@@ -1098,7 +1146,7 @@ export default function PhoneSystemDashboard() {
                   key={digit}
                   variant="outline"
                   className="h-12 text-lg font-semibold"
-                  onClick={() => setDialNumber(prev => prev + digit.toString())}
+                  onClick={() => setDialNumber((prev) => prev + digit.toString())}
                 >
                   {digit}
                 </Button>
@@ -1150,23 +1198,37 @@ export default function PhoneSystemDashboard() {
             <div className="space-y-6">
               {/* Call Status Header */}
               <div className="text-center">
-                <div className={`text-4xl font-bold mb-2 ${
-                  callStatus === 'connected' ? 'text-green-600' :
-                  callStatus === 'connecting' ? 'text-yellow-600' :
-                  callStatus === 'ringing' ? 'text-blue-600' : 'text-gray-600'
-                }`}>
-                  {callStatus === 'connected' ? `${Math.floor(callDuration / 60)}:${(callDuration % 60).toString().padStart(2, '0')}` :
-                   callStatus === 'connecting' ? 'Connecting...' :
-                   callStatus === 'ringing' ? 'Ringing...' : 'Call Ended'}
+                <div
+                  className={`text-4xl font-bold mb-2 ${
+                    callStatus === 'connected'
+                      ? 'text-green-600'
+                      : callStatus === 'connecting'
+                        ? 'text-yellow-600'
+                        : callStatus === 'ringing'
+                          ? 'text-blue-600'
+                          : 'text-gray-600'
+                  }`}
+                >
+                  {callStatus === 'connected'
+                    ? `${Math.floor(callDuration / 60)}:${(callDuration % 60).toString().padStart(2, '0')}`
+                    : callStatus === 'connecting'
+                      ? 'Connecting...'
+                      : callStatus === 'ringing'
+                        ? 'Ringing...'
+                        : 'Call Ended'}
                 </div>
-                <div className="text-lg text-gray-600 dark:text-gray-400">
-                  {remoteNumber}
-                </div>
-                <Badge className={`mt-2 ${
-                  callStatus === 'connected' ? 'bg-green-100 text-green-800' :
-                  callStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
-                  callStatus === 'ringing' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                }`}>
+                <div className="text-lg text-gray-600 dark:text-gray-400">{remoteNumber}</div>
+                <Badge
+                  className={`mt-2 ${
+                    callStatus === 'connected'
+                      ? 'bg-green-100 text-green-800'
+                      : callStatus === 'connecting'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : callStatus === 'ringing'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
                   {callStatus}
                 </Badge>
               </div>
@@ -1204,7 +1266,7 @@ export default function PhoneSystemDashboard() {
               <div className="flex justify-center gap-4">
                 <Button
                   onClick={toggleMute}
-                  variant={isMuted ? "destructive" : "outline"}
+                  variant={isMuted ? 'destructive' : 'outline'}
                   size="lg"
                   className="w-16 h-16 rounded-full"
                 >
@@ -1214,17 +1276,21 @@ export default function PhoneSystemDashboard() {
                 {isVideoEnabled && (
                   <Button
                     onClick={toggleVideo}
-                    variant={!isVideoEnabled ? "destructive" : "outline"}
+                    variant={!isVideoEnabled ? 'destructive' : 'outline'}
                     size="lg"
                     className="w-16 h-16 rounded-full"
                   >
-                    {!isVideoEnabled ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
+                    {!isVideoEnabled ? (
+                      <VideoOff className="h-6 w-6" />
+                    ) : (
+                      <Video className="h-6 w-6" />
+                    )}
                   </Button>
                 )}
 
                 <Button
                   onClick={toggleSpeaker}
-                  variant={!isSpeakerOn ? "destructive" : "outline"}
+                  variant={!isSpeakerOn ? 'destructive' : 'outline'}
                   size="lg"
                   className="w-16 h-16 rounded-full"
                 >
@@ -1275,23 +1341,33 @@ export default function PhoneSystemDashboard() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Caller</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Caller
+                  </Label>
                   <div className="font-medium">{selectedCall.caller}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Duration</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Duration
+                  </Label>
                   <div className="font-medium">
-                    {selectedCall.duration > 0 ? `${Math.floor(selectedCall.duration / 60)}:${(selectedCall.duration % 60).toString().padStart(2, '0')}` : 'No answer'}
+                    {selectedCall.duration > 0
+                      ? `${Math.floor(selectedCall.duration / 60)}:${(selectedCall.duration % 60).toString().padStart(2, '0')}`
+                      : 'No answer'}
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedCall.status)}>
                     {selectedCall.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">Sentiment</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Sentiment
+                  </Label>
                   {selectedCall.sentiment && (
                     <Badge className={getSentimentColor(selectedCall.sentiment)}>
                       {selectedCall.sentiment}
@@ -1302,7 +1378,9 @@ export default function PhoneSystemDashboard() {
 
               {selectedCall.transcript && (
                 <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Transcript</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                    Transcript
+                  </Label>
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-40 overflow-y-auto">
                     <p className="text-sm">{selectedCall.transcript}</p>
                   </div>
@@ -1318,7 +1396,9 @@ export default function PhoneSystemDashboard() {
                   <div className="space-y-3">
                     <div>
                       <div className="font-medium text-sm mb-1">Summary</div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{selectedCall.gpt5Analysis.summary}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        {selectedCall.gpt5Analysis.summary}
+                      </p>
                     </div>
 
                     <div>

@@ -31,10 +31,17 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
   onDealCreate,
   onDealUpdate,
   onDealDelete,
-  initialDeals = []
+  initialDeals = [],
 }) => {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
-  const [stages] = useState(['Lead', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']);
+  const [stages] = useState([
+    'Lead',
+    'Qualified',
+    'Proposal',
+    'Negotiation',
+    'Closed Won',
+    'Closed Lost',
+  ]);
 
   // Listen for messages from parent CRM
   useEffect(() => {
@@ -45,23 +52,29 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
     };
 
     window.addEventListener('message', handleMessage);
-    
+
     // Notify parent that pipeline module is ready
-    window.parent.postMessage({
-      type: 'PIPELINE_MODULE_READY',
-      source: 'REMOTE_PIPELINE'
-    }, '*');
+    window.parent.postMessage(
+      {
+        type: 'PIPELINE_MODULE_READY',
+        source: 'REMOTE_PIPELINE',
+      },
+      '*'
+    );
 
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const handleDealAction = (action: string, deal: Deal) => {
     // Notify parent CRM of deal actions
-    window.parent.postMessage({
-      type: `DEAL_${action.toUpperCase()}`,
-      data: deal,
-      source: 'REMOTE_PIPELINE'
-    }, '*');
+    window.parent.postMessage(
+      {
+        type: `DEAL_${action.toUpperCase()}`,
+        data: deal,
+        source: 'REMOTE_PIPELINE',
+      },
+      '*'
+    );
 
     // Execute local callbacks
     switch (action) {
@@ -82,26 +95,29 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
 
   const getStageColor = (stage: string) => {
     const colors: { [key: string]: string } = {
-      'Lead': 'bg-gray-100 text-gray-800',
-      'Qualified': 'bg-blue-100 text-blue-800',
-      'Proposal': 'bg-yellow-100 text-yellow-800',
-      'Negotiation': 'bg-orange-100 text-orange-800',
+      Lead: 'bg-gray-100 text-gray-800',
+      Qualified: 'bg-blue-100 text-blue-800',
+      Proposal: 'bg-yellow-100 text-yellow-800',
+      Negotiation: 'bg-orange-100 text-orange-800',
       'Closed Won': 'bg-green-100 text-green-800',
-      'Closed Lost': 'bg-red-100 text-red-800'
+      'Closed Lost': 'bg-red-100 text-red-800',
     };
     return colors[stage] || 'bg-gray-100 text-gray-800';
   };
 
-  const dealsByStage = stages.reduce((acc, stage) => {
-    acc[stage] = deals.filter(deal => deal.stage === stage);
-    return acc;
-  }, {} as { [key: string]: Deal[] });
+  const dealsByStage = stages.reduce(
+    (acc, stage) => {
+      acc[stage] = deals.filter((deal) => deal.stage === stage);
+      return acc;
+    },
+    {} as { [key: string]: Deal[] }
+  );
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Sales Pipeline</h1>
-        
+
         {/* Pipeline Stages */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {stages.map((stage) => (
@@ -112,7 +128,7 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
                   ({dealsByStage[stage]?.length || 0})
                 </span>
               </h3>
-              
+
               <div className="space-y-2 min-h-[200px]">
                 {dealsByStage[stage]?.map((deal) => (
                   <div
@@ -121,12 +137,8 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
                     onClick={() => handleDealAction('select', deal)}
                   >
                     <h4 className="font-medium text-sm mb-1">{deal.title}</h4>
-                    <p className="text-xs text-gray-600 mb-2">
-                      ${deal.value.toLocaleString()}
-                    </p>
-                    {deal.company && (
-                      <p className="text-xs text-gray-500">{deal.company}</p>
-                    )}
+                    <p className="text-xs text-gray-600 mb-2">${deal.value.toLocaleString()}</p>
+                    {deal.company && <p className="text-xs text-gray-500">{deal.company}</p>}
                     {deal.probability && (
                       <div className="mt-2">
                         <div className="w-full bg-gray-200 rounded-full h-1">
@@ -138,7 +150,7 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
                         <p className="text-xs text-gray-500 mt-1">{deal.probability}%</p>
                       </div>
                     )}
-                    
+
                     <div className="mt-2 flex justify-between">
                       <button
                         onClick={(e) => {
@@ -170,12 +182,14 @@ const PipelineApp: React.FC<PipelineAppProps> = ({
           <div className="text-center py-12">
             <p className="text-gray-500">No deals in pipeline</p>
             <button
-              onClick={() => handleDealAction('create', {
-                id: Date.now().toString(),
-                title: 'New Deal',
-                value: 10000,
-                stage: 'Lead'
-              })}
+              onClick={() =>
+                handleDealAction('create', {
+                  id: Date.now().toString(),
+                  title: 'New Deal',
+                  value: 10000,
+                  stage: 'Lead',
+                })
+              }
               className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               Add First Deal

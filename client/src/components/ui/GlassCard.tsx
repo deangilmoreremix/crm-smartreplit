@@ -7,11 +7,11 @@ interface GlassCardProps {
   hover?: boolean;
 }
 
-export const GlassCard: React.FC<GlassCardProps> = ({ 
-  children, 
-  className = '', 
+export const GlassCard: React.FC<GlassCardProps> = ({
+  children,
+  className = '',
   onClick,
-  hover = true 
+  hover = true,
 }) => {
   return (
     <div

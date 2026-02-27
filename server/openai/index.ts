@@ -63,7 +63,7 @@ class AICircuitBreaker {
       state: this.state,
       failures: this.failures,
       lastFailureTime: this.lastFailureTime,
-      nextRetryTime: this.lastFailureTime + this.timeoutMs
+      nextRetryTime: this.lastFailureTime + this.timeoutMs,
     };
   }
 }
@@ -95,29 +95,30 @@ class AIUsageTracker {
     }
 
     // Log high usage for monitoring
-    if (record.cost > 0.1) { // Log expensive requests
+    if (record.cost > 0.1) {
+      // Log expensive requests
       console.warn(`High-cost AI request: $${record.cost.toFixed(4)} for ${record.endpoint}`);
     }
   }
 
   getUserUsage(userId: string, timeWindowMs: number = 60 * 60 * 1000): AIUsageRecord[] {
     const cutoff = Date.now() - timeWindowMs;
-    return this.usageRecords.filter(record =>
-      record.userId === userId && record.timestamp > cutoff
+    return this.usageRecords.filter(
+      (record) => record.userId === userId && record.timestamp > cutoff
     );
   }
 
   getTotalCost(userId?: string): number {
     const records = userId
-      ? this.usageRecords.filter(r => r.userId === userId)
+      ? this.usageRecords.filter((r) => r.userId === userId)
       : this.usageRecords;
     return records.reduce((sum, record) => sum + record.cost, 0);
   }
 
   getUsageStats() {
     const now = Date.now();
-    const lastHour = this.usageRecords.filter(r => r.timestamp > now - 60 * 60 * 1000);
-    const lastDay = this.usageRecords.filter(r => r.timestamp > now - 24 * 60 * 60 * 1000);
+    const lastHour = this.usageRecords.filter((r) => r.timestamp > now - 60 * 60 * 1000);
+    const lastDay = this.usageRecords.filter((r) => r.timestamp > now - 24 * 60 * 60 * 1000);
 
     return {
       totalRequests: this.usageRecords.length,
@@ -126,14 +127,13 @@ class AIUsageTracker {
       totalCost: this.getTotalCost(),
       lastHourCost: lastHour.reduce((sum, r) => sum + r.cost, 0),
       lastDayCost: lastDay.reduce((sum, r) => sum + r.cost, 0),
-      circuitBreakerStatus: aiCircuitBreaker.getStatus()
+      circuitBreakerStatus: aiCircuitBreaker.getStatus(),
     };
   }
 }
 
 // Global usage tracker instance
 const aiUsageTracker = new AIUsageTracker();
-
 
 // Google AI integration
 interface GoogleAIResponse {
@@ -150,17 +150,22 @@ async function callGoogleAI(prompt: string, model: string = 'gemini-1.5-flash'):
     throw new Error('Google AI API key not configured');
   }
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{ text: prompt }]
-      }]
-    })
-  });
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      }),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
@@ -170,7 +175,16 @@ async function callGoogleAI(prompt: string, model: string = 'gemini-1.5-flash'):
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-export const handler = async (event: { httpMethod: string; path: string; body: string; headers: Record<string, string>; queryStringParameters?: Record<string, string> }, _context: unknown) => {
+export const handler = async (
+  event: {
+    httpMethod: string;
+    path: string;
+    body: string;
+    headers: Record<string, string>;
+    queryStringParameters?: Record<string, string>;
+  },
+  _context: unknown
+) => {
   const { httpMethod, path, body } = event;
   const pathParts = path.split('/').filter(Boolean);
 
@@ -178,7 +192,7 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   };
 
   if (httpMethod === 'OPTIONS') {
@@ -193,7 +207,12 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
     const maxRequests = 10; // 10 requests per minute
 
     const rateLimiter = getRedisRateLimiter();
-    const rateLimitResult = await rateLimiter.checkLimit(`ai_requests_${userId}`, maxRequests, windowMs, clientIP);
+    const rateLimitResult = await rateLimiter.checkLimit(
+      `ai_requests_${userId}`,
+      maxRequests,
+      windowMs,
+      clientIP
+    );
 
     if (!rateLimitResult.allowed) {
       return {
@@ -204,15 +223,20 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           message: 'AI request limit exceeded. Please wait before making another request.',
           retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000),
           remaining: rateLimitResult.remaining,
-          resetTime: rateLimitResult.resetTime
-        })
+          resetTime: rateLimitResult.resetTime,
+        }),
       };
     }
   }
 
   try {
     // GET /api/openai/status - OpenAI status check
-    if (pathParts.length >= 2 && pathParts[0] === 'openai' && pathParts[1] === 'status' && httpMethod === 'GET') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'status' &&
+      httpMethod === 'GET'
+    ) {
       const hasApiKey = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10;
 
       if (!hasApiKey) {
@@ -223,8 +247,8 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
             configured: false,
             model: 'none',
             status: 'needs_configuration',
-            error: 'No API key configured'
-          })
+            error: 'No API key configured',
+          }),
         };
       }
 
@@ -234,9 +258,9 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           throw new Error('OpenAI client not initialized');
         }
         await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: "test" }],
-          max_tokens: 1
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: 'test' }],
+          max_tokens: 1,
         });
         gpt5Available = true;
       } catch (_error: unknown) {
@@ -251,31 +275,38 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           model: gpt5Available ? 'gpt-4o' : 'gpt-4o',
           status: 'ready',
           gpt5Available,
-          capabilities: gpt5Available ? [
-            '94.6% AIME mathematical accuracy',
-            '74.9% SWE-bench coding accuracy',
-            '84.2% MMMU multimodal performance',
-            'Unified reasoning system',
-            'Advanced verbosity and reasoning_effort controls'
-          ] : [
-            'GPT-4 Omni model available',
-            'Advanced reasoning and analysis',
-            'Multimodal capabilities',
-            'JSON output formatting'
-          ]
-        })
+          capabilities: gpt5Available
+            ? [
+                '94.6% AIME mathematical accuracy',
+                '74.9% SWE-bench coding accuracy',
+                '84.2% MMMU multimodal performance',
+                'Unified reasoning system',
+                'Advanced verbosity and reasoning_effort controls',
+              ]
+            : [
+                'GPT-4 Omni model available',
+                'Advanced reasoning and analysis',
+                'Multimodal capabilities',
+                'JSON output formatting',
+              ],
+        }),
       };
     }
 
     // POST /api/openai/embeddings - OpenAI embeddings
-    if (pathParts.length >= 2 && pathParts[0] === 'openai' && pathParts[1] === 'embeddings' && httpMethod === 'POST') {
-      const { text, model = "text-embedding-3-small" } = JSON.parse(body);
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'embeddings' &&
+      httpMethod === 'POST'
+    ) {
+      const { text, model = 'text-embedding-3-small' } = JSON.parse(body);
 
       if (!text) {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'Text is required for embedding generation' })
+          body: JSON.stringify({ error: 'Text is required for embedding generation' }),
         };
       }
 
@@ -283,14 +314,17 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'OpenAI API key not configured', message: 'Please configure OpenAI API key for embeddings' })
+          body: JSON.stringify({
+            error: 'OpenAI API key not configured',
+            message: 'Please configure OpenAI API key for embeddings',
+          }),
         };
       }
 
       const response = await openai.embeddings.create({
         model: model,
         input: text,
-        encoding_format: "float",
+        encoding_format: 'float',
       });
 
       return {
@@ -300,20 +334,33 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           success: true,
           embedding: response.data[0].embedding,
           model: model,
-          usage: response.usage
-        })
+          usage: response.usage,
+        }),
       };
     }
 
     // POST /api/openai/images/generate - Image generation
-    if (pathParts.length >= 3 && pathParts[0] === 'openai' && pathParts[1] === 'images' && pathParts[2] === 'generate' && httpMethod === 'POST') {
-      const { prompt, model = 'dall-e-3', size = '1024x1024', quality = 'standard', style = 'vivid', n = 1 } = JSON.parse(body);
+    if (
+      pathParts.length >= 3 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'images' &&
+      pathParts[2] === 'generate' &&
+      httpMethod === 'POST'
+    ) {
+      const {
+        prompt,
+        model = 'dall-e-3',
+        size = '1024x1024',
+        quality = 'standard',
+        style = 'vivid',
+        n = 1,
+      } = JSON.parse(body);
 
       if (!prompt) {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'Prompt is required for image generation' })
+          body: JSON.stringify({ error: 'Prompt is required for image generation' }),
         };
       }
 
@@ -321,7 +368,10 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'OpenAI API key not configured', message: 'Please configure OpenAI API key for image generation' })
+          body: JSON.stringify({
+            error: 'OpenAI API key not configured',
+            message: 'Please configure OpenAI API key for image generation',
+          }),
         };
       }
 
@@ -331,7 +381,7 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
         size: size as '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792',
         quality: quality as 'standard' | 'hd',
         style: style as 'vivid' | 'natural',
-        n: n
+        n: n,
       });
 
       return {
@@ -341,13 +391,18 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           success: true,
           data: response.data,
           model: model,
-          usage: response.data?.length || 0
-        })
+          usage: response.data?.length || 0,
+        }),
       };
     }
 
     // GET /api/openai/usage - AI usage monitoring
-    if (pathParts.length >= 2 && pathParts[0] === 'openai' && pathParts[1] === 'usage' && httpMethod === 'GET') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'usage' &&
+      httpMethod === 'GET'
+    ) {
       const userId = event.headers['x-user-id'];
       const includeStats = event.queryStringParameters?.stats === 'true';
 
@@ -367,20 +422,25 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
             budgetRemaining: Math.max(0, budgetLimit - dailyCost),
             isOverBudget: dailyCost > budgetLimit,
             recentRequests: dailyUsage.slice(-10),
-            circuitBreakerStatus: aiCircuitBreaker.getStatus()
-          })
+            circuitBreakerStatus: aiCircuitBreaker.getStatus(),
+          }),
         };
       }
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify(aiUsageTracker.getUsageStats())
+        body: JSON.stringify(aiUsageTracker.getUsageStats()),
       };
     }
 
     // POST /api/openai/smart-greeting - Smart greeting generation
-    if (pathParts.length >= 2 && pathParts[0] === 'openai' && pathParts[1] === 'smart-greeting' && httpMethod === 'POST') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'smart-greeting' &&
+      httpMethod === 'POST'
+    ) {
       const { userMetrics, timeOfDay, recentActivity } = JSON.parse(body);
       const userId = event.headers['x-user-id'];
 
@@ -400,8 +460,8 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
               greeting: `Good ${timeOfDay}! Your pipeline looks strong.`,
               insight: 'AI insights temporarily unavailable due to budget limits.',
               source: 'budget_limit_fallback',
-              model: 'fallback'
-            })
+              model: 'fallback',
+            }),
           };
         }
       }
@@ -412,12 +472,13 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           headers,
           body: JSON.stringify({
             greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals worth $${(userMetrics?.totalValue || 0).toLocaleString()}.`,
-            insight: userMetrics?.totalValue > 50000
-              ? 'Your pipeline shows strong momentum. Focus on your highest-value opportunities to maximize Q4 performance.'
-              : 'Your pipeline is growing steadily. Consider expanding your outreach to increase deal flow.',
+            insight:
+              userMetrics?.totalValue > 50000
+                ? 'Your pipeline shows strong momentum. Focus on your highest-value opportunities to maximize Q4 performance.'
+                : 'Your pipeline is growing steadily. Consider expanding your outreach to increase deal flow.',
             source: 'intelligent_fallback',
-            model: 'fallback'
-          })
+            model: 'fallback',
+          }),
         };
       }
 
@@ -435,7 +496,7 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
             cost: 0,
             timestamp: Date.now(),
             model: 'cache',
-            success: true
+            success: true,
           });
 
           return cachedResult;
@@ -443,17 +504,21 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
 
         const result = await aiCircuitBreaker.execute(async () => {
           const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [{
-              role: "system",
-              content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
-            }, {
-              role: "user",
-              content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
-            }],
-            response_format: { type: "json_object" },
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are an expert business strategist. Generate personalized greetings and strategic insights.',
+              },
+              {
+                role: 'user',
+                content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`,
+              },
+            ],
+            response_format: { type: 'json_object' },
             temperature: 0.7,
-            max_tokens: 200
+            max_tokens: 200,
           });
 
           const parsedResult = JSON.parse(response.choices[0].message.content || '{}');
@@ -471,7 +536,7 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
             cost: estimatedCost,
             timestamp: Date.now(),
             model: 'gpt-4o-mini',
-            success: true
+            success: true,
           });
 
           return parsedResult;
@@ -483,11 +548,14 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           body: JSON.stringify({
             ...result,
             source: 'gpt-4o-mini',
-            model: 'gpt-4o-mini'
-          })
+            model: 'gpt-4o-mini',
+          }),
         };
       } catch (error: unknown) {
-        console.error('Smart greeting circuit breaker error:', error instanceof Error ? error.message : String(error));
+        console.error(
+          'Smart greeting circuit breaker error:',
+          error instanceof Error ? error.message : String(error)
+        );
 
         // Track failed usage
         aiUsageTracker.trackUsage({
@@ -497,7 +565,7 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           cost: 0,
           timestamp: Date.now(),
           model: 'gpt-4o-mini',
-          success: false
+          success: false,
         });
 
         return {
@@ -508,40 +576,50 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
             insight: 'AI service temporarily unavailable. Using intelligent defaults.',
             source: 'circuit_breaker_fallback',
             model: 'fallback',
-            error: error instanceof Error ? error.message : String(error)
-          })
+            error: error instanceof Error ? error.message : String(error),
+          }),
         };
       }
     }
 
     // POST /api/openai/kpi-analysis - KPI analysis
-    if (pathParts.length >= 2 && pathParts[0] === 'openai' && pathParts[1] === 'kpi-analysis' && httpMethod === 'POST') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'kpi-analysis' &&
+      httpMethod === 'POST'
+    ) {
       if (!openai) {
         return {
           statusCode: 400,
           headers,
           body: JSON.stringify({
             error: 'OpenAI API key not configured',
-            summary: 'Your KPI trends show steady performance. Configure OpenAI API key for detailed analysis.',
-            recommendations: ['Set up API credentials', 'Enable advanced analytics']
-          })
+            summary:
+              'Your KPI trends show steady performance. Configure OpenAI API key for detailed analysis.',
+            recommendations: ['Set up API credentials', 'Enable advanced analytics'],
+          }),
         };
       }
 
       const { historicalData, currentMetrics } = JSON.parse(body);
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations."
-        }, {
-          role: "user",
-          content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
-        }],
-        response_format: { type: "json_object" },
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations.',
+          },
+          {
+            role: 'user',
+            content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
+          },
+        ],
+        response_format: { type: 'json_object' },
         temperature: 0.3,
-        max_tokens: 800
+        max_tokens: 800,
       });
 
       let result;
@@ -553,7 +631,7 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           error: 'Failed to parse AI response',
           summary: 'Analysis completed but response parsing failed',
           recommendations: ['Review data format', 'Check API response'],
-          parsed_content: response.choices[0].message.content
+          parsed_content: response.choices[0].message.content,
         };
       }
 
@@ -561,9 +639,14 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
     }
 
     // POST /api/googleai/test - Google AI test
-    if (pathParts.length >= 2 && pathParts[0] === 'googleai' && pathParts[1] === 'test' && httpMethod === 'POST') {
+    if (
+      pathParts.length >= 2 &&
+      pathParts[0] === 'googleai' &&
+      pathParts[1] === 'test' &&
+      httpMethod === 'POST'
+    ) {
       const { prompt } = JSON.parse(body);
-      const response = await callGoogleAI(prompt || "Generate a business insight in one sentence.");
+      const response = await callGoogleAI(prompt || 'Generate a business insight in one sentence.');
 
       return {
         statusCode: 200,
@@ -572,28 +655,38 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           success: true,
           model: 'gemini-1.5-flash',
           output: response,
-          message: 'Google AI working perfectly!'
-        })
+          message: 'Google AI working perfectly!',
+        }),
       };
     }
 
     // POST /api/openai/test-gpt5-direct - Direct GPT test
-    if (pathParts.length >= 3 && pathParts[0] === 'openai' && pathParts[1] === 'test-gpt5-direct' && httpMethod === 'POST') {
+    if (
+      pathParts.length >= 3 &&
+      pathParts[0] === 'openai' &&
+      pathParts[1] === 'test-gpt5-direct' &&
+      httpMethod === 'POST'
+    ) {
       if (!openai) {
         return {
           statusCode: 400,
           headers,
           body: JSON.stringify({
             error: 'OpenAI API key not configured',
-            message: 'Please configure OpenAI API key for testing'
-          })
+            message: 'Please configure OpenAI API key for testing',
+          }),
         };
       }
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: "Generate a business insight about CRM efficiency in exactly 1 sentence." }],
-        max_tokens: 50
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: 'Generate a business insight about CRM efficiency in exactly 1 sentence.',
+          },
+        ],
+        max_tokens: 50,
       });
 
       return {
@@ -603,8 +696,8 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           success: true,
           model: 'gpt-4o-mini',
           output: response.choices[0].message.content,
-          message: 'AI working perfectly!'
-        })
+          message: 'AI working perfectly!',
+        }),
       };
     }
 
@@ -626,64 +719,64 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           headers,
           body: JSON.stringify({
             error: 'OpenAI API key not configured',
-            message: 'Please configure OpenAI API key for AI features'
-          })
+            message: 'Please configure OpenAI API key for AI features',
+          }),
         };
       }
 
       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
         {
-          role: "system",
-          content: "You are a helpful sales + ops assistant for white-label CRM applications."
+          role: 'system',
+          content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
         },
         {
-          role: "user",
-          content: imageUrl
-            ? `${prompt}\n\nImage URL: ${imageUrl}`
-            : prompt
-        }
+          role: 'user',
+          content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
+        },
       ];
 
       const response = await openai.chat.completions.create({
-        model: useThinking ? "gpt-4o" : "gpt-4o-mini",
+        model: useThinking ? 'gpt-4o' : 'gpt-4o-mini',
         messages,
         temperature,
         max_tokens: max_output_tokens,
-        response_format: schema ? { type: "json_object" } : undefined,
+        response_format: schema ? { type: 'json_object' } : undefined,
         tools: [
           {
-            type: "function",
+            type: 'function',
             function: {
-              name: "analyzeBusinessData",
-              description: "Analyze business data and provide insights",
+              name: 'analyzeBusinessData',
+              description: 'Analyze business data and provide insights',
               parameters: {
-                type: "object",
+                type: 'object',
                 properties: {
-                  dataType: { type: "string" },
-                  analysisType: { type: "string" },
-                  timeRange: { type: "string" }
+                  dataType: { type: 'string' },
+                  analysisType: { type: 'string' },
+                  timeRange: { type: 'string' },
                 },
-                required: ["dataType"]
-              }
-            }
+                required: ['dataType'],
+              },
+            },
           },
           {
-            type: "function",
+            type: 'function',
             function: {
-              name: "generateRecommendations",
-              description: "Generate business recommendations based on data",
+              name: 'generateRecommendations',
+              description: 'Generate business recommendations based on data',
               parameters: {
-                type: "object",
+                type: 'object',
                 properties: {
-                  context: { type: "string" },
-                  goals: { type: "array", items: { type: "string" } },
-                  constraints: { type: "array", items: { type: "string" } }
-                }
-              }
-            }
-          }
+                  context: { type: 'string' },
+                  goals: { type: 'array', items: { type: 'string' } },
+                  constraints: { type: 'array', items: { type: 'string' } },
+                },
+              },
+            },
+          },
         ],
-        tool_choice: forceToolName ? { type: "function", function: { name: forceToolName } } : "auto"
+        tool_choice: forceToolName
+          ? { type: 'function', function: { name: forceToolName } }
+          : 'auto',
       });
 
       const toolCalls = response.choices[0].message.tool_calls;
@@ -699,18 +792,18 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           ...messages,
           response.choices[0].message,
           ...toolOutputs.map((o) => ({
-            role: "tool" as const,
+            role: 'tool' as const,
             content: o.output,
-            tool_call_id: o.tool_call_id
-          }))
+            tool_call_id: o.tool_call_id,
+          })),
         ];
 
         const continuedResponse = await openai.chat.completions.create({
-          model: useThinking ? "gpt-4o" : "gpt-4o-mini",
+          model: useThinking ? 'gpt-4o' : 'gpt-4o-mini',
           messages: continuedMessages,
           temperature,
           max_tokens: max_output_tokens,
-          response_format: schema ? { type: "json_object" } : undefined
+          response_format: schema ? { type: 'json_object' } : undefined,
         });
 
         return {
@@ -718,15 +811,19 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
           headers,
           body: JSON.stringify({
             output_text: continuedResponse.choices[0].message.content,
-            output: [{
-              content: [{
-                type: "output_text",
-                text: continuedResponse.choices[0].message.content
-              }]
-            }],
+            output: [
+              {
+                content: [
+                  {
+                    type: 'output_text',
+                    text: continuedResponse.choices[0].message.content,
+                  },
+                ],
+              },
+            ],
             tool_calls: toolCalls,
-            continued: true
-          })
+            continued: true,
+          }),
         };
       }
 
@@ -735,15 +832,19 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
         headers,
         body: JSON.stringify({
           output_text: response.choices[0].message.content,
-          output: [{
-            content: [{
-              type: "output_text",
-              text: response.choices[0].message.content
-            }]
-          }],
+          output: [
+            {
+              content: [
+                {
+                  type: 'output_text',
+                  text: response.choices[0].message.content,
+                },
+              ],
+            },
+          ],
           model: response.model,
-          usage: response.usage
-        })
+          usage: response.usage,
+        }),
       };
     }
 
@@ -751,45 +852,51 @@ export const handler = async (event: { httpMethod: string; path: string; body: s
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ error: 'OpenAI endpoint not found' })
+      body: JSON.stringify({ error: 'OpenAI endpoint not found' }),
     };
-
   } catch (error: unknown) {
     console.error('OpenAI function error:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error', message: error instanceof Error ? error.message : String(error) })
+      body: JSON.stringify({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : String(error),
+      }),
     };
   }
 };
 
 // Tool execution function for WL apps
-async function executeWLTool(tc: { function: { name: string; arguments: string } }): Promise<string> {
+async function executeWLTool(tc: {
+  function: { name: string; arguments: string };
+}): Promise<string> {
   const { name, arguments: args } = tc.function;
   try {
     const parsedArgs = args ? JSON.parse(args) : {};
-    if (name === "analyzeBusinessData") {
+    if (name === 'analyzeBusinessData') {
       const { dataType, analysisType, timeRange } = parsedArgs;
       return JSON.stringify({
         ok: true,
         analysis: `Analysis of ${dataType} for ${timeRange}`,
         insights: [`Key insight 1 for ${analysisType}`, `Key insight 2 for ${analysisType}`],
-        recommendations: [`Recommendation 1`, `Recommendation 2`]
+        recommendations: [`Recommendation 1`, `Recommendation 2`],
       });
     }
-    if (name === "generateRecommendations") {
+    if (name === 'generateRecommendations') {
       const { context, goals, constraints } = parsedArgs;
       return JSON.stringify({
         ok: true,
-        recommendations: goals?.map((goal: string, i: number) =>
-          `For ${goal}: Action ${i + 1} considering ${constraints?.[i] || 'no constraints'}`
-        ) || [],
-        context: context
+        recommendations:
+          goals?.map(
+            (goal: string, i: number) =>
+              `For ${goal}: Action ${i + 1} considering ${constraints?.[i] || 'no constraints'}`
+          ) || [],
+        context: context,
       });
     }
     return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
   } catch (e: unknown) {
-    return JSON.stringify({ ok: false, error: e instanceof Error ? e.message : "Tool error" });
+    return JSON.stringify({ ok: false, error: e instanceof Error ? e.message : 'Tool error' });
   }
 }

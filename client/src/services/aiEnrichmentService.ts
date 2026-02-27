@@ -64,7 +64,7 @@ class AIEnrichmentService {
   ];
 
   private hasConfiguredProviders(): boolean {
-    return this.providers.some(provider => provider.enabled);
+    return this.providers.some((provider) => provider.enabled);
   }
 
   private generateMockData(input: any): ContactEnrichmentData {
@@ -75,47 +75,52 @@ class AIEnrichmentService {
       avatar: 'https://via.placeholder.com/100x100',
       industry: 'Technology',
       inferredPersonalityTraits: {
-        'Professionalism': 'High',
-        'Communication': 'Clear and direct',
-        'Leadership': 'Collaborative'
+        Professionalism: 'High',
+        Communication: 'Clear and direct',
+        Leadership: 'Collaborative',
       },
       communicationStyle: 'Professional and direct',
       professionalDemeanor: 'Confident and approachable',
-      imageAnalysisNotes: 'Professional appearance, business attire'
+      imageAnalysisNotes: 'Professional appearance, business attire',
     };
   }
 
-  async enrichContactByEmail(email: string, includeSocialResearch: boolean = false): Promise<ContactEnrichmentData> {
-    console.log(`Enriching contact by email: ${email} ${includeSocialResearch ? 'with social research' : ''}`);
-    
+  async enrichContactByEmail(
+    email: string,
+    includeSocialResearch: boolean = false
+  ): Promise<ContactEnrichmentData> {
+    console.log(
+      `Enriching contact by email: ${email} ${includeSocialResearch ? 'with social research' : ''}`
+    );
+
     // Check if any providers are configured before making the request
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for email enrichment: ${email}`);
       return this.generateMockData({ email });
     }
-    
+
     try {
       const response = await httpClient.post<ContactEnrichmentData>(
         this.apiUrl,
-        { 
+        {
           authorization: 'anon-key',
           contactId: 'client-enrichment-request',
-          enrichmentRequest: { 
+          enrichmentRequest: {
             email,
             includeSocialResearch,
-            socialResearchDepth: 'comprehensive'
+            socialResearchDepth: 'comprehensive',
           },
-          type: 'email'
+          type: 'email',
         },
         {
           timeout: includeSocialResearch ? 60000 : 30000,
           retries: 2,
           headers: {
-            'Authorization': `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
+            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
         }
       );
-      
+
       console.log(`Contact enriched successfully by email`);
       return response.data;
     } catch (error) {
@@ -125,32 +130,38 @@ class AIEnrichmentService {
     }
   }
 
-  async enrichContactByName(firstName: string, lastName: string, company?: string): Promise<ContactEnrichmentData> {
-    console.log(`Enriching contact by name: ${firstName} ${lastName} ${company ? `at ${company}` : ''}`);
-    
+  async enrichContactByName(
+    firstName: string,
+    lastName: string,
+    company?: string
+  ): Promise<ContactEnrichmentData> {
+    console.log(
+      `Enriching contact by name: ${firstName} ${lastName} ${company ? `at ${company}` : ''}`
+    );
+
     // Check if any providers are configured before making the request
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for name enrichment: ${firstName} ${lastName}`);
       return this.generateMockData({ firstName, lastName, company });
     }
-    
+
     try {
       const response = await httpClient.post<ContactEnrichmentData>(
         this.apiUrl,
-        { 
+        {
           contactId: 'client-enrichment-request',
           enrichmentRequest: { firstName, lastName, company },
-          type: 'name'
+          type: 'name',
         },
         {
           timeout: 30000,
           retries: 2,
           headers: {
-            'Authorization': `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
+            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
         }
       );
-      
+
       console.log(`Contact enriched successfully by name`);
       return response.data;
     } catch (error) {
@@ -161,12 +172,12 @@ class AIEnrichmentService {
 
   async enrichContactMultimodal(contact: any, imageUrl: string): Promise<ContactEnrichmentData> {
     console.log(`Starting multimodal enrichment for contact: ${contact.id}`);
-    
+
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for multimodal enrichment`);
       return this.generateMockData({ imageUrl });
     }
-    
+
     try {
       const response = await httpClient.post<ContactEnrichmentData>(
         this.apiUrl,
@@ -177,21 +188,21 @@ class AIEnrichmentService {
               name: contact.name,
               title: contact.title,
               company: contact.company,
-              email: contact.email
+              email: contact.email,
             },
-            imageUrl
+            imageUrl,
           },
-          type: 'multimodal'
+          type: 'multimodal',
         },
         {
           timeout: 45000,
           retries: 1,
           headers: {
-            'Authorization': `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
+            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
         }
       );
-      
+
       console.log(`Multimodal enrichment completed successfully`);
       return response.data;
     } catch (error) {
@@ -202,29 +213,29 @@ class AIEnrichmentService {
 
   async findContactImage(name: string, company?: string): Promise<string> {
     console.log(`Finding image for: ${name} ${company ? `at ${company}` : ''}`);
-    
+
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for image search`);
       return 'https://via.placeholder.com/100x100';
     }
-    
+
     try {
       const response = await httpClient.post<{ imageUrl: string }>(
         this.apiUrl,
         {
           contactId: 'image-search-request',
           enrichmentRequest: { name, company },
-          type: 'image-search'
+          type: 'image-search',
         },
         {
           timeout: 30000,
           retries: 2,
           headers: {
-            'Authorization': `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
+            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
         }
       );
-      
+
       console.log(`Image found successfully`);
       return response.data.imageUrl;
     } catch (error) {
@@ -241,13 +252,15 @@ class AIEnrichmentService {
       includePersonalityAnalysis?: boolean;
       includeEngagementMetrics?: boolean;
     } = {}
-  ): Promise<ContactEnrichmentData & {
-    socialResearch?: any;
-    personalityInsights?: any;
-    engagementMetrics?: any;
-  }> {
+  ): Promise<
+    ContactEnrichmentData & {
+      socialResearch?: any;
+      personalityInsights?: any;
+      engagementMetrics?: any;
+    }
+  > {
     console.log(`Starting comprehensive social research enrichment for: ${contact.name}`);
-    
+
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for social research enrichment`);
       return this.generateMockData(contact);
@@ -264,30 +277,39 @@ class AIEnrichmentService {
               email: contact.email,
               company: contact.company,
               title: contact.title,
-              existingSocialProfiles: contact.socialProfiles
+              existingSocialProfiles: contact.socialProfiles,
             },
             socialResearchOptions: {
               platforms: options.platforms || [
-                'LinkedIn', 'Twitter', 'Instagram', 'TikTok', 'YouTube', 'GitHub',
-                'Medium', 'Facebook', 'Discord', 'Reddit', 'Pinterest'
+                'LinkedIn',
+                'Twitter',
+                'Instagram',
+                'TikTok',
+                'YouTube',
+                'GitHub',
+                'Medium',
+                'Facebook',
+                'Discord',
+                'Reddit',
+                'Pinterest',
               ],
               depth: options.depth || 'comprehensive',
               includePersonalityAnalysis: options.includePersonalityAnalysis !== false,
               includeEngagementMetrics: options.includeEngagementMetrics !== false,
-              verifyProfiles: true
-            }
+              verifyProfiles: true,
+            },
           },
-          type: 'comprehensive-social'
+          type: 'comprehensive-social',
         },
         {
           timeout: 90000,
           retries: 1,
           headers: {
-            'Authorization': `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
+            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
         }
       );
-      
+
       console.log(`Comprehensive social research completed for ${contact.name}`);
       return response.data;
     } catch (error) {
@@ -297,7 +319,7 @@ class AIEnrichmentService {
   }
 
   getAvailableProviders(): AIProvider[] {
-    return this.providers.filter(provider => provider.enabled);
+    return this.providers.filter((provider) => provider.enabled);
   }
 
   isServiceAvailable(): boolean {
@@ -306,9 +328,24 @@ class AIEnrichmentService {
 
   getSupportedSocialPlatforms(): string[] {
     return [
-      'LinkedIn', 'Twitter', 'Instagram', 'TikTok', 'YouTube', 'GitHub',
-      'Medium', 'Facebook', 'Snapchat', 'Discord', 'Reddit', 'Pinterest',
-      'Behance', 'Dribbble', 'AngelList', 'Clubhouse', 'Telegram', 'WhatsApp'
+      'LinkedIn',
+      'Twitter',
+      'Instagram',
+      'TikTok',
+      'YouTube',
+      'GitHub',
+      'Medium',
+      'Facebook',
+      'Snapchat',
+      'Discord',
+      'Reddit',
+      'Pinterest',
+      'Behance',
+      'Dribbble',
+      'AngelList',
+      'Clubhouse',
+      'Telegram',
+      'WhatsApp',
     ];
   }
 }

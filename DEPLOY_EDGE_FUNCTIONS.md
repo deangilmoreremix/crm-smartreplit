@@ -5,11 +5,13 @@ You're missing the core `contacts` and `deals` Edge Functions that your remote a
 ## Missing Functions Created
 
 ### ✅ contacts
-- **Path**: `supabase/functions/contacts/index.ts`  
+
+- **Path**: `supabase/functions/contacts/index.ts`
 - **URL**: Will be `https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts`
 - **Features**: Full CRUD operations, filtering, pagination, proper field mapping
 
-### ✅ deals  
+### ✅ deals
+
 - **Path**: `supabase/functions/deals/index.ts`
 - **URL**: Will be `https://YOUR_PROJECT_REF.supabase.co/functions/v1/deals`
 - **Features**: Full CRUD operations, filtering, pagination, proper field mapping
@@ -45,25 +47,29 @@ supabase functions deploy deals
 ## Key Features of These Functions
 
 ### Proper REST API Design
+
 - `GET /contacts` - List contacts with filtering
 - `GET /contacts/{id}` - Get single contact
 - `POST /contacts` - Create contact
-- `PATCH /contacts/{id}` - Update contact  
+- `PATCH /contacts/{id}` - Update contact
 - `DELETE /contacts/{id}` - Delete contact
 
 ### Field Mapping
+
 - Maps between your frontend interface and database schema
 - Handles `firstName/lastName` ↔ `first_name/last_name`
 - Converts `sources` array ↔ `source` string
 - Maps `title` ↔ `position`
 
 ### Error Handling
+
 - Proper HTTP status codes
 - CORS headers for browser access
 - Detailed error messages
 - Graceful error responses
 
 ### Remote App Compatibility
+
 - Maintains exact same endpoint structure your remote apps expect
 - Returns data in the format your Contact/Deal interfaces expect
 - Handles authentication via Authorization header
@@ -79,7 +85,7 @@ curl -X POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/contacts \
   -H "Content-Type: application/json" \
   -d '{"firstName":"Test","lastName":"User","email":"test@example.com"}'
 
-# Test deals  
+# Test deals
 curl -X POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/deals \
   -H "Authorization: Bearer YOUR_ANON_KEY" \
   -H "Content-Type: application/json" \
@@ -91,7 +97,7 @@ curl -X POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/deals \
 Your services will automatically work with persistent storage because:
 
 1. ✅ Edge Function endpoints exist at the expected URLs
-2. ✅ Functions connect to your Supabase database 
+2. ✅ Functions connect to your Supabase database
 3. ✅ Field mapping handles interface differences
 4. ✅ Remote apps can call the functions without changes
 5. ✅ Local development still has localStorage fallback

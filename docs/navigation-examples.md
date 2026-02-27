@@ -7,9 +7,7 @@ Your remote contacts module can now control the parent CRM navigation! Here are 
 ### 1. Add a "Back to Dashboard" Button
 
 ```html
-<button onclick="navigateToDashboard()">
-  ← Back to Dashboard
-</button>
+<button onclick="navigateToDashboard()">← Back to Dashboard</button>
 ```
 
 ### 2. Navigation Menu
@@ -48,8 +46,10 @@ Add this to any page in your remote contacts module:
 
 ```html
 <div style="position: fixed; top: 10px; left: 10px; z-index: 1000;">
-  <button onclick="navigateToDashboard()" 
-          style="padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+  <button
+    onclick="navigateToDashboard()"
+    style="padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;"
+  >
     ← CRM Dashboard
   </button>
 </div>
@@ -68,7 +68,7 @@ Once the bridge is loaded, these functions are available globally:
 - `/` - Dashboard
 - `/contacts` - Contacts (current page)
 - `/deals` - Deals management
-- `/tasks` - Task management  
+- `/tasks` - Task management
 - `/calendar` - Calendar view
 
 The bridge automatically handles the navigation and provides console feedback for debugging.

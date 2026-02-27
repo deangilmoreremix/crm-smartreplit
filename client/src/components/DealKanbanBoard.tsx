@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { 
-  Plus, 
-  MoreVertical, 
-  DollarSign, 
-  Calendar, 
-  User, 
+import {
+  Plus,
+  MoreVertical,
+  DollarSign,
+  Calendar,
+  User,
   TrendingUp,
   Filter,
   Search,
@@ -13,7 +13,7 @@ import {
   Edit,
   Trash2,
   Target,
-  Clock
+  Clock,
 } from 'lucide-react';
 import { useDealStore } from '../store/dealStore';
 import { Deal, DealStage } from '../types/deal';
@@ -30,7 +30,7 @@ interface DealCardProps {
 const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDelete }) => {
   const { contacts } = useContactStore();
   const contact = contacts[deal.contactId];
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -42,10 +42,14 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'border-l-red-500 bg-red-50';
-      case 'medium': return 'border-l-yellow-500 bg-yellow-50';
-      case 'low': return 'border-l-green-500 bg-green-50';
-      default: return 'border-l-gray-300 bg-white';
+      case 'high':
+        return 'border-l-red-500 bg-red-50';
+      case 'medium':
+        return 'border-l-yellow-500 bg-yellow-50';
+      case 'low':
+        return 'border-l-green-500 bg-green-50';
+      default:
+        return 'border-l-gray-300 bg-white';
     }
   };
 
@@ -61,9 +65,9 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`bg-white rounded-lg shadow-sm border-l-4 p-4 mb-3 hover:shadow-md transition-shadow cursor-pointer ${
-            getPriorityColor(deal.priority)
-          } ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''}`}
+          className={`bg-white rounded-lg shadow-sm border-l-4 p-4 mb-3 hover:shadow-md transition-shadow cursor-pointer ${getPriorityColor(
+            deal.priority
+          )} ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''}`}
         >
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
@@ -81,12 +85,8 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
           {/* Deal Value */}
           <div className="flex items-center space-x-2 mb-3">
             <DollarSign size={16} className="text-green-600" />
-            <span className="font-bold text-lg text-gray-900">
-              {formatCurrency(deal.value)}
-            </span>
-            <span className="text-sm text-gray-500">
-              ({deal.probability}%)
-            </span>
+            <span className="font-bold text-lg text-gray-900">{formatCurrency(deal.value)}</span>
+            <span className="text-sm text-gray-500">({deal.probability}%)</span>
           </div>
 
           {/* Contact */}
@@ -111,9 +111,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
           {deal.daysInStage && (
             <div className="flex items-center space-x-2 mb-3">
               <Clock size={14} className="text-gray-400" />
-              <span className="text-sm text-gray-600">
-                {getDaysInStage()} in stage
-              </span>
+              <span className="text-sm text-gray-600">{getDaysInStage()} in stage</span>
             </div>
           )}
 
@@ -170,9 +168,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
                 <Trash2 size={14} />
               </button>
             </div>
-            <div className="text-xs text-gray-400">
-              #{deal.id.slice(-4)}
-            </div>
+            <div className="text-xs text-gray-400">#{deal.id.slice(-4)}</div>
           </div>
         </div>
       )}
@@ -195,10 +191,10 @@ const StageColumn: React.FC<StageColumnProps> = ({
   onAddDeal,
   onEditDeal,
   onViewDeal,
-  onDeleteDeal
+  onDeleteDeal,
 }) => {
   const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0);
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -213,10 +209,7 @@ const StageColumn: React.FC<StageColumnProps> = ({
       {/* Stage Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: stage.color }}
-          />
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stage.color }} />
           <h3 className="font-semibold text-gray-900">{stage.name}</h3>
           <span className="bg-gray-200 text-gray-700 text-sm px-2 py-1 rounded-full">
             {deals.length}
@@ -235,9 +228,7 @@ const StageColumn: React.FC<StageColumnProps> = ({
       <div className="mb-4 p-3 bg-white rounded-lg border">
         <div className="flex items-center space-x-2">
           <TrendingUp size={16} className="text-green-600" />
-          <span className="font-semibold text-gray-900">
-            {formatCurrency(totalValue)}
-          </span>
+          <span className="font-semibold text-gray-900">{formatCurrency(totalValue)}</span>
         </div>
         <div className="text-sm text-gray-500 mt-1">
           Total value • {stage.probability}% probability
@@ -265,7 +256,7 @@ const StageColumn: React.FC<StageColumnProps> = ({
               />
             ))}
             {provided.placeholder}
-            
+
             {deals.length === 0 && !snapshot.isDraggingOver && (
               <div className="text-center text-gray-500 mt-8">
                 <Target size={32} className="mx-auto mb-2 text-gray-300" />
@@ -296,7 +287,7 @@ const DealKanbanBoard: React.FC = () => {
     getTotalPipelineValue,
     fetchDeals,
     setFilters,
-    filters
+    filters,
   } = useDealStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -323,7 +314,7 @@ const DealKanbanBoard: React.FC = () => {
 
     const { draggableId, destination } = result;
     const newStageId = destination.droppableId;
-    
+
     await moveDeal(draggableId, newStageId);
   };
 
@@ -347,7 +338,7 @@ const DealKanbanBoard: React.FC = () => {
   };
 
   const getDealsByStage = (stageId: string) => {
-    return filteredDeals.filter(deal => deal.stage.id === stageId);
+    return filteredDeals.filter((deal) => deal.stage.id === stageId);
   };
 
   if (!pipeline) {
@@ -369,11 +360,13 @@ const DealKanbanBoard: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{pipeline.name}</h2>
           <p className="text-gray-600 mt-1">
-            {filteredDeals.length} deals • {new Intl.NumberFormat('en-US', {
+            {filteredDeals.length} deals •{' '}
+            {new Intl.NumberFormat('en-US', {
               style: 'currency',
               currency: 'USD',
-              minimumFractionDigits: 0
-            }).format(totalValue)} total value
+              minimumFractionDigits: 0,
+            }).format(totalValue)}{' '}
+            total value
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -414,7 +407,7 @@ const DealKanbanBoard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-sm border p-4">
           <div className="flex items-center">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -426,13 +419,13 @@ const DealKanbanBoard: React.FC = () => {
                 {new Intl.NumberFormat('en-US', {
                   style: 'currency',
                   currency: 'USD',
-                  minimumFractionDigits: 0
+                  minimumFractionDigits: 0,
                 }).format(totalValue)}
               </p>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-sm border p-4">
           <div className="flex items-center">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -444,7 +437,7 @@ const DealKanbanBoard: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow-sm border p-4">
           <div className="flex items-center">
             <div className="p-2 bg-orange-100 rounded-lg">
@@ -456,7 +449,7 @@ const DealKanbanBoard: React.FC = () => {
                 {new Intl.NumberFormat('en-US', {
                   style: 'currency',
                   currency: 'USD',
-                  minimumFractionDigits: 0
+                  minimumFractionDigits: 0,
                 }).format(metrics.averageDealSize)}
               </p>
             </div>

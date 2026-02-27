@@ -18,7 +18,7 @@ interface ProposalData {
 export default function ProposalGenerator() {
   const { isDark } = useTheme();
   const { generateProposal } = useEnhancedGemini();
-  
+
   const [proposalData, setProposalData] = useState<ProposalData>({
     clientName: '',
     companyName: '',
@@ -26,39 +26,43 @@ export default function ProposalGenerator() {
     requirements: [''],
     budget: undefined,
     timeline: '',
-    deliverables: ['']
+    deliverables: [''],
   });
-  
+
   const [generatedProposal, setGeneratedProposal] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState(false);
 
   const handleInputChange = (field: keyof ProposalData, value: string | number | undefined) => {
-    setProposalData(prev => ({
+    setProposalData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleArrayAdd = (field: 'requirements' | 'deliverables') => {
-    setProposalData(prev => ({
+    setProposalData((prev) => ({
       ...prev,
-      [field]: [...prev[field], '']
+      [field]: [...prev[field], ''],
     }));
   };
 
-  const handleArrayUpdate = (field: 'requirements' | 'deliverables', index: number, value: string) => {
-    setProposalData(prev => ({
+  const handleArrayUpdate = (
+    field: 'requirements' | 'deliverables',
+    index: number,
+    value: string
+  ) => {
+    setProposalData((prev) => ({
       ...prev,
-      [field]: prev[field].map((item, i) => i === index ? value : item)
+      [field]: prev[field].map((item, i) => (i === index ? value : item)),
     }));
   };
 
   const handleArrayRemove = (field: 'requirements' | 'deliverables', index: number) => {
-    setProposalData(prev => ({
+    setProposalData((prev) => ({
       ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
+      [field]: prev[field].filter((_, i) => i !== index),
     }));
   };
 
@@ -71,14 +75,14 @@ export default function ProposalGenerator() {
     setIsGenerating(true);
     setError('');
     setSuccess(false);
-    
+
     const startTime = Date.now();
 
     try {
       const filteredData = {
         ...proposalData,
-        requirements: proposalData.requirements.filter(req => req.trim()),
-        deliverables: proposalData.deliverables.filter(del => del.trim())
+        requirements: proposalData.requirements.filter((req) => req.trim()),
+        deliverables: proposalData.deliverables.filter((del) => del.trim()),
       };
 
       const proposal = await generateProposal(filteredData);
@@ -92,13 +96,12 @@ export default function ProposalGenerator() {
         category: 'Core AI Tools',
         executionTime: Date.now() - startTime,
         success: true,
-        customerId: 'current-user'
+        customerId: 'current-user',
       });
-
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to generate proposal';
       setError(errorMsg);
-      
+
       // Track failed usage
       await aiUsageTracker.trackUsage({
         toolId: 'proposal-generator',
@@ -107,7 +110,7 @@ export default function ProposalGenerator() {
         executionTime: Date.now() - startTime,
         success: false,
         error: errorMsg,
-        customerId: 'current-user'
+        customerId: 'current-user',
       });
     } finally {
       setIsGenerating(false);
@@ -136,14 +139,14 @@ export default function ProposalGenerator() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className={`max-w-6xl mx-auto p-4 sm:p-6 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8 text-center sm:text-left"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -162,14 +165,14 @@ export default function ProposalGenerator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Input Form */}
-        <motion.div 
+        <motion.div
           className={`p-4 sm:p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Proposal Details</h2>
-          
+
           {/* Basic Information */}
           <div className="space-y-4">
             <motion.div
@@ -183,8 +186,8 @@ export default function ProposalGenerator() {
                 value={proposalData.clientName}
                 onChange={(e) => handleInputChange('clientName', e.target.value)}
                 className={`w-full p-3 rounded-lg border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation`}
                 placeholder="Enter client name"
@@ -202,8 +205,8 @@ export default function ProposalGenerator() {
                 value={proposalData.companyName}
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
                 className={`w-full p-3 rounded-lg border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation`}
                 placeholder="Enter company name"
@@ -221,8 +224,8 @@ export default function ProposalGenerator() {
                 onChange={(e) => handleInputChange('projectDescription', e.target.value)}
                 rows={4}
                 className={`w-full p-3 rounded-lg border ${
-                  isDark 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
+                  isDark
+                    ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-white border-gray-300 text-gray-900'
                 } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                 placeholder="Describe the project in detail"
@@ -235,10 +238,15 @@ export default function ProposalGenerator() {
                 <input
                   type="number"
                   value={proposalData.budget || ''}
-                  onChange={(e) => handleInputChange('budget', e.target.value ? parseInt(e.target.value) : undefined)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      'budget',
+                      e.target.value ? parseInt(e.target.value) : undefined
+                    )
+                  }
                   className={`w-full p-3 rounded-lg border ${
-                    isDark 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
                   } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                   placeholder="Enter budget"
@@ -252,8 +260,8 @@ export default function ProposalGenerator() {
                   value={proposalData.timeline}
                   onChange={(e) => handleInputChange('timeline', e.target.value)}
                   className={`w-full p-3 rounded-lg border ${
-                    isDark 
-                      ? 'bg-gray-700 border-gray-600 text-white' 
+                    isDark
+                      ? 'bg-gray-700 border-gray-600 text-white'
                       : 'bg-white border-gray-300 text-gray-900'
                   } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                   placeholder="e.g., 3 months"
@@ -271,8 +279,8 @@ export default function ProposalGenerator() {
                     value={req}
                     onChange={(e) => handleArrayUpdate('requirements', index, e.target.value)}
                     className={`flex-1 p-3 rounded-lg border ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                     placeholder="Enter requirement"
@@ -303,8 +311,8 @@ export default function ProposalGenerator() {
                     value={del}
                     onChange={(e) => handleArrayUpdate('deliverables', index, e.target.value)}
                     className={`flex-1 p-3 rounded-lg border ${
-                      isDark 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
+                      isDark
+                        ? 'bg-gray-700 border-gray-600 text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                     placeholder="Enter deliverable"
@@ -362,7 +370,7 @@ export default function ProposalGenerator() {
         </motion.div>
 
         {/* Generated Proposal */}
-        <motion.div 
+        <motion.div
           className={`p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -391,15 +399,19 @@ export default function ProposalGenerator() {
           </div>
 
           {generatedProposal ? (
-            <div className={`p-4 rounded-lg border ${
-              isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-            } max-h-96 overflow-y-auto`}>
+            <div
+              className={`p-4 rounded-lg border ${
+                isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+              } max-h-96 overflow-y-auto`}
+            >
               <pre className="whitespace-pre-wrap text-sm">{generatedProposal}</pre>
             </div>
           ) : (
-            <div className={`p-8 text-center rounded-lg border-2 border-dashed ${
-              isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
-            }`}>
+            <div
+              className={`p-8 text-center rounded-lg border-2 border-dashed ${
+                isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
+              }`}
+            >
               <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>Your generated proposal will appear here</p>
             </div>

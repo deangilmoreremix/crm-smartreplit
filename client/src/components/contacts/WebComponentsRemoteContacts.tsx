@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Wifi, WifiOff, RefreshCw, ExternalLink } from 'lucide-react';
 
@@ -12,14 +11,16 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
   remoteUrls = [
     'https://taupe-sprinkles-83c9ee.netlify.app',
     'https://contacts-app.vercel.app',
-    'https://bolt.new/~/sb1-your-contacts-app'
+    'https://bolt.new/~/sb1-your-contacts-app',
   ],
   fallbackComponent: FallbackComponent,
-  onContactSync
+  onContactSync,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [currentUrl, setCurrentUrl] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'failed'>('checking');
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'failed'>(
+    'checking'
+  );
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,13 +31,11 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
 
     for (const url of remoteUrls) {
       try {
-        console.log(`Testing connectivity to: ${url}`);
-        
         // Create a test iframe to check if URL loads
         const testFrame = document.createElement('iframe');
         testFrame.style.display = 'none';
         testFrame.src = url;
-        
+
         const loadPromise = new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
             document.body.removeChild(testFrame);
@@ -58,12 +57,10 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
 
         document.body.appendChild(testFrame);
         await loadPromise;
-        
+
         setCurrentUrl(url);
         setConnectionStatus('connected');
-        console.log(`Successfully connected to: ${url}`);
         return;
-        
       } catch (error) {
         console.warn(`Failed to connect to ${url}:`, error);
         continue;
@@ -78,37 +75,32 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Only accept messages from trusted origins
-      const trustedOrigins = remoteUrls.map(url => new URL(url).origin);
+      const trustedOrigins = remoteUrls.map((url) => new URL(url).origin);
       if (!trustedOrigins.includes(event.origin)) return;
 
       const { type, data } = event.data;
 
       switch (type) {
         case 'CONTACT_CREATED':
-          console.log('Remote contact created:', data);
           onContactSync?.();
           break;
         case 'CONTACT_UPDATED':
-          console.log('Remote contact updated:', data);
           onContactSync?.();
           break;
         case 'CONTACT_DELETED':
-          console.log('Remote contact deleted:', data);
           onContactSync?.();
           break;
         case 'CONTACTS_LOADED':
-          console.log('Remote contacts loaded:', data);
           setIsLoaded(true);
           break;
         case 'APP_READY':
-          console.log('Remote app is ready');
           setIsLoaded(true);
           // Send initialization data to remote app
           sendMessageToRemote('INIT_CONFIG', {
             theme: 'smartcrm',
             allowCreate: true,
             allowEdit: true,
-            allowDelete: true
+            allowDelete: true,
           });
           break;
       }
@@ -146,7 +138,7 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
         </div>
       );
     }
-    
+
     if (connectionStatus === 'connected') {
       return (
         <div className="flex items-center space-x-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
@@ -155,7 +147,7 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
         </div>
       );
     }
-    
+
     return (
       <div className="flex items-center space-x-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
         <WifiOff className="h-4 w-4" />
@@ -198,7 +190,7 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
               <RefreshCw className="h-3 w-3" />
               <span>Refresh</span>
             </button>
-            
+
             <a
               href={currentUrl}
               target="_blank"
@@ -210,11 +202,9 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
             </a>
           </div>
         </div>
-        
+
         {error && (
-          <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded">
-            {error}
-          </div>
+          <div className="mt-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded">{error}</div>
         )}
       </div>
 
@@ -236,13 +226,12 @@ const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = 
             </div>
           </div>
         )}
-        
+
         <iframe
           ref={iframeRef}
           src={currentUrl}
           className={`w-full h-full border-0 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
           onLoad={() => {
-            console.log('Remote contacts iframe loaded');
             setIsLoaded(true);
             // Send ready signal to remote app
             sendMessageToRemote('PARENT_READY', { source: 'smartcrm' });

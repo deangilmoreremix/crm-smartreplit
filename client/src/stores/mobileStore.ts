@@ -34,7 +34,7 @@ export const useMobileStore = create<MobileStore>((set, get) => ({
       screenHeight: height,
       isMobile,
       isTablet,
-      orientation
+      orientation,
     });
   },
 
@@ -58,7 +58,7 @@ export const useMobileStore = create<MobileStore>((set, get) => ({
       isMobile,
       isTablet,
       orientation,
-      touchEnabled
+      touchEnabled,
     });
-  }
+  },
 }));

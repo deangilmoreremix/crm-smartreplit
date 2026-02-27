@@ -49,19 +49,21 @@ class AIUsageTracker {
   async trackUsage(record: Omit<UsageRecord, 'timestamp'>): Promise<void> {
     const usageRecord: UsageRecord = {
       ...record,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.usageHistory.push(usageRecord);
-    
+
     // Update metrics cache
     this.updateMetrics(record.toolId);
-    
+
     // Store in localStorage for persistence
     this.persistToStorage();
-    
+
     // Log analytics event
-    console.log(`AI Tool Used: ${record.toolName} (${record.category}) - ${record.success ? 'Success' : 'Failed'} in ${record.executionTime}ms`);
+    console.log(
+      `AI Tool Used: ${record.toolName} (${record.category}) - ${record.success ? 'Success' : 'Failed'} in ${record.executionTime}ms`
+    );
   }
 
   /**
@@ -84,8 +86,8 @@ class AIUsageTracker {
    */
   getCategoryMetrics(): CategoryMetrics[] {
     const categories = new Map<string, CategoryMetrics>();
-    
-    this.usageHistory.forEach(record => {
+
+    this.usageHistory.forEach((record) => {
       const existing = categories.get(record.category);
       if (existing) {
         existing.totalUsage++;
@@ -95,26 +97,26 @@ class AIUsageTracker {
           totalUsage: 1,
           toolCount: 0,
           averageSuccessRate: 0,
-          mostUsedTool: record.toolName
+          mostUsedTool: record.toolName,
         });
       }
     });
 
     // Calculate additional metrics
     categories.forEach((metrics, category) => {
-      const categoryRecords = this.usageHistory.filter(r => r.category === category);
-      const uniqueTools = new Set(categoryRecords.map(r => r.toolId));
-      const successCount = categoryRecords.filter(r => r.success).length;
-      
+      const categoryRecords = this.usageHistory.filter((r) => r.category === category);
+      const uniqueTools = new Set(categoryRecords.map((r) => r.toolId));
+      const successCount = categoryRecords.filter((r) => r.success).length;
+
       metrics.toolCount = uniqueTools.size;
       metrics.averageSuccessRate = (successCount / categoryRecords.length) * 100;
-      
+
       // Find most used tool in category
       const toolUsage = new Map<string, number>();
-      categoryRecords.forEach(record => {
+      categoryRecords.forEach((record) => {
         toolUsage.set(record.toolName, (toolUsage.get(record.toolName) || 0) + 1);
       });
-      
+
       let maxUsage = 0;
       let mostUsed = '';
       toolUsage.forEach((usage, toolName) => {
@@ -141,18 +143,18 @@ class AIUsageTracker {
     recentUsage: UsageRecord[];
   } {
     const totalUsage = this.usageHistory.length;
-    const successCount = this.usageHistory.filter(r => r.success).length;
+    const successCount = this.usageHistory.filter((r) => r.success).length;
     const successRate = totalUsage > 0 ? (successCount / totalUsage) * 100 : 0;
-    
+
     const totalTime = this.usageHistory.reduce((sum, r) => sum + r.executionTime, 0);
     const averageExecutionTime = totalUsage > 0 ? totalTime / totalUsage : 0;
-    
-    const uniqueTools = new Set(this.usageHistory.map(r => r.toolId));
+
+    const uniqueTools = new Set(this.usageHistory.map((r) => r.toolId));
     const activeTools = uniqueTools.size;
-    
+
     const categoryMetrics = this.getCategoryMetrics();
     const topPerformingCategory = categoryMetrics.length > 0 ? categoryMetrics[0].category : 'None';
-    
+
     const recentUsage = this.usageHistory
       .slice(-10)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -163,7 +165,7 @@ class AIUsageTracker {
       averageExecutionTime,
       activeTools,
       topPerformingCategory,
-      recentUsage
+      recentUsage,
     };
   }
 
@@ -173,11 +175,11 @@ class AIUsageTracker {
   getTrendingTools(days: number = 7): ToolMetrics[] {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
-    const recentUsage = this.usageHistory.filter(r => r.timestamp >= cutoffDate);
+
+    const recentUsage = this.usageHistory.filter((r) => r.timestamp >= cutoffDate);
     const toolUsage = new Map<string, { count: number; toolName: string; category: string }>();
-    
-    recentUsage.forEach(record => {
+
+    recentUsage.forEach((record) => {
       const existing = toolUsage.get(record.toolId);
       if (existing) {
         existing.count++;
@@ -185,26 +187,27 @@ class AIUsageTracker {
         toolUsage.set(record.toolId, {
           count: 1,
           toolName: record.toolName,
-          category: record.category
+          category: record.category,
         });
       }
     });
-    
+
     return Array.from(toolUsage.entries())
       .map(([toolId, data]) => {
-        const toolRecords = recentUsage.filter(r => r.toolId === toolId);
-        const successCount = toolRecords.filter(r => r.success).length;
-        const avgTime = toolRecords.reduce((sum, r) => sum + r.executionTime, 0) / toolRecords.length;
-        
+        const toolRecords = recentUsage.filter((r) => r.toolId === toolId);
+        const successCount = toolRecords.filter((r) => r.success).length;
+        const avgTime =
+          toolRecords.reduce((sum, r) => sum + r.executionTime, 0) / toolRecords.length;
+
         return {
           toolId,
           toolName: data.toolName,
           totalUsage: data.count,
           successRate: (successCount / data.count) * 100,
           averageTime: avgTime,
-          lastUsed: new Date(Math.max(...toolRecords.map(r => r.timestamp.getTime()))),
+          lastUsed: new Date(Math.max(...toolRecords.map((r) => r.timestamp.getTime()))),
           popularityScore: data.count * (successCount / data.count),
-          errorRate: ((data.count - successCount) / data.count) * 100
+          errorRate: ((data.count - successCount) / data.count) * 100,
         };
       })
       .sort((a, b) => b.popularityScore - a.popularityScore);
@@ -214,13 +217,13 @@ class AIUsageTracker {
    * Update metrics for a specific tool
    */
   private updateMetrics(toolId: string): void {
-    const toolRecords = this.usageHistory.filter(r => r.toolId === toolId);
+    const toolRecords = this.usageHistory.filter((r) => r.toolId === toolId);
     if (toolRecords.length === 0) return;
 
-    const successCount = toolRecords.filter(r => r.success).length;
+    const successCount = toolRecords.filter((r) => r.success).length;
     const totalTime = toolRecords.reduce((sum, r) => sum + r.executionTime, 0);
-    const lastUsed = new Date(Math.max(...toolRecords.map(r => r.timestamp.getTime())));
-    
+    const lastUsed = new Date(Math.max(...toolRecords.map((r) => r.timestamp.getTime())));
+
     const metrics: ToolMetrics = {
       toolId,
       toolName: toolRecords[0].toolName,
@@ -229,7 +232,7 @@ class AIUsageTracker {
       averageTime: totalTime / toolRecords.length,
       lastUsed,
       popularityScore: toolRecords.length * (successCount / toolRecords.length),
-      errorRate: ((toolRecords.length - successCount) / toolRecords.length) * 100
+      errorRate: ((toolRecords.length - successCount) / toolRecords.length) * 100,
     };
 
     this.metricsCache.set(toolId, metrics);
@@ -241,15 +244,15 @@ class AIUsageTracker {
   private refreshMetrics(): void {
     const now = new Date();
     const timeSinceUpdate = now.getTime() - this.lastCacheUpdate.getTime();
-    
+
     // Refresh every 5 minutes
     if (timeSinceUpdate < 5 * 60 * 1000) return;
-    
-    const uniqueToolIds = new Set(this.usageHistory.map(r => r.toolId));
-    uniqueToolIds.forEach(toolId => {
+
+    const uniqueToolIds = new Set(this.usageHistory.map((r) => r.toolId));
+    uniqueToolIds.forEach((toolId) => {
       this.updateMetrics(toolId);
     });
-    
+
     this.lastCacheUpdate = now;
   }
 
@@ -276,7 +279,7 @@ class AIUsageTracker {
         const records = JSON.parse(stored);
         this.usageHistory = records.map((r: any) => ({
           ...r,
-          timestamp: new Date(r.timestamp)
+          timestamp: new Date(r.timestamp),
         }));
         this.refreshMetrics();
       }
@@ -299,11 +302,15 @@ class AIUsageTracker {
    * Export usage data for analysis
    */
   exportUsageData(): string {
-    return JSON.stringify({
-      records: this.usageHistory,
-      metrics: Array.from(this.metricsCache.entries()),
-      exportDate: new Date().toISOString()
-    }, null, 2);
+    return JSON.stringify(
+      {
+        records: this.usageHistory,
+        metrics: Array.from(this.metricsCache.entries()),
+        exportDate: new Date().toISOString(),
+      },
+      null,
+      2
+    );
   }
 }
 

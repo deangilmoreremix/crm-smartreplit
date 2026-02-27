@@ -15,7 +15,7 @@ export const rateLimitConfigs = {
     message: {
       error: 'Too many requests',
       message: 'Rate limit exceeded. Please try again later.',
-      retryAfter: 900 // 15 minutes in seconds
+      retryAfter: 900, // 15 minutes in seconds
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -24,15 +24,15 @@ export const rateLimitConfigs = {
         ip: req.ip,
         userAgent: req.get('user-agent'),
         endpoint: req.path,
-        method: req.method
+        method: req.method,
       });
 
       res.status(429).json({
         error: 'Too many requests',
         message: 'Rate limit exceeded. Please try again later.',
-        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
       });
-    }
+    },
   },
 
   // Authentication endpoints
@@ -42,21 +42,25 @@ export const rateLimitConfigs = {
     message: {
       error: 'Too many authentication attempts',
       message: 'Too many login attempts. Please try again later.',
-      retryAfter: 900
+      retryAfter: 900,
     },
     skipSuccessfulRequests: true, // Don't count successful logins
     handler: (req: any, res: any) => {
-      errorLogger.logError('Auth rate limit exceeded', new Error('Authentication rate limit exceeded'), {
-        ip: req.ip,
-        endpoint: req.path
-      });
+      errorLogger.logError(
+        'Auth rate limit exceeded',
+        new Error('Authentication rate limit exceeded'),
+        {
+          ip: req.ip,
+          endpoint: req.path,
+        }
+      );
 
       res.status(429).json({
         error: 'Too many authentication attempts',
         message: 'Too many login attempts. Please try again later.',
-        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
       });
-    }
+    },
   },
 
   // AI endpoints (expensive operations)
@@ -66,21 +70,21 @@ export const rateLimitConfigs = {
     message: {
       error: 'AI rate limit exceeded',
       message: 'Too many AI requests. Please try again later.',
-      retryAfter: 3600
+      retryAfter: 3600,
     },
     handler: (req: any, res: any) => {
       errorLogger.logError('AI rate limit exceeded', new Error('AI rate limit exceeded'), {
         ip: req.ip,
         userId: req.session?.userId,
-        endpoint: req.path
+        endpoint: req.path,
       });
 
       res.status(429).json({
         error: 'AI rate limit exceeded',
         message: 'Too many AI requests. Please try again later.',
-        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
       });
-    }
+    },
   },
 
   // File upload endpoints
@@ -90,21 +94,21 @@ export const rateLimitConfigs = {
     message: {
       error: 'Upload rate limit exceeded',
       message: 'Too many file uploads. Please try again later.',
-      retryAfter: 3600
+      retryAfter: 3600,
     },
     handler: (req: any, res: any) => {
       errorLogger.logError('Upload rate limit exceeded', new Error('Upload rate limit exceeded'), {
         ip: req.ip,
         userId: req.session?.userId,
-        endpoint: req.path
+        endpoint: req.path,
       });
 
       res.status(429).json({
         error: 'Upload rate limit exceeded',
         message: 'Too many file uploads. Please try again later.',
-        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000)
+        retryAfter: Math.ceil(req.rateLimit.resetTime / 1000),
       });
-    }
+    },
   },
 
   // Admin endpoints
@@ -114,8 +118,8 @@ export const rateLimitConfigs = {
     message: {
       error: 'Admin rate limit exceeded',
       message: 'Too many admin requests. Please try again later.',
-      retryAfter: 900
-    }
+      retryAfter: 900,
+    },
   },
 
   // Webhook endpoints
@@ -125,9 +129,9 @@ export const rateLimitConfigs = {
     message: {
       error: 'Webhook rate limit exceeded',
       message: 'Too many webhook calls.',
-      retryAfter: 3600
-    }
-  }
+      retryAfter: 3600,
+    },
+  },
 };
 
 // Create rate limiters
@@ -142,7 +146,11 @@ export const webhookLimiter = rateLimit(rateLimitConfigs.webhook);
 export class TenantRateLimiter {
   private tenantLimits = new Map<string, { requests: number; resetTime: number }>();
 
-  checkLimit(tenantId: string, maxRequests: number = 100, windowMs: number = 15 * 60 * 1000): boolean {
+  checkLimit(
+    tenantId: string,
+    maxRequests: number = 100,
+    windowMs: number = 15 * 60 * 1000
+  ): boolean {
     const now = Date.now();
     const tenantData = this.tenantLimits.get(tenantId);
 
@@ -150,7 +158,7 @@ export class TenantRateLimiter {
       // Reset or initialize
       this.tenantLimits.set(tenantId, {
         requests: 1,
-        resetTime: now + windowMs
+        resetTime: now + windowMs,
       });
       return true;
     }
@@ -179,7 +187,10 @@ export class TenantRateLimiter {
 export const tenantRateLimiter = new TenantRateLimiter();
 
 // Middleware for tenant-specific rate limiting
-export const createTenantRateLimit = (maxRequests: number = 100, windowMs: number = 15 * 60 * 1000) => {
+export const createTenantRateLimit = (
+  maxRequests: number = 100,
+  windowMs: number = 15 * 60 * 1000
+) => {
   return (req: any, res: any, next: any) => {
     // Extract tenant ID from request (could be from subdomain, header, etc.)
     const tenantId = req.tenantId || req.params.tenantId || 'default';
@@ -191,13 +202,13 @@ export const createTenantRateLimit = (maxRequests: number = 100, windowMs: numbe
       errorLogger.logError('Tenant rate limit exceeded', new Error('Tenant rate limit exceeded'), {
         tenantId,
         ip: req.ip,
-        endpoint: req.path
+        endpoint: req.path,
       });
 
       return res.status(429).json({
         error: 'Tenant rate limit exceeded',
         message: 'Too many requests for this tenant. Please try again later.',
-        retryAfter
+        retryAfter,
       });
     }
 
@@ -206,7 +217,7 @@ export const createTenantRateLimit = (maxRequests: number = 100, windowMs: numbe
     res.set({
       'X-RateLimit-Limit': maxRequests.toString(),
       'X-RateLimit-Remaining': remaining.toString(),
-      'X-RateLimit-Reset': tenantRateLimiter.getResetTime(tenantId).toString()
+      'X-RateLimit-Reset': tenantRateLimiter.getResetTime(tenantId).toString(),
     });
 
     next();
@@ -225,7 +236,7 @@ export class BurstRateLimiter {
     let requestTimes = this.requests.get(key) || [];
 
     // Remove old requests outside the window
-    requestTimes = requestTimes.filter(time => time > windowStart);
+    requestTimes = requestTimes.filter((time) => time > windowStart);
 
     // Check if under limit
     if (requestTimes.length >= maxRequests) {
@@ -252,13 +263,13 @@ export const createBurstRateLimit = (maxRequests: number = 10, windowMs: number 
       errorLogger.logError('Burst rate limit exceeded', new Error('Burst rate limit exceeded'), {
         ip: req.ip,
         endpoint: req.path,
-        method: req.method
+        method: req.method,
       });
 
       return res.status(429).json({
         error: 'Burst rate limit exceeded',
         message: 'Too many rapid requests. Please slow down.',
-        retryAfter: 1
+        retryAfter: 1,
       });
     }
 

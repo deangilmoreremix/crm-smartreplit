@@ -21,7 +21,7 @@ const gapSizes = {
   sm: 'gap-2',
   md: 'gap-4',
   lg: 'gap-6',
-  xl: 'gap-8'
+  xl: 'gap-8',
 };
 
 const getGridColClasses = (columns: GridBreakpoints | number) => {
@@ -44,20 +44,21 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
   gap = 'lg',
   children,
   adaptive = true,
-  className
+  className,
 }) => {
-  const gridClasses = typeof columns === 'object' 
-    ? getGridColClasses(columns)
-    : `grid-cols-${Math.min(columns, 12)}`;
+  const gridClasses =
+    typeof columns === 'object' ? getGridColClasses(columns) : `grid-cols-${Math.min(columns, 12)}`;
 
   return (
-    <div className={cn(
-      'grid',
-      gridClasses,
-      gapSizes[gap],
-      adaptive && 'auto-rows-fr', // Equal height rows when adaptive
-      className
-    )}>
+    <div
+      className={cn(
+        'grid',
+        gridClasses,
+        gapSizes[gap],
+        adaptive && 'auto-rows-fr', // Equal height rows when adaptive
+        className
+      )}
+    >
       {children}
     </div>
   );
@@ -75,7 +76,7 @@ export const DashboardGridItem: React.FC<DashboardGridItemProps> = ({
   children,
   colSpan = 1,
   rowSpan,
-  className
+  className,
 }) => {
   const getColSpanClasses = (span: GridBreakpoints | number) => {
     if (typeof span === 'number') {
@@ -92,17 +93,14 @@ export const DashboardGridItem: React.FC<DashboardGridItemProps> = ({
     return classes.join(' ');
   };
 
-  const colSpanClasses = typeof colSpan === 'object' 
-    ? getColSpanClasses(colSpan)
-    : `col-span-${Math.min(colSpan as number, 12)}`;
+  const colSpanClasses =
+    typeof colSpan === 'object'
+      ? getColSpanClasses(colSpan)
+      : `col-span-${Math.min(colSpan as number, 12)}`;
 
   const rowSpanClass = rowSpan ? `row-span-${rowSpan}` : '';
 
-  return (
-    <div className={cn(colSpanClasses, rowSpanClass, className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(colSpanClasses, rowSpanClass, className)}>{children}</div>;
 };
 
 export default DashboardGrid;

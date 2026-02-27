@@ -11,7 +11,7 @@ async function recordContactsDemo() {
 
   try {
     const baseUrl = process.env.APP_URL || 'http://localhost:5000';
-    
+
     // Navigate to Contacts page
     await recorder.navigate(`${baseUrl}/contacts`);
     await recorder.wait(2000);
@@ -20,7 +20,7 @@ async function recordContactsDemo() {
     await recorder.startRecording('contacts-management');
 
     console.log('📸 Capturing Contacts overview...');
-    
+
     // Scroll through contacts list
     await recorder.scroll(400, 2000);
     await recorder.wait(1000);
@@ -55,7 +55,7 @@ async function recordContactsDemo() {
 
     // Stop recording
     await recorder.stopRecording();
-    
+
     console.log('✅ Contacts demo recorded successfully!');
   } catch (error) {
     console.error('❌ Error recording Contacts demo:', error);

@@ -1,47 +1,47 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { 
-  AIAutomationRule, 
-  AIInsight, 
-  AIWorkflow, 
-  AIModel, 
-  SmartSuggestion, 
+import {
+  AIAutomationRule,
+  AIInsight,
+  AIWorkflow,
+  AIModel,
+  SmartSuggestion,
   DataEnrichmentRequest,
   AIIntegrationSettings,
   WorkflowExecution,
   AutomationTrigger,
   AutomationCondition,
-  AutomationAction
+  AutomationAction,
 } from '../types/aiIntegration';
 
 interface AIIntegrationState {
   // Automation Rules
   automationRules: AIAutomationRule[];
   activeRules: number;
-  
+
   // AI Insights
   insights: AIInsight[];
   newInsights: number;
-  
+
   // Workflows
   workflows: AIWorkflow[];
   workflowExecutions: WorkflowExecution[];
-  
+
   // AI Models
   models: AIModel[];
   activeModel: string;
-  
+
   // Smart Suggestions
   suggestions: SmartSuggestion[];
   pendingSuggestions: number;
-  
+
   // Data Enrichment
   enrichmentRequests: DataEnrichmentRequest[];
   enrichmentCredits: number;
-  
+
   // Settings
   settings: AIIntegrationSettings[];
-  
+
   // Loading States
   loading: {
     rules: boolean;
@@ -50,53 +50,59 @@ interface AIIntegrationState {
     suggestions: boolean;
     enrichment: boolean;
   };
-  
+
   // Actions
   // Automation Rules
-  createAutomationRule: (rule: Omit<AIAutomationRule, 'id' | 'createdAt' | 'executionCount' | 'successRate'>) => void;
+  createAutomationRule: (
+    rule: Omit<AIAutomationRule, 'id' | 'createdAt' | 'executionCount' | 'successRate'>
+  ) => void;
   updateAutomationRule: (id: string, updates: Partial<AIAutomationRule>) => void;
   deleteAutomationRule: (id: string) => void;
   toggleAutomationRule: (id: string) => void;
   executeAutomationRule: (id: string, context?: Record<string, any>) => Promise<boolean>;
-  
+
   // AI Insights
   generateInsights: () => Promise<void>;
   dismissInsight: (id: string) => void;
   actOnInsight: (id: string, action: string) => void;
   markInsightReviewed: (id: string) => void;
-  
+
   // Workflows
-  createWorkflow: (workflow: Omit<AIWorkflow, 'id' | 'createdAt' | 'executionHistory' | 'analytics'>) => void;
+  createWorkflow: (
+    workflow: Omit<AIWorkflow, 'id' | 'createdAt' | 'executionHistory' | 'analytics'>
+  ) => void;
   updateWorkflow: (id: string, updates: Partial<AIWorkflow>) => void;
   deleteWorkflow: (id: string) => void;
   executeWorkflow: (id: string, context?: Record<string, any>) => Promise<string>;
   pauseWorkflow: (executionId: string) => void;
   resumeWorkflow: (executionId: string) => void;
   cancelWorkflow: (executionId: string) => void;
-  
+
   // Smart Suggestions
   generateSuggestions: (context: { entityType: string; entityId: string }) => Promise<void>;
   acceptSuggestion: (id: string) => Promise<void>;
   dismissSuggestion: (id: string) => void;
   provideFeedback: (id: string, feedback: { helpful: boolean; comment?: string }) => void;
-  
+
   // Data Enrichment
-  requestEnrichment: (request: Omit<DataEnrichmentRequest, 'id' | 'createdAt' | 'status'>) => Promise<string>;
+  requestEnrichment: (
+    request: Omit<DataEnrichmentRequest, 'id' | 'createdAt' | 'status'>
+  ) => Promise<string>;
   getEnrichmentStatus: (id: string) => Promise<DataEnrichmentRequest>;
   purchaseEnrichmentCredits: (amount: number) => Promise<void>;
-  
+
   // AI Models
   addModel: (model: Omit<AIModel, 'id' | 'usage' | 'createdAt'>) => void;
   updateModel: (id: string, updates: Partial<AIModel>) => void;
   setActiveModel: (id: string) => void;
   testModel: (id: string, prompt: string) => Promise<string>;
-  
+
   // Settings
   updateSetting: (id: string, value: any) => void;
   resetSettings: () => void;
   exportSettings: () => string;
   importSettings: (settings: string) => void;
-  
+
   // Analytics
   getAutomationAnalytics: () => {
     totalRules: number;
@@ -105,7 +111,7 @@ interface AIIntegrationState {
     successRate: number;
     topPerformingRules: AIAutomationRule[];
   };
-  
+
   getWorkflowAnalytics: () => {
     totalWorkflows: number;
     activeWorkflows: number;
@@ -167,8 +173,8 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       deleteAutomationRule: (id) => {
         set((state) => ({
           automationRules: state.automationRules.filter((rule) => rule.id !== id),
-          activeRules: state.automationRules.find(r => r.id === id)?.isActive 
-            ? state.activeRules - 1 
+          activeRules: state.automationRules.find((r) => r.id === id)?.isActive
+            ? state.activeRules - 1
             : state.activeRules,
         }));
       },
@@ -178,29 +184,29 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
           automationRules: state.automationRules.map((rule) =>
             rule.id === id ? { ...rule, isActive: !rule.isActive } : rule
           ),
-          activeRules: state.automationRules.find(r => r.id === id)?.isActive
+          activeRules: state.automationRules.find((r) => r.id === id)?.isActive
             ? state.activeRules - 1
             : state.activeRules + 1,
         }));
       },
 
       executeAutomationRule: async (id, context = {}) => {
-        const rule = get().automationRules.find(r => r.id === id);
+        const rule = get().automationRules.find((r) => r.id === id);
         if (!rule) return false;
 
         try {
           // Simulate rule execution
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
           set((state) => ({
             automationRules: state.automationRules.map((r) =>
-              r.id === id 
-                ? { 
-                    ...r, 
+              r.id === id
+                ? {
+                    ...r,
                     lastExecuted: new Date(),
                     executionCount: r.executionCount + 1,
-                    successRate: (r.successRate * r.executionCount + 1) / (r.executionCount + 1)
-                  } 
+                    successRate: (r.successRate * r.executionCount + 1) / (r.executionCount + 1),
+                  }
                 : r
             ),
           }));
@@ -220,14 +226,15 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
 
         try {
           // Simulate AI insight generation
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
 
           const mockInsights: AIInsight[] = [
             {
               id: `insight_${Date.now()}_1`,
               type: 'opportunity',
               title: 'High-Value Lead Identified',
-              description: 'Contact John Smith shows strong buying signals based on recent interactions.',
+              description:
+                'Contact John Smith shows strong buying signals based on recent interactions.',
               confidence: 0.85,
               impact: 'high',
               category: 'sales',
@@ -238,18 +245,16 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
                 recommendations: [
                   'Schedule a demo call within 48 hours',
                   'Send personalized proposal with enterprise features',
-                  'Involve technical team for solution architecture discussion'
-                ]
+                  'Involve technical team for solution architecture discussion',
+                ],
               },
               actionable: true,
               deadline: new Date(Date.now() + 48 * 60 * 60 * 1000),
-              relatedEntities: [
-                { type: 'contact', id: 'contact_1', name: 'John Smith' }
-              ],
+              relatedEntities: [{ type: 'contact', id: 'contact_1', name: 'John Smith' }],
               tags: ['high-priority', 'enterprise', 'demo-ready'],
               createdAt: new Date(),
               updatedAt: new Date(),
-              status: 'new'
+              status: 'new',
             },
             {
               id: `insight_${Date.now()}_2`,
@@ -266,18 +271,18 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
                 recommendations: [
                   'Immediate executive outreach required',
                   'Schedule relationship review meeting',
-                  'Provide additional value demonstration'
-                ]
+                  'Provide additional value demonstration',
+                ],
               },
               actionable: true,
               deadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
               relatedEntities: [
-                { type: 'deal', id: 'deal_1', name: 'TechCorp Enterprise License' }
+                { type: 'deal', id: 'deal_1', name: 'TechCorp Enterprise License' },
               ],
               tags: ['at-risk', 'urgent', 'executive-attention'],
               createdAt: new Date(),
               updatedAt: new Date(),
-              status: 'new'
+              status: 'new',
             },
             {
               id: `insight_${Date.now()}_3`,
@@ -297,22 +302,22 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
                     predictedValue: 2070000,
                     confidence: 0.91,
                     timeframe: 'End of Q4',
-                    factors: ['Strong pipeline', 'High close rates', 'Large deal momentum']
-                  }
+                    factors: ['Strong pipeline', 'High close rates', 'Large deal momentum'],
+                  },
                 ],
                 recommendations: [
                   'Prepare for higher capacity needs',
                   'Consider accelerating Q1 planning',
-                  'Review compensation plans for over-achievement'
-                ]
+                  'Review compensation plans for over-achievement',
+                ],
               },
               actionable: true,
               relatedEntities: [],
               tags: ['forecast', 'positive', 'planning'],
               createdAt: new Date(),
               updatedAt: new Date(),
-              status: 'new'
-            }
+              status: 'new',
+            },
           ];
 
           set((state) => ({
@@ -333,9 +338,10 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
           insights: state.insights.map((insight) =>
             insight.id === id ? { ...insight, status: 'dismissed' } : insight
           ),
-          newInsights: state.insights.find(i => i.id === id)?.status === 'new' 
-            ? state.newInsights - 1 
-            : state.newInsights,
+          newInsights:
+            state.insights.find((i) => i.id === id)?.status === 'new'
+              ? state.newInsights - 1
+              : state.newInsights,
         }));
       },
 
@@ -344,9 +350,10 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
           insights: state.insights.map((insight) =>
             insight.id === id ? { ...insight, status: 'acted_upon' } : insight
           ),
-          newInsights: state.insights.find(i => i.id === id)?.status === 'new'
-            ? state.newInsights - 1
-            : state.newInsights,
+          newInsights:
+            state.insights.find((i) => i.id === id)?.status === 'new'
+              ? state.newInsights - 1
+              : state.newInsights,
         }));
       },
 
@@ -355,9 +362,10 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
           insights: state.insights.map((insight) =>
             insight.id === id ? { ...insight, status: 'reviewing' } : insight
           ),
-          newInsights: state.insights.find(i => i.id === id)?.status === 'new'
-            ? state.newInsights - 1
-            : state.newInsights,
+          newInsights:
+            state.insights.find((i) => i.id === id)?.status === 'new'
+              ? state.newInsights - 1
+              : state.newInsights,
         }));
       },
 
@@ -377,9 +385,9 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
             performance: {
               daily: [],
               weekly: [],
-              monthly: []
-            }
-          }
+              monthly: [],
+            },
+          },
         };
 
         set((state) => ({
@@ -390,9 +398,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       updateWorkflow: (id, updates) => {
         set((state) => ({
           workflows: state.workflows.map((workflow) =>
-            workflow.id === id 
-              ? { ...workflow, ...updates, lastModified: new Date() } 
-              : workflow
+            workflow.id === id ? { ...workflow, ...updates, lastModified: new Date() } : workflow
           ),
         }));
       },
@@ -404,7 +410,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       },
 
       executeWorkflow: async (id, context = {}) => {
-        const workflow = get().workflows.find(w => w.id === id);
+        const workflow = get().workflows.find((w) => w.id === id);
         if (!workflow) throw new Error('Workflow not found');
 
         const executionId = `exec_${Date.now()}`;
@@ -424,8 +430,8 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
 
         try {
           // Simulate workflow execution
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+
           set((state) => ({
             workflowExecutions: state.workflowExecutions.map((exec) =>
               exec.id === executionId
@@ -466,9 +472,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       cancelWorkflow: (executionId) => {
         set((state) => ({
           workflowExecutions: state.workflowExecutions.map((exec) =>
-            exec.id === executionId 
-              ? { ...exec, status: 'cancelled', endTime: new Date() } 
-              : exec
+            exec.id === executionId ? { ...exec, status: 'cancelled', endTime: new Date() } : exec
           ),
         }));
       },
@@ -481,7 +485,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
 
         try {
           // Simulate AI suggestion generation
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
 
           const mockSuggestions: SmartSuggestion[] = [
             {
@@ -494,16 +498,17 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
                 type: 'send_email',
                 config: {
                   subject: 'Re: Pricing Information Request',
-                  body: 'Thank you for your interest in our solution...'
+                  body: 'Thank you for your interest in our solution...',
                 },
-                preview: 'Thank you for your interest in our solution. Based on your requirements...'
+                preview:
+                  'Thank you for your interest in our solution. Based on your requirements...',
               },
               confidence: 0.87,
               reasoning: 'Based on similar successful interactions and customer profile analysis.',
               aiModel: 'gpt-4',
               createdAt: new Date(),
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              status: 'pending'
+              status: 'pending',
             },
             {
               id: `suggestion_${Date.now()}_2`,
@@ -517,16 +522,17 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
                   title: 'Send technical proposal to John Smith',
                   description: 'Based on demo feedback, prepare technical proposal...',
                   priority: 'high',
-                  dueDate: new Date(Date.now() + 48 * 60 * 60 * 1000)
-                }
+                  dueDate: new Date(Date.now() + 48 * 60 * 60 * 1000),
+                },
               },
               confidence: 0.92,
-              reasoning: 'Meeting notes indicate technical requirements discussion and next steps agreement.',
+              reasoning:
+                'Meeting notes indicate technical requirements discussion and next steps agreement.',
               aiModel: 'gpt-4',
               createdAt: new Date(),
               expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
-              status: 'pending'
-            }
+              status: 'pending',
+            },
           ];
 
           set((state) => ({
@@ -543,13 +549,13 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       },
 
       acceptSuggestion: async (id) => {
-        const suggestion = get().suggestions.find(s => s.id === id);
+        const suggestion = get().suggestions.find((s) => s.id === id);
         if (!suggestion) return;
 
         try {
           // Simulate executing the suggestion
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
           set((state) => ({
             suggestions: state.suggestions.map((s) =>
               s.id === id ? { ...s, status: 'accepted' } : s
@@ -572,9 +578,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
 
       provideFeedback: (id, feedback) => {
         set((state) => ({
-          suggestions: state.suggestions.map((s) =>
-            s.id === id ? { ...s, feedback } : s
-          ),
+          suggestions: state.suggestions.map((s) => (s.id === id ? { ...s, feedback } : s)),
         }));
       },
 
@@ -594,13 +598,13 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
 
         try {
           // Simulate enrichment processing
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
           set((state) => ({
             enrichmentRequests: state.enrichmentRequests.map((req) =>
-              req.id === enrichmentRequest.id 
-                ? { 
-                    ...req, 
+              req.id === enrichmentRequest.id
+                ? {
+                    ...req,
                     status: 'completed',
                     completedAt: new Date(),
                     results: [
@@ -610,10 +614,10 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
                         confidence: 0.92,
                         source: 'clearbit',
                         lastUpdated: new Date(),
-                        verified: false
-                      }
+                        verified: false,
+                      },
                     ],
-                    cost: 2
+                    cost: 2,
                   }
                 : req
             ),
@@ -625,7 +629,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         } catch (error) {
           set((state) => ({
             enrichmentRequests: state.enrichmentRequests.map((req) =>
-              req.id === enrichmentRequest.id 
+              req.id === enrichmentRequest.id
                 ? { ...req, status: 'failed', error: error.message }
                 : req
             ),
@@ -636,15 +640,15 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       },
 
       getEnrichmentStatus: async (id) => {
-        const request = get().enrichmentRequests.find(r => r.id === id);
+        const request = get().enrichmentRequests.find((r) => r.id === id);
         if (!request) throw new Error('Enrichment request not found');
         return request;
       },
 
       purchaseEnrichmentCredits: async (amount) => {
         // Simulate credit purchase
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
         set((state) => ({
           enrichmentCredits: state.enrichmentCredits + amount,
         }));
@@ -661,7 +665,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
             totalCost: 0,
             lastMonth: { requests: 0, tokens: 0, cost: 0 },
             currentMonth: { requests: 0, tokens: 0, cost: 0 },
-            trend: 'stable'
+            trend: 'stable',
           },
           createdAt: new Date(),
         };
@@ -684,12 +688,12 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       },
 
       testModel: async (id, prompt) => {
-        const model = get().models.find(m => m.id === id);
+        const model = get().models.find((m) => m.id === id);
         if (!model) throw new Error('Model not found');
 
         // Simulate model testing
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
         return `Test response from ${model.name}: This is a simulated response to: "${prompt}"`;
       },
 
@@ -697,9 +701,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       updateSetting: (id, value) => {
         set((state) => ({
           settings: state.settings.map((setting) =>
-            setting.id === id 
-              ? { ...setting, value, lastModified: new Date() } 
-              : setting
+            setting.id === id ? { ...setting, value, lastModified: new Date() } : setting
           ),
         }));
       },
@@ -726,11 +728,13 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       // Analytics
       getAutomationAnalytics: () => {
         const { automationRules } = get();
-        const activeRules = automationRules.filter(rule => rule.isActive).length;
+        const activeRules = automationRules.filter((rule) => rule.isActive).length;
         const totalExecutions = automationRules.reduce((sum, rule) => sum + rule.executionCount, 0);
-        const successRate = automationRules.length > 0 
-          ? automationRules.reduce((sum, rule) => sum + rule.successRate, 0) / automationRules.length 
-          : 0;
+        const successRate =
+          automationRules.length > 0
+            ? automationRules.reduce((sum, rule) => sum + rule.successRate, 0) /
+              automationRules.length
+            : 0;
 
         return {
           totalRules: automationRules.length,
@@ -739,28 +743,30 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
           successRate,
           topPerformingRules: automationRules
             .sort((a, b) => b.successRate - a.successRate)
-            .slice(0, 5)
+            .slice(0, 5),
         };
       },
 
       getWorkflowAnalytics: () => {
         const { workflows, workflowExecutions } = get();
-        const activeWorkflows = workflows.filter(w => w.isActive).length;
-        const completedExecutions = workflowExecutions.filter(e => e.status === 'completed');
-        const averageDuration = completedExecutions.length > 0
-          ? completedExecutions.reduce((sum, e) => sum + (e.duration || 0), 0) / completedExecutions.length
-          : 0;
+        const activeWorkflows = workflows.filter((w) => w.isActive).length;
+        const completedExecutions = workflowExecutions.filter((e) => e.status === 'completed');
+        const averageDuration =
+          completedExecutions.length > 0
+            ? completedExecutions.reduce((sum, e) => sum + (e.duration || 0), 0) /
+              completedExecutions.length
+            : 0;
 
         return {
           totalWorkflows: workflows.length,
           activeWorkflows,
-          executionsThisWeek: workflowExecutions.filter(e => 
-            e.startTime > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+          executionsThisWeek: workflowExecutions.filter(
+            (e) => e.startTime > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
           ).length,
           averageDuration,
           mostUsedWorkflows: workflows
             .sort((a, b) => b.analytics.totalExecutions - a.analytics.totalExecutions)
-            .slice(0, 5)
+            .slice(0, 5),
         };
       },
     }),

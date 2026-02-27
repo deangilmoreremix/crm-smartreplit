@@ -4,7 +4,7 @@ console.log('🧪 Testing Fixed Contact API Service...\n');
 // Simulate creating a contact
 console.log('=== Testing Contact Creation with Edge Function Fallback ===');
 console.log('✓ Edge Function setup: Uses proper payload format for remote app compatibility');
-console.log('✓ Graceful fallback: Falls back to localStorage when Edge Functions are unavailable');  
+console.log('✓ Graceful fallback: Falls back to localStorage when Edge Functions are unavailable');
 console.log('✓ Data consistency: Maintains same Contact interface regardless of storage method');
 console.log('✓ Remote app compatibility: Preserves Edge Function endpoints for remote apps');
 console.log('✓ Caching layer: Uses proper caching for performance');
@@ -19,7 +19,7 @@ console.log('🎯 Proper error handling and logging for debugging');
 console.log('\n=== Edge Function Payload Format ===');
 const samplePayload = {
   firstName: 'John',
-  lastName: 'Doe', 
+  lastName: 'Doe',
   email: 'john.doe@example.com',
   phone: '+1 555 TEST',
   company: 'Test Company',
@@ -27,7 +27,7 @@ const samplePayload = {
   status: 'lead',
   sources: ['Website'],
   aiScore: 75,
-  tags: ['test']
+  tags: ['test'],
 };
 console.log('Sample Edge Function payload:', JSON.stringify(samplePayload, null, 2));
 

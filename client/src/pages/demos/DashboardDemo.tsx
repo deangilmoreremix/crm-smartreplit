@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  Target, 
-  Phone, 
-  Mail, 
+import {
+  TrendingUp,
+  Users,
+  DollarSign,
+  Target,
+  Phone,
+  Mail,
   Calendar,
   ArrowUp,
   ArrowDown,
   Activity,
   CheckCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 
 const DashboardDemo: React.FC = () => {
@@ -29,20 +29,20 @@ const DashboardDemo: React.FC = () => {
       revenue: 24750,
       deals: 8,
       contacts: 342,
-      winRate: 67
+      winRate: 67,
     },
     '30d': {
       revenue: 127500,
       deals: 24,
       contacts: 1248,
-      winRate: 85
+      winRate: 85,
     },
     '90d': {
       revenue: 345000,
       deals: 67,
       contacts: 3240,
-      winRate: 78
-    }
+      winRate: 78,
+    },
   };
 
   const currentData = kpiData[selectedTimeframe as keyof typeof kpiData];
@@ -54,7 +54,7 @@ const DashboardDemo: React.FC = () => {
       title: 'Acme Corp deal closed',
       value: '$15,000',
       time: '2 hours ago',
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />
+      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
     },
     {
       id: 2,
@@ -62,7 +62,7 @@ const DashboardDemo: React.FC = () => {
       title: 'Demo call with TechStart Inc',
       value: 'High priority',
       time: '4 hours ago',
-      icon: <Calendar className="w-5 h-5 text-blue-500" />
+      icon: <Calendar className="w-5 h-5 text-blue-500" />,
     },
     {
       id: 3,
@@ -70,7 +70,7 @@ const DashboardDemo: React.FC = () => {
       title: 'Follow-up sent to 12 prospects',
       value: 'Campaign complete',
       time: '6 hours ago',
-      icon: <Mail className="w-5 h-5 text-purple-500" />
+      icon: <Mail className="w-5 h-5 text-purple-500" />,
     },
     {
       id: 4,
@@ -78,24 +78,34 @@ const DashboardDemo: React.FC = () => {
       title: 'New lead from website form',
       value: 'Sarah Johnson',
       time: '8 hours ago',
-      icon: <Users className="w-5 h-5 text-orange-500" />
-    }
+      icon: <Users className="w-5 h-5 text-orange-500" />,
+    },
   ];
 
   const upcomingTasks = [
-    { id: 1, task: 'Follow up with Acme Corp on contract terms', due: 'Today 2:00 PM', priority: 'high' },
-    { id: 2, task: 'Prepare demo for Global Solutions meeting', due: 'Tomorrow 10:00 AM', priority: 'medium' },
+    {
+      id: 1,
+      task: 'Follow up with Acme Corp on contract terms',
+      due: 'Today 2:00 PM',
+      priority: 'high',
+    },
+    {
+      id: 2,
+      task: 'Prepare demo for Global Solutions meeting',
+      due: 'Tomorrow 10:00 AM',
+      priority: 'medium',
+    },
     { id: 3, task: 'Send proposal to TechStart Inc', due: 'Friday 9:00 AM', priority: 'high' },
-    { id: 4, task: 'Update CRM data for Q1 leads', due: 'Next week', priority: 'low' }
+    { id: 4, task: 'Update CRM data for Q1 leads', due: 'Next week', priority: 'low' },
   ];
 
-  const AnimatedKPI = ({ 
-    icon, 
-    title, 
-    value, 
-    change, 
-    isPositive, 
-    delay = 0 
+  const AnimatedKPI = ({
+    icon,
+    title,
+    value,
+    change,
+    isPositive,
+    delay = 0,
   }: {
     icon: React.ReactNode;
     title: string;
@@ -104,7 +114,7 @@ const DashboardDemo: React.FC = () => {
     isPositive: boolean;
     delay?: number;
   }) => (
-    <div 
+    <div
       className={`bg-white rounded-lg p-6 shadow-lg border transition-all duration-700 hover:shadow-xl cursor-pointer ${
         animateKPIs ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
@@ -115,9 +125,7 @@ const DashboardDemo: React.FC = () => {
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-2xl font-bold text-gray-900">{value}</p>
         </div>
-        <div className="text-blue-600">
-          {icon}
-        </div>
+        <div className="text-blue-600">{icon}</div>
       </div>
       <div className="mt-4 flex items-center">
         {isPositive ? (
@@ -125,7 +133,9 @@ const DashboardDemo: React.FC = () => {
         ) : (
           <ArrowDown className="w-4 h-4 text-red-500" />
         )}
-        <span className={`text-sm font-medium ml-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+        <span
+          className={`text-sm font-medium ml-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}
+        >
           {change}
         </span>
         <span className="text-sm text-gray-500 ml-1">vs last period</span>
@@ -143,7 +153,7 @@ const DashboardDemo: React.FC = () => {
             <p className="text-gray-600 mt-2">Interactive CRM dashboard with real-time insights</p>
           </div>
           <div className="flex items-center space-x-4">
-            <select 
+            <select
               value={selectedTimeframe}
               onChange={(e) => setSelectedTimeframe(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -197,7 +207,6 @@ const DashboardDemo: React.FC = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Recent Activities */}
         <div className="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between mb-6">
@@ -206,19 +215,17 @@ const DashboardDemo: React.FC = () => {
               View All
             </button>
           </div>
-          
+
           <div className="space-y-4">
             {recentActivities.map((activity, index) => (
-              <div 
+              <div
                 key={activity.id}
                 className={`flex items-center space-x-4 p-4 rounded-lg border transition-all duration-500 hover:bg-gray-50 cursor-pointer ${
                   animateKPIs ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
                 }`}
                 style={{ transitionDelay: `${400 + index * 100}ms` }}
               >
-                <div className="flex-shrink-0">
-                  {activity.icon}
-                </div>
+                <div className="flex-shrink-0">{activity.icon}</div>
                 <div className="flex-grow">
                   <p className="font-medium text-gray-900">{activity.title}</p>
                   <p className="text-sm text-gray-600">{activity.value}</p>
@@ -239,33 +246,37 @@ const DashboardDemo: React.FC = () => {
               <Calendar className="w-5 h-5" />
             </button>
           </div>
-          
+
           <div className="space-y-3">
             {upcomingTasks.map((task, index) => (
-              <div 
+              <div
                 key={task.id}
                 className={`p-3 rounded-lg border-l-4 transition-all duration-500 cursor-pointer hover:bg-gray-50 ${
-                  task.priority === 'high' ? 'border-red-400 bg-red-50' :
-                  task.priority === 'medium' ? 'border-yellow-400 bg-yellow-50' :
-                  'border-gray-400 bg-gray-50'
+                  task.priority === 'high'
+                    ? 'border-red-400 bg-red-50'
+                    : task.priority === 'medium'
+                      ? 'border-yellow-400 bg-yellow-50'
+                      : 'border-gray-400 bg-gray-50'
                 } ${animateKPIs ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
                 style={{ transitionDelay: `${800 + index * 100}ms` }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-grow">
-                    <p className="text-sm font-medium text-gray-900 mb-1">
-                      {task.task}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900 mb-1">{task.task}</p>
                     <div className="flex items-center space-x-2">
                       <Clock className="w-3 h-3 text-gray-400" />
                       <p className="text-xs text-gray-600">{task.due}</p>
                     </div>
                   </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                    task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <div
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      task.priority === 'high'
+                        ? 'bg-red-100 text-red-800'
+                        : task.priority === 'medium'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
                     {task.priority}
                   </div>
                 </div>
@@ -280,7 +291,9 @@ const DashboardDemo: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold mb-2">Experience the Full CRM</h3>
-            <p className="opacity-90">See how our AI-powered dashboard can transform your sales process</p>
+            <p className="opacity-90">
+              See how our AI-powered dashboard can transform your sales process
+            </p>
           </div>
           <div className="flex space-x-4">
             <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center">

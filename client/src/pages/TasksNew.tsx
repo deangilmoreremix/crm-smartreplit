@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutGrid, 
-  Calendar as CalendarIcon, 
+import {
+  LayoutGrid,
+  Calendar as CalendarIcon,
   Activity,
   BarChart3,
   Search,
   FileText,
-  X
+  X,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -59,22 +59,24 @@ export const Tasks: React.FC = () => {
 
   // Calculate metrics from tasks array
   const allTasks = tasks || [];
-  const completedTasks = allTasks.filter(task => task.status === 'completed');
-  const pendingTasks = allTasks.filter(task => task.status === 'pending' || task.status === 'in-progress');
-  const overdueTasks = allTasks.filter(task => {
+  const completedTasks = allTasks.filter((task) => task.status === 'completed');
+  const pendingTasks = allTasks.filter(
+    (task) => task.status === 'pending' || task.status === 'in-progress'
+  );
+  const overdueTasks = allTasks.filter((task) => {
     if (!task.dueDate) return false;
     const dueDate = new Date(task.dueDate);
     return dueDate < new Date() && task.status !== 'completed';
   });
-  
-  const tasksDueToday = allTasks.filter(task => {
+
+  const tasksDueToday = allTasks.filter((task) => {
     if (!task.dueDate) return false;
     const today = new Date();
     const dueDate = new Date(task.dueDate);
     return dueDate.toDateString() === today.toDateString();
   });
 
-  const tasksDueThisWeek = allTasks.filter(task => {
+  const tasksDueThisWeek = allTasks.filter((task) => {
     if (!task.dueDate) return false;
     const today = new Date();
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -88,30 +90,30 @@ export const Tasks: React.FC = () => {
     pendingTasks: pendingTasks.length,
     overdueTasks: overdueTasks.length,
     completionRate: allTasks.length > 0 ? (completedTasks.length / allTasks.length) * 100 : 0,
-    productivityScore: allTasks.length > 0 ? ((completedTasks.length / allTasks.length) * 100) : 0,
-    tasksCompletedThisWeek: completedTasks.filter(task => {
+    productivityScore: allTasks.length > 0 ? (completedTasks.length / allTasks.length) * 100 : 0,
+    tasksCompletedThisWeek: completedTasks.filter((task) => {
       if (!task.updatedAt) return false;
       const updated = new Date(task.updatedAt);
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       return updated >= weekAgo;
     }).length,
     tasksByPriority: {
-      high: allTasks.filter(t => t.priority === 'high').length,
-      medium: allTasks.filter(t => t.priority === 'medium').length,
-      low: allTasks.filter(t => t.priority === 'low').length,
+      high: allTasks.filter((t) => t.priority === 'high').length,
+      medium: allTasks.filter((t) => t.priority === 'medium').length,
+      low: allTasks.filter((t) => t.priority === 'low').length,
     },
     tasksByStatus: {
-      pending: allTasks.filter(t => t.status === 'pending').length,
-      'in-progress': allTasks.filter(t => t.status === 'in-progress').length,
-      completed: allTasks.filter(t => t.status === 'completed').length,
-      cancelled: allTasks.filter(t => t.status === 'cancelled').length,
+      pending: allTasks.filter((t) => t.status === 'pending').length,
+      'in-progress': allTasks.filter((t) => t.status === 'in-progress').length,
+      completed: allTasks.filter((t) => t.status === 'completed').length,
+      cancelled: allTasks.filter((t) => t.status === 'cancelled').length,
       overdue: overdueTasks.length,
     },
     tasksByType: allTasks.reduce((acc: Record<string, number>, task) => {
       const category = task.category || 'uncategorized';
       acc[category] = (acc[category] || 0) + 1;
       return acc;
-    }, {})
+    }, {}),
   };
 
   return (
@@ -185,7 +187,8 @@ export const Tasks: React.FC = () => {
                       {overdueTasks.length} Overdue
                     </Badge>
                     <span className="text-sm text-red-700">
-                      You have {overdueTasks.length} overdue task{overdueTasks.length > 1 ? 's' : ''} that need attention
+                      You have {overdueTasks.length} overdue task
+                      {overdueTasks.length > 1 ? 's' : ''} that need attention
                     </span>
                   </div>
                 </div>
@@ -210,29 +213,29 @@ export const Tasks: React.FC = () => {
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-transparent border-b border-gray-200 rounded-none w-full justify-start h-auto p-0">
-            <TabsTrigger 
-              value="board" 
+            <TabsTrigger
+              value="board"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-6 py-3"
             >
               <LayoutGrid className="h-4 w-4 mr-2" />
               Kanban Board
             </TabsTrigger>
-            <TabsTrigger 
-              value="calendar" 
+            <TabsTrigger
+              value="calendar"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-6 py-3"
             >
               <CalendarIcon className="h-4 w-4 mr-2" />
               Calendar
             </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
+            <TabsTrigger
+              value="activity"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-6 py-3"
             >
               <Activity className="h-4 w-4 mr-2" />
               Activity Feed
             </TabsTrigger>
-            <TabsTrigger 
-              value="analytics" 
+            <TabsTrigger
+              value="analytics"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-6 py-3"
             >
               <BarChart3 className="h-4 w-4 mr-2" />
@@ -362,10 +365,9 @@ export const Tasks: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">Completion rate</span>
                         <span className="font-semibold">
-                          {tasksDueThisWeek.length > 0 
+                          {tasksDueThisWeek.length > 0
                             ? `${((metrics.tasksCompletedThisWeek / tasksDueThisWeek.length) * 100).toFixed(0)}%`
-                            : 'N/A'
-                          }
+                            : 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -379,10 +381,7 @@ export const Tasks: React.FC = () => {
 
       {/* Task Creation Modal */}
       {showTaskModal && (
-        <TaskDetailsModal
-          isOpen={showTaskModal}
-          onClose={() => setShowTaskModal(false)}
-        />
+        <TaskDetailsModal isOpen={showTaskModal} onClose={() => setShowTaskModal(false)} />
       )}
 
       {/* Search Modal */}
@@ -430,21 +429,23 @@ export const Tasks: React.FC = () => {
               </button>
             </div>
             <div className="space-y-3">
-              {['Follow-up Call', 'Meeting Prep', 'Project Review', 'Client Proposal'].map((template) => (
-                <button
-                  key={template}
-                  className="w-full text-left p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-                  onClick={() => {
-                    setShowTemplatesModal(false);
-                    setShowTaskModal(true);
-                  }}
-                >
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium">{template}</span>
-                  </div>
-                </button>
-              ))}
+              {['Follow-up Call', 'Meeting Prep', 'Project Review', 'Client Proposal'].map(
+                (template) => (
+                  <button
+                    key={template}
+                    className="w-full text-left p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      setShowTemplatesModal(false);
+                      setShowTaskModal(true);
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium">{template}</span>
+                    </div>
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>

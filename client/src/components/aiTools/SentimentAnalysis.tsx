@@ -2,7 +2,16 @@ import { useState, createElement } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useEnhancedGemini } from '../../services/enhancedGeminiService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
-import { Brain, Loader2, MessageSquare, TrendingUp, TrendingDown, Minus, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  Brain,
+  Loader2,
+  MessageSquare,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react';
 
 interface SentimentResult {
   text: string;
@@ -13,17 +22,17 @@ interface SentimentResult {
 }
 
 const sampleTexts = [
-  "I absolutely love this product! It has exceeded all my expectations and the customer service is outstanding.",
-  "The service was okay, nothing special but not terrible either. Could use some improvements.",
+  'I absolutely love this product! It has exceeded all my expectations and the customer service is outstanding.',
+  'The service was okay, nothing special but not terrible either. Could use some improvements.',
   "This is the worst experience I've ever had. The product doesn't work and support is unresponsive.",
   "Your team was incredibly helpful during the implementation. Everything went smoothly and we're seeing great results!",
-  "I'm having some issues with the software crashing. It's frustrating because it happens during important meetings."
+  "I'm having some issues with the software crashing. It's frustrating because it happens during important meetings.",
 ];
 
 export default function SentimentAnalysis() {
   const { isDark } = useTheme();
   const { analyzeSentiment } = useEnhancedGemini();
-  
+
   const [inputText, setInputText] = useState<string>('');
   const [sentimentResult, setSentimentResult] = useState<SentimentResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -39,7 +48,7 @@ export default function SentimentAnalysis() {
     setIsAnalyzing(true);
     setError('');
     setSuccess(false);
-    
+
     const startTime = Date.now();
 
     try {
@@ -54,13 +63,12 @@ export default function SentimentAnalysis() {
         category: 'Advanced Analytics',
         executionTime: Date.now() - startTime,
         success: true,
-        customerId: 'current-user'
+        customerId: 'current-user',
       });
-
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to analyze sentiment';
       setError(errorMsg);
-      
+
       // Track failed usage
       await aiUsageTracker.trackUsage({
         toolId: 'sentiment-analysis',
@@ -69,7 +77,7 @@ export default function SentimentAnalysis() {
         executionTime: Date.now() - startTime,
         success: false,
         error: errorMsg,
-        customerId: 'current-user'
+        customerId: 'current-user',
       });
     } finally {
       setIsAnalyzing(false);
@@ -82,28 +90,40 @@ export default function SentimentAnalysis() {
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-500';
-      case 'negative': return 'text-red-500';
-      case 'neutral': return 'text-gray-500';
-      default: return 'text-gray-500';
+      case 'positive':
+        return 'text-green-500';
+      case 'negative':
+        return 'text-red-500';
+      case 'neutral':
+        return 'text-gray-500';
+      default:
+        return 'text-gray-500';
     }
   };
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return TrendingUp;
-      case 'negative': return TrendingDown;
-      case 'neutral': return Minus;
-      default: return Minus;
+      case 'positive':
+        return TrendingUp;
+      case 'negative':
+        return TrendingDown;
+      case 'neutral':
+        return Minus;
+      default:
+        return Minus;
     }
   };
 
   const getSentimentBg = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return isDark ? 'bg-green-900/20 border-green-500' : 'bg-green-50 border-green-200';
-      case 'negative': return isDark ? 'bg-red-900/20 border-red-500' : 'bg-red-50 border-red-200';
-      case 'neutral': return isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200';
-      default: return isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200';
+      case 'positive':
+        return isDark ? 'bg-green-900/20 border-green-500' : 'bg-green-50 border-green-200';
+      case 'negative':
+        return isDark ? 'bg-red-900/20 border-red-500' : 'bg-red-50 border-red-200';
+      case 'neutral':
+        return isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200';
+      default:
+        return isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -118,7 +138,9 @@ export default function SentimentAnalysis() {
   };
 
   return (
-    <div className={`max-w-6xl mx-auto p-6 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div
+      className={`max-w-6xl mx-auto p-6 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}
+    >
       {/* Header */}
       <div className="flex items-center mb-8">
         <div className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl mr-4">
@@ -136,7 +158,7 @@ export default function SentimentAnalysis() {
         {/* Input Section */}
         <div className={`p-6 rounded-xl shadow-lg ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <h2 className="text-xl font-semibold mb-6">Text Analysis</h2>
-          
+
           {/* Text Input */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Text to Analyze *</label>
@@ -145,16 +167,14 @@ export default function SentimentAnalysis() {
               onChange={(e) => setInputText(e.target.value)}
               rows={8}
               className={`w-full p-3 rounded-lg border ${
-                isDark 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
+                isDark
+                  ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none`}
               placeholder="Enter text to analyze sentiment (emails, reviews, feedback, social media posts, etc.)"
             />
             <div className="flex justify-between items-center mt-2">
-              <span className="text-sm text-gray-500">
-                {inputText.length} characters
-              </span>
+              <span className="text-sm text-gray-500">{inputText.length} characters</span>
               {inputText.length > 0 && (
                 <button
                   onClick={() => setInputText('')}
@@ -175,8 +195,8 @@ export default function SentimentAnalysis() {
                   key={index}
                   onClick={() => handleSampleText(text)}
                   className={`w-full p-3 text-left rounded-lg border transition-colors ${
-                    isDark 
-                      ? 'border-gray-600 hover:border-gray-500 bg-gray-700 hover:bg-gray-600' 
+                    isDark
+                      ? 'border-gray-600 hover:border-gray-500 bg-gray-700 hover:bg-gray-600'
                       : 'border-gray-200 hover:border-gray-300 bg-gray-50 hover:bg-gray-100'
                   }`}
                 >
@@ -239,10 +259,12 @@ export default function SentimentAnalysis() {
               <div className={`p-4 rounded-lg border ${getSentimentBg(sentimentResult.sentiment)}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center">
-                    {createElement(getSentimentIcon(sentimentResult.sentiment), { 
-                      className: `w-6 h-6 mr-2 ${getSentimentColor(sentimentResult.sentiment)}` 
+                    {createElement(getSentimentIcon(sentimentResult.sentiment), {
+                      className: `w-6 h-6 mr-2 ${getSentimentColor(sentimentResult.sentiment)}`,
                     })}
-                    <span className={`text-lg font-semibold capitalize ${getSentimentColor(sentimentResult.sentiment)}`}>
+                    <span
+                      className={`text-lg font-semibold capitalize ${getSentimentColor(sentimentResult.sentiment)}`}
+                    >
                       {sentimentResult.sentiment}
                     </span>
                   </div>
@@ -253,14 +275,17 @@ export default function SentimentAnalysis() {
                     <div className="text-xs text-gray-500">Confidence</div>
                   </div>
                 </div>
-                
+
                 {/* Score Bar */}
                 <div className="relative">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className={`h-2 rounded-full transition-all duration-500 ${
-                        sentimentResult.sentiment === 'positive' ? 'bg-green-500' :
-                        sentimentResult.sentiment === 'negative' ? 'bg-red-500' : 'bg-gray-500'
+                        sentimentResult.sentiment === 'positive'
+                          ? 'bg-green-500'
+                          : sentimentResult.sentiment === 'negative'
+                            ? 'bg-red-500'
+                            : 'bg-gray-500'
                       }`}
                       style={{ width: `${Math.abs(sentimentResult.score) * 100}%` }}
                     ></div>
@@ -290,9 +315,11 @@ export default function SentimentAnalysis() {
                   <Brain className="w-4 h-4 mr-2" />
                   Detailed Analysis
                 </h3>
-                <div className={`p-4 rounded-lg border ${
-                  isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-                } max-h-64 overflow-y-auto`}>
+                <div
+                  className={`p-4 rounded-lg border ${
+                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                  } max-h-64 overflow-y-auto`}
+                >
                   <div className="text-sm leading-relaxed whitespace-pre-wrap">
                     {sentimentResult.analysis}
                   </div>
@@ -301,27 +328,43 @@ export default function SentimentAnalysis() {
 
               {/* Insights */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-200'} border`}>
-                  <div className="font-medium text-blue-700 dark:text-blue-300 mb-1">Key Indicators</div>
+                <div
+                  className={`p-3 rounded-lg ${isDark ? 'bg-blue-900/20 border-blue-500' : 'bg-blue-50 border-blue-200'} border`}
+                >
+                  <div className="font-medium text-blue-700 dark:text-blue-300 mb-1">
+                    Key Indicators
+                  </div>
                   <div className="text-sm text-blue-600 dark:text-blue-400">
-                    {sentimentResult.sentiment === 'positive' ? 'Positive language, satisfaction' :
-                     sentimentResult.sentiment === 'negative' ? 'Critical tone, concerns' : 'Balanced, neutral tone'}
+                    {sentimentResult.sentiment === 'positive'
+                      ? 'Positive language, satisfaction'
+                      : sentimentResult.sentiment === 'negative'
+                        ? 'Critical tone, concerns'
+                        : 'Balanced, neutral tone'}
                   </div>
                 </div>
 
-                <div className={`p-3 rounded-lg ${isDark ? 'bg-purple-900/20 border-purple-500' : 'bg-purple-50 border-purple-200'} border`}>
-                  <div className="font-medium text-purple-700 dark:text-purple-300 mb-1">Recommendation</div>
+                <div
+                  className={`p-3 rounded-lg ${isDark ? 'bg-purple-900/20 border-purple-500' : 'bg-purple-50 border-purple-200'} border`}
+                >
+                  <div className="font-medium text-purple-700 dark:text-purple-300 mb-1">
+                    Recommendation
+                  </div>
                   <div className="text-sm text-purple-600 dark:text-purple-400">
-                    {sentimentResult.sentiment === 'positive' ? 'Maintain current approach' :
-                     sentimentResult.sentiment === 'negative' ? 'Address concerns promptly' : 'Monitor for changes'}
+                    {sentimentResult.sentiment === 'positive'
+                      ? 'Maintain current approach'
+                      : sentimentResult.sentiment === 'negative'
+                        ? 'Address concerns promptly'
+                        : 'Monitor for changes'}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className={`p-8 text-center rounded-lg border-2 border-dashed ${
-              isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
-            }`}>
+            <div
+              className={`p-8 text-center rounded-lg border-2 border-dashed ${
+                isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'
+              }`}
+            >
               <Brain className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>Your sentiment analysis will appear here</p>
               <p className="text-sm mt-2">Enter text and click analyze to get started</p>

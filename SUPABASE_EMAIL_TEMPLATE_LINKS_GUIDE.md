@@ -6,94 +6,90 @@ Supabase provides several built-in template variables that automatically populat
 
 ### **Available Variables:**
 
-| Variable | Description | Example Value |
-|----------|-------------|---------------|
+| Variable                 | Description                                    | Example Value                                |
+| ------------------------ | ---------------------------------------------- | -------------------------------------------- |
 | `{{ .ConfirmationURL }}` | Link to confirm email/signup OR reset password | `https://yourapp.com/auth/confirm?token=xyz` |
-| `{{ .InviteURL }}` | Link to accept invitation | `https://yourapp.com/auth/invite?token=xyz` |
-| `{{ .SiteURL }}` | Your application's base URL | `https://yourapp.com` |
-| `{{ .Email }}` | User's email address | `user@example.com` |
-| `{{ .Token }}` | Authentication token | `abc123xyz...` |
+| `{{ .InviteURL }}`       | Link to accept invitation                      | `https://yourapp.com/auth/invite?token=xyz`  |
+| `{{ .SiteURL }}`         | Your application's base URL                    | `https://yourapp.com`                        |
+| `{{ .Email }}`           | User's email address                           | `user@example.com`                           |
+| `{{ .Token }}`           | Authentication token                           | `abc123xyz...`                               |
 
 ## **Updated CTA Buttons in Each Template:**
 
 ### 1. **Confirm Signup Template**
+
 ```html
 <!-- Main CTA Button -->
-<a href="{{ .ConfirmationURL }}" class="cta-button">
-    Activate Your SmartCRM Account
-</a>
+<a href="{{ .ConfirmationURL }}" class="cta-button"> Activate Your SmartCRM Account </a>
 
 <!-- Footer Links -->
 <div class="footer-links">
-    <a href="{{ .SiteURL }}/help" class="footer-link">Help Center</a>
-    <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
-    <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
+  <a href="{{ .SiteURL }}/help" class="footer-link">Help Center</a>
+  <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
+  <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
 </div>
 ```
 
 ### 2. **Magic Link Template**
+
 ```html
 <!-- Main CTA Button -->
-<a href="{{ .ConfirmationURL }}" class="cta-button">
-    Sign In to SmartCRM
-</a>
+<a href="{{ .ConfirmationURL }}" class="cta-button"> Sign In to SmartCRM </a>
 
 <!-- Footer Links -->
 <div class="footer-links">
-    <a href="{{ .SiteURL }}/help" class="footer-link">Help Center</a>
-    <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
-    <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
+  <a href="{{ .SiteURL }}/help" class="footer-link">Help Center</a>
+  <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
+  <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
 </div>
 ```
 
 ### 3. **Password Recovery Template**
+
 ```html
 <!-- Main CTA Button -->
-<a href="{{ .ConfirmationURL }}" class="cta-button">
-    Reset Your Password
-</a>
+<a href="{{ .ConfirmationURL }}" class="cta-button"> Reset Your Password </a>
 
 <!-- Footer Links -->
 <div class="footer-links">
-    <a href="{{ .SiteURL }}/security" class="footer-link">Security Center</a>
-    <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
-    <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
+  <a href="{{ .SiteURL }}/security" class="footer-link">Security Center</a>
+  <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
+  <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
 </div>
 ```
 
 ### 4. **Invite Template**
+
 ```html
 <!-- Main CTA Button -->
-<a href="{{ .InviteURL }}" class="cta-button">
-    Accept Invitation & Join SmartCRM
-</a>
+<a href="{{ .InviteURL }}" class="cta-button"> Accept Invitation & Join SmartCRM </a>
 
 <!-- Footer Links -->
 <div class="footer-links">
-    <a href="{{ .SiteURL }}" class="footer-link">Learn More</a>
-    <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
-    <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
+  <a href="{{ .SiteURL }}" class="footer-link">Learn More</a>
+  <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
+  <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
 </div>
 ```
 
 ### 5. **Change Email Template**
+
 ```html
 <!-- Main CTA Button -->
-<a href="{{ .EmailChangeURL }}" class="cta-button">
-    Confirm Email Change
-</a>
+<a href="{{ .EmailChangeURL }}" class="cta-button"> Confirm Email Change </a>
 
 <!-- Footer Links -->
 <div class="footer-links">
-    <a href="{{ .SiteURL }}/security" class="footer-link">Security Center</a>
-    <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
-    <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
+  <a href="{{ .SiteURL }}/security" class="footer-link">Security Center</a>
+  <a href="{{ .SiteURL }}/support" class="footer-link">Contact Support</a>
+  <a href="{{ .SiteURL }}/privacy" class="footer-link">Privacy Policy</a>
 </div>
 ```
 
 ## **How to Upload Templates to Supabase:**
 
 ### **Step 1: Access Email Templates**
+
 1. Go to your Supabase Dashboard
 2. Navigate to **Authentication** → **Email Templates**
 3. You'll see 5 template types:
@@ -122,7 +118,7 @@ For each template type:
 ### **Step 4: Configure Redirect URLs**
 
 1. Still in **Authentication Settings**
-2. Find **"Additional Redirect URLs"** 
+2. Find **"Additional Redirect URLs"**
 3. Add these URLs (replace with your actual domain):
    ```
    https://your-domain.com/auth/callback
@@ -134,6 +130,7 @@ For each template type:
 ## **Testing the Links:**
 
 ### **Test Signup Flow:**
+
 ```javascript
 // Test signup with app context
 const { data, error } = await supabase.auth.signUp({
@@ -143,32 +140,34 @@ const { data, error } = await supabase.auth.signUp({
     data: {
       app_context: 'smartcrm',
       first_name: 'Test',
-      last_name: 'User'
-    }
-  }
-})
+      last_name: 'User',
+    },
+  },
+});
 ```
 
 ### **Test Magic Link:**
+
 ```javascript
 // Test magic link
 const { data, error } = await supabase.auth.signInWithOtp({
   email: 'test@smartcrm.com',
   options: {
     data: {
-      app_context: 'smartcrm'
-    }
-  }
-})
+      app_context: 'smartcrm',
+    },
+  },
+});
 ```
 
 ### **Test Password Recovery:**
+
 ```javascript
 // Test password recovery
 // Note: Supabase automatically includes token_hash and type=recovery in ConfirmationURL
 const { data, error } = await supabase.auth.resetPasswordForEmail('test@smartcrm.com', {
   redirectTo: 'https://your-app.com/auth/reset-password',
-})
+});
 ```
 
 ## **Multi-Tenant Setup:**
@@ -176,12 +175,16 @@ const { data, error } = await supabase.auth.resetPasswordForEmail('test@smartcrm
 For multiple apps using the same Supabase project:
 
 ### **Option 1: Multiple Template Sets**
+
 Create separate template sets in Supabase:
+
 - `smartcrm_templates` (green branding)
 - `otherapp_templates` (different branding)
 
 ### **Option 2: Dynamic Content**
+
 Use conditional logic in templates:
+
 ```html
 <!-- Example dynamic branding -->
 <div style="background-color: {{ if eq .AppContext "smartcrm" }}#22c55e{{ else }}#3b82f6{{ end }};">
@@ -192,16 +195,19 @@ Use conditional logic in templates:
 ## **Troubleshooting:**
 
 ### **Links Not Working?**
+
 1. Check Site URL in Supabase settings
 2. Verify redirect URLs are configured
 3. Ensure CORS settings allow your domain
 
 ### **Variables Not Populating?**
+
 1. Use exact variable syntax: `{{ .VariableName }}`
 2. Check template is saved in HTML mode
 3. Test with a real signup/recovery attempt
 
 ### **Styling Issues?**
+
 1. Use inline CSS for email compatibility
 2. Test with different email clients
 3. Keep CSS simple and widely supported

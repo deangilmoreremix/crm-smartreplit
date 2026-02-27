@@ -25,16 +25,20 @@ async function getCredentials() {
 
   const response = await fetch(url.toString(), {
     headers: {
-      'Accept': 'application/json',
-      'X_REPLIT_TOKEN': xReplitToken
-    }
+      Accept: 'application/json',
+      X_REPLIT_TOKEN: xReplitToken,
+    },
   });
 
   const data = await response.json();
-  
+
   connectionSettings = data.items?.[0];
 
-  if (!connectionSettings || (!connectionSettings.settings.publishable || !connectionSettings.settings.secret)) {
+  if (
+    !connectionSettings ||
+    !connectionSettings.settings.publishable ||
+    !connectionSettings.settings.secret
+  ) {
     throw new Error(`Stripe ${targetEnvironment} connection not found`);
   }
 

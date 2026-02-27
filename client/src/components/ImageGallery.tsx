@@ -13,7 +13,7 @@ export default function ImageGallery({
   userId,
   onImageSelect,
   maxImages = 50,
-  showActions = true
+  showActions = true,
 }: ImageGalleryProps) {
   const [images, setImages] = useState<StoredImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export default function ImageGallery({
 
     try {
       await imageStorage.deleteImage(image.storagePath);
-      setImages(prev => prev.filter(img => img.id !== image.id));
+      setImages((prev) => prev.filter((img) => img.id !== image.id));
     } catch (err) {
       console.error('Failed to delete image:', err);
       alert('Failed to delete image');
@@ -82,10 +82,7 @@ export default function ImageGallery({
     return (
       <div className="text-center py-12">
         <div className="text-red-500 mb-2">⚠️ {error}</div>
-        <button
-          onClick={loadUserImages}
-          className="text-blue-600 hover:text-blue-800 text-sm"
-        >
+        <button onClick={loadUserImages} className="text-blue-600 hover:text-blue-800 text-sm">
           Try again
         </button>
       </div>
@@ -110,10 +107,7 @@ export default function ImageGallery({
         <h3 className="text-lg font-semibold text-gray-900">
           Your Generated Images ({images.length})
         </h3>
-        <button
-          onClick={loadUserImages}
-          className="text-sm text-blue-600 hover:text-blue-800"
-        >
+        <button onClick={loadUserImages} className="text-sm text-blue-600 hover:text-blue-800">
           Refresh
         </button>
       </div>
@@ -198,10 +192,8 @@ export default function ImageGallery({
       {images.length >= maxImages && (
         <div className="text-center py-4">
           <p className="text-sm text-gray-500">
-            Showing first {maxImages} images.{" "}
-            <button className="text-blue-600 hover:text-blue-800">
-              View all
-            </button>
+            Showing first {maxImages} images.{' '}
+            <button className="text-blue-600 hover:text-blue-800">View all</button>
           </p>
         </div>
       )}

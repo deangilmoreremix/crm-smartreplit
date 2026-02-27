@@ -18,7 +18,7 @@ export const CustomizableAIToolbar: React.FC<CustomizableAIToolbarProps> = ({
   location,
   layout,
   size,
-  showCustomizeButton = true
+  showCustomizeButton = true,
 }) => {
   return (
     <div className="flex items-center space-x-2">

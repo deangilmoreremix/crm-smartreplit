@@ -1,21 +1,49 @@
 import { create } from 'zustand';
-import { 
-  Deal, 
-  DealStage, 
-  Pipeline, 
-  SalesMetrics, 
-  DealForecast, 
-  DealFilter, 
-  DealSortOption 
+import {
+  Deal,
+  DealStage,
+  Pipeline,
+  SalesMetrics,
+  DealForecast,
+  DealFilter,
+  DealSortOption,
 } from '../types/deal';
 
 // Default pipeline stages
 const defaultStages: DealStage[] = [
-  { id: 'qualification', name: 'Qualification', order: 1, color: '#3B82F6', probability: 20, isActive: true },
+  {
+    id: 'qualification',
+    name: 'Qualification',
+    order: 1,
+    color: '#3B82F6',
+    probability: 20,
+    isActive: true,
+  },
   { id: 'proposal', name: 'Proposal', order: 2, color: '#F59E0B', probability: 40, isActive: true },
-  { id: 'negotiation', name: 'Negotiation', order: 3, color: '#8B5CF6', probability: 70, isActive: true },
-  { id: 'closed-won', name: 'Closed Won', order: 4, color: '#10B981', probability: 100, isActive: true },
-  { id: 'closed-lost', name: 'Closed Lost', order: 5, color: '#EF4444', probability: 0, isActive: true },
+  {
+    id: 'negotiation',
+    name: 'Negotiation',
+    order: 3,
+    color: '#8B5CF6',
+    probability: 70,
+    isActive: true,
+  },
+  {
+    id: 'closed-won',
+    name: 'Closed Won',
+    order: 4,
+    color: '#10B981',
+    probability: 100,
+    isActive: true,
+  },
+  {
+    id: 'closed-lost',
+    name: 'Closed Lost',
+    order: 5,
+    color: '#EF4444',
+    probability: 0,
+    isActive: true,
+  },
 ];
 
 const defaultPipeline: Pipeline = {
@@ -162,11 +190,11 @@ export const useDealStore = create<DealStore>((set, get) => ({
       actualCloseDate: new Date('2024-01-10'),
       currency: 'USD',
       status: 'won',
-    }
+    },
   ],
 
   pipelines: {
-    'default': defaultPipeline
+    default: defaultPipeline,
   },
 
   activePipelineId: 'default',
@@ -180,7 +208,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       set({ isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch deals', isLoading: false });
@@ -200,57 +228,61 @@ export const useDealStore = create<DealStore>((set, get) => ({
       tags: dealData.tags || [],
     };
 
-    set(state => ({
-      deals: [...state.deals, newDeal]
+    set((state) => ({
+      deals: [...state.deals, newDeal],
     }));
     // Emit event for universal sync
-    window.dispatchEvent(new CustomEvent('dealsChanged', { 
-      detail: { deals: get().deals } 
-    }));
+    window.dispatchEvent(
+      new CustomEvent('dealsChanged', {
+        detail: { deals: get().deals },
+      })
+    );
 
     return id;
   },
 
   updateDeal: async (id, updates) => {
-    set(state => ({
-      deals: state.deals.map(deal =>
+    set((state) => ({
+      deals: state.deals.map((deal) =>
         deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
-      )
+      ),
     }));
     // Emit event for universal sync
-    window.dispatchEvent(new CustomEvent('dealsChanged', { 
-      detail: { deals: get().deals } 
-    }));
+    window.dispatchEvent(
+      new CustomEvent('dealsChanged', {
+        detail: { deals: get().deals },
+      })
+    );
   },
 
   deleteDeal: async (id) => {
-    set(state => ({
-      deals: state.deals.filter(deal => deal.id !== id)
+    set((state) => ({
+      deals: state.deals.filter((deal) => deal.id !== id),
     }));
   },
 
   moveDeal: async (dealId, newStageId) => {
     const { pipelines, activePipelineId } = get();
     const pipeline = pipelines[activePipelineId];
-    const newStage = pipeline?.stages.find(s => s.id === newStageId);
+    const newStage = pipeline?.stages.find((s) => s.id === newStageId);
 
     if (newStage) {
-      await get().updateDeal(dealId, { 
+      await get().updateDeal(dealId, {
         stage: newStage,
-        probability: newStage.probability 
+        probability: newStage.probability,
       });
     }
   },
 
   bulkUpdateDeals: async (dealIds, updates) => {
-    const promises = dealIds.map(id => get().updateDeal(id, updates));
+    const promises = dealIds.map((id) => get().updateDeal(id, updates));
     await Promise.all(promises);
   },
 
   // Pipeline management
   fetchPipelines: async () => {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
   },
 
   addPipeline: async (pipelineData) => {
@@ -262,28 +294,28 @@ export const useDealStore = create<DealStore>((set, get) => ({
       updatedAt: new Date(),
     };
 
-    set(state => ({
-      pipelines: { ...state.pipelines, [id]: newPipeline }
+    set((state) => ({
+      pipelines: { ...state.pipelines, [id]: newPipeline },
     }));
 
     return id;
   },
 
   updatePipeline: async (id, updates) => {
-    set(state => ({
+    set((state) => ({
       pipelines: {
         ...state.pipelines,
         [id]: {
           ...state.pipelines[id],
           ...updates,
-          updatedAt: new Date()
-        }
-      }
+          updatedAt: new Date(),
+        },
+      },
     }));
   },
 
   deletePipeline: async (id) => {
-    set(state => {
+    set((state) => {
       const { [id]: deleted, ...remaining } = state.pipelines;
       return { pipelines: remaining };
     });
@@ -295,37 +327,37 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
   // Stage management
   updateStage: async (pipelineId, stageId, updates) => {
-    set(state => ({
+    set((state) => ({
       pipelines: {
         ...state.pipelines,
         [pipelineId]: {
           ...state.pipelines[pipelineId],
-          stages: state.pipelines[pipelineId].stages.map(stage =>
+          stages: state.pipelines[pipelineId].stages.map((stage) =>
             stage.id === stageId ? { ...stage, ...updates } : stage
           ),
-          updatedAt: new Date()
-        }
-      }
+          updatedAt: new Date(),
+        },
+      },
     }));
   },
 
   reorderStages: async (pipelineId, stages) => {
-    set(state => ({
+    set((state) => ({
       pipelines: {
         ...state.pipelines,
         [pipelineId]: {
           ...state.pipelines[pipelineId],
           stages: stages.map((stage, index) => ({ ...stage, order: index + 1 })),
-          updatedAt: new Date()
-        }
-      }
+          updatedAt: new Date(),
+        },
+      },
     }));
   },
 
   // Filtering and sorting
   setFilters: (filters) => {
-    set(state => ({
-      filters: { ...state.filters, ...filters }
+    set((state) => ({
+      filters: { ...state.filters, ...filters },
     }));
   },
 
@@ -344,29 +376,24 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
     // Apply filters
     if (filters.stages?.length) {
-      filteredDeals = filteredDeals.filter(deal => 
-        filters.stages!.includes(deal.stage.id)
-      );
+      filteredDeals = filteredDeals.filter((deal) => filters.stages!.includes(deal.stage.id));
     }
 
     if (filters.priorities?.length) {
-      filteredDeals = filteredDeals.filter(deal => 
-        filters.priorities!.includes(deal.priority)
-      );
+      filteredDeals = filteredDeals.filter((deal) => filters.priorities!.includes(deal.priority));
     }
 
     if (filters.searchTerm) {
       const term = filters.searchTerm.toLowerCase();
-      filteredDeals = filteredDeals.filter(deal => 
-        deal.title.toLowerCase().includes(term) ||
-        deal.description?.toLowerCase().includes(term)
+      filteredDeals = filteredDeals.filter(
+        (deal) =>
+          deal.title.toLowerCase().includes(term) || deal.description?.toLowerCase().includes(term)
       );
     }
 
     if (filters.valueRange) {
-      filteredDeals = filteredDeals.filter(deal => 
-        deal.value >= filters.valueRange!.min && 
-        deal.value <= filters.valueRange!.max
+      filteredDeals = filteredDeals.filter(
+        (deal) => deal.value >= filters.valueRange!.min && deal.value <= filters.valueRange!.max
       );
     }
 
@@ -394,12 +421,12 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
     // Initialize all stage values to 0, fallback to default stages if no active pipeline
     const stages = activePipeline ? activePipeline.stages : defaultStages;
-    stages.forEach(stage => {
+    stages.forEach((stage) => {
       stageValues[stage.id] = 0;
     });
 
     // Sum up deal values for each stage
-    deals.forEach(deal => {
+    deals.forEach((deal) => {
       if (deal.stage && deal.stage.id) {
         stageValues[deal.stage.id] = (stageValues[deal.stage.id] || 0) + deal.value;
       }
@@ -411,14 +438,14 @@ export const useDealStore = create<DealStore>((set, get) => ({
   getTotalPipelineValue: () => {
     const deals = get().deals; // Use all deals instead of filtered
     return deals
-      .filter(deal => deal.stage.id !== 'closed-won' && deal.stage.id !== 'closed-lost')
+      .filter((deal) => deal.stage.id !== 'closed-won' && deal.stage.id !== 'closed-lost')
       .reduce((total, deal) => total + deal.value, 0);
   },
 
   getSalesMetrics: () => {
     const deals = get().deals;
-    const wonDeals = deals.filter(d => d.stage.id === 'closed-won');
-    const lostDeals = deals.filter(d => d.stage.id === 'closed-lost');
+    const wonDeals = deals.filter((d) => d.stage.id === 'closed-won');
+    const lostDeals = deals.filter((d) => d.stage.id === 'closed-lost');
     const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
     const wonValue = wonDeals.reduce((sum, d) => sum + d.value, 0);
     const lostValue = lostDeals.reduce((sum, d) => sum + d.value, 0);
@@ -435,7 +462,10 @@ export const useDealStore = create<DealStore>((set, get) => ({
       averageDealSize: deals.length ? totalValue / deals.length : 0,
       averageSalesCycle: 30, // placeholder
       conversionRate: deals.length ? (wonDeals.length / deals.length) * 100 : 0,
-      winRate: (wonDeals.length + lostDeals.length) ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100 : 0,
+      winRate:
+        wonDeals.length + lostDeals.length
+          ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100
+          : 0,
       salesVelocity: 1000, // placeholder
       forecastedRevenue: pipelineValue,
     };
@@ -443,12 +473,15 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
   calculateForecast: () => {
     const deals = get().deals;
-    const pipelineDeals = deals.filter(d => 
-      d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost'
+    const pipelineDeals = deals.filter(
+      (d) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost'
     );
 
     const totalPipeline = pipelineDeals.reduce((sum, d) => sum + d.value, 0);
-    const weightedPipeline = pipelineDeals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0);
+    const weightedPipeline = pipelineDeals.reduce(
+      (sum, d) => sum + (d.value * d.probability) / 100,
+      0
+    );
 
     return {
       month: new Date().toISOString().slice(0, 7),
@@ -471,7 +504,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
     const rates: Record<string, number> = {};
 
     if (pipeline) {
-      pipeline.stages.forEach(stage => {
+      pipeline.stages.forEach((stage) => {
         rates[stage.id] = stage.probability;
       });
     }
@@ -481,7 +514,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
   getSalesVelocity: () => {
     const deals = get().deals;
-    const wonDeals = deals.filter(d => d.stage.id === 'closed-won');
+    const wonDeals = deals.filter((d) => d.stage.id === 'closed-won');
 
     if (wonDeals.length === 0) return 0;
 

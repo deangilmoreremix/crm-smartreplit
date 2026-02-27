@@ -7,9 +7,9 @@ const VoiceToneOptimizerContent: React.FC = () => {
   const [formData, setFormData] = useState({
     content: '',
     targetAudience: '',
-    communicationGoal: 'persuasion'
+    communicationGoal: 'persuasion',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +17,13 @@ const VoiceToneOptimizerContent: React.FC = () => {
 
   const gemini = useGemini();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -31,19 +33,21 @@ const VoiceToneOptimizerContent: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const optimizedContent = await gemini.optimizeVoiceTone(
         formData.content,
         formData.targetAudience,
         formData.communicationGoal
       );
-      
+
       setResult(optimizedContent);
       setCopied(false);
     } catch (err) {
       console.error('Error optimizing voice tone:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while optimizing the voice tone');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred while optimizing the voice tone'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +67,9 @@ const VoiceToneOptimizerContent: React.FC = () => {
     { value: 'informational', label: 'Informational - Educate the audience' },
     { value: 'relationship_building', label: 'Relationship Building - Build trust and rapport' },
     { value: 'problem_solving', label: 'Problem Solving - Address concerns or issues' },
-    { value: 'inspirational', label: 'Inspirational - Motivate or encourage action' }
+    { value: 'inspirational', label: 'Inspirational - Motivate or encourage action' },
   ];
-  
+
   // Target audience suggestions
   const audienceSuggestions = [
     'C-level executives',
@@ -75,7 +79,7 @@ const VoiceToneOptimizerContent: React.FC = () => {
     'Financial analysts',
     'Healthcare administrators',
     'HR managers',
-    'Operations managers'
+    'Operations managers',
   ];
 
   return (
@@ -86,7 +90,8 @@ const VoiceToneOptimizerContent: React.FC = () => {
           <div>
             <h3 className="font-medium text-purple-800">Voice Tone Optimizer</h3>
             <p className="text-sm text-purple-700 mt-1">
-              Perfect your communication tone for different audiences and purposes. Get enhanced messaging that resonates with your specific audience.
+              Perfect your communication tone for different audiences and purposes. Get enhanced
+              messaging that resonates with your specific audience.
             </p>
           </div>
         </div>
@@ -114,7 +119,7 @@ const VoiceToneOptimizerContent: React.FC = () => {
               required
             ></textarea>
           </div>
-          
+
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
               <User className="h-4 w-4 mr-1 text-gray-500" />
@@ -138,7 +143,7 @@ const VoiceToneOptimizerContent: React.FC = () => {
               </datalist>
             </div>
           </div>
-          
+
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
               <MessageCircle className="h-4 w-4 mr-1 text-gray-500" />
@@ -151,12 +156,14 @@ const VoiceToneOptimizerContent: React.FC = () => {
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
               required
             >
-              {communicationGoals.map(goal => (
-                <option key={goal.value} value={goal.value}>{goal.label}</option>
+              {communicationGoals.map((goal) => (
+                <option key={goal.value} value={goal.value}>
+                  {goal.label}
+                </option>
               ))}
             </select>
           </div>
-            
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -182,11 +189,11 @@ const VoiceToneOptimizerContent: React.FC = () => {
       {result && !isLoading && !error && (
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
-            <button 
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
-                copied 
-                  ? 'bg-green-100 text-green-700' 
+                copied
+                  ? 'bg-green-100 text-green-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

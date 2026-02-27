@@ -38,7 +38,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       element.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
-        inline: 'nearest'
+        inline: 'nearest',
       });
     }
   };
@@ -56,14 +56,14 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         try {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (error) {
-          console.error("Error scrolling to top:", error);
+          console.error('Error scrolling to top:', error);
         }
         break;
       case 'contacts':
         try {
           scrollToSection('customer-lead-management');
         } catch (error) {
-          console.error("Error navigating to contacts:", error);
+          console.error('Error navigating to contacts:', error);
         }
         break;
       case 'pipeline':
@@ -88,22 +88,24 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         routerNavigate(feature as any);
         break;
       default:
-        console.log(`Navigation to ${feature} not implemented`);
     }
   };
 
-  const navigate = useCallback((path: string, options?: any) => {
-    if (path === currentPath) return;
+  const navigate = useCallback(
+    (path: string, options?: any) => {
+      if (path === currentPath) return;
 
-    // Debounce navigation to prevent rapid fire
-    if (navigationTimeoutRef.current) {
-      window.clearTimeout(navigationTimeoutRef.current);
-    }
-    navigationTimeoutRef.current = window.setTimeout(() => {
-      setCurrentPath(path);
-      routerNavigate(path, options as any);
-    }, 100);
-  }, [currentPath, routerNavigate]);
+      // Debounce navigation to prevent rapid fire
+      if (navigationTimeoutRef.current) {
+        window.clearTimeout(navigationTimeoutRef.current);
+      }
+      navigationTimeoutRef.current = window.setTimeout(() => {
+        setCurrentPath(path);
+        routerNavigate(path, options as any);
+      }, 100);
+    },
+    [currentPath, routerNavigate]
+  );
 
   // Add ref for timeout
   const navigationTimeoutRef = useRef<number | null>(null);

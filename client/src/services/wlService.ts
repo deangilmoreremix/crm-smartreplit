@@ -1,10 +1,10 @@
-import type { 
-  UserWLSettings, 
-  InsertUserWLSettings, 
-  TenantConfig, 
+import type {
+  UserWLSettings,
+  InsertUserWLSettings,
+  TenantConfig,
   InsertTenantConfig,
   PartnerWLConfig,
-  InsertPartnerWLConfig
+  InsertPartnerWLConfig,
 } from '@shared/schema';
 
 const API_BASE = '/api';
@@ -33,7 +33,10 @@ export class WLService {
     return await response.json();
   }
 
-  static async updateUserWLSettings(userId: string, data: Partial<UserWLSettings>): Promise<UserWLSettings> {
+  static async updateUserWLSettings(
+    userId: string,
+    data: Partial<UserWLSettings>
+  ): Promise<UserWLSettings> {
     const response = await fetch(`${API_BASE}/user/wl-settings/${userId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -66,7 +69,10 @@ export class WLService {
     return await response.json();
   }
 
-  static async updateTenantConfig(tenantId: string, data: Partial<TenantConfig>): Promise<TenantConfig> {
+  static async updateTenantConfig(
+    tenantId: string,
+    data: Partial<TenantConfig>
+  ): Promise<TenantConfig> {
     const response = await fetch(`${API_BASE}/tenant/config/${tenantId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -99,7 +105,10 @@ export class WLService {
     return await response.json();
   }
 
-  static async updatePartnerWLConfig(partnerId: string, data: Partial<PartnerWLConfig>): Promise<PartnerWLConfig> {
+  static async updatePartnerWLConfig(
+    partnerId: string,
+    data: Partial<PartnerWLConfig>
+  ): Promise<PartnerWLConfig> {
     const response = await fetch(`${API_BASE}/partner/wl-config/${partnerId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -137,10 +146,13 @@ export class WLService {
   }
 
   // Batch operations for better performance
-  static async syncUserData(userId: string, localData: Partial<UserWLSettings>): Promise<UserWLSettings> {
+  static async syncUserData(
+    userId: string,
+    localData: Partial<UserWLSettings>
+  ): Promise<UserWLSettings> {
     // Check if user settings exist in database
     const existingSettings = await this.getUserWLSettings(userId);
-    
+
     if (existingSettings) {
       // Update existing settings
       return await this.updateUserWLSettings(userId, localData);
@@ -148,15 +160,18 @@ export class WLService {
       // Create new settings
       return await this.createUserWLSettings({
         userId,
-        ...localData
+        ...localData,
       } as InsertUserWLSettings);
     }
   }
 
-  static async syncTenantData(tenantId: string, localData: Partial<TenantConfig>): Promise<TenantConfig> {
+  static async syncTenantData(
+    tenantId: string,
+    localData: Partial<TenantConfig>
+  ): Promise<TenantConfig> {
     // Check if tenant config exists in database
     const existingConfig = await this.getTenantConfig(tenantId);
-    
+
     if (existingConfig) {
       // Update existing config
       return await this.updateTenantConfig(tenantId, localData);
@@ -164,7 +179,7 @@ export class WLService {
       // Create new config
       return await this.createTenantConfig({
         tenantId,
-        ...localData
+        ...localData,
       } as InsertTenantConfig);
     }
   }

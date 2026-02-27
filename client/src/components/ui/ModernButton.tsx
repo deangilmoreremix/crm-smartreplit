@@ -18,7 +18,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
   loading = false,
   disabled = false,
   onClick,
-  className = ''
+  className = '',
 }) => {
   const getVariantClass = () => {
     switch (variant) {

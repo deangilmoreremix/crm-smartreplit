@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Building, Calendar, DollarSign, TrendingUp, User, Users, AlertCircle, CheckCircle, Clock, BarChart3, Target, Zap, Search, Globe } from 'lucide-react';
+import {
+  Building,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  User,
+  Users,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  BarChart3,
+  Target,
+  Zap,
+  Search,
+  Globe,
+} from 'lucide-react';
 import { Deal } from '../../types';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useContactStore } from '../../store/contactStore';
@@ -25,7 +40,7 @@ const AiEnhancedDealCard: React.FC<AiEnhancedDealCardProps> = ({ deal }) => {
       score: 85,
       risk: 'low',
       nextAction: 'Schedule follow-up call',
-      probability: deal.probability
+      probability: deal.probability,
     });
 
     // Load social profiles count
@@ -64,24 +79,35 @@ const AiEnhancedDealCard: React.FC<AiEnhancedDealCardProps> = ({ deal }) => {
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center space-x-2">
           <Building className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-          <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{deal.name}</h3>
+          <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {deal.name}
+          </h3>
         </div>
-        <button onClick={() => setIsExpanded(!isExpanded)} className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
+        >
           {isExpanded ? 'Collapse' : 'Expand'}
         </button>
       </div>
 
       <div className="flex items-center space-x-4 text-xs mb-3">
-        <div className={`flex items-center space-x-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+        <div
+          className={`flex items-center space-x-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+        >
           <Calendar className="h-3 w-3" />
           <span>{formatDate(deal.expectedCloseDate)}</span>
         </div>
-        <div className={`flex items-center space-x-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+        <div
+          className={`flex items-center space-x-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+        >
           <User className="h-3 w-3" />
           <span>{contact?.name || 'Unknown'}</span>
         </div>
         {socialProfilesCount > 0 && (
-          <div className={`flex items-center space-x-1 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+          <div
+            className={`flex items-center space-x-1 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+          >
             <Globe className="h-3 w-3" />
             <span>{socialProfilesCount} profiles</span>
           </div>
@@ -92,11 +118,17 @@ const AiEnhancedDealCard: React.FC<AiEnhancedDealCardProps> = ({ deal }) => {
         <div>
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>AMOUNT</p>
-              <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>${deal.amount.toLocaleString()}</p>
+              <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                AMOUNT
+              </p>
+              <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                ${deal.amount.toLocaleString()}
+              </p>
             </div>
             <div>
-              <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>STAGE</p>
+              <p className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                STAGE
+              </p>
               <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{deal.stage}</p>
             </div>
           </div>
@@ -104,7 +136,9 @@ const AiEnhancedDealCard: React.FC<AiEnhancedDealCardProps> = ({ deal }) => {
           {insights && (
             <div className={`p-3 rounded-md ${isDark ? 'bg-gray-700' : 'bg-gray-100'} mb-4`}>
               <div className="flex justify-between items-center mb-2">
-                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Insights</h4>
+                <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  AI Insights
+                </h4>
                 <button
                   onClick={loadSocialProfilesCount}
                   disabled={isLoadingSocial}
@@ -116,20 +150,36 @@ const AiEnhancedDealCard: React.FC<AiEnhancedDealCardProps> = ({ deal }) => {
               </div>
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>SCORE</p>
-                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{insights.score}%</p>
+                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    SCORE
+                  </p>
+                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {insights.score}%
+                  </p>
                 </div>
                 <div>
-                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>RISK</p>
-                  <p className={`font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>{insights.risk?.toUpperCase()}</p>
+                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    RISK
+                  </p>
+                  <p className={`font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>
+                    {insights.risk?.toUpperCase()}
+                  </p>
                 </div>
                 <div>
-                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>PROBABILITY</p>
-                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{insights.probability}%</p>
+                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    PROBABILITY
+                  </p>
+                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {insights.probability}%
+                  </p>
                 </div>
                 <div className="col-span-2">
-                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>NEXT ACTION</p>
-                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{insights.nextAction}</p>
+                  <p className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    NEXT ACTION
+                  </p>
+                  <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {insights.nextAction}
+                  </p>
                 </div>
               </div>
             </div>

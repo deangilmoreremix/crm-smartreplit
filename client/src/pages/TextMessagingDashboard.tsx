@@ -7,7 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Progress } from '../components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -32,7 +38,7 @@ import {
   Clock,
   Target,
   Shield,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 interface MessageProvider {
@@ -94,7 +100,7 @@ export default function TextMessagingDashboard() {
       supportedFeatures: ['SMS', 'MMS', 'Voice'],
       status: 'active',
       deliveryRate: 0.98,
-      responseTime: 2
+      responseTime: 2,
     },
     {
       id: 'aws-sns',
@@ -104,8 +110,8 @@ export default function TextMessagingDashboard() {
       supportedFeatures: ['SMS'],
       status: 'active',
       deliveryRate: 0.95,
-      responseTime: 3
-    }
+      responseTime: 3,
+    },
   ];
 
   const mockMessages: Message[] = [
@@ -118,7 +124,7 @@ export default function TextMessagingDashboard() {
       sentAt: new Date().toISOString(),
       gpt5Suggestions: ['Consider adding a specific time suggestion', 'Include a call-to-action'],
       sentiment: 'positive',
-      priority: 'high'
+      priority: 'high',
     },
     {
       id: '2',
@@ -128,8 +134,8 @@ export default function TextMessagingDashboard() {
       status: 'sent',
       sentAt: new Date(Date.now() - 3600000).toISOString(),
       sentiment: 'neutral',
-      priority: 'medium'
-    }
+      priority: 'medium',
+    },
   ];
 
   const mockStats: MessagingStats = {
@@ -139,25 +145,37 @@ export default function TextMessagingDashboard() {
     averageResponseTime: 2.3,
     totalCost: 1.85,
     costPerMessage: 0.0076,
-    activeProviders: 2
+    activeProviders: 2,
   };
 
-  const { data: providers = mockProviders, isLoading: providersLoading, error: providersError } = useQuery<MessageProvider[]>({
+  const {
+    data: providers = mockProviders,
+    isLoading: providersLoading,
+    error: providersError,
+  } = useQuery<MessageProvider[]>({
     queryKey: ['/api/messaging/providers'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
-  const { data: messages = mockMessages, isLoading: messagesLoading, error: messagesError } = useQuery<Message[]>({
+  const {
+    data: messages = mockMessages,
+    isLoading: messagesLoading,
+    error: messagesError,
+  } = useQuery<Message[]>({
     queryKey: ['/api/messaging/messages'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
-  const { data: stats = mockStats, isLoading: statsLoading, error: statsError } = useQuery<MessagingStats>({
+  const {
+    data: stats = mockStats,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery<MessagingStats>({
     queryKey: ['/api/messaging/stats'],
     refetchInterval: 30000,
-    retry: false
+    retry: false,
   });
 
   // Use mock data if API fails
@@ -171,7 +189,7 @@ export default function TextMessagingDashboard() {
       const response = await gpt5Communication.generateSMSReply({
         message: messageContent,
         context: 'Customer inquiry about product demo',
-        tone: 'professional'
+        tone: 'professional',
       });
       setGpt5Suggestions(response.suggestions);
     } catch (error) {
@@ -189,8 +207,8 @@ export default function TextMessagingDashboard() {
         body: JSON.stringify({
           content: messageContent,
           recipient: recipient,
-          provider: selectedProvider
-        })
+          provider: selectedProvider,
+        }),
       });
 
       if (response.ok) {
@@ -211,21 +229,31 @@ export default function TextMessagingDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
-      case 'delivered': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
-      case 'sent': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
-      case 'failed': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
-      case 'inactive': return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'active':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-200';
+      case 'delivered':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+      case 'sent':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+      case 'failed':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-200';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'bg-green-100 text-green-800';
-      case 'neutral': return 'bg-yellow-100 text-yellow-800';
-      case 'negative': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'positive':
+        return 'bg-green-100 text-green-800';
+      case 'neutral':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'negative':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -238,11 +266,7 @@ export default function TextMessagingDashboard() {
       <Plus className="h-4 w-4 mr-2" />
       Compose Message
     </Button>,
-    <Button
-      key="providers"
-      variant="outline"
-      onClick={() => setShowProviderModal(true)}
-    >
+    <Button key="providers" variant="outline" onClick={() => setShowProviderModal(true)}>
       <Settings className="h-4 w-4 mr-2" />
       Manage Providers
     </Button>,
@@ -254,7 +278,7 @@ export default function TextMessagingDashboard() {
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isGenerating ? 'Generating...' : 'AI Assist'}
-    </Button>
+    </Button>,
   ];
 
   const headerStats = stats ? (
@@ -264,7 +288,9 @@ export default function TextMessagingDashboard() {
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Messages</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-green-600">{Math.round(stats.deliveryRate * 100)}%</div>
+        <div className="text-2xl font-bold text-green-600">
+          {Math.round(stats.deliveryRate * 100)}%
+        </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Delivery Rate</div>
       </div>
       <div className="text-center">
@@ -312,12 +338,8 @@ export default function TextMessagingDashboard() {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge className={getStatusColor(message.status)}>
-                          {message.status}
-                        </Badge>
-                        <Badge variant="outline">
-                          {message.provider}
-                        </Badge>
+                        <Badge className={getStatusColor(message.status)}>{message.status}</Badge>
+                        <Badge variant="outline">{message.provider}</Badge>
                         {message.sentiment && (
                           <Badge className={getSentimentColor(message.sentiment)}>
                             {message.sentiment}
@@ -355,9 +377,7 @@ export default function TextMessagingDashboard() {
                       <Phone className="h-5 w-5" />
                       {provider.name}
                     </CardTitle>
-                    <Badge className={getStatusColor(provider.status)}>
-                      {provider.status}
-                    </Badge>
+                    <Badge className={getStatusColor(provider.status)}>{provider.status}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -369,7 +389,9 @@ export default function TextMessagingDashboard() {
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Delivery Rate:</span>
-                        <div className="font-semibold">{Math.round(provider.deliveryRate * 100)}%</div>
+                        <div className="font-semibold">
+                          {Math.round(provider.deliveryRate * 100)}%
+                        </div>
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Response Time:</span>
@@ -422,7 +444,9 @@ export default function TextMessagingDashboard() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Messages Delivered</span>
-                      <span className="font-semibold text-green-600">{displayStats.deliveredMessages}</span>
+                      <span className="font-semibold text-green-600">
+                        {displayStats.deliveredMessages}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Total Cost</span>
@@ -449,7 +473,9 @@ export default function TextMessagingDashboard() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Average Cost/Message</span>
-                      <span className="font-semibold">${displayStats.costPerMessage.toFixed(4)}</span>
+                      <span className="font-semibold">
+                        ${displayStats.costPerMessage.toFixed(4)}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm">Monthly Budget Used</span>
@@ -557,34 +583,37 @@ export default function TextMessagingDashboard() {
             </Card>
           </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5" />
-                  AI-Generated Suggestions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {gpt5Suggestions.map((suggestion, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm">{suggestion}</p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-2"
-                          onClick={() => setMessageContent(suggestion)}
-                        >
-                          Use This
-                        </Button>
-                      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5" />
+                AI-Generated Suggestions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {gpt5Suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
+                  >
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm">{suggestion}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => setMessageContent(suggestion)}
+                      >
+                        Use This
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
@@ -602,7 +631,7 @@ export default function TextMessagingDashboard() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {displayProviders.map(provider => (
+                        {displayProviders.map((provider) => (
                           <SelectItem key={provider.id} value={provider.id}>
                             {provider.name}
                           </SelectItem>
@@ -686,11 +715,13 @@ export default function TextMessagingDashboard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {providers.filter(p => p.status === 'active').map(provider => (
-                      <SelectItem key={provider.id} value={provider.id}>
-                        {provider.name} (${provider.costPerMessage.toFixed(4)}/msg)
-                      </SelectItem>
-                    ))}
+                    {providers
+                      .filter((p) => p.status === 'active')
+                      .map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name} (${provider.costPerMessage.toFixed(4)}/msg)
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

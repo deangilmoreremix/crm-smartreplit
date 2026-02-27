@@ -9,6 +9,7 @@ This guide documents the implementation of 8 advanced approaches for connecting 
 **Location**: `vite.config.ts`, `client/src/stores/index.ts`, `client/src/services/index.ts`, etc.
 
 **Features**:
+
 - Shared stores (Zustand): Contact, Deal, Task, Auth, Communication, Goal, Analytics, Mobile stores
 - Shared services: UnifiedEventSystem, API client, OpenAI embeddings, AI services
 - Shared hooks: Contact store, dark mode, toast, AI features
@@ -18,6 +19,7 @@ This guide documents the implementation of 8 advanced approaches for connecting 
 - Shared UI components: Buttons, cards, inputs, dialogs, form elements
 
 **Usage**:
+
 ```javascript
 // In remote app
 import { useContactStore } from 'crm/stores';
@@ -30,6 +32,7 @@ import { useWebSocket } from 'crm/services';
 **Location**: `client/src/services/webSocketManager.ts`
 
 **Features**:
+
 - Auto-reconnection with exponential backoff
 - Heartbeat monitoring
 - Message queuing during disconnection
@@ -38,6 +41,7 @@ import { useWebSocket } from 'crm/services';
 - React hook for easy usage
 
 **Usage**:
+
 ```javascript
 import { useWebSocket } from './services/webSocketManager';
 
@@ -60,6 +64,7 @@ function MyComponent() {
 **Location**: `client/src/services/broadcastChannelManager.ts`
 
 **Features**:
+
 - Cross-tab communication
 - Message history tracking
 - Data synchronization methods
@@ -67,6 +72,7 @@ function MyComponent() {
 - React hook integration
 
 **Usage**:
+
 ```javascript
 import { useBroadcastChannel } from './services/broadcastChannelManager';
 
@@ -88,6 +94,7 @@ function ContactList() {
 **Location**: `client/src/services/sharedWorkerManager.ts`
 
 **Features**:
+
 - Background task processing
 - Multiple worker types (data, AI, analytics)
 - Task prioritization
@@ -95,6 +102,7 @@ function ContactList() {
 - Error handling and recovery
 
 **Usage**:
+
 ```javascript
 import { useSharedWorker } from './services/sharedWorkerManager';
 
@@ -163,18 +171,21 @@ All implementations integrate seamlessly with your existing:
 ## 🚀 Quick Start
 
 1. **Enhanced Module Federation**:
+
    ```bash
    # Already configured in vite.config.ts
    # Remote apps can import shared modules
    ```
 
 2. **WebSocket Communication**:
+
    ```javascript
    import { webSocketManager } from './services/webSocketManager';
    webSocketManager.send('HELLO', { message: 'World' });
    ```
 
 3. **Broadcast Channel**:
+
    ```javascript
    import { broadcastChannelManager } from './services/broadcastChannelManager';
    broadcastChannelManager.broadcast('DATA_UPDATE', data);
@@ -189,6 +200,7 @@ All implementations integrate seamlessly with your existing:
 ## 🔧 Configuration
 
 ### WebSocket Configuration
+
 ```javascript
 // In webSocketManager.ts
 private config = {
@@ -200,6 +212,7 @@ private config = {
 ```
 
 ### BroadcastChannel Configuration
+
 ```javascript
 // In broadcastChannelManager.ts
 private config = {
@@ -209,13 +222,18 @@ private config = {
 ```
 
 ### Module Federation Configuration
+
 ```javascript
 // In vite.config.ts
 federation({
   name: 'crm_host',
-  exposes: { /* shared modules */ },
-  remotes: { /* remote apps */ },
-  shared: ['react', 'react-dom', 'zustand']
+  exposes: {
+    /* shared modules */
+  },
+  remotes: {
+    /* remote apps */
+  },
+  shared: ['react', 'react-dom', 'zustand'],
 });
 ```
 
@@ -236,6 +254,7 @@ federation({
 ## 🧪 Testing
 
 Each approach includes:
+
 - Unit tests for core functionality
 - Integration tests for cross-app communication
 - Performance benchmarks

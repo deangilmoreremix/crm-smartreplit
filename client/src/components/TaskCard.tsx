@@ -1,5 +1,15 @@
 import React from 'react';
-import { Calendar, Clock, Mail, Video, FileText, MoreHorizontal, CheckCircle, Check, MoreVertical } from 'lucide-react';
+import {
+  Calendar,
+  Clock,
+  Mail,
+  Video,
+  FileText,
+  MoreHorizontal,
+  CheckCircle,
+  Check,
+  MoreVertical,
+} from 'lucide-react';
 import Avatar from './ui/Avatar';
 import { useTaskStore } from '../store/taskStore';
 import { getInitials, getAvatarByIndex } from '../utils/avatars';
@@ -39,30 +49,38 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
 
   const getIconColor = (type: string) => {
     switch (type) {
-      case 'meeting': return isDark ? 'text-green-400' : 'text-green-600';
-      case 'call': return isDark ? 'text-blue-400' : 'text-blue-600';
-      case 'proposal': return isDark ? 'text-purple-400' : 'text-purple-600';
-      default: return isDark ? 'text-gray-400' : 'text-gray-600';
+      case 'meeting':
+        return isDark ? 'text-green-400' : 'text-green-600';
+      case 'call':
+        return isDark ? 'text-blue-400' : 'text-blue-600';
+      case 'proposal':
+        return isDark ? 'text-purple-400' : 'text-purple-600';
+      default:
+        return isDark ? 'text-gray-400' : 'text-gray-600';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'meeting': return Video;
-      case 'call': return Video;
-      case 'proposal': return FileText;
-      default: return CheckCircle;
+      case 'meeting':
+        return Video;
+      case 'call':
+        return Video;
+      case 'proposal':
+        return FileText;
+      default:
+        return CheckCircle;
     }
   };
 
   const handleCompleteTask = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     // Auto-trigger AI insights and next actions without user intervention
     if (task.assistantThreadId) {
       try {
         const { aiOrchestrator } = await import('../services/ai-orchestrator.service');
-        
+
         // Submit multiple AI requests in background
         await Promise.all([
           // Task completion analysis
@@ -76,11 +94,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
               context: {
                 contactId: task.contactId,
                 dealId: task.dealId,
-                completedAt: new Date()
-              }
-            }
+                completedAt: new Date(),
+              },
+            },
           }),
-          
+
           // Auto-generate follow-up recommendations
           aiOrchestrator.submitRequest({
             type: 'automation_suggestions',
@@ -89,22 +107,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
               entityType: 'task',
               entityId: task.id,
               action: 'completion',
-              context: { contactId: task.contactId, dealId: task.dealId }
-            }
+              context: { contactId: task.contactId, dealId: task.dealId },
+            },
           }),
-          
+
           // Update contact engagement score
-          task.contactId && aiOrchestrator.submitRequest({
-            type: 'contact_scoring',
-            priority: 'low',
-            data: { contactId: task.contactId, activityType: 'task_completion' }
-          })
+          task.contactId &&
+            aiOrchestrator.submitRequest({
+              type: 'contact_scoring',
+              priority: 'low',
+              data: { contactId: task.contactId, activityType: 'task_completion' },
+            }),
         ]);
       } catch (error) {
         console.warn('Assistant thread update failed:', error);
       }
     }
-    
+
     updateTask(task.id, { completed: !task.completed });
   };
 
@@ -114,9 +133,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const assigneeAvatar = task.assignee?.avatar || getAvatarByIndex(index, 'executives');
 
   return (
-    <div 
+    <div
       className={`${isDark ? 'bg-gray-800/50' : 'bg-white'} backdrop-blur-xl border rounded-2xl p-6 hover:${isDark ? 'bg-gray-800/70' : 'bg-gray-50'} transition-all duration-300 group ${getCardClass(task.isHighlighted)} ${task.completed ? 'opacity-70' : ''} relative`}
-      onClick={() => window.location.href = `/tasks/${task.id}`}
+      onClick={() => (window.location.href = `/tasks/${task.id}`)}
     >
       {task.completed && (
         <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
@@ -125,7 +144,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
       )}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <Avatar 
+          <Avatar
             src={assigneeAvatar}
             alt={task.assignee?.name || `User ${index}`}
             size="md"
@@ -141,7 +160,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
             </p>
           </div>
         </div>
-        <button 
+        <button
           className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'} transition-colors opacity-0 group-hover:opacity-100 relative`}
           onClick={(e) => {
             e.stopPropagation();
@@ -149,12 +168,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
           }}
         >
           <MoreVertical className="h-4 w-4" />
-          
+
           {menuOpen && (
-            <div className={`absolute right-0 mt-1 w-36 ${
-              isDark ? 'bg-gray-800 border-white/10' : 'bg-white border-gray-200'
-            } border rounded-lg shadow-lg z-10 py-1`}>
-              <button 
+            <div
+              className={`absolute right-0 mt-1 w-36 ${
+                isDark ? 'bg-gray-800 border-white/10' : 'bg-white border-gray-200'
+              } border rounded-lg shadow-lg z-10 py-1`}
+            >
+              <button
                 className={`w-full text-left px-3 py-2 text-sm ${
                   isDark ? 'hover:bg-white/5 text-white' : 'hover:bg-gray-100 text-gray-700'
                 } flex items-center space-x-2`}
@@ -163,11 +184,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
                   handleCompleteTask(e);
                 }}
               >
-                <CheckCircle size={14} className={task.completed ? 'text-green-400' : 'text-gray-400'} />
+                <CheckCircle
+                  size={14}
+                  className={task.completed ? 'text-green-400' : 'text-gray-400'}
+                />
                 <span>{task.completed ? 'Mark Incomplete' : 'Mark Complete'}</span>
               </button>
-              
-              <button 
+
+              <button
                 className={`w-full text-left px-3 py-2 text-sm ${
                   isDark ? 'hover:bg-white/5 text-white' : 'hover:bg-gray-100 text-gray-700'
                 } flex items-center space-x-2`}
@@ -183,44 +207,70 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
           )}
         </button>
       </div>
-      
+
       <div className="space-y-4">
         <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-lg ${isDark ? 'bg-white/10' : 'bg-gray-100'} ${getIconColor(task.type)}`}>
+          <div
+            className={`p-2 rounded-lg ${isDark ? 'bg-white/10' : 'bg-gray-100'} ${getIconColor(task.type)}`}
+          >
             <TypeIcon className="h-5 w-5" />
           </div>
           <div>
-            <h4 className={`font-medium ${isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'} transition-colors`}>
+            <h4
+              className={`font-medium ${isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'} transition-colors`}
+            >
               {task.title}
             </h4>
             {task.subtitle && (
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{task.subtitle}</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                {task.subtitle}
+              </p>
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className={`px-3 py-1 rounded-full text-xs ${isDark ? 'bg-white/10' : 'bg-gray-100'} ${getIconColor(task.type)}`}>
+            <span
+              className={`px-3 py-1 rounded-full text-xs ${isDark ? 'bg-white/10' : 'bg-gray-100'} ${getIconColor(task.type)}`}
+            >
               {task.status}
             </span>
             {task.priority && (
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                task.priority === 'high' ? (isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800') :
-                task.priority === 'medium' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-800') :
-                (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800')
-              }`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  task.priority === 'high'
+                    ? isDark
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-red-100 text-red-800'
+                    : task.priority === 'medium'
+                      ? isDark
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : 'bg-yellow-100 text-yellow-800'
+                      : isDark
+                        ? 'bg-green-500/20 text-green-400'
+                        : 'bg-green-100 text-green-800'
+                }`}
+              >
                 {task.priority}
               </span>
             )}
           </div>
           <div className="flex space-x-2">
-            <button className={`p-2 ${isDark ? 'bg-white/10 hover:bg-green-400/20' : 'bg-gray-100 hover:bg-green-100'} rounded-lg transition-colors`}>
-              <Mail className={`h-4 w-4 ${isDark ? 'text-gray-400 hover:text-green-400' : 'text-gray-500 hover:text-green-600'}`} />
+            <button
+              className={`p-2 ${isDark ? 'bg-white/10 hover:bg-green-400/20' : 'bg-gray-100 hover:bg-green-100'} rounded-lg transition-colors`}
+            >
+              <Mail
+                className={`h-4 w-4 ${isDark ? 'text-gray-400 hover:text-green-400' : 'text-gray-500 hover:text-green-600'}`}
+              />
             </button>
             {task.type === 'meeting' && (
-              <button className={`p-2 ${isDark ? 'bg-white/10 hover:bg-green-400/20' : 'bg-gray-100 hover:bg-green-100'} rounded-lg transition-colors`}>
-                <Calendar className={`h-4 w-4 ${isDark ? 'text-gray-400 hover:text-green-400' : 'text-gray-500 hover:text-green-600'}`} />
+              <button
+                className={`p-2 ${isDark ? 'bg-white/10 hover:bg-green-400/20' : 'bg-gray-100 hover:bg-green-100'} rounded-lg transition-colors`}
+              >
+                <Calendar
+                  className={`h-4 w-4 ${isDark ? 'text-gray-400 hover:text-green-400' : 'text-gray-500 hover:text-green-600'}`}
+                />
               </button>
             )}
           </div>

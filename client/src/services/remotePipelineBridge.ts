@@ -56,9 +56,9 @@ export class RemotePipelineBridge {
       isConnected: false,
       lastSync: null,
       dealCount: 0,
-      connectionAttempts: 0
+      connectionAttempts: 0,
     };
-    
+
     // Store bound message handler for proper cleanup
     this.messageHandler = this.handleMessage.bind(this);
     window.addEventListener('message', this.messageHandler);
@@ -73,10 +73,14 @@ export class RemotePipelineBridge {
     const allowedOrigins = [
       'https://cheery-syrniki-b5b6ca.netlify.app',
       'http://localhost:3000',
-      'http://127.0.0.1:3000'
+      'http://127.0.0.1:3000',
     ];
-    
-    if (!allowedOrigins.some(origin => event.origin.includes(origin.replace('https://', '').replace('http://', '')))) {
+
+    if (
+      !allowedOrigins.some((origin) =>
+        event.origin.includes(origin.replace('https://', '').replace('http://', ''))
+      )
+    ) {
       return;
     }
 
@@ -92,29 +96,29 @@ export class RemotePipelineBridge {
           this.updateStatus({ connectionAttempts: this.status.connectionAttempts + 1 });
           this.initializePipeline();
           break;
-          
+
         case 'CRM_INIT_COMPLETE':
           this.updateStatus({
             isConnected: true,
             lastSync: new Date(),
-            dealCount: message.data?.dealsReceived || 0
+            dealCount: message.data?.dealsReceived || 0,
           });
           console.log('✅ Remote pipeline initialized successfully');
           break;
-          
+
         case 'BRIDGE_READY':
           // Bridge code is loaded and ready
           this.updateStatus({ connectionAttempts: this.status.connectionAttempts + 1 });
           setTimeout(() => this.initializePipeline(), 500);
           break;
-          
+
         case 'DEAL_UPDATED':
         case 'DEAL_CREATED':
         case 'DEAL_DELETED':
         case 'DEAL_STAGE_CHANGED':
           this.updateStatus({ lastSync: new Date() });
           // Notify all message callbacks
-          this.messageCallbacks.forEach(callback => {
+          this.messageCallbacks.forEach((callback) => {
             try {
               callback(message.data);
             } catch (error) {
@@ -122,11 +126,11 @@ export class RemotePipelineBridge {
             }
           });
           break;
-          
+
         case 'CONNECTION_ERROR':
           this.updateStatus({
             isConnected: false,
-            errorMessage: message.data?.error || 'Connection error'
+            errorMessage: message.data?.error || 'Connection error',
           });
           break;
       }
@@ -150,7 +154,7 @@ export class RemotePipelineBridge {
       type,
       data,
       source: 'CRM',
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     try {
@@ -171,7 +175,7 @@ export class RemotePipelineBridge {
 
     // First, try to inject the bridge code
     this.injectBridgeCode();
-    
+
     // Then send initialization data
     setTimeout(() => {
       this.sendInitializationData();
@@ -310,12 +314,12 @@ export class RemotePipelineBridge {
     // Get deals and contacts from stores (these would be passed in)
     const deals: any[] = []; // This would come from useDealStore
     const contacts: any[] = []; // This would come from useContactStore
-    
+
     const initData = {
       crmInfo: {
         name: 'Smart CRM Dashboard',
         version: '2.0.0',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       pipelineData: {
         deals: deals as any[],
@@ -325,10 +329,10 @@ export class RemotePipelineBridge {
           { id: 'proposal', name: 'Proposal', order: 3 },
           { id: 'negotiation', name: 'Negotiation', order: 4 },
           { id: 'won', name: 'Won', order: 5 },
-          { id: 'lost', name: 'Lost', order: 6 }
-        ]
+          { id: 'lost', name: 'Lost', order: 6 },
+        ],
       },
-      contactsData: contacts as any[]
+      contactsData: contacts as any[],
     };
 
     this.sendMessage('CRM_INIT', initData);
@@ -338,7 +342,7 @@ export class RemotePipelineBridge {
     if (this.status.connectionAttempts >= this.maxAttempts) {
       this.updateStatus({
         isConnected: false,
-        errorMessage: 'Max connection attempts reached'
+        errorMessage: 'Max connection attempts reached',
       });
       return false;
     }
@@ -346,7 +350,7 @@ export class RemotePipelineBridge {
     this.updateStatus({
       isConnected: false,
       errorMessage: undefined,
-      connectionAttempts: this.status.connectionAttempts + 1
+      connectionAttempts: this.status.connectionAttempts + 1,
     });
 
     // Reload iframe
@@ -367,9 +371,9 @@ export class RemotePipelineBridge {
 
   syncDeals(deals: CRMDeal[]) {
     this.sendMessage('SYNC_DEALS', { deals });
-    this.updateStatus({ 
+    this.updateStatus({
       lastSync: new Date(),
-      dealCount: deals.length 
+      dealCount: deals.length,
     });
   }
 
@@ -378,7 +382,7 @@ export class RemotePipelineBridge {
       isConnected: false,
       lastSync: null,
       dealCount: 0,
-      errorMessage: undefined
+      errorMessage: undefined,
     });
     if (this.iframe) {
       this.iframe.src = 'about:blank';

@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
 import { useOpenAIImage } from '../../services/openaiImageService';
 import AIToolContent from '../shared/AIToolContent';
-import { Image, Camera, RefreshCw, Download, Copy, Check, Lightbulb, Grid3X3, Layout } from 'lucide-react';
+import {
+  Image,
+  Camera,
+  RefreshCw,
+  Download,
+  Copy,
+  Check,
+  Lightbulb,
+  Grid3X3,
+  Layout,
+} from 'lucide-react';
 
 const ImageGeneratorContent: React.FC = () => {
   const imageService = useOpenAIImage();
-  
+
   const [prompt, setPrompt] = useState('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [revisedPrompt, setRevisedPrompt] = useState<string | null>(null);
@@ -15,28 +25,28 @@ const ImageGeneratorContent: React.FC = () => {
   const [imageStyle, setImageStyle] = useState<'natural' | 'vivid'>('natural');
   const [imageQuality, setImageQuality] = useState<'standard' | 'hd'>('standard');
   const [promptCopied, setPromptCopied] = useState(false);
-  
+
   // Sample prompts for quick selection
   const samplePrompts = [
-    "Professional business team collaborating in a modern office setting",
-    "Product showcase for a sleek new CRM dashboard",
-    "Visual representation of increasing sales and growth",
-    "Business person analyzing data with attractive data visualizations",
-    "Minimalist product feature comparison chart"
+    'Professional business team collaborating in a modern office setting',
+    'Product showcase for a sleek new CRM dashboard',
+    'Visual representation of increasing sales and growth',
+    'Business person analyzing data with attractive data visualizations',
+    'Minimalist product feature comparison chart',
   ];
-  
+
   const handleGenerateImage = async () => {
     if (!prompt) {
       setError('Please enter a prompt');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await imageService.generateImage(prompt, imageSize, imageQuality, imageStyle);
-      
+
       setGeneratedImageUrl(result.url);
       setRevisedPrompt(result.revisedPrompt);
     } catch (err) {
@@ -46,7 +56,7 @@ const ImageGeneratorContent: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleDownloadImage = () => {
     if (generatedImageUrl) {
       const link = document.createElement('a');
@@ -57,7 +67,7 @@ const ImageGeneratorContent: React.FC = () => {
       document.body.removeChild(link);
     }
   };
-  
+
   const handleCopyPrompt = () => {
     if (revisedPrompt) {
       navigator.clipboard.writeText(revisedPrompt);
@@ -65,7 +75,7 @@ const ImageGeneratorContent: React.FC = () => {
       setTimeout(() => setPromptCopied(false), 2000);
     }
   };
-  
+
   const handleUseSamplePrompt = (sample: string) => {
     setPrompt(sample);
   };
@@ -105,7 +115,7 @@ const ImageGeneratorContent: React.FC = () => {
               rows={4}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <Lightbulb className="inline h-4 w-4 mr-1 text-amber-500" />
@@ -123,7 +133,7 @@ const ImageGeneratorContent: React.FC = () => {
               ))}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
@@ -140,7 +150,7 @@ const ImageGeneratorContent: React.FC = () => {
                 <option value="1024x1792">Portrait (9:16)</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                 <Layout size={16} className="mr-1 text-gray-500" />
@@ -155,7 +165,7 @@ const ImageGeneratorContent: React.FC = () => {
                 <option value="vivid">Vivid</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                 <Camera size={16} className="mr-1 text-gray-500" />
@@ -174,7 +184,7 @@ const ImageGeneratorContent: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex justify-end">
             <button
               onClick={handleGenerateImage}
@@ -199,20 +209,20 @@ const ImageGeneratorContent: React.FC = () => {
             </button>
           </div>
         </div>
-        
+
         {/* Generated Image Result */}
         {generatedImageUrl && !isLoading && (
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-3">Generated Image</h3>
-            
+
             <div className="mb-4 rounded-lg overflow-hidden shadow-sm border border-gray-200">
-              <img 
-                src={generatedImageUrl} 
-                alt="Generated image" 
+              <img
+                src={generatedImageUrl}
+                alt="Generated image"
                 className="w-full h-auto object-contain"
               />
             </div>
-            
+
             {revisedPrompt && (
               <div className="mb-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-1">Revised Prompt:</h4>
@@ -230,7 +240,7 @@ const ImageGeneratorContent: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             <div className="flex justify-end">
               <button
                 onClick={handleDownloadImage}

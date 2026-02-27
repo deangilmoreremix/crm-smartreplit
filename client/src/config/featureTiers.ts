@@ -5,32 +5,109 @@
 
 export const featureTiers: Record<string, string[]> = {
   // Dashboard & Core
-  dashboard: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  contacts: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  pipeline: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  calendar: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  tasks: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  
+  dashboard: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+  contacts: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+  pipeline: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+  calendar: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+  tasks: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+
   // AI Features
-  aiGoals: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  aiTools: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  aiAssistant: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  
+  aiGoals: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+  aiTools: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+  aiAssistant: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+
   // Communication
-  communications: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
+  communications: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
   videoEmail: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'ai_communication'],
   phoneSystem: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'ai_communication'],
   sms: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'ai_communication'],
-  
+
   // Business Tools
   invoicing: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'ai_communication'],
   contentLibrary: ['super_admin', 'whitelabel', 'smartcrm_bundle'],
   formsSurveys: ['super_admin', 'whitelabel', 'smartcrm_bundle'],
-  analytics: ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'],
-  
+  analytics: [
+    'super_admin',
+    'whitelabel',
+    'smartcrm_bundle',
+    'smartcrm',
+    'sales_maximizer',
+    'ai_boost_unlimited',
+    'ai_communication',
+  ],
+
   // White Label
   whitelabel: ['super_admin', 'whitelabel'],
-  
+
   // Admin
   admin: ['super_admin'],
 };
@@ -40,7 +117,10 @@ export type FeatureKey = keyof typeof featureTiers;
 /**
  * Check if a user's product tier has access to a feature
  */
-export function hasFeatureAccess(productTier: string | null | undefined, featureKey: FeatureKey): boolean {
+export function hasFeatureAccess(
+  productTier: string | null | undefined,
+  featureKey: FeatureKey
+): boolean {
   // null tier = no access to any paid features
   if (!productTier) {
     return false;

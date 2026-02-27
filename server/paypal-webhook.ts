@@ -1,25 +1,25 @@
-import { Request, Response } from "express";
-import crypto from "crypto";
-import { 
+import { Request, Response } from 'express';
+import crypto from 'crypto';
+import {
   handleSuccessfulPurchase,
   handleInvoicePaid,
   handlePaymentFailure,
   handleCancellation,
   handleRefund,
   ProductType,
-  upsertEntitlement
-} from "./entitlements-utils";
-import { supabase } from "./supabase";
-import { ProductTier } from "../shared/schema";
+  upsertEntitlement,
+} from './entitlements-utils';
+import { supabase } from './supabase';
+import { ProductTier } from '../shared/schema';
 
 const PRODUCT_TIER_MAP: Record<string, ProductTier> = {
-  'super_admin': 'super_admin',
-  'whitelabel': 'whitelabel',
-  'smartcrm': 'smartcrm',
-  'sales_maximizer': 'sales_maximizer',
-  'ai_boost_unlimited': 'ai_boost_unlimited',
-  'ai_communication': 'ai_communication',
-  'smartcrm_bundle': 'smartcrm_bundle',
+  super_admin: 'super_admin',
+  whitelabel: 'whitelabel',
+  smartcrm: 'smartcrm',
+  sales_maximizer: 'sales_maximizer',
+  ai_boost_unlimited: 'ai_boost_unlimited',
+  ai_communication: 'ai_communication',
+  smartcrm_bundle: 'smartcrm_bundle',
 };
 
 function detectProductTierFromName(productName: string): ProductTier {
@@ -34,13 +34,20 @@ function detectProductTierFromName(productName: string): ProductTier {
   return 'smartcrm';
 }
 
-function determineRoleFromTier(productTier: ProductTier): 'super_admin' | 'wl_user' | 'regular_user' {
+function determineRoleFromTier(
+  productTier: ProductTier
+): 'super_admin' | 'wl_user' | 'regular_user' {
   if (productTier === 'super_admin') return 'super_admin';
   if (productTier === 'whitelabel' || productTier === 'smartcrm_bundle') return 'wl_user';
   return 'regular_user';
 }
 
-async function updateUserProductTier(userId: string, email: string, productTier: ProductTier, role: string) {
+async function updateUserProductTier(
+  userId: string,
+  email: string,
+  productTier: ProductTier,
+  role: string
+) {
   if (!supabase) {
     console.error('Supabase not configured');
     return;
@@ -49,10 +56,10 @@ async function updateUserProductTier(userId: string, email: string, productTier:
   try {
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ 
+      .update({
         product_tier: productTier,
         role: role,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
 
@@ -67,8 +74,8 @@ async function updateUserProductTier(userId: string, email: string, productTier:
         product_tier: productTier,
         role: role,
         product_tier_updated_at: new Date().toISOString(),
-        payment_source: 'paypal'
-      }
+        payment_source: 'paypal',
+      },
     });
   } catch (error) {
     console.error('Error updating user product tier:', error);
@@ -84,10 +91,10 @@ async function revokeUserAccess(userId: string, email: string, reason: string) {
   try {
     await supabase
       .from('profiles')
-      .update({ 
+      .update({
         product_tier: null,
         role: 'regular_user',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
 
@@ -96,8 +103,8 @@ async function revokeUserAccess(userId: string, email: string, reason: string) {
         product_tier: null,
         role: 'regular_user',
         product_tier_updated_at: new Date().toISOString(),
-        [`paypal_${reason}_at`]: new Date().toISOString()
-      }
+        [`paypal_${reason}_at`]: new Date().toISOString(),
+      },
     });
 
     console.log(`✅ Revoked PayPal access for user ${email} due to ${reason}`);
@@ -110,8 +117,9 @@ async function verifyPayPalWebhook(req: Request): Promise<boolean> {
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1';
-  
+  const isProduction =
+    process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1';
+
   if (!webhookId) {
     if (isProduction) {
       console.error('❌ PayPal webhook ID not configured in production - rejecting');
@@ -137,19 +145,21 @@ async function verifyPayPalWebhook(req: Request): Promise<boolean> {
       console.error('❌ PayPal credentials not configured in production - rejecting');
       return false;
     }
-    console.warn('⚠️ PayPal credentials not configured - using header presence check only (dev only)');
+    console.warn(
+      '⚠️ PayPal credentials not configured - using header presence check only (dev only)'
+    );
     return true;
   }
 
   try {
-    const paypalBaseUrl = isProduction 
-      ? 'https://api-m.paypal.com' 
+    const paypalBaseUrl = isProduction
+      ? 'https://api-m.paypal.com'
       : 'https://api-m.sandbox.paypal.com';
 
     const authResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
@@ -162,22 +172,25 @@ async function verifyPayPalWebhook(req: Request): Promise<boolean> {
 
     const { access_token } = await authResponse.json();
 
-    const verifyResponse = await fetch(`${paypalBaseUrl}/v1/notifications/verify-webhook-signature`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        auth_algo: authAlgo,
-        cert_url: certUrl,
-        transmission_id: transmissionId,
-        transmission_sig: transmissionSig,
-        transmission_time: transmissionTime,
-        webhook_id: webhookId,
-        webhook_event: req.body,
-      }),
-    });
+    const verifyResponse = await fetch(
+      `${paypalBaseUrl}/v1/notifications/verify-webhook-signature`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          auth_algo: authAlgo,
+          cert_url: certUrl,
+          transmission_id: transmissionId,
+          transmission_sig: transmissionSig,
+          transmission_time: transmissionTime,
+          webhook_id: webhookId,
+          webhook_event: req.body,
+        }),
+      }
+    );
 
     if (!verifyResponse.ok) {
       console.error('PayPal webhook verification failed:', await verifyResponse.text());
@@ -186,7 +199,7 @@ async function verifyPayPalWebhook(req: Request): Promise<boolean> {
 
     const verifyResult = await verifyResponse.json();
     const isValid = verifyResult.verification_status === 'SUCCESS';
-    
+
     if (!isValid) {
       console.error('PayPal webhook signature invalid:', verifyResult.verification_status);
     }
@@ -203,9 +216,7 @@ async function findUserByEmail(email: string): Promise<string | null> {
 
   try {
     const { data: usersData } = await supabase.auth.admin.listUsers();
-    const user = usersData?.users?.find(u => 
-      u.email?.toLowerCase() === email.toLowerCase()
-    );
+    const user = usersData?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
     return user?.id || null;
   } catch (error) {
     console.error('Error finding user by email:', error);
@@ -231,9 +242,11 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
         const resource = event.resource;
         const payer = resource.payer || resource.purchase_units?.[0]?.payer;
         const customerEmail = payer?.email_address;
-        const customData = resource.purchase_units?.[0]?.custom_id || 
-                          resource.purchase_units?.[0]?.reference_id || '';
-        
+        const customData =
+          resource.purchase_units?.[0]?.custom_id ||
+          resource.purchase_units?.[0]?.reference_id ||
+          '';
+
         let customMetadata: any = {};
         try {
           customMetadata = JSON.parse(customData);
@@ -241,9 +254,10 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
           customMetadata = { product_tier: customData };
         }
 
-        const productTier: ProductTier = customMetadata.product_tier ? 
-          (PRODUCT_TIER_MAP[customMetadata.product_tier] || detectProductTierFromName(customMetadata.product_tier)) :
-          'smartcrm';
+        const productTier: ProductTier = customMetadata.product_tier
+          ? PRODUCT_TIER_MAP[customMetadata.product_tier] ||
+            detectProductTierFromName(customMetadata.product_tier)
+          : 'smartcrm';
         const productType: ProductType = customMetadata.product_type || 'lifetime';
 
         let userId = customMetadata.user_id;
@@ -255,19 +269,20 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
           const role = determineRoleFromTier(productTier);
           await updateUserProductTier(userId, customerEmail || '', productTier, role);
 
-          await handleSuccessfulPurchase(
-            userId,
-            productType,
-            {
-              planName: customMetadata.plan_name || productTier,
-              planAmount: resource.amount?.value || resource.purchase_units?.[0]?.amount?.value,
-              currency: resource.amount?.currency_code || 'USD',
-            }
+          await handleSuccessfulPurchase(userId, productType, {
+            planName: customMetadata.plan_name || productTier,
+            planAmount: resource.amount?.value || resource.purchase_units?.[0]?.amount?.value,
+            currency: resource.amount?.currency_code || 'USD',
+          });
+
+          console.log(
+            `✅ PayPal purchase processed: user=${userId}, tier=${productTier}, type=${productType}`
           );
-          
-          console.log(`✅ PayPal purchase processed: user=${userId}, tier=${productTier}, type=${productType}`);
         } else {
-          console.warn('⚠️ Could not identify user for PayPal payment:', { customerEmail, customData });
+          console.warn('⚠️ Could not identify user for PayPal payment:', {
+            customerEmail,
+            customData,
+          });
         }
         break;
       }
@@ -277,7 +292,7 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
         const resource = event.resource;
         const subscriberEmail = resource.subscriber?.email_address;
         const customData = resource.custom_id || '';
-        
+
         let customMetadata: any = {};
         try {
           customMetadata = JSON.parse(customData);
@@ -285,9 +300,10 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
           customMetadata = { product_tier: customData };
         }
 
-        const productTier: ProductTier = customMetadata.product_tier ? 
-          (PRODUCT_TIER_MAP[customMetadata.product_tier] || detectProductTierFromName(customMetadata.product_tier)) :
-          'smartcrm';
+        const productTier: ProductTier = customMetadata.product_tier
+          ? PRODUCT_TIER_MAP[customMetadata.product_tier] ||
+            detectProductTierFromName(customMetadata.product_tier)
+          : 'smartcrm';
         const productType: ProductType = customMetadata.product_type || 'monthly';
 
         let userId = customMetadata.user_id;
@@ -308,7 +324,7 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
         const resource = event.resource;
         const subscriberEmail = resource.subscriber?.email_address;
         const customData = resource.custom_id || '';
-        
+
         let customMetadata: any = {};
         try {
           customMetadata = JSON.parse(customData);
@@ -335,7 +351,7 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
         const resource = event.resource;
         const subscriberEmail = resource.subscriber?.email_address;
         const customData = resource.custom_id || '';
-        
+
         let customMetadata: any = {};
         try {
           customMetadata = JSON.parse(customData);
@@ -362,7 +378,7 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
         const resource = event.resource;
         const links = resource.links || [];
         const captureLink = links.find((l: any) => l.rel === 'up');
-        
+
         let customerEmail: string | undefined;
         let userId: string | undefined;
 
@@ -398,7 +414,7 @@ export async function handlePayPalWebhook(req: Request, res: Response) {
       case 'CUSTOMER.DISPUTE.CREATED': {
         const resource = event.resource;
         const disputedTransaction = resource.disputed_transactions?.[0];
-        
+
         if (disputedTransaction) {
           const customData = disputedTransaction.custom || '';
           let customMetadata: any = {};

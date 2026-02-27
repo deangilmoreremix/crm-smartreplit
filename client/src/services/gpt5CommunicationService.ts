@@ -1,5 +1,12 @@
 export interface GPT5Request {
-  type: 'email' | 'message' | 'video-script' | 'meeting-summary' | 'content' | 'analysis' | 'optimization';
+  type:
+    | 'email'
+    | 'message'
+    | 'video-script'
+    | 'meeting-summary'
+    | 'content'
+    | 'analysis'
+    | 'optimization';
   context?: string;
   recipient?: any;
   content?: string;
@@ -146,7 +153,7 @@ Make it personalized, engaging, and professional.`;
       recipient: params.recipient,
       goal: params.purpose,
       tone: params.tone,
-      metadata: { length: params.length }
+      metadata: { length: params.length },
     });
   }
 
@@ -155,9 +162,7 @@ Make it personalized, engaging, and professional.`;
     recipient: any;
     tone: string;
   }): Promise<GPT5Response> {
-    const context = params.conversation.map(msg =>
-      `${msg.sender}: ${msg.content}`
-    ).join('\n');
+    const context = params.conversation.map((msg) => `${msg.sender}: ${msg.content}`).join('\n');
 
     const prompt = `Generate a professional email response based on this conversation:
 ${context}
@@ -169,7 +174,7 @@ Tone: ${params.tone}`;
       type: 'email',
       context: prompt,
       recipient: params.recipient,
-      tone: params.tone
+      tone: params.tone,
     });
   }
 
@@ -186,7 +191,7 @@ Keep it under 160 characters. Tone: ${params.tone}`;
       type: 'message',
       context: prompt,
       tone: params.tone,
-      constraints: ['max-160-chars']
+      constraints: ['max-160-chars'],
     });
   }
 
@@ -205,11 +210,14 @@ Include: Key decisions, action items, and next steps.`;
     return this.generateContent({
       type: 'meeting-summary',
       context: prompt,
-      metadata: { attendees }
+      metadata: { attendees },
     });
   }
 
-  async optimizeBusinessContent(content: string, type: 'email' | 'proposal' | 'presentation'): Promise<OptimizationResult> {
+  async optimizeBusinessContent(
+    content: string,
+    type: 'email' | 'proposal' | 'presentation'
+  ): Promise<OptimizationResult> {
     return this.optimizeContent(content, `optimize-${type}`);
   }
 }

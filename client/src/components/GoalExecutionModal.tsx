@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../types/goals';
-import { 
-  X, 
-  Play, 
-  Pause, 
-  CheckCircle, 
-  AlertCircle, 
-  Clock, 
-  Users, 
+import {
+  X,
+  Play,
+  Pause,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Users,
   Brain,
   Zap,
   Target,
@@ -18,7 +18,7 @@ import {
   Network,
   Bot,
   Eye,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 
 interface GoalExecutionModalProps {
@@ -44,7 +44,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
   isOpen,
   onClose,
   realMode,
-  onComplete
+  onComplete,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -64,7 +64,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'System Orchestrator',
-          duration: '15s'
+          duration: '15s',
         },
         {
           id: '2',
@@ -73,7 +73,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Data Analyst Agent',
-          duration: '30s'
+          duration: '30s',
         },
         {
           id: '3',
@@ -82,7 +82,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Strategy Agent',
-          duration: '45s'
+          duration: '45s',
         },
         {
           id: '4',
@@ -91,7 +91,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Execution Agent',
-          duration: '60s'
+          duration: '60s',
         },
         {
           id: '5',
@@ -100,8 +100,8 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Analytics Agent',
-          duration: '20s'
-        }
+          duration: '20s',
+        },
       ];
       setExecutionSteps(steps);
       setCurrentStep(0);
@@ -114,35 +114,42 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
   useEffect(() => {
     if (isExecuting && currentStep < executionSteps.length) {
       const step = executionSteps[currentStep];
-      const interval = setInterval(() => {
-        setExecutionSteps(prev => 
-          prev.map((s, index) => 
-            index === currentStep 
-              ? { ...s, status: 'running', progress: Math.min(100, s.progress + Math.random() * 20 + 5) }
-              : s
-          )
-        );
-
-        // Update agent thinking
-        const thinkingMessages = [
-          `${step.agent} is analyzing ${goal.category.toLowerCase()} opportunities...`,
-          `Processing CRM data and external signals...`,
-          `Optimizing strategy based on ${goal.priority.toLowerCase()} priority...`,
-          `Coordinating with ${goal.agentsRequired.length} specialized agents...`,
-          `Implementing ${goal.complexity.toLowerCase()} complexity workflow...`
-        ];
-        setAgentThinking(thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)]);
-
-        // Check if step is complete
-        if (executionSteps[currentStep]?.progress >= 100) {
-          setExecutionSteps(prev => 
-            prev.map((s, index) => 
-              index === currentStep ? { ...s, status: 'completed', progress: 100 } : s
+      const interval = setInterval(
+        () => {
+          setExecutionSteps((prev) =>
+            prev.map((s, index) =>
+              index === currentStep
+                ? {
+                    ...s,
+                    status: 'running',
+                    progress: Math.min(100, s.progress + Math.random() * 20 + 5),
+                  }
+                : s
             )
           );
-          setCurrentStep(prev => prev + 1);
-        }
-      }, realMode ? 1500 : 800);
+
+          // Update agent thinking
+          const thinkingMessages = [
+            `${step.agent} is analyzing ${goal.category.toLowerCase()} opportunities...`,
+            `Processing CRM data and external signals...`,
+            `Optimizing strategy based on ${goal.priority.toLowerCase()} priority...`,
+            `Coordinating with ${goal.agentsRequired.length} specialized agents...`,
+            `Implementing ${goal.complexity.toLowerCase()} complexity workflow...`,
+          ];
+          setAgentThinking(thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)]);
+
+          // Check if step is complete
+          if (executionSteps[currentStep]?.progress >= 100) {
+            setExecutionSteps((prev) =>
+              prev.map((s, index) =>
+                index === currentStep ? { ...s, status: 'completed', progress: 100 } : s
+              )
+            );
+            setCurrentStep((prev) => prev + 1);
+          }
+        },
+        realMode ? 1500 : 800
+      );
 
       return () => clearInterval(interval);
     }
@@ -158,8 +165,8 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
         recommendations: [
           'Continue monitoring lead engagement metrics',
           'Expand successful automation to similar segments',
-          'Schedule follow-up optimization in 2 weeks'
-        ]
+          'Schedule follow-up optimization in 2 weeks',
+        ],
       });
     }
   }, [isExecuting, currentStep, executionSteps.length, realMode, goal]);
@@ -167,8 +174,8 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
   const handleStartExecution = () => {
     setIsExecuting(true);
     setCurrentStep(0);
-    setExecutionSteps(prev => 
-      prev.map((step, index) => 
+    setExecutionSteps((prev) =>
+      prev.map((step, index) =>
         index === 0 ? { ...step, status: 'running' } : { ...step, status: 'pending' }
       )
     );
@@ -218,17 +225,15 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
                 {goal.priority}
               </div>
             </div>
-            
+
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
               <div className="flex items-center text-green-600 dark:text-green-400 mb-2">
                 <TrendingUp className="h-5 w-5 mr-2" />
                 Expected ROI
               </div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                {goal.roi}
-              </div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-white">{goal.roi}</div>
             </div>
-            
+
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
               <div className="flex items-center text-purple-600 dark:text-purple-400 mb-2">
                 <Users className="h-5 w-5 mr-2" />
@@ -247,32 +252,39 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700/50">
               <div className="flex items-center mb-2">
                 <Brain className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
-                <span className="font-medium text-blue-900 dark:text-blue-100">AI Agent Thinking</span>
+                <span className="font-medium text-blue-900 dark:text-blue-100">
+                  AI Agent Thinking
+                </span>
                 <div className="ml-auto flex space-x-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-75"></div>
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-150"></div>
                 </div>
               </div>
-              <p className="text-gray-700 dark:text-gray-300 text-sm">
-                {agentThinking}
-              </p>
+              <p className="text-gray-700 dark:text-gray-300 text-sm">{agentThinking}</p>
             </div>
           </div>
         )}
 
         {/* Execution Steps */}
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Execution Steps</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Execution Steps
+          </h3>
           <div className="space-y-4">
             {executionSteps.map((step, index) => (
               <div key={step.id} className="flex items-start space-x-4">
-                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                  step.status === 'completed' ? 'bg-green-100 dark:bg-green-900/50' :
-                  step.status === 'running' ? 'bg-blue-100 dark:bg-blue-900/50' :
-                  step.status === 'error' ? 'bg-red-100 dark:bg-red-900/50' :
-                  'bg-gray-100 dark:bg-slate-700'
-                }`}>
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    step.status === 'completed'
+                      ? 'bg-green-100 dark:bg-green-900/50'
+                      : step.status === 'running'
+                        ? 'bg-blue-100 dark:bg-blue-900/50'
+                        : step.status === 'error'
+                          ? 'bg-red-100 dark:bg-red-900/50'
+                          : 'bg-gray-100 dark:bg-slate-700'
+                  }`}
+                >
                   {step.status === 'completed' ? (
                     <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                   ) : step.status === 'running' ? (
@@ -283,19 +295,25 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
                     <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
                   )}
                 </div>
-                
+
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium text-gray-900 dark:text-white">{step.title}</h4>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{step.duration}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {step.duration}
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{step.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    {step.description}
+                  </p>
                   <div className="flex items-center mt-2 space-x-3">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Agent: {step.agent}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Agent: {step.agent}
+                    </span>
                     {step.status === 'running' && (
                       <div className="flex-1 max-w-xs">
                         <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-1.5">
-                          <div 
+                          <div
                             className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
                             style={{ width: `${step.progress}%` }}
                           ></div>
@@ -312,33 +330,50 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
         {/* Results Section */}
         {executionResults && (
           <div className="p-6 border-t border-gray-200 dark:border-slate-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Execution Results</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Execution Results
+            </h3>
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700/50">
               <div className="flex items-center mb-3">
                 <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
-                <span className="font-semibold text-green-900 dark:text-green-100">Goal Executed Successfully</span>
+                <span className="font-semibold text-green-900 dark:text-green-100">
+                  Goal Executed Successfully
+                </span>
               </div>
-              
+
               <div className="grid md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Estimated Value Generated</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">{executionResults.estimatedValue}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Estimated Value Generated
+                  </div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {executionResults.estimatedValue}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Time to Complete</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">{executionResults.timeToComplete}</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {executionResults.timeToComplete}
+                  </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">Efficiency Rating</div>
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">{executionResults.efficiency}</div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {executionResults.efficiency}
+                  </div>
                 </div>
               </div>
-              
+
               <div>
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">AI Recommendations:</div>
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  AI Recommendations:
+                </div>
                 <ul className="space-y-1">
                   {executionResults.recommendations.map((rec: string, index: number) => (
-                    <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start">
+                    <li
+                      key={index}
+                      className="text-sm text-gray-600 dark:text-gray-400 flex items-start"
+                    >
                       <ArrowRight className="h-3 w-3 mt-0.5 mr-2 flex-shrink-0" />
                       {rec}
                     </li>
@@ -358,13 +393,13 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
             >
               Close
             </button>
-            
+
             <div className="flex space-x-3">
               {!isExecuting && !executionResults && (
                 <button
                   onClick={handleStartExecution}
                   className={`flex items-center px-6 py-2 rounded-lg font-medium transition-all ${
-                    realMode 
+                    realMode
                       ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-lg'
                       : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg'
                   }`}
@@ -373,7 +408,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
                   {realMode ? 'Execute Live' : 'Start Preview'}
                 </button>
               )}
-              
+
               {isExecuting && (
                 <button
                   onClick={handlePauseExecution}
@@ -383,7 +418,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
                   Pause
                 </button>
               )}
-              
+
               {executionResults && (
                 <button
                   onClick={handleCompleteExecution}

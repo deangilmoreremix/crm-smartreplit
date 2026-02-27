@@ -1,4 +1,15 @@
-import { VoIPProvider, ProviderConfig, Room, RoomConnection, Call, CallParticipant, RoomOptions, CallOptions, Recording, RecordingResult } from '../VoIPProvider';
+import {
+  VoIPProvider,
+  ProviderConfig,
+  Room,
+  RoomConnection,
+  Call,
+  CallParticipant,
+  RoomOptions,
+  CallOptions,
+  Recording,
+  RecordingResult,
+} from '../VoIPProvider';
 
 export class TwilioProvider implements VoIPProvider {
   name = 'twilio';
@@ -19,7 +30,7 @@ export class TwilioProvider implements VoIPProvider {
         type: 'password',
         required: true,
         placeholder: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        description: 'Your Twilio Account SID from the console'
+        description: 'Your Twilio Account SID from the console',
       },
       {
         key: 'authToken',
@@ -27,7 +38,7 @@ export class TwilioProvider implements VoIPProvider {
         type: 'password',
         required: true,
         placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        description: 'Your Twilio Auth Token'
+        description: 'Your Twilio Auth Token',
       },
       {
         key: 'apiKeySid',
@@ -35,7 +46,7 @@ export class TwilioProvider implements VoIPProvider {
         type: 'password',
         required: true,
         placeholder: 'SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        description: 'Twilio API Key SID for Video'
+        description: 'Twilio API Key SID for Video',
       },
       {
         key: 'apiKeySecret',
@@ -43,8 +54,8 @@ export class TwilioProvider implements VoIPProvider {
         type: 'password',
         required: true,
         placeholder: 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-        description: 'Twilio API Key Secret for Video'
-      }
+        description: 'Twilio API Key Secret for Video',
+      },
     ];
   }
 
@@ -60,17 +71,22 @@ export class TwilioProvider implements VoIPProvider {
 
     // Test connection
     try {
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Calls.json?PageSize=1`, {
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${this.accountSid}:${this.authToken}`)
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${this.accountSid}/Calls.json?PageSize=1`,
+        {
+          headers: {
+            Authorization: 'Basic ' + btoa(`${this.accountSid}:${this.authToken}`),
+          },
         }
-      });
+      );
 
       if (!response.ok) {
         throw new Error('Invalid Twilio credentials');
       }
     } catch (error) {
-      throw new Error(`Twilio initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Twilio initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -83,14 +99,14 @@ export class TwilioProvider implements VoIPProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + btoa(`${this.apiKeySid}:${this.apiKeySecret}`)
+          Authorization: 'Basic ' + btoa(`${this.apiKeySid}:${this.apiKeySecret}`),
         },
         body: new URLSearchParams({
           UniqueName: roomName,
           Type: 'group',
           MaxParticipants: (options.maxParticipants || 50).toString(),
-          RecordParticipantsOnConnect: (options.recordingEnabled ? 'true' : 'false')
-        })
+          RecordParticipantsOnConnect: options.recordingEnabled ? 'true' : 'false',
+        }),
       });
 
       if (!response.ok) {
@@ -104,11 +120,13 @@ export class TwilioProvider implements VoIPProvider {
         id: roomData.sid,
         name: roomData.unique_name,
         url: `https://video.twilio.com/v1/Rooms/${roomData.sid}`,
-        participants: participants.map(id => ({ id, name: id })),
-        createdAt: new Date(roomData.date_created)
+        participants: participants.map((id) => ({ id, name: id })),
+        createdAt: new Date(roomData.date_created),
       };
     } catch (error) {
-      throw new Error(`Twilio room creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Twilio room creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -123,8 +141,8 @@ export class TwilioProvider implements VoIPProvider {
           participantId,
           accountSid: this.accountSid,
           apiKeySid: this.apiKeySid,
-          apiKeySecret: this.apiKeySecret
-        })
+          apiKeySecret: this.apiKeySecret,
+        }),
       });
 
       if (!response.ok) {
@@ -136,8 +154,8 @@ export class TwilioProvider implements VoIPProvider {
       // Get room details
       const roomResponse = await fetch(`https://video.twilio.com/v1/Rooms/${roomId}`, {
         headers: {
-          'Authorization': 'Basic ' + btoa(`${this.apiKeySid}:${this.apiKeySecret}`)
-        }
+          Authorization: 'Basic ' + btoa(`${this.apiKeySid}:${this.apiKeySecret}`),
+        },
       });
 
       const roomData = await roomResponse.json();
@@ -148,13 +166,15 @@ export class TwilioProvider implements VoIPProvider {
           name: roomData.unique_name,
           url: `https://video.twilio.com/v1/Rooms/${roomData.sid}`,
           participants: [], // Would need to fetch participants separately
-          createdAt: new Date(roomData.date_created)
+          createdAt: new Date(roomData.date_created),
         },
         token,
-        participantId
+        participantId,
       };
     } catch (error) {
-      throw new Error(`Twilio room join failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Twilio room join failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -166,10 +186,13 @@ export class TwilioProvider implements VoIPProvider {
 
   async startCall(participants: CallParticipant[], options: CallOptions = {}): Promise<Call> {
     // For Twilio, we create a room and return call info
-    const room = await this.createRoom(participants.map(p => p.id), {
-      name: `call-${Date.now()}`,
-      recordingEnabled: options.recordingEnabled
-    });
+    const room = await this.createRoom(
+      participants.map((p) => p.id),
+      {
+        name: `call-${Date.now()}`,
+        recordingEnabled: options.recordingEnabled,
+      }
+    );
 
     return {
       id: room.id,
@@ -177,7 +200,7 @@ export class TwilioProvider implements VoIPProvider {
       participants,
       status: 'ringing',
       startedAt: new Date(),
-      recordingEnabled: options.recordingEnabled || false
+      recordingEnabled: options.recordingEnabled || false,
     };
   }
 
@@ -188,11 +211,11 @@ export class TwilioProvider implements VoIPProvider {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + btoa(`${this.apiKeySid}:${this.apiKeySecret}`)
+          Authorization: 'Basic ' + btoa(`${this.apiKeySid}:${this.apiKeySecret}`),
         },
         body: new URLSearchParams({
-          Status: 'completed'
-        })
+          Status: 'completed',
+        }),
       });
 
       if (!response.ok) {
@@ -217,8 +240,8 @@ export class TwilioProvider implements VoIPProvider {
         body: JSON.stringify({
           roomSid: callId,
           accountSid: this.accountSid,
-          authToken: this.authToken
-        })
+          authToken: this.authToken,
+        }),
       });
 
       const recording = await response.json();
@@ -227,10 +250,12 @@ export class TwilioProvider implements VoIPProvider {
         id: recording.sid,
         callId,
         startedAt: new Date(),
-        status: 'recording'
+        status: 'recording',
       };
     } catch (error) {
-      throw new Error(`Twilio recording start failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Twilio recording start failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -242,8 +267,8 @@ export class TwilioProvider implements VoIPProvider {
         body: JSON.stringify({
           recordingSid: recordingId,
           accountSid: this.accountSid,
-          authToken: this.authToken
-        })
+          authToken: this.authToken,
+        }),
       });
 
       const result = await response.json();
@@ -253,10 +278,12 @@ export class TwilioProvider implements VoIPProvider {
         url: result.url,
         duration: result.duration,
         size: result.size,
-        format: 'mp4'
+        format: 'mp4',
       };
     } catch (error) {
-      throw new Error(`Twilio recording stop failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Twilio recording stop failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

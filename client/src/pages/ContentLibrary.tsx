@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Video, Headphones, Trash2, Plus, Search, Filter, RefreshCw, X, Music } from 'lucide-react';
+import {
+  FileText,
+  Video,
+  Headphones,
+  Trash2,
+  Plus,
+  Search,
+  Filter,
+  RefreshCw,
+  X,
+  Music,
+} from 'lucide-react';
 
 interface ContentItem {
   id: string;
@@ -20,13 +31,15 @@ const ContentLibrary: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  
+
   // New content item form
   const [newItemTitle, setNewItemTitle] = useState('');
-  const [newItemType, setNewItemType] = useState<'podcast' | 'audiobook' | 'video' | 'voice_over'>('podcast');
+  const [newItemType, setNewItemType] = useState<'podcast' | 'audiobook' | 'video' | 'voice_over'>(
+    'podcast'
+  );
   const [newItemUrl, setNewItemUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Mock data for demo
   useEffect(() => {
     const mockData: ContentItem[] = [
@@ -54,7 +67,7 @@ const ContentLibrary: React.FC = () => {
     ];
     setContentItems(mockData);
   }, []);
-  
+
   const loadContentItems = async () => {
     setIsLoading(true);
     setError(null);
@@ -62,13 +75,13 @@ const ContentLibrary: React.FC = () => {
       // In a real app, this would fetch from an API
       // For now, we're using the mock data from useEffect
     } catch (err) {
-      console.error("Error loading content items:", err);
+      console.error('Error loading content items:', err);
       setError('Failed to load content library');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const handleAddContent = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -80,44 +93,43 @@ const ContentLibrary: React.FC = () => {
         url: newItemUrl,
         created_at: new Date().toISOString(),
       };
-      
+
       setContentItems([...contentItems, newItem]);
-      
+
       // Reset form and close
       setNewItemTitle('');
       setNewItemType('podcast');
       setNewItemUrl('');
       setShowAddForm(false);
-      
     } catch (err) {
-      console.error("Error adding content item:", err);
+      console.error('Error adding content item:', err);
       setError('Failed to add content item');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleDeleteItem = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
-    
+
     setIsDeleting(id);
     try {
-      setContentItems(contentItems.filter(item => item.id !== id));
+      setContentItems(contentItems.filter((item) => item.id !== id));
     } catch (err) {
-      console.error("Error deleting content item:", err);
+      console.error('Error deleting content item:', err);
       setError('Failed to delete content item');
     } finally {
       setIsDeleting(null);
     }
   };
-  
+
   // Filter content items
-  const filteredItems = contentItems.filter(item => {
+  const filteredItems = contentItems.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || item.type === filterType;
     return matchesSearch && matchesType;
   });
-  
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'podcast':
@@ -141,7 +153,7 @@ const ContentLibrary: React.FC = () => {
           <p className="text-gray-600 mt-1">Manage your media content and voice profiles</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button 
+          <button
             onClick={() => setShowAddForm(true)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
           >
@@ -150,7 +162,7 @@ const ContentLibrary: React.FC = () => {
           </button>
         </div>
       </header>
-      
+
       {/* Search and Filter */}
       <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -158,7 +170,7 @@ const ContentLibrary: React.FC = () => {
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search size={16} className="text-gray-400" />
             </div>
-            <input 
+            <input
               type="text"
               placeholder="Search content..."
               value={searchTerm}
@@ -166,7 +178,7 @@ const ContentLibrary: React.FC = () => {
               className="pl-10 pr-4 py-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Filter size={16} className="text-gray-400" />
             <select
@@ -196,14 +208,14 @@ const ContentLibrary: React.FC = () => {
         <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Add New Content</h2>
-            <button 
+            <button
               onClick={() => setShowAddForm(false)}
               className="text-gray-400 hover:text-gray-600"
             >
               <X size={20} />
             </button>
           </div>
-          
+
           <form onSubmit={handleAddContent} className="space-y-4">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -219,7 +231,7 @@ const ContentLibrary: React.FC = () => {
                 placeholder="Enter content title"
               />
             </div>
-            
+
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
                 Type
@@ -236,7 +248,7 @@ const ContentLibrary: React.FC = () => {
                 <option value="voice_over">Voice Over</option>
               </select>
             </div>
-            
+
             <div>
               <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
                 URL
@@ -251,7 +263,7 @@ const ContentLibrary: React.FC = () => {
                 placeholder="https://example.com/content.mp3"
               />
             </div>
-            
+
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
@@ -283,10 +295,9 @@ const ContentLibrary: React.FC = () => {
           <FileText size={48} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No content found</h3>
           <p className="text-gray-500 mb-4">
-            {searchTerm || filterType !== 'all' 
-              ? 'No content matches your search criteria' 
-              : 'Start building your content library by adding your first item'
-            }
+            {searchTerm || filterType !== 'all'
+              ? 'No content matches your search criteria'
+              : 'Start building your content library by adding your first item'}
           </p>
           <button
             onClick={() => setShowAddForm(true)}
@@ -305,7 +316,9 @@ const ContentLibrary: React.FC = () => {
                   {getTypeIcon(item.type)}
                   <div>
                     <h3 className="font-medium text-gray-900 line-clamp-2">{item.title}</h3>
-                    <p className="text-sm text-gray-500 capitalize">{item.type.replace('_', ' ')}</p>
+                    <p className="text-sm text-gray-500 capitalize">
+                      {item.type.replace('_', ' ')}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -320,7 +333,7 @@ const ContentLibrary: React.FC = () => {
                   )}
                 </button>
               </div>
-              
+
               <div className="space-y-2">
                 <a
                   href={item.url}

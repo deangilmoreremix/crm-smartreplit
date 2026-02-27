@@ -2,7 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDemoData } from '../../contexts/DemoDataContext';
-import { BarChart3, TrendingUp, Calendar, Search, Bell, User, Sparkles, Brain, Zap, Trash2 } from 'lucide-react';
+import {
+  BarChart3,
+  TrendingUp,
+  Calendar,
+  Search,
+  Bell,
+  User,
+  Sparkles,
+  Brain,
+  Zap,
+  Trash2,
+} from 'lucide-react';
 import { gpt5Service } from '../../services/gpt5Service';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
@@ -14,32 +25,32 @@ interface DashboardHeaderProps {
   subtitle?: string;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ 
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   title = 'Dashboard Overview',
-  subtitle = 'Welcome back! Here\'s an overview of your sales performance'
+  subtitle = "Welcome back! Here's an overview of your sales performance",
 }) => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
   const { showDemoData } = useDemoData();
-  
+
   // GPT-5 Enhanced State
   const [smartGreeting, setSmartGreeting] = useState<string>('');
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
-  
+
   // Get current date and time context
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
-  
-  const timeOfDay = currentDate.getHours() < 12 ? 'morning' : 
-                   currentDate.getHours() < 18 ? 'afternoon' : 'evening';
+
+  const timeOfDay =
+    currentDate.getHours() < 12 ? 'morning' : currentDate.getHours() < 18 ? 'afternoon' : 'evening';
 
   // GPT-5 Smart Greeting Generation
   useEffect(() => {
@@ -52,17 +63,19 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         const userMetrics = {
           totalDeals: deals.length,
           totalValue: deals.reduce((sum: number, deal: Deal) => sum + deal.value, 0),
-          activeDeals: deals.filter((d: Deal) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost').length,
+          activeDeals: deals.filter(
+            (d: Deal) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost'
+          ).length,
           wonDeals: deals.filter((d: Deal) => d.stage.id === 'closed-won').length,
-          totalContacts: Object.keys(contacts).length
+          totalContacts: Object.keys(contacts).length,
         };
 
         const recentActivity = {
           recentDeals: deals.slice(0, 3).map((d: Deal) => ({
             title: d.title,
             value: d.value,
-            stage: d.stage.id
-          }))
+            stage: d.stage.id,
+          })),
         };
 
         // Call GPT-5 Expert Greeting Service
@@ -75,10 +88,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         if (greetingResult.greeting) {
           setSmartGreeting(greetingResult.greeting);
         }
-
       } catch (error) {
         console.error('GPT-5 Smart Greeting Error:', error);
-        setSmartGreeting(`Good ${timeOfDay}! Your pipeline looks strong with ${deals.length} deals in progress.`);
+        setSmartGreeting(
+          `Good ${timeOfDay}! Your pipeline looks strong with ${deals.length} deals in progress.`
+        );
       } finally {
         setIsLoadingAI(false);
       }
@@ -98,15 +112,17 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               {title}
             </h1>
             {(smartGreeting || isLoadingAI) && (
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs ${
-                isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-600'
-              }`}>
+              <div
+                className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs ${
+                  isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-600'
+                }`}
+              >
                 <Sparkles size={12} />
                 GPT-5 Enhanced
               </div>
             )}
           </div>
-          
+
           {/* GPT-5 Smart Greeting */}
           {smartGreeting ? (
             <div className={`flex items-start gap-2 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}>
@@ -114,7 +130,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <p className="text-sm font-medium">{smartGreeting}</p>
             </div>
           ) : isLoadingAI ? (
-            <div className={`flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <div
+              className={`flex items-center gap-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+            >
               <div className="animate-spin">
                 <Zap size={14} />
               </div>
@@ -123,10 +141,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           ) : (
             <p className={`mt-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{subtitle}</p>
           )}
-          
-
         </div>
-        
+
         <div className="flex items-center gap-4">
           {showDemoData && (
             <button
@@ -142,28 +158,36 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               Clear Demo Data
             </button>
           )}
-          <div className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm flex items-center`}>
+          <div
+            className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm flex items-center`}
+          >
             <Calendar size={16} className="mr-2" />
             {formattedDate}
           </div>
         </div>
       </div>
-      
+
       <ClearDemoDataModal isOpen={showClearModal} onClose={() => setShowClearModal(false)} />
-      
+
       {/* GPT-5 Enhanced KPI Summary */}
-      <div className={`mt-6 p-4 rounded-xl ${
-        isDark 
-          ? 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10' 
-          : 'bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50'
-      }`}>
+      <div
+        className={`mt-6 p-4 rounded-xl ${
+          isDark
+            ? 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10'
+            : 'bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50'
+        }`}
+      >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${
-              isDark ? 'bg-blue-500/20' : 'bg-blue-100'
-            } mr-3 relative`}>
+            <div
+              className={`p-3 rounded-lg ${
+                isDark ? 'bg-blue-500/20' : 'bg-blue-100'
+              } mr-3 relative`}
+            >
               <BarChart3 className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <Sparkles className={`absolute -top-1 -right-1 h-3 w-3 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`} />
+              <Sparkles
+                className={`absolute -top-1 -right-1 h-3 w-3 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}
+              />
             </div>
             <div>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -174,28 +198,37 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${
-              isDark ? 'bg-purple-500/20' : 'bg-purple-100'
-            } mr-3 relative`}>
+            <div
+              className={`p-3 rounded-lg ${
+                isDark ? 'bg-purple-500/20' : 'bg-purple-100'
+              } mr-3 relative`}
+            >
               <TrendingUp className={`h-6 w-6 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
-              <Brain className={`absolute -top-1 -right-1 h-3 w-3 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
+              <Brain
+                className={`absolute -top-1 -right-1 h-3 w-3 ${isDark ? 'text-blue-400' : 'text-blue-500'}`}
+              />
             </div>
             <div>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 AI Win Probability
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {deals.length > 0 ? Math.round((deals.filter((d: Deal) => d.stage.id === 'closed-won').length / deals.length) * 100) : 0}%
+                {deals.length > 0
+                  ? Math.round(
+                      (deals.filter((d: Deal) => d.stage.id === 'closed-won').length /
+                        deals.length) *
+                        100
+                    )
+                  : 0}
+                %
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${
-              isDark ? 'bg-green-500/20' : 'bg-green-100'
-            } mr-3`}>
+            <div className={`p-3 rounded-lg ${isDark ? 'bg-green-500/20' : 'bg-green-100'} mr-3`}>
               <User className={`h-6 w-6 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
             </div>
             <div>
@@ -207,8 +240,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </div>
             </div>
           </div>
-          
-          <div 
+
+          <div
             onClick={() => navigate('/analytics-dashboard')}
             className={`px-4 py-2 rounded-lg ${
               isDark ? 'bg-white/10 hover:bg-white/20' : 'bg-white hover:bg-gray-50'

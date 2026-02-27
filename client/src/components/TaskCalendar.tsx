@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, momentLocalizer, View, Event, NavigateAction, ToolbarProps } from 'react-big-calendar';
+import {
+  Calendar,
+  momentLocalizer,
+  View,
+  Event,
+  NavigateAction,
+  ToolbarProps,
+} from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import {
@@ -58,22 +60,33 @@ const EventModal: React.FC<EventModalProps> = ({ event, isOpen, onClose, onEdit 
 
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
-      case 'low': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'urgent': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'high':
+        return 'bg-orange-100 text-orange-800';
+      case 'urgent':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusColor = (status: Task['status']) => {
     switch (status) {
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'overdue': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending':
+        return 'bg-gray-100 text-gray-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'overdue':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -168,9 +181,7 @@ const EventModal: React.FC<EventModalProps> = ({ event, isOpen, onClose, onEdit 
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button onClick={onEdit}>
-              Edit {isTask ? 'Task' : 'Event'}
-            </Button>
+            <Button onClick={onEdit}>Edit {isTask ? 'Task' : 'Event'}</Button>
           </div>
         </div>
       </DialogContent>
@@ -179,11 +190,8 @@ const EventModal: React.FC<EventModalProps> = ({ event, isOpen, onClose, onEdit 
 };
 
 export const TaskCalendar: React.FC = () => {
-  const { 
-    tasks, 
-    calendarEvents,
-  } = useTaskStore();
-  
+  const { tasks, calendarEvents } = useTaskStore();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<View>('month');
   const [selectedEvent, setSelectedEvent] = useState<TaskEvent | null>(null);
@@ -199,14 +207,14 @@ export const TaskCalendar: React.FC = () => {
   ];
 
   const [visibleCalendars, setVisibleCalendars] = useState<string[]>(
-    calendars.filter(cal => cal.isVisible).map(cal => cal.id)
+    calendars.filter((cal) => cal.isVisible).map((cal) => cal.id)
   );
 
   // Convert tasks and calendar events to calendar events
   const events: TaskEvent[] = useMemo(() => {
     const taskEvents: TaskEvent[] = tasks
-      .filter(task => task.dueDate)
-      .map(task => ({
+      .filter((task) => task.dueDate)
+      .map((task) => ({
         id: task.id,
         title: task.title,
         start: task.dueDate!,
@@ -221,8 +229,8 @@ export const TaskCalendar: React.FC = () => {
       }));
 
     const calendarEventItems: TaskEvent[] = calendarEvents
-      .filter(event => visibleCalendars.includes(event.calendarId))
-      .map(event => ({
+      .filter((event) => visibleCalendars.includes(event.calendarId))
+      .map((event) => ({
         id: event.id,
         title: event.title,
         start: event.startDate,
@@ -246,13 +254,12 @@ export const TaskCalendar: React.FC = () => {
     if (!selectedEvent) return;
 
     setShowEventModal(false);
-    
+
     if (selectedEvent.resource.type === 'task') {
       setSelectedTask(selectedEvent.resource.data);
       setShowTaskModal(true);
     } else {
       // Handle calendar event editing
-      console.log('Edit calendar event:', selectedEvent.resource.data);
     }
   };
 
@@ -265,10 +272,8 @@ export const TaskCalendar: React.FC = () => {
   };
 
   const toggleCalendarVisibility = (calendarId: string) => {
-    setVisibleCalendars(prev => 
-      prev.includes(calendarId)
-        ? prev.filter(id => id !== calendarId)
-        : [...prev, calendarId]
+    setVisibleCalendars((prev) =>
+      prev.includes(calendarId) ? prev.filter((id) => id !== calendarId) : [...prev, calendarId]
     );
   };
 
@@ -276,10 +281,10 @@ export const TaskCalendar: React.FC = () => {
   const eventStyleGetter = (event: TaskEvent) => {
     if (event.resource.type === 'task') {
       const { priority, status } = event.resource;
-      
+
       let backgroundColor = '#3174ad';
       let borderColor = '#3174ad';
-      
+
       if (status === 'completed') {
         backgroundColor = '#10b981';
         borderColor = '#10b981';
@@ -302,11 +307,11 @@ export const TaskCalendar: React.FC = () => {
           border: 'none',
           borderRadius: '4px',
           fontSize: '12px',
-        }
+        },
       };
     } else {
       // Calendar event styling
-      const calendar = calendars.find(cal => cal.id === event.resource.data.calendarId);
+      const calendar = calendars.find((cal) => cal.id === event.resource.data.calendarId);
       return {
         style: {
           backgroundColor: calendar?.color || '#6b7280',
@@ -315,7 +320,7 @@ export const TaskCalendar: React.FC = () => {
           border: 'none',
           borderRadius: '4px',
           fontSize: '12px',
-        }
+        },
       };
     }
   };
@@ -330,32 +335,18 @@ export const TaskCalendar: React.FC = () => {
       <div className="flex items-center justify-between p-4 border-b bg-white">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('PREV')}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate('PREV')}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('TODAY')}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate('TODAY')}>
               Today
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('NEXT')}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate('NEXT')}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
 
-          <h2 className="text-xl font-semibold">
-            {moment(date).format('MMMM YYYY')}
-          </h2>
+          <h2 className="text-xl font-semibold">{moment(date).format('MMMM YYYY')}</h2>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -375,10 +366,7 @@ export const TaskCalendar: React.FC = () => {
                   className="flex items-center justify-between"
                 >
                   <div className="flex items-center space-x-2">
-                    <div
-                      className="w-3 h-3 rounded"
-                      style={{ backgroundColor: calendar.color }}
-                    />
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: calendar.color }} />
                     <span>{calendar.name}</span>
                   </div>
                   {visibleCalendars.includes(calendar.id) ? (
