@@ -40,6 +40,16 @@ function getSupabase() {
   return _supabase;
 }
 
+// Helper to get Supabase client with error handling
+function requireSupabase() {
+  try {
+    return getSupabase();
+  } catch (error) {
+    console.warn('Supabase not available:', (error as Error).message);
+    return null;
+  }
+}
+
 export async function bulkImportUsers(users: BulkUser[]): Promise<ImportResult> {
   const result: ImportResult = {
     success: 0,
@@ -54,7 +64,7 @@ export async function bulkImportUsers(users: BulkUser[]): Promise<ImportResult> 
       const tempPassword = generateTempPassword();
 
       // Create user with Supabase Auth
-      const { data, error } = await supabase.auth.admin.createUser({
+      const { data, error } = await requireSupabase().auth.admin.createUser({
         email: user.email,
         password: tempPassword,
         email_confirm: true, // Auto-confirm email
@@ -100,7 +110,7 @@ async function sendWelcomeEmail(email: string, firstName: string, tempPassword: 
           ? `https://${process.env.REPLIT_DEV_DOMAIN}/dashboard?welcome=true`
           : 'https://smartcrm-videoremix.replit.app/dashboard?welcome=true';
 
-    const { data, error } = await supabase.auth.admin.generateLink({
+    const { data, error } = await requireSupabase().auth.admin.generateLink({
       type: 'recovery',
       email: email,
       options: {
@@ -174,11 +184,11 @@ export function registerBulkImportRoutes(app: Express) {
       for (const email of adminEmails) {
         try {
           // Get user details from Supabase Auth
-          const { data, error } = await supabase.auth.admin.getUserById(email);
+          const { data, error } = await requireSupabase().auth.admin.getUserById(email);
 
           if (error && error.message.includes('User not found')) {
             // Try to get by email instead
-            const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
+            const { data: listData, error: listError } = await requireSupabase().auth.admin.listUsers();
             const user = listData?.users?.find((u) => u.email === email);
 
             results.push({
@@ -252,7 +262,7 @@ export function registerBulkImportRoutes(app: Express) {
             ? `https://${process.env.REPLIT_DEV_DOMAIN}/dashboard?confirmed=true`
             : 'https://smartcrm-videoremix.replit.app/dashboard?confirmed=true';
 
-      const { data, error } = await supabase.auth.admin.generateLink({
+      const { data, error } = await requireSupabase().auth.admin.generateLink({
         type: 'recovery',
         email: email,
         options: {
@@ -359,7 +369,7 @@ export function registerBulkImportRoutes(app: Express) {
 
       for (const email of emails) {
         try {
-          const { error } = await supabase.auth.admin.generateLink({
+          const { error } = await requireSupabase().auth.admin.generateLink({
             type: 'recovery',
             email: email,
           });
@@ -412,7 +422,7 @@ export function registerBulkImportRoutes(app: Express) {
             ? `https://${process.env.REPLIT_DEV_DOMAIN}/auth/reset-password?setup=true`
             : 'https://smartcrm-videoremix.replit.app/auth/reset-password?setup=true';
 
-      const { data, error } = await supabase.auth.admin.generateLink({
+      const { data, error } = await requireSupabase().auth.admin.generateLink({
         type: 'recovery',
         email: email,
         options: {
@@ -471,7 +481,7 @@ export function registerBulkImportRoutes(app: Express) {
 
       for (const email of emails) {
         try {
-          const { error } = await supabase.auth.admin.generateLink({
+          const { error } = await requireSupabase().auth.admin.generateLink({
             type: 'recovery',
             email: email,
             options: {
