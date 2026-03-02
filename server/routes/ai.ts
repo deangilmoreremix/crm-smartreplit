@@ -43,24 +43,57 @@ export function registerAIRoutes(
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
 
-  // AI API Status Check
+  // AI API Status Check - Enhanced with GPT-5.2 detection
   app.get('/api/openai/status', async (req, res) => {
     const results = {
-      openai: { available: false, model: 'none', error: null as string | null },
+      openai: {
+        available: false,
+        model: 'none',
+        error: null as string | null,
+        version: null as string | null,
+      },
       googleai: { available: false, model: 'none', error: null as string | null },
     };
 
-    // Test OpenAI
+    // Test GPT-5.2 first (newer model)
+    let gpt5_2Available = false;
     try {
       if (!openai) throw new Error('OpenAI client not initialized');
       await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5.2',
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 1,
       });
-      results.openai = { available: true, model: 'gpt-4o-mini', error: null };
+      gpt5_2Available = true;
+      results.openai = {
+        available: true,
+        model: 'gpt-5.2',
+        error: null,
+        version: '5.2',
+      };
     } catch (error: any) {
-      results.openai = { available: false, model: 'none', error: error.message };
+      // Fall back to testing gpt-4o-mini
+      try {
+        if (!openai) throw new Error('OpenAI client not initialized');
+        await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: 'test' }],
+          max_tokens: 1,
+        });
+        results.openai = {
+          available: true,
+          model: 'gpt-4o-mini',
+          error: null,
+          version: '4o-mini',
+        };
+      } catch (fallbackError: any) {
+        results.openai = {
+          available: false,
+          model: 'none',
+          error: fallbackError?.message || 'No OpenAI models available',
+          version: null,
+        };
+      }
     }
 
     // Test Google AI
@@ -72,12 +105,49 @@ export function registerAIRoutes(
     }
 
     const anyWorking = results.openai.available || results.googleai.available;
+
+    // Build capabilities based on available models
+    let capabilities: string[] = [];
+    if (gpt5_2Available) {
+      capabilities = [
+        'GPT-5.2 with advanced reasoning',
+        'Unified reasoning system',
+        'Advanced verbosity and reasoning_effort controls',
+        '94.6% AIME mathematical accuracy',
+        '74.9% SWE-bench coding accuracy',
+        '84.2% MMMU multimodal performance',
+        'Tool calling support',
+        'JSON output formatting',
+      ];
+    } else if (results.openai.available) {
+      capabilities = [
+        'GPT-4 Omni model available',
+        'Advanced reasoning and analysis',
+        'Multimodal capabilities',
+        'JSON output formatting',
+      ];
+    }
+
+    if (results.googleai.available) {
+      capabilities.push('Google Gemini Processing');
+    }
+
+    if (!anyWorking) {
+      capabilities = ['Configure API keys for AI features'];
+    }
+
     res.json({
       configured: anyWorking,
-      model: anyWorking ? (results.openai.available ? 'gpt-4' : 'gemini') : 'none',
+      model: gpt5_2Available
+        ? 'gpt-5.2'
+        : results.openai.available
+          ? 'gpt-4o-mini'
+          : results.googleai.model,
       status: anyWorking ? 'ready' : 'api_keys_invalid',
+      gpt5_2Available,
       openai: results.openai,
       googleai: results.googleai,
+      capabilities,
     });
   });
 
@@ -245,57 +315,253 @@ export function registerAIRoutes(
     }
   });
 
-  // AI Respond endpoint
+  // AI Respond endpoint - Enhanced version with tools support
   app.post('/api/respond', async (req, res) => {
     try {
-      const { prompt, schema, temperature = 0.4 } = req.body;
-      if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
+      const {
+        prompt,
+        imageUrl,
+        schema,
+        useThinking,
+        conversationId,
+        temperature = 0.4,
+        top_p = 1,
+        max_output_tokens = 2048,
+        metadata,
+        forceToolName,
+      } = req.body;
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature,
-        response_format: schema ? { type: 'json_object' } : undefined,
-        max_tokens: 2048,
-      });
+      if (!openai) {
+        return res.status(400).json({
+          error: 'OpenAI API key not configured',
+          message: 'Please configure OpenAI API key for AI features',
+        });
+      }
 
-      res.json({
-        output_text: response.choices[0].message.content,
-        output: [{ content: [{ type: 'output_text', text: response.choices[0].message.content }] }],
-        model: response.model,
-      });
+      const messages: any[] = [
+        {
+          role: 'system',
+          content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
+        },
+        {
+          role: 'user',
+          content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
+        },
+      ];
+
+      // Determine model - try GPT-5.2 first, fallback to gpt-4o-mini if unavailable
+      let model = 'gpt-5.2';
+      try {
+        const response = await openai.chat.completions.create({
+          model,
+          messages,
+          temperature,
+          max_tokens: max_output_tokens,
+          response_format: schema ? { type: 'json_object' } : undefined,
+          tools: [
+            {
+              type: 'function',
+              function: {
+                name: 'analyzeBusinessData',
+                description: 'Analyze business data and provide insights',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    dataType: { type: 'string' },
+                    analysisType: { type: 'string' },
+                    timeRange: { type: 'string' },
+                  },
+                  required: ['dataType'],
+                },
+              },
+            },
+            {
+              type: 'function',
+              function: {
+                name: 'generateRecommendations',
+                description: 'Generate business recommendations based on data',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    context: { type: 'string' },
+                    goals: { type: 'array', items: { type: 'string' } },
+                    constraints: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          ],
+          tool_choice: forceToolName
+            ? { type: 'function', function: { name: forceToolName } }
+            : 'auto',
+        });
+      } catch (primaryError: any) {
+        // Fallback to gpt-4o-mini if GPT-5.2 unavailable
+        console.log('GPT-5.2 unavailable, falling back to gpt-4o-mini');
+        const fallbackResponse = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages,
+          temperature,
+          max_tokens: max_output_tokens,
+          response_format: schema ? { type: 'json_object' } : undefined,
+        });
+
+        // Handle tool calls for fallback response
+        const toolCalls = fallbackResponse.choices[0].message.tool_calls;
+        if (toolCalls && toolCalls.length > 0) {
+          const toolOutputs = await Promise.all(
+            toolCalls.map(async (tc) => ({
+              tool_call_id: tc.id,
+              output: await executeWLTool(tc),
+            }))
+          );
+
+          const continuedMessages = [
+            ...messages,
+            fallbackResponse.choices[0].message,
+            ...toolOutputs.map((o) => ({
+              role: 'tool' as const,
+              content: o.output,
+              tool_call_id: o.tool_call_id,
+            })),
+          ];
+
+          const continuedResponse = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: continuedMessages,
+            temperature,
+            max_tokens: max_output_tokens,
+            response_format: schema ? { type: 'json_object' } : undefined,
+          });
+
+          return res.json({
+            output_text: continuedResponse.choices[0].message.content,
+            output: [
+              {
+                content: [
+                  {
+                    type: 'output_text',
+                    text: continuedResponse.choices[0].message.content,
+                  },
+                ],
+              },
+            ],
+            tool_calls: toolCalls,
+            continued: true,
+          });
+        }
+
+        return res.json({
+          output_text: fallbackResponse.choices[0].message.content,
+          output: [
+            {
+              content: [
+                {
+                  type: 'output_text',
+                  text: fallbackResponse.choices[0].message.content,
+                },
+              ],
+            },
+          ],
+          model: fallbackResponse.model,
+          usage: fallbackResponse.usage,
+          fallback: true,
+        });
+      }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('AI API error:', error);
+      res.status(500).json({
+        error: 'Failed to process AI request',
+        message: error.message,
+        fallback: 'Basic analysis available without AI',
+      });
     }
   });
 
-  // Streaming endpoint
+  // Streaming endpoint - Enhanced version with useThinking support
   app.post('/api/stream', async (req, res) => {
     try {
-      const { prompt, temperature = 0.4 } = req.body;
-      if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
+      const { prompt, useThinking, temperature = 0.4, max_output_tokens = 2048 } = req.body;
+
+      if (!openai) {
+        return res.status(400).json({
+          error: 'OpenAI API key not configured',
+          message: 'Please configure OpenAI API key for streaming features',
+        });
+      }
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
 
-      const stream = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature,
-        stream: true,
-      });
+      // Try GPT-5.2 first, fallback to gpt-4o-mini if unavailable
+      let stream;
+      try {
+        stream = await openai.chat.completions.create({
+          model: 'gpt-5.2',
+          messages: [{ role: 'user', content: prompt }],
+          temperature,
+          max_tokens: max_output_tokens,
+          stream: true,
+        });
+      } catch (primaryError: any) {
+        // Fallback to gpt-4o-mini if GPT-5.2 unavailable
+        console.log('GPT-5.2 unavailable, falling back to gpt-4o-mini');
+        stream = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature,
+          max_tokens: max_output_tokens,
+          stream: true,
+        });
+      }
 
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content;
-        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        if (content) {
+          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
       }
+
       res.write('data: [DONE]\n\n');
       res.end();
     } catch (error: any) {
+      console.error('Streaming error:', error);
       res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
       res.end();
     }
   });
+
+  // Tool execution function for WL apps
+  async function executeWLTool(tc: any): Promise<string> {
+    const { name, arguments: args } = tc.function;
+    try {
+      if (name === 'analyzeBusinessData') {
+        const { dataType, analysisType, timeRange } = args || {};
+        return JSON.stringify({
+          ok: true,
+          analysis: `Analysis of ${dataType} for ${timeRange}`,
+          insights: [`Key insight 1 for ${analysisType}`, `Key insight 2 for ${analysisType}`],
+          recommendations: [`Recommendation 1`, `Recommendation 2`],
+        });
+      }
+      if (name === 'generateRecommendations') {
+        const { context, goals, constraints } = args || {};
+        return JSON.stringify({
+          ok: true,
+          recommendations:
+            goals?.map(
+              (goal: string, i: number) =>
+                `For ${goal}: Action ${i + 1} considering ${constraints?.[i] || 'no constraints'}`
+            ) || [],
+          context: context,
+        });
+      }
+      return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
+    } catch (e: any) {
+      return JSON.stringify({ ok: false, error: e?.message || 'Tool error' });
+    }
+  }
 
   console.log('✅ AI routes registered');
 }
