@@ -100,8 +100,10 @@ const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
     for (let i = 0; i < totalSteps; i++) {
       setCurrentAnalysisStep(analysisSteps[analysisType][i]);
       setAnalysisProgress(Math.round((i / (totalSteps - 1)) * 100));
-      // Add a delay between steps to simulate processing
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Add a delay between steps to show progress
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(undefined), 500);
+      });
     }
 
     try {

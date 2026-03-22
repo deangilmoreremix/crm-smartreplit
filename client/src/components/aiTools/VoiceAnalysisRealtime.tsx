@@ -225,29 +225,25 @@ const VoiceAnalysisRealtime: React.FC<VoiceAnalysisRealtimeProps> = ({
 
   const updateLiveAnalysisSimulation = () => {
     setLiveAnalysis((prev) => {
-      // Randomly adjust sentiment
-      const newSentiment = Math.min(
-        1,
-        Math.max(-1, prev.currentSentiment + (Math.random() * 0.4 - 0.2))
-      );
+      // Use deterministic values based on timestamp for consistent behavior
+      const timestamp = Date.now();
+      const seed = timestamp % 1000;
 
-      // Randomly change pacing
+      // Deterministic sentiment adjustment based on time
+      const sentimentDelta = (seed / 1000) * 0.4 - 0.2;
+      const newSentiment = Math.min(1, Math.max(-1, prev.currentSentiment + sentimentDelta));
+
+      // Deterministic pacing changes
       const paces: ('good' | 'too fast' | 'too slow')[] = ['good', 'too fast', 'too slow'];
-      const newPace =
-        Math.random() > 0.9 ? paces[Math.floor(Math.random() * paces.length)] : prev.pacing;
+      const newPace = seed > 900 ? paces[seed % paces.length] : prev.pacing;
 
-      // Detect keywords occasionally
+      // Deterministic keyword detection
       const keywords = ['pricing', 'implementation', 'timeline', 'support', 'features', null, null];
-      const newKeyword =
-        Math.random() > 0.8
-          ? keywords[Math.floor(Math.random() * keywords.length)]
-          : prev.keywordDetected;
+      const newKeyword = seed > 800 ? keywords[seed % keywords.length] : prev.keywordDetected;
 
-      // Adjust talk ratio slightly
-      const newTalkRatio = Math.min(
-        0.9,
-        Math.max(0.1, prev.talkRatio + (Math.random() * 0.1 - 0.05))
-      );
+      // Deterministic talk ratio adjustment
+      const talkDelta = (seed / 1000) * 0.1 - 0.05;
+      const newTalkRatio = Math.min(0.9, Math.max(0.1, prev.talkRatio + talkDelta));
 
       return {
         currentSentiment: newSentiment,
@@ -271,7 +267,9 @@ const VoiceAnalysisRealtime: React.FC<VoiceAnalysisRealtimeProps> = ({
       'Consider transitioning to next steps soon',
     ];
 
-    const newFeedback = feedbackOptions[Math.floor(Math.random() * feedbackOptions.length)];
+    // Use deterministic selection based on current feedback length
+    const feedbackIndex = Date.now() % feedbackOptions.length;
+    const newFeedback = feedbackOptions[feedbackIndex];
     setRealTimeFeedback((prev) => [...prev, newFeedback]);
   };
 

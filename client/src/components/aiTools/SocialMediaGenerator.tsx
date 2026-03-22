@@ -66,11 +66,24 @@ export default function SocialMediaGenerator() {
           keywords: keywords.length > 0 ? keywords : undefined,
           callToAction: formData.callToAction || undefined,
         });
+        // Calculate deterministic scores based on content characteristics
+        const contentLength = variation.length;
+        const wordCount = variation.split(/\s+/).length;
+        const avgWordsPerSentence = wordCount / Math.max(1, variation.split(/[.!?]/).length - 1);
+        const hasCTA =
+          formData.callToAction &&
+          variation.toLowerCase().includes(formData.callToAction.toLowerCase());
+
+        // Engagement: Higher score for shorter, punchy content with CTA
+        const engagement = Math.min(100, Math.max(50, 80 - contentLength / 50 + (hasCTA ? 15 : 0)));
+        // Readability: Flesch-Kincaid inspired score (simplified)
+        const readability = Math.min(100, Math.max(60, 100 - avgWordsPerSentence * 2));
+
         variations.push({
           content: variation,
           id: i + 1,
-          engagement: Math.floor(Math.random() * 100) + 50, // Mock engagement score
-          readability: Math.floor(Math.random() * 20) + 80, // Mock readability score
+          engagement: Math.round(engagement),
+          readability: Math.round(readability),
         });
       }
 
