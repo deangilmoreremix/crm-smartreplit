@@ -7,7 +7,13 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import {
@@ -29,7 +35,7 @@ import {
   CheckCircle,
   Settings,
   Sun,
-  Moon
+  Moon,
 } from 'lucide-react';
 
 interface PackageFeature {
@@ -80,25 +86,25 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       id: 'admin',
       name: 'Administrator',
       permissions: ['all_access', 'user_management', 'package_config'],
-      description: 'Full system access'
+      description: 'Full system access',
     },
     {
       id: 'manager',
       name: 'Package Manager',
       permissions: ['package_config', 'user_view', 'analytics'],
-      description: 'Manage package features and view analytics'
+      description: 'Manage package features and view analytics',
     },
     {
       id: 'user',
       name: 'Standard User',
       permissions: ['basic_access'],
-      description: 'Basic package access'
-    }
+      description: 'Basic package access',
+    },
   ]);
   const [newUserForm, setNewUserForm] = useState({
     name: '',
     email: '',
-    role: 'user'
+    role: 'user',
   });
   const [bulkImportFile, setBulkImportFile] = useState<File | null>(null);
   const [bulkImportData, setBulkImportData] = useState<PackageUser[]>([]);
@@ -127,7 +133,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       packageName,
       packageDescription,
       packageUsers,
-      userRoles
+      userRoles,
     };
     localStorage.setItem('package-builder-state', JSON.stringify(state));
   }, [selectedFeatures, packageName, packageDescription, packageUsers, userRoles]);
@@ -139,7 +145,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       description: 'Logo, colors, and basic customization',
       category: 'branding',
       basePrice: 99,
-      icon: Package
+      icon: Package,
     },
     {
       id: 'advanced-branding',
@@ -147,7 +153,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       description: 'Complete UI customization and white-labeling',
       category: 'branding',
       basePrice: 299,
-      icon: Star
+      icon: Star,
     },
     {
       id: 'custom-domain',
@@ -155,7 +161,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       description: 'Use your own domain name',
       category: 'core',
       basePrice: 49,
-      icon: Globe
+      icon: Globe,
     },
     {
       id: 'api-access',
@@ -163,7 +169,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       description: 'Full API integration capabilities',
       category: 'integration',
       basePrice: 199,
-      icon: Zap
+      icon: Zap,
     },
     {
       id: 'priority-support',
@@ -171,8 +177,8 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       description: '24/7 dedicated support team',
       category: 'support',
       basePrice: 149,
-      icon: Shield
-    }
+      icon: Shield,
+    },
   ];
 
   const packageTemplates: PackageTemplate[] = [
@@ -181,7 +187,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       name: 'Starter Package',
       description: 'Perfect for small businesses getting started',
       basePrice: 199,
-      features: ['basic-branding', 'custom-domain']
+      features: ['basic-branding', 'custom-domain'],
     },
     {
       id: 'professional',
@@ -189,29 +195,27 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       description: 'Ideal for growing businesses',
       basePrice: 499,
       features: ['advanced-branding', 'custom-domain', 'api-access'],
-      popular: true
+      popular: true,
     },
     {
       id: 'enterprise',
       name: 'Enterprise Package',
       description: 'Complete solution for large organizations',
       basePrice: 999,
-      features: ['advanced-branding', 'custom-domain', 'api-access', 'priority-support']
-    }
+      features: ['advanced-branding', 'custom-domain', 'api-access', 'priority-support'],
+    },
   ];
 
   const calculateTotalPrice = () => {
     return selectedFeatures.reduce((total, featureId) => {
-      const feature = features.find(f => f.id === featureId);
+      const feature = features.find((f) => f.id === featureId);
       return total + (feature?.basePrice || 0);
     }, 0);
   };
 
   const toggleFeature = (featureId: string) => {
-    setSelectedFeatures(prev =>
-      prev.includes(featureId)
-        ? prev.filter(id => id !== featureId)
-        : [...prev, featureId]
+    setSelectedFeatures((prev) =>
+      prev.includes(featureId) ? prev.filter((id) => id !== featureId) : [...prev, featureId]
     );
   };
 
@@ -225,14 +229,14 @@ const WhiteLabelPackageBuilder: React.FC = () => {
     if (!packageName.trim()) return;
     setIsCreatingPackage(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       // TODO: Save to backend
       console.log('Creating package:', {
         name: packageName,
         description: packageDescription,
         features: selectedFeatures,
         users: packageUsers,
-        totalPrice: calculateTotalPrice()
+        totalPrice: calculateTotalPrice(),
       });
     } catch (error) {
       console.error('Error creating package:', error);
@@ -242,9 +246,9 @@ const WhiteLabelPackageBuilder: React.FC = () => {
   };
 
   const parseCSV = (csvText: string): PackageUser[] => {
-    const lines = csvText.split('\n').filter(line => line.trim());
+    const lines = csvText.split('\n').filter((line) => line.trim());
     if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
     const nameIndex = headers.indexOf('name');
     const emailIndex = headers.indexOf('email');
     const roleIndex = headers.indexOf('role');
@@ -252,7 +256,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       throw new Error('CSV must contain name and email columns');
     }
     return lines.slice(1).map((line, index) => {
-      const values = line.split(',').map(v => v.trim());
+      const values = line.split(',').map((v) => v.trim());
       const name = values[nameIndex];
       const email = values[emailIndex];
       const role = values[roleIndex] || 'user';
@@ -264,7 +268,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
         name,
         email,
         role: ['admin', 'manager', 'user'].includes(role) ? role : 'user',
-        status: 'pending' as const
+        status: 'pending' as const,
       };
     });
   };
@@ -292,8 +296,8 @@ const WhiteLabelPackageBuilder: React.FC = () => {
     setIsImporting(true);
     try {
       for (let i = 0; i < bulkImportData.length; i++) {
-        setPackageUsers(prev => [...prev, bulkImportData[i]]);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        setPackageUsers((prev) => [...prev, bulkImportData[i]]);
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
       setBulkImportData([]);
       setBulkImportFile(null);
@@ -311,7 +315,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
       name: userData.name,
       email: userData.email,
       role: userData.role,
-      status: 'pending'
+      status: 'pending',
     };
     setPackageUsers([...packageUsers, newUser]);
     setNewUserForm({ name: '', email: '', role: 'user' });
@@ -319,7 +323,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen pb-8 transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen pb-8 transition-colors duration-300 bg-background">
       <div className="container mx-auto px-6 py-8 space-y-8 max-w-7xl">
         {/* Dashboard Header - Matching Dashboard Design */}
         <DashboardHeader
@@ -389,7 +393,9 @@ const WhiteLabelPackageBuilder: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <GlassCard className="p-6">
-                  <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  <h2
+                    className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}
+                  >
                     Quick Start Templates
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -403,10 +409,10 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                         }`}
                         onClick={() => applyTemplate(template)}
                       >
-                        {template.popular && (
-                          <Badge className="mb-2 bg-blue-600">Popular</Badge>
-                        )}
-                        <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
+                        {template.popular && <Badge className="mb-2 bg-blue-600">Popular</Badge>}
+                        <h3
+                          className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}
+                        >
                           {template.name}
                         </h3>
                         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
@@ -421,7 +427,9 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 </GlassCard>
 
                 <GlassCard className="p-6">
-                  <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  <h2
+                    className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}
+                  >
                     Select Features
                   </h2>
                   <div className="space-y-3">
@@ -436,11 +444,17 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                         onClick={() => toggleFeature(feature.id)}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${selectedFeatures.includes(feature.id) ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                            <feature.icon className={`h-5 w-5 ${selectedFeatures.includes(feature.id) ? 'text-blue-600' : 'text-gray-600'}`} />
+                          <div
+                            className={`p-2 rounded-lg ${selectedFeatures.includes(feature.id) ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-700'}`}
+                          >
+                            <feature.icon
+                              className={`h-5 w-5 ${selectedFeatures.includes(feature.id) ? 'text-blue-600' : 'text-gray-600'}`}
+                            />
                           </div>
                           <div>
-                            <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                            <h3
+                              className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                            >
                               {feature.name}
                             </h3>
                             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -449,14 +463,18 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          <span
+                            className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                          >
                             ${feature.basePrice}/mo
                           </span>
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                            selectedFeatures.includes(feature.id)
-                              ? 'border-blue-500 bg-blue-500'
-                              : 'border-gray-300 dark:border-gray-600'
-                          }`}>
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                              selectedFeatures.includes(feature.id)
+                                ? 'border-blue-500 bg-blue-500'
+                                : 'border-gray-300 dark:border-gray-600'
+                            }`}
+                          >
                             {selectedFeatures.includes(feature.id) && (
                               <Check className="h-4 w-4 text-white" />
                             )}
@@ -470,27 +488,29 @@ const WhiteLabelPackageBuilder: React.FC = () => {
 
               <div className="space-y-6">
                 <GlassCard className="p-6 sticky top-4">
-                  <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
+                  <h2
+                    className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}
+                  >
                     Package Summary
                   </h2>
                   <div className="space-y-4">
                     <div>
-                      <Label className={`block text-sm font-medium mb-1`}>
-                        Package Name
-                      </Label>
+                      <Label className={`block text-sm font-medium mb-1`}>Package Name</Label>
                       <Input
                         value={packageName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPackageName(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setPackageName(e.target.value)
+                        }
                         placeholder="Enter package name"
                       />
                     </div>
                     <div>
-                      <Label className={`block text-sm font-medium mb-1`}>
-                        Description
-                      </Label>
+                      <Label className={`block text-sm font-medium mb-1`}>Description</Label>
                       <Textarea
                         value={packageDescription}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPackageDescription(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          setPackageDescription(e.target.value)
+                        }
                         rows={3}
                         placeholder="Package description"
                       />
@@ -499,7 +519,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                       <h3 className={`font-semibold mb-2`}>Included Features:</h3>
                       <ul className="space-y-2">
                         {selectedFeatures.map((featureId) => {
-                          const feature = features.find(f => f.id === featureId);
+                          const feature = features.find((f) => f.id === featureId);
                           return feature ? (
                             <li key={featureId} className={`text-sm flex items-center gap-2`}>
                               <Check className="h-4 w-4 text-green-500" />
@@ -516,7 +536,11 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                           ${calculateTotalPrice()}/month
                         </span>
                       </div>
-                      <Button onClick={createPackage} disabled={isCreatingPackage} className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      <Button
+                        onClick={createPackage}
+                        disabled={isCreatingPackage}
+                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                      >
                         <Save className="h-4 w-4 mr-2" />
                         Create Package
                       </Button>
@@ -534,7 +558,10 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   Package Users ({packageUsers.length})
                 </h2>
-                <Button onClick={() => setShowUserModal(true)} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                <Button
+                  onClick={() => setShowUserModal(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add User
                 </Button>
@@ -543,50 +570,73 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {packageUsers.length > 0 ? packageUsers.map((user) => (
-                      <tr key={user.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
-                              <Users className="h-5 w-5 text-blue-600" />
+                    {packageUsers.length > 0 ? (
+                      packageUsers.map((user) => (
+                        <tr key={user.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                                <Users className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium">{user.name}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {user.email}
+                                </div>
+                              </div>
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium">{user.name}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge variant="outline">
+                              {userRoles.find((r) => r.id === user.role)?.name || user.role}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge
+                              className={`${
+                                user.status === 'active'
+                                  ? 'bg-green-100 text-green-800'
+                                  : user.status === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {user.status}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="outline">
-                            {userRoles.find(r => r.id === user.role)?.name || user.role}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={`${
-                            user.status === 'active' ? 'bg-green-100 text-green-800' :
-                            user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {user.status}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm"><Edit className="h-4 w-4" /></Button>
-                            <Button variant="outline" size="sm"><Trash2 className="h-4 w-4" /></Button>
-                          </div>
-                        </td>
-                      </tr>
-                    )) : (
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
                       <tr>
-                        <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-300">
+                        <td
+                          colSpan={4}
+                          className="px-6 py-8 text-center text-gray-500 dark:text-gray-300"
+                        >
                           No users assigned to this package. Add users to get started!
                         </td>
                       </tr>
@@ -600,17 +650,28 @@ const WhiteLabelPackageBuilder: React.FC = () => {
           {/* Role Configuration Tab */}
           <TabsContent value="roles" className="space-y-6 mt-6">
             <GlassCard className="p-6">
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>
+              <h2
+                className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}
+              >
                 User Roles & Permissions
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {userRoles.map((role) => (
-                  <div key={role.id} className={`border-2 rounded-lg p-4 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div
+                    key={role.id}
+                    className={`border-2 rounded-lg p-4 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
+                  >
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{role.name}</h3>
-                      <Button variant="outline" size="sm"><Edit className="h-4 w-4" /></Button>
+                      <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {role.name}
+                      </h3>
+                      <Button variant="outline" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>{role.description}</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                      {role.description}
+                    </p>
                     <div>
                       <h4 className={`text-xs font-medium mb-2`}>Permissions:</h4>
                       <div className="flex flex-wrap gap-1">
@@ -630,31 +691,57 @@ const WhiteLabelPackageBuilder: React.FC = () => {
           {/* Package Preview Tab */}
           <TabsContent value="preview" className="space-y-6 mt-6">
             <GlassCard className="p-6">
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}>
+              <h2
+                className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-6`}
+              >
                 Package Preview
               </h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                  <h3 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Package Details</h3>
+                  <h3
+                    className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}
+                  >
+                    Package Details
+                  </h3>
                   <div className="space-y-3">
-                    <div><span className="text-sm font-medium">Name:</span> <span>{packageName || 'Untitled Package'}</span></div>
-                    <div><span className="text-sm font-medium">Description:</span> <span>{packageDescription || 'No description'}</span></div>
-                    <div><span className="text-sm font-medium">Monthly Price:</span> <span className="text-lg font-bold text-blue-600">${calculateTotalPrice()}</span></div>
-                    <div><span className="text-sm font-medium">Total Users:</span> <span>{packageUsers.length}</span></div>
+                    <div>
+                      <span className="text-sm font-medium">Name:</span>{' '}
+                      <span>{packageName || 'Untitled Package'}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Description:</span>{' '}
+                      <span>{packageDescription || 'No description'}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Monthly Price:</span>{' '}
+                      <span className="text-lg font-bold text-blue-600">
+                        ${calculateTotalPrice()}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">Total Users:</span>{' '}
+                      <span>{packageUsers.length}</span>
+                    </div>
                   </div>
                 </div>
                 <div>
-                  <h3 className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>Feature Breakdown</h3>
+                  <h3
+                    className={`text-lg font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}
+                  >
+                    Feature Breakdown
+                  </h3>
                   <div className="space-y-2">
-                    {selectedFeatures.length > 0 ? selectedFeatures.map((featureId) => {
-                      const feature = features.find(f => f.id === featureId);
-                      return feature ? (
-                        <div key={featureId} className="flex justify-between items-center">
-                          <span className="text-sm">{feature.name}</span>
-                          <span className="text-sm font-medium">${feature.basePrice}/mo</span>
-                        </div>
-                      ) : null;
-                    }) : (
+                    {selectedFeatures.length > 0 ? (
+                      selectedFeatures.map((featureId) => {
+                        const feature = features.find((f) => f.id === featureId);
+                        return feature ? (
+                          <div key={featureId} className="flex justify-between items-center">
+                            <span className="text-sm">{feature.name}</span>
+                            <span className="text-sm font-medium">${feature.basePrice}/mo</span>
+                          </div>
+                        ) : null;
+                      })
+                    ) : (
                       <p className="text-sm text-gray-500">No features selected</p>
                     )}
                   </div>
@@ -679,7 +766,9 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 <Input
                   id="userName"
                   value={newUserForm.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewUserForm({...newUserForm, name: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewUserForm({ ...newUserForm, name: e.target.value })
+                  }
                   placeholder="John Smith"
                 />
               </div>
@@ -689,26 +778,35 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                   id="userEmail"
                   type="email"
                   value={newUserForm.email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewUserForm({...newUserForm, email: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setNewUserForm({ ...newUserForm, email: e.target.value })
+                  }
                   placeholder="john@company.com"
                 />
               </div>
               <div>
                 <Label htmlFor="userRole">Role</Label>
-                <Select value={newUserForm.role} onValueChange={(value: string) => setNewUserForm({...newUserForm, role: value})}>
+                <Select
+                  value={newUserForm.role}
+                  onValueChange={(value: string) => setNewUserForm({ ...newUserForm, role: value })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {userRoles.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowUserModal(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setShowUserModal(false)}>
+                Cancel
+              </Button>
               <Button
                 onClick={() => addUser(newUserForm)}
                 disabled={!newUserForm.name || !newUserForm.email}
@@ -754,8 +852,12 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">CSV Format Requirements</h4>
-                    <p className="text-sm text-blue-700 dark:text-blue-200 mb-3">Your CSV file should include these columns:</p>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      CSV Format Requirements
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-200 mb-3">
+                      Your CSV file should include these columns:
+                    </p>
                     <ul className="text-xs text-blue-600 dark:text-blue-300 space-y-1">
                       <li>• name (required)</li>
                       <li>• email (required)</li>
@@ -765,10 +867,19 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                 </div>
               </div>
               <div className="flex justify-between">
-                <Button variant="outline"><FileText className="h-4 w-4 mr-2" />Download Template</Button>
+                <Button variant="outline">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Download Template
+                </Button>
                 <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setShowBulkUserModal(false)}>Cancel</Button>
-                  <Button onClick={handleBulkImport} disabled={bulkImportData.length === 0 || isImporting} className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                  <Button variant="outline" onClick={() => setShowBulkUserModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleBulkImport}
+                    disabled={bulkImportData.length === 0 || isImporting}
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                  >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Import Users
                   </Button>

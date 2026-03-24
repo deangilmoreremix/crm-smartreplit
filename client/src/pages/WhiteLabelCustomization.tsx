@@ -298,9 +298,7 @@ const WhiteLabelCustomization: React.FC = () => {
   );
 
   return (
-    <div
-      className={`min-h-screen pb-8 transition-colors duration-300 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}
-    >
+    <div className="min-h-screen pb-8 transition-colors duration-300 bg-background">
       <div className="container mx-auto px-6 py-8 space-y-8 max-w-7xl">
         {/* Dashboard Header - Matching Dashboard Design */}
         <DashboardHeader
@@ -553,7 +551,7 @@ const WhiteLabelCustomization: React.FC = () => {
                     {config.ctaButtons.map((button, index) => (
                       <div
                         key={button.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-muted"
                       >
                         <Input
                           value={button.text}
