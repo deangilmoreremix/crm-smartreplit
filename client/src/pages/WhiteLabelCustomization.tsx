@@ -188,9 +188,7 @@ const WhiteLabelCustomization: React.FC = () => {
   const BrandingPreview = () => (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          Live Preview
-        </h3>
+        <h3 className="text-lg font-semibold text-foreground">Live Preview</h3>
         <div className="flex items-center gap-2">
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
@@ -219,9 +217,7 @@ const WhiteLabelCustomization: React.FC = () => {
         </div>
       </div>
 
-      <div
-        className={`border rounded-lg overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
-      >
+      <div className="border rounded-lg overflow-hidden border-border">
         <div
           className={`bg-white transition-all duration-300 ${
             previewDevice === 'mobile'

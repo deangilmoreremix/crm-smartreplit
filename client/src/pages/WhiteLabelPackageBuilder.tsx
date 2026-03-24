@@ -410,11 +410,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                         onClick={() => applyTemplate(template)}
                       >
                         {template.popular && <Badge className="mb-2 bg-blue-600">Popular</Badge>}
-                        <h3
-                          className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}
-                        >
-                          {template.name}
-                        </h3>
+                        <h3 className="font-semibold text-foreground mb-2">{template.name}</h3>
                         <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
                           {template.description}
                         </p>
@@ -452,11 +448,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <h3
-                              className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
-                            >
-                              {feature.name}
-                            </h3>
+                            <h3 className="font-medium text-foreground">{feature.name}</h3>
                             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                               {feature.description}
                             </p>
@@ -555,7 +547,7 @@ const WhiteLabelPackageBuilder: React.FC = () => {
           <TabsContent value="users" className="space-y-6 mt-6">
             <GlassCard className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <h2 className="text-xl font-semibold text-foreground">
                   Package Users ({packageUsers.length})
                 </h2>
                 <Button
