@@ -91,7 +91,9 @@ export default function AIIntegration() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <GlassCard className="p-6">
           <div className="flex flex-row items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Connected</span>
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Connected
+            </span>
             <Bot className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
           <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -100,12 +102,16 @@ export default function AIIntegration() {
               0
             )}
           </div>
-          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Active integrations</p>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Active integrations
+          </p>
         </GlassCard>
 
         <GlassCard className="p-6">
           <div className="flex flex-row items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Available</span>
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Available
+            </span>
             <Zap className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
           <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -114,27 +120,39 @@ export default function AIIntegration() {
               0
             )}
           </div>
-          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Ready to connect</p>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Ready to connect
+          </p>
         </GlassCard>
 
         <GlassCard className="p-6">
           <div className="flex flex-row items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Categories</span>
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Categories
+            </span>
             <Database className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
-          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{integrationCategories.length}</div>
-          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Integration types</p>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {integrationCategories.length}
+          </div>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            Integration types
+          </p>
         </GlassCard>
 
         <GlassCard className="p-6">
           <div className="flex flex-row items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Total Available</span>
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Total Available
+            </span>
             <Globe className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
           </div>
           <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {integrationCategories.reduce((sum, cat) => sum + cat.integrations.length, 0)}
           </div>
-          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>All integrations</p>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            All integrations
+          </p>
         </GlassCard>
       </div>
 
@@ -147,11 +165,19 @@ export default function AIIntegration() {
               <div className="mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
-                    <IconComponent className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <IconComponent
+                      className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                    />
                   </div>
                   <div>
-                    <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{category.name}</h3>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{category.description}</p>
+                    <h3
+                      className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      {category.name}
+                    </h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {category.description}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -160,9 +186,11 @@ export default function AIIntegration() {
                   <div
                     key={integration.name}
                     className={`p-4 border rounded-lg transition-all cursor-pointer hover:border-blue-300 ${
-                      selectedIntegration === integration.name 
-                        ? `border-blue-500 ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}` 
-                        : isDark ? 'border-gray-700' : ''
+                      selectedIntegration === integration.name
+                        ? `border-blue-500 ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`
+                        : isDark
+                          ? 'border-gray-700'
+                          : ''
                     }`}
                     onClick={() =>
                       setSelectedIntegration(
@@ -171,7 +199,9 @@ export default function AIIntegration() {
                     }
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{integration.name}</h4>
+                      <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {integration.name}
+                      </h4>
                       <div
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           integration.status === 'connected'
@@ -184,7 +214,9 @@ export default function AIIntegration() {
                         {integration.status}
                       </div>
                     </div>
-                    <p className={`text-xs capitalize mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p
+                      className={`text-xs capitalize mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                    >
                       {integration.type.replace('-', ' ')}
                     </p>
                     <Button
@@ -212,20 +244,34 @@ export default function AIIntegration() {
     <div className="space-y-6">
       {/* AI Configuration */}
       <GlassCard className="p-6">
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Model Configuration</h3>
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          AI Model Configuration
+        </h3>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Primary AI Model</label>
-              <select className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                Primary AI Model
+              </label>
+              <select
+                className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+              >
                 <option>GPT-4 (OpenAI)</option>
                 <option>Claude-3 (Anthropic)</option>
                 <option>Gemini Pro (Google)</option>
               </select>
             </div>
             <div>
-              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Fallback Model</label>
-              <select className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+              >
+                Fallback Model
+              </label>
+              <select
+                className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+              >
                 <option>GPT-3.5 Turbo</option>
                 <option>Claude-2</option>
                 <option>PaLM 2</option>
@@ -233,16 +279,15 @@ export default function AIIntegration() {
             </div>
           </div>
           <div>
-            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>AI Response Temperature</label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              defaultValue="0.7"
-              className="w-full"
-            />
-            <div className={`flex justify-between text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+            >
+              AI Response Temperature
+            </label>
+            <input type="range" min="0" max="1" step="0.1" defaultValue="0.7" className="w-full" />
+            <div
+              className={`flex justify-between text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+            >
               <span>Conservative (0.0)</span>
               <span>Balanced (0.5)</span>
               <span>Creative (1.0)</span>
@@ -253,59 +298,59 @@ export default function AIIntegration() {
 
       {/* Automation Settings */}
       <GlassCard className="p-6">
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Automation Settings</h3>
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Automation Settings
+        </h3>
         <div className="space-y-4">
-            {[
-              {
-                name: 'Auto-generate insights',
-                description: 'Automatically generate AI insights from data',
-                enabled: true,
-              },
-              {
-                name: 'Smart suggestions',
-                description: 'Show AI-powered action suggestions',
-                enabled: true,
-              },
-              {
-                name: 'Auto-enrichment',
-                description: 'Automatically enrich contact data',
-                enabled: false,
-              },
-              {
-                name: 'Workflow automation',
-                description: 'Enable automated workflow execution',
-                enabled: true,
-              },
-              {
-                name: 'Email automation',
-                description: 'AI-powered email responses and follow-ups',
-                enabled: false,
-              },
-            ].map((setting) => (
-              <div
-                key={setting.name}
-                className="flex items-center justify-between p-3 border rounded-lg"
-              >
-                <div>
-                  <h4 className="font-medium">{setting.name}</h4>
-                  <p className="text-sm text-gray-600">{setting.description}</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    defaultChecked={setting.enabled}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+          {[
+            {
+              name: 'Auto-generate insights',
+              description: 'Automatically generate AI insights from data',
+              enabled: true,
+            },
+            {
+              name: 'Smart suggestions',
+              description: 'Show AI-powered action suggestions',
+              enabled: true,
+            },
+            {
+              name: 'Auto-enrichment',
+              description: 'Automatically enrich contact data',
+              enabled: false,
+            },
+            {
+              name: 'Workflow automation',
+              description: 'Enable automated workflow execution',
+              enabled: true,
+            },
+            {
+              name: 'Email automation',
+              description: 'AI-powered email responses and follow-ups',
+              enabled: false,
+            },
+          ].map((setting) => (
+            <div
+              key={setting.name}
+              className="flex items-center justify-between p-3 border rounded-lg"
+            >
+              <div>
+                <h4 className="font-medium">{setting.name}</h4>
+                <p className="text-sm text-gray-600">{setting.description}</p>
               </div>
-            ))}
-          </div>
-        </GlassCard>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" defaultChecked={setting.enabled} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
 
       {/* API Keys Management */}
       <GlassCard className="p-6">
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>API Keys & Security</h3>
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          API Keys & Security
+        </h3>
         <div>
           <div className="space-y-4">
             {[
@@ -340,22 +385,35 @@ export default function AIIntegration() {
               </div>
             ))}
           </div>
-        </GlassCard>
+        </div>
+      </GlassCard>
 
       {/* Usage & Billing */}
       <GlassCard className="p-6">
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Usage & Billing</h3>
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Usage & Billing
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className={`text-center p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
-            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>$127.45</h4>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>This month's spend</p>
+            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              $127.45
+            </h4>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              This month's spend
+            </p>
           </div>
           <div className={`text-center p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
-            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>15,234</h4>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>API calls made</p>
+            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              15,234
+            </h4>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              API calls made
+            </p>
           </div>
           <div className={`text-center p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
-            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>2.1M</h4>
+            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              2.1M
+            </h4>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Tokens used</p>
           </div>
         </div>
