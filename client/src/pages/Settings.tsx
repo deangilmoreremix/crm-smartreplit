@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
+import { useTheme } from '../contexts/ThemeContext';
 import { useApiStore } from '../store/apiStore';
 import { Eye, EyeOff, Key, AlertCircle, Save } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useToast } from '../hooks/use-toast';
 
 const Settings: React.FC = () => {
+  const { isDark } = useTheme();
   const { apiKeys, setApiKey } = useApiStore();
   const { toast } = useToast();
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);

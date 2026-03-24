@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
+import { useTheme } from '../contexts/ThemeContext';
 import { useCompany } from '../contexts/CompanyContext';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import GlassCard from '../components/GlassCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import {
@@ -22,6 +24,7 @@ import {
 import { useToast } from '../hooks/use-toast';
 
 const CompanyAdminDashboard: React.FC = () => {
+  const { isDark } = useTheme();
   const { currentCompany, companyUsers, inviteUser, updateCompany, updateWhitelabelConfig } =
     useCompany();
   const { config: whitelabelConfig, updateConfig } = useWhitelabel();
@@ -179,16 +182,14 @@ const CompanyAdminDashboard: React.FC = () => {
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Team Members ({companyUsers.length}/{currentCompany.max_users})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Users className="h-5 w-5 mr-2" />
+                Team Members ({companyUsers.length}/{currentCompany.max_users})
+              </h3>
+              <div className="space-y-4">
                 {/* Invite User Form */}
-                <div className="flex gap-4 p-4 border rounded-lg bg-blue-50">
+                <div className={`flex gap-4 p-4 border rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
                   <Input
                     placeholder="user@company.com"
                     value={inviteEmail}
@@ -199,7 +200,7 @@ const CompanyAdminDashboard: React.FC = () => {
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
-                    className="px-3 py-2 border rounded"
+                    className={`px-3 py-2 border rounded ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
                   >
                     <option value="user">User</option>
                     <option value="manager">Manager</option>
@@ -216,7 +217,7 @@ const CompanyAdminDashboard: React.FC = () => {
                   {companyUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
+                      className={`flex items-center justify-between p-4 border rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
                     >
                       <div className="flex items-center space-x-3">
                         {user.profiles?.avatar_url ? (
@@ -226,15 +227,15 @@ const CompanyAdminDashboard: React.FC = () => {
                             className="w-10 h-10 rounded-full"
                           />
                         ) : (
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Users className="h-5 w-5 text-blue-600" />
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-800' : 'bg-blue-100'}`}>
+                            <Users className={`h-5 w-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                           </div>
                         )}
                         <div>
-                          <p className="font-medium">
+                          <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             {user.profiles?.first_name} {user.profiles?.last_name}
                           </p>
-                          <p className="text-sm text-gray-500">{user.profiles?.email}</p>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user.profiles?.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -249,21 +250,19 @@ const CompanyAdminDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </TabsContent>
 
           <TabsContent value="branding" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Palette className="h-5 w-5 mr-2" />
-                  Company Branding
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Palette className="h-5 w-5 mr-2" />
+                Company Branding
+              </h3>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Company Name</label>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Company Name</label>
                   <Input
                     value={whitelabelConfig.companyName}
                     onChange={(e) => updateConfig({ companyName: e.target.value })}
@@ -271,7 +270,7 @@ const CompanyAdminDashboard: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Logo URL</label>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Logo URL</label>
                   <Input
                     value={whitelabelConfig.logoUrl || ''}
                     onChange={(e) => updateConfig({ logoUrl: e.target.value })}
@@ -281,7 +280,7 @@ const CompanyAdminDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Primary Color</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Primary Color</label>
                     <div className="flex gap-2">
                       <Input
                         type="color"
@@ -297,7 +296,7 @@ const CompanyAdminDashboard: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Secondary Color</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Secondary Color</label>
                     <div className="flex gap-2">
                       <Input
                         type="color"
@@ -312,19 +311,17 @@ const CompanyAdminDashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Settings className="h-5 w-5 mr-2" />
-                  Company Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Settings className="h-5 w-5 mr-2" />
+                Company Settings
+              </h3>
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Company Description</label>
                   <Input
@@ -372,21 +369,19 @@ const CompanyAdminDashboard: React.FC = () => {
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </TabsContent>
 
           <TabsContent value="whitelabel" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Palette className="h-5 w-5 mr-2" />
-                  Advanced White Label Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Palette className="h-5 w-5 mr-2" />
+                Advanced White Label Configuration
+              </h3>
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Hero Title</label>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Hero Title</label>
                   <Input
                     value={whitelabelConfig.heroTitle}
                     onChange={(e) => updateConfig({ heroTitle: e.target.value })}
@@ -395,7 +390,7 @@ const CompanyAdminDashboard: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Hero Subtitle</label>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Hero Subtitle</label>
                   <Input
                     value={whitelabelConfig.heroSubtitle}
                     onChange={(e) => updateConfig({ heroSubtitle: e.target.value })}
@@ -404,16 +399,16 @@ const CompanyAdminDashboard: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Custom CSS</label>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Custom CSS</label>
                   <textarea
                     value={whitelabelConfig.customCss || ''}
                     onChange={(e) => updateConfig({ customCss: e.target.value })}
                     placeholder="/* Custom CSS styles */"
-                    className="w-full px-3 py-2 border rounded h-32"
+                    className={`w-full px-3 py-2 border rounded h-32 ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </TabsContent>
         </Tabs>
       </div>

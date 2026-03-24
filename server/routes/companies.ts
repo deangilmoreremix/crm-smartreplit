@@ -6,7 +6,7 @@ const router = Router();
 
 // Create a new company
 router.post('/', async (req, res) => {
-  const userId = req.session?.userId;
+  const userId = (req.session as any)?.userId;
 
   try {
     const { name, domain, description, industry } = req.body;
@@ -60,11 +60,12 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error creating company:', error);
     res.status(500).json({ error: 'Failed to create company' });
+  }
 });
 
 // Get user's companies
 router.get('/', async (req, res) => {
-  const userId = req.session?.userId;
+const userId = (req.session as any)?.userId;
   try {
     const { data: companies, error } = await supabase
       .from('companies')
@@ -80,11 +81,12 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching companies:', error);
     res.status(500).json({ error: 'Failed to fetch companies' });
+  }
 });
 
 // Get company details
 router.get('/:companyId', async (req, res) => {
-  const userId = req.session?.userId;
+const userId = (req.session as any)?.userId;
   try {
     const { companyId } = req.params;
 
@@ -112,6 +114,7 @@ router.get('/:companyId', async (req, res) => {
   } catch (error) {
     console.error('Error fetching company:', error);
     res.status(500).json({ error: 'Failed to fetch company' });
+  }
 });
 
 // Update company
@@ -146,6 +149,7 @@ router.put('/:companyId', async (req, res) => {
   } catch (error) {
     console.error('Error updating company:', error);
     res.status(500).json({ error: 'Failed to update company' });
+  }
 });
 
 // Get company users
@@ -188,6 +192,7 @@ router.get('/:companyId/users', async (req, res) => {
   } catch (error) {
     console.error('Error fetching company users:', error);
     res.status(500).json({ error: 'Failed to fetch company users' });
+  }
 });
 
 // Invite user to company
@@ -290,6 +295,7 @@ router.post('/:companyId/invitations', async (req, res) => {
   } catch (error) {
     console.error('Error creating invitation:', error);
     res.status(500).json({ error: 'Failed to create invitation' });
+  }
 });
 
 // Accept invitation
@@ -344,6 +350,7 @@ router.post('/invitations/:token/accept', async (req, res) => {
   } catch (error) {
     console.error('Error accepting invitation:', error);
     res.status(500).json({ error: 'Failed to accept invitation' });
+  }
 });
 
 // Get company whitelabel config
@@ -376,6 +383,7 @@ router.get('/:companyId/whitelabel', async (req, res) => {
   } catch (error) {
     console.error('Error fetching whitelabel config:', error);
     res.status(500).json({ error: 'Failed to fetch whitelabel config' });
+  }
 });
 
 // Update company whitelabel config
@@ -412,6 +420,7 @@ router.put('/:companyId/whitelabel', async (req, res) => {
   } catch (error) {
     console.error('Error updating whitelabel config:', error);
     res.status(500).json({ error: 'Failed to update whitelabel config' });
+  }
 });
 
 export default router;

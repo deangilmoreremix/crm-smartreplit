@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/use-toast';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import {
   User,
   Mail,
@@ -19,7 +21,19 @@ import {
   AlertTriangle,
   CheckCircle,
   Camera,
+  X,
+  Plus,
+  Building,
+  Home,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -34,6 +48,29 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+  fieldType: 'text' | 'number' | 'date' | 'url';
+}
+
+interface ValidationErrors {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  website?: string;
+  confirmPassword?: string;
+}
 
 interface UserProfile {
   id: string;
@@ -56,6 +93,8 @@ interface UserProfile {
   pushNotifications: boolean;
   marketingEmails: boolean;
   twoFactorEnabled: boolean;
+  address?: Address;
+  customFields?: CustomField[];
 }
 
 interface SecuritySettings {
@@ -90,6 +129,14 @@ export default function UserProfilePage() {
     pushNotifications: true,
     marketingEmails: false,
     twoFactorEnabled: false,
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: '',
+    },
+    customFields: [],
   });
 
   const [security, setSecurity] = useState<SecuritySettings>({
@@ -97,6 +144,79 @@ export default function UserProfilePage() {
     newPassword: '',
     confirmPassword: '',
   });
+
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [newCustomField, setNewCustomField] = useState<CustomField>({
+    id: '',
+    label: '',
+    value: '',
+    fieldType: 'text',
+  });
+  const [showAddField, setShowAddField] = useState(false);
+
+  // Calculate profile completeness
+  const profileCompleteness = useMemo(() => {
+    const fields = [
+      profile.firstName,
+      profile.lastName,
+      profile.phone,
+      profile.avatar,
+      profile.bio,
+      profile.company,
+      profile.position,
+      profile.location,
+      profile.website,
+      profile.address?.street,
+      profile.address?.city,
+      profile.address?.state,
+      profile.address?.zipCode,
+      profile.address?.country,
+    ];
+    
+    const filledFields = fields.filter(field => field && field.trim() !== '').length;
+    const totalFields = fields.length;
+    
+    const customFieldsFilled = profile.customFields?.filter(f => f.value && f.value.trim() !== '').length || 0;
+    const totalCustomFields = profile.customFields?.length || 0;
+    
+    return Math.round(((filledFields + customFieldsFilled) / (totalFields + (totalCustomFields || 1))) * 100) || 0;
+  }, [profile]);
+
+  // Form validation
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+    let isValid = true;
+
+    if (!profile.firstName.trim()) {
+      errors.firstName = 'First name is required';
+      isValid = false;
+    }
+
+    if (!profile.lastName.trim()) {
+      errors.lastName = 'Last name is required';
+      isValid = false;
+    }
+
+    if (profile.phone && !/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/.test(profile.phone)) {
+      errors.phone = 'Please enter a valid phone number';
+      isValid = false;
+    }
+
+    if (profile.website && !/^(https?:\/\/)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(profile.website)) {
+      errors.website = 'Please enter a valid website URL';
+      isValid = false;
+    }
+
+    if (security.newPassword !== security.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
 
   const [showPasswords, setShowPasswords] = useState({
     current: false,
@@ -169,6 +289,16 @@ export default function UserProfilePage() {
   };
 
   const updateProfile = async () => {
+    // Validate form before saving
+    if (!validateForm()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fix the errors in the form before saving',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       setLoading(true);
 
@@ -421,6 +551,29 @@ export default function UserProfilePage() {
         </div>
       </div>
 
+      {/* Profile Completeness Indicator */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Profile Completeness</span>
+            <span className={`text-sm font-bold ${profileCompleteness >= 80 ? 'text-green-600' : profileCompleteness >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+              {profileCompleteness}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+            <div
+              className={`h-2.5 rounded-full transition-all duration-500 ${profileCompleteness >= 80 ? 'bg-green-600' : profileCompleteness >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+              style={{ width: `${profileCompleteness}%` }}
+            ></div>
+          </div>
+          {profileCompleteness < 100 && (
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+              Complete your profile by adding more information to get the most out of SmartCRM
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <Tabs value="profile" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -480,22 +633,40 @@ export default function UserProfilePage() {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">First Name *</Label>
                   <Input
                     id="firstName"
                     value={profile.firstName}
-                    onChange={(e) => setProfile((prev) => ({ ...prev, firstName: e.target.value }))}
+                    onChange={(e) => {
+                      setProfile((prev) => ({ ...prev, firstName: e.target.value }));
+                      if (validationErrors.firstName) {
+                        setValidationErrors((prev) => ({ ...prev, firstName: undefined }));
+                      }
+                    }}
                     placeholder="John"
+                    className={validationErrors.firstName ? 'border-red-500' : ''}
                   />
+                  {validationErrors.firstName && (
+                    <p className="text-xs text-red-500 mt-1">{validationErrors.firstName}</p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={profile.lastName}
-                    onChange={(e) => setProfile((prev) => ({ ...prev, lastName: e.target.value }))}
+                    onChange={(e) => {
+                      setProfile((prev) => ({ ...prev, lastName: e.target.value }));
+                      if (validationErrors.lastName) {
+                        setValidationErrors((prev) => ({ ...prev, lastName: undefined }));
+                      }
+                    }}
                     placeholder="Doe"
+                    className={validationErrors.lastName ? 'border-red-500' : ''}
                   />
+                  {validationErrors.lastName && (
+                    <p className="text-xs text-red-500 mt-1">{validationErrors.lastName}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="username">Username</Label>
@@ -524,9 +695,18 @@ export default function UserProfilePage() {
                   <Input
                     id="phone"
                     value={profile.phone}
-                    onChange={(e) => setProfile((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) => {
+                      setProfile((prev) => ({ ...prev, phone: e.target.value }));
+                      if (validationErrors.phone) {
+                        setValidationErrors((prev) => ({ ...prev, phone: undefined }));
+                      }
+                    }}
                     placeholder="+1 (555) 123-4567"
+                    className={validationErrors.phone ? 'border-red-500' : ''}
                   />
+                  {validationErrors.phone && (
+                    <p className="text-xs text-red-500 mt-1">{validationErrors.phone}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="location">Location</Label>
@@ -564,9 +744,18 @@ export default function UserProfilePage() {
                   <Input
                     id="website"
                     value={profile.website}
-                    onChange={(e) => setProfile((prev) => ({ ...prev, website: e.target.value }))}
+                    onChange={(e) => {
+                      setProfile((prev) => ({ ...prev, website: e.target.value }));
+                      if (validationErrors.website) {
+                        setValidationErrors((prev) => ({ ...prev, website: undefined }));
+                      }
+                    }}
                     placeholder="https://example.com"
+                    className={validationErrors.website ? 'border-red-500' : ''}
                   />
+                  {validationErrors.website && (
+                    <p className="text-xs text-red-500 mt-1">{validationErrors.website}</p>
+                  )}
                 </div>
               </div>
 
@@ -580,6 +769,168 @@ export default function UserProfilePage() {
                   placeholder="Tell us about yourself..."
                   rows={4}
                 />
+              </div>
+
+              {/* Address Section */}
+              <div className="border-t pt-6">
+                <h3 className="font-medium text-lg mb-4 flex items-center gap-2">
+                  <Home className="h-5 w-5" />
+                  Address
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="street">Street Address</Label>
+                    <Input
+                      id="street"
+                      value={profile.address?.street || ''}
+                      onChange={(e) => setProfile((prev) => ({ ...prev, address: { ...prev.address!, street: e.target.value } }))}
+                      placeholder="123 Main Street"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={profile.address?.city || ''}
+                      onChange={(e) => setProfile((prev) => ({ ...prev, address: { ...prev.address!, city: e.target.value } }))}
+                      placeholder="New York"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="state">State/Province</Label>
+                    <Input
+                      id="state"
+                      value={profile.address?.state || ''}
+                      onChange={(e) => setProfile((prev) => ({ ...prev, address: { ...prev.address!, state: e.target.value } }))}
+                      placeholder="NY"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zipCode">ZIP/Postal Code</Label>
+                    <Input
+                      id="zipCode"
+                      value={profile.address?.zipCode || ''}
+                      onChange={(e) => setProfile((prev) => ({ ...prev, address: { ...prev.address!, zipCode: e.target.value } }))}
+                      placeholder="10001"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      value={profile.address?.country || ''}
+                      onChange={(e) => setProfile((prev) => ({ ...prev, address: { ...prev.address!, country: e.target.value } }))}
+                      placeholder="United States"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Fields Section */}
+              <div className="border-t pt-6">
+                <h3 className="font-medium text-lg mb-4 flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  Custom Fields
+                </h3>
+                
+                {profile.customFields && profile.customFields.length > 0 ? (
+                  <div className="space-y-4 mb-4">
+                    {profile.customFields.map((field, index) => (
+                      <div key={field.id || index} className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <Label>{field.label}</Label>
+                          {(field.fieldType === 'text' || field.fieldType === 'url') ? (
+                            <Textarea
+                              value={field.value}
+                              onChange={(e) => {
+                                const newFields = [...(profile.customFields || [])];
+                                newFields[index] = { ...field, value: e.target.value };
+                                setProfile((prev) => ({ ...prev, customFields: newFields }));
+                              }}
+                              placeholder={`Enter ${field.label.toLowerCase()}`}
+                              rows={2}
+                            />
+                          ) : (
+                            <Input
+                              type={field.fieldType === 'number' ? 'number' : field.fieldType === 'date' ? 'date' : field.fieldType === 'url' ? 'url' : 'text'}
+                              value={field.value}
+                              onChange={(e) => {
+                                const newFields = [...(profile.customFields || [])];
+                                newFields[index] = { ...field, value: e.target.value };
+                                setProfile((prev) => ({ ...prev, customFields: newFields }));
+                              }}
+                              placeholder={`Enter ${field.label.toLowerCase()}`}
+                            />
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="mt-6 text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            const newFields = (profile.customFields || []).filter((_, i) => i !== index);
+                            setProfile((prev) => ({ ...prev, customFields: newFields }));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-4">No custom fields added yet</p>
+                )}
+                
+                {/* Add New Custom Field */}
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <h4 className="font-medium text-sm mb-3">Add Custom Field</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label>Field Label</Label>
+                      <Input
+                        value={newCustomField.label}
+                        onChange={(e) => setNewCustomField((prev) => ({ ...prev, label: e.target.value }))}
+                        placeholder="e.g., LinkedIn URL"
+                      />
+                    </div>
+                    <div>
+                      <Label>Field Type</Label>
+                      <Select
+                        value={newCustomField.fieldType}
+                        onValueChange={(value) => setNewCustomField((prev) => ({ ...prev, fieldType: value as 'text' | 'number' | 'date' | 'url' }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Text</SelectItem>
+                          <SelectItem value="number">Number</SelectItem>
+                          <SelectItem value="date">Date</SelectItem>
+                          <SelectItem value="url">URL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (newCustomField.label.trim()) {
+                            setProfile((prev) => ({
+                              ...prev,
+                              customFields: [...(prev.customFields || []), { ...newCustomField, id: Date.now().toString() }],
+                            }));
+                            setNewCustomField({ id: '', label: '', value: '', fieldType: 'text' });
+                          }
+                        }}
+                        disabled={!newCustomField.label.trim()}
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Field
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <Button onClick={updateProfile} disabled={loading} className="w-full md:w-auto">
@@ -724,7 +1075,7 @@ export default function UserProfilePage() {
                     Permanently delete your account and all data
                   </p>
                 </div>
-                <Button onClick={deleteAccount} variant="destructive" size="sm">
+                <Button onClick={() => setShowDeleteDialog(true)} variant="destructive" size="sm">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete Account
                 </Button>
@@ -845,6 +1196,58 @@ export default function UserProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Account
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete your account? This action is irreversible and all your data will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="confirmDelete">Type <span className="font-bold">DELETE</span> to confirm</Label>
+            <Input
+              id="confirmDelete"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowDeleteDialog(false);
+              setDeleteConfirmText('');
+            }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteConfirmText === 'DELETE') {
+                  deleteAccount();
+                  setShowDeleteDialog(false);
+                } else {
+                  toast({
+                    title: 'Error',
+                    description: 'Please type DELETE to confirm account deletion',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              disabled={deleteConfirmText !== 'DELETE'}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete My Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

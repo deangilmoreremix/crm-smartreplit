@@ -364,7 +364,7 @@ router.get('/users', async (req: Request, res: Response) => {
       success: true,
       data: {
         users: data.users,
-        total: data.total,
+        total: data.total_metadata?.total_count ?? data.users.length,
       },
     });
   } catch (err: any) {

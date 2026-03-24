@@ -4,6 +4,8 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import AdvancedFeaturesDashboard from '../components/AdvancedFeaturesDashboard';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import {
   CheckCircle,
   Clock,
@@ -18,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function SystemOverview() {
+  const { isDark } = useTheme();
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
 
   const phases = [
@@ -158,63 +161,47 @@ export default function SystemOverview() {
 
         {/* System Health Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Activity className="w-4 h-4" />
-                System Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600 mb-1">{systemMetrics.uptime}%</div>
-              <p className="text-sm text-gray-600">Uptime</p>
-            </CardContent>
-          </Card>
+          <GlassCard className="p-4">
+            <h3 className={`text-base flex items-center gap-2 mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <Activity className="w-4 h-4" />
+              System Health
+            </h3>
+            <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-green-400' : 'text-green-600'}`}>{systemMetrics.uptime}%</div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Uptime</p>
+          </GlassCard>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                Performance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {systemMetrics.performance}%
-              </div>
-              <p className="text-sm text-gray-600">Score</p>
-            </CardContent>
-          </Card>
+          <GlassCard className="p-4">
+            <h3 className={`text-base flex items-center gap-2 mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <Zap className="w-4 h-4" />
+              Performance
+            </h3>
+            <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              {systemMetrics.performance}%
+            </div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Score</p>
+          </GlassCard>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Security
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {systemMetrics.security}%
-              </div>
-              <p className="text-sm text-gray-600">Score</p>
-            </CardContent>
-          </Card>
+          <GlassCard className="p-4">
+            <h3 className={`text-base flex items-center gap-2 mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <Shield className="w-4 h-4" />
+              Security
+            </h3>
+            <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+              {systemMetrics.security}%
+            </div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Score</p>
+          </GlassCard>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                User Satisfaction
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600 mb-1">
-                {systemMetrics.userSatisfaction}%
-              </div>
-              <p className="text-sm text-gray-600">Rating</p>
-            </CardContent>
-          </Card>
+          <GlassCard className="p-4">
+            <h3 className={`text-base flex items-center gap-2 mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <Users className="w-4 h-4" />
+              User Satisfaction
+            </h3>
+            <div className={`text-2xl font-bold mb-1 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
+              {systemMetrics.userSatisfaction}%
+            </div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Rating</p>
+          </GlassCard>
         </div>
 
         {/* Development Phases */}
@@ -285,99 +272,87 @@ export default function SystemOverview() {
 
         {/* Feature Highlights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>🚀 Key Achievements</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  {
-                    title: 'Complete CRM Foundation',
-                    description: 'Full contact management, deal pipeline, and task tracking system',
-                    icon: Database,
-                  },
-                  {
-                    title: 'AI-Powered Intelligence',
-                    description: 'Smart insights, automated suggestions, and workflow automation',
-                    icon: Zap,
-                  },
-                  {
-                    title: 'Enterprise Security',
-                    description: 'Advanced permissions, audit trails, and compliance tools',
-                    icon: Shield,
-                  },
-                  {
-                    title: 'Mobile-First Design',
-                    description: 'Responsive interface with touch gestures and offline support',
-                    icon: Activity,
-                  },
-                  {
-                    title: 'Comprehensive Analytics',
-                    description: 'Advanced reporting, forecasting, and business intelligence',
-                    icon: BarChart3,
-                  },
-                  {
-                    title: 'Integration Ecosystem',
-                    description: 'API management, webhooks, and external service connections',
-                    icon: Globe,
-                  },
-                ].map((achievement) => {
-                  const IconComponent = achievement.icon;
-                  return (
-                    <div
-                      key={achievement.title}
-                      className="flex items-start gap-3 p-3 bg-green-50 rounded-lg"
-                    >
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <IconComponent className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-green-900">{achievement.title}</h4>
-                        <p className="text-sm text-green-700">{achievement.description}</p>
-                      </div>
+          <GlassCard className="p-6">
+            <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>🚀 Key Achievements</h3>
+            <div className="space-y-4">
+              {[
+                {
+                  title: 'Complete CRM Foundation',
+                  description: 'Full contact management, deal pipeline, and task tracking system',
+                  icon: Database,
+                },
+                {
+                  title: 'AI-Powered Intelligence',
+                  description: 'Smart insights, automated suggestions, and workflow automation',
+                  icon: Zap,
+                },
+                {
+                  title: 'Enterprise Security',
+                  description: 'Advanced permissions, audit trails, and compliance tools',
+                  icon: Shield,
+                },
+                {
+                  title: 'Mobile-First Design',
+                  description: 'Responsive interface with touch gestures and offline support',
+                  icon: Activity,
+                },
+                {
+                  title: 'Comprehensive Analytics',
+                  description: 'Advanced reporting, forecasting, and business intelligence',
+                  icon: BarChart3,
+                },
+                {
+                  title: 'Integration Ecosystem',
+                  description: 'API management, webhooks, and external service connections',
+                  icon: Globe,
+                },
+              ].map((achievement) => {
+                const IconComponent = achievement.icon;
+                return (
+                  <div
+                    key={achievement.title}
+                    className={`flex items-start gap-3 p-3 rounded-lg ${isDark ? 'bg-green-900/30' : 'bg-green-50'}`}
+                  >
+                    <div className={`p-2 rounded-lg ${isDark ? 'bg-green-900/50' : 'bg-green-100'}`}>
+                      <IconComponent className={`w-4 h-4 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>📊 Implementation Statistics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: 'Total Components', value: '156', color: 'text-blue-600' },
-                  { label: 'Pages Created', value: '23', color: 'text-green-600' },
-                  { label: 'API Endpoints', value: '67', color: 'text-purple-600' },
-                  { label: 'UI Components', value: '89', color: 'text-orange-600' },
-                  { label: 'Store Actions', value: '234', color: 'text-indigo-600' },
-                  { label: 'Type Definitions', value: '178', color: 'text-pink-600' },
-                  { label: 'Test Cases', value: '145', color: 'text-teal-600' },
-                  { label: 'Documentation', value: '95%', color: 'text-red-600' },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center p-3 border rounded-lg">
-                    <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                    <div className="text-sm text-gray-600">{stat.label}</div>
+                    <div>
+                      <h4 className={`font-medium ${isDark ? 'text-green-400' : 'text-green-900'}`}>{achievement.title}</h4>
+                      <p className={`text-sm ${isDark ? 'text-green-400/80' : 'text-green-700'}`}>{achievement.description}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                );
+              })}
+            </div>
+          </GlassCard>
+
+          <GlassCard className="p-6">
+            <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>📊 Implementation Statistics</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Total Components', value: '156', color: isDark ? 'text-blue-400' : 'text-blue-600' },
+                { label: 'Pages Created', value: '23', color: isDark ? 'text-green-400' : 'text-green-600' },
+                { label: 'API Endpoints', value: '67', color: isDark ? 'text-purple-400' : 'text-purple-600' },
+                { label: 'UI Components', value: '89', color: isDark ? 'text-orange-400' : 'text-orange-600' },
+                { label: 'Store Actions', value: '234', color: isDark ? 'text-indigo-400' : 'text-indigo-600' },
+                { label: 'Type Definitions', value: '178', color: isDark ? 'text-pink-400' : 'text-pink-600' },
+                { label: 'Test Cases', value: '145', color: isDark ? 'text-teal-400' : 'text-teal-600' },
+                { label: 'Documentation', value: '95%', color: isDark ? 'text-red-400' : 'text-red-600' },
+              ].map((stat) => (
+                <div key={stat.label} className={`text-center p-3 rounded-lg ${isDark ? 'border border-gray-700' : 'border'}`}>
+                  <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
+                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </GlassCard>
         </div>
 
         {/* Advanced Features Demo */}
-        <Card>
-          <CardHeader>
-            <CardTitle>🎯 Advanced Features Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AdvancedFeaturesDashboard />
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>🎯 Advanced Features Overview</h3>
+          <AdvancedFeaturesDashboard />
+        </GlassCard>
 
         {/* Next Steps */}
         <Card className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">

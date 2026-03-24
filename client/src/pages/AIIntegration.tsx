@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import AIAutomationDashboard from '../components/AIAutomationDashboard';
 import { Bot, Brain, Zap, Settings, Database, Globe, Shield, Activity, Plus } from 'lucide-react';
 
 export default function AIIntegration() {
+  const { isDark } = useTheme();
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
 
   const integrationCategories = [
@@ -87,61 +89,53 @@ export default function AIIntegration() {
     <div className="space-y-6">
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Connected</CardTitle>
-            <Bot className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {integrationCategories.reduce(
-                (sum, cat) => sum + cat.integrations.filter((i) => i.status === 'connected').length,
-                0
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Active integrations</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Connected</span>
+            <Bot className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {integrationCategories.reduce(
+              (sum, cat) => sum + cat.integrations.filter((i) => i.status === 'connected').length,
+              0
+            )}
+          </div>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Active integrations</p>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {integrationCategories.reduce(
-                (sum, cat) => sum + cat.integrations.filter((i) => i.status === 'available').length,
-                0
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Ready to connect</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Available</span>
+            <Zap className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {integrationCategories.reduce(
+              (sum, cat) => sum + cat.integrations.filter((i) => i.status === 'available').length,
+              0
+            )}
+          </div>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Ready to connect</p>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{integrationCategories.length}</div>
-            <p className="text-xs text-muted-foreground">Integration types</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Categories</span>
+            <Database className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{integrationCategories.length}</div>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Integration types</p>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Available</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {integrationCategories.reduce((sum, cat) => sum + cat.integrations.length, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">All integrations</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Total Available</span>
+            <Globe className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {integrationCategories.reduce((sum, cat) => sum + cat.integrations.length, 0)}
+          </div>
+          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>All integrations</p>
+        </GlassCard>
       </div>
 
       {/* Integration Categories */}
@@ -149,65 +143,65 @@ export default function AIIntegration() {
         {integrationCategories.map((category) => {
           const IconComponent = category.icon;
           return (
-            <Card key={category.name}>
-              <CardHeader>
+            <GlassCard key={category.name} className="p-6">
+              <div className="mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <IconComponent className="w-5 h-5 text-blue-600" />
+                  <div className={`p-2 rounded-lg ${isDark ? 'bg-blue-900/50' : 'bg-blue-100'}`}>
+                    <IconComponent className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{category.name}</CardTitle>
-                    <p className="text-sm text-gray-600">{category.description}</p>
+                    <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{category.name}</h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{category.description}</p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {category.integrations.map((integration) => (
-                    <div
-                      key={integration.name}
-                      className={`p-4 border rounded-lg transition-all cursor-pointer hover:border-blue-300 ${
-                        selectedIntegration === integration.name ? 'border-blue-500 bg-blue-50' : ''
-                      }`}
-                      onClick={() =>
-                        setSelectedIntegration(
-                          selectedIntegration === integration.name ? null : integration.name
-                        )
-                      }
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">{integration.name}</h4>
-                        <div
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            integration.status === 'connected'
-                              ? 'bg-green-100 text-green-800'
-                              : integration.status === 'enabled'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {integration.status}
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-600 capitalize mb-3">
-                        {integration.type.replace('-', ' ')}
-                      </p>
-                      <Button
-                        size="sm"
-                        variant={integration.status === 'connected' ? 'outline' : 'default'}
-                        className="w-full"
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {category.integrations.map((integration) => (
+                  <div
+                    key={integration.name}
+                    className={`p-4 border rounded-lg transition-all cursor-pointer hover:border-blue-300 ${
+                      selectedIntegration === integration.name 
+                        ? `border-blue-500 ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}` 
+                        : isDark ? 'border-gray-700' : ''
+                    }`}
+                    onClick={() =>
+                      setSelectedIntegration(
+                        selectedIntegration === integration.name ? null : integration.name
+                      )
+                    }
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{integration.name}</h4>
+                      <div
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          integration.status === 'connected'
+                            ? 'bg-green-100 text-green-800'
+                            : integration.status === 'enabled'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
                       >
-                        {integration.status === 'connected'
-                          ? 'Configure'
-                          : integration.status === 'enabled'
-                            ? 'Manage'
-                            : 'Connect'}
-                      </Button>
+                        {integration.status}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <p className={`text-xs capitalize mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {integration.type.replace('-', ' ')}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant={integration.status === 'connected' ? 'outline' : 'default'}
+                      className="w-full"
+                    >
+                      {integration.status === 'connected'
+                        ? 'Configure'
+                        : integration.status === 'enabled'
+                          ? 'Manage'
+                          : 'Connect'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
           );
         })}
       </div>
@@ -217,57 +211,50 @@ export default function AIIntegration() {
   const SettingsTab = () => (
     <div className="space-y-6">
       {/* AI Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Model Configuration</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Primary AI Model</label>
-                <select className="w-full p-2 border rounded-lg">
-                  <option>GPT-4 (OpenAI)</option>
-                  <option>Claude-3 (Anthropic)</option>
-                  <option>Gemini Pro (Google)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Fallback Model</label>
-                <select className="w-full p-2 border rounded-lg">
-                  <option>GPT-3.5 Turbo</option>
-                  <option>Claude-2</option>
-                  <option>PaLM 2</option>
-                </select>
-              </div>
+      <GlassCard className="p-6">
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>AI Model Configuration</h3>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Primary AI Model</label>
+              <select className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+                <option>GPT-4 (OpenAI)</option>
+                <option>Claude-3 (Anthropic)</option>
+                <option>Gemini Pro (Google)</option>
+              </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">AI Response Temperature</label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                defaultValue="0.7"
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Conservative (0.0)</span>
-                <span>Balanced (0.5)</span>
-                <span>Creative (1.0)</span>
-              </div>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Fallback Model</label>
+              <select className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+                <option>GPT-3.5 Turbo</option>
+                <option>Claude-2</option>
+                <option>PaLM 2</option>
+              </select>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>AI Response Temperature</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              defaultValue="0.7"
+              className="w-full"
+            />
+            <div className={`flex justify-between text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              <span>Conservative (0.0)</span>
+              <span>Balanced (0.5)</span>
+              <span>Creative (1.0)</span>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
 
       {/* Automation Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Automation Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+      <GlassCard className="p-6">
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Automation Settings</h3>
+        <div className="space-y-4">
             {[
               {
                 name: 'Auto-generate insights',
@@ -314,15 +301,12 @@ export default function AIIntegration() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </GlassCard>
 
       {/* API Keys Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>API Keys & Security</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <GlassCard className="p-6">
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>API Keys & Security</h3>
+        <div>
           <div className="space-y-4">
             {[
               { service: 'OpenAI API', status: 'configured', lastUsed: '2 minutes ago' },
@@ -356,31 +340,26 @@ export default function AIIntegration() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </GlassCard>
 
       {/* Usage & Billing */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Usage & Billing</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 border rounded-lg">
-              <h4 className="font-medium text-lg">$127.45</h4>
-              <p className="text-sm text-gray-600">This month's spend</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <h4 className="font-medium text-lg">15,234</h4>
-              <p className="text-sm text-gray-600">API calls made</p>
-            </div>
-            <div className="text-center p-4 border rounded-lg">
-              <h4 className="font-medium text-lg">2.1M</h4>
-              <p className="text-sm text-gray-600">Tokens used</p>
-            </div>
+      <GlassCard className="p-6">
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Usage & Billing</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`text-center p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>$127.45</h4>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>This month's spend</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className={`text-center p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>15,234</h4>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>API calls made</p>
+          </div>
+          <div className={`text-center p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+            <h4 className={`font-medium text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>2.1M</h4>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Tokens used</p>
+          </div>
+        </div>
+      </GlassCard>
     </div>
   );
 

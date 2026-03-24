@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Progress } from '../components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import { gpt5Communication } from '../services/gpt5CommunicationService';
@@ -465,49 +466,42 @@ export default function VideoEmailDashboard() {
             </div>
           ) : stats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    Performance Overview
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Views</span>
-                      <span className="font-semibold">
-                        {displayStats.totalViews.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Average Completion</span>
-                      <span className="font-semibold">
-                        {Math.round(displayStats.averageEngagement * 100)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Conversion Rate</span>
-                      <span className="font-semibold">
-                        {Math.round(displayStats.conversionRate * 100)}%
-                      </span>
-                    </div>
+              <GlassCard className="p-6">
+                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <BarChart3 className="h-5 w-5" />
+                  Performance Overview
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Total Views</span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {displayStats.totalViews.toLocaleString()}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Average Completion</span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {Math.round(displayStats.averageEngagement * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Conversion Rate</span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {Math.round(displayStats.conversionRate * 100)}%
+                    </span>
+                  </div>
+                </div>
+              </GlassCard>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Top Performing Video
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      {displayStats.topPerformingVideo}
-                    </h4>
+              <GlassCard className="p-6">
+                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <TrendingUp className="h-5 w-5" />
+                  Top Performing Video
+                </h3>
+                <div className="space-y-3">
+                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {displayStats.topPerformingVideo}
+                  </h4>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Views</span>
@@ -521,8 +515,7 @@ export default function VideoEmailDashboard() {
                       <Progress value={85} className="h-2" />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </GlassCard>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -539,185 +532,169 @@ export default function VideoEmailDashboard() {
 
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Script Generator
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="recipient">Recipient</Label>
-                      <Input id="recipient" placeholder="John Doe, Acme Corp" />
-                    </div>
-                    <div>
-                      <Label htmlFor="purpose">Purpose</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select purpose" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="demo">Product Demo</SelectItem>
-                          <SelectItem value="welcome">Welcome Message</SelectItem>
-                          <SelectItem value="followup">Follow-up</SelectItem>
-                          <SelectItem value="announcement">Announcement</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="tone">Tone</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select tone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
-                          <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                          <SelectItem value="formal">Formal</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() =>
-                        generateVideoScript({
-                          recipient: { name: 'John Doe', company: 'Acme Corp' },
-                          purpose: 'product demonstration',
-                          tone: 'professional',
-                          length: 90,
-                        })
-                      }
-                      disabled={isGeneratingScript}
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {isGeneratingScript ? 'Generating...' : 'Generate Script'}
-                    </Button>
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Sparkles className="h-5 w-5" />
+                Script Generator
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="recipient">Recipient</Label>
+                    <Input id="recipient" placeholder="John Doe, Acme Corp" />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Camera className="h-5 w-5" />
-                  Content Optimizer
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Textarea
-                    placeholder="Paste your video script here for AI optimization..."
-                    rows={6}
-                  />
-                  <Button className="w-full" variant="outline">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Optimize Content
+                  <div>
+                    <Label htmlFor="purpose">Purpose</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select purpose" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="demo">Product Demo</SelectItem>
+                        <SelectItem value="welcome">Welcome Message</SelectItem>
+                        <SelectItem value="followup">Follow-up</SelectItem>
+                        <SelectItem value="announcement">Announcement</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="tone">Tone</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="friendly">Friendly</SelectItem>
+                        <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                        <SelectItem value="formal">Formal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      generateVideoScript({
+                        recipient: { name: 'John Doe', company: 'Acme Corp' },
+                        purpose: 'product demonstration',
+                        tone: 'professional',
+                        length: 90,
+                      })
+                    }
+                    disabled={isGeneratingScript}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isGeneratingScript ? 'Generating...' : 'Generate Script'}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
+
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Camera className="h-5 w-5" />
+                Content Optimizer
+              </h3>
+              <div className="space-y-4">
+                <Textarea
+                  placeholder="Paste your video script here for AI optimization..."
+                  rows={6}
+                />
+                <Button className="w-full" variant="outline">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Optimize Content
+                </Button>
+              </div>
+            </GlassCard>
           </div>
 
           {generatedScript && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Generated Script
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <pre className="whitespace-pre-wrap text-sm">{generatedScript}</pre>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <Button size="sm">
-                    <Edit3 className="h-4 w-4 mr-1" />
-                    Edit Script
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    <Camera className="h-4 w-4 mr-1" />
-                    Create Video
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <FileText className="h-5 w-5" />
+                Generated Script
+              </h3>
+              <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
+                <pre className={`whitespace-pre-wrap text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{generatedScript}</pre>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Button size="sm">
+                  <Edit3 className="h-4 w-4 mr-1" />
+                  Edit Script
+                </Button>
+                <Button size="sm" variant="outline">
+                  <Camera className="h-4 w-4 mr-1" />
+                  Create Video
+                </Button>
+              </div>
+            </GlassCard>
           )}
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Video Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Default Video Quality</Label>
-                    <Select value={videoQuality} onValueChange={setVideoQuality}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="720p">720p</SelectItem>
-                        <SelectItem value="1080p">1080p</SelectItem>
-                        <SelectItem value="4k">4K</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Video Settings</h3>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Default Video Quality</Label>
+                  <Select value={videoQuality} onValueChange={setVideoQuality}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="720p">720p</SelectItem>
+                      <SelectItem value="1080p">1080p</SelectItem>
+                      <SelectItem value="4k">4K</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Default Duration</Label>
-                    <Select value={defaultDuration} onValueChange={setDefaultDuration}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="60">1 minute</SelectItem>
-                        <SelectItem value="120">2 minutes</SelectItem>
-                        <SelectItem value="180">3 minutes</SelectItem>
-                        <SelectItem value="300">5 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Default Duration</Label>
+                  <Select value={defaultDuration} onValueChange={setDefaultDuration}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="60">1 minute</SelectItem>
+                      <SelectItem value="120">2 minutes</SelectItem>
+                      <SelectItem value="180">3 minutes</SelectItem>
+                      <SelectItem value="300">5 minutes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Auto-save Interval</Label>
-                    <Select value={autoSaveInterval} onValueChange={setAutoSaveInterval}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 seconds</SelectItem>
-                        <SelectItem value="30">30 seconds</SelectItem>
-                        <SelectItem value="60">1 minute</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Auto-save Interval</Label>
+                  <Select value={autoSaveInterval} onValueChange={setAutoSaveInterval}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">15 seconds</SelectItem>
+                      <SelectItem value="30">30 seconds</SelectItem>
+                      <SelectItem value="60">1 minute</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>AI Optimization Level</Label>
-                    <Select value={aiOptimizationLevel} onValueChange={setAiOptimizationLevel}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="conservative">Conservative</SelectItem>
-                        <SelectItem value="balanced">Balanced</SelectItem>
-                        <SelectItem value="aggressive">Aggressive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>AI Optimization Level</Label>
+                  <Select value={aiOptimizationLevel} onValueChange={setAiOptimizationLevel}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="conservative">Conservative</SelectItem>
+                      <SelectItem value="balanced">Balanced</SelectItem>
+                      <SelectItem value="aggressive">Aggressive</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 

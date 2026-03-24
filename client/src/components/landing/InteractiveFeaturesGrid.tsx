@@ -15,6 +15,7 @@ import {
   FileText,
   ChevronRight,
 } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Feature {
   id: string;
@@ -28,6 +29,7 @@ interface Feature {
 
 const InteractiveFeaturesGrid: React.FC = () => {
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
+  const { isDark } = useTheme();
 
   const features: Feature[] = [
     {
@@ -121,13 +123,13 @@ const InteractiveFeaturesGrid: React.FC = () => {
   ];
 
   return (
-    <div className="py-16 bg-gradient-to-r from-gray-50 to-blue-50">
+    <div className={`py-16 ${isDark ? 'bg-gradient-to-r from-slate-900 to-slate-800' : 'bg-gradient-to-r from-gray-50 to-blue-50'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className={`text-3xl md:text-4xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-4`}>
             Interactive Feature Experience
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className={`text-xl ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-3xl mx-auto`}>
             Explore our powerful features and see how they can transform your sales process
           </p>
         </div>
@@ -142,7 +144,7 @@ const InteractiveFeaturesGrid: React.FC = () => {
               onMouseLeave={() => setHoveredFeature(null)}
             >
               <div
-                className={`h-full bg-white rounded-xl shadow-lg p-6 border border-gray-200 transition-all duration-500 transform ${
+                className={`h-full ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg p-6 border transition-all duration-500 transform ${
                   hoveredFeature === feature.id ? 'scale-105 shadow-xl -rotate-1' : 'scale-100'
                 } animation-fix hover:z-10`}
               >
@@ -154,14 +156,14 @@ const InteractiveFeaturesGrid: React.FC = () => {
                   >
                     {feature.icon}
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 mb-6 flex-grow">{feature.description}</p>
+                  <h3 className={`text-xl font-bold mb-3 ${isDark ? 'text-white' : ''}`}>{feature.title}</h3>
+                  <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-6 flex-grow`}>{feature.description}</p>
                   <div className="mt-auto">
                     <span
                       className={`inline-flex items-center font-medium transition-all duration-300 ${
                         hoveredFeature === feature.id
-                          ? 'text-blue-700 translate-x-2'
-                          : 'text-blue-600'
+                          ? isDark ? 'text-primary' : 'text-blue-700'
+                          : isDark ? 'text-primary/80' : 'text-blue-600'
                       }`}
                     >
                       Explore {feature.title}
@@ -170,9 +172,8 @@ const InteractiveFeaturesGrid: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Particle effect on hover */}
                 {hoveredFeature === feature.id && (
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600 rounded-xl opacity-20 group-hover:opacity-40 blur-lg transition-opacity z-[-1]"></div>
+                  <div className={`absolute -inset-1 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600 rounded-xl opacity-20 group-hover:opacity-40 blur-lg transition-opacity z-[-1] ${isDark ? 'opacity-30' : ''}`}></div>
                 )}
               </div>
             </Link>

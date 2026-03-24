@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 import { Contact } from '../types';
 import {
   Plus,
@@ -42,6 +43,7 @@ import ContactImport from '../components/contacts/ContactImport';
 import ContactExport from '../components/contacts/ContactExport';
 
 const Contacts: React.FC = () => {
+  const { isDark } = useTheme();
   // Use the contact store
   const {
     contacts: storeContacts,

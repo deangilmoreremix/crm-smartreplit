@@ -211,8 +211,8 @@ export async function handleAuthWebhook(req: Request, res: Response) {
 
       // Send role-based welcome email
       await sendRoleBasedWelcomeEmail(email, role, {
-        firstName: metadata.firstName || metadata.first_name,
-        lastName: metadata.lastName || metadata.last_name,
+        firstName: (metadata as any).firstName || (metadata as any).first_name || '',
+        lastName: (metadata as any).lastName || (metadata as any).last_name || '',
       });
 
       console.log(`Processed auth webhook for ${email} with role ${role} and tier ${productTier}`);

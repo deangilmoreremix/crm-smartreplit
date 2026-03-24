@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import { Textarea } from '../components/ui/textarea';
 import { useToast } from '../hooks/use-toast';
 import { Upload, Users, Mail, CheckCircle, XCircle, AlertCircle, Shield } from 'lucide-react';
@@ -26,6 +27,7 @@ interface ImportResult {
 }
 
 export default function BulkImportPage() {
+  const { isDark } = useTheme();
   const [csvContent, setCsvContent] = useState('');
   const [parsedUsers, setParsedUsers] = useState<BulkUser[]>([]);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -236,29 +238,27 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
       </div>
 
       {step === 'upload' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-              Upload CSV Data
-            </CardTitle>
-            <CardDescription>
-              Paste your CSV data below. Required columns: email, first_name, last_name
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <Upload className="w-5 h-5" />
+            Upload CSV Data
+          </h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            Paste your CSV data below. Required columns: email, first_name, last_name
+          </p>
+          <div className="space-y-4">
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
               <div className="flex items-start">
-                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 mr-2" />
+                <AlertCircle className={`h-4 w-4 mt-0.5 mr-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
                 <div>
-                  <strong className="text-blue-800">CSV Format Example:</strong>
-                  <pre className="mt-2 text-xs bg-white p-2 rounded border">{sampleCsv}</pre>
+                  <strong className={isDark ? 'text-blue-300' : 'text-blue-800'}>CSV Format Example:</strong>
+                  <pre className={`mt-2 text-xs p-2 rounded border ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-white'}`}>{sampleCsv}</pre>
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">CSV Data</label>
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>CSV Data</label>
               <Textarea
                 placeholder="Paste your CSV data here..."
                 value={csvContent}
@@ -274,38 +274,36 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
             >
               {isLoading ? 'Parsing...' : 'Parse CSV'}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </GlassCard>
       )}
 
       {step === 'preview' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Preview Users ({parsedUsers.length})
-            </CardTitle>
-            <CardDescription>Review the parsed users before importing</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="max-h-60 overflow-y-auto border rounded p-4">
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <Users className="w-5 h-5" />
+            Preview Users ({parsedUsers.length})
+          </h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Review the parsed users before importing</p>
+          <div className="space-y-4">
+            <div className={`max-h-60 overflow-y-auto border rounded p-4 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               {parsedUsers.slice(0, 10).map((user, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between py-2 border-b last:border-b-0"
+                  className={`flex items-center justify-between py-2 border-b last:border-b-0 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
                 >
                   <div>
-                    <div className="font-medium">
+                    <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {user.first_name} {user.last_name}
                     </div>
-                    <div className="text-sm text-gray-600">{user.email}</div>
-                    {user.company && <div className="text-xs text-gray-500">{user.company}</div>}
+                    <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{user.email}</div>
+                    {user.company && <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{user.company}</div>}
                   </div>
-                  <div className="text-sm text-blue-600">SmartCRM</div>
+                  <div className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>SmartCRM</div>
                 </div>
               ))}
               {parsedUsers.length > 10 && (
-                <div className="text-center text-gray-500 py-2">
+                <div className={`text-center py-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                   ... and {parsedUsers.length - 10} more users
                 </div>
               )}
@@ -319,49 +317,47 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
                 {isLoading ? 'Importing...' : `Import ${parsedUsers.length} Users`}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </GlassCard>
       )}
 
       {step === 'complete' && importResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              Import Complete
-            </CardTitle>
-            <CardDescription>Your bulk user import has been completed</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            Import Complete
+          </h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Your bulk user import has been completed</p>
+          <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{importResult.success}</div>
-                <div className="text-sm text-green-700">Successful</div>
+              <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-green-900/30' : 'bg-green-50'}`}>
+                <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{importResult.success}</div>
+                <div className={`text-sm ${isDark ? 'text-green-400' : 'text-green-700'}`}>Successful</div>
               </div>
-              <div className="text-center p-4 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">{importResult.failed}</div>
-                <div className="text-sm text-red-700">Failed</div>
+              <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-red-900/30' : 'bg-red-50'}`}>
+                <div className={`text-2xl font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>{importResult.failed}</div>
+                <div className={`text-sm ${isDark ? 'text-red-400' : 'text-red-700'}`}>Failed</div>
               </div>
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{importResult.success}</div>
-                <div className="text-sm text-blue-700">Emails Sent</div>
+              <div className={`text-center p-4 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
+                <div className={`text-2xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{importResult.success}</div>
+                <div className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>Emails Sent</div>
               </div>
             </div>
 
             {importResult.errors.length > 0 && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-red-900/30 border-red-700' : 'bg-red-50 border-red-200'}`}>
                 <div className="flex items-start">
-                  <XCircle className="h-4 w-4 text-red-600 mt-0.5 mr-2" />
+                  <XCircle className={`h-4 w-4 mt-0.5 mr-2 ${isDark ? 'text-red-400' : 'text-red-600'}`} />
                   <div>
-                    <div className="font-medium text-red-800">Import Errors:</div>
+                    <div className={`font-medium ${isDark ? 'text-red-400' : 'text-red-800'}`}>Import Errors:</div>
                     <ul className="mt-2 space-y-1">
                       {importResult.errors.slice(0, 5).map((error, index) => (
-                        <li key={index} className="text-sm text-red-700">
+                        <li key={index} className={`text-sm ${isDark ? 'text-red-400' : 'text-red-700'}`}>
                           • {error}
                         </li>
                       ))}
                       {importResult.errors.length > 5 && (
-                        <li className="text-sm text-red-700">
+                        <li className={`text-sm ${isDark ? 'text-red-400' : 'text-red-700'}`}>
                           ... and {importResult.errors.length - 5} more errors
                         </li>
                       )}
@@ -371,12 +367,12 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
               </div>
             )}
 
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-green-900/30 border-green-700' : 'bg-green-50 border-green-200'}`}>
               <div className="flex items-start">
-                <Mail className="h-4 w-4 text-green-600 mt-0.5 mr-2" />
+                <Mail className={`h-4 w-4 mt-0.5 mr-2 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                 <div>
-                  <strong className="text-green-800">What happens next:</strong>
-                  <ul className="mt-2 space-y-1 text-sm text-green-700">
+                  <strong className={isDark ? 'text-green-400' : 'text-green-800'}>What happens next:</strong>
+                  <ul className={`mt-2 space-y-1 text-sm ${isDark ? 'text-green-400' : 'text-green-700'}`}>
                     <li>• Users receive welcome emails with account access links</li>
                     <li>
                       • Emails use the "Confirm Reauthentication" template with SmartCRM branding
@@ -391,8 +387,8 @@ jane.smith@business.com,Jane,Smith,Tech Solutions,(555) 987-6543,wl_user,smartcr
             <Button onClick={resetImport} className="w-full">
               Import More Users
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </GlassCard>
       )}
     </div>
   );

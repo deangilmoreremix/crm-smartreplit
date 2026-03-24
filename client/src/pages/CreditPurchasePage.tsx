@@ -4,6 +4,8 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import {
   CreditCard,
   Sparkles,
@@ -271,44 +273,43 @@ const CreditPurchasePage: React.FC = () => {
         </div>
 
         {/* FAQ Section */}
+        {(() => {
+          const { isDark } = useTheme();
+          return (
         <div className="mt-16 max-w-3xl mx-auto">
-          <h3 className="text-2xl font-bold text-center text-gray-900 mb-8">
+          <h3 className={`text-2xl font-bold text-center mb-8 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Frequently Asked Questions
           </h3>
           <div className="space-y-4">
-            <Card>
-              <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 mb-2">What can I use AI credits for?</h4>
-                <p className="text-gray-600">
-                  AI credits can be used for any of our AI tools including the AI Assistant, Vision
-                  Analyzer, Image Generator, Function Assistant, and all other AI-powered features
-                  in the platform.
-                </p>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-6">
+              <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>What can I use AI credits for?</h4>
+              <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                AI credits can be used for any of our AI tools including the AI Assistant, Vision
+                Analyzer, Image Generator, Function Assistant, and all other AI-powered features
+                in the platform.
+              </p>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Do credits expire?</h4>
-                <p className="text-gray-600">
-                  No, your AI credits never expire. You can use them whenever you're ready.
-                </p>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-6">
+              <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Do credits expire?</h4>
+              <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                No, your AI credits never expire. You can use them whenever you're ready.
+              </p>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-6">
-                <h4 className="font-semibold text-gray-900 mb-2">
-                  Can I share credits with my team?
-                </h4>
-                <p className="text-gray-600">
-                  Credits are tied to your account. Team members use their own credits for AI
-                  operations.
-                </p>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-6">
+              <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Can I share credits with my team?
+              </h4>
+              <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                Credits are tied to your account. Team members use their own credits for AI
+                operations.
+              </p>
+            </GlassCard>
           </div>
         </div>
+          );
+        })()}
       </div>
     </div>
   );

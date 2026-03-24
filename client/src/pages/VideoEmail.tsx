@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-// import { useOpenAI } from '../services/openaiService';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   Video,
   Download,
@@ -59,6 +59,7 @@ interface TalkingPoint {
 }
 
 const VideoEmail: React.FC = () => {
+  const { isDark } = useTheme();
   // Video Recording States
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);

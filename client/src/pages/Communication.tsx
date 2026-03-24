@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useCommunicationStore } from '../store/communicationStore';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import {
   Mail,
   Phone,
@@ -17,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function Communication() {
+  const { isDark } = useTheme();
   const { emails, callLogs, communicationLogs, analytics } = useCommunicationStore();
 
   const [activeTab, setActiveTab] = useState('email');
@@ -69,76 +72,69 @@ export default function Communication() {
   };
 
   const CallsList = () => (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="w-5 h-5" />
-            Recent Calls
-          </CardTitle>
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Log Call
-          </Button>
+    <GlassCard className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className={`text-lg font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <Phone className="w-5 h-5" />
+          Recent Calls
+        </h3>
+        <Button size="sm">
+          <Plus className="w-4 h-4 mr-2" />
+          Log Call
+        </Button>
+      </div>
+      {recentCalls.length === 0 ? (
+        <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          <Phone className={`w-8 h-8 mx-auto mb-2 ${isDark ? 'text-gray-500' : 'opacity-50'}`} />
+          <p>No calls logged yet</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        {recentCalls.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Phone className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>No calls logged yet</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {recentCalls.map((call) => (
-              <div key={call.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                <div
-                  className={`p-2 rounded-full ${
-                    call.direction === 'outbound' ? 'bg-blue-100' : 'bg-green-100'
+      ) : (
+        <div className="space-y-4">
+          {recentCalls.map((call) => (
+            <div key={call.id} className={`flex items-start gap-3 p-3 rounded-lg ${isDark ? 'border border-gray-700' : 'border'}`}>
+              <div
+                className={`p-2 rounded-full ${
+                  call.direction === 'outbound' ? (isDark ? 'bg-blue-900/50' : 'bg-blue-100') : (isDark ? 'bg-green-900/50' : 'bg-green-100')
+                }`}
+              >
+                <Phone
+                  className={`w-4 h-4 ${
+                    call.direction === 'outbound' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-green-400' : 'text-green-600')
                   }`}
-                >
-                  <Phone
-                    className={`w-4 h-4 ${
-                      call.direction === 'outbound' ? 'text-blue-600' : 'text-green-600'
-                    }`}
-                  />
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{call.phoneNumber}</span>
+                  <Badge className={getStatusColor(call.status)}>{call.status}</Badge>
+                  <Badge variant="outline">{call.direction}</Badge>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">{call.phoneNumber}</span>
-                    <Badge className={getStatusColor(call.status)}>{call.status}</Badge>
-                    <Badge variant="outline">{call.direction}</Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">
-                    Duration: {Math.floor(call.duration / 60)}m {call.duration % 60}s
-                  </p>
-                  {call.notes && <p className="text-sm text-gray-700 truncate">{call.notes}</p>}
-                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                    <span>{formatDate(call.timestamp)}</span>
-                    {call.outcome && (
-                      <Badge variant="outline" className="text-xs">
-                        {call.outcome}
-                      </Badge>
-                    )}
-                  </div>
+                <p className={`text-sm mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Duration: {Math.floor(call.duration / 60)}m {call.duration % 60}s
+                </p>
+                {call.notes && <p className={`text-sm truncate ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{call.notes}</p>}
+                <div className={`flex items-center gap-2 mt-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  <span>{formatDate(call.timestamp)}</span>
+                  {call.outcome && (
+                    <Badge variant="outline" className="text-xs">
+                      {call.outcome}
+                    </Badge>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+          ))}
+        </div>
+      )}
+    </GlassCard>
   );
 
   const CommunicationLog = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5" />
-          Communication Timeline
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <GlassCard className="p-6">
+      <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+        <MessageSquare className="w-5 h-5" />
+        Communication Timeline
+      </h3>
         {recentCommunications.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -179,67 +175,58 @@ export default function Communication() {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </GlassCard>
   );
 
   const OverviewTab = () => (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Communications</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {emails.length + callLogs.length + communicationLogs.length}
-            </div>
-            <p className="text-xs text-muted-foreground">Across all channels</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Communications</h3>
+            <MessageSquare className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {emails.length + callLogs.length + communicationLogs.length}
+          </div>
+          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Across all channels</p>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Week</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                communicationLogs.filter((c) => {
-                  const weekAgo = new Date();
-                  weekAgo.setDate(weekAgo.getDate() - 7);
-                  return new Date(c.timestamp) > weekAgo;
-                }).length
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">Communications this week</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>This Week</h3>
+            <TrendingUp className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            {
+              communicationLogs.filter((c) => {
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                return new Date(c.timestamp) > weekAgo;
+              }).length
+            }
+          </div>
+          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Communications this week</p>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(analytics.replyRate * 100).toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">Email response rate</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Response Rate</h3>
+            <CheckCircle className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{(analytics.replyRate * 100).toFixed(1)}%</div>
+          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Email response rate</p>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2.3h</div>
-            <p className="text-xs text-muted-foreground">Average response time</p>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <h3 className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Avg Response Time</h3>
+            <Clock className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          </div>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>2.3h</div>
+          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Average response time</p>
+        </GlassCard>
       </div>
 
       {/* Recent Activity */}
@@ -309,17 +296,13 @@ export default function Communication() {
           </TabsContent>
 
           <TabsContent value="meetings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Meetings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Meeting management coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Meetings</h3>
+              <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                <Calendar className={`w-8 h-8 mx-auto mb-2 ${isDark ? 'text-gray-500' : 'opacity-50'}`} />
+                <p>Meeting management coming soon</p>
+              </div>
+            </GlassCard>
           </TabsContent>
         </Tabs>
       </div>

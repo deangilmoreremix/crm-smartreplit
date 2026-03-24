@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-import GlassCard from '../components/GlassCard';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -16,7 +15,7 @@ import {
 } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Progress } from '../components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { GlassCard } from '../components/ui/GlassCard';
 import { useTheme } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
@@ -322,15 +321,12 @@ export default function TextMessagingDashboard() {
 
         <TabsContent value="messages" className="space-y-6">
           {/* Message List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Recent Messages
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <MessageSquare className="h-5 w-5 inline mr-2" />
+              Recent Messages
+            </h3>
+            <div className="space-y-4">
                 {displayMessages.map((message: Message) => (
                   <div
                     key={message.id}
@@ -362,41 +358,37 @@ export default function TextMessagingDashboard() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+          </GlassCard>
         </TabsContent>
 
         <TabsContent value="providers" className="space-y-6">
           {/* Provider Status Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayProviders.map((provider: MessageProvider) => (
-              <Card key={provider.id} className="relative">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Phone className="h-5 w-5" />
-                      {provider.name}
-                    </CardTitle>
-                    <Badge className={getStatusColor(provider.status)}>{provider.status}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Cost/Message:</span>
-                        <div className="font-semibold">${provider.costPerMessage.toFixed(4)}</div>
+              <GlassCard key={provider.id} className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`flex items-center gap-2 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    <Phone className="h-5 w-5" />
+                    {provider.name}
+                  </h3>
+                  <Badge className={getStatusColor(provider.status)}>{provider.status}</Badge>
+                </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Cost/Message:</span>
+                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${provider.costPerMessage.toFixed(4)}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Delivery Rate:</span>
+                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {Math.round(provider.deliveryRate * 100)}%
                       </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Delivery Rate:</span>
-                        <div className="font-semibold">
-                          {Math.round(provider.deliveryRate * 100)}%
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Response Time:</span>
-                        <div className="font-semibold">{provider.responseTime}s</div>
-                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Response Time:</span>
+                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{provider.responseTime}s</div>
+                    </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Features:</span>
                         <div className="font-semibold">{provider.supportedFeatures.length}</div>
@@ -420,88 +412,76 @@ export default function TextMessagingDashboard() {
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+              </GlassCard>
             ))}
           </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Performance Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <GlassCard className="p-6">
+              <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <BarChart3 className="h-5 w-5" />
+                Performance Metrics
+              </h3>
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Messages Sent</span>
-                      <span className="font-semibold">{displayStats.totalMessages}</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Messages Sent</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayStats.totalMessages}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Messages Delivered</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Messages Delivered</span>
                       <span className="font-semibold text-green-600">
                         {displayStats.deliveredMessages}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Total Cost</span>
-                      <span className="font-semibold">${displayStats.totalCost.toFixed(2)}</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Cost</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${displayStats.totalCost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Active Providers</span>
-                      <span className="font-semibold">{displayStats.activeProviders}</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Active Providers</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayStats.activeProviders}</span>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </GlassCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Cost Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <GlassCard className="p-6">
+              <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <TrendingUp className="h-5 w-5" />
+                Cost Analysis
+              </h3>
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Average Cost/Message</span>
-                      <span className="font-semibold">
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Average Cost/Message</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         ${displayStats.costPerMessage.toFixed(4)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Monthly Budget Used</span>
-                      <span className="font-semibold">$8.75</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Monthly Budget Used</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>$8.75</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">Projected Monthly Cost</span>
-                      <span className="font-semibold">$12.50</span>
+                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Projected Monthly Cost</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>$12.50</span>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </GlassCard>
           </div>
         </TabsContent>
 
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Smart Reply Generator
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <GlassCard className="p-6">
+              <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Sparkles className="h-5 w-5" />
+                Smart Reply Generator
+              </h3>
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <div>
@@ -538,151 +518,138 @@ export default function TextMessagingDashboard() {
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </GlassCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Message Optimizer
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="optimize-content">Message to Optimize</Label>
-                      <Textarea
-                        id="optimize-content"
-                        placeholder="Enter your message for AI optimization..."
-                        rows={4}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="goal">Optimization Goal</Label>
-                      <Select value={optimizationGoal} onValueChange={setOptimizationGoal}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="engagement">Increase Engagement</SelectItem>
-                          <SelectItem value="response">Improve Response Rate</SelectItem>
-                          <SelectItem value="conversion">Boost Conversion</SelectItem>
-                          <SelectItem value="clarity">Enhance Clarity</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button className="w-full" variant="outline">
-                      <Zap className="h-4 w-4 mr-2" />
-                      Optimize Message
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Target className="h-5 w-5" />
+                Message Optimizer
+              </h3>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="optimize-content">Message to Optimize</Label>
+                    <Textarea
+                      id="optimize-content"
+                      placeholder="Enter your message for AI optimization..."
+                      rows={4}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="goal">Optimization Goal</Label>
+                    <Select value={optimizationGoal} onValueChange={setOptimizationGoal}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="engagement">Increase Engagement</SelectItem>
+                        <SelectItem value="response">Improve Response Rate</SelectItem>
+                        <SelectItem value="conversion">Boost Conversion</SelectItem>
+                        <SelectItem value="clarity">Enhance Clarity</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" variant="outline">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Optimize Message
+                  </Button>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <CheckCircle className="h-5 w-5" />
+              AI-Generated Suggestions
+            </h3>
+            <div className="space-y-3">
+              {gpt5Suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-3 p-3 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}
+                >
+                  <CheckCircle className={`h-5 w-5 mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <div className="flex-1">
+                    <p className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{suggestion}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-2"
+                      onClick={() => setMessageContent(suggestion)}
+                    >
+                      Use This
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                AI-Generated Suggestions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {gpt5Suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-                  >
-                    <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm">{suggestion}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => setMessageContent(suggestion)}
-                      >
-                        Use This
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </GlassCard>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Messaging Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Default Provider</Label>
-                    <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {displayProviders.map((provider) => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            {provider.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Messaging Settings</h3>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Default Provider</Label>
+                  <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {displayProviders.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id}>
+                          {provider.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Auto-Failover</Label>
-                    <Select value={autoFailover} onValueChange={setAutoFailover}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="enabled">Enabled</SelectItem>
-                        <SelectItem value="disabled">Disabled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Auto-Failover</Label>
+                  <Select value={autoFailover} onValueChange={setAutoFailover}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="enabled">Enabled</SelectItem>
+                      <SelectItem value="disabled">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Message Templates</Label>
-                    <Select value={messageTemplates} onValueChange={setMessageTemplates}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="enabled">Enabled</SelectItem>
-                        <SelectItem value="disabled">Disabled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Message Templates</Label>
+                  <Select value={messageTemplates} onValueChange={setMessageTemplates}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="enabled">Enabled</SelectItem>
+                      <SelectItem value="disabled">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Delivery Notifications</Label>
-                    <Select value={deliveryNotifications} onValueChange={setDeliveryNotifications}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Messages</SelectItem>
-                        <SelectItem value="important">Important Only</SelectItem>
-                        <SelectItem value="none">None</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Delivery Notifications</Label>
+                  <Select value={deliveryNotifications} onValueChange={setDeliveryNotifications}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Messages</SelectItem>
+                      <SelectItem value="important">Important Only</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 

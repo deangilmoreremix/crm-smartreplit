@@ -10,6 +10,7 @@ import {
   Users,
   Target,
 } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface DemoFeature {
   id: string;
@@ -20,6 +21,7 @@ interface DemoFeature {
 const FeatureDemo: React.FC = () => {
   const [activeFeature, setActiveFeature] = useState('email-composer');
   const [isAnimating, setIsAnimating] = useState(false);
+  const { isDark } = useTheme();
 
   const demoFeatures: DemoFeature[] = [
     {
@@ -187,11 +189,11 @@ const FeatureDemo: React.FC = () => {
   }, [activeFeature, demoFeatures.length]);
 
   return (
-    <div className="bg-gradient-to-r from-gray-50 via-indigo-50 to-purple-50 py-16">
+    <div className={`py-16 ${isDark ? 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-r from-gray-50 via-indigo-50 to-purple-50'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Experience Our Features</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-3`}>Experience Our Features</h2>
+          <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
             See how our AI-powered CRM can help you streamline your workflow
           </p>
         </div>
@@ -211,8 +213,8 @@ const FeatureDemo: React.FC = () => {
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeFeature === feature.id
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  ? isDark ? 'bg-primary text-white shadow-md' : 'bg-indigo-600 text-white shadow-md'
+                  : isDark ? 'bg-slate-800 text-gray-200 hover:bg-slate-700' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
               {feature.title}
@@ -229,7 +231,9 @@ const FeatureDemo: React.FC = () => {
                 key={feature.id}
                 className={`absolute inset-0 ${activeFeature === feature.id ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
               >
-                {feature.snippet}
+                <div className={`h-full ${isDark ? '[&>*]:bg-slate-800 [&>*]:border-slate-700 [&_*]:text-gray-200' : ''}`}>
+                  {feature.snippet}
+                </div>
               </div>
             ))}
           </div>
@@ -238,7 +242,7 @@ const FeatureDemo: React.FC = () => {
         <div className="text-center mt-10">
           <a
             href="#"
-            className="inline-flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition-colors"
+            className={`inline-flex items-center font-medium hover:transition-colors ${isDark ? 'text-primary hover:text-primary/80' : 'text-indigo-600 hover:text-indigo-800'}`}
           >
             See all features <ArrowRight size={16} className="ml-2" />
           </a>

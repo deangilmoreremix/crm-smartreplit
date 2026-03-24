@@ -23,6 +23,8 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog';
 import { Input } from '../components/ui/input';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import {
@@ -359,18 +361,18 @@ export default function FeatureManagement() {
           </TabsList>
 
           <TabsContent value={selectedCategory} className="space-y-4">
+            {(() => {
+              const { isDark } = useTheme();
+              return (
+            <>
             {isLoading ? (
-              <Card>
-                <CardContent className="p-8">
-                  <div className="text-center text-gray-500">Loading features...</div>
-                </CardContent>
-              </Card>
+              <GlassCard className="p-8">
+                <div className={`text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Loading features...</div>
+              </GlassCard>
             ) : filteredFeatures.length === 0 ? (
-              <Card>
-                <CardContent className="p-8">
-                  <div className="text-center text-gray-500">No features found</div>
-                </CardContent>
-              </Card>
+              <GlassCard className="p-8">
+                <div className={`text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No features found</div>
+              </GlassCard>
             ) : (
               <div className="grid gap-4">
                 {filteredFeatures.map((feature) => {
@@ -378,26 +380,26 @@ export default function FeatureManagement() {
                   const Icon = category?.icon || Settings;
 
                   return (
-                    <Card key={feature.id} data-testid={`card-feature-${feature.id}`}>
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <GlassCard key={feature.id} className="p-4" data-testid={`card-feature-${feature.id}`}>
+                      <div className="flex flex-row items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div
-                            className={`p-2 rounded-lg ${feature.isEnabled ? 'bg-green-100' : 'bg-gray-100'}`}
+                            className={`p-2 rounded-lg ${feature.isEnabled ? (isDark ? 'bg-green-900/50' : 'bg-green-100') : (isDark ? 'bg-gray-700' : 'bg-gray-100')}`}
                           >
                             <Icon
-                              className={`h-5 w-5 ${feature.isEnabled ? 'text-green-600' : 'text-gray-400'}`}
+                              className={`h-5 w-5 ${feature.isEnabled ? (isDark ? 'text-green-400' : 'text-green-600') : (isDark ? 'text-gray-400' : 'text-gray-400')}`}
                             />
                           </div>
                           <div>
-                            <CardTitle className="text-lg">{feature.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-2 mt-1">
-                              <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{feature.name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <code className={`text-xs px-2 py-1 rounded ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
                                 {feature.featureKey}
                               </code>
                               <Badge variant={feature.isEnabled ? 'default' : 'secondary'}>
                                 {feature.isEnabled ? 'Enabled' : 'Disabled'}
                               </Badge>
-                            </CardDescription>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -423,31 +425,35 @@ export default function FeatureManagement() {
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
-                      </CardHeader>
+                      </div>
                       {feature.description && (
-                        <CardContent>
-                          <p className="text-sm text-gray-600">{feature.description}</p>
-                        </CardContent>
+                        <div className="mt-2">
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{feature.description}</p>
+                        </div>
                       )}
-                    </Card>
+                    </GlassCard>
                   );
                 })}
               </div>
             )}
+            </>
+              );
+            })()}
           </TabsContent>
         </Tabs>
 
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Product Tier Templates</CardTitle>
-            <CardDescription>
-              Configure which features are included in each product tier
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TierFeatureConfig features={features} />
-          </CardContent>
-        </Card>
+        {(() => {
+          const { isDark } = useTheme();
+          return (
+        <GlassCard className="mt-8 p-6">
+          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Product Tier Templates</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            Configure which features are included in each product tier
+          </p>
+          <TierFeatureConfig features={features} />
+        </GlassCard>
+          );
+        })()}
       </div>
     </div>
   );

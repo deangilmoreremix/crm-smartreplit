@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTheme } from '../contexts/ThemeContext';
 import { useOpenAI } from '../services/openaiLegacyService';
 import { useGemini } from '../services/geminiService';
 import { Contact } from '../types';
@@ -27,6 +28,7 @@ import {
 import Avatar from 'react-avatar';
 
 const ContactDetail: React.FC = () => {
+  const { isDark } = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 

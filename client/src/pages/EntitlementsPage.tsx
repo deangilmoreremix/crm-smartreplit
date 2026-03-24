@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import {
   Calendar,
   CreditCard,
@@ -214,58 +216,48 @@ export default function EntitlementsPage() {
       </div>
 
       {/* Statistics Cards */}
+      {(() => {
+        const { isDark } = useTheme();
+        return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Entitlements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{entitlements.length}</div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Entitlements</h3>
+          <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{entitlements.length}</div>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {entitlements.filter((e) => e.status === 'active').length}
-            </div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Active Users</h3>
+          <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+            {entitlements.filter((e) => e.status === 'active').length}
+          </div>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Past Due</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {entitlements.filter((e) => e.status === 'past_due').length}
-            </div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Past Due</h3>
+          <div className={`text-2xl font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
+            {entitlements.filter((e) => e.status === 'past_due').length}
+          </div>
+        </GlassCard>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Lifetime Plans</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {entitlements.filter((e) => e.productType === 'lifetime').length}
-            </div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-4">
+          <h3 className={`text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Lifetime Plans</h3>
+          <div className={`text-2xl font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+            {entitlements.filter((e) => e.productType === 'lifetime').length}
+          </div>
+        </GlassCard>
       </div>
+        );
+      })()}
 
       {/* Create Form Modal */}
       {showCreateForm && (
-        <Card className="mb-6 border-2 border-blue-200">
-          <CardHeader>
-            <CardTitle>Create New Entitlement</CardTitle>
-            <CardDescription>Grant access to a user for SmartCRM features</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        (() => {
+          const { isDark } = useTheme();
+          return (
+        <GlassCard className="mb-6 p-6">
+          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Create New Entitlement</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Grant access to a user for SmartCRM features</p>
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="userId">User ID</Label>
@@ -330,24 +322,26 @@ export default function EntitlementsPage() {
                 {creating ? 'Creating...' : 'Create Entitlement'}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </GlassCard>
+          );
+        })()
       )}
 
       {/* Entitlements List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User Entitlements</CardTitle>
-          <CardDescription>
+      {(() => {
+        const { isDark } = useTheme();
+        return (
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>User Entitlements</h3>
+          <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {entitlements.length === 0
               ? 'No entitlements found. Create one to get started.'
               : `Showing ${entitlements.length} entitlement${entitlements.length === 1 ? '' : 's'}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
           {entitlements.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              <Users className={`h-12 w-12 mx-auto mb-4 ${isDark ? 'text-gray-500' : 'opacity-50'}`} />
               <p>No entitlements found</p>
             </div>
           ) : (
@@ -355,18 +349,18 @@ export default function EntitlementsPage() {
               {entitlements.map((entitlement) => (
                 <div
                   key={entitlement.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className={`flex items-center justify-between p-4 rounded-lg ${isDark ? 'border border-gray-700 hover:bg-gray-800' : 'border hover:bg-gray-50'}`}
                 >
                   <div className="flex items-center space-x-4">
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         {entitlement.planName || 'Unnamed Plan'}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         User: {entitlement.userId.substring(0, 8)}...
                       </p>
                       {entitlement.revokeAt && (
-                        <p className="text-xs text-gray-500">
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                           Expires: {new Date(entitlement.revokeAt).toLocaleDateString()}
                         </p>
                       )}
@@ -387,8 +381,9 @@ export default function EntitlementsPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </GlassCard>
+        );
+      })()}
     </div>
   );
 }

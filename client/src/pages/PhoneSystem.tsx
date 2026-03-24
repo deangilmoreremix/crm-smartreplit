@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   Phone,
   User,
@@ -33,6 +34,7 @@ interface CallLog {
 }
 
 const PhoneSystem: React.FC = () => {
+  const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'dialer' | 'logs' | 'voicemail' | 'settings'>(
     'dialer'
   );

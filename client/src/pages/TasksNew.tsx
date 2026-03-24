@@ -18,8 +18,11 @@ import { TaskKanbanBoard } from '../components/TaskKanbanBoard';
 import { TaskCalendar } from '../components/TaskCalendar';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
+import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 
 export const Tasks: React.FC = () => {
+  const { isDark } = useTheme();
   const { tasks, getFilteredTasks } = useTaskStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -134,47 +137,35 @@ export const Tasks: React.FC = () => {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-gray-900">{metrics.totalTasks}</div>
-                <div className="text-sm text-gray-600">Total Tasks</div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-4 text-center">
+              <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{metrics.totalTasks}</div>
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Tasks</div>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{metrics.completedTasks}</div>
-                <div className="text-sm text-gray-600">Completed</div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-4 text-center">
+              <div className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{metrics.completedTasks}</div>
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Completed</div>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-600">{metrics.pendingTasks}</div>
-                <div className="text-sm text-gray-600">Pending</div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-4 text-center">
+              <div className={`text-2xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{metrics.pendingTasks}</div>
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Pending</div>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-600">{metrics.overdueTasks}</div>
-                <div className="text-sm text-gray-600">Overdue</div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-4 text-center">
+              <div className={`text-2xl font-bold ${isDark ? 'text-red-400' : 'text-red-600'}`}>{metrics.overdueTasks}</div>
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Overdue</div>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-orange-600">{tasksDueToday.length}</div>
-                <div className="text-sm text-gray-600">Due Today</div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-4 text-center">
+              <div className={`text-2xl font-bold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>{tasksDueToday.length}</div>
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Due Today</div>
+            </GlassCard>
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-purple-600">{tasksDueThisWeek.length}</div>
-                <div className="text-sm text-gray-600">This Week</div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-4 text-center">
+              <div className={`text-2xl font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>{tasksDueThisWeek.length}</div>
+              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>This Week</div>
+            </GlassCard>
           </div>
 
           {/* Alerts */}
@@ -264,115 +255,91 @@ export const Tasks: React.FC = () => {
             <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Completion Rate */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Completion Rate</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-green-600 mb-2">
-                      {metrics.completionRate.toFixed(1)}%
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${metrics.completionRate}%` }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                <GlassCard className="p-4">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Completion Rate</h3>
+                  <div className={`text-3xl font-bold mb-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                    {metrics.completionRate.toFixed(1)}%
+                  </div>
+                  <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <div
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${metrics.completionRate}%` }}
+                    />
+                  </div>
+                </GlassCard>
 
                 {/* Productivity Score */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Productivity Score</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-blue-600 mb-2">
-                      {metrics.productivityScore.toFixed(0)}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Based on completion rate and daily goals
-                    </div>
-                  </CardContent>
-                </Card>
+                <GlassCard className="p-4">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Productivity Score</h3>
+                  <div className={`text-3xl font-bold mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                    {metrics.productivityScore.toFixed(0)}
+                  </div>
+                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Based on completion rate and daily goals
+                  </div>
+                </GlassCard>
 
                 {/* Tasks by Priority */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Tasks by Priority</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {Object.entries(metrics.tasksByPriority).map(([priority, count]) => (
-                        <div key={priority} className="flex items-center justify-between">
-                          <span className="capitalize text-sm">{priority}</span>
-                          <Badge variant="secondary">{count}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <GlassCard className="p-4">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Tasks by Priority</h3>
+                  <div className="space-y-2">
+                    {Object.entries(metrics.tasksByPriority).map(([priority, count]) => (
+                      <div key={priority} className="flex items-center justify-between">
+                        <span className={`capitalize text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{priority}</span>
+                        <Badge variant="secondary">{count}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
 
                 {/* Tasks by Type */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Tasks by Type</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {Object.entries(metrics.tasksByType).map(([type, count]) => (
-                        <div key={type} className="flex items-center justify-between">
-                          <span className="capitalize text-sm">{type.replace('-', ' ')}</span>
-                          <Badge variant="secondary">{count}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <GlassCard className="p-4">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Tasks by Type</h3>
+                  <div className="space-y-2">
+                    {Object.entries(metrics.tasksByType).map(([type, count]) => (
+                      <div key={type} className="flex items-center justify-between">
+                        <span className={`capitalize text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{type.replace('-', ' ')}</span>
+                        <Badge variant="secondary">{count}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
 
                 {/* Tasks by Status */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Tasks by Status</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {Object.entries(metrics.tasksByStatus).map(([status, count]) => (
-                        <div key={status} className="flex items-center justify-between">
-                          <span className="capitalize text-sm">{status.replace('-', ' ')}</span>
-                          <Badge variant="secondary">{count}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <GlassCard className="p-4">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Tasks by Status</h3>
+                  <div className="space-y-2">
+                    {Object.entries(metrics.tasksByStatus).map(([status, count]) => (
+                      <div key={status} className="flex items-center justify-between">
+                        <span className={`capitalize text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{status.replace('-', ' ')}</span>
+                        <Badge variant="secondary">{count}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
 
                 {/* Weekly Progress */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">This Week</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Completed</span>
-                        <span className="font-semibold">{metrics.tasksCompletedThisWeek}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Due this week</span>
-                        <span className="font-semibold">{tasksDueThisWeek.length}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Completion rate</span>
-                        <span className="font-semibold">
-                          {tasksDueThisWeek.length > 0
-                            ? `${((metrics.tasksCompletedThisWeek / tasksDueThisWeek.length) * 100).toFixed(0)}%`
-                            : 'N/A'}
-                        </span>
-                      </div>
+                <GlassCard className="p-4">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>This Week</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Completed</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{metrics.tasksCompletedThisWeek}</span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Due this week</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{tasksDueThisWeek.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Completion rate</span>
+                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {tasksDueThisWeek.length > 0
+                          ? `${((metrics.tasksCompletedThisWeek / tasksDueThisWeek.length) * 100).toFixed(0)}%`
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </GlassCard>
               </div>
             </div>
           </TabsContent>

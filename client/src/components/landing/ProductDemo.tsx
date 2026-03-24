@@ -11,6 +11,7 @@ import {
   BarChart3,
   Target,
 } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface DemoSlide {
   title: string;
@@ -21,6 +22,7 @@ interface DemoSlide {
 
 const ProductDemo: React.FC = () => {
   const [activeSlide, setActiveSlide] = useState(0);
+  const { isDark } = useTheme();
 
   const slides: DemoSlide[] = [
     {
@@ -64,14 +66,14 @@ const ProductDemo: React.FC = () => {
   }, [slides.length]);
 
   return (
-    <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100 relative">
-      <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-r from-white/90 to-white/80 backdrop-blur z-20">
+    <div className={`rounded-xl shadow-xl overflow-hidden ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-100'} border relative`}>
+      <div className={`absolute top-0 left-0 w-full p-4 ${isDark ? 'bg-gradient-to-r from-slate-900/90 to-slate-800/80' : 'bg-gradient-to-r from-white/90 to-white/80'} backdrop-blur z-20`}>
         <div className="flex space-x-1">
           {slides.map((_, index) => (
             <button
               key={index}
               className={`h-2 rounded-full flex-1 transition-colors ${
-                index === activeSlide ? 'bg-blue-600' : 'bg-gray-300'
+                index === activeSlide ? 'bg-blue-600' : isDark ? 'bg-slate-600' : 'bg-gray-300'
               }`}
               onClick={() => setActiveSlide(index)}
             />
@@ -111,19 +113,19 @@ const ProductDemo: React.FC = () => {
         ))}
       </div>
 
-      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-t border-gray-100">
+      <div className={`p-4 ${isDark ? 'bg-gradient-to-r from-slate-800 to-slate-700 border-slate-600' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-100'} border-t`}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="flex items-center">
             <CheckCircle size={16} className="text-green-600 mr-2 flex-shrink-0" />
-            <span className="text-xs">No credit card required</span>
+            <span className={`text-xs ${isDark ? 'text-gray-300' : ''}`}>No credit card required</span>
           </div>
           <div className="flex items-center">
             <CheckCircle size={16} className="text-green-600 mr-2 flex-shrink-0" />
-            <span className="text-xs">Free onboarding</span>
+            <span className={`text-xs ${isDark ? 'text-gray-300' : ''}`}>Free onboarding</span>
           </div>
           <div className="flex items-center">
             <CheckCircle size={16} className="text-green-600 mr-2 flex-shrink-0" />
-            <span className="text-xs">Cancel anytime</span>
+            <span className={`text-xs ${isDark ? 'text-gray-300' : ''}`}>Cancel anytime</span>
           </div>
         </div>
       </div>

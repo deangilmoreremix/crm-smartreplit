@@ -228,6 +228,63 @@ export const schemas = {
   }),
 };
 
+// Validate user data for admin operations
+export const validateUserData = (fields: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        email: fields.includes('email') ? schemas.email.optional() : z.undefined(),
+        role: fields.includes('role') ? z.enum(['super_admin', 'admin', 'wl_user', 'regular_user']).optional() : z.undefined(),
+        productTier: fields.includes('productTier') ? z.string().optional() : z.undefined(),
+        firstName: fields.includes('firstName') ? schemas.name.optional() : z.undefined(),
+        lastName: fields.includes('lastName') ? schemas.name.optional() : z.undefined(),
+      });
+      
+      req.body = schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors,
+        });
+      }
+      next(error);
+    }
+  };
+};
+
+// Validate bulk import data
+export const validateBulkImport = () => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const schema = z.object({
+        users: z.array(z.object({
+          email: schemas.email,
+          first_name: schemas.name.optional(),
+          last_name: schemas.name.optional(),
+          company: z.string().optional(),
+          phone: schemas.phone.optional(),
+          role: z.enum(['super_admin', 'admin', 'wl_user', 'regular_user']).optional(),
+          product_tier: z.string().optional(),
+        })),
+        send_notifications: z.boolean().optional(),
+      });
+      
+      req.body = schema.parse(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors,
+        });
+      }
+      next(error);
+    }
+  };
+};
+
 // Validation middleware factory
 export const validate = (schema: z.ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {

@@ -16,6 +16,7 @@ import {
 } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { useTheme } from '../contexts/ThemeContext';
+import GlassCard from '../components/GlassCard';
 import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import { gpt5Communication } from '../services/gpt5CommunicationService';
@@ -247,154 +248,130 @@ Provide optimal timing, preparation notes, and follow-up actions.`;
 
         <TabsContent value="overview" className="space-y-6">
           {/* Today's Schedule */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Today's Schedule
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {displayAppointments
-                  .filter((apt: Appointment) => apt.date === new Date().toISOString().split('T')[0])
-                  .map((appointment: Appointment) => (
-                    <div
-                      key={appointment.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
-                      onClick={() => setSelectedAppointment(appointment)}
-                    >
-                      <div className="flex items-center gap-3">
-                        {getTypeIcon(appointment.type)}
-                        <div>
-                          <h4 className="font-medium">{appointment.title}</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {appointment.time} • {appointment.duration}min •{' '}
-                            {appointment.attendees.length} attendees
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(appointment.priority)}>
-                          {appointment.priority}
-                        </Badge>
-                        <Badge variant="outline">{appointment.status}</Badge>
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Calendar className="h-5 w-5" />
+              Today's Schedule
+            </h3>
+            <div className="space-y-4">
+              {displayAppointments
+                .filter((apt: Appointment) => apt.date === new Date().toISOString().split('T')[0])
+                .map((appointment: Appointment) => (
+                  <div
+                    key={appointment.id}
+                    className={`flex items-center justify-between p-4 border rounded-lg hover:${isDark ? 'bg-gray-700' : 'bg-gray-50'} cursor-pointer`}
+                    onClick={() => setSelectedAppointment(appointment)}
+                  >
+                    <div className="flex items-center gap-3">
+                      {getTypeIcon(appointment.type)}
+                      <div>
+                        <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{appointment.title}</h4>
+                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {appointment.time} • {appointment.duration}min •{' '}
+                          {appointment.attendees.length} attendees
+                        </p>
                       </div>
                     </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getPriorityColor(appointment.priority)}>
+                        {appointment.priority}
+                      </Badge>
+                      <Badge variant="outline">{appointment.status}</Badge>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </GlassCard>
 
           {/* AI Suggestions */}
           {gpt5Suggestions.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  AI Meeting Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {gpt5Suggestions.map((suggestion, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                      <span className="text-sm">{suggestion}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Sparkles className="h-5 w-5" />
+                AI Meeting Insights
+              </h3>
+              <div className="space-y-2">
+                {gpt5Suggestions.map((suggestion, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{suggestion}</span>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
           )}
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Calendar View</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <Calendar className="h-16 w-16 mx-auto mb-4" />
-                <p>Interactive calendar view coming soon...</p>
-                <p className="text-sm mt-2">
-                  Full calendar integration with drag-and-drop scheduling
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Calendar View</h3>
+            <div className={`text-center py-12 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              <Calendar className="h-16 w-16 mx-auto mb-4" />
+              <p>Interactive calendar view coming soon...</p>
+              <p className="text-sm mt-2">
+                Full calendar integration with drag-and-drop scheduling
+              </p>
+            </div>
+          </GlassCard>
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Optimal Meeting Times
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">9:00 AM - 11:00 AM</span>
-                    <Badge className="bg-green-100 text-green-800">High</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">2:00 PM - 4:00 PM</span>
-                    <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">4:00 PM - 5:00 PM</span>
-                    <Badge className="bg-red-100 text-red-800">Low</Badge>
-                  </div>
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Target className="h-5 w-5" />
+                Optimal Meeting Times
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>9:00 AM - 11:00 AM</span>
+                  <Badge className="bg-green-100 text-green-800">High</Badge>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>2:00 PM - 4:00 PM</span>
+                  <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>4:00 PM - 5:00 PM</span>
+                  <Badge className="bg-red-100 text-red-800">Low</Badge>
+                </div>
+              </div>
+            </GlassCard>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Meeting Effectiveness
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Average Duration</span>
-                    <span className="font-medium">{displayStats.averageDuration}min</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">On-Time Rate</span>
-                    <span className="font-medium text-green-600">94%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Follow-up Rate</span>
-                    <span className="font-medium text-blue-600">87%</span>
-                  </div>
+            <GlassCard className="p-6">
+              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <TrendingUp className="h-5 w-5" />
+                Meeting Effectiveness
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Average Duration</span>
+                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayStats.averageDuration}min</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>On-Time Rate</span>
+                  <span className="font-medium text-green-600">94%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Follow-up Rate</span>
+                  <span className="font-medium text-blue-600">87%</span>
+                </div>
+              </div>
+            </GlassCard>
           </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Meeting Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                <TrendingUp className="h-16 w-16 mx-auto mb-4" />
-                <p>Advanced analytics dashboard coming soon...</p>
-                <p className="text-sm mt-2">
-                  Performance metrics, trends, and optimization insights
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <GlassCard className="p-6">
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Meeting Analytics</h3>
+            <div className={`text-center py-12 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              <TrendingUp className="h-16 w-16 mx-auto mb-4" />
+              <p>Advanced analytics dashboard coming soon...</p>
+              <p className="text-sm mt-2">
+                Performance metrics, trends, and optimization insights
+              </p>
+            </div>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Brain, Users, BarChart3, Search, PieChart, ArrowRight, Check } from 'lucide-react';
 import AnimatedFeatureIcon from './AnimatedFeatureIcon';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Feature {
   id: string;
@@ -13,6 +14,7 @@ interface Feature {
 }
 
 const FeatureShowcase: React.FC = () => {
+  const { isDark } = useTheme();
   const [activeFeature, setActiveFeature] = useState<string>('ai-assistant');
 
   const features: Feature[] = [
@@ -101,11 +103,11 @@ const FeatureShowcase: React.FC = () => {
   const currentFeature = features.find((f) => f.id === activeFeature) || features[0];
 
   return (
-    <div className="py-16 bg-white">
+    <div className={`py-16 ${isDark ? 'bg-slate-900' : 'bg-white'}`}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold">Designed for Modern Sales Teams</h2>
-          <p className="text-lg text-gray-600 mt-3 max-w-2xl mx-auto">
+          <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Designed for Modern Sales Teams</h2>
+          <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-600'} mt-3 max-w-2xl mx-auto`}>
             Discover how our AI-powered features can transform your sales process
           </p>
         </div>
@@ -118,11 +120,11 @@ const FeatureShowcase: React.FC = () => {
               className={`px-4 py-3 rounded-lg flex items-center transition-all ${
                 activeFeature === feature.id
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  : isDark ? 'bg-slate-800 hover:bg-slate-700 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
               }`}
             >
               <div
-                className={`mr-2 ${activeFeature === feature.id ? '' : feature.color} p-1 rounded-full`}
+                className={`mr-2 ${activeFeature === feature.id ? '' : isDark ? 'bg-slate-700' : feature.color} p-1 rounded-full`}
               >
                 {feature.icon}
               </div>
@@ -133,21 +135,21 @@ const FeatureShowcase: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="p-6 order-2 lg:order-1 animation-fix">
-            <h3 className="text-2xl font-bold mb-4">{currentFeature.title}</h3>
-            <p className="text-gray-700 mb-6">{currentFeature.description}</p>
+            <h3 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{currentFeature.title}</h3>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} mb-6`}>{currentFeature.description}</p>
 
             <ul className="space-y-3 mb-8">
               {currentFeature.benefits.map((benefit, index) => (
                 <li key={index} className="flex items-start">
-                  <div className="p-1 bg-green-100 rounded-full text-green-600 mr-3 mt-0.5">
+                  <div className={`p-1 ${isDark ? 'bg-green-900' : 'bg-green-100'} rounded-full ${isDark ? 'text-green-400' : 'text-green-600'} mr-3 mt-0.5`}>
                     <Check size={16} />
                   </div>
-                  <span>{benefit}</span>
+                  <span className={isDark ? 'text-gray-300' : ''}>{benefit}</span>
                 </li>
               ))}
             </ul>
 
-            <button className="inline-flex items-center text-blue-600 font-medium group">
+            <button className={`inline-flex items-center font-medium group ${isDark ? 'text-primary' : 'text-blue-600'}`}>
               Learn more about {currentFeature.title}
               <ArrowRight
                 size={16}

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import PageLayout from '../components/PageLayout';
+import { useTheme } from '../contexts/ThemeContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import GeminiImageModal from '../components/GeminiImageModal';
@@ -37,6 +38,7 @@ import {
 import Select from 'react-select';
 
 const Appointments: React.FC = () => {
+  const { isDark } = useTheme();
   const {
     appointments,
     fetchAppointments,

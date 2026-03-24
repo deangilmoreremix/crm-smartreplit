@@ -188,7 +188,16 @@ export function registerBulkImportRoutes(app: Express) {
 
           if (error && error.message.includes('User not found')) {
             // Try to get by email instead
-            const { data: listData, error: listError } = await requireSupabase().auth.admin.listUsers();
+            const supabase = requireSupabase();
+            if (!supabase) {
+              results.push({
+                email,
+                status: 'error',
+                error: 'Supabase not available',
+              });
+              continue;
+            }
+            const { data: listData, error: listError } = await supabase.auth.admin.listUsers();
             const user = listData?.users?.find((u) => u.email === email);
 
             results.push({

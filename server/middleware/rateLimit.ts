@@ -142,6 +142,9 @@ export const uploadLimiter = rateLimit(rateLimitConfigs.upload);
 export const adminLimiter = rateLimit(rateLimitConfigs.admin);
 export const webhookLimiter = rateLimit(rateLimitConfigs.webhook);
 
+// Admin rate limiter - using admin config
+export const adminRateLimit = adminLimiter;
+
 // Per-tenant rate limiting (more sophisticated)
 export class TenantRateLimiter {
   private tenantLimits = new Map<string, { requests: number; resetTime: number }>();

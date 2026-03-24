@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { GlassCard } from '../components/ui/GlassCard';
+import { ModernButton } from '../components/ui/ModernButton';
+import { useTheme } from '../contexts/ThemeContext';
+import PageLayout from '../components/PageLayout';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -28,6 +31,7 @@ import {
 } from 'lucide-react';
 
 export default function Analytics() {
+  const { isDark } = useTheme();
   const {
     salesMetrics,
     pipelineMetrics,
@@ -93,13 +97,10 @@ export default function Analytics() {
     trendValue?: string;
     subtitle?: string;
   }) => (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+    <GlassCard className="p-6">
+      <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{title}</div>
+      {icon}
+      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{value}</div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {trend && trendValue && (
             <span
@@ -118,8 +119,7 @@ export default function Analytics() {
           )}
           {subtitle && <span>{subtitle}</span>}
         </div>
-      </CardContent>
-    </Card>
+    </GlassCard>
   );
 
   const SalesOverview = () => (
@@ -161,90 +161,78 @@ export default function Analytics() {
       </div>
 
       {/* Revenue Trend Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center border rounded-lg bg-gray-50">
-            <div className="text-center text-gray-500">
-              <LineChart className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Revenue trend chart would go here</p>
-              <p className="text-sm">Integration with charting library needed</p>
-            </div>
+      <GlassCard className="p-6">
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Revenue Trend</h3>
+        <div className={`h-64 flex items-center justify-center border rounded-lg ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50'}`}>
+          <div className={`text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            <LineChart className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>Revenue trend chart would go here</p>
+            <p className="text-sm">Integration with charting library needed</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </GlassCard>
 
       {/* Deals Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Deal Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Won Deals</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{salesMetrics.wonDeals}</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {formatPercent(salesMetrics.wonDeals / salesMetrics.totalDeals)}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Lost Deals</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{salesMetrics.lostDeals}</span>
-                  <Badge variant="secondary" className="bg-red-100 text-red-800">
-                    {formatPercent(salesMetrics.lostDeals / salesMetrics.totalDeals)}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Active Deals</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{salesMetrics.activeDeals}</span>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    {formatPercent(salesMetrics.activeDeals / salesMetrics.totalDeals)}
-                  </Badge>
-                </div>
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Deal Status</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Won Deals</span>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{salesMetrics.wonDeals}</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  {formatPercent(salesMetrics.wonDeals / salesMetrics.totalDeals)}
+                </Badge>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex justify-between items-center">
+              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Lost Deals</span>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{salesMetrics.lostDeals}</span>
+                <Badge variant="secondary" className="bg-red-100 text-red-800">
+                  {formatPercent(salesMetrics.lostDeals / salesMetrics.totalDeals)}
+                </Badge>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Active Deals</span>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{salesMetrics.activeDeals}</span>
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  {formatPercent(salesMetrics.activeDeals / salesMetrics.totalDeals)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Forecast vs Quota</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Forecast vs Quota</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span>Forecasted Revenue</span>
-                <span className="font-medium">
+                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Forecasted Revenue</span>
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   {formatCurrency(salesMetrics.forecastedRevenue)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Quota Attainment</span>
+                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Quota Attainment</span>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   {formatPercent(salesMetrics.quotaAttainment)}
                 </Badge>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
                 <div
                   className="bg-blue-600 h-2 rounded-full"
                   style={{ width: `${Math.min(salesMetrics.quotaAttainment * 100, 100)}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-gray-600">
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {salesMetrics.quotaAttainment >= 1 ? 'Quota exceeded!' : 'On track to meet quota'}
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </GlassCard>
       </div>
     </div>
   );
@@ -276,118 +264,101 @@ export default function Analytics() {
       </div>
 
       {/* Deals by Stage */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Deals by Stage</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <GlassCard className="p-6">
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Deals by Stage</h3>
           <div className="space-y-4">
             {pipelineMetrics.dealsByStage.map((stage) => (
               <div
                 key={stage.stage}
-                className="flex items-center justify-between p-3 border rounded-lg"
+                className={`flex items-center justify-between p-3 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}
               >
                 <div>
-                  <h4 className="font-medium">{stage.stage}</h4>
-                  <p className="text-sm text-gray-600">{stage.count} deals</p>
+                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{stage.stage}</h4>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stage.count} deals</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{formatCurrency(stage.value)}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(stage.value)}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {formatPercent(stage.value / pipelineMetrics.totalPipelineValue)}
                   </p>
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+      </GlassCard>
 
       {/* Stage Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Average Time in Stage</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pipelineMetrics.averageTimeInStage.map((stage) => (
-                <div key={stage.stage} className="flex justify-between items-center">
-                  <span>{stage.stage}</span>
-                  <Badge variant="outline">{stage.days} days</Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Average Time in Stage</h3>
+          <div className="space-y-3">
+            {pipelineMetrics.averageTimeInStage.map((stage) => (
+              <div key={stage.stage} className="flex justify-between items-center">
+                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{stage.stage}</span>
+                <Badge variant="outline">{stage.days} days</Badge>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Conversion Rates</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pipelineMetrics.stageConversionRates.map((stage) => (
-                <div key={stage.stage} className="flex justify-between items-center">
-                  <span>{stage.stage}</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {formatPercent(stage.rate)}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Conversion Rates</h3>
+          <div className="space-y-3">
+            {pipelineMetrics.stageConversionRates.map((stage) => (
+              <div key={stage.stage} className="flex justify-between items-center">
+                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>{stage.stage}</span>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  {formatPercent(stage.rate)}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
       </div>
 
       {/* Bottlenecks */}
       {pipelineMetrics.bottlenecks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
-              Pipeline Bottlenecks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pipelineMetrics.bottlenecks.map((bottleneck, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{bottleneck.stage}</h4>
-                    <Badge
-                      variant="outline"
-                      className={
-                        bottleneck.severity === 'high'
-                          ? 'bg-red-100 text-red-800'
-                          : bottleneck.severity === 'medium'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                      }
-                    >
-                      {bottleneck.severity} severity
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Average time: {bottleneck.averageDays} days (threshold: {bottleneck.threshold}{' '}
-                    days)
-                  </p>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Suggestions:</p>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {bottleneck.suggestions.map((suggestion, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="text-blue-500">•</span>
-                          {suggestion}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+        <GlassCard className="p-6">
+          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+            Pipeline Bottlenecks
+          </h3>
+          <div className="space-y-4">
+            {pipelineMetrics.bottlenecks.map((bottleneck, index) => (
+              <div key={index} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{bottleneck.stage}</h4>
+                  <Badge
+                    variant="outline"
+                    className={
+                      bottleneck.severity === 'high'
+                        ? 'bg-red-100 text-red-800'
+                        : bottleneck.severity === 'medium'
+                          ? 'bg-orange-100 text-orange-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                    }
+                  >
+                    {bottleneck.severity} severity
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Average time: {bottleneck.averageDays} days (threshold: {bottleneck.threshold} days)
+                </p>
+                <div className="space-y-1">
+                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Suggestions:</p>
+                  <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {bottleneck.suggestions.map((suggestion, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-blue-500">•</span>
+                        {suggestion}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
       )}
     </div>
   );
@@ -395,77 +366,72 @@ export default function Analytics() {
   const InsightsTab = () => (
     <div className="space-y-6">
       {/* AI Insights */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>AI-Generated Insights</CardTitle>
-            <Button size="sm" onClick={generateInsights}>
-              Refresh Insights
-            </Button>
+      <GlassCard className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>AI-Generated Insights</h3>
+          <Button size="sm" onClick={generateInsights}>
+            Refresh Insights
+          </Button>
+        </div>
+        {insights.length === 0 ? (
+          <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>No insights available yet</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {insights.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>No insights available yet</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {insights.map((insight) => (
-                <div key={insight.id} className="p-4 border rounded-lg">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-medium">{insight.title}</h4>
-                      <Badge variant="outline" className="mt-1">
-                        {insight.type}
-                      </Badge>
-                    </div>
-                    <Badge
-                      className={
-                        insight.severity === 'critical'
-                          ? 'bg-red-100 text-red-800'
-                          : insight.severity === 'high'
-                            ? 'bg-orange-100 text-orange-800'
-                            : insight.severity === 'medium'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-blue-100 text-blue-800'
-                      }
-                    >
-                      {insight.severity}
+        ) : (
+          <div className="space-y-4">
+            {insights.map((insight) => (
+              <div key={insight.id} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{insight.title}</h4>
+                    <Badge variant="outline" className="mt-1">
+                      {insight.type}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-700 mb-3">{insight.description}</p>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm text-gray-600">Confidence:</span>
-                    <Badge variant="secondary">{formatPercent(insight.confidence)}</Badge>
-                  </div>
-                  {insight.actionable && insight.suggestions.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium mb-2">Recommended Actions:</p>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        {insight.suggestions.map((suggestion, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-blue-500">•</span>
-                            {suggestion}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <Badge
+                    className={
+                      insight.severity === 'critical'
+                        ? 'bg-red-100 text-red-800'
+                        : insight.severity === 'high'
+                          ? 'bg-orange-100 text-orange-800'
+                          : insight.severity === 'medium'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-blue-100 text-blue-800'
+                    }
+                  >
+                    {insight.severity}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{insight.description}</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Confidence:</span>
+                  <Badge variant="secondary">{formatPercent(insight.confidence)}</Badge>
+                </div>
+                {insight.actionable && insight.suggestions.length > 0 && (
+                  <div>
+                    <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Recommended Actions:</p>
+                    <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {insight.suggestions.map((suggestion, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-blue-500">•</span>
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
 
       {/* Forecasting */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Forecasting</CardTitle>
-            <div className="flex items-center gap-2">
+      <GlassCard className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Forecasting</h3>
+          <div className="flex items-center gap-2">
               <Select value={selectedMetric} onValueChange={setSelectedMetric}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
@@ -480,62 +446,59 @@ export default function Analytics() {
                 {isLoading ? 'Generating...' : 'Generate Forecast'}
               </Button>
             </div>
+        </div>
+        {forecasts.length === 0 ? (
+          <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>No forecasts generated yet</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {forecasts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>No forecasts generated yet</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {forecasts.map((forecast) => (
-                <div key={forecast.metric} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-medium capitalize">{forecast.metric} Forecast</h4>
-                    <Badge variant="secondary">
-                      {formatPercent(forecast.confidence)} confidence
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Current</p>
-                      <p className="font-medium">{formatCurrency(forecast.currentValue)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Forecasted</p>
-                      <p className="font-medium">{formatCurrency(forecast.forecastedValue)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Best Case</p>
-                      <p className="font-medium text-green-600">
-                        {formatCurrency(forecast.scenarioAnalysis.best)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Worst Case</p>
-                      <p className="font-medium text-red-600">
-                        {formatCurrency(forecast.scenarioAnalysis.worst)}
-                      </p>
-                    </div>
+        ) : (
+          <div className="space-y-4">
+            {forecasts.map((forecast) => (
+              <div key={forecast.metric} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className={`font-medium capitalize ${isDark ? 'text-white' : 'text-gray-900'}`}>{forecast.metric} Forecast</h4>
+                  <Badge variant="secondary">
+                    {formatPercent(forecast.confidence)} confidence
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Current</p>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(forecast.currentValue)}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium mb-2">Key Factors:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {forecast.factors.map((factor) => (
-                        <Badge key={factor} variant="outline" className="text-xs">
-                          {factor.replace('_', ' ')}
-                        </Badge>
-                      ))}
-                    </div>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Forecasted</p>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(forecast.forecastedValue)}</p>
+                  </div>
+                  <div>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Best Case</p>
+                    <p className="font-medium text-green-600">
+                      {formatCurrency(forecast.scenarioAnalysis.best)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Worst Case</p>
+                    <p className="font-medium text-red-600">
+                      {formatCurrency(forecast.scenarioAnalysis.worst)}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div>
+                  <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Key Factors:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {forecast.factors.map((factor) => (
+                      <Badge key={factor} variant="outline" className="text-xs">
+                        {factor.replace('_', ' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
     </div>
   );
 

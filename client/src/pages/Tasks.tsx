@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
+import { useTheme } from '../contexts/ThemeContext';
 import { useTaskStore } from '../store/taskStore';
 import { Task } from '../store/taskStore';
 import {
@@ -18,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 
 const Tasks: React.FC = () => {
+  const { isDark } = useTheme();
   const {
     tasks,
     isLoading,

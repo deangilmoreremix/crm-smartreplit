@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { HashLink } from 'react-router-hash-link';
 import { Brain, Users, BarChart3, Zap, Search, Image, Mail, ArrowRight } from 'lucide-react';
 import { WhitelabelButton } from '../../types/whitelabel';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface ParallaxHeroProps {
   title?: string;
@@ -15,6 +16,7 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
   subtitle = "Our AI-powered CRM transforms how sales teams work by automating routine tasks, providing deep insights, and helping you close more deals.",
   ctaButtons = []
 }) => {
+  const { isDark } = useTheme();
   const [scrollY, setScrollY] = useState(0);
   const [hasRendered, setHasRendered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,49 +50,49 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
   
   const parallaxItems = [
     { 
-      icon: <Brain size={40} className="text-indigo-600" />, 
+      icon: <Brain size={40} className={isDark ? "text-primary" : "text-indigo-600"} />, 
       speed: 0.3, 
       startY: 20, 
       startX: 20,
       label: 'AI Assistant' 
     },
     { 
-      icon: <Users size={32} className="text-blue-600" />, 
+      icon: <Users size={32} className={isDark ? "text-blue-400" : "text-blue-600"} />, 
       speed: 0.2, 
       startY: 60, 
       startX: 15,
       label: 'Contacts' 
     },
     { 
-      icon: <BarChart3 size={36} className="text-purple-600" />, 
+      icon: <BarChart3 size={36} className={isDark ? "text-purple-400" : "text-purple-600"} />, 
       speed: 0.4, 
       startY: 30, 
       startX: 80,
       label: 'Analytics' 
     },
     { 
-      icon: <Zap size={30} className="text-amber-600" />, 
+      icon: <Zap size={30} className={isDark ? "text-amber-400" : "text-amber-600"} />, 
       speed: 0.25, 
       startY: 70, 
       startX: 85,
       label: 'Automation' 
     },
     { 
-      icon: <Search size={28} className="text-cyan-600" />, 
+      icon: <Search size={28} className={isDark ? "text-cyan-400" : "text-cyan-600"} />, 
       speed: 0.15, 
       startY: 50, 
       startX: 10,
       label: 'Search' 
     },
     { 
-      icon: <Image size={34} className="text-emerald-600" />, 
+      icon: <Image size={34} className={isDark ? "text-emerald-400" : "text-emerald-600"} />, 
       speed: 0.35, 
       startY: 80, 
       startX: 70,
       label: 'Visuals' 
     },
     { 
-      icon: <Mail size={30} className="text-rose-600" />, 
+      icon: <Mail size={30} className={isDark ? "text-rose-400" : "text-rose-600"} />, 
       speed: 0.3, 
       startY: 40, 
       startX: 90, 
@@ -106,7 +108,7 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative min-h-[600px] overflow-hidden bg-gradient-to-b from-gray-50 to-indigo-50 py-24"
+      className={`relative min-h-[600px] overflow-hidden ${isDark ? 'bg-gradient-to-b from-slate-900 to-slate-800' : 'bg-gradient-to-b from-gray-50 to-indigo-50'} py-24`}
     >
       {/* Debug information */}
       <div 
@@ -129,10 +131,10 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
               willChange: 'transform'
             }}
           >
-            <div className="p-4 bg-white rounded-full shadow-lg">
+            <div className={`p-4 ${isDark ? 'bg-slate-800' : 'bg-white'} rounded-full shadow-lg`}>
               {item.icon}
             </div>
-            <div className="mt-2 px-3 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium">
+            <div className={`mt-2 px-3 py-1 ${isDark ? 'bg-slate-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-full text-xs font-medium ${isDark ? 'text-white' : 'text-gray-700'}`}>
               {item.label}
             </div>
           </div>
@@ -142,15 +144,15 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className={`text-4xl md:text-6xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-6 leading-tight`}>
             {title.includes('Sales Technology') ? (
-              <>Experience the Future of <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">Sales Technology</span></>
+              <><span className={isDark ? 'text-white' : 'text-gray-900'}>Experience the Future of </span><span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Sales Technology</span></>
             ) : (
               title
             )}
           </h1>
 
-          <p className="text-xl text-gray-700 mb-12">
+          <p className={`text-xl ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-12`}>
             {subtitle}
           </p>
 
@@ -180,10 +182,10 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
                   Sign In to SmartCRM <ArrowRight size={18} className="ml-2" />
                 </Link>
 
-                <HashLink to="#features" className="
-                  px-8 py-4 bg-white text-indigo-600 font-medium rounded-xl border border-indigo-200
+                <HashLink to="#features" className={`
+                  px-8 py-4 ${isDark ? 'bg-slate-800 text-primary border-slate-600' : 'bg-white text-indigo-600 font-medium rounded-xl border border-indigo-200'}
                   hover:border-indigo-300 hover:shadow-md transition duration-300 transform hover:translate-y-[-2px]
-                ">
+                `}>
                   Explore Features
                 </HashLink>
               </>
@@ -193,8 +195,8 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
       </div>
       
       {/* Gradient orbs */}
-      <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{animationDuration: '8s'}}></div>
-      <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{animationDuration: '12s', animationDelay: '1s'}}></div>
+      <div className={`absolute top-1/4 left-1/4 w-40 h-40 ${isDark ? 'bg-blue-600' : 'bg-blue-300'} rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse`} style={{animationDuration: '8s'}}></div>
+      <div className={`absolute bottom-1/4 right-1/4 w-60 h-60 ${isDark ? 'bg-indigo-600' : 'bg-indigo-300'} rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse`} style={{animationDuration: '12s', animationDelay: '1s'}}></div>
     </div>
   );
 };

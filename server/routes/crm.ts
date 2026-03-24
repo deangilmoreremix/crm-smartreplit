@@ -21,7 +21,7 @@ import { requireAuth, requireProductTier } from './auth';
 
 // Helper function to check authentication with dev bypass support
 const checkAuth = (req: any): { userId: string | null; isAuthenticated: boolean } => {
-  const userId = req.session?.userId;
+  const userId = (req.session as any)?.userId;
   const authHeader = req.headers.authorization;
   const hostname = req.headers.host || '';
   const isDevHost = hostname.includes('localhost') || hostname.includes('replit.dev') || hostname.includes('127.0.0.1');
