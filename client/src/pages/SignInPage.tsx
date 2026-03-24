@@ -61,9 +61,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div
-      className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4 relative`}
-    >
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
       <button
         onClick={toggleDevMode}
         style={{
