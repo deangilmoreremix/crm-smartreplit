@@ -42,7 +42,7 @@ global.fetch = vi.fn();
 describe('OpenClaw Integration Tests', () => {
   // Tool definition tests
   describe('CRM Tool Definitions', () => {
-    it('should define all 26 CRM tools', () => {
+    it('should define all 42 CRM tools', () => {
       const expectedTools = [
         // Contact Management
         'search_contacts',
@@ -79,9 +79,28 @@ describe('OpenClaw Integration Tests', () => {
         // Analytics
         'get_pipeline_summary',
         'get_sales_forecast',
+        // Communications & Activity
+        'list_communications',
+        'create_communication',
+        'list_notes',
+        'create_note',
+        'delete_note',
+        // Tags
+        'add_contact_tag',
+        'remove_contact_tag',
+        // Engagement & Interaction History
+        'get_contact_engagement',
+        'get_interaction_history',
+        // AI Features
+        'analyze_lead_score',
+        'generate_personalization',
+        'enrich_contact',
+        'social_media_research',
+        'analyze_sentiment',
+        'generate_email_draft',
       ];
 
-      expect(expectedTools.length).toBe(26);
+      expect(expectedTools.length).toBe(41);
     });
 
     it('should categorize tools correctly', () => {
@@ -107,18 +126,34 @@ describe('OpenClaw Integration Tests', () => {
           'cancel_appointment',
           'send_email',
           'send_sms',
+          'list_communications',
+          'create_communication',
+          'list_notes',
+          'create_note',
+          'delete_note',
+          'add_contact_tag',
+          'remove_contact_tag',
+          'get_interaction_history',
         ],
         navigation: ['navigate_to_app', 'open_remote_app'],
         automation: ['trigger_automation'],
-        ai: ['run_ai_insights'],
-        analytics: ['get_pipeline_summary', 'get_sales_forecast'],
+        ai: [
+          'run_ai_insights',
+          'analyze_lead_score',
+          'generate_personalization',
+          'enrich_contact',
+          'social_media_research',
+          'analyze_sentiment',
+          'generate_email_draft',
+        ],
+        analytics: ['get_pipeline_summary', 'get_sales_forecast', 'get_contact_engagement'],
       };
 
-      expect(categories.crm.length).toBe(20);
+      expect(categories.crm.length).toBe(28);
       expect(categories.navigation.length).toBe(2);
       expect(categories.automation.length).toBe(1);
-      expect(categories.ai.length).toBe(1);
-      expect(categories.analytics.length).toBe(2);
+      expect(categories.ai.length).toBe(7);
+      expect(categories.analytics.length).toBe(3);
     });
   });
 

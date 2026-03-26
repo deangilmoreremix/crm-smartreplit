@@ -6,10 +6,14 @@ import {
   deals,
   tasks,
   appointments,
+  communications,
+  notes,
   insertContactSchema,
   insertDealSchema,
   insertTaskSchema,
   insertAppointmentSchema,
+  insertCommunicationSchema,
+  insertNoteSchema,
 } from '../../shared/schema';
 import { supabase } from '../supabase';
 
@@ -210,6 +214,106 @@ const crmTools = [
     description: 'Get AI-powered sales forecast',
     parameters: { period: 'week | month | quarter?' },
     category: 'analytics',
+  },
+  // Communications & Activity
+  {
+    name: 'list_communications',
+    description: 'List communications for a contact',
+    parameters: { contactId: 'string', type: 'string?', limit: 'number?' },
+    category: 'crm',
+  },
+  {
+    name: 'create_communication',
+    description: 'Log a communication (email, call, sms, meeting)',
+    parameters: {
+      contactId: 'string',
+      type: 'email | call | sms | meeting',
+      subject: 'string?',
+      content: 'string?',
+      direction: 'inbound | outbound',
+    },
+    category: 'crm',
+  },
+  {
+    name: 'list_notes',
+    description: 'List notes for a contact or deal',
+    parameters: { contactId: 'string?', dealId: 'string?', limit: 'number?' },
+    category: 'crm',
+  },
+  {
+    name: 'create_note',
+    description: 'Create a note for a contact or deal',
+    parameters: { content: 'string', type: 'string?', contactId: 'string?', dealId: 'string?' },
+    category: 'crm',
+  },
+  {
+    name: 'delete_note',
+    description: 'Delete a note',
+    parameters: { noteId: 'string' },
+    category: 'crm',
+  },
+  // Tags
+  {
+    name: 'add_contact_tag',
+    description: 'Add a tag to a contact',
+    parameters: { contactId: 'string', tag: 'string' },
+    category: 'crm',
+  },
+  {
+    name: 'remove_contact_tag',
+    description: 'Remove a tag from a contact',
+    parameters: { contactId: 'string', tag: 'string' },
+    category: 'crm',
+  },
+  // Engagement & Interaction History
+  {
+    name: 'get_contact_engagement',
+    description: 'Get engagement metrics for a contact',
+    parameters: { contactId: 'string' },
+    category: 'analytics',
+  },
+  {
+    name: 'get_interaction_history',
+    description: 'Get full interaction history for a contact',
+    parameters: { contactId: 'string', limit: 'number?' },
+    category: 'crm',
+  },
+  // AI Features
+  {
+    name: 'analyze_lead_score',
+    description: 'AI-powered lead scoring analysis for a contact',
+    parameters: { contactId: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'generate_personalization',
+    description: 'Generate personalization recommendations for a contact',
+    parameters: { contactId: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'enrich_contact',
+    description: 'AI-powered contact enrichment with research',
+    parameters: { contactId: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'social_media_research',
+    description: 'Research contact social media profiles',
+    parameters: { contactId: 'string', platforms: 'string?' },
+    category: 'ai',
+  },
+  {
+    name: 'analyze_sentiment',
+    description: 'Analyze sentiment of text content',
+    parameters: { text: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'generate_email_draft',
+    description: 'Generate an AI email draft for a contact',
+    parameters: { contactId: 'string', purpose: 'string', context: 'string?' },
+    category: 'ai',
   },
 ];
 
@@ -694,6 +798,430 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           parameters: params.parameters || {},
           message: `Opening remote app: ${remoteApp.description}`,
         };
+      }
+
+      // Communications
+      case 'list_communications': {
+        const contactId = parseInt(params.contactId);
+        const limit = params.limit || 50;
+        const type = params.type;
+
+        let results = await db!
+          .select()
+          .from(communications)
+          .where(
+            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
+          )
+          .limit(limit);
+
+        if (type) results = results.filter((c) => c.type === type);
+
+        return { communications: results, count: results.length };
+      }
+
+      case 'create_communication': {
+        const validated = insertCommunicationSchema.parse({
+          ...params,
+          contactId: parseInt(params.contactId),
+          profileId: targetUserId,
+          sentAt: new Date(),
+        });
+        const [newComm] = await db!.insert(communications).values(validated).returning();
+        return { communication: newComm };
+      }
+
+      // Notes
+      case 'list_notes': {
+        const limit = params.limit || 50;
+        const contactId = params.contactId ? parseInt(params.contactId) : null;
+        const dealId = params.dealId ? parseInt(params.dealId) : null;
+
+        const conditions = [eq(notes.profileId, targetUserId)];
+        if (contactId) conditions.push(eq(notes.contactId, contactId));
+        if (dealId) conditions.push(eq(notes.dealId, dealId));
+
+        const results = await db!
+          .select()
+          .from(notes)
+          .where(and(...conditions))
+          .limit(limit)
+          .orderBy(desc(notes.createdAt));
+
+        return { notes: results, count: results.length };
+      }
+
+      case 'create_note': {
+        const validated = insertNoteSchema.parse({
+          ...params,
+          contactId: params.contactId ? parseInt(params.contactId) : undefined,
+          dealId: params.dealId ? parseInt(params.dealId) : undefined,
+          profileId: targetUserId,
+        });
+        const [newNote] = await db!.insert(notes).values(validated).returning();
+        return { note: newNote };
+      }
+
+      case 'delete_note': {
+        const noteId = parseInt(params.noteId);
+        await db!.delete(notes).where(and(eq(notes.id, noteId), eq(notes.profileId, targetUserId)));
+        return { success: true, message: 'Note deleted' };
+      }
+
+      // Tags
+      case 'add_contact_tag': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const currentTags = (contact as any).tags || [];
+        const newTags = [...new Set([...currentTags, params.tag])];
+
+        const [updated] = await db!
+          .update(contacts)
+          .set({ tags: newTags, updatedAt: new Date() })
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)))
+          .returning();
+
+        return { contact: updated, tags: newTags };
+      }
+
+      case 'remove_contact_tag': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const currentTags = (contact as any).tags || [];
+        const newTags = currentTags.filter((t: string) => t !== params.tag);
+
+        const [updated] = await db!
+          .update(contacts)
+          .set({ tags: newTags, updatedAt: new Date() })
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)))
+          .returning();
+
+        return { contact: updated, tags: newTags };
+      }
+
+      // Engagement & Interaction History
+      case 'get_contact_engagement': {
+        const contactId = parseInt(params.contactId);
+
+        const comms = await db!
+          .select()
+          .from(communications)
+          .where(
+            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
+          );
+
+        const emails = comms.filter((c) => c.type === 'email');
+        const calls = comms.filter((c) => c.type === 'call');
+        const meetings = comms.filter((c) => c.type === 'meeting');
+        const sms = comms.filter((c) => c.type === 'sms');
+
+        const inboundCount = comms.filter((c) => c.direction === 'inbound').length;
+        const outboundCount = comms.filter((c) => c.direction === 'outbound').length;
+
+        const lastCommunication = comms.sort(
+          (a, b) =>
+            new Date(b.sentAt || b.createdAt).getTime() -
+            new Date(a.sentAt || a.createdAt).getTime()
+        )[0];
+
+        return {
+          totalCommunications: comms.length,
+          emails: emails.length,
+          calls: calls.length,
+          meetings: meetings.length,
+          sms: sms.length,
+          inboundCount,
+          outboundCount,
+          responseRate: outboundCount > 0 ? Math.round((inboundCount / outboundCount) * 100) : 0,
+          lastCommunication: lastCommunication
+            ? {
+                type: lastCommunication.type,
+                sentAt: lastCommunication.sentAt || lastCommunication.createdAt,
+                subject: lastCommunication.subject,
+              }
+            : null,
+        };
+      }
+
+      case 'get_interaction_history': {
+        const contactId = parseInt(params.contactId);
+        const limit = params.limit || 50;
+
+        const comms = await db!
+          .select()
+          .from(communications)
+          .where(
+            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
+          )
+          .limit(limit)
+          .orderBy(desc(communications.sentAt), desc(communications.createdAt));
+
+        const contactNotes = await db!
+          .select()
+          .from(notes)
+          .where(and(eq(notes.contactId, contactId), eq(notes.profileId, targetUserId)))
+          .limit(limit)
+          .orderBy(desc(notes.createdAt));
+
+        const interactions = [
+          ...comms.map((c) => ({
+            type: 'communication',
+            subtype: c.type,
+            subject: c.subject,
+            content: c.content,
+            direction: c.direction,
+            date: c.sentAt || c.createdAt,
+          })),
+          ...contactNotes.map((n) => ({
+            type: 'note',
+            subtype: n.type,
+            content: n.content,
+            date: n.createdAt,
+          })),
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        return { interactions: interactions.slice(0, limit), count: interactions.length };
+      }
+
+      // AI Features
+      case 'analyze_lead_score': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a sales AI expert. Analyze the lead and provide a lead score from 1-100 with detailed reasoning. Return JSON with fields: score, reasoning, strengths, weaknesses, recommendations.',
+            },
+            {
+              role: 'user',
+              content: `Analyze this lead: ${JSON.stringify(contact)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        return result;
+      }
+
+      case 'generate_personalization': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const comms = await db!
+          .select()
+          .from(communications)
+          .where(
+            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
+          )
+          .limit(10);
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const previousInteractions = comms.map(
+          (c) => `${c.type}: ${c.subject || ''} - ${c.content || ''}`
+        );
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a personalization expert. Generate personalized outreach strategies based on contact data and interaction history. Return JSON with fields: recommendations (array of objects with title, description, priority), talkingPoints (array), bestApproach, suggestedTiming.',
+            },
+            {
+              role: 'user',
+              content: `Contact: ${JSON.stringify(contact)}. Previous interactions: ${JSON.stringify(previousInteractions)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        return result;
+      }
+
+      case 'enrich_contact': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
+            },
+            {
+              role: 'user',
+              content: `Research and enrich this contact: ${JSON.stringify(contact)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.5,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        return result;
+      }
+
+      case 'social_media_research': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const platforms = params.platforms
+          ? params.platforms.split(',').map((p: string) => p.trim())
+          : ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'];
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(', ')}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
+            },
+            {
+              role: 'user',
+              content: `Research social media for: ${JSON.stringify(contact)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.5,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        return result;
+      }
+
+      case 'analyze_sentiment': {
+        const text = params.text;
+        if (!text) return { error: 'Text is required for sentiment analysis' };
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a sentiment analysis expert. Analyze the sentiment and return JSON with: sentiment (positive/negative/neutral/mixed), score (1-100), confidence, keyPhrases (array), emotionalTone.',
+            },
+            {
+              role: 'user',
+              content: `Analyze the sentiment of: "${text}"`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        return result;
+      }
+
+      case 'generate_email_draft': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const purpose = params.purpose || 'follow-up';
+        const context = params.context || '';
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a sales email expert. Draft professional, personalized emails. Return JSON with: subject, body, suggestedSendTime.',
+            },
+            {
+              role: 'user',
+              content: `Draft a ${purpose} email to ${contact.name} (${contact.position} at ${contact.company}). Additional context: ${context}. Contact info: ${JSON.stringify(contact)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        return result;
       }
 
       default:
