@@ -40,6 +40,19 @@ const aiRateLimit = new Map<string, { count: number; resetAt: number }>();
 const AI_RATE_LIMIT_WINDOW_MS = 60_000;
 const AI_RATE_LIMIT_MAX = 20;
 
+// Clean up rate limit entries every 5 minutes to prevent memory leak
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, entry] of aiRateLimit) {
+      if (now > entry.resetAt) {
+        aiRateLimit.delete(key);
+      }
+    }
+  },
+  5 * 60 * 1000
+);
+
 function checkAIRateLimit(userId: string): boolean {
   const now = Date.now();
   const entry = aiRateLimit.get(userId);
@@ -50,6 +63,22 @@ function checkAIRateLimit(userId: string): boolean {
   if (entry.count >= AI_RATE_LIMIT_MAX) return false;
   entry.count++;
   return true;
+}
+
+// Fetch with timeout
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs = 10000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // Auth helper - extracts userId from session or dev token
@@ -560,6 +589,12 @@ router.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
+    // Authenticate
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     // Build the request to OpenClaw
     const openclawRequest = {
       message,
@@ -568,29 +603,34 @@ router.post('/chat', async (req, res) => {
       context: {
         ...context,
         crmBaseUrl: process.env.CRM_BASE_URL || 'http://localhost:3000',
+        userId,
       },
     };
 
-    // Call OpenClaw API
-    const response = await fetch(`${OPENCLAW_API_URL}/api/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(OPENCLAW_API_KEY ? { Authorization: `Bearer ${OPENCLAW_API_KEY}` } : {}),
+    // Call OpenClaw API with timeout
+    const response = await fetchWithTimeout(
+      `${OPENCLAW_API_URL}/api/v1/chat/completions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(OPENCLAW_API_KEY ? { Authorization: `Bearer ${OPENCLAW_API_KEY}` } : {}),
+        },
+        body: JSON.stringify(openclawRequest),
       },
-      body: JSON.stringify(openclawRequest),
-    });
+      30000
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenClaw API error:', errorText);
-      return res.status(response.status).json({ error: 'OpenClaw API error', details: errorText });
+      console.error('OpenClaw API error:', response.status);
+      return res.status(response.status).json({ error: 'OpenClaw API error' });
     }
 
     const data = await response.json();
     res.json(data);
-  } catch (error) {
-    console.error('OpenClaw proxy error:', error);
+  } catch (error: any) {
+    console.error('OpenClaw proxy error:', error.name === 'AbortError' ? 'Timeout' : error.message);
     res.status(500).json({ error: 'Failed to communicate with OpenClaw API' });
   }
 });
@@ -602,6 +642,12 @@ router.post('/chat/stream', async (req, res) => {
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Authenticate
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
     }
 
     // Set up SSE headers
@@ -617,17 +663,22 @@ router.post('/chat/stream', async (req, res) => {
       context: {
         ...context,
         crmBaseUrl: process.env.CRM_BASE_URL || 'http://localhost:3000',
+        userId,
       },
     };
 
-    const response = await fetch(`${OPENCLAW_API_URL}/api/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(OPENCLAW_API_KEY ? { Authorization: `Bearer ${OPENCLAW_API_KEY}` } : {}),
+    const response = await fetchWithTimeout(
+      `${OPENCLAW_API_URL}/api/v1/chat/completions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(OPENCLAW_API_KEY ? { Authorization: `Bearer ${OPENCLAW_API_KEY}` } : {}),
+        },
+        body: JSON.stringify(openclawRequest),
       },
-      body: JSON.stringify(openclawRequest),
-    });
+      60000
+    );
 
     if (!response.ok) {
       res.end(`data: ${JSON.stringify({ error: 'OpenClaw API error' })}\n\n`);
@@ -702,7 +753,7 @@ router.post('/execute', async (req, res) => {
 
 // Helper function to execute CRM functions based on tool name
 async function executeCRMFunction(toolName: string, params: any, userId?: string): Promise<any> {
-  console.log(`Executing CRM function: ${toolName}`, params);
+  console.log(`Executing CRM function: ${toolName}`);
 
   if (!isDbAvailable()) {
     return { error: 'Database not available' };
