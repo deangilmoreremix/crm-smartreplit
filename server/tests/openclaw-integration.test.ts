@@ -42,7 +42,7 @@ global.fetch = vi.fn();
 describe('OpenClaw Integration Tests', () => {
   // Tool definition tests
   describe('CRM Tool Definitions', () => {
-    it('should define all 54 CRM tools', () => {
+    it('should define all 62 CRM tools', () => {
       const expectedTools = [
         // Contact Management
         'search_contacts',
@@ -118,9 +118,23 @@ describe('OpenClaw Integration Tests', () => {
         // Module Federation
         'get_module_federation_status',
         'broadcast_to_modules',
+        // UI Control
+        'toggle_dark_mode',
+        'set_theme',
+        // Image Generation
+        'generate_image',
+        // Demo Agent
+        'generate_demo_script',
+        // Video Management
+        'list_videos',
+        'create_video',
+        // Pipeline Drag & Drop
+        'move_deal',
+        // Shared State Sync
+        'sync_shared_state',
       ];
 
-      expect(expectedTools.length).toBe(54);
+      expect(expectedTools.length).toBe(62);
     });
 
     it('should categorize tools correctly', () => {

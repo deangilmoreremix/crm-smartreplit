@@ -491,6 +491,64 @@ const crmTools = [
     parameters: { type: 'string', data: 'object' },
     category: 'navigation',
   },
+  // UI Control
+  {
+    name: 'toggle_dark_mode',
+    description: 'Toggle dark mode theme for the application',
+    parameters: {},
+    category: 'navigation',
+  },
+  {
+    name: 'set_theme',
+    description: 'Set the application theme',
+    parameters: { theme: 'light | dark | auto' },
+    category: 'navigation',
+  },
+  // Image Generation
+  {
+    name: 'generate_image',
+    description: 'Generate an image using AI (DALL-E or Gemini)',
+    parameters: { prompt: 'string', size: 'string?', style: 'string?' },
+    category: 'ai',
+  },
+  // Video/Demo
+  {
+    name: 'generate_demo_script',
+    description: 'Generate a product demo script using AI',
+    parameters: { productName: 'string', productDescription: 'string?', targetAudience: 'string?' },
+    category: 'ai',
+  },
+  {
+    name: 'list_videos',
+    description: 'List all video emails for the user',
+    parameters: { limit: 'number?' },
+    category: 'crm',
+  },
+  {
+    name: 'create_video',
+    description: 'Create a new video email entry',
+    parameters: {
+      title: 'string',
+      script: 'string',
+      recipientEmail: 'string?',
+      recipientName: 'string?',
+    },
+    category: 'crm',
+  },
+  // Pipeline Drag & Drop (alias for update_deal_stage with position)
+  {
+    name: 'move_deal',
+    description: 'Move a deal to a different pipeline stage (drag & drop equivalent)',
+    parameters: { dealId: 'string', stage: 'string', position: 'number?' },
+    category: 'crm',
+  },
+  // Shared State Sync
+  {
+    name: 'sync_shared_state',
+    description: 'Sync shared state across all module federation apps',
+    parameters: { dataType: 'contacts | deals | appointments', data: 'object' },
+    category: 'navigation',
+  },
 ];
 
 // Chat endpoint - proxy to OpenClaw
@@ -2022,6 +2080,162 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           type: params.type,
           data: params.data,
           message: 'Broadcast message sent to all module federation apps',
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      // UI Control
+      case 'toggle_dark_mode': {
+        return {
+          type: 'ui_action',
+          action: 'toggle_dark_mode',
+          message: 'Toggling dark mode',
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      case 'set_theme': {
+        return {
+          type: 'ui_action',
+          action: 'set_theme',
+          theme: params.theme || 'light',
+          message: `Setting theme to ${params.theme || 'light'}`,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      // Image Generation
+      case 'generate_image': {
+        const prompt = params.prompt;
+        if (!prompt) return { error: 'Prompt is required for image generation' };
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        const size = params.size || '1024x1024';
+        const validSizes = ['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'];
+        const imageSize = validSizes.includes(size) ? size : '1024x1024';
+
+        const response = await client.images.generate({
+          model: 'dall-e-3',
+          prompt,
+          size: imageSize as any,
+          n: 1,
+        });
+
+        return {
+          images: response.data.map((img) => ({
+            url: img.url,
+            revisedPrompt: img.revised_prompt,
+          })),
+          model: 'dall-e-3',
+          size: imageSize,
+        };
+      }
+
+      // Demo Agent
+      case 'generate_demo_script': {
+        const productName = params.productName;
+        if (!productName) return { error: 'Product name is required' };
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        const response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a product demo expert. Create compelling demo scripts. Return JSON with: introduction, keyFeatures (array with name, demo, benefit), callToAction, estimatedDuration, talkingPoints (array).',
+            },
+            {
+              role: 'user',
+              content: `Create a demo script for: ${productName}. Description: ${params.productDescription || 'N/A'}. Target audience: ${params.targetAudience || 'business professionals'}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+          max_tokens: 2000,
+        });
+
+        return safeJsonParse(response.choices[0].message.content || '{}');
+      }
+
+      // Video Management
+      case 'list_videos': {
+        const limit = params.limit || 20;
+        const videoRes = await fetch(
+          `${process.env.CRM_BASE_URL || 'http://localhost:3000'}/api/videos`,
+          {
+            headers: {
+              Authorization: req.headers.authorization || '',
+              Cookie: req.headers.cookie || '',
+            },
+          }
+        );
+
+        if (!videoRes.ok) {
+          return { videos: [], count: 0 };
+        }
+
+        const videos = await videoRes.json();
+        return { videos: videos.slice(0, limit), count: videos.length };
+      }
+
+      case 'create_video': {
+        const videoRes = await fetch(
+          `${process.env.CRM_BASE_URL || 'http://localhost:3000'}/api/videos`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: req.headers.authorization || '',
+              Cookie: req.headers.cookie || '',
+            },
+            body: JSON.stringify({
+              title: params.title,
+              script: params.script,
+              recipient: params.recipientEmail
+                ? { email: params.recipientEmail, name: params.recipientName }
+                : undefined,
+            }),
+          }
+        );
+
+        if (!videoRes.ok) {
+          return { error: 'Failed to create video' };
+        }
+
+        const video = await videoRes.json();
+        return { video };
+      }
+
+      // Pipeline Drag & Drop
+      case 'move_deal': {
+        const dealId = parseInt(params.dealId);
+        const stage = params.stage;
+        if (!stage) return { error: 'Stage is required' };
+
+        const [updated] = await db!
+          .update(deals)
+          .set({ stage, updatedAt: new Date() })
+          .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)))
+          .returning();
+
+        return updated
+          ? { deal: updated, message: `Deal moved to ${stage}` }
+          : { error: 'Deal not found' };
+      }
+
+      // Shared State Sync
+      case 'sync_shared_state': {
+        return {
+          type: 'state_sync',
+          action: 'sync',
+          dataType: params.dataType,
+          data: params.data,
+          message: `Shared state synced: ${params.dataType}`,
           timestamp: new Date().toISOString(),
         };
       }
