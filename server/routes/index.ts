@@ -4,6 +4,7 @@ import { registerCRMRoutes } from './crm';
 // Import other route modules as they are created
 import { registerAdminRoutes } from './admin';
 import { billingRoutes } from './billing';
+import openclawRoutes from './openclaw';
 // import { registerAPIRoutes } from './api';
 // import { registerMessagingRoutes } from './messaging';
 // import { registerAnalyticsRoutes } from './analytics';
@@ -19,6 +20,10 @@ export async function registerRoutes(app: Express): Promise<any> {
   // Register billing routes
   console.log('Registering billing routes at /api/billing');
   app.use('/api/billing', billingRoutes);
+
+  // Register OpenClaw routes
+  console.log('Registering OpenClaw routes at /api/openclaw');
+  app.use('/api/openclaw', openclawRoutes);
 
   // TODO: Add other route modules as they are implemented
   // registerAPIRoutes(app);

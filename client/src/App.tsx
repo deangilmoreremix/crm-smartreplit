@@ -100,6 +100,9 @@ const SmartCRMPage = lazy(() => import('./pages/SmartCRMPage'));
 const ContentAIPage = lazy(() => import('./pages/ContentAIPage'));
 const AnalyticsRemotePage = lazy(() => import('./pages/AnalyticsRemotePage'));
 
+// OpenClaw AI CRM Integration
+const OpenClawPage = lazy(() => import('./pages/OpenClawPage'));
+
 // User Account Management - reserved for future routes
 
 // Demo Pages for Sales
@@ -994,6 +997,17 @@ function AppContent() {
                 <ProtectedRoute>
                   <Navbar />
                   <ContentAIPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* OpenClaw AI CRM */}
+            <Route
+              path="/openclaw"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <OpenClawPage />
                 </ProtectedRoute>
               }
             />
