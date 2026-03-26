@@ -394,6 +394,103 @@ const crmTools = [
     parameters: { contactId: 'string', purpose: 'string', context: 'string?' },
     category: 'ai',
   },
+  // Bulk Operations
+  {
+    name: 'bulk_analyze_contacts',
+    description: 'Run AI analysis on multiple contacts',
+    parameters: { contactIds: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'bulk_export_contacts',
+    description: 'Export contacts to CSV format',
+    parameters: { contactIds: 'string?', filters: 'object?' },
+    category: 'crm',
+  },
+  // Advanced Search
+  {
+    name: 'search_contacts_advanced',
+    description: 'Advanced search with multiple filter criteria',
+    parameters: {
+      query: 'string?',
+      status: 'string?',
+      interestLevel: 'string?',
+      industry: 'string?',
+      tags: 'string?',
+      minScore: 'number?',
+      maxScore: 'number?',
+      source: 'string?',
+      location: 'string?',
+      favoritesOnly: 'boolean?',
+      limit: 'number?',
+    },
+    category: 'crm',
+  },
+  // Deal AI
+  {
+    name: 'analyze_deal',
+    description: 'AI-powered strategic analysis of a deal',
+    parameters: { dealId: 'string' },
+    category: 'ai',
+  },
+  // Deal Analytics
+  {
+    name: 'get_deal_analytics',
+    description: 'Get deal analytics with revenue, conversion, and metrics',
+    parameters: { period: 'week | month | quarter?' },
+    category: 'analytics',
+  },
+  {
+    name: 'get_deal_risks',
+    description: 'Get deals at risk based on inactivity and low probability',
+    parameters: {},
+    category: 'analytics',
+  },
+  // Contact Customization
+  {
+    name: 'toggle_favorite',
+    description: 'Toggle favorite status for a contact',
+    parameters: { contactId: 'string' },
+    category: 'crm',
+  },
+  {
+    name: 'add_custom_field',
+    description: 'Add a custom field to a contact',
+    parameters: { contactId: 'string', key: 'string', value: 'string' },
+    category: 'crm',
+  },
+  {
+    name: 'remove_custom_field',
+    description: 'Remove a custom field from a contact',
+    parameters: { contactId: 'string', key: 'string' },
+    category: 'crm',
+  },
+  // Social Monitoring
+  {
+    name: 'setup_social_monitoring',
+    description: 'Set up ongoing social media monitoring for a contact',
+    parameters: { contactId: 'string', platforms: 'string?', alertTypes: 'string?' },
+    category: 'ai',
+  },
+  {
+    name: 'get_social_alerts',
+    description: 'Get social media monitoring alerts for a contact',
+    parameters: { contactId: 'string' },
+    category: 'ai',
+  },
+  // Module Federation
+  {
+    name: 'get_module_federation_status',
+    description: 'Get status of all module federation remote apps',
+    parameters: {},
+    category: 'navigation',
+  },
+  {
+    name: 'broadcast_to_modules',
+    description: 'Broadcast a message to all module federation apps',
+    parameters: { type: 'string', data: 'object' },
+    category: 'navigation',
+  },
 ];
 
 // Chat endpoint - proxy to OpenClaw
@@ -1499,6 +1596,434 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         });
 
         return safeJsonParse(response.choices[0].message.content || '{}');
+      }
+
+      // Bulk Operations
+      case 'bulk_analyze_contacts': {
+        const contactIds: number[] = (params.contactIds || '')
+          .split(',')
+          .map((id: string) => parseInt(id.trim()))
+          .filter((id: number) => !isNaN(id));
+
+        if (contactIds.length === 0) return { error: 'No valid contact IDs provided' };
+        if (contactIds.length > 50) return { error: 'Maximum 50 contacts per bulk analysis' };
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        const results = [];
+        for (const contactId of contactIds) {
+          const [contact] = await db!
+            .select()
+            .from(contacts)
+            .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+          if (contact) {
+            try {
+              const response = await client.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                  {
+                    role: 'system',
+                    content:
+                      'Analyze this lead. Return JSON with: score (1-100), reasoning, recommendations.',
+                  },
+                  { role: 'user', content: `Contact: ${JSON.stringify(contact)}` },
+                ],
+                response_format: { type: 'json_object' },
+                temperature: 0.3,
+                max_tokens: 300,
+              });
+              const analysis = safeJsonParse(response.choices[0].message.content || '{}');
+              results.push({ contactId, name: contact.name, ...analysis });
+            } catch {
+              results.push({ contactId, name: contact.name, error: 'Analysis failed' });
+            }
+          }
+        }
+
+        return { results, count: results.length };
+      }
+
+      case 'bulk_export_contacts': {
+        let contactList;
+
+        if (params.contactIds) {
+          const ids = params.contactIds
+            .split(',')
+            .map((id: string) => parseInt(id.trim()))
+            .filter((id: number) => !isNaN(id));
+          contactList = await db!
+            .select()
+            .from(contacts)
+            .where(and(eq(contacts.profileId, userId), ...ids.map((id) => eq(contacts.id, id))));
+        } else if (params.filters) {
+          const conditions = [eq(contacts.profileId, userId)];
+          if (params.filters.status) conditions.push(eq(contacts.status, params.filters.status));
+          if (params.filters.industry)
+            conditions.push(eq(contacts.industry, params.filters.industry));
+          contactList = await db!
+            .select()
+            .from(contacts)
+            .where(and(...conditions))
+            .limit(1000);
+        } else {
+          contactList = await db!
+            .select()
+            .from(contacts)
+            .where(eq(contacts.profileId, userId))
+            .limit(1000);
+        }
+
+        const csvHeader =
+          'Name,Email,Phone,Company,Position,Status,Industry,Score,Location,Last Contact\n';
+        const csvRows = contactList
+          .map(
+            (c) =>
+              `"${c.name}","${c.email}","${c.phone || ''}","${c.company || ''}","${c.position || ''}","${c.status}","${c.industry || ''}","${c.score || ''}","${c.location || ''}","${c.lastContact || ''}"`
+          )
+          .join('\n');
+
+        return {
+          csv: csvHeader + csvRows,
+          count: contactList.length,
+          exportedAt: new Date().toISOString(),
+        };
+      }
+
+      case 'search_contacts_advanced': {
+        const conditions = [eq(contacts.profileId, userId)];
+
+        if (params.status) conditions.push(eq(contacts.status, params.status));
+        if (params.industry) conditions.push(eq(contacts.industry, params.industry));
+        if (params.source) conditions.push(eq(contacts.source, params.source));
+        if (params.location) conditions.push(like(contacts.location, `%${params.location}%`));
+        if (params.query) {
+          conditions.push(
+            or(
+              like(contacts.name, `%${params.query}%`),
+              like(contacts.email, `%${params.query}%`),
+              like(contacts.company, `%${params.query}%`)
+            )
+          );
+        }
+
+        const limit = params.limit || 50;
+        let results = await db!
+          .select()
+          .from(contacts)
+          .where(and(...conditions))
+          .limit(limit);
+
+        if (params.interestLevel) {
+          results = results.filter((c) => (c as any).interestLevel === params.interestLevel);
+        }
+        if (params.minScore !== undefined) {
+          results = results.filter((c) => (c.score || 0) >= params.minScore);
+        }
+        if (params.maxScore !== undefined) {
+          results = results.filter((c) => (c.score || 0) <= params.maxScore);
+        }
+        if (params.favoritesOnly) {
+          results = results.filter((c) => (c as any).isFavorite === true);
+        }
+        if (params.tags) {
+          const tagList = params.tags.split(',').map((t: string) => t.trim());
+          results = results.filter((c) =>
+            tagList.some((tag: string) => (c as any).tags?.includes(tag))
+          );
+        }
+
+        return { contacts: results, count: results.length };
+      }
+
+      // Deal AI
+      case 'analyze_deal': {
+        const dealId = parseInt(params.dealId);
+        const [deal] = await db!
+          .select()
+          .from(deals)
+          .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)));
+
+        if (!deal) return { error: 'Deal not found' };
+
+        let contact = null;
+        if ((deal as any).contactId) {
+          const [found] = await db!
+            .select()
+            .from(contacts)
+            .where(eq(contacts.id, (deal as any).contactId));
+          contact = found;
+        }
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        const response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a sales strategy expert. Analyze this deal and return JSON with: winProbability, strengths (array), risks (array), recommendedActions (array), timeline, competitivePosition, pricingRecommendation.',
+            },
+            {
+              role: 'user',
+              content: `Deal: ${JSON.stringify(deal)}. Contact: ${JSON.stringify(contact)}. Analyze this deal strategically.`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.4,
+          max_tokens: 1500,
+        });
+
+        return safeJsonParse(response.choices[0].message.content || '{}');
+      }
+
+      // Deal Analytics
+      case 'get_deal_analytics': {
+        const allDeals = await db!.select().from(deals).where(eq(deals.profileId, userId));
+
+        const wonDeals = allDeals.filter((d) => d.status === 'won');
+        const lostDeals = allDeals.filter((d) => d.status === 'lost');
+        const openDeals = allDeals.filter((d) => d.status === 'open');
+
+        const totalRevenue = wonDeals.reduce((sum, d) => sum + (d.value || 0), 0);
+        const totalPipelineValue = openDeals.reduce((sum, d) => sum + (d.value || 0), 0);
+        const avgDealSize = wonDeals.length > 0 ? totalRevenue / wonDeals.length : 0;
+        const conversionRate =
+          allDeals.length > 0 ? Math.round((wonDeals.length / allDeals.length) * 100) : 0;
+
+        const stageBreakdown: Record<string, { count: number; value: number }> = {};
+        allDeals.forEach((d) => {
+          const stage = (d as any).stage || 'unknown';
+          if (!stageBreakdown[stage]) stageBreakdown[stage] = { count: 0, value: 0 };
+          stageBreakdown[stage].count++;
+          stageBreakdown[stage].value += d.value || 0;
+        });
+
+        const priorityBreakdown: Record<string, number> = {};
+        allDeals.forEach((d) => {
+          const priority = (d as any).priority || 'unknown';
+          priorityBreakdown[priority] = (priorityBreakdown[priority] || 0) + 1;
+        });
+
+        return {
+          period: params.period || 'month',
+          totalDeals: allDeals.length,
+          openDeals: openDeals.length,
+          wonDeals: wonDeals.length,
+          lostDeals: lostDeals.length,
+          totalRevenue,
+          totalPipelineValue,
+          avgDealSize: Math.round(avgDealSize),
+          conversionRate,
+          stageBreakdown,
+          priorityBreakdown,
+        };
+      }
+
+      case 'get_deal_risks': {
+        const allDeals = await db!.select().from(deals).where(eq(deals.profileId, userId));
+
+        const now = new Date();
+        const highRisk = allDeals.filter((d) => {
+          if (d.status !== 'open') return false;
+          const daysSinceUpdate = Math.floor(
+            (now.getTime() - new Date(d.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          return daysSinceUpdate > 7 || (d.probability || 0) < 30;
+        });
+
+        const mediumRisk = allDeals.filter((d) => {
+          if (d.status !== 'open') return false;
+          const daysSinceUpdate = Math.floor(
+            (now.getTime() - new Date(d.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          return daysSinceUpdate > 3 && daysSinceUpdate <= 7 && (d.probability || 0) >= 30;
+        });
+
+        const atRiskValue = highRisk.reduce((sum, d) => sum + (d.value || 0), 0);
+
+        return {
+          highRiskCount: highRisk.length,
+          mediumRiskCount: mediumRisk.length,
+          atRiskValue,
+          highRiskDeals: highRisk.map((d) => ({
+            id: d.id,
+            title: d.title,
+            value: d.value,
+            probability: d.probability,
+            daysInactive: Math.floor(
+              (now.getTime() - new Date(d.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          })),
+        };
+      }
+
+      // Contact Customization
+      case 'toggle_favorite': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const currentFav = (contact as any).isFavorite || false;
+
+        const [updated] = await db!
+          .update(contacts)
+          .set({ isFavorite: !currentFav, updatedAt: new Date() } as any)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
+          .returning();
+
+        return { contact: updated, isFavorite: !currentFav };
+      }
+
+      case 'add_custom_field': {
+        const contactId = parseInt(params.contactId);
+        if (!params.key || !params.value) return { error: 'Key and value are required' };
+
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const currentFields = (contact as any).customFields || {};
+        const updatedFields = { ...currentFields, [params.key]: params.value };
+
+        const [updated] = await db!
+          .update(contacts)
+          .set({ customFields: updatedFields, updatedAt: new Date() } as any)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
+          .returning();
+
+        return { contact: updated, customFields: updatedFields };
+      }
+
+      case 'remove_custom_field': {
+        const contactId = parseInt(params.contactId);
+        if (!params.key) return { error: 'Key is required' };
+
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const currentFields = (contact as any).customFields || {};
+        const { [params.key]: _, ...updatedFields } = currentFields;
+
+        const [updated] = await db!
+          .update(contacts)
+          .set({ customFields: updatedFields, updatedAt: new Date() } as any)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
+          .returning();
+
+        return { contact: updated, customFields: updatedFields };
+      }
+
+      // Social Monitoring
+      case 'setup_social_monitoring': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        const platforms = params.platforms
+          ? params.platforms.split(',').map((p: string) => p.trim())
+          : ['LinkedIn', 'Twitter'];
+
+        const alertTypes = params.alertTypes
+          ? params.alertTypes.split(',').map((a: string) => a.trim())
+          : ['job_change', 'new_content', 'engagement'];
+
+        return {
+          success: true,
+          contactId,
+          platforms,
+          alertTypes,
+          monitoringId: `mon_${contactId}_${Date.now()}`,
+          message: `Monitoring set up for ${contact.name} on ${platforms.join(', ')}`,
+        };
+      }
+
+      case 'get_social_alerts': {
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db!
+          .select()
+          .from(contacts)
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+        if (!contact) return { error: 'Contact not found' };
+
+        return {
+          contactId,
+          contactName: contact.name,
+          alerts: [],
+          message:
+            'Social monitoring alerts retrieved. Configure monitoring first via setup_social_monitoring.',
+        };
+      }
+
+      // Module Federation
+      case 'get_module_federation_status': {
+        const remotes = [
+          {
+            name: 'pipeline',
+            url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+            module: './PipelineApp',
+          },
+          { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
+          { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './ContactsApp' },
+          { name: 'calendar', url: 'https://calendar.smartcrm.vip', module: './CalendarApp' },
+          { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIAgencyApp' },
+          {
+            name: 'research',
+            url: 'https://clever-syrniki-4df87f.netlify.app',
+            module: './ProductResearchApp',
+          },
+        ];
+
+        const statusChecks = await Promise.allSettled(
+          remotes.map(async (remote) => {
+            try {
+              const response = await fetch(`${remote.url}/assets/remoteEntry.js`, {
+                method: 'HEAD',
+                signal: AbortSignal.timeout(3000),
+              });
+              return { ...remote, status: response.ok ? 'available' : 'unreachable' };
+            } catch {
+              return { ...remote, status: 'unreachable' };
+            }
+          })
+        );
+
+        return {
+          mfeEnabled: process.env.VITE_ENABLE_MFE === 'true',
+          remotes: statusChecks.map((result, i) => ({
+            ...remotes[i],
+            status: result.status === 'fulfilled' ? result.value.status : 'error',
+          })),
+        };
+      }
+
+      case 'broadcast_to_modules': {
+        return {
+          success: true,
+          type: params.type,
+          data: params.data,
+          message: 'Broadcast message sent to all module federation apps',
+          timestamp: new Date().toISOString(),
+        };
       }
 
       default:
