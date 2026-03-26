@@ -617,6 +617,85 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         };
       }
 
+      case 'navigate_to_app': {
+        const validApps: Record<string, string> = {
+          contacts: '/contacts',
+          deals: '/pipeline',
+          pipeline: '/pipeline',
+          tasks: '/tasks',
+          appointments: '/appointments',
+          calendar: '/calendar',
+          analytics: '/analytics',
+          email: '/email',
+          sms: '/messaging',
+          companies: '/companies',
+          phone: '/phone',
+          video: '/videos',
+        };
+        const appKey = (params.app || '').toLowerCase();
+        const route = validApps[appKey] || params.route || '/';
+        return {
+          type: 'navigation',
+          action: 'navigate',
+          app: appKey,
+          route,
+          url: route,
+          message: `Navigating to ${appKey}${route !== '/' ? ` (${route})` : ''}`,
+        };
+      }
+
+      case 'open_remote_app': {
+        const remoteApps: Record<string, { url: string; module: string; description: string }> = {
+          pipeline: {
+            url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+            module: './PipelineApp',
+            description: 'Pipeline Management Remote App',
+          },
+          analytics: {
+            url: 'https://ai-analytics.smartcrm.vip',
+            module: './AnalyticsApp',
+            description: 'AI Analytics Dashboard',
+          },
+          contacts: {
+            url: 'https://contacts.smartcrm.vip',
+            module: './ContactsApp',
+            description: 'Contacts Management App',
+          },
+          calendar: {
+            url: 'https://calendar.smartcrm.vip',
+            module: './CalendarApp',
+            description: 'Calendar App',
+          },
+          agency: {
+            url: 'https://agency.smartcrm.vip',
+            module: './AIAgencyApp',
+            description: 'AI Agency App',
+          },
+          research: {
+            url: 'https://clever-syrniki-4df87f.netlify.app',
+            module: './ProductResearchApp',
+            description: 'Product Research App',
+          },
+        };
+        const appNameKey = (params.appName || '').toLowerCase();
+        const remoteApp = remoteApps[appNameKey];
+        if (!remoteApp) {
+          return {
+            error: `Remote app '${params.appName}' not found. Available: ${Object.keys(remoteApps).join(', ')}`,
+          };
+        }
+        return {
+          type: 'remote_app',
+          action: 'open',
+          appName: appNameKey,
+          remoteUrl: remoteApp.url,
+          remoteModule: remoteApp.module,
+          remoteEntry: `${remoteApp.url}/assets/remoteEntry.js`,
+          parameters: params.parameters || {},
+          message: `Opening remote app: ${remoteApp.description}`,
+        };
+      }
+
       default:
         return { error: `Tool '${toolName}' not implemented` };
     }
