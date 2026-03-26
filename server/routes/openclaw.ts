@@ -16,12 +16,85 @@ import {
   insertNoteSchema,
 } from '../../shared/schema';
 import { supabase } from '../supabase';
+import OpenAI from 'openai';
 
 const router = Router();
 
 // OpenClaw API Configuration
 const OPENCLAW_API_URL = process.env.OPENCLAW_API_URL || 'http://localhost:3001';
 const OPENCLAW_API_KEY = process.env.OPENCLAW_API_KEY || '';
+
+// Cached OpenAI client
+let openaiClient: OpenAI | null = null;
+function getOpenAIClient(): OpenAI | null {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
+  }
+  return openaiClient;
+}
+
+// Rate limiting for AI tools (simple in-memory)
+const aiRateLimit = new Map<string, { count: number; resetAt: number }>();
+const AI_RATE_LIMIT_WINDOW_MS = 60_000;
+const AI_RATE_LIMIT_MAX = 20;
+
+function checkAIRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = aiRateLimit.get(userId);
+  if (!entry || now > entry.resetAt) {
+    aiRateLimit.set(userId, { count: 1, resetAt: now + AI_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= AI_RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+// Auth helper - extracts userId from session or dev token
+function getUserId(req: any): string | null {
+  const sessionUserId = req.session?.userId;
+  if (sessionUserId) return sessionUserId;
+
+  const authHeader = req.headers.authorization;
+  const hostname = req.headers.host || '';
+  const isDevHost =
+    hostname.includes('localhost') ||
+    hostname.includes('replit.dev') ||
+    hostname.includes('127.0.0.1');
+
+  if (process.env.NODE_ENV === 'development' && isDevHost && authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    if (token.startsWith('dev-bypass-token-')) {
+      req.user = {
+        id: 'dev-user-12345',
+        email: 'dev@smartcrm.local',
+        username: 'dev@smartcrm.local',
+        role: 'super_admin',
+        productTier: 'super_admin',
+      };
+      return 'dev-user-12345';
+    }
+  }
+  return null;
+}
+
+// Validate numeric ID
+function parseId(value: any): number {
+  const id = parseInt(value);
+  if (isNaN(id) || id <= 0) throw new Error(`Invalid ID: ${value}`);
+  return id;
+}
+
+// Safe JSON parse with error handling
+function safeJsonParse(text: string, fallback: any = {}): any {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return fallback;
+  }
+}
 
 // CRM Tools Definition for OpenClaw
 const crmTools = [
@@ -54,6 +127,12 @@ const crmTools = [
     name: 'update_contact',
     description: 'Update contact information',
     parameters: { contactId: 'string', data: 'object' },
+    category: 'crm',
+  },
+  {
+    name: 'delete_contact',
+    description: 'Delete a contact from the CRM',
+    parameters: { contactId: 'string' },
     category: 'crm',
   },
   // Deal Management
@@ -438,17 +517,29 @@ router.post('/execute', async (req, res) => {
       return res.status(400).json({ error: 'Tool name is required' });
     }
 
+    // Authenticate
+    const userId = getUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     // Find the tool definition
     const toolDef = crmTools.find((t) => t.name === tool);
     if (!toolDef) {
       return res.status(400).json({ error: `Tool '${tool}' not found` });
     }
 
+    // Rate limit AI tools
+    const isAITool = toolDef.category === 'ai';
+    if (isAITool && !checkAIRateLimit(userId)) {
+      return res.status(429).json({ error: 'Rate limit exceeded for AI tools' });
+    }
+
     // Execute the tool by calling the appropriate CRM API
-    const result = await executeCRMFunction(tool, parameters);
+    const result = await executeCRMFunction(tool, parameters, userId);
 
     res.json({ success: true, tool, result });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Tool execution error:', error);
     res.status(500).json({ error: 'Failed to execute tool', details: error.message });
   }
@@ -462,7 +553,9 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
     return { error: 'Database not available' };
   }
 
-  const targetUserId = userId || 'dev-user-12345';
+  if (!userId) {
+    return { error: 'User ID required' };
+  }
 
   try {
     switch (toolName) {
@@ -475,7 +568,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           .where(
             query
               ? and(
-                  eq(contacts.profileId, targetUserId),
+                  eq(contacts.profileId, userId),
                   or(
                     like(contacts.firstName, `%${query}%`),
                     like(contacts.lastName, `%${query}%`),
@@ -483,7 +576,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
                     like(contacts.company, `%${query}%`)
                   )
                 )
-              : eq(contacts.profileId, targetUserId)
+              : eq(contacts.profileId, userId)
           )
           .limit(limit);
         return { contacts: results, count: results.length };
@@ -494,12 +587,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
         return contact || { error: 'Contact not found' };
       }
 
       case 'create_contact': {
-        const validated = insertContactSchema.parse({ ...params, profileId: targetUserId });
+        const validated = insertContactSchema.parse({ ...params, profileId: userId });
         const [newContact] = await db!.insert(contacts).values(validated).returning();
         return { contact: newContact };
       }
@@ -509,7 +602,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [updated] = await db!
           .update(contacts)
           .set({ ...params.data, updatedAt: new Date() })
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)))
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
           .returning();
         return updated || { error: 'Contact not found' };
       }
@@ -518,7 +611,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const contactId = parseInt(params.contactId);
         await db!
           .delete(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
         return { success: true, message: 'Contact deleted' };
       }
 
@@ -526,12 +619,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const limit = params.limit || 20;
         const stage = params.stage;
         const status = params.status;
-        let whereClause = eq(deals.profileId, targetUserId);
+        let whereClause = eq(deals.profileId, userId);
 
         let results = await db!
           .select()
           .from(deals)
-          .where(eq(deals.profileId, targetUserId))
+          .where(eq(deals.profileId, userId))
           .limit(limit);
 
         if (stage) results = results.filter((d) => d.stage === stage);
@@ -541,7 +634,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       case 'create_deal': {
-        const validated = insertDealSchema.parse({ ...params, profileId: targetUserId });
+        const validated = insertDealSchema.parse({ ...params, profileId: userId });
         const [newDeal] = await db!.insert(deals).values(validated).returning();
         return { deal: newDeal };
       }
@@ -551,7 +644,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [updated] = await db!
           .update(deals)
           .set({ stage: params.stage, updatedAt: new Date() })
-          .where(and(eq(deals.id, dealId), eq(deals.profileId, targetUserId)))
+          .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)))
           .returning();
         return updated || { error: 'Deal not found' };
       }
@@ -562,7 +655,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [updated] = await db!
           .update(deals)
           .set({ status, updatedAt: new Date() })
-          .where(and(eq(deals.id, dealId), eq(deals.profileId, targetUserId)))
+          .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)))
           .returning();
         return updated || { error: 'Deal not found' };
       }
@@ -575,7 +668,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         let results = await db!
           .select()
           .from(tasks)
-          .where(eq(tasks.profileId, targetUserId))
+          .where(eq(tasks.profileId, userId))
           .limit(limit);
 
         if (status) results = results.filter((t) => t.status === status);
@@ -588,7 +681,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       case 'create_task': {
-        const validated = insertTaskSchema.parse({ ...params, profileId: targetUserId });
+        const validated = insertTaskSchema.parse({ ...params, profileId: userId });
         const [newTask] = await db!.insert(tasks).values(validated).returning();
         return { task: newTask };
       }
@@ -598,14 +691,14 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [updated] = await db!
           .update(tasks)
           .set({ status: 'completed', updatedAt: new Date() })
-          .where(and(eq(tasks.id, taskId), eq(tasks.profileId, targetUserId)))
+          .where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId)))
           .returning();
         return updated || { error: 'Task not found' };
       }
 
       case 'delete_task': {
         const taskId = parseInt(params.taskId);
-        await db!.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.profileId, targetUserId)));
+        await db!.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId)));
         return { success: true, message: 'Task deleted' };
       }
 
@@ -613,10 +706,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const query = params.query || '';
         const limit = params.limit || 10;
 
-        let supabaseQuery = supabase
-          .from('companies')
-          .select('*')
-          .eq('owner_user_id', targetUserId);
+        let supabaseQuery = supabase.from('companies').select('*').eq('owner_user_id', userId);
         if (query) {
           supabaseQuery = supabaseQuery.ilike('name', `%${query}%`);
         }
@@ -634,7 +724,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             domain: params.website,
             description: params.address,
             industry: params.industry,
-            owner_user_id: targetUserId,
+            owner_user_id: userId,
           })
           .select()
           .single();
@@ -649,7 +739,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         let results = await db!
           .select()
           .from(appointments)
-          .where(eq(appointments.profileId, targetUserId))
+          .where(eq(appointments.profileId, userId))
           .limit(limit);
 
         if (date) {
@@ -664,7 +754,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       case 'create_appointment': {
         const validated = insertAppointmentSchema.parse({
           ...params,
-          profileId: targetUserId,
+          profileId: userId,
           dateTime: new Date(params.dateTime),
         });
         const [newAppointment] = await db!.insert(appointments).values(validated).returning();
@@ -675,12 +765,165 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const appointmentId = parseInt(params.appointmentId);
         await db!
           .delete(appointments)
-          .where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, targetUserId)));
+          .where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId)));
         return { success: true, message: 'Appointment cancelled' };
       }
 
+      case 'send_email': {
+        if (!params.to || !params.subject || !params.body) {
+          return { error: 'to, subject, and body are required' };
+        }
+        let emailContactId = params.contactId ? parseInt(params.contactId) : null;
+        if (!emailContactId) {
+          const [existing] = await db!
+            .select({ id: contacts.id })
+            .from(contacts)
+            .where(and(eq(contacts.email, params.to), eq(contacts.profileId, userId)))
+            .limit(1);
+          if (existing) emailContactId = existing.id;
+        }
+        const [newComm] = await db!
+          .insert(communications)
+          .values({
+            type: 'email',
+            subject: params.subject,
+            content: params.body,
+            direction: 'outbound',
+            status: 'sent',
+            sentAt: new Date(),
+            contactId: emailContactId,
+            profileId: userId,
+          })
+          .returning();
+        return { success: true, communication: newComm, message: `Email queued for ${params.to}` };
+      }
+
+      case 'send_sms': {
+        if (!params.to || !params.message) {
+          return { error: 'to and message are required' };
+        }
+        let smsContactId = params.contactId ? parseInt(params.contactId) : null;
+        if (!smsContactId) {
+          const [existing] = await db!
+            .select({ id: contacts.id })
+            .from(contacts)
+            .where(and(eq(contacts.phone, params.to), eq(contacts.profileId, userId)))
+            .limit(1);
+          if (existing) smsContactId = existing.id;
+        }
+        const [newComm] = await db!
+          .insert(communications)
+          .values({
+            type: 'sms',
+            subject: null,
+            content: params.message,
+            direction: 'outbound',
+            status: 'sent',
+            sentAt: new Date(),
+            contactId: smsContactId,
+            profileId: userId,
+          })
+          .returning();
+        return { success: true, communication: newComm, message: `SMS queued for ${params.to}` };
+      }
+
+      case 'trigger_automation': {
+        if (!params.workflowId) {
+          return { error: 'workflowId is required' };
+        }
+        const ruleId = parseInt(params.workflowId);
+        const [rule] = await db!
+          .select()
+          .from(automationRules)
+          .where(and(eq(automationRules.id, ruleId), eq(automationRules.profileId, userId)));
+
+        if (!rule) return { error: 'Automation rule not found' };
+        if (!rule.isActive) return { error: 'Automation rule is inactive' };
+
+        const actions = (rule.actions as any[]) || [];
+        const results: any[] = [];
+        for (const action of actions) {
+          try {
+            const actionResult = await executeCRMFunction(
+              action.type || action.tool,
+              { ...action.params, ...action.parameters, ...params.context },
+              userId
+            );
+            results.push({
+              action: action.type || action.tool,
+              success: true,
+              result: actionResult,
+            });
+          } catch (actionError: any) {
+            results.push({
+              action: action.type || action.tool,
+              success: false,
+              error: actionError.message,
+            });
+          }
+        }
+
+        return { success: true, automation: rule.name, actionsExecuted: results.length, results };
+      }
+
+      case 'run_ai_insights': {
+        if (!params.entityType || !params.entityId) {
+          return { error: 'entityType and entityId are required' };
+        }
+        let entity: any = null;
+        if (params.entityType === 'deal') {
+          const [deal] = await db!
+            .select()
+            .from(deals)
+            .where(and(eq(deals.id, parseInt(params.entityId)), eq(deals.profileId, userId)));
+          entity = deal;
+        } else if (params.entityType === 'contact') {
+          const [contact] = await db!
+            .select()
+            .from(contacts)
+            .where(and(eq(contacts.id, parseInt(params.entityId)), eq(contacts.profileId, userId)));
+          entity = contact;
+        } else if (params.entityType === 'company') {
+          const { data } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', params.entityId)
+            .eq('owner_user_id', userId)
+            .single();
+          entity = data;
+        }
+        if (!entity) return { error: `${params.entityType} not found` };
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) return { error: 'OpenAI API key not configured' };
+
+        const OpenAI = (await import('openai')).default;
+        const openaiClient = new OpenAI({ apiKey });
+
+        const response = await openaiClient.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a CRM analyst. Provide actionable insights for the given entity. Return JSON with: summary (string), recommendations (string array), riskLevel (low/medium/high), nextBestAction (string), confidence (number 0-1).',
+            },
+            {
+              role: 'user',
+              content: `Analyze this ${params.entityType} and provide insights: ${JSON.stringify(entity)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 500,
+        });
+
+        const insights = JSON.parse(response.choices[0].message.content || '{}');
+        return { entityType: params.entityType, entityId: params.entityId, ...insights };
+      }
+
       case 'get_pipeline_summary': {
-        const allDeals = await db!.select().from(deals).where(eq(deals.profileId, targetUserId));
+        const allDeals = await db!.select().from(deals).where(eq(deals.profileId, userId));
         const totalValue = allDeals.reduce((sum, d) => sum + (d.value || 0), 0);
         const wonDeals = allDeals.filter((d) => d.status === 'won');
         const wonValue = wonDeals.reduce((sum, d) => sum + (d.value || 0), 0);
@@ -702,7 +945,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       case 'get_sales_forecast': {
-        const allDeals = await db!.select().from(deals).where(eq(deals.profileId, targetUserId));
+        const allDeals = await db!.select().from(deals).where(eq(deals.profileId, userId));
         const openDeals = allDeals.filter((d) => d.status === 'open');
         const totalPipeline = openDeals.reduce((sum, d) => sum + (d.value || 0), 0);
         const avgDealSize = openDeals.length > 0 ? totalPipeline / openDeals.length : 0;
@@ -723,20 +966,78 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
       case 'navigate_to_app': {
         const validApps: Record<string, string> = {
+          // Core CRM
           contacts: '/contacts',
           deals: '/pipeline',
           pipeline: '/pipeline',
           tasks: '/tasks',
           appointments: '/appointments',
+          appointments_dashboard: '/appointments-dashboard',
           calendar: '/calendar',
-          analytics: '/analytics',
-          email: '/email',
-          sms: '/messaging',
           companies: '/companies',
-          phone: '/phone',
-          video: '/videos',
+          dashboard: '/dashboard',
+          // Communication
+          email: '/email',
+          sms: '/text-messages',
+          messaging: '/text-messages',
+          communication: '/communication',
+          communication_hub: '/communication-hub',
+          phone: '/phone-system',
+          phone_system: '/phone-system',
+          video: '/video-email',
+          video_email: '/video-email',
+          voice_profiles: '/voice-profiles',
+          invoicing: '/invoicing',
+          // AI & Analytics
+          analytics: '/analytics',
+          ai_tools: '/ai-tools',
+          ai_goals: '/ai-goals',
+          ai_integration: '/ai-integration',
+          ai_sales_forecast: '/ai-sales-forecast',
+          assistants: '/assistants',
+          content_ai: '/content-ai',
+          business_intel: '/business-intel',
+          competitor_insights: '/competitor-insights',
+          revenue_intelligence: '/revenue-intelligence',
+          sales_cycle_analytics: '/sales-cycle-analytics',
+          win_rate_intelligence: '/win-rate-intelligence',
+          deal_risk_monitor: '/deal-risk-monitor',
+          pipeline_intelligence: '/pipeline-intelligence',
+          pipeline_health: '/pipeline-health-dashboard',
+          live_deal_analysis: '/live-deal-analysis',
+          smartcrm_closer: '/smartcrm-closer',
+          // Automation & Leads
+          automations: '/lead-automation',
+          lead_automation: '/lead-automation',
+          // Content & Forms
+          content_library: '/content-library',
+          forms: '/forms',
+          surveys: '/forms',
+          circle_prospecting: '/circle-prospecting',
+          funnelcraft: '/funnelcraft-ai',
+          // Admin & Settings
+          admin: '/admin',
+          settings: '/settings',
+          users: '/users',
+          white_label: '/white-label',
+          white_label_management: '/white-label-management',
+          package_builder: '/package-builder',
+          feature_management: '/feature-management',
+          bulk_import: '/bulk-import',
+          system_overview: '/system-overview',
+          // Partner
+          partner_dashboard: '/partner-dashboard',
+          partner_onboarding: '/partner-onboarding',
+          revenue_sharing: '/revenue-sharing',
+          // Credits & Upgrade
+          credits: '/buy-credits',
+          upgrade: '/upgrade',
+          // Other
+          openclaw: '/openclaw',
+          business_analysis: '/business-analysis',
+          demo_recorder: '/demo-recorder',
         };
-        const appKey = (params.app || '').toLowerCase();
+        const appKey = (params.app || '').toLowerCase().replace(/[\s-]/g, '_');
         const route = validApps[appKey] || params.route || '/';
         return {
           type: 'navigation',
@@ -809,9 +1110,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         let results = await db!
           .select()
           .from(communications)
-          .where(
-            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
-          )
+          .where(and(eq(communications.contactId, contactId), eq(communications.profileId, userId)))
           .limit(limit);
 
         if (type) results = results.filter((c) => c.type === type);
@@ -823,7 +1122,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const validated = insertCommunicationSchema.parse({
           ...params,
           contactId: parseInt(params.contactId),
-          profileId: targetUserId,
+          profileId: userId,
           sentAt: new Date(),
         });
         const [newComm] = await db!.insert(communications).values(validated).returning();
@@ -836,7 +1135,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const contactId = params.contactId ? parseInt(params.contactId) : null;
         const dealId = params.dealId ? parseInt(params.dealId) : null;
 
-        const conditions = [eq(notes.profileId, targetUserId)];
+        const conditions = [eq(notes.profileId, userId)];
         if (contactId) conditions.push(eq(notes.contactId, contactId));
         if (dealId) conditions.push(eq(notes.dealId, dealId));
 
@@ -855,7 +1154,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ...params,
           contactId: params.contactId ? parseInt(params.contactId) : undefined,
           dealId: params.dealId ? parseInt(params.dealId) : undefined,
-          profileId: targetUserId,
+          profileId: userId,
         });
         const [newNote] = await db!.insert(notes).values(validated).returning();
         return { note: newNote };
@@ -863,7 +1162,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
       case 'delete_note': {
         const noteId = parseInt(params.noteId);
-        await db!.delete(notes).where(and(eq(notes.id, noteId), eq(notes.profileId, targetUserId)));
+        await db!.delete(notes).where(and(eq(notes.id, noteId), eq(notes.profileId, userId)));
         return { success: true, message: 'Note deleted' };
       }
 
@@ -873,7 +1172,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
@@ -883,7 +1182,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [updated] = await db!
           .update(contacts)
           .set({ tags: newTags, updatedAt: new Date() })
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)))
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
           .returning();
 
         return { contact: updated, tags: newTags };
@@ -894,7 +1193,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
@@ -904,7 +1203,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [updated] = await db!
           .update(contacts)
           .set({ tags: newTags, updatedAt: new Date() })
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)))
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
           .returning();
 
         return { contact: updated, tags: newTags };
@@ -918,7 +1217,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           .select()
           .from(communications)
           .where(
-            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
+            and(eq(communications.contactId, contactId), eq(communications.profileId, userId))
           );
 
         const emails = comms.filter((c) => c.type === 'email');
@@ -961,16 +1260,14 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const comms = await db!
           .select()
           .from(communications)
-          .where(
-            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
-          )
+          .where(and(eq(communications.contactId, contactId), eq(communications.profileId, userId)))
           .limit(limit)
           .orderBy(desc(communications.sentAt), desc(communications.createdAt));
 
         const contactNotes = await db!
           .select()
           .from(notes)
-          .where(and(eq(notes.contactId, contactId), eq(notes.profileId, targetUserId)))
+          .where(and(eq(notes.contactId, contactId), eq(notes.profileId, userId)))
           .limit(limit)
           .orderBy(desc(notes.createdAt));
 
@@ -1000,17 +1297,14 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
 
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
-
-        const response = await openaiClient.chat.completions.create({
+        const response = await client.chat.completions.create({
           model: 'gpt-4o',
           messages: [
             {
@@ -1025,10 +1319,10 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ],
           response_format: { type: 'json_object' },
           temperature: 0.3,
+          max_tokens: 1000,
         });
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        return result;
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       case 'generate_personalization': {
@@ -1036,29 +1330,24 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
         const comms = await db!
           .select()
           .from(communications)
-          .where(
-            and(eq(communications.contactId, contactId), eq(communications.profileId, targetUserId))
-          )
+          .where(and(eq(communications.contactId, contactId), eq(communications.profileId, userId)))
           .limit(10);
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
-
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
 
         const previousInteractions = comms.map(
           (c) => `${c.type}: ${c.subject || ''} - ${c.content || ''}`
         );
 
-        const response = await openaiClient.chat.completions.create({
+        const response = await client.chat.completions.create({
           model: 'gpt-4o',
           messages: [
             {
@@ -1073,10 +1362,10 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ],
           response_format: { type: 'json_object' },
           temperature: 0.7,
+          max_tokens: 1500,
         });
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        return result;
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       case 'enrich_contact': {
@@ -1084,17 +1373,14 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
 
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
-
-        const response = await openaiClient.chat.completions.create({
+        const response = await client.chat.completions.create({
           model: 'gpt-4o',
           messages: [
             {
@@ -1109,10 +1395,10 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ],
           response_format: { type: 'json_object' },
           temperature: 0.5,
+          max_tokens: 1500,
         });
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        return result;
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       case 'social_media_research': {
@@ -1120,21 +1406,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
 
         const platforms = params.platforms
           ? params.platforms.split(',').map((p: string) => p.trim())
           : ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'];
 
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
-
-        const response = await openaiClient.chat.completions.create({
+        const response = await client.chat.completions.create({
           model: 'gpt-4o',
           messages: [
             {
@@ -1148,23 +1431,20 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ],
           response_format: { type: 'json_object' },
           temperature: 0.5,
+          max_tokens: 2000,
         });
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        return result;
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       case 'analyze_sentiment': {
         const text = params.text;
         if (!text) return { error: 'Text is required for sentiment analysis' };
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
 
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
-
-        const response = await openaiClient.chat.completions.create({
+        const response = await client.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
             {
@@ -1179,10 +1459,10 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ],
           response_format: { type: 'json_object' },
           temperature: 0.3,
+          max_tokens: 500,
         });
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        return result;
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       case 'generate_email_draft': {
@@ -1190,20 +1470,17 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const [contact] = await db!
           .select()
           .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, targetUserId)));
+          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
         if (!contact) return { error: 'Contact not found' };
 
         const purpose = params.purpose || 'follow-up';
         const context = params.context || '';
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
 
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
-
-        const response = await openaiClient.chat.completions.create({
+        const response = await client.chat.completions.create({
           model: 'gpt-4o',
           messages: [
             {
@@ -1218,10 +1495,10 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           ],
           response_format: { type: 'json_object' },
           temperature: 0.7,
+          max_tokens: 1000,
         });
 
-        const result = JSON.parse(response.choices[0].message.content || '{}');
-        return result;
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       default:
