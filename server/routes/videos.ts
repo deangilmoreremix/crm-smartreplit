@@ -189,9 +189,19 @@ export function registerVideoRoutes(app: Express): void {
         return res.status(404).json({ error: 'Video not found' });
       }
 
-      const updatedVideo = {
+      // Whitelist allowed fields to prevent mass assignment
+      const allowedFields = ['title', 'script', 'duration', 'thumbnail', 'status', 'recipient'];
+      const updates: Partial<VideoEmail> = {};
+
+      for (const field of allowedFields) {
+        if (field in req.body) {
+          (updates as Record<string, unknown>)[field] = req.body[field];
+        }
+      }
+
+      const updatedVideo: VideoEmail = {
         ...videoEmails[videoIndex],
-        ...req.body,
+        ...updates,
         updatedAt: new Date(),
       };
 
@@ -225,8 +235,10 @@ export function registerVideoRoutes(app: Express): void {
       res.status(500).json({ error: 'Failed to delete video' });
     }
   });
+}
 
-  // Generate video script using AI
+// Generate video script using AI - registered separately to avoid route ordering issues
+export function registerVideoScriptRoute(app: Express): void {
   app.post('/api/videos/generate-script', async (req, res) => {
     try {
       const userId = req.session?.userId;

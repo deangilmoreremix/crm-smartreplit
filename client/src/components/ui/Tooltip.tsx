@@ -17,6 +17,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   className = '',
 }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [tooltipId] = useState(() => `tooltip-${Math.random().toString(36).substr(2, 9)}`);
 
   const positionClasses = {
     top: 'bottom-full left-1/2 transform -translate-x-1/2 mb-2',
@@ -30,13 +31,18 @@ export const Tooltip: React.FC<TooltipProps> = ({
       <div
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
+        onFocus={() => setIsVisible(true)}
+        onBlur={() => setIsVisible(false)}
+        tabIndex={0}
+        role="button"
+        aria-describedby={isVisible ? tooltipId : undefined}
         className="cursor-help"
       >
         {children || <HelpCircle size={16} className="text-gray-400 hover:text-gray-600" />}
       </div>
 
       {isVisible && (
-        <div className={`absolute z-50 ${positionClasses[position]}`}>
+        <div id={tooltipId} role="tooltip" className={`absolute z-50 ${positionClasses[position]}`}>
           <div className="bg-gray-900 text-white text-sm rounded-lg px-3 py-2 max-w-xs shadow-lg border border-gray-700">
             {title && <div className="font-semibold mb-1 text-blue-300">{title}</div>}
             <div className="text-gray-200">{content}</div>

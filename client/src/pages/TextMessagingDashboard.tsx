@@ -200,9 +200,16 @@ export default function TextMessagingDashboard() {
 
   const sendMessage = async () => {
     try {
+      const authToken =
+        localStorage.getItem('authToken') || localStorage.getItem('sb-supabase-auth-token');
+
       const response = await fetch('/api/messaging/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        credentials: 'include',
         body: JSON.stringify({
           content: messageContent,
           recipient: recipient,
@@ -214,15 +221,12 @@ export default function TextMessagingDashboard() {
         setShowComposeModal(false);
         setMessageContent('');
         setRecipient('');
-        // Invalidate and refetch data using React Query
-        // This will be handled by the query invalidation when implemented
-        alert('Message sent successfully!');
+        console.log('Message sent successfully');
       } else {
         throw new Error('Failed to send message');
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      alert('Failed to send message. Please try again.');
     }
   };
 
@@ -327,37 +331,35 @@ export default function TextMessagingDashboard() {
               Recent Messages
             </h3>
             <div className="space-y-4">
-                {displayMessages.map((message: Message) => (
-                  <div
-                    key={message.id}
-                    className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className={getStatusColor(message.status)}>{message.status}</Badge>
-                        <Badge variant="outline">{message.provider}</Badge>
-                        {message.sentiment && (
-                          <Badge className={getSentimentColor(message.sentiment)}>
-                            {message.sentiment}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-900 dark:text-white mb-2">
-                        {message.content}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>To: {message.recipient}</span>
-                        <span>{new Date(message.sentAt).toLocaleString()}</span>
-                      </div>
+              {displayMessages.map((message: Message) => (
+                <div
+                  key={message.id}
+                  className="flex items-start justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={getStatusColor(message.status)}>{message.status}</Badge>
+                      <Badge variant="outline">{message.provider}</Badge>
+                      {message.sentiment && (
+                        <Badge className={getSentimentColor(message.sentiment)}>
+                          {message.sentiment}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline">
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
+                    <p className="text-sm text-gray-900 dark:text-white mb-2">{message.content}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>To: {message.recipient}</span>
+                      <span>{new Date(message.sentAt).toLocaleString()}</span>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline">
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </GlassCard>
         </TabsContent>
 
@@ -367,7 +369,9 @@ export default function TextMessagingDashboard() {
             {displayProviders.map((provider: MessageProvider) => (
               <GlassCard key={provider.id} className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className={`flex items-center gap-2 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <h3
+                    className={`flex items-center gap-2 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
                     <Phone className="h-5 w-5" />
                     {provider.name}
                   </h3>
@@ -377,7 +381,9 @@ export default function TextMessagingDashboard() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Cost/Message:</span>
-                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${provider.costPerMessage.toFixed(4)}</div>
+                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        ${provider.costPerMessage.toFixed(4)}
+                      </div>
                     </div>
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Delivery Rate:</span>
@@ -387,31 +393,33 @@ export default function TextMessagingDashboard() {
                     </div>
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Response Time:</span>
-                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{provider.responseTime}s</div>
-                    </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Features:</span>
-                        <div className="font-semibold">{provider.supportedFeatures.length}</div>
+                      <div className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {provider.responseTime}s
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Delivery Rate</span>
-                        <span>{Math.round(provider.deliveryRate * 100)}%</span>
-                      </div>
-                      <Progress value={provider.deliveryRate * 100} className="h-2" />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1">
-                        Configure
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
-                        Test
-                      </Button>
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Features:</span>
+                      <div className="font-semibold">{provider.supportedFeatures.length}</div>
                     </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Delivery Rate</span>
+                      <span>{Math.round(provider.deliveryRate * 100)}%</span>
+                    </div>
+                    <Progress value={provider.deliveryRate * 100} className="h-2" />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1">
+                      Configure
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1">
+                      Test
+                    </Button>
+                  </div>
+                </div>
               </GlassCard>
             ))}
           </div>
@@ -420,57 +428,85 @@ export default function TextMessagingDashboard() {
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <BarChart3 className="h-5 w-5" />
                 Performance Metrics
               </h3>
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Messages Sent</span>
-                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayStats.totalMessages}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Messages Delivered</span>
-                      <span className="font-semibold text-green-600">
-                        {displayStats.deliveredMessages}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Total Cost</span>
-                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>${displayStats.totalCost.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Active Providers</span>
-                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{displayStats.activeProviders}</span>
-                    </div>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Total Messages Sent
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {displayStats.totalMessages}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Messages Delivered
+                    </span>
+                    <span className="font-semibold text-green-600">
+                      {displayStats.deliveredMessages}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Total Cost
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      ${displayStats.totalCost.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Active Providers
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {displayStats.activeProviders}
+                    </span>
                   </div>
                 </div>
+              </div>
             </GlassCard>
 
             <GlassCard className="p-6">
-              <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <TrendingUp className="h-5 w-5" />
                 Cost Analysis
               </h3>
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Average Cost/Message</span>
-                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        ${displayStats.costPerMessage.toFixed(4)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Monthly Budget Used</span>
-                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>$8.75</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Projected Monthly Cost</span>
-                      <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>$12.50</span>
-                    </div>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Average Cost/Message
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      ${displayStats.costPerMessage.toFixed(4)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Monthly Budget Used
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      $8.75
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Projected Monthly Cost
+                    </span>
+                    <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      $12.50
+                    </span>
                   </div>
                 </div>
+              </div>
             </GlassCard>
           </div>
         </TabsContent>
@@ -478,50 +514,54 @@ export default function TextMessagingDashboard() {
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <h3 className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`flex items-center gap-2 text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <Sparkles className="h-5 w-5" />
                 Smart Reply Generator
               </h3>
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="message-context">Message Context</Label>
-                      <Textarea
-                        id="message-context"
-                        placeholder="Paste the incoming message here..."
-                        rows={4}
-                        value={messageContent}
-                        onChange={(e) => setMessageContent(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="tone">Response Tone</Label>
-                      <Select value={responseTone} onValueChange={setResponseTone}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={generateSmartReply}
-                      disabled={isGenerating || !messageContent.trim()}
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {isGenerating ? 'Generating...' : 'Generate Smart Reply'}
-                    </Button>
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="message-context">Message Context</Label>
+                    <Textarea
+                      id="message-context"
+                      placeholder="Paste the incoming message here..."
+                      rows={4}
+                      value={messageContent}
+                      onChange={(e) => setMessageContent(e.target.value)}
+                    />
                   </div>
+                  <div>
+                    <Label htmlFor="tone">Response Tone</Label>
+                    <Select value={responseTone} onValueChange={setResponseTone}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="friendly">Friendly</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                        <SelectItem value="casual">Casual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={generateSmartReply}
+                    disabled={isGenerating || !messageContent.trim()}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isGenerating ? 'Generating...' : 'Generate Smart Reply'}
+                  </Button>
                 </div>
-              </GlassCard>
+              </div>
+            </GlassCard>
 
             <GlassCard className="p-6">
-              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <Target className="h-5 w-5" />
                 Message Optimizer
               </h3>
@@ -559,7 +599,9 @@ export default function TextMessagingDashboard() {
           </div>
 
           <GlassCard className="p-6">
-            <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <h3
+              className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+            >
               <CheckCircle className="h-5 w-5" />
               AI-Generated Suggestions
             </h3>
@@ -569,9 +611,13 @@ export default function TextMessagingDashboard() {
                   key={index}
                   className={`flex items-start gap-3 p-3 rounded-lg ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}
                 >
-                  <CheckCircle className={`h-5 w-5 mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <CheckCircle
+                    className={`h-5 w-5 mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                  />
                   <div className="flex-1">
-                    <p className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{suggestion}</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                      {suggestion}
+                    </p>
                     <Button
                       size="sm"
                       variant="outline"
@@ -589,7 +635,9 @@ export default function TextMessagingDashboard() {
 
         <TabsContent value="settings" className="space-y-6">
           <GlassCard className="p-6">
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Messaging Settings</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Messaging Settings
+            </h3>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">

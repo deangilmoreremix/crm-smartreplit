@@ -169,9 +169,27 @@ export function registerPhoneRoutes(app: Express): void {
         return res.status(404).json({ error: 'Call not found' });
       }
 
-      const updatedCall = {
+      // Whitelist allowed fields to prevent mass assignment
+      const allowedFields = [
+        'caller',
+        'duration',
+        'status',
+        'sentiment',
+        'transcript',
+        'recording',
+        'gpt5Analysis',
+      ];
+      const updates: Partial<Call> = {};
+
+      for (const field of allowedFields) {
+        if (field in req.body) {
+          (updates as Record<string, unknown>)[field] = req.body[field];
+        }
+      }
+
+      const updatedCall: Call = {
         ...calls[callIndex],
-        ...req.body,
+        ...updates,
       };
 
       calls[callIndex] = updatedCall;

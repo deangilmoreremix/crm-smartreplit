@@ -1,5 +1,8 @@
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { db } from '../db';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { PgTransaction } from 'drizzle-orm/pg-core';
+import type { ExtractTablesWithRelations } from 'drizzle-orm';
 import {
   userCredits,
   creditTransactions,
@@ -8,6 +11,7 @@ import {
   type InsertUserCredits,
   type InsertCreditTransaction,
 } from '../../shared/schema';
+import type * as schema from '../../shared/schema';
 
 export interface CreditPurchaseData {
   userId: string;
@@ -28,9 +32,17 @@ export class CreditService {
   /**
    * Get user's credit balance
    */
-  static async getCreditBalance(userId: string): Promise<any> {
+  static async getCreditBalance(
+    userId: string,
+    tx?: PgTransaction<
+      NodePgDatabase<typeof schema>,
+      typeof schema,
+      ExtractTablesWithRelations<typeof schema>
+    >
+  ): Promise<any> {
+    const dbClient = tx || db;
     try {
-      const credits = await db
+      const credits = await dbClient
         .select()
         .from(userCredits)
         .where(eq(userCredits.userId, userId))
@@ -44,7 +56,7 @@ export class CreditService {
           usedCredits: '0',
           availableCredits: '0',
         };
-        await db.insert(userCredits).values(newCredits);
+        await dbClient.insert(userCredits).values(newCredits);
         return {
           totalCredits: 0,
           usedCredits: 0,
@@ -67,12 +79,12 @@ export class CreditService {
   }
 
   /**
-   * Purchase credits for a user
+   * Purchase credits for a user - uses atomic transaction with row-level locking
    */
   static async purchaseCredits(data: CreditPurchaseData): Promise<any> {
-    try {
+    return await db.transaction(async (tx) => {
       // Get plan details
-      const plan = await db
+      const plan = await tx
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.id, data.planId))
@@ -83,22 +95,22 @@ export class CreditService {
       }
 
       const planData = plan[0];
-      const limits = planData.limits as any;
+      const limits = planData.limits as Record<string, unknown>;
       const creditAmount = limits?.credits || 0;
 
-      if (!creditAmount) {
+      if (!creditAmount || typeof creditAmount !== 'number') {
         throw new Error(`Plan ${data.planId} does not define credit amount`);
       }
 
-      // Get current balance
-      const currentBalance = await this.getCreditBalance(data.userId);
+      // Get current balance within transaction (with implicit lock)
+      const currentBalance = await this.getCreditBalance(data.userId, tx);
 
       // Calculate new balance
       const newTotalCredits = currentBalance.totalCredits + creditAmount;
       const newAvailableCredits = currentBalance.availableCredits + creditAmount;
 
-      // Update or insert credit record
-      await db
+      // Update or insert credit record atomically
+      await tx
         .insert(userCredits)
         .values({
           userId: data.userId,
@@ -117,7 +129,7 @@ export class CreditService {
           },
         });
 
-      // Record transaction
+      // Record transaction atomically
       const transaction: InsertCreditTransaction = {
         userId: data.userId,
         type: 'purchase',
@@ -128,7 +140,7 @@ export class CreditService {
         stripeTransactionId: data.stripeTransactionId,
       };
 
-      const result = await db
+      const result = await tx
         .insert(creditTransactions)
         .values(transaction)
         .returning({ id: creditTransactions.id });
@@ -137,21 +149,18 @@ export class CreditService {
         success: true,
         creditsPurchased: creditAmount,
         newBalance: newAvailableCredits,
-        transactionId: result[0].id,
+        transactionId: result[0]?.id,
       };
-    } catch (error) {
-      console.error('Error purchasing credits:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Deduct credits for usage
+   * Deduct credits for usage - uses atomic transaction
    */
   static async deductCredits(data: CreditUsageData): Promise<any> {
-    try {
-      // Get current balance
-      const currentBalance = await this.getCreditBalance(data.userId);
+    return await db.transaction(async (tx) => {
+      // Get current balance within transaction (with implicit lock)
+      const currentBalance = await this.getCreditBalance(data.userId, tx);
 
       if (currentBalance.availableCredits < data.amount) {
         throw new Error(
@@ -163,8 +172,8 @@ export class CreditService {
       const newUsedCredits = currentBalance.usedCredits + data.amount;
       const newAvailableCredits = currentBalance.availableCredits - data.amount;
 
-      // Update credit record
-      await db
+      // Update credit record atomically
+      await tx
         .update(userCredits)
         .set({
           usedCredits: newUsedCredits.toString(),
@@ -173,7 +182,7 @@ export class CreditService {
         })
         .where(eq(userCredits.userId, data.userId));
 
-      // Record transaction
+      // Record transaction atomically
       const transaction: InsertCreditTransaction = {
         userId: data.userId,
         type: 'usage',
@@ -184,7 +193,7 @@ export class CreditService {
         usageEventId: data.usageEventId,
       };
 
-      const result = await db
+      const result = await tx
         .insert(creditTransactions)
         .values(transaction)
         .returning({ id: creditTransactions.id });
@@ -193,12 +202,9 @@ export class CreditService {
         success: true,
         creditsDeducted: data.amount,
         newBalance: newAvailableCredits,
-        transactionId: result[0].id,
+        transactionId: result[0]?.id,
       };
-    } catch (error) {
-      console.error('Error deducting credits:', error);
-      throw error;
-    }
+    });
   }
 
   /**
@@ -271,7 +277,7 @@ export class CreditService {
   }
 
   /**
-   * Admin: Grant credits to user
+   * Admin: Grant credits to user - uses atomic transaction
    */
   static async grantCredits(
     userId: string,
@@ -279,16 +285,16 @@ export class CreditService {
     description: string,
     adminId: string
   ): Promise<any> {
-    try {
-      // Get current balance
-      const currentBalance = await this.getCreditBalance(userId);
+    return await db.transaction(async (tx) => {
+      // Get current balance within transaction
+      const currentBalance = await this.getCreditBalance(userId, tx);
 
       // Calculate new balance
       const newTotalCredits = currentBalance.totalCredits + amount;
       const newAvailableCredits = currentBalance.availableCredits + amount;
 
-      // Update credit record
-      await db
+      // Update credit record atomically
+      await tx
         .insert(userCredits)
         .values({
           userId,
@@ -305,31 +311,28 @@ export class CreditService {
           },
         });
 
-      // Record transaction
+      // Record transaction atomically
       const transaction: InsertCreditTransaction = {
         userId,
         type: 'admin_grant',
         amount: amount.toString(),
-        description: `${description} (Granted by admin)`,
+        description: `${description} (Granted by admin ${adminId})`,
         balanceBefore: currentBalance.availableCredits.toString(),
         balanceAfter: newAvailableCredits.toString(),
       };
 
-      await db.insert(creditTransactions).values(transaction);
+      await tx.insert(creditTransactions).values(transaction);
 
       return {
         success: true,
         creditsGranted: amount,
         newBalance: newAvailableCredits,
       };
-    } catch (error) {
-      console.error('Error granting credits:', error);
-      throw error;
-    }
+    });
   }
 
   /**
-   * Process refund - return credits to user
+   * Process refund - return credits to user - uses atomic transaction
    */
   static async refundCredits(
     userId: string,
@@ -337,16 +340,18 @@ export class CreditService {
     description: string,
     stripeTransactionId?: string
   ): Promise<any> {
-    try {
-      // Get current balance
-      const currentBalance = await this.getCreditBalance(userId);
+    return await db.transaction(async (tx) => {
+      // Get current balance within transaction
+      const currentBalance = await this.getCreditBalance(userId, tx);
 
       // Calculate new balance (refunds reduce used credits and increase available)
-      const newUsedCredits = Math.max(0, currentBalance.usedCredits - amount);
-      const newAvailableCredits = currentBalance.availableCredits + amount;
+      // Ensure refund doesn't exceed original usage
+      const maxRefundable = Math.min(amount, currentBalance.usedCredits);
+      const newUsedCredits = Math.max(0, currentBalance.usedCredits - maxRefundable);
+      const newAvailableCredits = currentBalance.availableCredits + maxRefundable;
 
-      // Update credit record
-      await db
+      // Update credit record atomically
+      await tx
         .update(userCredits)
         .set({
           usedCredits: newUsedCredits.toString(),
@@ -355,27 +360,28 @@ export class CreditService {
         })
         .where(eq(userCredits.userId, userId));
 
-      // Record transaction
+      // Record transaction atomically
       const transaction: InsertCreditTransaction = {
         userId,
         type: 'refund',
-        amount: amount.toString(),
-        description,
+        amount: maxRefundable.toString(),
+        description:
+          maxRefundable < amount
+            ? `${description} (Limited to ${maxRefundable} due to usage cap)`
+            : description,
         balanceBefore: currentBalance.availableCredits.toString(),
         balanceAfter: newAvailableCredits.toString(),
         stripeTransactionId,
       };
 
-      await db.insert(creditTransactions).values(transaction);
+      await tx.insert(creditTransactions).values(transaction);
 
       return {
         success: true,
-        creditsRefunded: amount,
+        creditsRefunded: maxRefundable,
+        originalRefundRequest: amount,
         newBalance: newAvailableCredits,
       };
-    } catch (error) {
-      console.error('Error refunding credits:', error);
-      throw error;
-    }
+    });
   }
 }

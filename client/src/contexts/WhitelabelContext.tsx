@@ -75,12 +75,37 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const loadFromUrl = useCallback((urlParams: URLSearchParams) => {
     const configParam = urlParams.get('wl_config');
     if (configParam) {
+      // Limit config size to prevent abuse
+      if (configParam.length > 4096) {
+        console.error('Whitelabel config from URL exceeds maximum size');
+        return;
+      }
       try {
         const decoded = atob(configParam);
         const parsedConfig = JSON.parse(decoded);
-        // Basic validation
+        // Validate structure - only allow known whitelabel fields
+        const allowedFields = [
+          'companyName',
+          'primaryColor',
+          'secondaryColor',
+          'accentColor',
+          'heroTitle',
+          'heroSubtitle',
+          'footerText',
+          'logoUrl',
+          'faviconUrl',
+          'features',
+          'customStyles',
+          'theme',
+        ];
         if (typeof parsedConfig === 'object' && parsedConfig !== null) {
-          setConfig((prev) => ({ ...prev, ...parsedConfig }));
+          const sanitized: Record<string, unknown> = {};
+          for (const key of allowedFields) {
+            if (key in parsedConfig) {
+              sanitized[key] = parsedConfig[key];
+            }
+          }
+          setConfig((prev) => ({ ...prev, ...sanitized }));
         } else {
           console.error('Invalid whitelabel config structure from URL');
         }

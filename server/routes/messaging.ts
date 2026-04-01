@@ -148,8 +148,19 @@ export function registerMessagingRoutes(app: Express): void {
 
       const { content, recipient, provider } = req.body;
 
+      // Validate required fields
       if (!content || !recipient || !provider) {
         return res.status(400).json({ error: 'Content, recipient, and provider are required' });
+      }
+
+      // Validate content length
+      if (typeof content !== 'string' || content.length === 0 || content.length > 5000) {
+        return res.status(400).json({ error: 'Content must be between 1 and 5000 characters' });
+      }
+
+      // Validate recipient format (phone or email)
+      if (typeof recipient !== 'string' || recipient.length === 0 || recipient.length > 200) {
+        return res.status(400).json({ error: 'Invalid recipient format' });
       }
 
       // Validate provider exists

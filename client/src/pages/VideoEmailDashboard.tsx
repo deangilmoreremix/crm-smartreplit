@@ -240,33 +240,48 @@ export default function VideoEmailDashboard() {
 
   const handleSaveVideo = async (videoData: any) => {
     try {
-      // Send video data to backend as JSON
-      const response = await fetch('/api/videos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: videoData.title,
-          recipientName: videoData.recipientName,
-          recipientEmail: videoData.recipientEmail,
-          company: videoData.company,
-          script: videoData.script,
-          videoBlob: videoData.videoBlob, // Include video blob if present
-        }),
-      });
+      // Use FormData if video blob is present, otherwise send as JSON
+      const hasVideoBlob = videoData.videoBlob && videoData.videoBlob instanceof Blob;
+
+      let fetchOptions: RequestInit;
+
+      if (hasVideoBlob) {
+        const formData = new FormData();
+        formData.append('video', videoData.videoBlob, 'recording.webm');
+        formData.append('title', videoData.title || '');
+        formData.append('recipientName', videoData.recipientName || '');
+        formData.append('recipientEmail', videoData.recipientEmail || '');
+        formData.append('company', videoData.company || '');
+        formData.append('script', videoData.script || '');
+
+        fetchOptions = {
+          method: 'POST',
+          body: formData,
+        };
+      } else {
+        fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: videoData.title,
+            recipientName: videoData.recipientName,
+            recipientEmail: videoData.recipientEmail,
+            company: videoData.company,
+            script: videoData.script,
+          }),
+        };
+      }
+
+      const response = await fetch('/api/videos', fetchOptions);
 
       if (!response.ok) {
         throw new Error('Failed to save video');
       }
 
-      const result = await response.json();
-
-      // Optionally show a success message
-      alert('Video email saved successfully!');
+      await response.json();
+      console.log('Video email saved successfully');
     } catch (error) {
       console.error('Failed to save video:', error);
-      alert('Failed to save video email. Please try again.');
     }
   };
 
@@ -467,25 +482,33 @@ export default function VideoEmailDashboard() {
           ) : stats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <GlassCard className="p-6">
-                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <h3
+                  className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                >
                   <BarChart3 className="h-5 w-5" />
                   Performance Overview
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Total Views</span>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Total Views
+                    </span>
                     <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {displayStats.totalViews.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Average Completion</span>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Average Completion
+                    </span>
                     <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {Math.round(displayStats.averageEngagement * 100)}%
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Conversion Rate</span>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Conversion Rate
+                    </span>
                     <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {Math.round(displayStats.conversionRate * 100)}%
                     </span>
@@ -494,7 +517,9 @@ export default function VideoEmailDashboard() {
               </GlassCard>
 
               <GlassCard className="p-6">
-                <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <h3
+                  className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                >
                   <TrendingUp className="h-5 w-5" />
                   Top Performing Video
                 </h3>
@@ -502,20 +527,20 @@ export default function VideoEmailDashboard() {
                   <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {displayStats.topPerformingVideo}
                   </h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Views</span>
-                        <span>245</span>
-                      </div>
-                      <Progress value={85} className="h-2" />
-                      <div className="flex justify-between text-sm">
-                        <span>Engagement</span>
-                        <span>85%</span>
-                      </div>
-                      <Progress value={85} className="h-2" />
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Views</span>
+                      <span>245</span>
                     </div>
+                    <Progress value={85} className="h-2" />
+                    <div className="flex justify-between text-sm">
+                      <span>Engagement</span>
+                      <span>85%</span>
+                    </div>
+                    <Progress value={85} className="h-2" />
                   </div>
-                </GlassCard>
+                </div>
+              </GlassCard>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -533,7 +558,9 @@ export default function VideoEmailDashboard() {
         <TabsContent value="ai-tools" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <GlassCard className="p-6">
-              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <Sparkles className="h-5 w-5" />
                 Script Generator
               </h3>
@@ -591,7 +618,9 @@ export default function VideoEmailDashboard() {
             </GlassCard>
 
             <GlassCard className="p-6">
-              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <Camera className="h-5 w-5" />
                 Content Optimizer
               </h3>
@@ -610,12 +639,18 @@ export default function VideoEmailDashboard() {
 
           {generatedScript && (
             <GlassCard className="p-6">
-              <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
                 <FileText className="h-5 w-5" />
                 Generated Script
               </h3>
               <div className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} p-4 rounded-lg`}>
-                <pre className={`whitespace-pre-wrap text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{generatedScript}</pre>
+                <pre
+                  className={`whitespace-pre-wrap text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}
+                >
+                  {generatedScript}
+                </pre>
               </div>
               <div className="mt-4 flex gap-2">
                 <Button size="sm">
@@ -633,7 +668,9 @@ export default function VideoEmailDashboard() {
 
         <TabsContent value="settings" className="space-y-6">
           <GlassCard className="p-6">
-            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Video Settings</h3>
+            <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Video Settings
+            </h3>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">

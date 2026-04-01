@@ -4,7 +4,7 @@ import { storage } from './storage';
 import OpenAI from 'openai';
 import { registerBulkImportRoutes } from './bulk-import';
 import { registerPhoneRoutes } from './routes/phone';
-import { registerVideoRoutes } from './routes/videos';
+import { registerVideoRoutes, registerVideoScriptRoute } from './routes/videos';
 import { registerMessagingRoutes } from './routes/messaging';
 import { registerAIRoutes } from './routes/ai';
 // import companiesRouter from './companies'; // Temporarily disabled due to import issues
@@ -804,6 +804,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerPhoneRoutes(app);
   // Register video routes
   registerVideoRoutes(app);
+  // Register video script route (must be registered before routes with :id param)
+  registerVideoScriptRoute(app);
   // Register messaging routes
   registerMessagingRoutes(app);
   // app.use('/api/companies', companiesRouter); // Temporarily disabled due to import issues

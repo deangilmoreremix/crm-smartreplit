@@ -290,39 +290,39 @@ class UnifiedApiClient {
     // Add authentication headers automatically
     const originalRequest = this.request.bind(this);
     this.request = async <T = any>(request: ApiRequest): Promise<ApiResponse<T>> => {
-      // Add auth token if available - check for dev bypass tokens first
+      // Add auth token if available
       if (!request.headers?.Authorization) {
-        // Check for dev bypass session
-        const devSession = localStorage.getItem('dev-user-session');
-        const devToken = localStorage.getItem('sb-supabase-auth-token');
-        const devMode = localStorage.getItem('smartcrm-dev-mode');
-
-        console.log('🔍 API Client Auth Check:', {
-          devSession: !!devSession,
-          devToken: !!devToken,
-          devMode,
-          endpoint: request.endpoint,
-        });
-
-        if ((devSession && devToken) || devMode === 'true') {
-          // Use dev bypass token format expected by server
-          const token = devToken ? JSON.parse(devToken).access_token : 'dev-bypass-token';
-          console.log('🔑 Using dev bypass token for request');
+        // Check for regular auth token first
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
           request.headers = {
             ...request.headers,
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${authToken}`,
           };
         } else {
-          // Check for regular auth token
-          const authToken = localStorage.getItem('authToken');
-          if (authToken) {
-            console.log('🔑 Using regular auth token for request');
-            request.headers = {
-              ...request.headers,
-              Authorization: `Bearer ${authToken}`,
-            };
-          } else {
-            console.log('⚠️ No auth token found for request');
+          // Check for dev bypass session (non-production only)
+          const devSession = localStorage.getItem('dev-user-session');
+          const devToken = localStorage.getItem('sb-supabase-auth-token');
+          const devMode = localStorage.getItem('smartcrm-dev-mode');
+
+          if ((devSession && devToken) || devMode === 'true') {
+            try {
+              const parsed = JSON.parse(devToken);
+              if (parsed?.access_token) {
+                request.headers = {
+                  ...request.headers,
+                  Authorization: `Bearer ${parsed.access_token}`,
+                };
+              }
+            } catch {
+              // Invalid JSON in dev token, use fallback
+              if (devMode === 'true') {
+                request.headers = {
+                  ...request.headers,
+                  Authorization: 'Bearer dev-bypass-token',
+                };
+              }
+            }
           }
         }
       }

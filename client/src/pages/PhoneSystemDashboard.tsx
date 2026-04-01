@@ -288,6 +288,19 @@ export default function PhoneSystemDashboard() {
         startCallTimer();
       }
     };
+
+    peerConnectionRef.current.oniceconnectionstatechange = () => {
+      if (
+        peerConnectionRef.current?.iceConnectionState === 'failed' ||
+        peerConnectionRef.current?.iceConnectionState === 'disconnected'
+      ) {
+        // Clean up failed connection
+        if (peerConnectionRef.current) {
+          peerConnectionRef.current.close();
+          peerConnectionRef.current = null;
+        }
+      }
+    };
   };
 
   const startCall = async (number: string, withVideo: boolean = false) => {

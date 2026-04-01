@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to SmartCRM!</title>
+  <!--[if mso]><style>body,table,td{font-family:Arial,sans-serif!important}</style><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#0f0a1e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#0f0a1e">
+    <tr><td style="padding:40px 20px">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+             style="max-width:600px;margin:0 auto;background-color:#1a1030;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#7c3aed 0%,#4c1d95 100%);padding:48px 32px;text-align:center">
+            <h1 style="margin:0;color:#ffffff;font-size:32px;font-weight:700">SmartCRM</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;text-transform:uppercase;letter-spacing:0.5px">AI-Powered CRM Platform</p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="padding:48px 40px">
+            <h2 style="margin:0 0 24px;color:#f8fafc;font-size:28px;font-weight:700">Welcome to SmartCRM!</h2>
+            <p style="margin:0 0 20px;color:#cbd5e1;font-size:16px;line-height:1.6">We're excited to have you on board! Click the button below to confirm your email address and get started with your account.</p>
+
+            <!-- CTA BUTTON -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+              <tr><td style="text-align:center;padding:0 0 32px">
+                <a href="{{ .ConfirmationURL }}"
+                   style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#4c1d95 100%);color:#ffffff;text-decoration:none;padding:18px 48px;border-radius:12px;font-weight:600;font-size:16px">
+                  Confirm Email Address
+                </a>
+              </td></tr>
+            </table>
+
+            <!-- BENEFITS BOX -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                   style="background-color:#334155;border-radius:12px">
+              <tr><td style="padding:32px">
+                <h3 style="margin:0 0 20px;color:#f8fafc;font-size:20px;font-weight:600">What You'll Get Access To:</h3>
+                <ul style="margin:0;padding:0;list-style:none">
+                  <li style="margin-bottom:12px;color:#cbd5e1;font-size:15px;">AI-powered CRM</li>
+                  <li style="margin-bottom:12px;color:#cbd5e1;font-size:15px;">Smart contact management</li>
+                  <li style="margin-bottom:12px;color:#cbd5e1;font-size:15px;">Automated workflows</li>
+                  <li style="margin-bottom:12px;color:#cbd5e1;font-size:15px;">Sales forecasting</li>
+                </ul>
+              </td></tr>
+            </table>
+
+            <!-- SECURITY NOTE -->
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                   style="margin-top:32px;background-color:#1e293b;border-left:4px solid #7c3aed;border-radius:8px">
+              <tr><td style="padding:20px 24px">
+                <p style="margin:0;color:#94a3b8;font-size:14px;line-height:1.6">
+                  <strong style="color:#e2e8f0">Security Note:</strong> This link expires in 24 hours.
+                </p>
+              </td></tr>
+            </table>
+
+            <!-- FALLBACK LINK -->
+            <p style="margin:32px 0 0;color:#94a3b8;font-size:13px">If the button doesn't work, copy this link:</p>
+            <p style="margin:8px 0 0;color:#7c3aed;font-size:13px;word-break:break-all">{{ .ConfirmationURL }}</p>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background-color:#0f0a1e;padding:40px;border-top:1px solid #334155;text-align:center">
+            <p style="margin:0;color:#64748b;font-size:14px">
+              Need help? <a href="mailto:support@smartcrm.ai" style="color:#7c3aed;text-decoration:none">support@smartcrm.ai</a>
+            </p>
+            <p style="margin:16px 0 0;color:#475569;font-size:13px">&copy; 2025 SmartCRM. All rights reserved.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
