@@ -6,6 +6,7 @@ functions = "netlify/functions"
 [build.environment]
 NODE_VERSION = "20"
 SECRETS_SCAN_ENABLED = "true"
+VITE_ENABLE_MFE = "true"
 
 [dev]
 command = "npm run dev"

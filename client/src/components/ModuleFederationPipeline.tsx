@@ -11,8 +11,18 @@ const LocalPipelineFallback: React.FC = () => {
     <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="text-center p-8">
         <div className="mb-4">
-          <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          <svg
+            className="w-16 h-16 mx-auto text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+            />
           </svg>
         </div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -32,6 +42,11 @@ const LocalPipelineFallback: React.FC = () => {
   );
 };
 
+const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
+const REMOTE_URL = 'https://cheery-syrniki-b5b6ca.netlify.app';
+const REMOTE_SCOPE = 'PipelineApp';
+const REMOTE_MODULE = './PipelineApp';
+
 const PipelineApp: React.FC = () => {
   const [RemotePipeline, setRemotePipeline] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,14 +54,23 @@ const PipelineApp: React.FC = () => {
 
   useEffect(() => {
     const loadRemote = async () => {
+      if (!ENABLE_MFE) {
+        setError('MFE disabled');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        // Skip remote loading - remote modules are not available
-        // Show loading state briefly then show fallback
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setError('Module Federation not configured');
+        const Component = await loadRemoteComponent<React.ComponentType>(
+          REMOTE_URL,
+          REMOTE_SCOPE,
+          REMOTE_MODULE
+        );
+        setRemotePipeline(() => Component);
         setIsLoading(false);
       } catch (err) {
-        setError('Failed to load module');
+        console.warn('Pipeline MF load failed, using fallback:', err);
+        setError('Failed to load remote module');
         setIsLoading(false);
       }
     };

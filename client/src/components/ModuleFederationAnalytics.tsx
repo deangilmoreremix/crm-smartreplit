@@ -1,6 +1,11 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { loadRemoteComponent } from '../utils/dynamicModuleFederation';
 
+const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
+const REMOTE_URL = 'https://ai-analytics.smartcrm.vip';
+const REMOTE_SCOPE = 'AnalyticsApp';
+const REMOTE_MODULE = './AnalyticsApp';
+
 // Local development analytics dashboard
 const LocalAnalyticsDashboard: React.FC = () => {
   const [selectedMetric, setSelectedMetric] = React.useState('revenue');
@@ -246,16 +251,34 @@ class AnalyticsErrorBoundary extends React.Component<
 }
 
 const AnalyticsApp: React.FC = () => {
+  const [RemoteAnalytics, setRemoteAnalytics] = useState<React.ComponentType | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Skip remote loading - remote modules are not available
-    // Show loading state briefly then show local dashboard
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    const loadRemote = async () => {
+      if (!ENABLE_MFE) {
+        setError('MFE disabled');
+        setIsLoading(false);
+        return;
+      }
 
-    return () => clearTimeout(timer);
+      try {
+        const Component = await loadRemoteComponent<React.ComponentType>(
+          REMOTE_URL,
+          REMOTE_SCOPE,
+          REMOTE_MODULE
+        );
+        setRemoteAnalytics(() => Component);
+        setIsLoading(false);
+      } catch (err) {
+        console.warn('Analytics MF load failed, using local dashboard:', err);
+        setError('Failed to load remote module');
+        setIsLoading(false);
+      }
+    };
+
+    loadRemote();
   }, []);
 
   if (isLoading) {
@@ -269,8 +292,11 @@ const AnalyticsApp: React.FC = () => {
     );
   }
 
-  // Show local analytics dashboard (remote modules not available)
-  return <LocalAnalyticsDashboard />;
+  if (error || !RemoteAnalytics) {
+    return <LocalAnalyticsDashboard />;
+  }
+
+  return React.createElement(RemoteAnalytics as any, { theme: 'light', mode: 'light' });
 };
 
 interface ModuleFederationAnalyticsProps {
