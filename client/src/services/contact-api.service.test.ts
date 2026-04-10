@@ -9,6 +9,8 @@ Object.defineProperty(contactAPIService, 'supabaseKey', { value: 'test-anon-key'
 Object.defineProperty(contactAPIService, 'baseURL', {
   value: 'https://test.supabase.co/functions/v1/contacts',
 });
+Object.defineProperty(contactAPIService, 'isMockMode', { value: false });
+Object.defineProperty(contactAPIService, 'isBackendAvailable', { value: true });
 
 // Mock dependencies
 vi.mock('./cache.service', () => ({
