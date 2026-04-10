@@ -4,10 +4,7 @@
  */
 
 // Admin configuration
-export const DEV_BYPASS_EMAILS = (
-  process.env.DEV_BYPASS_EMAILS ||
-  'dev@smartcrm.local,dean@smartcrm.vip,dean@videoremix.io,samuel@videoremix.io,victor@videoremix.io'
-).split(',');
+export const DEV_BYPASS_EMAILS = (process.env.DEV_BYPASS_EMAILS || 'dev@smartcrm.local').split(',');
 
 // Product tier hierarchy - higher index = more access
 export const TIER_HIERARCHY = [
