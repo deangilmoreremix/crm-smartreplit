@@ -1,4 +1,5 @@
 import { unifiedEventSystem, UnifiedEvent } from '../unifiedEventSystem';
+import { vi } from 'vitest';
 
 // Simple test framework for demonstration
 class TestRunner {
@@ -48,6 +49,7 @@ describe('UnifiedEventSystem', () => {
   let unsubscribe: () => void;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     handlerCalls = [];
     mockHandler = (event: UnifiedEvent) => {
       handlerCalls.push(event);
@@ -66,6 +68,7 @@ describe('UnifiedEventSystem', () => {
 
   describe('Event Registration and Emission', () => {
     test('should register and handle events correctly', async () => {
+      vi.useRealTimers();
       // Register event handler
       unsubscribe = unifiedEventSystem.registerHandler({
         id: 'test-handler',
@@ -105,8 +108,8 @@ describe('UnifiedEventSystem', () => {
     });
 
     test('should handle event filters correctly', async () => {
-      const handler1 = jest.fn();
-      const handler2 = jest.fn();
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
 
       // Register handlers with different filters
       unifiedEventSystem.registerHandler({
@@ -130,7 +133,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      jest.runOnlyPendingTimers();
+      vi.advanceTimersByTime(10);
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(0);
@@ -139,8 +142,8 @@ describe('UnifiedEventSystem', () => {
     test('should handle event priorities correctly', async () => {
       const callOrder: string[] = [];
 
-      const handler1 = jest.fn(() => callOrder.push('low'));
-      const handler2 = jest.fn(() => callOrder.push('high'));
+      const handler1 = vi.fn(() => callOrder.push('low'));
+      const handler2 = vi.fn(() => callOrder.push('high'));
 
       unifiedEventSystem.registerHandler({
         id: 'low-priority',
@@ -160,7 +163,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      jest.runOnlyPendingTimers();
+      vi.advanceTimersByTime(10);
 
       // High priority should be called first
       expect(callOrder).toEqual(['high', 'low']);
@@ -169,7 +172,7 @@ describe('UnifiedEventSystem', () => {
 
   describe('Event Targeting', () => {
     test('should emit events to specific targets', async () => {
-      const mockTargetHandler = jest.fn();
+      const mockTargetHandler = vi.fn();
 
       unifiedEventSystem.registerHandler({
         id: 'target-handler',
@@ -184,7 +187,7 @@ describe('UnifiedEventSystem', () => {
         data: { targeted: true },
       });
 
-      jest.runOnlyPendingTimers();
+      vi.advanceTimersByTime(10);
 
       expect(mockTargetHandler).toHaveBeenCalledTimes(1);
       expect(mockTargetHandler).toHaveBeenCalledWith(
@@ -210,7 +213,7 @@ describe('UnifiedEventSystem', () => {
         });
       }
 
-      jest.runOnlyPendingTimers();
+      vi.advanceTimersByTime(10);
 
       const history = unifiedEventSystem.getEventHistory();
       expect(history).toHaveLength(3);
@@ -219,7 +222,7 @@ describe('UnifiedEventSystem', () => {
     });
 
     test('should respect TTL for events', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
 
       unifiedEventSystem.registerHandler({
         id: 'ttl-handler',
@@ -236,9 +239,9 @@ describe('UnifiedEventSystem', () => {
       });
 
       // Fast-forward time past TTL
-      jest.advanceTimersByTime(1500);
+      vi.advanceTimersByTime(1500);
 
-      jest.runOnlyPendingTimers();
+      vi.advanceTimersByTime(10);
 
       // Handler should not be called due to expired TTL
       expect(handler).not.toHaveBeenCalled();
@@ -247,10 +250,10 @@ describe('UnifiedEventSystem', () => {
 
   describe('Error Handling', () => {
     test('should handle handler errors gracefully', async () => {
-      const errorHandler = jest.fn(() => {
+      const errorHandler = vi.fn(() => {
         throw new Error('Handler error');
       });
-      const successHandler = jest.fn();
+      const successHandler = vi.fn();
 
       unifiedEventSystem.registerHandler({
         id: 'error-handler',
@@ -270,7 +273,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      jest.runOnlyPendingTimers();
+      vi.advanceTimersByTime(10);
 
       // Error handler should have been called and failed
       expect(errorHandler).toHaveBeenCalledTimes(1);
