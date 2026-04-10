@@ -1,86 +1,28 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { app } from '../index'; // Assuming app is exported
-import { db } from '../db';
-import { userCredits, creditTransactions, usagePlans, profiles } from '../../shared/schema';
+import { describe, it, expect, beforeAll } from 'vitest';
+import { setupDatabaseTests } from '../test-helpers/setup.js';
+import request from 'supertest';
+import { app } from '../index.js'; // Import the app
+import { usagePlans } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 
-// Mock authentication for API tests
-const mockUser = {
-  id: 'test-api-user-' + Date.now(),
-  email: 'test@example.com',
-};
+const { getDb } = setupDatabaseTests();
 
 describe('Credit Purchase API Integration Tests', () => {
-  let server: any;
-  let baseUrl: string;
+  let testDb: any;
 
   beforeAll(async () => {
-    // Start test server
-    const port = 3001; // Use different port for tests
-    server = app.listen(port);
-    baseUrl = `http://localhost:${port}`;
-
-    // Create test user in database
-    await db
-      .insert(profiles)
-      .values({
-        id: mockUser.id,
-        email: mockUser.email,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .onConflictDoNothing();
-
-    // Ensure test credit packages exist
-    await db
-      .insert(usagePlans)
-      .values({
-        planName: 'credit_pack_small',
-        displayName: '500 Credits Pack',
-        description: 'Test credit pack',
-        billingType: 'pay_per_use',
-        basePriceCents: 1000,
-        features: '{"credits": 500}',
-        limits: '{"credits": 500}',
-        isActive: true,
-      })
-      .onConflictDoNothing();
-  });
-
-  afterAll(async () => {
-    // Cleanup and close server
-    await db.delete(creditTransactions).where(eq(creditTransactions.userId, mockUser.id));
-    await db.delete(userCredits).where(eq(userCredits.userId, mockUser.id));
-    await db.delete(profiles).where(eq(profiles.id, mockUser.id));
-
-    if (server) {
-      server.close();
+    testDb = getDb();
+    if (!testDb) {
+      console.warn('Skipping database tests - database not available');
+      return;
     }
-  });
-
-  beforeEach(async () => {
-    // Reset user credits before each test
-    await db.delete(creditTransactions).where(eq(creditTransactions.userId, mockUser.id));
-    await db.delete(userCredits).where(eq(userCredits.userId, mockUser.id));
   });
 
   // Helper function to make authenticated requests
-  const makeAuthRequest = async (method: string, url: string, body?: any) => {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Cookie: `session=${JSON.stringify({ user: mockUser })}`, // Mock session
-    };
-
-    const config: RequestInit = {
-      method,
-      headers,
-    };
-
-    if (body) {
-      config.body = JSON.stringify(body);
-    }
-
-    return fetch(`${baseUrl}${url}`, config);
+  const makeAuthRequest = (method: string, url: string) => {
+    return request(app)
+      [method.toLowerCase()](url)
+      .set('Cookie', `session=${JSON.stringify({ user: mockUser })}`);
   };
 
   describe('GET /api/billing/credit-packages', () => {
@@ -127,7 +69,7 @@ describe('Credit Purchase API Integration Tests', () => {
 
   describe('POST /api/billing/purchase-credits', () => {
     it('should purchase credits successfully', async () => {
-      const plan = await db
+      const plan = await testDb
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -172,7 +114,7 @@ describe('Credit Purchase API Integration Tests', () => {
 
     it('should update balance after purchase', async () => {
       // Purchase credits
-      const plan = await db
+      const plan = await testDb
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -193,7 +135,7 @@ describe('Credit Purchase API Integration Tests', () => {
 
     it('should record transaction after purchase', async () => {
       // Purchase credits
-      const plan = await db
+      const plan = await testDb
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -217,7 +159,7 @@ describe('Credit Purchase API Integration Tests', () => {
 
   describe('Purchase Simulation Scenarios', () => {
     it('should handle multiple purchases', async () => {
-      const plan = await db
+      const plan = await testDb
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -243,7 +185,7 @@ describe('Credit Purchase API Integration Tests', () => {
     it('should simulate payment failure', async () => {
       // This would require mocking Stripe to fail
       // For now, test with invalid payment method
-      const plan = await db
+      const plan = await testDb
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -262,7 +204,7 @@ describe('Credit Purchase API Integration Tests', () => {
   describe('Verification Endpoints', () => {
     it('should verify transaction history consistency', async () => {
       // Purchase credits
-      const plan = await db
+      const plan = await testDb
         .select()
         .from(usagePlans)
         .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -282,7 +224,7 @@ describe('Credit Purchase API Integration Tests', () => {
     });
 
     it('should handle unauthenticated requests', async () => {
-      const response = await fetch(`${baseUrl}/api/billing/credits`);
+      const response = await request(app).get('/api/billing/credits');
       expect(response.status).toBe(401); // Should require auth
     });
   });

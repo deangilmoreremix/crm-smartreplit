@@ -2,32 +2,39 @@ import { config } from 'dotenv';
 config({ path: '../../.env' }); // Load environment variables from root .env
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { setupDatabaseTests } from '../test-helpers/setup.js';
 import { CreditService } from '../services/creditService';
 import { db } from '../db';
 import { userCredits, creditTransactions, usagePlans, profiles } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
-// Mock Stripe for payment simulation
-vi.mock('../stripeClient', () => ({
-  stripe: {
-    paymentIntents: {
-      create: vi.fn().mockResolvedValue({ id: 'pi_test_123', client_secret: 'secret' }),
-      confirm: vi.fn().mockResolvedValue({ status: 'succeeded' }),
-    },
-  },
-}));
+const { getDb } = setupDatabaseTests();
 
+// Check if database is available before running tests
+const dbAvailable = getDb() !== null;
+
+if (dbAvailable) {
 describe('Credit Purchase Flow Tests', () => {
+  let testDb: any;
   let testUserId: string;
   let testPlanId: string;
 
   beforeAll(async () => {
+    testDb = getDb();
+  });
+
+  // Skip the entire suite if database is not available
+  beforeAll(() => {
+    if (!dbAvailable) {
+      console.warn('Skipping database tests - database not available');
+    }
+  });
     // Create test user and plan
     testUserId = randomUUID();
 
     // Create test user in profiles table
-    await db
+    await testDb
       .insert(profiles)
       .values({
         id: testUserId,
@@ -38,7 +45,7 @@ describe('Credit Purchase Flow Tests', () => {
       .onConflictDoNothing();
 
     // Use existing plan from database
-    const plan = await db
+    const plan = await testDb
       .select()
       .from(usagePlans)
       .where(eq(usagePlans.planName, 'credit_pack_small'))
@@ -53,15 +60,15 @@ describe('Credit Purchase Flow Tests', () => {
 
   afterAll(async () => {
     // Cleanup test data
-    await db.delete(creditTransactions).where(eq(creditTransactions.userId, testUserId));
-    await db.delete(userCredits).where(eq(userCredits.userId, testUserId));
-    await db.delete(profiles).where(eq(profiles.id, testUserId));
+    await testDb.delete(creditTransactions).where(eq(creditTransactions.userId, testUserId));
+    await testDb.delete(userCredits).where(eq(userCredits.userId, testUserId));
+    await testDb.delete(profiles).where(eq(profiles.id, testUserId));
   });
 
   beforeEach(async () => {
     // Reset user credits before each test
-    await db.delete(creditTransactions).where(eq(creditTransactions.userId, testUserId));
-    await db.delete(userCredits).where(eq(userCredits.userId, testUserId));
+    await testDb.delete(creditTransactions).where(eq(creditTransactions.userId, testUserId));
+    await testDb.delete(userCredits).where(eq(userCredits.userId, testUserId));
   });
 
   describe('CreditService - Core Functionality', () => {
@@ -181,7 +188,7 @@ describe('Credit Purchase Flow Tests', () => {
     it('should handle purchase with zero credit plan', async () => {
       // Create a test plan with zero credits
       const zeroPlanId = 'test-zero-credits-' + Date.now();
-      await db.insert(usagePlans).values({
+      await testDb.insert(usagePlans).values({
         id: zeroPlanId,
         planName: 'test_zero_credits',
         displayName: 'Zero Credits Test',
@@ -201,7 +208,7 @@ describe('Credit Purchase Flow Tests', () => {
       ).rejects.toThrow('Plan test_zero_credits does not define credit amount');
 
       // Cleanup
-      await db.delete(usagePlans).where(eq(usagePlans.id, zeroPlanId));
+      await testDb.delete(usagePlans).where(eq(usagePlans.id, zeroPlanId));
     });
 
     it('should prevent overspending credits', async () => {
@@ -355,3 +362,8 @@ describe('Credit Purchase Flow Tests', () => {
     });
   });
 });
+} else {
+  describe.skip('Credit Purchase Flow Tests', () => {
+    it('skipped due to database not available', () => {});
+  });
+}
