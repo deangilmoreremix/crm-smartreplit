@@ -66,6 +66,12 @@ export const contacts = pgTable('contacts', {
   tags: text('tags').array(),
   notes: text('notes'),
   status: text('status').default('active'),
+  // Twenty-inspired enhancements
+  healthScore: integer('health_score'), // AI-calculated contact health (0-100)
+  enrichmentData: json('enrichment_data'), // AI enrichment data
+  lastEnrichedAt: timestamp('last_enriched_at'), // Last AI enrichment timestamp
+  customFields: json('custom_fields'), // Custom field values (EAV pattern)
+  position: integer('position').default(0), // For drag-drop ordering in Kanban
   idempotencyKey: varchar('idempotency_key', { length: 64 }), // For duplicate prevention
   version: integer('version').default(1), // Optimistic locking version
   createdAt: timestamp('created_at').defaultNow(),
@@ -84,6 +90,13 @@ export const deals = pgTable('deals', {
   actualCloseDate: timestamp('actual_close_date'),
   description: text('description'),
   status: text('status').default('open'),
+  // Twenty-inspired enhancements
+  healthScore: integer('health_score'), // AI-calculated deal health (0-100)
+  winProbability: integer('win_probability'), // AI-predicted win probability
+  lastActivityAt: timestamp('last_activity_at'), // Track recent activity
+  daysInStage: integer('days_in_stage').default(0), // Days in current stage
+  customFields: json('custom_fields'), // Custom field values (EAV pattern)
+  position: integer('position').default(0), // For drag-drop ordering in Kanban
   idempotencyKey: varchar('idempotency_key', { length: 64 }), // For duplicate prevention
   version: integer('version').default(1), // Optimistic locking version
   createdAt: timestamp('created_at').defaultNow(),
@@ -101,6 +114,9 @@ export const tasks = pgTable('tasks', {
   priority: text('priority').default('medium'),
   dueDate: timestamp('due_date'),
   completedAt: timestamp('completed_at'),
+  // Twenty-inspired enhancements
+  customFields: json('custom_fields'), // Custom field values (EAV pattern)
+  position: integer('position').default(0), // For drag-drop ordering in Kanban
   idempotencyKey: varchar('idempotency_key', { length: 64 }), // For duplicate prevention
   version: integer('version').default(1), // Optimistic locking version
   createdAt: timestamp('created_at').defaultNow(),
@@ -108,6 +124,7 @@ export const tasks = pgTable('tasks', {
   contactId: integer('contact_id').references(() => contacts.id),
   dealId: integer('deal_id').references(() => deals.id),
   profileId: uuid('profile_id').references(() => profiles.id),
+  assignedTo: uuid('assigned_to').references(() => profiles.id), // Task assignee
 });
 
 // Appointments table
@@ -1549,3 +1566,203 @@ export const insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type InsertWebhookEvent = z.infer<typeof insertWebhookEventSchema>;
+
+// ============================================================================
+// TWENTY-INSPIRED METADATA TABLES (EAV Pattern)
+// ============================================================================
+
+// Field types enum
+export const fieldTypes = [
+  'TEXT',
+  'NUMBER',
+  'DATE',
+  'DATE_TIME',
+  'SELECT',
+  'MULTI_SELECT',
+  'BOOLEAN',
+  'CURRENCY',
+  'EMAIL',
+  'PHONE',
+  'URL',
+  'RELATION',
+  'RICH_TEXT',
+  'JSON',
+  'ARRAY',
+] as const;
+export type FieldType = (typeof fieldTypes)[number];
+
+// Object metadata for custom objects
+export const objectMetadata = pgTable('object_metadata', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  label: text('label').notNull(),
+  labelPlural: text('label_plural'),
+  description: text('description'),
+  icon: text('icon'),
+  isCustom: boolean('is_custom').default(false),
+  isActive: boolean('is_active').default(true),
+  isSystem: boolean('is_system').default(false),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Field metadata for EAV pattern
+export const fieldMetadata = pgTable('field_metadata', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  objectMetadataId: uuid('object_metadata_id')
+    .references(() => objectMetadata.id, { onDelete: 'cascade' })
+    .notNull(),
+  name: text('name').notNull(),
+  label: text('label').notNull(),
+  type: text('type').notNull(),
+  description: text('description'),
+  icon: text('icon'),
+  options: json('options'), // For SELECT, MULTI_SELECT
+  defaultValue: json('default_value'),
+  settings: json('settings'),
+  isCustom: boolean('is_custom').default(false),
+  isActive: boolean('is_active').default(true),
+  isSystem: boolean('is_system').default(false),
+  isNullable: boolean('is_nullable').default(true),
+  isUnique: boolean('is_unique').default(false),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Views table for saved view configurations
+export const viewTypes = ['table', 'kanban', 'calendar'] as const;
+export type ViewType = (typeof viewTypes)[number];
+
+export const views = pgTable('views', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id, {
+    onDelete: 'cascade',
+  }),
+  name: text('name').notNull(),
+  type: text('type').notNull(),
+  kanbanFieldMetadataId: uuid('kanban_field_metadata_id').references(() => fieldMetadata.id),
+  filters: json('filters').default([]),
+  sorts: json('sorts').default([]),
+  visibleFields: json('visible_fields').default([]),
+  hiddenFields: json('hidden_fields').default([]),
+  aggregations: json('aggregations').default([]),
+  visibility: text('visibility').default('personal'),
+  isDefault: boolean('is_default').default(false),
+  userId: uuid('user_id').references(() => profiles.id),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Workflow trigger types
+export const workflowTriggerTypes = [
+  'RECORD_CREATED',
+  'RECORD_UPDATED',
+  'RECORD_DELETED',
+  'MANUAL',
+  'SCHEDULED',
+  'WEBHOOK',
+] as const;
+export type WorkflowTriggerType = (typeof workflowTriggerTypes)[number];
+
+// Workflow run status
+export const workflowRunStatuses = [
+  'pending',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+] as const;
+export type WorkflowRunStatus = (typeof workflowRunStatuses)[number];
+
+// Workflows table
+export const workflows = pgTable('workflows', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  description: text('description'),
+  trigger: json('trigger').notNull(),
+  steps: json('steps').notNull(),
+  isActive: boolean('is_active').default(false),
+  lastRunAt: timestamp('last_run_at'),
+  runCount: integer('run_count').default(0),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdBy: uuid('created_by').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Workflow runs table
+export const workflowRuns = pgTable('workflow_runs', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  workflowId: uuid('workflow_id')
+    .references(() => workflows.id, { onDelete: 'cascade' })
+    .notNull(),
+  status: text('status').notNull(),
+  triggerData: json('trigger_data'),
+  context: json('context'),
+  results: json('results'),
+  errorMessage: text('error_message'),
+  startedAt: timestamp('started_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Roles table for granular permissions
+export const roles = pgTable('roles', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  description: text('description'),
+  icon: text('icon'),
+  isCustom: boolean('is_custom').default(true),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Permissions table
+export const permissions = pgTable('permissions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  roleId: uuid('role_id')
+    .references(() => roles.id, { onDelete: 'cascade' })
+    .notNull(),
+  objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id),
+  canRead: boolean('can_read').default(false),
+  canCreate: boolean('can_create').default(false),
+  canUpdate: boolean('can_update').default(false),
+  canDelete: boolean('can_delete').default(false),
+  fieldPermissions: json('field_permissions'),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// User roles assignment
+export const userRoles = pgTable('user_roles', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id, { onDelete: 'cascade' })
+    .notNull(),
+  roleId: uuid('role_id')
+    .references(() => roles.id, { onDelete: 'cascade' })
+    .notNull(),
+  workspaceId: uuid('workspace_id').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+});
