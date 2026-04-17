@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "npm run build:client && npm run build:functions && node scripts/verify-dist.mjs",
-    "build:client": "vite build",
+    "build:client": "npx vite build",
     "build:functions": "npm run build:health && npm run build:partners && npm run build:openai && npm run build:users && npm run build:messaging && npm run build:white-label && npm run build:auth && npm run build:entitlements && npm run build:ai-proxy",
     "build:health": "esbuild server/health/index.ts --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/health --out-extension:.js=.mjs",
     "build:partners": "esbuild server/partners/index.ts --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/partners --out-extension:.js=.mjs --alias:@shared=./shared",
