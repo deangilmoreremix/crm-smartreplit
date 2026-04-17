@@ -73,7 +73,7 @@ const LandingPage = () => {
         <main className="landing-content">
           {/* Hero Section */}
           <section className="landing-section">
-            <ParallaxHero />
+            <ParallaxHero subtitle="Unlock advanced AI contact intelligence with automated enrichment, smart scoring, custom fields, comprehensive activity tracking, and powerful bulk operations to supercharge your sales pipeline." />
           </section>
 
           {/* Client logos */}
