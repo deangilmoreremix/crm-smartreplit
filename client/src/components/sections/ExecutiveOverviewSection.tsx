@@ -5,6 +5,7 @@ import KPICards from '../dashboard/KPICards';
 import QuickActions from '../dashboard/QuickActions';
 import AIGoalsCard from '../AIGoalsCard'; // Import the new AIGoalsCard component
 import MetricsCards from '../dashboard/MetricsCards';
+import AIConfigurationStatusWidget from '../ui/AIConfigurationStatusWidget';
 
 const ExecutiveOverviewSection: React.FC = () => {
   const { isDark } = useTheme();
@@ -25,6 +26,11 @@ const ExecutiveOverviewSection: React.FC = () => {
           Quick Actions
         </h2>
         <QuickActions />
+      </div>
+
+      {/* AI Configuration Status */}
+      <div className="mb-8">
+        <AIConfigurationStatusWidget />
       </div>
 
       {/* Optional: MetricsCards as a secondary metrics display */}

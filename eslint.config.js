@@ -6,6 +6,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import prettierConfig from 'eslint-config-prettier';
 
 export default [
+
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],
@@ -307,6 +308,7 @@ export default [
   {
     ignores: [
       'dist/**', 
+       'apps/**/dist/**',
       'node_modules/**', 
       'netlify/**',
       '.netlify/**',

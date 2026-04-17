@@ -3,6 +3,7 @@ import { Settings, Save, Database, Mail, Shield, Globe, Bell, Lock } from 'lucid
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import AIProviderSettings from '@/components/AIProviderSettings';
 
 const AdminSettings: React.FC = () => {
   const { isDark } = useTheme();
@@ -166,6 +167,9 @@ const AdminSettings: React.FC = () => {
             </div>
           );
         })}
+
+        {/* AI Provider Settings */}
+        <AIProviderSettings />
       </div>
     </div>
   );

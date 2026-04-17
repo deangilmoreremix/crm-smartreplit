@@ -11,10 +11,6 @@ import { randomUUID } from 'crypto';
 
 const { getDb } = setupDatabaseTests();
 
-// Check if database is available before running tests
-const dbAvailable = getDb() !== null;
-
-if (dbAvailable) {
 describe('Credit Purchase Flow Tests', () => {
   let testDb: any;
   let testUserId: string;
@@ -22,11 +18,7 @@ describe('Credit Purchase Flow Tests', () => {
 
   beforeAll(async () => {
     testDb = getDb();
-  });
-
-  // Skip the entire suite if database is not available
-  beforeAll(() => {
-    if (!dbAvailable) {
+    if (!testDb) {
       console.warn('Skipping database tests - database not available');
     }
   });
@@ -362,8 +354,3 @@ describe('Credit Purchase Flow Tests', () => {
     });
   });
 });
-} else {
-  describe.skip('Credit Purchase Flow Tests', () => {
-    it('skipped due to database not available', () => {});
-  });
-}

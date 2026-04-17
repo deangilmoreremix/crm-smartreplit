@@ -53,3 +53,61 @@ export const config = {
   // Security
   secretsScanEnabled: process.env.SECRETS_SCAN_ENABLED !== 'false',
 };
+
+// Environment variable validation
+export function validateEnvironmentVariables(): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Critical variables that must be set in production
+  const requiredVars = [
+    'DATABASE_URL',
+    'SUPABASE_URL', 
+    'SUPABASE_SERVICE_ROLE_KEY'
+  ];
+  
+  // In production, these should be set
+  if (config.nodeEnv === 'production') {
+    requiredVars.forEach(varName => {
+      if (!process.env[varName]) {
+        errors.push(`Missing required environment variable: ${varName}`);
+      }
+    });
+    
+    // At least one AI provider should be configured
+    if (!config.openaiApiKey && !config.googleAiApiKey) {
+      errors.push('At least one AI provider must be configured (OPENAI_API_KEY or GOOGLE_AI_API_KEY)');
+    }
+  }
+  
+  // Validate Supabase configuration
+  if (config.supabaseUrl && !config.supabaseUrl.startsWith('https://')) {
+    errors.push('SUPABASE_URL must be a valid HTTPS URL');
+  }
+  
+  if (config.supabaseServiceKey && config.supabaseServiceKey.length < 50) {
+    errors.push('SUPABASE_SERVICE_ROLE_KEY appears to be invalid (too short)');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+// Validate on module load
+const validation = validateEnvironmentVariables();
+if (!validation.valid) {
+  console.error('❌ Environment variable validation failed:');
+  validation.errors.forEach(error => console.error(`  - ${error}`));
+  
+  // In production, exit with error if validation fails
+  if (config.nodeEnv === 'production') {
+    console.error('💥 Exiting due to invalid configuration in production');
+    process.exit(1);
+  } else {
+    console.warn('⚠️ Continuing with invalid configuration in development');
+  }
+} else {
+  console.log('✅ Environment variables validated successfully');
+}
+

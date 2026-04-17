@@ -17,7 +17,10 @@ import RemoteProductResearchLoader from './RemoteProductResearchLoader';
 import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import RemoteAIGoalsLoader from './RemoteAIGoalsLoader';
 import AssistantStatusWidget from './ui/AssistantStatusWidget';
+import AIConfigurationStatusWidget from './ui/AIConfigurationStatusWidget';
+import AIProviderSettingsModal from './modals/AIProviderSettingsModal';
 import { OnboardingWidget } from './OnboardingWidget';
+import { useAIConfiguration } from '../contexts/AIConfigurationContext';
 
 // Import section components
 import ExecutiveOverviewSection from './sections/ExecutiveOverviewSection';
@@ -72,6 +75,7 @@ const Dashboard: React.FC = React.memo(() => {
   const initializedRef = useRef(false);
   const [dashboardError, setDashboardError] = React.useState<string | null>(null);
   const [isInitialized, setIsInitialized] = React.useState(false);
+  const { showAIProviderModal, setShowAIProviderModal } = useAIConfiguration();
 
   useEffect(() => {
     // Only fetch data once
@@ -431,6 +435,15 @@ const Dashboard: React.FC = React.memo(() => {
       <PersistentVideoCallButton />
       <VideoCallPreviewWidget />
       <VideoCallOverlay />
+
+      {/* AI Provider Settings Modal */}
+      <AIProviderSettingsModal
+        isOpen={showAIProviderModal}
+        onClose={() => setShowAIProviderModal(false)}
+        onKeyConfigured={() => {
+          setShowAIProviderModal(false);
+        }}
+      />
     </main>
   );
 });

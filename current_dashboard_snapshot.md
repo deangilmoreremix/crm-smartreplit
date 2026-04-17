@@ -1,0 +1,867 @@
+- generic [ref=e8]:
+  - generic "Drop here to position navbar top" [ref=e9]
+  - generic "Drop here to position navbar bottom" [ref=e10]
+  - generic "Drop here to position navbar left" [ref=e11]
+  - generic "Drop here to position navbar right" [ref=e12]
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - img [ref=e16]
+      - generic [ref=e23]: 0 Active
+    - button "Refresh all remote apps" [ref=e24] [cursor=pointer]:
+      - img [ref=e25]
+    - button "Disable auto-refresh" [ref=e30] [cursor=pointer]:
+      - img [ref=e31]
+  - button "Dev" [ref=e34] [cursor=pointer]:
+    - img [ref=e35]
+    - generic [ref=e39]: Dev
+    - img [ref=e40]
+  - generic [ref=e42]:
+    - banner [ref=e43]:
+      - generic [ref=e45]:
+        - link "Smart CRM" [ref=e46] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e47]: Smart CRM
+        - navigation [ref=e48]:
+          - button "Features" [ref=e50] [cursor=pointer]:
+            - text: Features
+            - img [ref=e51]
+          - link "Pricing" [ref=e53] [cursor=pointer]:
+            - /url: /#pricing
+          - link "Voice Profiles" [ref=e54] [cursor=pointer]:
+            - /url: /voice-profiles
+          - link "FAQ" [ref=e55] [cursor=pointer]:
+            - /url: /#faq
+          - link "Sign In" [ref=e56] [cursor=pointer]:
+            - /url: /signin
+          - link "Get Started" [ref=e57] [cursor=pointer]:
+            - /url: /signup
+    - main [ref=e58]:
+      - generic [ref=e60]:
+        - generic [ref=e61]: "ScrollY: 0 | Items: 7"
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - img [ref=e65]
+            - generic [ref=e75]: AI Assistant
+          - generic [ref=e76]:
+            - img [ref=e78]
+            - generic [ref=e83]: Contacts
+          - generic [ref=e84]:
+            - img [ref=e86]
+            - generic [ref=e88]: Analytics
+          - generic [ref=e89]:
+            - img [ref=e91]
+            - generic [ref=e93]: Automation
+          - generic [ref=e94]:
+            - img [ref=e96]
+            - generic [ref=e99]: Search
+          - generic [ref=e100]:
+            - img [ref=e102]
+            - generic [ref=e106]: Visuals
+          - generic [ref=e107]:
+            - img [ref=e109]
+            - generic [ref=e112]: Communication
+        - generic [ref=e114]:
+          - heading "Experience the Future of Sales Technology" [level=1] [ref=e115]
+          - paragraph [ref=e116]: Our AI-powered CRM transforms how sales teams work by automating routine tasks, providing deep insights, and helping you close more deals.
+          - generic [ref=e117]:
+            - link "Sign In to SmartCRM" [ref=e118] [cursor=pointer]:
+              - /url: /signin
+              - text: Sign In to SmartCRM
+              - img [ref=e119]
+            - link "Explore Features" [ref=e121] [cursor=pointer]:
+              - /url: /#features
+      - generic [ref=e126]:
+        - paragraph [ref=e127]: Trusted by innovative companies worldwide
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - generic [ref=e130]: T
+            - generic [ref=e131]: TechCorp
+          - generic [ref=e132]:
+            - generic [ref=e133]: I
+            - generic [ref=e134]: Innovative Inc
+          - generic [ref=e135]:
+            - generic [ref=e136]: G
+            - generic [ref=e137]: GlobalSoft
+          - generic [ref=e138]:
+            - generic [ref=e139]: F
+            - generic [ref=e140]: FutureTech
+          - generic [ref=e141]:
+            - generic [ref=e142]: "N"
+            - generic [ref=e143]: NextGen Solutions
+          - generic [ref=e144]:
+            - generic [ref=e145]: D
+            - generic [ref=e146]: Digital Dynamics
+      - generic [ref=e149]:
+        - generic [ref=e150]:
+          - heading "Experience Our Features" [level=2] [ref=e151]
+          - paragraph [ref=e152]: See how our AI-powered CRM can help you streamline your workflow
+        - generic [ref=e153]:
+          - button "AI Email Composer" [ref=e154] [cursor=pointer]
+          - button "Meeting Summarizer" [ref=e155] [cursor=pointer]
+          - button "AI Lead Scoring" [ref=e156] [cursor=pointer]
+        - generic [ref=e158]:
+          - generic [ref=e161]:
+            - 'heading "New Email to: John Smith" [level=4] [ref=e163]'
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]: Subject
+                - generic [ref=e167]: Follow up on our recent conversation about enterprise features
+              - generic [ref=e168]:
+                - generic [ref=e169]: Email Body
+                - generic [ref=e170]:
+                  - paragraph [ref=e171]: Hi John,
+                  - paragraph [ref=e172]: I hope this email finds you well. I wanted to follow up on our conversation last week about the enterprise features you were interested in.
+                  - paragraph [ref=e173]: As discussed, our platform offers advanced security features, custom integrations, and dedicated support that would address the challenges you mentioned.
+                  - paragraph [ref=e174]: Would you have time for a quick call this week to discuss these features in more detail?
+                  - paragraph [ref=e175]:
+                    - text: Best regards,
+                    - text: Alex
+              - generic [ref=e176]:
+                - generic [ref=e177]: AI generated • Personalized
+                - button "Send Email" [ref=e178] [cursor=pointer]
+          - generic [ref=e181]:
+            - heading "Acme Corp Meeting Summary" [level=4] [ref=e183]
+            - generic [ref=e184]:
+              - generic [ref=e185]:
+                - heading "Key Discussion Points:" [level=5] [ref=e186]
+                - list [ref=e187]:
+                  - listitem [ref=e188]: • Product roadmap for Q3
+                  - listitem [ref=e189]: • Integration requirements
+                  - listitem [ref=e190]: • Security compliance needs
+                  - listitem [ref=e191]: • Pricing structure for enterprise tier
+              - generic [ref=e192]:
+                - heading "Action Items:" [level=5] [ref=e193]
+                - list [ref=e194]:
+                  - listitem [ref=e195]: • Send technical documentation by Friday
+                  - listitem [ref=e196]: • Schedule security review call next week
+                  - listitem [ref=e197]: • Prepare custom pricing proposal
+              - generic [ref=e198]:
+                - heading "Follow-Up:" [level=5] [ref=e199]
+                - paragraph [ref=e200]: Decision expected by end of month with potential for 80% agreement probability.
+          - generic [ref=e203]:
+            - 'heading "Contact: Sarah Williams" [level=4] [ref=e205]'
+            - generic [ref=e206]:
+              - generic [ref=e207]:
+                - img [ref=e209]
+                - generic [ref=e214]:
+                  - generic [ref=e215]: Sarah Williams
+                  - generic [ref=e216]: CTO, TechCorp Inc
+              - generic [ref=e218]: "87"
+            - generic [ref=e219]:
+              - generic [ref=e221]:
+                - generic [ref=e222]: Engagement
+                - generic [ref=e223]: 92%
+              - generic [ref=e227]:
+                - generic [ref=e228]: Fit Score
+                - generic [ref=e229]: 85%
+              - generic [ref=e233]:
+                - generic [ref=e234]: Budget Match
+                - generic [ref=e235]: 75%
+        - link "See all features" [ref=e239] [cursor=pointer]:
+          - /url: "#"
+          - text: See all features
+          - img [ref=e240]
+      - generic [ref=e245]:
+        - generic [ref=e246]:
+          - heading "Interactive Feature Experience" [level=2] [ref=e247]
+          - paragraph [ref=e248]: Explore our powerful features and see how they can transform your sales process
+        - generic [ref=e249]:
+          - link "AI Sales Tools Access 20+ AI tools to automate tasks, get insights, and personalize your sales approach. Explore AI Sales Tools" [ref=e250] [cursor=pointer]:
+            - /url: /features/ai-tools
+            - generic [ref=e252]:
+              - img [ref=e254]
+              - heading "AI Sales Tools" [level=3] [ref=e264]
+              - paragraph [ref=e265]: Access 20+ AI tools to automate tasks, get insights, and personalize your sales approach.
+              - generic [ref=e267]:
+                - text: Explore AI Sales Tools
+                - img [ref=e268]
+          - link "Contact Management Organize and track all your contacts, leads, and accounts in one unified database. Explore Contact Management" [ref=e270] [cursor=pointer]:
+            - /url: /features/contacts
+            - generic [ref=e272]:
+              - img [ref=e274]
+              - heading "Contact Management" [level=3] [ref=e279]
+              - paragraph [ref=e280]: Organize and track all your contacts, leads, and accounts in one unified database.
+              - generic [ref=e282]:
+                - text: Explore Contact Management
+                - img [ref=e283]
+          - link "Deal Pipeline Visualize and optimize your sales pipeline with drag-and-drop simplicity and AI insights. Explore Deal Pipeline" [ref=e285] [cursor=pointer]:
+            - /url: /features/pipeline
+            - generic [ref=e287]:
+              - img [ref=e289]
+              - heading "Deal Pipeline" [level=3] [ref=e292]
+              - paragraph [ref=e293]: Visualize and optimize your sales pipeline with drag-and-drop simplicity and AI insights.
+              - generic [ref=e295]:
+                - text: Explore Deal Pipeline
+                - img [ref=e296]
+          - link "AI Assistant Work with a context-aware AI assistant that remembers conversations and takes actions for you. Explore AI Assistant" [ref=e298] [cursor=pointer]:
+            - /url: /features/ai-assistant
+            - generic [ref=e300]:
+              - img [ref=e302]
+              - heading "AI Assistant" [level=3] [ref=e312]
+              - paragraph [ref=e313]: Work with a context-aware AI assistant that remembers conversations and takes actions for you.
+              - generic [ref=e315]:
+                - text: Explore AI Assistant
+                - img [ref=e316]
+          - link "Vision Analyzer Extract insights from images, documents, competitor materials, and visual content. Explore Vision Analyzer" [ref=e318] [cursor=pointer]:
+            - /url: /features/vision-analyzer
+            - generic [ref=e320]:
+              - img [ref=e322]
+              - heading "Vision Analyzer" [level=3] [ref=e325]
+              - paragraph [ref=e326]: Extract insights from images, documents, competitor materials, and visual content.
+              - generic [ref=e328]:
+                - text: Explore Vision Analyzer
+                - img [ref=e329]
+          - link "Image Generator Create professional images for presentations, proposals, and marketing materials instantly. Explore Image Generator" [ref=e331] [cursor=pointer]:
+            - /url: /features/image-generator
+            - generic [ref=e333]:
+              - img [ref=e335]
+              - heading "Image Generator" [level=3] [ref=e339]
+              - paragraph [ref=e340]: Create professional images for presentations, proposals, and marketing materials instantly.
+              - generic [ref=e342]:
+                - text: Explore Image Generator
+                - img [ref=e343]
+          - link "Speech to Text Convert meeting recordings and voice notes into searchable, actionable text. Explore Speech to Text" [ref=e345] [cursor=pointer]:
+            - /url: /features/speech-to-text
+            - generic [ref=e347]:
+              - img [ref=e349]
+              - heading "Speech to Text" [level=3] [ref=e352]
+              - paragraph [ref=e353]: Convert meeting recordings and voice notes into searchable, actionable text.
+              - generic [ref=e355]:
+                - text: Explore Speech to Text
+                - img [ref=e356]
+          - link "Semantic Search Find anything in your CRM with natural language queries and contextual understanding. Explore Semantic Search" [ref=e358] [cursor=pointer]:
+            - /url: /features/semantic-search
+            - generic [ref=e360]:
+              - img [ref=e362]
+              - heading "Semantic Search" [level=3] [ref=e365]
+              - paragraph [ref=e366]: Find anything in your CRM with natural language queries and contextual understanding.
+              - generic [ref=e368]:
+                - text: Explore Semantic Search
+                - img [ref=e369]
+          - link "Function Assistant Let AI perform real actions in your CRM through natural conversation. Explore Function Assistant" [ref=e371] [cursor=pointer]:
+            - /url: /features/function-assistant
+            - generic [ref=e373]:
+              - img [ref=e375]
+              - heading "Function Assistant" [level=3] [ref=e377]
+              - paragraph [ref=e378]: Let AI perform real actions in your CRM through natural conversation.
+              - generic [ref=e380]:
+                - text: Explore Function Assistant
+                - img [ref=e381]
+      - generic [ref=e385]:
+        - generic [ref=e387]:
+          - heading "The Impact of SmartCRM" [level=2] [ref=e388]
+          - paragraph [ref=e389]: Real results from businesses using our SmartCRM platform
+        - generic [ref=e390]:
+          - generic [ref=e392]:
+            - generic [ref=e393]:
+              - img [ref=e395]
+              - heading "Sales Growth" [level=3] [ref=e398]
+            - generic [ref=e400]: 0%
+          - generic [ref=e402]:
+            - generic [ref=e403]:
+              - img [ref=e405]
+              - heading "Hours Saved Weekly" [level=3] [ref=e408]
+            - generic [ref=e409]: "0.0"
+          - generic [ref=e411]:
+            - generic [ref=e412]:
+              - img [ref=e414]
+              - heading "Lead Conversion" [level=3] [ref=e415]
+            - generic [ref=e417]: 0%
+          - generic [ref=e419]:
+            - generic [ref=e420]:
+              - img [ref=e422]
+              - heading "Happy Customers" [level=3] [ref=e427]
+            - generic [ref=e429]: 0+
+      - generic [ref=e430]:
+        - generic [ref=e432]:
+          - generic [ref=e433]:
+            - heading "Experience Your CRM Dashboard" [level=2] [ref=e434]
+            - paragraph [ref=e435]: Try our fully interactive dashboard demo with real-time data and AI-powered insights
+          - generic [ref=e437]:
+            - generic [ref=e438]:
+              - generic [ref=e439]:
+                - generic [ref=e440]:
+                  - heading "Live CRM Dashboard" [level=3] [ref=e441]
+                  - generic [ref=e442]: ✓ Interactive Demo
+                - paragraph [ref=e443]: Click and explore the features below
+              - generic [ref=e444]:
+                - button "Auto Demo" [ref=e445] [cursor=pointer]:
+                  - img [ref=e446]
+                  - generic [ref=e448]: Auto Demo
+                - combobox [ref=e449] [cursor=pointer]:
+                  - option "Last 7 days"
+                  - option "Last 30 days" [selected]
+                  - option "Last 90 days"
+            - generic [ref=e450]:
+              - generic [ref=e451] [cursor=pointer]:
+                - generic [ref=e452]:
+                  - generic [ref=e453]:
+                    - paragraph [ref=e454]: Total Revenue
+                    - paragraph [ref=e455]: $127,500
+                  - img [ref=e457]
+                - generic [ref=e459]:
+                  - img [ref=e460]
+                  - generic [ref=e462]: +23.5%
+                  - generic [ref=e463]: vs last period
+              - generic [ref=e464] [cursor=pointer]:
+                - generic [ref=e465]:
+                  - generic [ref=e466]:
+                    - paragraph [ref=e467]: Active Deals
+                    - paragraph [ref=e468]: "24"
+                  - img [ref=e470]
+                - generic [ref=e474]:
+                  - img [ref=e475]
+                  - generic [ref=e477]: +12.3%
+                  - generic [ref=e478]: vs last period
+              - generic [ref=e479] [cursor=pointer]:
+                - generic [ref=e480]:
+                  - generic [ref=e481]:
+                    - paragraph [ref=e482]: Total Contacts
+                    - paragraph [ref=e483]: 1,248
+                  - img [ref=e485]
+                - generic [ref=e490]:
+                  - img [ref=e491]
+                  - generic [ref=e493]: +8.7%
+                  - generic [ref=e494]: vs last period
+              - generic [ref=e495] [cursor=pointer]:
+                - generic [ref=e496]:
+                  - generic [ref=e497]:
+                    - paragraph [ref=e498]: Win Rate
+                    - paragraph [ref=e499]: 85%
+                  - img [ref=e501]
+                - generic [ref=e504]:
+                  - img [ref=e505]
+                  - generic [ref=e507]: +5.2%
+                  - generic [ref=e508]: vs last period
+            - generic [ref=e509]:
+              - generic [ref=e510]:
+                - generic [ref=e511]:
+                  - heading "Recent Activities" [level=4] [ref=e512]
+                  - button "View All" [ref=e513] [cursor=pointer]
+                - generic [ref=e514]:
+                  - generic [ref=e515] [cursor=pointer]:
+                    - img [ref=e517]
+                    - generic [ref=e520]:
+                      - paragraph [ref=e521]: Acme Corp deal closed
+                      - paragraph [ref=e522]: $15,000
+                    - paragraph [ref=e524]: 2 hours ago
+                  - generic [ref=e525] [cursor=pointer]:
+                    - img [ref=e527]
+                    - generic [ref=e529]:
+                      - paragraph [ref=e530]: Demo call with TechStart Inc
+                      - paragraph [ref=e531]: High priority
+                    - paragraph [ref=e533]: 4 hours ago
+                  - generic [ref=e534] [cursor=pointer]:
+                    - img [ref=e536]
+                    - generic [ref=e539]:
+                      - paragraph [ref=e540]: Follow-up sent to 12 prospects
+                      - paragraph [ref=e541]: Campaign complete
+                    - paragraph [ref=e543]: 6 hours ago
+              - generic [ref=e544]:
+                - generic [ref=e545]:
+                  - heading "Pipeline" [level=4] [ref=e546]
+                  - img [ref=e547]
+                - generic [ref=e551]:
+                  - generic [ref=e552]:
+                    - generic [ref=e553]: Prospecting
+                    - generic [ref=e554]: $45K
+                  - generic [ref=e555]:
+                    - generic [ref=e556]: Qualification
+                    - generic [ref=e557]: $32K
+                  - generic [ref=e558]:
+                    - generic [ref=e559]: Proposal
+                    - generic [ref=e560]: $28K
+                  - generic [ref=e561]:
+                    - generic [ref=e562]: Negotiation
+                    - generic [ref=e563]: $22K
+                - generic [ref=e565]:
+                  - generic [ref=e566]: Total Pipeline
+                  - generic [ref=e567]: $127K
+            - generic [ref=e569]:
+              - generic [ref=e570]:
+                - heading "Ready to try the full dashboard?" [level=4] [ref=e571]
+                - paragraph [ref=e572]: Explore all features with your own data
+              - generic [ref=e573]:
+                - button "Full Demo" [ref=e574] [cursor=pointer]:
+                  - img [ref=e575]
+                  - text: Full Demo
+                - button "Start Free Trial" [ref=e580] [cursor=pointer]
+        - img [ref=e583]
+        - img [ref=e595]
+      - generic [ref=e599]:
+        - generic [ref=e600]:
+          - heading "More Features to Explore" [level=2] [ref=e601]
+          - paragraph [ref=e602]: Discover additional capabilities of our AI-powered CRM platform
+        - generic [ref=e604]:
+          - generic [ref=e606]:
+            - button [ref=e607] [cursor=pointer]
+            - button [ref=e608] [cursor=pointer]
+            - button [ref=e609] [cursor=pointer]
+            - button [ref=e610] [cursor=pointer]
+          - generic [ref=e611]:
+            - generic [ref=e612]:
+              - img "AI-Powered CRM Dashboard" [ref=e613]
+              - generic [ref=e615]:
+                - generic [ref=e616]:
+                  - img [ref=e618]
+                  - heading "AI-Powered CRM Dashboard" [level=3] [ref=e620]
+                - paragraph [ref=e621]: Get a complete overview of your sales pipeline with real-time analytics and AI insights
+                - button "Learn more" [ref=e622] [cursor=pointer]:
+                  - text: Learn more
+                  - img [ref=e623]
+            - generic [ref=e625]:
+              - img "Smart Lead Management" [ref=e626]
+              - generic [ref=e628]:
+                - generic [ref=e629]:
+                  - img [ref=e631]
+                  - heading "Smart Lead Management" [level=3] [ref=e636]
+                - paragraph [ref=e637]: Prioritize your leads with AI scoring and get personalized engagement recommendations
+                - button "Learn more" [ref=e638] [cursor=pointer]:
+                  - text: Learn more
+                  - img [ref=e639]
+            - generic [ref=e641]:
+              - img "AI Deal Intelligence" [ref=e642]
+              - generic [ref=e644]:
+                - generic [ref=e645]:
+                  - img [ref=e647]
+                  - heading "AI Deal Intelligence" [level=3] [ref=e650]
+                - paragraph [ref=e651]: Get strategic insights and recommendations to close deals faster
+                - button "Learn more" [ref=e652] [cursor=pointer]:
+                  - text: Learn more
+                  - img [ref=e653]
+            - generic [ref=e655]:
+              - img "Smart Email Automation" [ref=e656]
+              - generic [ref=e658]:
+                - generic [ref=e659]:
+                  - img [ref=e661]
+                  - heading "Smart Email Automation" [level=3] [ref=e664]
+                - paragraph [ref=e665]: Create personalized emails with AI and automate your follow-ups
+                - button "Learn more" [ref=e666] [cursor=pointer]:
+                  - text: Learn more
+                  - img [ref=e667]
+          - generic [ref=e670]:
+            - generic [ref=e671]:
+              - img [ref=e672]
+              - generic [ref=e675]: No credit card required
+            - generic [ref=e676]:
+              - img [ref=e677]
+              - generic [ref=e680]: Free onboarding
+            - generic [ref=e681]:
+              - img [ref=e682]
+              - generic [ref=e685]: Cancel anytime
+      - generic [ref=e687]:
+        - generic [ref=e688]:
+          - heading "Designed for Modern Sales Teams" [level=2] [ref=e689]
+          - paragraph [ref=e690]: Discover how our AI-powered features can transform your sales process
+        - generic [ref=e691]:
+          - button "AI Sales Assistant" [ref=e692] [cursor=pointer]:
+            - img [ref=e694]
+            - generic [ref=e704]: AI Sales Assistant
+          - button "Contact Management" [ref=e705] [cursor=pointer]:
+            - img [ref=e707]
+            - generic [ref=e712]: Contact Management
+          - button "Advanced Analytics" [ref=e713] [cursor=pointer]:
+            - img [ref=e715]
+            - generic [ref=e717]: Advanced Analytics
+          - button "Semantic Search" [ref=e718] [cursor=pointer]:
+            - img [ref=e720]
+            - generic [ref=e723]: Semantic Search
+          - button "AI Forecasting" [ref=e724] [cursor=pointer]:
+            - img [ref=e726]
+            - generic [ref=e729]: AI Forecasting
+        - generic [ref=e730]:
+          - generic [ref=e731]:
+            - heading "AI Sales Assistant" [level=3] [ref=e732]
+            - paragraph [ref=e733]: Get personalized guidance and automation from your AI sales assistant that learns your business.
+            - list [ref=e734]:
+              - listitem [ref=e735]:
+                - img [ref=e737]
+                - generic [ref=e739]: Automatically prioritize leads and opportunities
+              - listitem [ref=e740]:
+                - img [ref=e742]
+                - generic [ref=e744]: Get personalized email and call scripts
+              - listitem [ref=e745]:
+                - img [ref=e747]
+                - generic [ref=e749]: Receive strategic recommendations
+              - listitem [ref=e750]:
+                - img [ref=e752]
+                - generic [ref=e754]: Automate routine tasks and follow-ups
+            - button "Learn more about AI Sales Assistant" [ref=e755] [cursor=pointer]:
+              - text: Learn more about AI Sales Assistant
+              - img [ref=e756]
+          - generic [ref=e760]:
+            - img "AI Sales Assistant" [ref=e761]
+            - generic [ref=e763]:
+              - heading "AI Sales Assistant" [level=4] [ref=e764]
+              - paragraph [ref=e765]: Get personalized guidance and automation from your AI sales assistant that learns your business.
+            - img [ref=e768]
+            - img [ref=e780]
+            - img [ref=e787]
+      - generic [ref=e790]:
+        - generic [ref=e792]:
+          - heading "All the Features You Need to Succeed" [level=2] [ref=e793]
+          - paragraph [ref=e794]: SmartCRM combines powerful sales tools with advanced AI capabilities to streamline your workflow and boost your results.
+        - generic [ref=e795]:
+          - generic [ref=e797]:
+            - img [ref=e799]
+            - heading "AI Sales Tools" [level=3] [ref=e809]
+            - paragraph [ref=e810]: Access 20+ AI tools to automate tasks, get insights, and personalize your sales approach.
+            - link "Learn More" [ref=e811] [cursor=pointer]:
+              - /url: /landing/features/ai-tools
+              - text: Learn More
+              - img [ref=e812]
+          - generic [ref=e815]:
+            - img [ref=e817]
+            - heading "Contact Management" [level=3] [ref=e822]
+            - paragraph [ref=e823]: Organize and track all your contacts, leads, and accounts in one unified database.
+            - link "Learn More" [ref=e824] [cursor=pointer]:
+              - /url: /landing/features/contacts
+              - text: Learn More
+              - img [ref=e825]
+          - generic [ref=e828]:
+            - img [ref=e830]
+            - heading "Deal Pipeline" [level=3] [ref=e833]
+            - paragraph [ref=e834]: Visualize and optimize your sales pipeline with drag-and-drop simplicity and AI insights.
+            - link "Learn More" [ref=e835] [cursor=pointer]:
+              - /url: /landing/features/pipeline
+              - text: Learn More
+              - img [ref=e836]
+          - generic [ref=e839]:
+            - img [ref=e841]
+            - heading "AI Assistant" [level=3] [ref=e851]
+            - paragraph [ref=e852]: Work with a context-aware AI assistant that remembers conversations and takes actions for you.
+            - link "Learn More" [ref=e853] [cursor=pointer]:
+              - /url: /landing/features/ai-assistant
+              - text: Learn More
+              - img [ref=e854]
+          - generic [ref=e857]:
+            - img [ref=e859]
+            - heading "Vision Analyzer" [level=3] [ref=e862]
+            - paragraph [ref=e863]: Extract insights from images, documents, competitor materials, and visual content.
+            - link "Learn More" [ref=e864] [cursor=pointer]:
+              - /url: /landing/features/vision-analyzer
+              - text: Learn More
+              - img [ref=e865]
+          - generic [ref=e868]:
+            - img [ref=e870]
+            - heading "Image Generator" [level=3] [ref=e874]
+            - paragraph [ref=e875]: Create professional images for presentations, proposals, and marketing materials instantly.
+            - link "Learn More" [ref=e876] [cursor=pointer]:
+              - /url: /landing/features/image-generator
+              - text: Learn More
+              - img [ref=e877]
+          - generic [ref=e880]:
+            - img [ref=e882]
+            - heading "Communications" [level=3] [ref=e884]
+            - paragraph [ref=e885]: Unified communication hub for email, calls, messages, and meetings all in one place.
+            - link "Learn More" [ref=e886] [cursor=pointer]:
+              - /url: /landing/features/communications
+              - text: Learn More
+              - img [ref=e887]
+          - generic [ref=e890]:
+            - img [ref=e892]
+            - heading "Semantic Search" [level=3] [ref=e895]
+            - paragraph [ref=e896]: Find anything in your CRM with natural language queries and contextual understanding.
+            - link "Learn More" [ref=e897] [cursor=pointer]:
+              - /url: /landing/features/semantic-search
+              - text: Learn More
+              - img [ref=e898]
+          - generic [ref=e901]:
+            - img [ref=e903]
+            - heading "Function Assistant" [level=3] [ref=e905]
+            - paragraph [ref=e906]: Let AI perform real actions in your CRM through natural conversation.
+            - link "Learn More" [ref=e907] [cursor=pointer]:
+              - /url: /landing/features/function-assistant
+              - text: Learn More
+              - img [ref=e908]
+        - link "Explore AI Tools" [ref=e911] [cursor=pointer]:
+          - /url: /features/ai-tools
+          - text: Explore AI Tools
+          - img [ref=e912]
+      - generic [ref=e915]:
+        - generic [ref=e917]:
+          - heading "AI-Powered Features" [level=2] [ref=e918]
+          - paragraph [ref=e919]: Discover our cutting-edge AI tools designed specifically for sales professionals
+        - generic [ref=e920]:
+          - link "AI Sales Assistant Get a context-aware AI assistant that can search your CRM, schedule tasks, and take actions for you. Learn more" [ref=e922] [cursor=pointer]:
+            - /url: /features/ai-assistant
+            - img [ref=e924]
+            - heading "AI Sales Assistant" [level=3] [ref=e934]
+            - paragraph [ref=e935]: Get a context-aware AI assistant that can search your CRM, schedule tasks, and take actions for you.
+            - generic [ref=e936]:
+              - text: Learn more
+              - img [ref=e937]
+          - link "Vision Analyzer Analyze documents, competitor materials, and visual content to extract valuable sales intelligence. Learn more" [ref=e940] [cursor=pointer]:
+            - /url: /features/vision-analyzer
+            - img [ref=e942]
+            - heading "Vision Analyzer" [level=3] [ref=e945]
+            - paragraph [ref=e946]: Analyze documents, competitor materials, and visual content to extract valuable sales intelligence.
+            - generic [ref=e947]:
+              - text: Learn more
+              - img [ref=e948]
+          - link "Image Generator Create professional product images, diagrams, and marketing visuals for your sales presentations. Learn more" [ref=e951] [cursor=pointer]:
+            - /url: /features/image-generator
+            - img [ref=e953]
+            - heading "Image Generator" [level=3] [ref=e957]
+            - paragraph [ref=e958]: Create professional product images, diagrams, and marketing visuals for your sales presentations.
+            - generic [ref=e959]:
+              - text: Learn more
+              - img [ref=e960]
+          - link "Function Assistant AI that performs real actions in your CRM through natural conversation and function calling. Learn more" [ref=e963] [cursor=pointer]:
+            - /url: /features/function-assistant
+            - img [ref=e965]
+            - heading "Function Assistant" [level=3] [ref=e967]
+            - paragraph [ref=e968]: AI that performs real actions in your CRM through natural conversation and function calling.
+            - generic [ref=e969]:
+              - text: Learn more
+              - img [ref=e970]
+      - generic [ref=e973]:
+        - generic [ref=e975]:
+          - heading "What Our Customers Say" [level=2] [ref=e976]
+          - paragraph [ref=e977]: Hear from sales teams who've transformed their results with SmartCRM
+        - generic [ref=e978]:
+          - generic [ref=e980]:
+            - generic [ref=e981]:
+              - img [ref=e982]
+              - img [ref=e984]
+              - img [ref=e986]
+              - img [ref=e988]
+              - img [ref=e990]
+            - paragraph [ref=e992]: SmartCRM has completely transformed our sales process. The AI insights help us prioritize the right leads and close 40% more deals.
+            - generic [ref=e993]:
+              - img "Sarah Johnson" [ref=e994]
+              - generic [ref=e995]:
+                - paragraph [ref=e996]: Sarah Johnson
+                - paragraph [ref=e997]: VP of Sales, TechCorp
+          - generic [ref=e999]:
+            - generic [ref=e1000]:
+              - img [ref=e1001]
+              - img [ref=e1003]
+              - img [ref=e1005]
+              - img [ref=e1007]
+              - img [ref=e1009]
+            - paragraph [ref=e1011]: The AI assistant saves me 10 hours a week on administrative tasks. I can focus on what I do best - selling.
+            - generic [ref=e1012]:
+              - img "Michael Chen" [ref=e1013]
+              - generic [ref=e1014]:
+                - paragraph [ref=e1015]: Michael Chen
+                - paragraph [ref=e1016]: Senior Sales Rep, GlobalTech
+          - generic [ref=e1018]:
+            - generic [ref=e1019]:
+              - img [ref=e1020]
+              - img [ref=e1022]
+              - img [ref=e1024]
+              - img [ref=e1026]
+              - img [ref=e1028]
+            - paragraph [ref=e1030]: The vision analyzer helps us understand competitor materials instantly. It's like having a research assistant that never sleeps.
+            - generic [ref=e1031]:
+              - img "Emily Rodriguez" [ref=e1032]
+              - generic [ref=e1033]:
+                - paragraph [ref=e1034]: Emily Rodriguez
+                - paragraph [ref=e1035]: Sales Manager, InnovateNow
+      - generic [ref=e1037]:
+        - generic [ref=e1039]:
+          - heading "Simple, Transparent Pricing" [level=2] [ref=e1040]
+          - paragraph [ref=e1041]: Choose the plan that fits your team size and needs. All plans include our core CRM features.
+        - generic [ref=e1042]:
+          - generic [ref=e1044]:
+            - generic [ref=e1045]:
+              - heading "Starter" [level=3] [ref=e1046]
+              - generic [ref=e1047]:
+                - generic [ref=e1048]: $
+                - generic [ref=e1049]: "29"
+                - generic [ref=e1050]: /month
+              - paragraph [ref=e1051]: Perfect for small teams getting started
+            - generic [ref=e1052]:
+              - generic [ref=e1053]:
+                - img [ref=e1054]
+                - generic [ref=e1057]: Up to 3 users
+              - generic [ref=e1058]:
+                - img [ref=e1059]
+                - generic [ref=e1062]: 1,000 contacts
+              - generic [ref=e1063]:
+                - img [ref=e1064]
+                - generic [ref=e1067]: Basic CRM features
+              - generic [ref=e1068]:
+                - img [ref=e1069]
+                - generic [ref=e1072]: Email support
+              - generic [ref=e1073]:
+                - img [ref=e1074]
+                - generic [ref=e1077]: 5 AI tool credits/month
+            - link "Get Started Now" [ref=e1079] [cursor=pointer]:
+              - /url: /dashboard
+          - generic [ref=e1081]:
+            - generic [ref=e1083]:
+              - img [ref=e1084]
+              - text: Most Popular
+            - generic [ref=e1086]:
+              - heading "Professional" [level=3] [ref=e1087]
+              - generic [ref=e1088]:
+                - generic [ref=e1089]: $
+                - generic [ref=e1090]: "79"
+                - generic [ref=e1091]: /month
+              - paragraph [ref=e1092]: Best for growing sales teams
+            - generic [ref=e1093]:
+              - generic [ref=e1094]:
+                - img [ref=e1095]
+                - generic [ref=e1098]: Up to 10 users
+              - generic [ref=e1099]:
+                - img [ref=e1100]
+                - generic [ref=e1103]: 10,000 contacts
+              - generic [ref=e1104]:
+                - img [ref=e1105]
+                - generic [ref=e1108]: Advanced pipeline management
+              - generic [ref=e1109]:
+                - img [ref=e1110]
+                - generic [ref=e1113]: Priority support
+              - generic [ref=e1114]:
+                - img [ref=e1115]
+                - generic [ref=e1118]: 50 AI tool credits/month
+              - generic [ref=e1119]:
+                - img [ref=e1120]
+                - generic [ref=e1123]: Custom integrations
+              - generic [ref=e1124]:
+                - img [ref=e1125]
+                - generic [ref=e1128]: Advanced analytics
+            - link "Get Started Now" [ref=e1130] [cursor=pointer]:
+              - /url: /dashboard
+          - generic [ref=e1132]:
+            - generic [ref=e1133]:
+              - heading "Enterprise" [level=3] [ref=e1134]
+              - generic [ref=e1135]:
+                - generic [ref=e1136]: $
+                - generic [ref=e1137]: "199"
+                - generic [ref=e1138]: /month
+              - paragraph [ref=e1139]: For large teams with advanced needs
+            - generic [ref=e1140]:
+              - generic [ref=e1141]:
+                - img [ref=e1142]
+                - generic [ref=e1145]: Unlimited users
+              - generic [ref=e1146]:
+                - img [ref=e1147]
+                - generic [ref=e1150]: Unlimited contacts
+              - generic [ref=e1151]:
+                - img [ref=e1152]
+                - generic [ref=e1155]: Custom workflows
+              - generic [ref=e1156]:
+                - img [ref=e1157]
+                - generic [ref=e1160]: Dedicated support
+              - generic [ref=e1161]:
+                - img [ref=e1162]
+                - generic [ref=e1165]: Unlimited AI tools
+              - generic [ref=e1166]:
+                - img [ref=e1167]
+                - generic [ref=e1170]: White-label options
+              - generic [ref=e1171]:
+                - img [ref=e1172]
+                - generic [ref=e1175]: Advanced security
+              - generic [ref=e1176]:
+                - img [ref=e1177]
+                - generic [ref=e1180]: Custom integrations
+            - link "Contact Sales" [ref=e1182] [cursor=pointer]:
+              - /url: /dashboard
+      - generic [ref=e1185]:
+        - heading "Ready to Transform Your Sales Process?" [level=2] [ref=e1186]
+        - paragraph [ref=e1187]: Join thousands of sales teams using SmartCRM to close more deals and grow their business faster.
+        - generic [ref=e1188]:
+          - link "Get Started Now" [ref=e1189] [cursor=pointer]:
+            - /url: /signup
+            - text: Get Started Now
+            - img [ref=e1190]
+          - button "Schedule Demo" [ref=e1192] [cursor=pointer]
+    - contentinfo [ref=e1193]:
+      - generic [ref=e1194]:
+        - generic [ref=e1195]:
+          - generic [ref=e1196]:
+            - link "Smart CRM" [ref=e1197] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e1198]: Smart CRM
+            - paragraph [ref=e1199]: The all-in-one sales platform that combines powerful CRM capabilities with AI-driven insights to transform your sales process.
+            - generic [ref=e1200]:
+              - generic [ref=e1201]:
+                - img [ref=e1202]
+                - generic [ref=e1205]: contact@smartcrm.com
+              - generic [ref=e1206]:
+                - img [ref=e1207]
+                - generic [ref=e1210]: 123 Sales Street, San Francisco, CA 94103
+          - generic [ref=e1211]:
+            - heading "Features" [level=3] [ref=e1212]
+            - list [ref=e1213]:
+              - listitem [ref=e1214]:
+                - link "AI Sales Tools" [ref=e1215] [cursor=pointer]:
+                  - /url: /features/ai-tools
+              - listitem [ref=e1216]:
+                - link "Contact Management" [ref=e1217] [cursor=pointer]:
+                  - /url: /features/contacts
+              - listitem [ref=e1218]:
+                - link "Deal Pipeline" [ref=e1219] [cursor=pointer]:
+                  - /url: /features/pipeline
+              - listitem [ref=e1220]:
+                - link "Analytics" [ref=e1221] [cursor=pointer]:
+                  - /url: /features/analytics
+          - generic [ref=e1222]:
+            - heading "Company" [level=3] [ref=e1223]
+            - list [ref=e1224]:
+              - listitem [ref=e1225]:
+                - link "About Us" [ref=e1226] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e1227]:
+                - link "Careers" [ref=e1228] [cursor=pointer]:
+                  - /url: /careers
+              - listitem [ref=e1229]:
+                - link "Press" [ref=e1230] [cursor=pointer]:
+                  - /url: /press
+              - listitem [ref=e1231]:
+                - link "Blog" [ref=e1232] [cursor=pointer]:
+                  - /url: /blog
+          - generic [ref=e1233]:
+            - heading "Support" [level=3] [ref=e1234]
+            - list [ref=e1235]:
+              - listitem [ref=e1236]:
+                - link "Help Center" [ref=e1237] [cursor=pointer]:
+                  - /url: /help
+              - listitem [ref=e1238]:
+                - link "Contact Us" [ref=e1239] [cursor=pointer]:
+                  - /url: /contact
+              - listitem [ref=e1240]:
+                - link "System Status" [ref=e1241] [cursor=pointer]:
+                  - /url: /status
+              - listitem [ref=e1242]:
+                - link "FAQ" [ref=e1243] [cursor=pointer]:
+                  - /url: /faq
+        - generic [ref=e1245]:
+          - generic [ref=e1246]:
+            - heading "Stay Updated" [level=3] [ref=e1247]
+            - paragraph [ref=e1248]: Get the latest updates on new features and product releases.
+          - generic [ref=e1249]:
+            - textbox "Enter your email" [ref=e1250] [cursor=pointer]
+            - button "Subscribe" [ref=e1251] [cursor=pointer]:
+              - text: Subscribe
+              - img [ref=e1252]
+        - generic [ref=e1254]:
+          - paragraph [ref=e1256]: © 2026 Smart CRM. All rights reserved.
+          - generic [ref=e1257]:
+            - link "Privacy Policy" [ref=e1258] [cursor=pointer]:
+              - /url: /legal/privacy
+            - link "Terms of Service" [ref=e1259] [cursor=pointer]:
+              - /url: /legal/terms
+            - link "Cookie Policy" [ref=e1260] [cursor=pointer]:
+              - /url: /legal/cookies
+          - generic [ref=e1261]:
+            - link [ref=e1262] [cursor=pointer]:
+              - /url: https://twitter.com
+              - img [ref=e1263]
+            - link [ref=e1265] [cursor=pointer]:
+              - /url: https://linkedin.com
+              - img [ref=e1266]
+            - link [ref=e1270] [cursor=pointer]:
+              - /url: https://facebook.com
+              - img [ref=e1271]
+            - link [ref=e1273] [cursor=pointer]:
+              - /url: https://instagram.com
+              - img [ref=e1274]
+            - link [ref=e1277] [cursor=pointer]:
+              - /url: https://youtube.com
+              - img [ref=e1278]
+  - region "Notifications (F8)":
+    - list [ref=e1281]

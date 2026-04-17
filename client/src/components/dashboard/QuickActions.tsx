@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, UserPlus, Calendar, Mail, Video } from 'lucide-react';
+import { Plus, UserPlus, Calendar, Mail, Video, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDealStore } from '../../store/dealStore';
@@ -7,6 +7,7 @@ import { useContactStore } from '../../store/contactStore';
 import { Deal } from '../../types/deal';
 import { useAITools } from '../../components/AIToolsProvider';
 import { useVideoCall } from '../../contexts/VideoCallContext';
+import { useAIConfiguration } from '../../contexts/AIConfigurationContext';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
 
@@ -16,6 +17,7 @@ const QuickActions = () => {
   const { contacts } = useContactStore();
   const { openTool } = useAITools();
   const { initiateCall } = useVideoCall();
+  const { openAIProviderModal } = useAIConfiguration();
   const navigate = useNavigate();
 
   // Get active deals
@@ -105,6 +107,10 @@ const QuickActions = () => {
         };
         initiateCall(dummyRecipient, 'video');
         break;
+      case 'aiSettings':
+        // Open AI provider settings modal
+        openAIProviderModal();
+        break;
       default:
         // Action not implemented yet
         break;
@@ -153,6 +159,14 @@ const QuickActions = () => {
       color: 'from-indigo-500 to-purple-500',
       hoverColor: 'hover:from-indigo-600 hover:to-purple-600',
       action: 'videoCall',
+    },
+    {
+      title: 'AI Settings',
+      description: 'Configure AI providers',
+      icon: Bot,
+      color: 'from-purple-500 to-pink-500',
+      hoverColor: 'hover:from-purple-600 hover:to-pink-600',
+      action: 'aiSettings',
     },
   ];
 

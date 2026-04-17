@@ -1,7 +1,7 @@
 // src/App.tsx
 
 import React, { Suspense, lazy, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
@@ -16,6 +16,7 @@ import { VideoCallProvider } from './contexts/VideoCallContext';
 import { NavigationProvider } from './contexts/NavigationContext';
 import { DashboardLayoutProvider } from './contexts/DashboardLayoutContext';
 import { AIProvider } from './contexts/AIContext';
+import { AIConfigurationProvider } from './contexts/AIConfigurationContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { RoleProvider } from './components/RoleBasedAccess';
 import { NavbarPositionProvider, useNavbarPosition } from './contexts/NavbarPositionContext';
@@ -227,13 +228,15 @@ function App() {
                         <VideoCallProvider>
                           <NavigationProvider>
                             <DashboardLayoutProvider>
-                              <AIProvider>
-                                <RoleProvider>
-                                  <NavbarPositionProvider>
-                                    <AppContent />
-                                  </NavbarPositionProvider>
-                                </RoleProvider>
-                              </AIProvider>
+                              <AIConfigurationProvider>
+                                <AIProvider>
+                                  <RoleProvider>
+                                    <NavbarPositionProvider>
+                                      <AppContent />
+                                    </NavbarPositionProvider>
+                                  </RoleProvider>
+                                </AIProvider>
+                              </AIConfigurationProvider>
                             </DashboardLayoutProvider>
                           </NavigationProvider>
                         </VideoCallProvider>
@@ -254,6 +257,23 @@ function App() {
 function AppContent() {
   const { loading } = useAuth();
   const { setPosition } = useNavbarPosition();
+  const navigate = useNavigate();
+
+  // Handle messages from MF apps (iframes)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from our own origin for security
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'NAVIGATE_TO_SETTINGS' && event.data?.section === 'ai-providers') {
+        navigate('/settings');
+        // Could also scroll to the AI provider section or highlight it
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [navigate]);
 
   // Handle navbar drag end
   const handleNavbarDragEnd = (result: DropResult) => {
