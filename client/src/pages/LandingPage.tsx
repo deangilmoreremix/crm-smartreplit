@@ -32,6 +32,7 @@ import ScrollAnimationWrapper from '../components/landing/ScrollAnimationWrapper
 import FeatureDemo from '../components/landing/FeatureDemo';
 import InteractiveFeaturesGrid from '../components/landing/InteractiveFeaturesGrid';
 import ParticleBackground from '../components/landing/ParticleBackground';
+import NewFeaturesSection from '../components/landing/NewFeaturesSection';
 
 // Import the embedded dashboard demo
 import EmbeddedDashboardDemo from '../components/landing/EmbeddedDashboardDemo';
@@ -312,6 +313,9 @@ const LandingPage = () => {
               </div>
             </div>
           </section>
+
+          {/* New Features Section */}
+          <NewFeaturesSection />
 
           {/* AI Highlights Section */}
           <section className="py-20 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 content-stable gpu-accelerated">

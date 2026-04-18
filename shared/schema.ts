@@ -66,10 +66,11 @@ export const contacts = pgTable('contacts', {
   tags: text('tags').array(),
   notes: text('notes'),
   status: text('status').default('active'),
-  // Twenty-inspired enhancements
+  // AI contact enhancements
+  score: decimal('score', { precision: 3, scale: 2 }).default('0.50'), // AI lead score (0.00-1.00)
   healthScore: integer('health_score'), // AI-calculated contact health (0-100)
-  enrichmentData: json('enrichment_data'), // AI enrichment data
-  lastEnrichedAt: timestamp('last_enriched_at'), // Last AI enrichment timestamp
+  enrichmentData: jsonb('enrichment_data'), // AI enrichment data
+  lastEnrichedAt: timestamp('last_enriched_at', { withTimezone: true }), // Last AI enrichment timestamp
   customFields: json('custom_fields'), // Custom field values (EAV pattern)
   position: integer('position').default(0), // For drag-drop ordering in Kanban
   idempotencyKey: varchar('idempotency_key', { length: 64 }), // For duplicate prevention
@@ -77,6 +78,29 @@ export const contacts = pgTable('contacts', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   profileId: uuid('profile_id').references(() => profiles.id),
+});
+
+// Contact Custom Fields table
+export const contactCustomFields = pgTable('contact_custom_fields', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
+  fieldKey: text('field_key').notNull(),
+  fieldValue: jsonb('field_value'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Contact Activities table
+export const contactActivities = pgTable('contact_activities', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(),
+  description: text('description'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 // Deals table
@@ -295,6 +319,8 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
   communications: many(communications),
   notes: many(notes),
   documents: many(documents),
+  customFields: many(contactCustomFields),
+  activities: many(contactActivities),
 }));
 
 export const dealsRelations = relations(deals, ({ one, many }) => ({
@@ -375,6 +401,20 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   profile: one(profiles, {
     fields: [documents.profileId],
     references: [profiles.id],
+  }),
+}));
+
+export const contactCustomFieldsRelations = relations(contactCustomFields, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactCustomFields.contactId],
+    references: [contacts.id],
+  }),
+}));
+
+export const contactActivitiesRelations = relations(contactActivities, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactActivities.contactId],
+    references: [contacts.id],
   }),
 }));
 
@@ -461,6 +501,16 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({
   createdAt: true,
 });
 
+export const insertContactCustomFieldSchema = createInsertSchema(contactCustomFields).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertContactActivitySchema = createInsertSchema(contactActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertAutomationRuleSchema = createInsertSchema(automationRules).omit({
   id: true,
   createdAt: true,
@@ -495,6 +545,10 @@ export type Note = typeof notes.$inferSelect;
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type ContactCustomField = typeof contactCustomFields.$inferSelect;
+export type InsertContactCustomField = z.infer<typeof insertContactCustomFieldSchema>;
+export type ContactActivity = typeof contactActivities.$inferSelect;
+export type InsertContactActivity = z.infer<typeof insertContactActivitySchema>;
 export type AutomationRule = typeof automationRules.$inferSelect;
 export type InsertAutomationRule = z.infer<typeof insertAutomationRuleSchema>;
 export type AiQuery = typeof aiQueries.$inferSelect;
