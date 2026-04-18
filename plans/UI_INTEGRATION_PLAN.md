@@ -31,9 +31,8 @@ const connectedApps = [
   { name: 'FunnelCraft AI', url: '/funnelcraft-ai', icon: Megaphone, isExternal: false },
   { name: 'SmartCRM Closer', url: '/smartcrm-closer', icon: Users, isExternal: false },
   { name: 'ContentAI', url: '/content-ai', icon: FileText, isExternal: false },
-  // NEW: OpenClaw & Agency Agents
+  // NEW: OpenClaw AI Integration
   { name: 'OpenClaw AI Chat', url: '/openclaw-chat', icon: Bot, isExternal: false },
-  { name: 'Agency Specialists', url: '/agency-agents', icon: Users, isExternal: false },
 ];
 ```
 
@@ -58,10 +57,9 @@ Add a dedicated "AI Agents" tab in the main navigation:
 
 Add full pages accessible via navigation:
 
-| Route | Page | Description |
-|-------|------|-------------|
+| Route            | Page             | Description       |
+| ---------------- | ---------------- | ----------------- |
 | `/openclaw-chat` | OpenClawChatPage | AI chat interface |
-| `/agency-agents` | AgencyAgentsPage | Agent selector & playground |
 
 ---
 
@@ -87,7 +85,6 @@ const connectedApps = [
   { name: 'ContentAI', url: '/content-ai', icon: FileText, isExternal: false },
   // Add these new entries:
   { name: 'OpenClaw AI Chat', url: '/openclaw-chat', icon: Bot, isExternal: false },
-  { name: 'Agency Specialists', url: '/agency-agents', icon: Sparkles, isExternal: false },
 ];
 ```
 
@@ -98,7 +95,6 @@ Add new routes for the pages:
 ```typescript
 // Lazy load new pages
 const OpenClawChatPage = lazy(() => import('./pages/OpenClawChatPage'));
-const AgencyAgentsPage = lazy(() => import('./pages/AgencyAgentsPage'));
 
 // Add routes
 <Route
@@ -110,15 +106,7 @@ const AgencyAgentsPage = lazy(() => import('./pages/AgencyAgentsPage'));
     </ProtectedRoute>
   }
 />
-<Route
-  path="/agency-agents"
-  element={
-    <ProtectedRoute>
-      <Navbar />
-      <AgencyAgentsPage />
-    </ProtectedRoute>
-  }
-/>
+
 ```
 
 ### Step 3: Create OpenClaw Chat Page
@@ -128,74 +116,20 @@ Create a page that connects to OpenClaw's AI chat capabilities:
 **File**: `client/src/pages/OpenClawChatPage.tsx`
 
 Features:
+
 - Chat interface with message history
 - Connection to OpenClaw API (40+ endpoints)
 - Streaming responses (SSE)
 - Tool execution for CRM actions
 
-### Step 4: Create Agency Agents Page
-
-Create a page to browse and use 147+ specialized agents:
-
-**File**: `client/src/pages/AgencyAgentsPage.tsx`
-
-Features:
-- Agent category browser (12 divisions)
-- Agent search/filter
-- Task input for selected agent
-- Results display area
-
----
-
-## UI Mockup for Agency Agents Page
-
-```tsx
-// Conceptual layout
-<div className="p-6">
-  <h1 className="text-2xl font-bold mb-4">AI Agency Specialists</h1>
-  
-  {/* Agent Categories */}
-  <div className="flex gap-2 mb-6">
-    {['Engineering', 'Sales', 'Marketing', 'Design', 'All'].map(cat => (
-      <button key={cat} className="px-4 py-2 rounded-full bg-gray-100">
-        {cat}
-      </button>
-    ))}
-  </div>
-  
-  {/* Agent Grid */}
-  <div className="grid grid-cols-3 gap-4">
-    {filteredAgents.map(agent => (
-      <div key={agent.id} className="p-4 border rounded-lg hover:shadow-md">
-        <h3 className="font-semibold">{agent.name}</h3>
-        <p className="text-sm text-gray-600">{agent.specialty}</p>
-      </div>
-    ))}
-  </div>
-  
-  {/* Task Input */}
-  <div className="mt-6">
-    <textarea 
-      placeholder="What do you need help with?" 
-      className="w-full p-3 border rounded-lg"
-    />
-    <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg">
-      Run Agent
-    </button>
-  </div>
-</div>
-```
-
----
-
 ## Files to Create/Modify
 
-| Action | File | Description |
-|--------|------|-------------|
-| Modify | `client/src/components/Navbar.tsx` | Add to connectedApps |
-| Modify | `client/src/App.tsx` | Add routes |
-| Create | `client/src/pages/OpenClawChatPage.tsx` | AI chat page |
-| Create | `client/src/pages/AgencyAgentsPage.tsx` | Agent selector page |
+| Action | File                                    | Description          |
+| ------ | --------------------------------------- | -------------------- |
+| Modify | `client/src/components/Navbar.tsx`      | Add to connectedApps |
+| Modify | `client/src/App.tsx`                    | Add routes           |
+| Create | `client/src/pages/OpenClawChatPage.tsx` | AI chat page         |
+
 | Create | `client/src/services/openclawService.ts` | API integration |
 | Create | `client/src/services/agencyAgentsService.ts` | Agent orchestration |
 
@@ -221,5 +155,5 @@ Features:
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: March 2025*
+_Document Version: 1.0_
+_Last Updated: March 2025_

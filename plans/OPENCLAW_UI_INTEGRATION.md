@@ -1,4 +1,5 @@
 # OpenClaw UI Integration Plan
+
 ## Adding OpenClaw to CRM-SmartReplit Interface
 
 ---
@@ -13,17 +14,16 @@ This document outlines how to add OpenClaw UI to the CRM-SmartReplit platform, g
 
 The CRM-SmartReplit already has an AI chat interface:
 
-| Component | Location | Features |
-|-----------|----------|----------|
-| **StreamingChat** | client/src/components/aiTools/StreamingChat.tsx | Basic AI chat, model selection, streaming responses |
-| **AIAssistantChat** | client/src/components/aiTools/AIAssistantChat.tsx | Enhanced AI assistant |
-| **AgentWorkflowChat** | client/src/components/aiTools/AgentWorkflowChat.tsx | Agent workflow chat |
+| Component             | Location                                            | Features                                            |
+| --------------------- | --------------------------------------------------- | --------------------------------------------------- |
+| **StreamingChat**     | client/src/components/aiTools/StreamingChat.tsx     | Basic AI chat, model selection, streaming responses |
+| **AIAssistantChat**   | client/src/components/aiTools/AIAssistantChat.tsx   | Enhanced AI assistant                               |
+| **AgentWorkflowChat** | client/src/components/aiTools/AgentWorkflowChat.tsx | Agent workflow chat                                 |
 
 **What's Missing:**
+
 - OpenClaw's 40+ AI tools for CRM actions
-- AI agent integration (147 specialized agents)
 - Advanced tool execution capabilities
-- Multi-agent workflow support
 
 ---
 
@@ -43,8 +43,8 @@ const mainTabs = [
     icon: Bot,
     path: '/openclaw',
     badge: 'NEW',
-    color: 'from-violet-500 to-purple-500'
-  }
+    color: 'from-violet-500 to-purple-500',
+  },
 ];
 ```
 
@@ -60,14 +60,8 @@ const aiToolsItems = [
     id: 'openclaw-chat',
     label: 'OpenClaw AI Chat',
     description: 'AI chat with 40+ CRM tools',
-    icon: Bot
+    icon: Bot,
   },
-  {
-    id: 'agency-agents',
-    label: 'Agency Specialists',
-    description: '147 specialized AI agents',
-    icon: Users
-  }
 ];
 ```
 
@@ -77,14 +71,14 @@ Add OpenClaw as a floating side panel that's accessible from anywhere:
 
 ```typescript
 // Floating button in bottom-right corner
-<FloatingChatButton 
+<FloatingChatButton
   icon={<Bot />}
   label="OpenClaw AI"
   onClick={() => setOpenClawPanelOpen(true)}
 />
 
 // Side panel component
-<OpenClawPanel 
+<OpenClawPanel
   isOpen={isOpenClawPanelOpen}
   onClose={() => setOpenClawPanelOpen(false)}
 />
@@ -99,6 +93,7 @@ Replace the existing StreamingChat with OpenClaw - this breaks existing function
 ## Recommended Approach: Hybrid (Options A + C)
 
 Use both:
+
 1. **Main Tab** - Full OpenClaw page for power users
 2. **Side Panel** - Quick access for casual users
 
@@ -124,18 +119,15 @@ const OpenClawPage: React.FC = () => {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar - Agent/Team Selection */}
       <OpenClawSidebar />
-      
+
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         <OpenClawChat onToolSelect={setSelectedTool} />
       </div>
-      
+
       {/* Tools Panel */}
       {showTools && (
-        <OpenClawToolsPanel 
-          selectedTool={selectedTool}
-          onClose={() => setShowTools(false)}
-        />
+        <OpenClawToolsPanel selectedTool={selectedTool} onClose={() => setShowTools(false)} />
       )}
     </div>
   );
@@ -175,9 +167,10 @@ const OpenClawChat: React.FC<OpenClawChatProps> = ({ onToolSelect }) => {
     {
       id: '1',
       role: 'assistant',
-      content: "Hi! I'm OpenClaw AI. I can help you manage your CRM through natural conversation. Try asking me to:\n\n• Search for contacts\n• Create a new deal\n• Schedule a meeting\n• View pipeline details\n• And much more!\n\nWhat would you like to do?",
-      timestamp: new Date()
-    }
+      content:
+        "Hi! I'm OpenClaw AI. I can help you manage your CRM through natural conversation. Try asking me to:\n\n• Search for contacts\n• Create a new deal\n• Schedule a meeting\n• View pipeline details\n• And much more!\n\nWhat would you like to do?",
+      timestamp: new Date(),
+    },
   ]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -198,10 +191,10 @@ const OpenClawChat: React.FC<OpenClawChatProps> = ({ onToolSelect }) => {
       id: Date.now().toString(),
       role: 'user',
       content: input.trim(),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsProcessing(true);
 
@@ -212,8 +205,8 @@ const OpenClawChat: React.FC<OpenClawChatProps> = ({ onToolSelect }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: input.trim(),
-          history: messages.map(m => ({ role: m.role, content: m.content }))
-        })
+          history: messages.map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
 
       const data = await response.json();
@@ -223,19 +216,21 @@ const OpenClawChat: React.FC<OpenClawChatProps> = ({ onToolSelect }) => {
         role: 'assistant',
         content: data.response,
         toolCalls: data.toolCalls,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
 
       // If tool was executed, broadcast to UnifiedEventSystem
       if (data.toolCalls) {
-        data.toolCalls.forEach(toolCall => {
+        data.toolCalls.forEach((toolCall) => {
           if (onToolSelect) onToolSelect(toolCall.name);
           // Emit event for Module Federation apps
-          window.dispatchEvent(new CustomEvent('openclaw:tool:execute', {
-            detail: toolCall
-          }));
+          window.dispatchEvent(
+            new CustomEvent('openclaw:tool:execute', {
+              detail: toolCall,
+            })
+          );
         });
       }
     } catch (error) {
@@ -263,18 +258,29 @@ const OpenClawChat: React.FC<OpenClawChatProps> = ({ onToolSelect }) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map(message => (
-          <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div className={`max-w-[80%] ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
-              <div className={`flex items-center mb-1 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {message.role === 'user' ? <User size={14} className="mr-1" /> : <Bot size={14} className="mr-1" />}
+              <div
+                className={`flex items-center mb-1 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                {message.role === 'user' ? (
+                  <User size={14} className="mr-1" />
+                ) : (
+                  <Bot size={14} className="mr-1" />
+                )}
                 <span className="text-xs text-gray-500">
                   {message.role === 'user' ? 'You' : 'OpenClaw AI'}
                 </span>
               </div>
-              <div className={`p-3 rounded-lg ${message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white border'}`}>
+              <div
+                className={`p-3 rounded-lg ${message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white border'}`}
+              >
                 <p className="whitespace-pre-line">{message.content}</p>
-                
+
                 {/* Show tool calls */}
                 {message.toolCalls && message.toolCalls.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-gray-200">
@@ -307,7 +313,13 @@ const OpenClawChat: React.FC<OpenClawChatProps> = ({ onToolSelect }) => {
 
       {/* Input */}
       <div className="p-4 bg-white border-t">
-        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSend();
+          }}
+          className="flex gap-2"
+        >
           <input
             type="text"
             value={input}
@@ -400,7 +412,7 @@ const OpenClawPage = lazy(() => import('./pages/OpenClawPage'));
       <OpenClawPage />
     </ProtectedRoute>
   }
-/>
+/>;
 ```
 
 ---
@@ -476,19 +488,19 @@ const router = express.Router();
 // Proxy to OpenClaw API
 router.post('/chat', async (req, res) => {
   const { message, history } = req.body;
-  
+
   // Call OpenClaw API
   const response = await fetch('http://localhost:3001/api/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENCLAW_API_KEY}`
+      Authorization: `Bearer ${process.env.OPENCLAW_API_KEY}`,
     },
     body: JSON.stringify({
       message,
       history,
-      tools: getCRMTools() // Include CRM tool definitions
-    })
+      tools: getCRMTools(), // Include CRM tool definitions
+    }),
   });
 
   const data = await response.json();
@@ -502,20 +514,21 @@ export default router;
 
 ## Summary
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| OpenClawPage | /openclaw | Full-page route |
-| OpenClawChat | Side panel + page | Chat interface |
-| OpenClawPanel | Floating widget | Quick access |
-| OpenClawToolsPanel | Right sidebar | Tool selection |
-| openclawService | API calls | Backend integration |
+| Component          | Location          | Purpose             |
+| ------------------ | ----------------- | ------------------- |
+| OpenClawPage       | /openclaw         | Full-page route     |
+| OpenClawChat       | Side panel + page | Chat interface      |
+| OpenClawPanel      | Floating widget   | Quick access        |
+| OpenClawToolsPanel | Right sidebar     | Tool selection      |
+| openclawService    | API calls         | Backend integration |
 
 This gives users multiple ways to access OpenClaw AI:
+
 1. **Full page** - `/openclaw` route for power users
 2. **Floating button** - Bottom-right quick access
 3. **Navbar dropdown** - Under AI Tools menu
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: March 2025*
+_Document Version: 1.0_
+_Last Updated: March 2025_
