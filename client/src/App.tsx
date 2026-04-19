@@ -104,6 +104,9 @@ const AnalyticsRemotePage = lazy(() => import('./pages/AnalyticsRemotePage'));
 // OpenClaw AI CRM Integration
 const OpenClawPage = lazy(() => import('./pages/OpenClawPage'));
 
+// SuperPowers Hub - AI Agents Integration
+const SuperPowers = lazy(() => import('./pages/SuperPowers'));
+
 // User Account Management - reserved for future routes
 
 // Demo Pages for Sales
@@ -1028,6 +1031,17 @@ function AppContent() {
                 <ProtectedRoute>
                   <Navbar />
                   <OpenClawPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* SuperPowers Hub - AI Agents Integration */}
+            <Route
+              path="/superpowers"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <SuperPowers />
                 </ProtectedRoute>
               }
             />
