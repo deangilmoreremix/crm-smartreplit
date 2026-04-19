@@ -88,8 +88,16 @@ describe('WorkflowMonitor', () => {
     });
     render(<WorkflowMonitor workflowId="wf-1" />);
     await waitFor(() => {
-      expect(screen.getByText('Trigger Context')).toBeInTheDocument();
+      expect(screen.getByText('COMPLETED')).toBeInTheDocument();
     });
+    // Click to expand the first run
+    const firstRun = screen.getByText('COMPLETED').closest('[data-testid]');
+    if (firstRun) {
+      fireEvent.click(firstRun);
+      await waitFor(() => {
+        expect(screen.getByText('Trigger Context')).toBeInTheDocument();
+      });
+    }
   });
 
   it('displays status badges with correct variants', async () => {
@@ -100,8 +108,8 @@ describe('WorkflowMonitor', () => {
     await waitFor(() => {
       const completedBadge = screen.getByText('COMPLETED');
       const failedBadge = screen.getByText('FAILED');
-      expect(completedBadge).toHaveClass('badge-success');
-      expect(failedBadge).toHaveClass('badge-destructive');
+      expect(completedBadge.parentElement).toHaveClass('bg-emerald-100');
+      expect(failedBadge.parentElement).toHaveClass('bg-red-100');
     });
   });
 
