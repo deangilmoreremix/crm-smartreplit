@@ -1,6 +1,7 @@
-// AI Contact Enrichment Service - OpenAI & Gemini Integration
+// AI Contact Enrichment Service - AI Agents Integration
 import { httpClient } from './http-client.service';
 import { logger } from './logger.service';
+import { agentOrchestrator } from '@smartcrm/ai-agents';
 
 export interface ContactEnrichmentData {
   firstName?: string;
@@ -93,36 +94,38 @@ class AIEnrichmentService {
       `Enriching contact by email: ${email} ${includeSocialResearch ? 'with social research' : ''}`
     );
 
-    // Check if any providers are configured before making the request
-    if (!this.hasConfiguredProviders()) {
-      console.warn(`No AI providers configured for email enrichment: ${email}`);
-      return this.generateMockData({ email });
-    }
-
     try {
-      const response = await httpClient.post<ContactEnrichmentData>(
-        this.apiUrl,
-        {
-          authorization: 'anon-key',
-          contactId: 'client-enrichment-request',
-          enrichmentRequest: {
-            email,
-            includeSocialResearch,
-            socialResearchDepth: 'comprehensive',
-          },
-          type: 'email',
-        },
-        {
-          timeout: includeSocialResearch ? 60000 : 30000,
-          retries: 2,
-          headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-        }
-      );
+      // Use AI agents for contact enrichment
+      const leadData = {
+        email,
+        includeSocialResearch,
+        socialResearchDepth: 'comprehensive',
+      };
 
-      console.log(`Contact enriched successfully by email`);
-      return response.data;
+      const result = await agentOrchestrator.processNewLead(leadData);
+
+      // Convert AI agent result to ContactEnrichmentData format
+      const enrichmentData: ContactEnrichmentData = {
+        email,
+        firstName: result.qualification?.enriched_data?.first_name,
+        lastName: result.qualification?.enriched_data?.last_name,
+        name: result.qualification?.enriched_data?.name,
+        title: result.qualification?.enriched_data?.job_title,
+        company: result.qualification?.enriched_data?.company,
+        industry: result.qualification?.enriched_data?.industry,
+        location: result.qualification?.enriched_data?.location,
+        socialProfiles: result.qualification?.enriched_data?.social_profiles,
+        avatar: result.qualification?.enriched_data?.avatar,
+        bio: result.qualification?.enriched_data?.bio,
+        confidence: result.qualification?.score ? result.qualification.score / 100 : undefined,
+        inferredPersonalityTraits: result.qualification?.enriched_data?.personality_traits,
+        communicationStyle: result.qualification?.enriched_data?.communication_style,
+        professionalDemeanor: result.qualification?.enriched_data?.professional_demeanor,
+        imageAnalysisNotes: result.qualification?.enriched_data?.image_analysis_notes,
+      };
+
+      console.log(`Contact enriched successfully by email via AI agents`);
+      return enrichmentData;
     } catch (error) {
       console.error('Contact enrichment by email failed', error);
       // Return graceful fallback data instead of throwing error

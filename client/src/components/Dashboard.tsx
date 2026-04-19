@@ -29,6 +29,7 @@ import SalesPipelineDealAnalytics from './sections/SalesPipelineDealAnalytics';
 import CustomerLeadManagement from './sections/CustomerLeadManagement';
 import ActivitiesCommunications from './sections/ActivitiesCommunications';
 import IntegrationsSystem from './sections/IntegrationsSystem';
+import AIAgentsManagement from './sections/AIAgentsManagement';
 
 // Keep legacy components for backward compatibility
 import MetricsCards from './dashboard/MetricsCards';
@@ -193,6 +194,9 @@ const Dashboard: React.FC = React.memo(() => {
 
       case 'integrations-system':
         return typeof IntegrationsSystem === 'function' ? <IntegrationsSystem /> : null;
+
+      case 'ai-agents-management':
+        return typeof AIAgentsManagement === 'function' ? <AIAgentsManagement /> : null;
 
       // Legacy sections - REMOVED to prevent duplicate rendering
       // These components are now included in ExecutiveOverviewSection

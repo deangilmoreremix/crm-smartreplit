@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import GeminiImageModal from '../components/GeminiImageModal';
+import { agentOrchestrator, MeetingScheduleRequest } from '@smartcrm/ai-agents';
 import {
   Clock,
   User,
@@ -62,6 +63,11 @@ const Appointments: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [appointmentTypes, setAppointmentTypes] = useState<string[]>([]);
   const [showAvatarGenerator, setShowAvatarGenerator] = useState(false);
+
+  // AI Agent states
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [isAiScheduling, setIsAiScheduling] = useState(false);
+  const [aiScheduleResult, setAiScheduleResult] = useState<any>(null);
 
   // Form data for creating/editing appointments
   const [formData, setFormData] = useState<Partial<Appointment>>({
@@ -158,6 +164,55 @@ const Appointments: React.FC = () => {
     setSelectedDate(date);
     selectTimeSlot(null);
     setShowAppointmentForm(false);
+  };
+
+  // AI Agent functions
+  const handleAIScheduling = async (request: MeetingScheduleRequest) => {
+    setIsAiScheduling(true);
+    try {
+      const result = await agentOrchestrator.scheduleMeeting(request);
+      setAiScheduleResult(result);
+
+      // Create appointment from AI result
+      const aiAppointment = {
+        title: result.subject || request.subject || 'AI Scheduled Meeting',
+        contactName: 'AI Scheduled',
+        contactEmail: '',
+        contactPhone: '',
+        date: new Date(result.scheduled_time),
+        duration: result.duration_minutes || 30,
+        type: request.meeting_type === 'video' ? 'video' : 'phone',
+        location: result.location || '',
+        notes: `AI Scheduled Meeting\n\nAgenda:\n${result.agenda?.join('\n') || ''}\n\nPrep Materials:\n${result.prep_materials?.join('\n') || ''}`,
+        status: 'scheduled',
+      };
+
+      await createAppointment(aiAppointment);
+      await fetchAppointments(); // Refresh appointments
+    } catch (error) {
+      console.error('AI scheduling failed:', error);
+      // Could show error toast here
+    } finally {
+      setIsAiScheduling(false);
+    }
+  };
+
+  const getAISuggestions = async (contactEmail?: string) => {
+    if (!contactEmail) return;
+
+    try {
+      // Get AI suggestions for meeting times based on contact
+      const suggestions = await agentOrchestrator.scheduleMeeting({
+        action: 'suggest_times',
+        attendees: [contactEmail],
+        duration: 30,
+        subject: 'Meeting Suggestion',
+      });
+
+      setAiSuggestions([suggestions]);
+    } catch (error) {
+      console.error('Failed to get AI suggestions:', error);
+    }
   };
 
   const handleTimeSlotClick = (timeSlot: string) => {
@@ -857,6 +912,33 @@ const Appointments: React.FC = () => {
                         variant="outline"
                       >
                         Cancel
+                      </ModernButton>
+                      <ModernButton
+                        type="button"
+                        onClick={() => {
+                          if (formData.contactEmail && formData.title) {
+                            handleAIScheduling({
+                              action: 'schedule',
+                              meeting_type: formData.type === 'video' ? 'video' : 'phone',
+                              attendees: [formData.contactEmail],
+                              duration: formData.duration || 30,
+                              subject: formData.title,
+                              description: formData.notes,
+                            });
+                          }
+                        }}
+                        disabled={isAiScheduling || !formData.contactEmail || !formData.title}
+                        variant="secondary"
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        {isAiScheduling ? (
+                          <>
+                            <RefreshCw size={16} className="animate-spin mr-2" />
+                            AI Scheduling...
+                          </>
+                        ) : (
+                          <>🤖 AI Schedule</>
+                        )}
                       </ModernButton>
                       <ModernButton
                         type="submit"
