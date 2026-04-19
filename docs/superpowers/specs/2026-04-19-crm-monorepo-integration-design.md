@@ -4,36 +4,71 @@
 
 This design spec outlines the integration of 5 external CRM repositories into the crm-smartreplit monorepo to create a comprehensive, AI-powered CRM system. The integration follows a monorepo architecture using Turborepo for build orchestration.
 
+## Current Integration Status
+
+After codebase analysis, several repositories have partial integrations:
+
+### Already Partially Integrated
+
+- **Pipeline Deals**: `apps/pipeline/` - React app with AI services, deal management, probability calculations
+- **AI Calendar**: `apps/calendar/` - React app with AI enrichment, contact management, appointment scheduling
+- **OpenClaw CRM**: API routes and services integrated (`server/routes/openclaw.ts`, `client/src/services/openclawService.ts`)
+- **Twenty CRM**: Added as git submodule - full CRM with objects, deals, AI features
+
+### Not Yet Integrated
+
+- **AI CRM Agents**: Repository exists but not integrated into monorepo
+- **DenchClaw**: No integration found
+- **Sales Outreach Automation**: General outreach features exist but not the specific LangGraph-based system
+- **GTM Skills**: No integration found
+
 ## Project Decomposition
 
-The integration is decomposed into 5 sub-projects for manageable implementation:
+Updated to reflect current state - focus on completing partial integrations and adding missing ones:
 
-### Sub-Project 1: OpenClaw CRM Integration
+### Sub-Project 1: Complete OpenClaw CRM Integration
 
-**Goal**: Integrate OpenClaw CRM's flexible object model, Kanban pipeline, and AI chat capabilities
+**Status**: Partially integrated (API routes exist)
+**Goal**: Fully integrate OpenClaw CRM's flexible object model, Kanban pipeline, and AI chat capabilities
 **Key Features**: Custom objects, deals pipeline, table views, AI-powered CRM chat
 **Tech**: Next.js, PostgreSQL (EAV schema)
 
-### Sub-Project 2: AI CRM Agents Integration
+### Sub-Project 2: Enhance Pipeline Deals App
 
+**Status**: Partially implemented
+**Goal**: Complete the pipeline deals functionality with full AI integration and unified UI
+**Key Features**: Deal stages, AI scoring, probability calculations, bulk operations
+
+### Sub-Project 3: Enhance AI Calendar App
+
+**Status**: Partially implemented
+**Goal**: Complete calendar with full AI scheduling, meeting prep, and contact integration
+**Key Features**: Smart scheduling, AI enrichment, calendar sync
+
+### Sub-Project 4: AI CRM Agents Integration
+
+**Status**: Not integrated
 **Goal**: Add autonomous AI agents for lead qualification, email intelligence, sales pipeline, customer success, meeting scheduling, and analytics
 **Key Features**: 6 specialized agents with multi-agent workflows
 **Tech**: Python FastAPI, LangChain, Redis, Celery
 
-### Sub-Project 3: DenchClaw Framework Integration
+### Sub-Project 5: DenchClaw Framework Integration
 
+**Status**: Not integrated
 **Goal**: Integrate DenchClaw's OpenClaw-based productivity framework for CRM automation and outreach agents
 **Key Features**: Local productivity tools, CRM automation workflows
 **Tech**: TypeScript, OpenClaw Gateway
 
-### Sub-Project 4: Sales Outreach Automation Integration
+### Sub-Project 6: Sales Outreach Automation Integration
 
+**Status**: Not integrated
 **Goal**: Add automated lead research, qualification, and personalized outreach capabilities
 **Key Features**: LinkedIn scraping, company analysis, CRM integration (HubSpot/Airtable), personalized emails/reports
 **Tech**: Python, LangGraph, OpenAI, Google APIs
 
-### Sub-Project 5: GTM Skills Integration
+### Sub-Project 7: GTM Skills Integration
 
+**Status**: Not integrated
 **Goal**: Integrate comprehensive sales methodology prompts, agent workflows, and MCP server for AI-powered sales processes
 **Key Features**: Role-based playbooks, industry templates, competitive intelligence, MCP server
 **Tech**: Next.js, TypeScript, MCP protocol
