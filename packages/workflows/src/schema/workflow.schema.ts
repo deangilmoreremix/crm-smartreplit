@@ -1,15 +1,6 @@
-import {
-  pgTable,
-  text,
-  uuid,
-  jsonb,
-  timestamp,
-  boolean,
-  integer,
-  date,
-  sql,
-} from 'drizzle-orm/pg-core';
+import { pgTable, text, uuid, jsonb, timestamp, boolean, integer, date } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
 
 // ============================================================================
 // WORKFLOW ENUMS
