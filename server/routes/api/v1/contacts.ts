@@ -6,6 +6,7 @@ import {
   insertContactSchema,
   updateContactSchema,
 } from '../../../shared/schema.js';
+import { webhookService } from '../../../server/services/webhook.js';
 
 const router = Router();
 
@@ -149,6 +150,12 @@ router.post('/', async (req, res) => {
     });
 
     const [newContact] = await db.insert(contacts).values(validatedData).returning();
+
+    webhookService
+      .dispatchEvent(userId!, 'contact_created', {
+        contact: newContact,
+      })
+      .catch((err) => console.error('Webhook dispatch error:', err));
 
     res.status(201).json(newContact);
   } catch (error: any) {

@@ -7,7 +7,9 @@
   "exports": {
     ".": "./schema.ts",
     "./types": "./types/index.ts",
-    "./permissions": "./src/permissions/index.ts"
+    "./permissions": "./src/permissions/index.ts",
+    "./calendar": "./src/calendar/types.ts",
+    "./email": "./src/email/types.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

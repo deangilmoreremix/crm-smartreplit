@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import PageLayout from '../components/PageLayout';
+import CalendarSync from '../components/Calendar/CalendarSync';
 import { useTheme } from '../contexts/ThemeContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
@@ -28,6 +29,7 @@ import {
   Link,
   Image,
 } from 'lucide-react';
+import { CalendarProvider, SyncStatus, CalendarSyncState } from '@smartcrm/shared/calendar/types';
 import {
   useAppointmentStore,
   Appointment,
@@ -39,6 +41,61 @@ import Select from 'react-select';
 
 const Appointments: React.FC = () => {
   const { isDark } = useTheme();
+  const [syncStates, setSyncStates] = useState<CalendarSyncState[]>([
+    { provider: CalendarProvider.GOOGLE, status: SyncStatus.DISCONNECTED },
+    { provider: CalendarProvider.OUTLOOK, status: SyncStatus.DISCONNECTED },
+  ]);
+
+  const handleCalendarConnect = (provider: CalendarProvider) => {
+    setSyncStates((prev) =>
+      prev.map((s) => (s.provider === provider ? { ...s, status: SyncStatus.CONNECTING } : s))
+    );
+    setTimeout(() => {
+      setSyncStates((prev) =>
+        prev.map((s) =>
+          s.provider === provider
+            ? { ...s, status: SyncStatus.CONNECTED, lastSyncedAt: new Date(), eventCount: 0 }
+            : s
+        )
+      );
+    }, 1500);
+  };
+
+  const handleCalendarDisconnect = (provider: CalendarProvider) => {
+    setSyncStates((prev) =>
+      prev.map((s) =>
+        s.provider === provider
+          ? {
+              ...s,
+              status: SyncStatus.DISCONNECTED,
+              lastSyncedAt: undefined,
+              eventCount: undefined,
+            }
+          : s
+      )
+    );
+  };
+
+  const handleCalendarSync = (provider: CalendarProvider) => {
+    setSyncStates((prev) =>
+      prev.map((s) => (s.provider === provider ? { ...s, status: SyncStatus.SYNCING } : s))
+    );
+    setTimeout(() => {
+      setSyncStates((prev) =>
+        prev.map((s) =>
+          s.provider === provider
+            ? {
+                ...s,
+                status: SyncStatus.CONNECTED,
+                lastSyncedAt: new Date(),
+                eventCount: Math.floor(Math.random() * 20) + 1,
+              }
+            : s
+        )
+      );
+    }, 2000);
+  };
+
   const {
     appointments,
     fetchAppointments,
@@ -435,87 +492,12 @@ const Appointments: React.FC = () => {
             </div>
           </GlassCard>
 
-          <GlassCard>
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Upcoming Appointments</h2>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search appointments..."
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    className="pl-8 pr-4 py-1 text-sm border rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <Search size={14} className="absolute left-2 top-2 text-gray-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4">
-              {Object.values(appointments)
-                .filter(
-                  (appointment) =>
-                    appointment.date >= new Date() &&
-                    appointment.status === 'scheduled' &&
-                    (searchText === '' ||
-                      appointment.contactName.toLowerCase().includes(searchText.toLowerCase()) ||
-                      appointment.title.toLowerCase().includes(searchText.toLowerCase()))
-                )
-                .sort((a, b) => a.date.getTime() - b.date.getTime())
-                .slice(0, 5)
-                .map((appointment) => (
-                  <div
-                    key={appointment.id}
-                    className="border rounded-lg p-3 mb-3 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => selectAppointment(appointment.id)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center">
-                          {renderAppointmentTypeIcon(appointment.type)}
-                          <h3 className="font-medium ml-1 text-sm">{appointment.title}</h3>
-                        </div>
-                        <p className="text-xs text-gray-500">{appointment.contactName}</p>
-                      </div>
-                      <div className="text-right text-xs">
-                        <p className="font-medium">
-                          {appointment.date.toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </p>
-                        <p className="text-gray-500">{formatTime(appointment.date)}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-              {Object.values(appointments).filter(
-                (appointment) =>
-                  appointment.date >= new Date() &&
-                  appointment.status === 'scheduled' &&
-                  (searchText === '' ||
-                    appointment.contactName.toLowerCase().includes(searchText.toLowerCase()) ||
-                    appointment.title.toLowerCase().includes(searchText.toLowerCase()))
-              ).length === 0 && (
-                <div className="text-center p-4">
-                  <CalendarIcon size={32} className="mx-auto text-gray-300 mb-2" />
-                  <p className="text-gray-500">No upcoming appointments</p>
-                </div>
-              )}
-
-              <div className="mt-2 text-center">
-                <ModernButton
-                  variant="ghost"
-                  size="sm"
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  View All Appointments
-                </ModernButton>
-              </div>
-            </div>
-          </GlassCard>
+          <CalendarSync
+            syncStates={syncStates}
+            onConnect={handleCalendarConnect}
+            onDisconnect={handleCalendarDisconnect}
+            onSync={handleCalendarSync}
+          />
         </div>
 
         <div className="lg:col-span-2">

@@ -12,6 +12,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'client/src'),
+      '@smartcrm/shared': path.resolve(__dirname, 'packages/shared/src'),
+      '@smartcrm/shared/calendar': path.resolve(__dirname, 'packages/shared/src/calendar/types.ts'),
+      '@smartcrm/shared/email': path.resolve(__dirname, 'packages/shared/src/email/types.ts'),
       'stream': 'stream-browserify',
     },
   },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import EmailSync from '../components/Email/EmailSync';
 import {
   MessageSquare,
   Phone,
@@ -26,6 +27,7 @@ import CircleProspectingDashboard from './CircleProspectingDashboard';
 import InvoicingDashboard from './InvoicingDashboard';
 import FormsSurveysDashboard from './FormsSurveysDashboard';
 import PersistentVideoCallButton from '../components/PersistentVideoCallButton';
+import { EmailProvider, EmailSyncStatus, EmailAccount } from '@smartcrm/shared/email/types';
 
 interface Message {
   id: string;
@@ -77,6 +79,7 @@ const CommunicationHub: React.FC = () => {
     | 'circle-prospecting'
     | 'invoicing'
     | 'forms-surveys'
+    | 'email-sync'
   >('messages');
   const [messageType, setMessageType] = useState<'sms' | 'whatsapp' | 'email'>('sms');
   const [newMessage, setNewMessage] = useState('');
@@ -84,6 +87,7 @@ const CommunicationHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailAccounts, setEmailAccounts] = useState<EmailAccount[]>([]);
 
   useEffect(() => {}, []);
 
@@ -146,10 +150,66 @@ const CommunicationHub: React.FC = () => {
     let content = template.content;
     if (selectedContact) {
       content = content.replace('{name}', selectedContact.name);
-      // Add more placeholder replacements as needed
     }
     setNewMessage(content);
     setMessageType(template.type);
+  };
+
+  const handleEmailConnect = (provider: EmailProvider) => {
+    const newAccount: EmailAccount = {
+      id: Date.now().toString(),
+      email: `user@${provider}.com`,
+      provider,
+      displayName: 'User',
+      syncStatus: EmailSyncStatus.CONNECTING,
+    };
+    setEmailAccounts((prev) => [...prev, newAccount]);
+    setTimeout(() => {
+      setEmailAccounts((prev) =>
+        prev.map((a) =>
+          a.id === newAccount.id
+            ? {
+                ...a,
+                syncStatus: EmailSyncStatus.CONNECTED,
+                lastSyncedAt: new Date(),
+                unreadCount: 5,
+                totalEmails: 128,
+              }
+            : a
+        )
+      );
+    }, 1500);
+  };
+
+  const handleEmailDisconnect = (accountId: string) => {
+    setEmailAccounts((prev) => prev.filter((a) => a.id !== accountId));
+  };
+
+  const handleEmailSync = (accountId: string) => {
+    setEmailAccounts((prev) =>
+      prev.map((a) => (a.id === accountId ? { ...a, syncStatus: EmailSyncStatus.SYNCING } : a))
+    );
+    setTimeout(() => {
+      setEmailAccounts((prev) =>
+        prev.map((a) =>
+          a.id === accountId
+            ? {
+                ...a,
+                syncStatus: EmailSyncStatus.CONNECTED,
+                lastSyncedAt: new Date(),
+                unreadCount: Math.floor(Math.random() * 10),
+                totalEmails: Math.floor(Math.random() * 200) + 100,
+              }
+            : a
+        )
+      );
+    }, 2000);
+  };
+
+  const handleSyncAllEmails = () => {
+    emailAccounts.forEach((account) => {
+      handleEmailSync(account.id);
+    });
   };
 
   const getStatusIcon = (status: Message['status']) => {
@@ -213,6 +273,18 @@ const CommunicationHub: React.FC = () => {
         return <InvoicingDashboard />;
       case 'forms-surveys':
         return <FormsSurveysDashboard />;
+      case 'email-sync':
+        return (
+          <div className="p-4">
+            <EmailSync
+              accounts={emailAccounts}
+              onConnect={handleEmailConnect}
+              onDisconnect={handleEmailDisconnect}
+              onSync={handleEmailSync}
+              onSyncAll={handleSyncAllEmails}
+            />
+          </div>
+        );
       case 'templates':
         return (
           <div className="p-4 overflow-y-auto h-full">
@@ -278,6 +350,7 @@ const CommunicationHub: React.FC = () => {
                 { key: 'forms-surveys', label: 'Forms & Surveys', icon: ClipboardList },
                 { key: 'templates', label: 'Templates', icon: Mail },
                 { key: 'broadcast', label: 'Broadcast', icon: Users },
+                { key: 'email-sync', label: 'Email Sync', icon: Mail },
               ].map((tab) => {
                 const IconComponent = tab.icon;
                 return (
@@ -304,8 +377,11 @@ const CommunicationHub: React.FC = () => {
 
         {/* Main Communication Hub */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - only show for messages/templates/broadcast tabs */}
-          {(activeTab === 'messages' || activeTab === 'templates' || activeTab === 'broadcast') && (
+          {/* Sidebar - only show for messages/templates/broadcast/email-sync tabs */}
+          {(activeTab === 'messages' ||
+            activeTab === 'templates' ||
+            activeTab === 'broadcast' ||
+            activeTab === 'email-sync') && (
             <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
               {/* Header */}
               <div className="p-4 border-b border-gray-200">
@@ -313,11 +389,13 @@ const CommunicationHub: React.FC = () => {
                   {activeTab === 'messages' && 'Messages'}
                   {activeTab === 'templates' && 'Templates'}
                   {activeTab === 'broadcast' && 'Broadcast'}
+                  {activeTab === 'email-sync' && 'Email Sync'}
                 </h1>
                 <p className="text-sm text-gray-600">
                   {activeTab === 'messages' && 'SMS, WhatsApp & Email'}
                   {activeTab === 'templates' && 'Message templates'}
                   {activeTab === 'broadcast' && 'Send to multiple contacts'}
+                  {activeTab === 'email-sync' && 'Connected email accounts'}
                 </p>
               </div>
 
