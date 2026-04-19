@@ -2,24 +2,26 @@ import React from 'react';
 import { cn } from '../utils/cn';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'default' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant = 'primary', size = 'md', isLoading, children, disabled, ...props },
+    { className, variant = 'default', size = 'md', isLoading, children, disabled, ...props },
     ref
   ) => {
     const baseStyles =
       'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
 
     const variants = {
-      primary: 'bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600',
-      secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-500',
-      ghost: 'hover:bg-gray-100 text-gray-700',
-      danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
+      default: 'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring',
+      secondary:
+        'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-ring',
+      ghost: 'hover:bg-accent hover:text-accent-foreground',
+      danger:
+        'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-ring',
     };
 
     const sizes = {

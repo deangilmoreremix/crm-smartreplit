@@ -11,7 +11,8 @@ export default defineConfig({
     setupFiles: ['./client/src/test/setup.ts'],
     include: [
       'client/src/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}',
-      'server/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}'
+      'server/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}',
+      'packages/**/src/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}'
     ],
     exclude: [
       '**/node_modules/**',
