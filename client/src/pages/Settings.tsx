@@ -5,6 +5,8 @@ import { useApiStore } from '../store/apiStore';
 import { Eye, EyeOff, Key, AlertCircle, Save } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useToast } from '../hooks/use-toast';
+import { WorkflowBuilder, WorkflowMonitor } from '../components/Workflows';
+import { WorkflowDefinition } from '../../packages/workflows/src/types';
 
 const Settings: React.FC = () => {
   const { isDark } = useTheme();
@@ -14,6 +16,9 @@ const Settings: React.FC = () => {
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [openAiInput, setOpenAiInput] = useState(apiKeys.openai || '');
   const [geminiInput, setGeminiInput] = useState(apiKeys.google || '');
+  const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<WorkflowDefinition | undefined>();
+  const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
 
   const toggleOpenAiVisibility = () => setShowOpenAiKey(!showOpenAiKey);
   const toggleGeminiVisibility = () => setShowGeminiKey(!showGeminiKey);
@@ -31,6 +36,58 @@ const Settings: React.FC = () => {
     toast({
       title: 'Success',
       description: 'Gemini API key saved successfully!',
+    });
+  };
+
+  const handleCreateWorkflow = () => {
+    setEditingWorkflow(undefined);
+    setShowWorkflowBuilder(true);
+  };
+
+  const handleEditWorkflow = (workflow: WorkflowDefinition) => {
+    setEditingWorkflow(workflow);
+    setShowWorkflowBuilder(true);
+  };
+
+  const handleSaveWorkflow = (workflow: WorkflowDefinition) => {
+    if (editingWorkflow) {
+      setWorkflows((prev) => prev.map((w) => (w.id === workflow.id ? workflow : w)));
+    } else {
+      setWorkflows((prev) => [
+        ...prev,
+        { ...workflow, id: `wf_${Date.now()}` } as WorkflowDefinition,
+      ]);
+    }
+    setShowWorkflowBuilder(false);
+    setEditingWorkflow(undefined);
+    toast({
+      title: 'Success',
+      description: editingWorkflow
+        ? 'Workflow updated successfully!'
+        : 'Workflow created successfully!',
+    });
+  };
+
+  const handleToggleWorkflow = (workflowId: string, isActive: boolean) => {
+    setWorkflows((prev) => prev.map((w) => (w.id === workflowId ? { ...w, isActive } : w)));
+    toast({
+      title: isActive ? 'Workflow Activated' : 'Workflow Deactivated',
+      description: `Workflow has been ${isActive ? 'activated' : 'deactivated'}.`,
+    });
+  };
+
+  const handleDeleteWorkflow = (workflowId: string) => {
+    setWorkflows((prev) => prev.filter((w) => w.id !== workflowId));
+    toast({
+      title: 'Workflow Deleted',
+      description: 'The workflow has been deleted successfully.',
+    });
+  };
+
+  const handleRefreshWorkflows = () => {
+    toast({
+      title: 'Refreshing',
+      description: 'Workflow data is being refreshed.',
     });
   };
 
@@ -168,6 +225,35 @@ const Settings: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">Workflows</h2>
+              <p className="text-gray-600 text-sm mt-1">
+                Automate your CRM processes with custom workflows
+              </p>
+            </div>
+            <Button onClick={handleCreateWorkflow}>
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Create Workflow
+            </Button>
+          </div>
+          <WorkflowMonitor
+            workflows={workflows}
+            onToggleWorkflow={handleToggleWorkflow}
+            onEditWorkflow={handleEditWorkflow}
+            onDeleteWorkflow={handleDeleteWorkflow}
+            onRefresh={handleRefreshWorkflows}
+          />
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold mb-4">About</h2>
           <p className="text-gray-600">
             AI CRM Platform v0.1.0 - A powerful customer relationship management system enhanced
@@ -178,6 +264,21 @@ const Settings: React.FC = () => {
           </p>
         </div>
       </div>
+      {showWorkflowBuilder && (
+        <WorkflowBuilder
+          workflow={editingWorkflow}
+          onSave={handleSaveWorkflow}
+          onCancel={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+          isOpen={showWorkflowBuilder}
+          onClose={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+        />
+      )}
     </PageLayout>
   );
 };

@@ -6,7 +6,8 @@
   "types": "./schema.ts",
   "exports": {
     ".": "./schema.ts",
-    "./types": "./types/index.ts"
+    "./types": "./types/index.ts",
+    "./permissions": "./src/permissions/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
