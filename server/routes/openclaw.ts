@@ -578,6 +578,56 @@ const crmTools = [
     parameters: { dataType: 'contacts | deals | appointments', data: 'object' },
     category: 'navigation',
   },
+  // AI Agents
+  {
+    name: 'list_agents',
+    description: 'List all available AI agents',
+    parameters: {},
+    category: 'ai',
+  },
+  {
+    name: 'get_agent',
+    description: 'Get details about a specific AI agent',
+    parameters: { agentId: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'execute_agent',
+    description: 'Execute an AI agent with input data',
+    parameters: { agentId: 'string', input: 'object', task: 'string?' },
+    category: 'ai',
+  },
+  {
+    name: 'get_agent_execution',
+    description: 'Get the status and result of an agent execution',
+    parameters: { executionId: 'string' },
+    category: 'ai',
+  },
+  {
+    name: 'list_agent_executions',
+    description: 'List recent agent executions',
+    parameters: { limit: 'number?', status: 'string?' },
+    category: 'ai',
+  },
+  // AI Calendar
+  {
+    name: 'get_calendar_ai_suggestions',
+    description: 'Get AI-powered meeting scheduling suggestions',
+    parameters: { contactId: 'string?', context: 'string?' },
+    category: 'ai',
+  },
+  {
+    name: 'schedule_meeting_intelligence',
+    description: 'Schedule a meeting with AI-optimized timing',
+    parameters: { title: 'string', contactIds: 'string[]', duration: 'number', context: 'string?' },
+    category: 'ai',
+  },
+  {
+    name: 'get_meeting_summary',
+    description: 'Get AI-generated meeting summary and action items',
+    parameters: { appointmentId: 'string' },
+    category: 'ai',
+  },
 ];
 
 // Chat endpoint - proxy to OpenClaw
@@ -2289,6 +2339,339 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           message: `Shared state synced: ${params.dataType}`,
           timestamp: new Date().toISOString(),
         };
+      }
+
+      // AI Agents
+      case 'list_agents': {
+        // Get available AI agents from database
+        const { data: agents, error } = await supabase
+          .from('ai_agents')
+          .select('*')
+          .eq('profile_id', userId)
+          .limit(50);
+
+        if (error) return { error: 'Failed to fetch agents', details: error.message };
+
+        return {
+          agents: agents || [],
+          count: agents?.length || 0,
+        };
+      }
+
+      case 'get_agent': {
+        const agentId = params.agentId;
+        if (!agentId) return { error: 'Agent ID is required' };
+
+        const { data: agent, error } = await supabase
+          .from('ai_agents')
+          .select('*')
+          .eq('id', agentId)
+          .single();
+
+        if (error) return { error: 'Agent not found' };
+
+        // Get agent configurations
+        const { data: configs } = await supabase
+          .from('agent_configurations')
+          .select('config_key, config_value')
+          .eq('agent_id', agentId);
+
+        return {
+          agent,
+          configurations: configs || [],
+        };
+      }
+
+      case 'execute_agent': {
+        const agentId = params.agentId;
+        const input = params.input || {};
+        const task = params.task || 'Execute agent task';
+
+        if (!agentId) return { error: 'Agent ID is required' };
+
+        // Get agent details
+        const { data: agent, error: agentError } = await supabase
+          .from('ai_agents')
+          .select('*')
+          .eq('id', agentId)
+          .single();
+
+        if (agentError || !agent) return { error: 'Agent not found' };
+
+        // Create execution record
+        const { data: execution, error: execError } = await supabase
+          .from('agent_executions')
+          .insert({
+            agent_id: agentId,
+            app_id: 'smartcrm',
+            profile_id: userId,
+            input_data: { ...input, task },
+            status: 'running',
+            started_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (execError) return { error: 'Failed to create execution', details: execError.message };
+
+        // Execute the agent (using OpenAI for now)
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        const systemPrompt = agent.system_prompt || `You are a helpful AI agent.`;
+        const userPrompt = `Task: ${task}\n\nInput data: ${JSON.stringify(input)}`;
+
+        try {
+          const response = await client.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.7,
+            max_tokens: 2000,
+          });
+
+          const output = response.choices[0].message.content;
+
+          // Update execution as completed
+          await supabase
+            .from('agent_executions')
+            .update({
+              status: 'completed',
+              output_data: { result: output, model: 'gpt-4o' },
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', execution.id);
+
+          return {
+            execution_id: execution.id,
+            status: 'completed',
+            result: output,
+            agent_id: agentId,
+            agent_name: agent.name,
+          };
+        } catch (aiError: any) {
+          // Update execution as failed
+          await supabase
+            .from('agent_executions')
+            .update({
+              status: 'failed',
+              error_message: aiError.message,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', execution.id);
+
+          return {
+            execution_id: execution.id,
+            status: 'failed',
+            error: aiError.message,
+          };
+        }
+      }
+
+      case 'get_agent_execution': {
+        const executionId = params.executionId;
+        if (!executionId) return { error: 'Execution ID is required' };
+
+        const { data: execution, error } = await supabase
+          .from('agent_executions')
+          .select('*')
+          .eq('id', executionId)
+          .single();
+
+        if (error) return { error: 'Execution not found' };
+
+        return { execution };
+      }
+
+      case 'list_agent_executions': {
+        const limit = params.limit || 20;
+        const status = params.status;
+
+        let query = supabase
+          .from('agent_executions')
+          .select('*')
+          .eq('profile_id', userId)
+          .order('started_at', { ascending: false })
+          .limit(limit);
+
+        if (status) {
+          query = query.eq('status', status);
+        }
+
+        const { data: executions, error } = await query;
+
+        if (error) return { error: 'Failed to fetch executions' };
+
+        return {
+          executions: executions || [],
+          count: executions?.length || 0,
+        };
+      }
+
+      // AI Calendar
+      case 'get_calendar_ai_suggestions': {
+        const contactId = params.contactId;
+        const context = params.context || '';
+
+        // Get upcoming appointments and contacts for context
+        let suggestions: any = {
+          recommended_times: [],
+          recommended_durations: [],
+          optimal_days: [],
+        };
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        // Get relevant contact if provided
+        let contactInfo = '';
+        if (contactId) {
+          const [contact] = await db!
+            .select()
+            .from(contacts)
+            .where(and(eq(contacts.id, parseInt(contactId)), eq(contacts.profileId, userId)));
+          if (contact) {
+            contactInfo = `Contact: ${contact.firstName} ${contact.lastName} (${contact.email})`;
+          }
+        }
+
+        const response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a meeting scheduling expert. Based on the context provided, suggest optimal meeting times and durations. Return JSON with: recommended_times (array of time slots with day, hour, reason), recommended_durations (array with duration, use_case), optimal_days (array of best days of week for meetings with reasons).',
+            },
+            {
+              role: 'user',
+              content: `Context: ${context}\n\n${contactInfo}\n\nProvide meeting scheduling suggestions.`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.5,
+          max_tokens: 1000,
+        });
+
+        suggestions = safeJsonParse(response.choices[0].message.content || '{}');
+        return suggestions;
+      }
+
+      case 'schedule_meeting_intelligence': {
+        const title = params.title;
+        const contactIds = params.contactIds || [];
+        const duration = params.duration || 30;
+        const meetingContext = params.context || '';
+
+        if (!title) return { error: 'Meeting title is required' };
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        // Get contacts for the meeting
+        const contactInfo: any[] = [];
+        for (const cid of contactIds.slice(0, 5)) {
+          const [contact] = await db!
+            .select()
+            .from(contacts)
+            .where(and(eq(contacts.id, parseInt(cid)), eq(contacts.profileId, userId)));
+          if (contact) {
+            contactInfo.push({
+              name: `${contact.firstName} ${contact.lastName}`,
+              email: contact.email,
+              company: contact.company,
+            });
+          }
+        }
+
+        // Find optimal meeting time
+        const response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a meeting scheduling expert. Find the optimal meeting time considering business hours (9am-5pm weekdays). Return JSON with: suggested_date (ISO string), suggested_time, duration_minutes, meeting_type (internal/external), agenda_points (array), preparation_notes.',
+            },
+            {
+              role: 'user',
+              content: `Meeting: ${title}\nDuration: ${duration} minutes\nContext: ${meetingContext}\nAttendees: ${JSON.stringify(contactInfo)}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 800,
+        });
+
+        const scheduling = safeJsonParse(response.choices[0].message.content || '{}');
+
+        // Create the appointment
+        const suggestedDate = scheduling.suggested_date || new Date().toISOString();
+        const suggestedTime = scheduling.suggested_time || '10:00';
+
+        const [appointment] = await db!
+          .insert(appointments)
+          .values({
+            profileId: userId,
+            title,
+            dateTime: new Date(`${suggestedDate.split('T')[0]}T${suggestedTime}:00`),
+            duration,
+            notes: `Agenda: ${(scheduling.agenda_points || []).join(', ')}\n\nPreparation: ${scheduling.preparation_notes || ''}`,
+          })
+          .returning();
+
+        return {
+          appointment,
+          scheduling,
+          message: `Meeting "${title}" scheduled for ${scheduling.suggested_date} at ${scheduling.suggested_time}`,
+        };
+      }
+
+      case 'get_meeting_summary': {
+        const appointmentId = params.appointmentId;
+        if (!appointmentId) return { error: 'Appointment ID is required' };
+
+        const [appointment] = await db!
+          .select()
+          .from(appointments)
+          .where(
+            and(eq(appointments.id, parseInt(appointmentId)), eq(appointments.profileId, userId))
+          );
+
+        if (!appointment) return { error: 'Appointment not found' };
+
+        const client = getOpenAIClient();
+        if (!client) return { error: 'OpenAI API key not configured' };
+
+        // Get related notes and communications
+        const notes = await db!
+          .select()
+          .from(notes)
+          .where(
+            and(eq(notes.appointmentId, parseInt(appointmentId)), eq(notes.profileId, userId))
+          );
+
+        const response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a meeting summarization expert. Create a comprehensive summary with: attendees, meeting_title, date_time, duration_actual, key_discussion_points (array), decisions_made (array), action_items (array with task, assignee, due_date), follow_up_required (boolean), next_steps.',
+            },
+            {
+              role: 'user',
+              content: `Meeting Details:\nTitle: ${appointment.title}\nDate: ${appointment.dateTime}\nDuration: ${appointment.duration} minutes\nNotes: ${appointment.notes || 'N/A'}\n\nRelated Notes: ${notes.map((n) => n.content).join('\n') || 'None'}`,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 1500,
+        });
+
+        return safeJsonParse(response.choices[0].message.content || '{}');
       }
 
       default:

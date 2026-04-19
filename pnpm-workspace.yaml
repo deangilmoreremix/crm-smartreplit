@@ -1,0 +1,15 @@
+packages:
+  # SmartCRM packages
+  - 'packages/*'
+  - 'client'
+  - 'server'
+
+  # OpenClaw CRM (if cloned into openclaw-repo)
+  - 'openclaw-repo/apps/*'
+  - 'openclaw-repo/packages/*'
+
+  # Remote apps (if present)
+  - 'apps/*'
+
+  # Supabase functions
+  - 'supabase/functions/*'
