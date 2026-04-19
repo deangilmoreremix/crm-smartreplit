@@ -67,6 +67,7 @@ export const workflowTriggerTypes = [
   'MANUAL',
   'SCHEDULED',
   'WEBHOOK',
+  'AI_COMPLETED',
 ] as const;
 export type WorkflowTriggerType = (typeof workflowTriggerTypes)[number];
 
@@ -78,6 +79,23 @@ export const workflowRunStatus = [
   'cancelled',
 ] as const;
 export type WorkflowRunStatus = (typeof workflowRunStatus)[number];
+
+export const actionTypes = [
+  'SEND_EMAIL',
+  'UPDATE_FIELD',
+  'CREATE_RECORD',
+  'CREATE_TASK',
+  'CREATE_NOTE',
+  'WEBHOOK',
+  'CODE',
+  'WAIT',
+  'BRANCH',
+  'ITERATE',
+  'SEND_SMS',
+  'CREATE_DEAL',
+  'CREATE_CONTACT',
+] as const;
+export type ActionType = (typeof actionTypes)[number];
 
 // ============================================================================
 // CORE TABLES
@@ -274,7 +292,7 @@ export const views = pgTable('views', {
 });
 
 // ============================================================================
-// WORKFLOW TABLES (Twenty-inspired)
+// WORKFLOW TABLES (Twenty-inspired, enhanced)
 // ============================================================================
 
 export const workflows = pgTable('workflows', {
@@ -283,13 +301,34 @@ export const workflows = pgTable('workflows', {
     .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
-  trigger: jsonb('trigger').notNull(), // { type, object, conditions, etc. }
-  steps: jsonb('steps').notNull(), // Array of workflow steps/actions
-  isActive: boolean('is_active').default(false),
+  triggerType: text('trigger_type').$type<WorkflowTriggerType>().notNull(),
+  appSlug: text('app_slug').notNull(), // 'contacts', 'pipeline', 'ai-agents', etc.
+  enabled: boolean('enabled').default(true),
+  createdBy: uuid('created_by')
+    .notNull()
+    .references(() => profiles.id),
+  configuration: jsonb('configuration'), // trigger-specific config (e.g., { objectType: 'contact', filter: {...} })
+  steps: jsonb('steps').notNull(), // Array of { id, actionType, configuration, order, parentId, condition } - kept for backward compatibility
+  version: integer('version').default(1),
   lastRunAt: timestamp('last_run_at'),
   runCount: integer('run_count').default(0),
-  workspaceId: uuid('workspace_id').references(() => profiles.id),
-  createdBy: uuid('created_by').references(() => profiles.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const workflowActions = pgTable('workflow_actions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  workflowId: uuid('workflow_id')
+    .notNull()
+    .references(() => workflows.id, { onDelete: 'cascade' }),
+  actionType: text('action_type').$type<ActionType>().notNull(),
+  order: integer('order').notNull(), // execution order
+  configuration: jsonb('configuration'), // action-specific parameters
+  parentId: uuid('parent_id').references(() => workflowActions.id), // for branches/iterators
+  condition: jsonb('condition'), // { field, operator, value } for branch conditions
+  isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -299,16 +338,46 @@ export const workflowRuns = pgTable('workflow_runs', {
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   workflowId: uuid('workflow_id')
-    .references(() => workflows.id, { onDelete: 'cascade' })
-    .notNull(),
-  status: text('status').$type<WorkflowRunStatus>().notNull(),
-  triggerData: jsonb('trigger_data'),
-  context: jsonb('context'), // Variables throughout the workflow
-  results: jsonb('results'),
+    .notNull()
+    .references(() => workflows.id),
+  triggeredBy: jsonb('triggered_by'), // { type, recordId, userId, timestamp }
+  status: text('status').$type<WorkflowRunStatus>().default('pending'),
+  context: jsonb('context'), // Variables passed through the workflow
+  results: jsonb('results'), // { actionId: result, ... }
   errorMessage: text('error_message'),
   startedAt: timestamp('started_at').defaultNow(),
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const workflowRunLogs = pgTable('workflow_run_logs', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  runId: uuid('run_id')
+    .notNull()
+    .references(() => workflowRuns.id, { onDelete: 'cascade' }),
+  actionId: uuid('action_id').references(() => workflowActions.id),
+  step: integer('step').notNull(),
+  level: text('level').default('info'), // info, warn, error
+  message: text('message').notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const workflowCredits = pgTable('workflow_credits', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  tenantId: uuid('tenant_id')
+    .notNull()
+    .references(() => profiles.id),
+  month: date('month').notNull(), // First day of month
+  creditsUsed: integer('credits_used').default(0),
+  creditsAvailable: integer('credits_available').default(100),
+  limit: integer('limit').default(100),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const workflowTemplates = pgTable('workflow_templates', {
@@ -320,7 +389,10 @@ export const workflowTemplates = pgTable('workflow_templates', {
   category: text('category'),
   trigger: jsonb('trigger').notNull(),
   steps: jsonb('steps').notNull(),
+  icon: text('icon'),
   isSystem: boolean('is_system').default(false),
+  isPublic: boolean('is_public').default(true),
+  createdBy: uuid('created_by').references(() => profiles.id),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -588,13 +660,45 @@ export const fieldMetadataRelations = relations(fieldMetadata, ({ one }) => ({
 }));
 
 export const workflowsRelations = relations(workflows, ({ many }) => ({
+  actions: many(workflowActions),
   runs: many(workflowRuns),
 }));
 
-export const workflowRunsRelations = relations(workflowRuns, ({ one }) => ({
+export const workflowActionsRelations = relations(workflowActions, ({ one, many }) => ({
+  workflow: one(workflows, {
+    fields: [workflowActions.workflowId],
+    references: [workflows.id],
+  }),
+  parent: one(workflowActions, {
+    fields: [workflowActions.parentId],
+    references: [workflowActions.id],
+  }),
+  children: many(workflowActions, {
+    relationName: 'actionChildren',
+    fields: [workflowActions.id],
+    references: [workflowActions.parentId],
+  }),
+}));
+
+export const workflowRunsRelations = relations(workflowRuns, ({ one, many }) => ({
   workflow: one(workflows, {
     fields: [workflowRuns.workflowId],
     references: [workflows.id],
+  }),
+  logs: many(workflowRunLogs),
+}));
+
+export const workflowRunLogsRelations = relations(workflowRunLogs, ({ one }) => ({
+  run: one(workflowRuns, {
+    fields: [workflowRunLogs.runId],
+    references: [workflowRuns.id],
+  }),
+}));
+
+export const workflowCreditsRelations = relations(workflowCredits, ({ one }) => ({
+  tenant: one(profiles, {
+    fields: [workflowCredits.tenantId],
+    references: [profiles.id],
   }),
 }));
 
