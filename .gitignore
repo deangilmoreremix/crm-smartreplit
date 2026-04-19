@@ -48,3 +48,6 @@ replit.nix
 .netlify
 apps/
 .kilo/
+
+# Git worktrees
+.worktrees
