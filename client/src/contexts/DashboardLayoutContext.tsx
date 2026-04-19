@@ -38,6 +38,7 @@ const defaultSectionOrder = [
   'gpt5-smart-kpi-section',
   'executive-overview-section',
   'automations-section',
+  'openclaw-chat-section',
   'gpt5-analytics-section',
   'gpt5-deal-intelligence-section',
   'ai-smart-features-hub',
@@ -162,6 +163,14 @@ const sectionConfigs: Record<string, SectionConfig> = {
     icon: 'Repeat',
     component: null,
     color: 'from-violet-500 to-purple-500',
+  },
+  'openclaw-chat-section': {
+    id: 'openclaw-chat-section',
+    title: 'OpenClaw AI Assistant',
+    description: 'AI-powered CRM assistant for insights and recommendations',
+    icon: 'Bot',
+    component: null,
+    color: 'from-blue-500 to-indigo-500',
   },
   'ai-insights-section': {
     id: 'ai-insights-section',

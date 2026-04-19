@@ -55,7 +55,6 @@ export const contacts = pgTable('contacts', {
   email: text('email'),
   phone: text('phone'),
   company: text('company'),
-  position: text('position'),
   address: text('address'),
   city: text('city'),
   state: text('state'),
@@ -1807,7 +1806,7 @@ export const permissions = pgTable('permissions', {
 });
 
 // User roles assignment
-export const userRoles = pgTable('user_roles', {
+export const userRolesTable = pgTable('user_roles', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),

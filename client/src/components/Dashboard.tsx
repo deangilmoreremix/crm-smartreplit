@@ -212,6 +212,29 @@ const Dashboard: React.FC = React.memo(() => {
       case 'ai-insights-section':
         return <AIInsightsPanel />;
 
+      case 'openclaw-chat-section':
+        return React.createElement(() => {
+          const OpenClawChatWidget = React.lazy(() =>
+            import('./dashboard/OpenClawChatWidget').then((module) => ({
+              default: module.OpenClawChatWidget,
+            }))
+          );
+          return (
+            <React.Suspense
+              fallback={
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    OpenClaw AI Assistant
+                  </h3>
+                  <LoadingSpinner message="Loading AI assistant..." size="sm" />
+                </div>
+              }
+            >
+              <OpenClawChatWidget />
+            </React.Suspense>
+          );
+        });
+
       case 'gpt5-analytics-section':
         return <GPT5AnalyticsPanel />;
 

@@ -35,25 +35,33 @@ export const productTiers = [
 ] as const;
 export type ProductTier = (typeof productTiers)[number];
 
-// Twenty-inspired field types
+// Twenty-inspired field types (matches FieldMetadataType enum)
 export const fieldTypes = [
-  'TEXT',
-  'NUMBER',
-  'DATE',
-  'DATE_TIME',
-  'SELECT',
-  'MULTI_SELECT',
+  'ACTOR',
+  'ADDRESS',
+  'ARRAY',
   'BOOLEAN',
   'CURRENCY',
-  'EMAIL',
-  'PHONE',
-  'URL',
+  'DATE',
+  'DATE_TIME',
+  'EMAILS',
+  'FILES',
+  'FULL_NAME',
+  'LINKS',
+  'MORPH_RELATION',
+  'MULTI_SELECT',
+  'NUMBER',
+  'NUMERIC',
+  'PHONES',
+  'POSITION',
+  'RATING',
+  'RAW_JSON',
   'RELATION',
   'RICH_TEXT',
-  'JSON',
-  'ARRAY',
+  'SELECT',
+  'TEXT',
+  'TS_VECTOR',
   'UUID',
-  'POSITION',
 ] as const;
 export type FieldType = (typeof fieldTypes)[number];
 
