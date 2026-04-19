@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useApiStore } from '../store/apiStore';
-import { Eye, EyeOff, Key, AlertCircle, Save } from 'lucide-react';
+import { Eye, EyeOff, Key, AlertCircle, Save, Palette, Building2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useToast } from '../hooks/use-toast';
 import { WorkflowBuilder, WorkflowMonitor } from '../components/Workflows';
 import { WorkflowDefinition } from '../../packages/workflows/src/types';
+import { WhiteLabelCustomizer } from '../components/Settings/WhiteLabelCustomizer';
+import { TenantSettings } from '../components/Settings/TenantSettings';
+
+type SettingsTab = 'api' | 'workflows' | 'branding' | 'about';
 
 const Settings: React.FC = () => {
   const { isDark } = useTheme();
@@ -19,6 +23,7 @@ const Settings: React.FC = () => {
   const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowDefinition | undefined>();
   const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('api');
 
   const toggleOpenAiVisibility = () => setShowOpenAiKey(!showOpenAiKey);
   const toggleGeminiVisibility = () => setShowGeminiKey(!showGeminiKey);
@@ -110,23 +115,75 @@ const Settings: React.FC = () => {
       }
     >
       <div className="max-w-4xl mx-auto space-y-6">
-        {!hasValidKeys && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start">
-              <AlertCircle className="text-amber-600 mr-3 mt-0.5" size={20} />
-              <div>
-                <h3 className="text-amber-800 font-medium mb-1">API Keys Required</h3>
-                <p className="text-amber-700 text-sm">
-                  You need to add at least one API key (OpenAI or Gemini) to use the AI features in
-                  this application. Please add your API keys below to get started.
-                </p>
-              </div>
-            </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800">
+          <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+            <button
+              onClick={() => setActiveTab('api')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'api'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              <Key className="h-4 w-4 inline mr-2" />
+              API Configuration
+            </button>
+            <button
+              onClick={() => setActiveTab('workflows')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'workflows'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              <svg className="h-4 w-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Workflows
+            </button>
+            <button
+              onClick={() => setActiveTab('branding')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'branding'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              <Palette className="h-4 w-4 inline mr-2" />
+              White Label
+            </button>
+            <button
+              onClick={() => setActiveTab('about')}
+              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'about'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/20'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+            >
+              <Building2 className="h-4 w-4 inline mr-2" />
+              About
+            </button>
           </div>
-        )}
 
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-6">API Configuration</h2>
+          <div className="p-6">
+            {activeTab === 'api' && (
+              <>
+                {!hasValidKeys && (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="text-amber-600 dark:text-amber-400 mr-3 mt-0.5" size={20} />
+                      <div>
+                        <h3 className="text-amber-800 dark:text-amber-200 font-medium mb-1">API Keys Required</h3>
+                        <p className="text-amber-700 dark:text-amber-300 text-sm">
+                          You need to add at least one API key (OpenAI or Gemini) to use the AI features in
+                          this application. Please add your API keys below to get started.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <h2 className="text-xl font-semibold mb-6">API Configuration</h2>
 
           <div className="mb-6">
             <div className="flex items-center mb-2">
@@ -221,47 +278,66 @@ const Settings: React.FC = () => {
                 Save
               </button>
             </div>
-          </div>
-        </div>
+              </>
+            )}
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-semibold">Workflows</h2>
-              <p className="text-gray-600 text-sm mt-1">
-                Automate your CRM processes with custom workflows
-              </p>
-            </div>
-            <Button onClick={handleCreateWorkflow}>
-              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
+            {activeTab === 'workflows' && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold">Workflows</h2>
+                    <p className="text-zinc-600 dark:text-zinc-400 text-sm mt-1">
+                      Automate your CRM processes with custom workflows
+                    </p>
+                  </div>
+                  <Button onClick={handleCreateWorkflow}>
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Create Workflow
+                  </Button>
+                </div>
+                <WorkflowMonitor
+                  workflows={workflows}
+                  onToggleWorkflow={handleToggleWorkflow}
+                  onEditWorkflow={handleEditWorkflow}
+                  onDeleteWorkflow={handleDeleteWorkflow}
+                  onRefresh={handleRefreshWorkflows}
                 />
-              </svg>
-              Create Workflow
-            </Button>
-          </div>
-          <WorkflowMonitor
-            workflows={workflows}
-            onToggleWorkflow={handleToggleWorkflow}
-            onEditWorkflow={handleEditWorkflow}
-            onDeleteWorkflow={handleDeleteWorkflow}
-            onRefresh={handleRefreshWorkflows}
-          />
-        </div>
+              </>
+            )}
 
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4">About</h2>
-          <p className="text-gray-600">
-            AI CRM Platform v0.1.0 - A powerful customer relationship management system enhanced
-            with AI capabilities.
-          </p>
-          <p className="text-gray-600 mt-2">
-            Built with React, Vite, and powered by OpenAI and Google Gemini.
-          </p>
+            {activeTab === 'branding' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold mb-2">White Label Settings</h2>
+                  <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+                    Customize your branding, domain, and tenant settings
+                  </p>
+                </div>
+                <WhiteLabelCustomizer />
+                <TenantSettings />
+              </div>
+            )}
+
+            {activeTab === 'about' && (
+              <>
+                <h2 className="text-xl font-semibold mb-4">About</h2>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  AI CRM Platform v0.1.0 - A powerful customer relationship management system enhanced
+                  with AI capabilities.
+                </p>
+                <p className="text-zinc-600 dark:text-zinc-400 mt-2">
+                  Built with React, Vite, and powered by OpenAI and Google Gemini.
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </div>
       {showWorkflowBuilder && (

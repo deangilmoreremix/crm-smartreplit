@@ -1,6 +1,6 @@
 [build]
 command   = "npm run build"
-publish   = "server/public"
+publish   = "client/dist"
 functions = "netlify/functions"
 
 [build.environment]
@@ -13,13 +13,11 @@ command = "npm run dev"
 targetPort = 5000
 port = 8888
 
-# SPA fallback for client-side routing
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
 
-# API redirects to Netlify Functions
 [[redirects]]
 from = "/api/openai/smart-greeting"
 to = "/.netlify/functions/openai"
@@ -34,3 +32,41 @@ status = 200
 from = "/api/openai/business-intelligence"
 to = "/.netlify/functions/openai"
 status = 200
+
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/:splat"
+status = 200
+
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+for = "/assets/*"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+for = "/*.js"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[plugins]]
+package = "@netlify/plugin-edge-functions"
+
+[[plugins]]
+package = "@netlify/plugin-build-info"
+
+[functions]
+node_bundler = "esbuild"
+included_files = ["shared/**"]
+
+[functions."health"]
+schedule = "rate 5 minutes"
+
+[edge_functions]
+path = "netlify/edge-functions"

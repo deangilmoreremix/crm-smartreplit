@@ -29,6 +29,10 @@ import {
   PieChart,
   LineChart,
 } from 'lucide-react';
+import { MetricWidget } from '../components/Dashboard/MetricWidget';
+import { DateRangeFilter } from '../components/Dashboard/DateRangeFilter';
+import type { MetricWidgetData, DateRange } from '@smartcrm/shared/dashboard';
+import { subDays } from 'date-fns';
 
 export default function Analytics() {
   const { isDark } = useTheme();
@@ -49,6 +53,49 @@ export default function Analytics() {
 
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [isLoading, setIsLoading] = useState(false);
+
+  const [dateRange, setDateRange] = useState<DateRange>({
+    preset: '30d',
+    startDate: subDays(new Date(), 30),
+    endDate: new Date(),
+    label: 'Last 30 days',
+  });
+
+  const sampleMetricWidgets: { title: string; data: MetricWidgetData }[] = [
+    {
+      title: 'Total Revenue',
+      data: {
+        value: 284500,
+        format: 'currency',
+        trend: { value: 15.3, direction: 'up', label: 'vs last month' },
+      },
+    },
+    {
+      title: 'Win Rate',
+      data: {
+        value: 0.342,
+        format: 'percent',
+        trend: { value: 2.1, direction: 'up', label: 'vs last month' },
+      },
+    },
+    {
+      title: 'Avg Deal Size',
+      data: {
+        value: 42500,
+        format: 'currency',
+        trend: { value: -5.2, direction: 'down', label: 'vs last month' },
+      },
+    },
+    {
+      title: 'Sales Cycle',
+      data: {
+        value: 28,
+        format: 'duration',
+        trend: { value: -3, direction: 'up', label: 'vs last month' },
+        target: 30,
+      },
+    },
+  ];
 
   useEffect(() => {
     updateMetrics();
@@ -98,27 +145,29 @@ export default function Analytics() {
     subtitle?: string;
   }) => (
     <GlassCard className="p-6">
-      <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{title}</div>
+      <div className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+        {title}
+      </div>
       {icon}
       <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{value}</div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {trend && trendValue && (
-            <span
-              className={`flex items-center gap-1 ${
-                trend === 'up'
-                  ? 'text-green-600'
-                  : trend === 'down'
-                    ? 'text-red-600'
-                    : 'text-gray-600'
-              }`}
-            >
-              {trend === 'up' && <TrendingUp className="w-3 h-3" />}
-              {trend === 'down' && <TrendingDown className="w-3 h-3" />}
-              {trendValue}
-            </span>
-          )}
-          {subtitle && <span>{subtitle}</span>}
-        </div>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {trend && trendValue && (
+          <span
+            className={`flex items-center gap-1 ${
+              trend === 'up'
+                ? 'text-green-600'
+                : trend === 'down'
+                  ? 'text-red-600'
+                  : 'text-gray-600'
+            }`}
+          >
+            {trend === 'up' && <TrendingUp className="w-3 h-3" />}
+            {trend === 'down' && <TrendingDown className="w-3 h-3" />}
+            {trendValue}
+          </span>
+        )}
+        {subtitle && <span>{subtitle}</span>}
+      </div>
     </GlassCard>
   );
 
@@ -162,8 +211,12 @@ export default function Analytics() {
 
       {/* Revenue Trend Chart */}
       <GlassCard className="p-6">
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Revenue Trend</h3>
-        <div className={`h-64 flex items-center justify-center border rounded-lg ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50'}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Revenue Trend
+        </h3>
+        <div
+          className={`h-64 flex items-center justify-center border rounded-lg ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50'}`}
+        >
           <div className={`text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             <LineChart className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p>Revenue trend chart would go here</p>
@@ -175,12 +228,16 @@ export default function Analytics() {
       {/* Deals Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <GlassCard className="p-6">
-          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Deal Status</h3>
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Deal Status
+          </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Won Deals</span>
               <div className="flex items-center gap-2">
-                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{salesMetrics.wonDeals}</span>
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {salesMetrics.wonDeals}
+                </span>
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   {formatPercent(salesMetrics.wonDeals / salesMetrics.totalDeals)}
                 </Badge>
@@ -189,7 +246,9 @@ export default function Analytics() {
             <div className="flex justify-between items-center">
               <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Lost Deals</span>
               <div className="flex items-center gap-2">
-                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{salesMetrics.lostDeals}</span>
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {salesMetrics.lostDeals}
+                </span>
                 <Badge variant="secondary" className="bg-red-100 text-red-800">
                   {formatPercent(salesMetrics.lostDeals / salesMetrics.totalDeals)}
                 </Badge>
@@ -198,7 +257,9 @@ export default function Analytics() {
             <div className="flex justify-between items-center">
               <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Active Deals</span>
               <div className="flex items-center gap-2">
-                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{salesMetrics.activeDeals}</span>
+                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {salesMetrics.activeDeals}
+                </span>
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   {formatPercent(salesMetrics.activeDeals / salesMetrics.totalDeals)}
                 </Badge>
@@ -208,31 +269,33 @@ export default function Analytics() {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Forecast vs Quota</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Forecasted Revenue</span>
-                <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {formatCurrency(salesMetrics.forecastedRevenue)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Quota Attainment</span>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {formatPercent(salesMetrics.quotaAttainment)}
-                </Badge>
-              </div>
-              <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${Math.min(salesMetrics.quotaAttainment * 100, 100)}%` }}
-                ></div>
-              </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                {salesMetrics.quotaAttainment >= 1 ? 'Quota exceeded!' : 'On track to meet quota'}
-              </p>
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Forecast vs Quota
+          </h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Forecasted Revenue</span>
+              <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {formatCurrency(salesMetrics.forecastedRevenue)}
+              </span>
             </div>
-          </GlassCard>
+            <div className="flex justify-between items-center">
+              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>Quota Attainment</span>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                {formatPercent(salesMetrics.quotaAttainment)}
+              </Badge>
+            </div>
+            <div className={`w-full rounded-full h-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+              <div
+                className="bg-blue-600 h-2 rounded-full"
+                style={{ width: `${Math.min(salesMetrics.quotaAttainment * 100, 100)}%` }}
+              ></div>
+            </div>
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              {salesMetrics.quotaAttainment >= 1 ? 'Quota exceeded!' : 'On track to meet quota'}
+            </p>
+          </div>
+        </GlassCard>
       </div>
     </div>
   );
@@ -265,32 +328,42 @@ export default function Analytics() {
 
       {/* Deals by Stage */}
       <GlassCard className="p-6">
-        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Deals by Stage</h3>
-          <div className="space-y-4">
-            {pipelineMetrics.dealsByStage.map((stage) => (
-              <div
-                key={stage.stage}
-                className={`flex items-center justify-between p-3 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}
-              >
-                <div>
-                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{stage.stage}</h4>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stage.count} deals</p>
-                </div>
-                <div className="text-right">
-                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(stage.value)}</p>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {formatPercent(stage.value / pipelineMetrics.totalPipelineValue)}
-                  </p>
-                </div>
+        <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Deals by Stage
+        </h3>
+        <div className="space-y-4">
+          {pipelineMetrics.dealsByStage.map((stage) => (
+            <div
+              key={stage.stage}
+              className={`flex items-center justify-between p-3 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}
+            >
+              <div>
+                <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {stage.stage}
+                </h4>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {stage.count} deals
+                </p>
               </div>
-            ))}
-          </div>
+              <div className="text-right">
+                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  {formatCurrency(stage.value)}
+                </p>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {formatPercent(stage.value / pipelineMetrics.totalPipelineValue)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </GlassCard>
 
       {/* Stage Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <GlassCard className="p-6">
-          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Average Time in Stage</h3>
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Average Time in Stage
+          </h3>
           <div className="space-y-3">
             {pipelineMetrics.averageTimeInStage.map((stage) => (
               <div key={stage.stage} className="flex justify-between items-center">
@@ -302,7 +375,9 @@ export default function Analytics() {
         </GlassCard>
 
         <GlassCard className="p-6">
-          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Conversion Rates</h3>
+          <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Conversion Rates
+          </h3>
           <div className="space-y-3">
             {pipelineMetrics.stageConversionRates.map((stage) => (
               <div key={stage.stage} className="flex justify-between items-center">
@@ -319,15 +394,22 @@ export default function Analytics() {
       {/* Bottlenecks */}
       {pipelineMetrics.bottlenecks.length > 0 && (
         <GlassCard className="p-6">
-          <h3 className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          <h3
+            className={`text-lg font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+          >
             <AlertTriangle className="w-5 h-5 text-orange-500" />
             Pipeline Bottlenecks
           </h3>
           <div className="space-y-4">
             {pipelineMetrics.bottlenecks.map((bottleneck, index) => (
-              <div key={index} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+              <div
+                key={index}
+                className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{bottleneck.stage}</h4>
+                  <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {bottleneck.stage}
+                  </h4>
                   <Badge
                     variant="outline"
                     className={
@@ -342,10 +424,13 @@ export default function Analytics() {
                   </Badge>
                 </div>
                 <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Average time: {bottleneck.averageDays} days (threshold: {bottleneck.threshold} days)
+                  Average time: {bottleneck.averageDays} days (threshold: {bottleneck.threshold}{' '}
+                  days)
                 </p>
                 <div className="space-y-1">
-                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Suggestions:</p>
+                  <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    Suggestions:
+                  </p>
                   <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {bottleneck.suggestions.map((suggestion, i) => (
                       <li key={i} className="flex items-start gap-2">
@@ -368,7 +453,9 @@ export default function Analytics() {
       {/* AI Insights */}
       <GlassCard className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>AI-Generated Insights</h3>
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            AI-Generated Insights
+          </h3>
           <Button size="sm" onClick={generateInsights}>
             Refresh Insights
           </Button>
@@ -381,10 +468,15 @@ export default function Analytics() {
         ) : (
           <div className="space-y-4">
             {insights.map((insight) => (
-              <div key={insight.id} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+              <div
+                key={insight.id}
+                className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}
+              >
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{insight.title}</h4>
+                    <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {insight.title}
+                    </h4>
                     <Badge variant="outline" className="mt-1">
                       {insight.type}
                     </Badge>
@@ -403,15 +495,25 @@ export default function Analytics() {
                     {insight.severity}
                   </Badge>
                 </div>
-                <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{insight.description}</p>
+                <p className={`text-sm mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {insight.description}
+                </p>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Confidence:</span>
+                  <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Confidence:
+                  </span>
                   <Badge variant="secondary">{formatPercent(insight.confidence)}</Badge>
                 </div>
                 {insight.actionable && insight.suggestions.length > 0 && (
                   <div>
-                    <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Recommended Actions:</p>
-                    <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p
+                      className={`text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      Recommended Actions:
+                    </p>
+                    <ul
+                      className={`text-sm space-y-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                    >
                       {insight.suggestions.map((suggestion, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <span className="text-blue-500">•</span>
@@ -430,22 +532,24 @@ export default function Analytics() {
       {/* Forecasting */}
       <GlassCard className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Forecasting</h3>
+          <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Forecasting
+          </h3>
           <div className="flex items-center gap-2">
-              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="revenue">Revenue</SelectItem>
-                  <SelectItem value="deals">Deals</SelectItem>
-                  <SelectItem value="pipeline">Pipeline</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button size="sm" onClick={handleGenerateForecast} disabled={isLoading}>
-                {isLoading ? 'Generating...' : 'Generate Forecast'}
-              </Button>
-            </div>
+            <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="revenue">Revenue</SelectItem>
+                <SelectItem value="deals">Deals</SelectItem>
+                <SelectItem value="pipeline">Pipeline</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button size="sm" onClick={handleGenerateForecast} disabled={isLoading}>
+              {isLoading ? 'Generating...' : 'Generate Forecast'}
+            </Button>
+          </div>
         </div>
         {forecasts.length === 0 ? (
           <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -455,37 +559,58 @@ export default function Analytics() {
         ) : (
           <div className="space-y-4">
             {forecasts.map((forecast) => (
-              <div key={forecast.metric} className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}>
+              <div
+                key={forecast.metric}
+                className={`p-4 border rounded-lg ${isDark ? 'border-gray-700' : ''}`}
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className={`font-medium capitalize ${isDark ? 'text-white' : 'text-gray-900'}`}>{forecast.metric} Forecast</h4>
-                  <Badge variant="secondary">
-                    {formatPercent(forecast.confidence)} confidence
-                  </Badge>
+                  <h4
+                    className={`font-medium capitalize ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    {forecast.metric} Forecast
+                  </h4>
+                  <Badge variant="secondary">{formatPercent(forecast.confidence)} confidence</Badge>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Current</p>
-                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(forecast.currentValue)}</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Current
+                    </p>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {formatCurrency(forecast.currentValue)}
+                    </p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Forecasted</p>
-                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(forecast.forecastedValue)}</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Forecasted
+                    </p>
+                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {formatCurrency(forecast.forecastedValue)}
+                    </p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Best Case</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Best Case
+                    </p>
                     <p className="font-medium text-green-600">
                       {formatCurrency(forecast.scenarioAnalysis.best)}
                     </p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Worst Case</p>
+                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Worst Case
+                    </p>
                     <p className="font-medium text-red-600">
                       {formatCurrency(forecast.scenarioAnalysis.worst)}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <p className={`text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Key Factors:</p>
+                  <p
+                    className={`text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    Key Factors:
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {forecast.factors.map((factor) => (
                       <Badge key={factor} variant="outline" className="text-xs">
@@ -503,31 +628,32 @@ export default function Analytics() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
-            <p className="text-gray-600">Track performance and generate insights</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100">
+              Analytics & Reports
+            </h1>
+            <p className="text-gray-600 dark:text-zinc-400">
+              Track performance and generate insights
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Select value={timeRange} onValueChange={handleTimeRangeChange}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-              </SelectContent>
-            </Select>
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
             <Button variant="outline">
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
           </div>
+        </div>
+
+        {/* Widget Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {sampleMetricWidgets.map((widget) => (
+            <MetricWidget key={widget.title} title={widget.title} data={widget.data} />
+          ))}
         </div>
 
         {/* Tabs */}

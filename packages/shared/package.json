@@ -9,7 +9,8 @@
     "./types": "./types/index.ts",
     "./permissions": "./src/permissions/index.ts",
     "./calendar": "./src/calendar/types.ts",
-    "./email": "./src/email/types.ts"
+    "./email": "./src/email/types.ts",
+    "./dashboard": "./src/dashboard/types.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

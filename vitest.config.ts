@@ -11,7 +11,9 @@ export default defineConfig({
     setupFiles: ['./client/src/test/setup.ts'],
     include: [
       'client/src/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}',
-      'server/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}'
+      'server/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}',
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}',
+      'packages/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}'
     ],
     exclude: [
       '**/node_modules/**',
@@ -26,7 +28,9 @@ export default defineConfig({
         'client/src/test/',
         '**/*.d.ts',
         '**/*.config.*',
-        '**/coverage/**'
+        '**/coverage/**',
+        'server/test-helpers/**',
+        'tests/**'
       ],
       thresholds: {
         global: {
