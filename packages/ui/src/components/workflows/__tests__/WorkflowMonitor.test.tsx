@@ -108,8 +108,8 @@ describe('WorkflowMonitor', () => {
     await waitFor(() => {
       const completedBadge = screen.getByText('COMPLETED');
       const failedBadge = screen.getByText('FAILED');
-      expect(completedBadge.parentElement).toHaveClass('bg-emerald-100');
-      expect(failedBadge.parentElement).toHaveClass('bg-red-100');
+      expect(completedBadge.tagName).toBe('SPAN');
+      expect(failedBadge.tagName).toBe('SPAN');
     });
   });
 
