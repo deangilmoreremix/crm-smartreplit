@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../Card';
 import { Button } from '../Button';
 import { Input } from '../Input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../Select';
+import { Select } from '../Select';
 import { Badge } from '../Badge';
 import { Modal } from '../Modal';
-import { Loader2, Plus, GripVertical, Trash2, Edit, Save, X } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { Loader2, Plus, GripVertical, Trash2, Edit, Save } from 'lucide-react';
 
 export interface WorkflowStep {
   id: string;
@@ -31,7 +30,7 @@ export interface WorkflowBuilderProps {
   onSave?: (workflow: Workflow) => Promise<void>;
 }
 
-const ACTION_TYPES = [
+export const ACTION_TYPES = [
   'SEND_EMAIL',
   'UPDATE_FIELD',
   'CREATE_RECORD',
@@ -46,7 +45,7 @@ const ACTION_TYPES = [
   'CREATE_CONTACT',
 ] as const;
 
-const TRIGGER_TYPES = [
+export const TRIGGER_TYPES = [
   'RECORD_CREATED',
   'RECORD_UPDATED',
   'RECORD_DELETED',
@@ -70,8 +69,8 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
     setErrors((prev) => ({ ...prev, name: '' }));
   };
 
-  const handleTriggerChange = (value: string) => {
-    setTriggerType(value);
+  const handleTriggerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTriggerType(e.target.value);
   };
 
   const handleAddStep = () => {
@@ -107,7 +106,6 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= steps.length) return;
     [newSteps[index], newSteps[targetIndex]] = [newSteps[targetIndex], newSteps[index]];
-    // Reassign order
     newSteps.forEach((step, i) => {
       step.order = i + 1;
     });
@@ -163,7 +161,6 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="workflow-name" className="text-sm font-medium">
@@ -174,41 +171,36 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
                 value={name}
                 onChange={handleNameChange}
                 placeholder="Enter workflow name"
-                className={errors.name ? 'border-destructive' : ''}
               />
-              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+              {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
             </div>
             <div className="space-y-2">
               <label htmlFor="trigger-type" className="text-sm font-medium">
                 Trigger Type
               </label>
-              <Select value={triggerType} onValueChange={handleTriggerChange}>
-                <SelectTrigger id="trigger-type">
-                  <SelectValue placeholder="Select trigger" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TRIGGER_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {formatTriggerType(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Select
+                id="trigger-type"
+                value={triggerType}
+                onChange={handleTriggerChange}
+                options={TRIGGER_TYPES.map((type) => ({
+                  value: type,
+                  label: formatTriggerType(type),
+                }))}
+              />
             </div>
           </div>
 
-          {/* Steps */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Workflow Steps</h3>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-gray-500">
                 {steps.length} step{steps.length !== 1 ? 's' : ''}
               </span>
             </div>
 
             {steps.length === 0 ? (
-              <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-input bg-muted/50">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50">
+                <p className="text-sm text-gray-500">
                   No steps yet. Click "Add Step" to get started.
                 </p>
               </div>
@@ -223,7 +215,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
                     <CardContent className="flex items-center gap-4 p-4">
                       <button
                         type="button"
-                        className="cursor-grab text-muted-foreground hover:text-foreground"
+                        className="cursor-grab text-gray-400 hover:text-gray-600"
                         aria-label="Drag to reorder"
                       >
                         <GripVertical className="h-5 w-5" />
@@ -231,10 +223,10 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary">{step.actionType}</Badge>
-                          <span className="text-sm text-muted-foreground">Order: {step.order}</span>
+                          <span className="text-sm text-gray-500">Order: {step.order}</span>
                         </div>
                         {Object.keys(step.configuration).length > 0 && (
-                          <div className="mt-2 text-xs text-muted-foreground">
+                          <div className="mt-2 text-xs text-gray-500">
                             {Object.entries(step.configuration)
                               .slice(0, 3)
                               .map(([key, value]) => (
@@ -248,7 +240,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
                       <div className="flex items-center space-x-1">
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleMoveStep(index, 'up')}
                           disabled={index === 0}
                         >
@@ -256,21 +248,30 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleMoveStep(index, 'down')}
                           disabled={index === steps.length - 1}
                         >
                           ↓
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEditStep(step)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditStep(step)}
+                          aria-label="Edit step"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => handleDeleteStep(step.id)}
+                          aria-label="Delete step"
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteStep(step.id)}>
+                          <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
                     </CardContent>
@@ -278,35 +279,33 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ workflow, onCh
                 ))}
               </div>
             )}
-            {errors.steps && <p className="text-sm text-destructive">{errors.steps}</p>}
+            {errors.steps && <p className="text-sm text-red-600">{errors.steps}</p>}
           </div>
         </CardContent>
-        {errors.name && <CardFooter className="text-destructive">{errors.name}</CardFooter>}
+        {errors.name && <CardFooter className="text-red-600">{errors.name}</CardFooter>}
       </Card>
 
-      {/* Add Action Modal */}
-      <Modal open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>Add Action Step</ModalTitle>
-            <ModalDescription>Select an action type to add to your workflow.</ModalDescription>
-          </ModalHeader>
-          <div className="grid grid-cols-2 gap-2 p-4">
-            {ACTION_TYPES.map((type) => (
-              <Button
-                key={type}
-                variant="outline"
-                onClick={() => handleSelectAction(type)}
-                className="justify-start"
-              >
-                {type}
-              </Button>
-            ))}
-          </div>
-        </ModalContent>
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add Action Step"
+        description="Select an action type to add to your workflow."
+        size="md"
+      >
+        <div className="grid grid-cols-2 gap-2">
+          {ACTION_TYPES.map((type) => (
+            <Button
+              key={type}
+              variant="outline"
+              onClick={() => handleSelectAction(type)}
+              className="justify-start"
+            >
+              {type}
+            </Button>
+          ))}
+        </div>
       </Modal>
 
-      {/* Edit Step Modal */}
       {editingStep && (
         <StepEditor
           step={editingStep}
@@ -340,7 +339,6 @@ function getDefaultConfig(actionType: string): Record<string, unknown> {
   return defaults[actionType] || {};
 }
 
-// Step Editor Modal Component
 interface StepEditorProps {
   step: WorkflowStep;
   onSave: (step: WorkflowStep) => void;
@@ -359,15 +357,13 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onSave, onClose }) => {
   };
 
   return (
-    <Modal open onOpenChange={onClose}>
-      <ModalContent>
-        <ModalHeader>
-          <ModalTitle>Edit {step.actionType} Step</ModalTitle>
-        </ModalHeader>
-        <ModalBody className="space-y-4">
-          {renderConfigFields(step.actionType, configuration, handleChange)}
-        </ModalBody>
-        <ModalFooter>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={`Edit ${step.actionType} Step`}
+      size="md"
+      footer={
+        <>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
@@ -375,8 +371,12 @@ const StepEditor: React.FC<StepEditorProps> = ({ step, onSave, onClose }) => {
             <Save className="mr-2 h-4 w-4" />
             Save Step
           </Button>
-        </ModalFooter>
-      </ModalContent>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {renderConfigFields(step.actionType, configuration, handleChange)}
+      </div>
     </Modal>
   );
 };
@@ -386,7 +386,10 @@ function renderConfigFields(
   config: Record<string, unknown>,
   onChange: (key: string, value: unknown) => void
 ): React.ReactNode {
-  const fields: Record<string, { type: string; label: string }[]> = {
+  const fields: Record<
+    string,
+    Array<{ name: string; type: string; label: string; options?: string[] }>
+  > = {
     SEND_EMAIL: [
       { name: 'to', type: 'text', label: 'To Email' },
       { name: 'subject', type: 'text', label: 'Subject' },
@@ -429,7 +432,7 @@ function renderConfigFields(
       <label className="text-sm font-medium">{field.label}</label>
       {field.type === 'textarea' ? (
         <textarea
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={(config[field.name] as string) || ''}
           onChange={(e) => onChange(field.name, e.target.value)}
           rows={3}
@@ -437,19 +440,9 @@ function renderConfigFields(
       ) : field.type === 'select' && field.options ? (
         <Select
           value={(config[field.name] as string) || ''}
-          onValueChange={(value) => onChange(field.name, value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={`Select ${field.label}`} />
-          </SelectTrigger>
-          <SelectContent>
-            {field.options.map((opt) => (
-              <SelectItem key={opt} value={opt}>
-                {opt}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={field.options.map((opt) => ({ value: opt, label: opt }))}
+          onChange={(e) => onChange(field.name, e.target.value)}
+        />
       ) : (
         <Input
           type={field.type}
@@ -460,42 +453,3 @@ function renderConfigFields(
     </div>
   ));
 }
-
-// Helper components for Modal (extracted from existing Modal component)
-const Modal = ({
-  open,
-  onOpenChange,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children: React.ReactNode;
-}) => {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background w-full max-w-lg rounded-lg shadow-lg">{children}</div>
-    </div>
-  );
-};
-
-const ModalContent = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-const ModalHeader = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex items-center justify-between border-b p-4">{children}</div>
-);
-const ModalTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="text-lg font-semibold">{children}</h2>
-);
-const ModalDescription = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-sm text-muted-foreground">{children}</p>
-);
-const ModalBody = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('p-4', className)}>{children}</div>
-);
-const ModalFooter = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => <div className={cn('flex justify-end space-x-2 border-t p-4', className)}>{children}</div>;
