@@ -30,6 +30,10 @@ __export(schema_exports, {
   commissionsRelations: () => commissionsRelations,
   communications: () => communications,
   communicationsRelations: () => communicationsRelations,
+  contactActivities: () => contactActivities,
+  contactActivitiesRelations: () => contactActivitiesRelations,
+  contactCustomFields: () => contactCustomFields,
+  contactCustomFieldsRelations: () => contactCustomFieldsRelations,
   contacts: () => contacts,
   contactsRelations: () => contactsRelations,
   creditTransactions: () => creditTransactions,
@@ -43,6 +47,8 @@ __export(schema_exports, {
   featurePackages: () => featurePackages,
   featureUsage: () => featureUsage,
   features: () => features,
+  fieldMetadata: () => fieldMetadata,
+  fieldTypes: () => fieldTypes,
   insertAIFeatureDefinitionSchema: () => insertAIFeatureDefinitionSchema,
   insertAIFeatureUsageSchema: () => insertAIFeatureUsageSchema,
   insertAIResellerPricingSchema: () => insertAIResellerPricingSchema,
@@ -54,6 +60,8 @@ __export(schema_exports, {
   insertBillingNotificationSchema: () => insertBillingNotificationSchema,
   insertCommissionSchema: () => insertCommissionSchema,
   insertCommunicationSchema: () => insertCommunicationSchema,
+  insertContactActivitySchema: () => insertContactActivitySchema,
+  insertContactCustomFieldSchema: () => insertContactCustomFieldSchema,
   insertContactSchema: () => insertContactSchema,
   insertCreditTransactionSchema: () => insertCreditTransactionSchema,
   insertDealSchema: () => insertDealSchema,
@@ -88,6 +96,7 @@ __export(schema_exports, {
   insertWhiteLabelPackageSchema: () => insertWhiteLabelPackageSchema,
   notes: () => notes,
   notesRelations: () => notesRelations,
+  objectMetadata: () => objectMetadata,
   partnerCustomers: () => partnerCustomers,
   partnerCustomersRelations: () => partnerCustomersRelations,
   partnerMetrics: () => partnerMetrics,
@@ -99,6 +108,7 @@ __export(schema_exports, {
   partnersRelations: () => partnersRelations,
   payouts: () => payouts,
   payoutsRelations: () => payoutsRelations,
+  permissions: () => permissions,
   productTiers: () => productTiers,
   profiles: () => profiles,
   profilesRelations: () => profilesRelations,
@@ -106,6 +116,7 @@ __export(schema_exports, {
   resellerCreditTransactionsRelations: () => resellerCreditTransactionsRelations,
   resellerCredits: () => resellerCredits,
   resellerCreditsRelations: () => resellerCreditsRelations,
+  roles: () => roles,
   tasks: () => tasks,
   tasksRelations: () => tasksRelations,
   tenantConfigs: () => tenantConfigs,
@@ -125,11 +136,18 @@ __export(schema_exports, {
   userGeneratedImages: () => userGeneratedImages,
   userGeneratedImagesRelations: () => userGeneratedImagesRelations,
   userRoles: () => userRoles,
+  userRolesTable: () => userRolesTable,
   userUsageLimits: () => userUsageLimits,
   userUsageLimitsRelations: () => userUsageLimitsRelations,
   userWLSettings: () => userWLSettings,
+  viewTypes: () => viewTypes,
+  views: () => views,
   webhookEvents: () => webhookEvents,
-  whiteLabelPackages: () => whiteLabelPackages
+  whiteLabelPackages: () => whiteLabelPackages,
+  workflowRunStatuses: () => workflowRunStatuses,
+  workflowRuns: () => workflowRuns,
+  workflowTriggerTypes: () => workflowTriggerTypes,
+  workflows: () => workflows
 });
 import {
   pgTable,
@@ -188,7 +206,6 @@ var contacts = pgTable("contacts", {
   email: text("email"),
   phone: text("phone"),
   company: text("company"),
-  position: text("position"),
   address: text("address"),
   city: text("city"),
   state: text("state"),
@@ -199,6 +216,19 @@ var contacts = pgTable("contacts", {
   tags: text("tags").array(),
   notes: text("notes"),
   status: text("status").default("active"),
+  // AI contact enhancements
+  score: decimal("score", { precision: 3, scale: 2 }).default("0.50"),
+  // AI lead score (0.00-1.00)
+  healthScore: integer("health_score"),
+  // AI-calculated contact health (0-100)
+  enrichmentData: jsonb("enrichment_data"),
+  // AI enrichment data
+  lastEnrichedAt: timestamp("last_enriched_at", { withTimezone: true }),
+  // Last AI enrichment timestamp
+  customFields: json("custom_fields"),
+  // Custom field values (EAV pattern)
+  position: integer("position").default(0),
+  // For drag-drop ordering in Kanban
   idempotencyKey: varchar("idempotency_key", { length: 64 }),
   // For duplicate prevention
   version: integer("version").default(1),
@@ -206,6 +236,21 @@ var contacts = pgTable("contacts", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   profileId: uuid("profile_id").references(() => profiles.id)
+});
+var contactCustomFields = pgTable("contact_custom_fields", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+  fieldKey: text("field_key").notNull(),
+  fieldValue: jsonb("field_value"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var contactActivities = pgTable("contact_activities", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+  activityType: text("activity_type").notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow()
 });
 var deals = pgTable("deals", {
   id: serial("id").primaryKey(),
@@ -217,6 +262,19 @@ var deals = pgTable("deals", {
   actualCloseDate: timestamp("actual_close_date"),
   description: text("description"),
   status: text("status").default("open"),
+  // Twenty-inspired enhancements
+  healthScore: integer("health_score"),
+  // AI-calculated deal health (0-100)
+  winProbability: integer("win_probability"),
+  // AI-predicted win probability
+  lastActivityAt: timestamp("last_activity_at"),
+  // Track recent activity
+  daysInStage: integer("days_in_stage").default(0),
+  // Days in current stage
+  customFields: json("custom_fields"),
+  // Custom field values (EAV pattern)
+  position: integer("position").default(0),
+  // For drag-drop ordering in Kanban
   idempotencyKey: varchar("idempotency_key", { length: 64 }),
   // For duplicate prevention
   version: integer("version").default(1),
@@ -234,6 +292,11 @@ var tasks = pgTable("tasks", {
   priority: text("priority").default("medium"),
   dueDate: timestamp("due_date"),
   completedAt: timestamp("completed_at"),
+  // Twenty-inspired enhancements
+  customFields: json("custom_fields"),
+  // Custom field values (EAV pattern)
+  position: integer("position").default(0),
+  // For drag-drop ordering in Kanban
   idempotencyKey: varchar("idempotency_key", { length: 64 }),
   // For duplicate prevention
   version: integer("version").default(1),
@@ -242,7 +305,9 @@ var tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow(),
   contactId: integer("contact_id").references(() => contacts.id),
   dealId: integer("deal_id").references(() => deals.id),
-  profileId: uuid("profile_id").references(() => profiles.id)
+  profileId: uuid("profile_id").references(() => profiles.id),
+  assignedTo: uuid("assigned_to").references(() => profiles.id)
+  // Task assignee
 });
 var appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
@@ -407,7 +472,9 @@ var contactsRelations = relations(contacts, ({ one, many }) => ({
   appointments: many(appointments),
   communications: many(communications),
   notes: many(notes),
-  documents: many(documents)
+  documents: many(documents),
+  customFields: many(contactCustomFields),
+  activities: many(contactActivities)
 }));
 var dealsRelations = relations(deals, ({ one, many }) => ({
   contact: one(contacts, {
@@ -484,6 +551,18 @@ var documentsRelations = relations(documents, ({ one }) => ({
     references: [profiles.id]
   })
 }));
+var contactCustomFieldsRelations = relations(contactCustomFields, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactCustomFields.contactId],
+    references: [contacts.id]
+  })
+}));
+var contactActivitiesRelations = relations(contactActivities, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactActivities.contactId],
+    references: [contacts.id]
+  })
+}));
 var automationRulesRelations = relations(automationRules, ({ one }) => ({
   profile: one(profiles, {
     fields: [automationRules.profileId],
@@ -552,6 +631,14 @@ var updateNoteSchema = insertNoteSchema.partial().omit({
   // Never allow updating profileId
 });
 var insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true
+});
+var insertContactCustomFieldSchema = createInsertSchema(contactCustomFields).omit({
+  id: true,
+  createdAt: true
+});
+var insertContactActivitySchema = createInsertSchema(contactActivities).omit({
   id: true,
   createdAt: true
 });
@@ -1404,20 +1491,163 @@ var insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
   processedAt: true,
   createdAt: true
 });
+var fieldTypes = [
+  "TEXT",
+  "NUMBER",
+  "DATE",
+  "DATE_TIME",
+  "SELECT",
+  "MULTI_SELECT",
+  "BOOLEAN",
+  "CURRENCY",
+  "EMAIL",
+  "PHONE",
+  "URL",
+  "RELATION",
+  "RICH_TEXT",
+  "JSON",
+  "ARRAY"
+];
+var objectMetadata = pgTable("object_metadata", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  label: text("label").notNull(),
+  labelPlural: text("label_plural"),
+  description: text("description"),
+  icon: text("icon"),
+  isCustom: boolean("is_custom").default(false),
+  isActive: boolean("is_active").default(true),
+  isSystem: boolean("is_system").default(false),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var fieldMetadata = pgTable("field_metadata", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  label: text("label").notNull(),
+  type: text("type").notNull(),
+  description: text("description"),
+  icon: text("icon"),
+  options: json("options"),
+  // For SELECT, MULTI_SELECT
+  defaultValue: json("default_value"),
+  settings: json("settings"),
+  isCustom: boolean("is_custom").default(false),
+  isActive: boolean("is_active").default(true),
+  isSystem: boolean("is_system").default(false),
+  isNullable: boolean("is_nullable").default(true),
+  isUnique: boolean("is_unique").default(false),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var viewTypes = ["table", "kanban", "calendar"];
+var views = pgTable("views", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id, {
+    onDelete: "cascade"
+  }),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  kanbanFieldMetadataId: uuid("kanban_field_metadata_id").references(() => fieldMetadata.id),
+  filters: json("filters").default([]),
+  sorts: json("sorts").default([]),
+  visibleFields: json("visible_fields").default([]),
+  hiddenFields: json("hidden_fields").default([]),
+  aggregations: json("aggregations").default([]),
+  visibility: text("visibility").default("personal"),
+  isDefault: boolean("is_default").default(false),
+  userId: uuid("user_id").references(() => profiles.id),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var workflowTriggerTypes = [
+  "RECORD_CREATED",
+  "RECORD_UPDATED",
+  "RECORD_DELETED",
+  "MANUAL",
+  "SCHEDULED",
+  "WEBHOOK"
+];
+var workflowRunStatuses = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "cancelled"
+];
+var workflows = pgTable("workflows", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  trigger: json("trigger").notNull(),
+  steps: json("steps").notNull(),
+  isActive: boolean("is_active").default(false),
+  lastRunAt: timestamp("last_run_at"),
+  runCount: integer("run_count").default(0),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdBy: uuid("created_by").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var workflowRuns = pgTable("workflow_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  workflowId: uuid("workflow_id").references(() => workflows.id, { onDelete: "cascade" }).notNull(),
+  status: text("status").notNull(),
+  triggerData: json("trigger_data"),
+  context: json("context"),
+  results: json("results"),
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var roles = pgTable("roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon"),
+  isCustom: boolean("is_custom").default(true),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var permissions = pgTable("permissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
+  objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id),
+  canRead: boolean("can_read").default(false),
+  canCreate: boolean("can_create").default(false),
+  canUpdate: boolean("can_update").default(false),
+  canDelete: boolean("can_delete").default(false),
+  fieldPermissions: json("field_permissions"),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var userRolesTable = pgTable("user_roles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id, { onDelete: "cascade" }).notNull(),
+  roleId: uuid("role_id").references(() => roles.id, { onDelete: "cascade" }).notNull(),
+  workspaceId: uuid("workspace_id").references(() => profiles.id),
+  createdAt: timestamp("created_at").defaultNow()
+});
 
 // server/storage.ts
 import { eq, desc, sql as sql2, and } from "drizzle-orm";
 
 // server/db.ts
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
-neonConfig.webSocketConstructor = ws;
-var pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
-var db = pool ? drizzle({ client: pool, schema: schema_exports }) : null;
+import { Pool } from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+var pool = process.env.DATABASE_URL ? new Pool(process.env.DATABASE_URL) : null;
+var db = pool ? drizzle(pool, { schema: schema_exports }) : null;
 
 // server/storage.ts
 var DatabaseStorage = class {
+  db;
   constructor(dbConnection) {
     this.db = dbConnection;
   }
@@ -1641,6 +1871,15 @@ var DatabaseStorage = class {
   }
 };
 var MemStorage = class {
+  profiles;
+  partners;
+  partnerTiers;
+  commissions;
+  featurePackages;
+  tenantConfigs;
+  userWLSettings;
+  partnerWLConfigs;
+  whiteLabelPackages;
   constructor() {
     this.profiles = /* @__PURE__ */ new Map();
     this.partners = /* @__PURE__ */ new Map();
