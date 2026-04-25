@@ -1656,14 +1656,14 @@ __export(db_exports, {
   isDbAvailable: () => isDbAvailable,
   pool: () => pool
 });
-import { Pool } from "postgres";
+import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/postgres-js";
 var pool, db, isDbAvailable;
 var init_db = __esm({
   "server/db.ts"() {
     "use strict";
     init_schema();
-    pool = process.env.DATABASE_URL ? new Pool(process.env.DATABASE_URL) : null;
+    pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
     db = pool ? drizzle(pool, { schema: schema_exports }) : null;
     isDbAvailable = () => pool !== null && db !== null;
   }

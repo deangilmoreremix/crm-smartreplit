@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 import { DateTime } from "luxon";
 
 // server/db.ts
-import { Pool } from "postgres";
+import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/postgres-js";
 
 // shared/schema.ts
@@ -1644,7 +1644,7 @@ var userRolesTable = pgTable("user_roles", {
 });
 
 // server/db.ts
-var pool = process.env.DATABASE_URL ? new Pool(process.env.DATABASE_URL) : null;
+var pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
 var db = pool ? drizzle(pool, { schema: schema_exports }) : null;
 
 // server/entitlements-utils.ts
