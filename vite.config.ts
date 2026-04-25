@@ -13,6 +13,12 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'client/src'),
       'stream': 'stream-browserify',
+      '@crm/openclaw-api': path.resolve(__dirname, 'packages/openclaw-api/src'),
+      '@crm/twenty-fields': path.resolve(__dirname, 'packages/twenty-fields/src'),
+      '@crm/ai-core': path.resolve(__dirname, 'packages/ai-core/src'),
+      '@crm/shared': path.resolve(__dirname, 'packages/shared/src'),
+      '@crm/ui': path.resolve(__dirname, 'packages/ui/src'),
+      '@crm/workflows': path.resolve(__dirname, 'packages/workflows/src'),
     },
   },
   build: {

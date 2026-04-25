@@ -3,17 +3,19 @@ import OpenAI from "openai";
 
 // server/services/enhancedCache.ts
 var LRUCache = class {
+  cache = /* @__PURE__ */ new Map();
+  accessOrder = /* @__PURE__ */ new Set();
+  maxSize;
+  defaultTTL;
+  stats = {
+    hits: 0,
+    misses: 0,
+    evictions: 0,
+    sets: 0,
+    size: 0,
+    maxSizeReached: 0
+  };
   constructor(maxSize = 1e4, defaultTTL = 5 * 60 * 1e3) {
-    this.cache = /* @__PURE__ */ new Map();
-    this.accessOrder = /* @__PURE__ */ new Set();
-    this.stats = {
-      hits: 0,
-      misses: 0,
-      evictions: 0,
-      sets: 0,
-      size: 0,
-      maxSizeReached: 0
-    };
     this.maxSize = maxSize;
     this.defaultTTL = defaultTTL;
     if (typeof setInterval !== "undefined") {
@@ -116,8 +118,9 @@ var configCache = new LRUCache(1e3, 60 * 60 * 1e3);
 // server/services/redisRateLimiter.ts
 import Redis from "ioredis";
 var RedisRateLimiter = class {
+  redis;
+  keyPrefix = "rate_limit:";
   constructor(redisUrl) {
-    this.keyPrefix = "rate_limit:";
     this.redis = new Redis(redisUrl || process.env.REDIS_URL || "redis://localhost:6379", {
       retryDelayOnFailover: 100,
       enableReadyCheck: false,
@@ -273,15 +276,13 @@ var userOpenAIKey = process.env.OPENAI_API_KEY;
 var openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
 var openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 var AICircuitBreaker = class {
-  constructor() {
-    this.failures = 0;
-    this.lastFailureTime = 0;
-    this.failureThreshold = 5;
-    this.timeoutMs = 6e4;
-    // 1 minute
-    this.halfOpenMaxRequests = 3;
-    this.halfOpenRequests = 0;
-  }
+  failures = 0;
+  lastFailureTime = 0;
+  failureThreshold = 5;
+  timeoutMs = 6e4;
+  // 1 minute
+  halfOpenMaxRequests = 3;
+  halfOpenRequests = 0;
   get state() {
     if (this.failures >= this.failureThreshold) {
       if (Date.now() - this.lastFailureTime < this.timeoutMs) {
@@ -330,10 +331,8 @@ var AICircuitBreaker = class {
 };
 var aiCircuitBreaker = new AICircuitBreaker();
 var AIUsageTracker = class {
-  constructor() {
-    this.usageRecords = [];
-    this.maxRecords = 1e4;
-  }
+  usageRecords = [];
+  maxRecords = 1e4;
   // Keep last 10k records in memory
   trackUsage(record) {
     this.usageRecords.push(record);

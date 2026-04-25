@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, MessageSquare, Loader2 } from 'lucide-react';
 import { OpenClawService } from '@crm/openclaw-api';
-import { GlassCard } from './ui/GlassCard';
-import { Button } from './ui/Button';
-import { Input } from './ui/Input';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface OpenClawChatWidgetProps {
   className?: string;
