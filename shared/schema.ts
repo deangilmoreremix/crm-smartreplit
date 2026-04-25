@@ -7,6 +7,7 @@ import {
   timestamp,
   decimal,
   json,
+  jsonb,
   varchar,
   uuid,
 } from 'drizzle-orm/pg-core';

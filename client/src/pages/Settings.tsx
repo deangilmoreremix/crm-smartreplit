@@ -12,11 +12,14 @@ const Settings: React.FC = () => {
   const { toast } = useToast();
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [showOpenClawKey, setShowOpenClawKey] = useState(false);
   const [openAiInput, setOpenAiInput] = useState(apiKeys.openai || '');
   const [geminiInput, setGeminiInput] = useState(apiKeys.google || '');
+  const [openClawInput, setOpenClawInput] = useState(apiKeys.openclaw || '');
 
   const toggleOpenAiVisibility = () => setShowOpenAiKey(!showOpenAiKey);
   const toggleGeminiVisibility = () => setShowGeminiKey(!showGeminiKey);
+  const toggleOpenClawVisibility = () => setShowOpenClawKey(!showOpenClawKey);
 
   const handleOpenAiSave = () => {
     setApiKey('openai', openAiInput);
@@ -34,7 +37,15 @@ const Settings: React.FC = () => {
     });
   };
 
-  const hasValidKeys = apiKeys.openai || apiKeys.google;
+  const handleOpenClawSave = () => {
+    setApiKey('openclaw', openClawInput);
+    toast({
+      title: 'Success',
+      description: 'OpenClaw API key saved successfully!',
+    });
+  };
+
+  const hasValidKeys = apiKeys.openai || apiKeys.google || apiKeys.openclaw;
 
   return (
     <PageLayout
@@ -45,6 +56,7 @@ const Settings: React.FC = () => {
           onClick={() => {
             if (openAiInput) handleOpenAiSave();
             if (geminiInput) handleGeminiSave();
+            if (openClawInput) handleOpenClawSave();
           }}
         >
           <Save className="h-4 w-4 mr-2" />
@@ -160,6 +172,53 @@ const Settings: React.FC = () => {
                 onClick={handleGeminiSave}
                 className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-r-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={!geminiInput.trim()}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center mb-2">
+              <Key size={18} className="mr-2 text-gray-500" />
+              <h3 className="text-lg font-medium">OpenClaw API Key</h3>
+              <span className="ml-2 text-sm text-purple-600 font-medium">CRM AI Enhancement</span>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Used for advanced contact enrichment, lead scoring, and AI-powered CRM insights. Get
+              your API key from the{' '}
+              <a
+                href="https://openclaw.ai"
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                OpenClaw platform
+              </a>
+              .
+            </p>
+
+            <div className="flex">
+              <div className="relative flex-1">
+                <input
+                  type={showOpenClawKey ? 'text' : 'password'}
+                  value={openClawInput}
+                  onChange={(e) => setOpenClawInput(e.target.value)}
+                  placeholder="oc-..."
+                  className="w-full p-2 border rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={toggleOpenClawVisibility}
+                  className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  {showOpenClawKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <button
+                onClick={handleOpenClawSave}
+                className="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-r-md transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={!openClawInput.trim()}
               >
                 Save
               </button>

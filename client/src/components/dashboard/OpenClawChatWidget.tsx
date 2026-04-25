@@ -1,9 +1,39 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, MessageSquare, Loader2 } from 'lucide-react';
-import { OpenClawService } from '@crm/openclaw-api';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { GlassCard } from './ui/GlassCard';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+
+// Simple OpenClaw service implementation
+class OpenClawService {
+  private baseUrl: string;
+  private apiKey: string;
+
+  constructor(config: { baseUrl: string; apiKey: string }) {
+    this.baseUrl = config.baseUrl;
+    this.apiKey = config.apiKey;
+  }
+
+  async chat({ message, context }: { message: string; context: any }) {
+    const response = await fetch(`${this.baseUrl}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        message,
+        context,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenClaw API error: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+}
 
 interface OpenClawChatWidgetProps {
   className?: string;

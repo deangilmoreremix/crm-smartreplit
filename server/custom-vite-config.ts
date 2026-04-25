@@ -1,7 +1,5 @@
 // Custom Vite configuration to fix allowedHosts issue
 export const customViteServerConfig = {
-  middlewareMode: true,
-  port: 5173,
   allowedHosts: [
     '9f38fddb-d049-4cd4-9f57-c41b6a878a9d-00-2xv27ubfspt46.riker.replit.dev',
     '.replit.dev',

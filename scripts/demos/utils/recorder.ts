@@ -1,5 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
+import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder-improved';
 import fs from 'fs';
 import path from 'path';
 import GIFEncoder from 'gifencoder';
