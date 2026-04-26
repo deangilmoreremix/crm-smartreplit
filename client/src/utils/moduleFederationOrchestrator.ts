@@ -42,6 +42,12 @@ interface SharedModuleState {
     deals: any[];
     theme: string;
     user: any;
+    gtmAnalytics: {
+      contactInsights: any;
+      dealInsights: any;
+      recommendations: any[];
+      performanceMetrics: any;
+    };
   };
 
   // Actions
@@ -49,6 +55,12 @@ interface SharedModuleState {
   setModuleStatus: (moduleId: string, status: string) => void;
   updateSharedData: (key: string, data: any) => void;
   syncDataAcrossModules: (source: string, data: any) => void;
+  // GTM Analytics Actions
+  updateContactInsights: (contactId: string, insights: any) => void;
+  updateDealInsights: (dealId: string, insights: any) => void;
+  addRecommendation: (recommendation: any) => void;
+  clearRecommendations: () => void;
+  updatePerformanceMetrics: (metrics: any) => void;
 }
 
 export const useSharedModuleState = create<SharedModuleState>()(
@@ -60,6 +72,12 @@ export const useSharedModuleState = create<SharedModuleState>()(
       deals: [],
       theme: 'light',
       user: null,
+      gtmAnalytics: {
+        contactInsights: {},
+        dealInsights: {},
+        recommendations: [],
+        performanceMetrics: {}
+      },
     },
 
     setModuleLoaded: (moduleId: string, component: React.ComponentType, data = {}) => {
@@ -117,6 +135,89 @@ export const useSharedModuleState = create<SharedModuleState>()(
 
       // Emit to all other modules
       globalEventBus.emit('MODULE_DATA_SYNC', { source, data });
+    },
+
+    // GTM Analytics Methods
+    updateContactInsights: (contactId: string, insights: any) => {
+      set((state) => ({
+        sharedData: {
+          ...state.sharedData,
+          gtmAnalytics: {
+            ...state.sharedData.gtmAnalytics,
+            contactInsights: {
+              ...state.sharedData.gtmAnalytics.contactInsights,
+              [contactId]: insights
+            }
+          }
+        }
+      }));
+
+      globalEventBus.emit('CONTACT_INSIGHTS_UPDATED', { contactId, insights });
+    },
+
+    updateDealInsights: (dealId: string, insights: any) => {
+      set((state) => ({
+        sharedData: {
+          ...state.sharedData,
+          gtmAnalytics: {
+            ...state.sharedData.gtmAnalytics,
+            dealInsights: {
+              ...state.sharedData.gtmAnalytics.dealInsights,
+              [dealId]: insights
+            }
+          }
+        }
+      }));
+
+      globalEventBus.emit('DEAL_INSIGHTS_UPDATED', { dealId, insights });
+    },
+
+    addRecommendation: (recommendation: any) => {
+      set((state) => ({
+        sharedData: {
+          ...state.sharedData,
+          gtmAnalytics: {
+            ...state.sharedData.gtmAnalytics,
+            recommendations: [
+              ...state.sharedData.gtmAnalytics.recommendations,
+              { ...recommendation, id: Date.now() }
+            ]
+          }
+        }
+      }));
+
+      globalEventBus.emit('RECOMMENDATION_ADDED', recommendation);
+    },
+
+    clearRecommendations: () => {
+      set((state) => ({
+        sharedData: {
+          ...state.sharedData,
+          gtmAnalytics: {
+            ...state.sharedData.gtmAnalytics,
+            recommendations: []
+          }
+        }
+      }));
+
+      globalEventBus.emit('RECOMMENDATIONS_CLEARED');
+    },
+
+    updatePerformanceMetrics: (metrics: any) => {
+      set((state) => ({
+        sharedData: {
+          ...state.sharedData,
+          gtmAnalytics: {
+            ...state.sharedData.gtmAnalytics,
+            performanceMetrics: {
+              ...state.sharedData.gtmAnalytics.performanceMetrics,
+              ...metrics
+            }
+          }
+        }
+      }));
+
+      globalEventBus.emit('PERFORMANCE_METRICS_UPDATED', metrics);
     },
   }))
 );
