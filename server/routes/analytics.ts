@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { analyticsEngine } from '../services/whitelabel/analyticsEngine';
 import { errorLogger } from '../services/errorLogger';
+import { getDateRange, calculatePeriodDays, MILLISECONDS_PER_DAY } from '../utils/analyticsUtils';
 
 const router = Router();
 
@@ -85,11 +86,10 @@ router.get('/summary/:tenantId', async (req: Request, res: Response) => {
     const { tenantId } = req.params;
     const { startDate, endDate } = req.query;
 
-    // Default to last 30 days if not specified
-    const end = endDate ? new Date(endDate as string) : new Date();
-    const start = startDate
-      ? new Date(startDate as string)
-      : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+    // Use provided dates or default to last 30 days
+    const { start, end } = startDate && endDate
+      ? { start: new Date(startDate as string), end: new Date(endDate as string) }
+      : getDateRange();
 
     const summary = await analyticsEngine.getAnalyticsSummary(tenantId, start, end);
 
@@ -98,7 +98,7 @@ router.get('/summary/:tenantId', async (req: Request, res: Response) => {
       period: {
         start: start.toISOString(),
         end: end.toISOString(),
-        days: Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)),
+        days: calculatePeriodDays(start, end),
       },
     });
   } catch (error: any) {

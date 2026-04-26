@@ -255,3 +255,46 @@ export async function healthCheckMiddleware(req: any, res: any) {
     });
   }
 }
+
+/**
+ * Netlify function handler
+ */
+export async function handler(event: any, context: any) {
+  try {
+    const health = await performHealthCheck();
+
+    // Set appropriate HTTP status code
+    let statusCode = 200;
+    if (health.status === 'unhealthy') {
+      statusCode = 503; // Service Unavailable
+    } else if (health.status === 'degraded') {
+      statusCode = 200; // Still OK but with warnings
+    }
+
+    return {
+      statusCode,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      },
+      body: JSON.stringify(health),
+    };
+  } catch (error: any) {
+    console.error('Health check failed:', error);
+    return {
+      statusCode: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed',
+        message: error.message,
+      }),
+    };
+  }
+}

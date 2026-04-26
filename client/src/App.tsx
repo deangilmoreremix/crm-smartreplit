@@ -100,6 +100,7 @@ const FunnelCraftPage = lazy(() => import('./pages/FunnelCraftPage'));
 const SmartCRMPage = lazy(() => import('./pages/SmartCRMPage'));
 const ContentAIPage = lazy(() => import('./pages/ContentAIPage'));
 const AnalyticsRemotePage = lazy(() => import('./pages/AnalyticsRemotePage'));
+const GTMPromptHub = lazy(() => import('./pages/GTMPromptHub'));
 
 // OpenClaw AI CRM Integration
 const OpenClawPage = lazy(() => import('./pages/OpenClawPage'));
@@ -486,6 +487,17 @@ function AppContent() {
                 <ProtectedRoute resource="ai_tools">
                   <Navbar />
                   <AITools />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* GTM Prompt Library Analytics */}
+            <Route
+              path="/gtm-prompt-hub"
+              element={
+                <ProtectedRoute resource="ai_tools">
+                  <Navbar />
+                  <GTMPromptHub />
                 </ProtectedRoute>
               }
             />

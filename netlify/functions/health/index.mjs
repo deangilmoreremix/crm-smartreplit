@@ -165,6 +165,7 @@ import {
   timestamp,
   decimal,
   json,
+  jsonb,
   varchar,
   uuid
 } from "drizzle-orm/pg-core";
@@ -1656,7 +1657,6 @@ __export(db_exports, {
   isDbAvailable: () => isDbAvailable,
   pool: () => pool
 });
-import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/postgres-js";
 var pool, db, isDbAvailable;
 var init_db = __esm({
@@ -1865,7 +1865,44 @@ async function healthCheckMiddleware(req, res) {
     });
   }
 }
+async function handler(event, context) {
+  try {
+    const health = await performHealthCheck();
+    let statusCode = 200;
+    if (health.status === "unhealthy") {
+      statusCode = 503;
+    } else if (health.status === "degraded") {
+      statusCode = 200;
+    }
+    return {
+      statusCode,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+      },
+      body: JSON.stringify(health)
+    };
+  } catch (error) {
+    console.error("Health check failed:", error);
+    return {
+      statusCode: 503,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      },
+      body: JSON.stringify({
+        status: "unhealthy",
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        error: "Health check failed",
+        message: error.message
+      })
+    };
+  }
+}
 export {
+  handler,
   healthCheckMiddleware,
   performHealthCheck
 };

@@ -672,15 +672,22 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                                     </button>
                                   ))}
                               </div>
-                              <div className="p-3 border-t border-gray-200/30">
-                                <button
-                                  onClick={() => handleNavigation('/ai-tools', 'ai-tools')}
-                                  data-testid="button-view-all-ai-tools"
-                                  className={`w-full py-2 px-4 rounded-xl border-2 border-dashed transition-all duration-200 ${isDark ? 'border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white' : 'border-gray-300 hover:border-gray-400 text-gray-600 hover:text-gray-900'}`}
-                                >
-                                  View All AI Tools
-                                </button>
-                              </div>
+                               <div className="p-3 border-t border-gray-200/30 space-y-2">
+                                 <button
+                                   onClick={() => handleNavigation('/ai-tools', 'ai-tools')}
+                                   data-testid="button-view-all-ai-tools"
+                                   className={`w-full py-2 px-4 rounded-xl border-2 border-dashed transition-all duration-200 ${isDark ? 'border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white' : 'border-gray-300 hover:border-gray-400 text-gray-600 hover:text-gray-900'}`}
+                                 >
+                                   View All AI Tools
+                                 </button>
+                                 <button
+                                   onClick={() => handleNavigation('/gtm-prompt-hub', 'ai-tools')}
+                                   data-testid="button-gtm-prompt-hub"
+                                   className={`w-full py-2 px-4 rounded-xl transition-all duration-200 ${isDark ? 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 hover:text-blue-200 border border-blue-500/30' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-800 border border-blue-200'}`}
+                                 >
+                                   GTM Prompt Analytics
+                                 </button>
+                               </div>
                             </div>
                           )}
 

@@ -158,6 +158,7 @@ import {
   timestamp,
   decimal,
   json,
+  jsonb,
   varchar,
   uuid
 } from "drizzle-orm/pg-core";
@@ -1640,7 +1641,6 @@ var userRolesTable = pgTable("user_roles", {
 import { eq, desc, sql as sql2, and } from "drizzle-orm";
 
 // server/db.ts
-import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/postgres-js";
 var pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
 var db = pool ? drizzle(pool, { schema: schema_exports }) : null;

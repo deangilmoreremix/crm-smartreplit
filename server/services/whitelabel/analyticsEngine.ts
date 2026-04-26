@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { errorLogger } from '../errorLogger';
+import { getDateRange, validateTimeRange, calculatePeriodDays, MILLISECONDS_PER_DAY } from '../../utils/analyticsUtils';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -159,12 +160,20 @@ class AnalyticsEngine {
    */
   async getAnalyticsSummary(
     tenantId: string,
-    startDate: Date,
-    endDate: Date
+    startDate?: Date,
+    endDate?: Date
   ): Promise<AnalyticsSummary> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
+
+    // Use default date range if not provided
+    const { start, end } = startDate && endDate
+      ? { start: startDate, end: endDate }
+      : getDateRange();
+
+    // Validate time range
+    validateTimeRange(start, end);
 
     try {
       // Get user metrics
@@ -196,9 +205,9 @@ class AnalyticsEngine {
       const conversionRate = totalDeals > 0 ? (wonDeals.length / totalDeals) * 100 : 0;
 
       // Calculate trends (compare with previous period)
-      const periodDuration = endDate.getTime() - startDate.getTime();
-      const previousStart = new Date(startDate.getTime() - periodDuration);
-      const previousEnd = startDate;
+      const periodDuration = end.getTime() - start.getTime();
+      const previousStart = new Date(start.getTime() - periodDuration);
+      const previousEnd = start;
 
       const previousContacts =
         contacts?.filter(
@@ -239,8 +248,8 @@ class AnalyticsEngine {
       return {
         tenantId,
         period: {
-          start: startDate,
-          end: endDate,
+          start,
+          end,
         },
         metrics: {
           totalUsers,
@@ -344,6 +353,9 @@ class AnalyticsEngine {
       }
 
       const report = this.mapDatabaseToReport(reportData);
+
+      // Validate report date range
+      validateTimeRange(report.config.dateRange.start, report.config.dateRange.end);
 
       // Get analytics data based on report config
       const summary = await this.getAnalyticsSummary(

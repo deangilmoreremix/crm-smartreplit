@@ -11,7 +11,6 @@ import { createClient } from "@supabase/supabase-js";
 import { DateTime } from "luxon";
 
 // server/db.ts
-import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/postgres-js";
 
 // shared/schema.ts
@@ -165,6 +164,7 @@ import {
   timestamp,
   decimal,
   json,
+  jsonb,
   varchar,
   uuid
 } from "drizzle-orm/pg-core";
