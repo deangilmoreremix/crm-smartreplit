@@ -24,8 +24,7 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     ...customViteServerConfig,
-    // Ensure HMR is disabled for Codespaces
-    hmr: false,
+    hmr: false, // Additional HMR disable as fallback
   };
 
   const vite = await createViteServer({
@@ -33,6 +32,10 @@ export async function setupVite(app: Express, server: Server) {
     configFile: false,
     plugins: [await import('@vitejs/plugin-react').then((m) => m.default())],
     root: path.resolve(import.meta.dirname, '..', 'client'),
+    // Completely disable HMR for Codespaces
+    server: {
+      hmr: false,
+    },
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '..', 'client', 'src'),
