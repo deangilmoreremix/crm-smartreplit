@@ -113,7 +113,7 @@ const LocalPipelineFallback: React.FC = () => {
 };
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
-const REMOTE_URL = 'https://cheery-syrniki-b5b6ca.netlify.app';
+const REMOTE_URL = 'https://pipeline.smartcrm.vip/';
 const REMOTE_SCOPE = 'PipelineApp';
 const REMOTE_MODULE = './PipelineApp';
 
