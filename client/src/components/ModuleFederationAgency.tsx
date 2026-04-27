@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { loadRemoteComponent } from '../utils/dynamicModuleFederation';
+import React, { lazy, Suspense } from 'react';
 import {
   moduleFederationOrchestrator,
   useSharedModuleState,
 } from '../utils/moduleFederationOrchestrator';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
-const REMOTE_URL = 'https://agency.smartcrm.vip';
-const REMOTE_SCOPE = 'AgencyApp';
-const REMOTE_MODULE = './AIAgencyApp';
+
+// Lazy load the remote AgencyApp
+const RemoteAgencyApp = lazy(() => import('AgencyApp/AIAgencyApp'));
 
 // Local fallback component when Module Federation is not available
 const LocalAgencyFallback: React.FC = () => {
@@ -48,52 +47,24 @@ const LocalAgencyFallback: React.FC = () => {
 };
 
 const AgencyApp: React.FC = () => {
-  const [RemoteAgency, setRemoteAgency] = useState<React.ComponentType | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadRemote = async () => {
-      if (!ENABLE_MFE) {
-        setError('MFE disabled');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const Component = await loadRemoteComponent<React.ComponentType>(
-          REMOTE_URL,
-          REMOTE_SCOPE,
-          REMOTE_MODULE
-        );
-        setRemoteAgency(() => Component);
-        setIsLoading(false);
-      } catch (err) {
-        console.warn('Agency MF load failed, using fallback:', err);
-        setError('Failed to load remote module');
-        setIsLoading(false);
-      }
-    };
-
-    loadRemote();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading AI Agency Suite...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !RemoteAgency) {
+  if (!ENABLE_MFE) {
     return <LocalAgencyFallback />;
   }
 
-  return React.createElement(RemoteAgency as any, { theme: 'light', mode: 'light' });
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading AI Agency Suite...</p>
+          </div>
+        </div>
+      }
+    >
+      <RemoteAgencyApp theme="light" mode="light" />
+    </Suspense>
+  );
 };
 
 const ModuleFederationAgency: React.FC = () => {

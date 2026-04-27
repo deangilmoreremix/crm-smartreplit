@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { loadRemoteComponent } from '../utils/dynamicModuleFederation';
-import {
-  moduleFederationOrchestrator,
-  useSharedModuleState,
-} from '../utils/moduleFederationOrchestrator';
+import React, { lazy, Suspense } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
-const REMOTE_URL = 'https://calendar.smartcrm.vip';
-const REMOTE_SCOPE = 'CalendarApp';
-const REMOTE_MODULE = './CalendarApp';
+
+// Lazy load the remote CalendarApp
+const RemoteCalendarApp = lazy(() => import('CalendarApp/CalendarApp'));
 
 // Local fallback component when Module Federation is not available
 const LocalCalendarFallback: React.FC = () => {
@@ -161,53 +156,24 @@ const LocalCalendarFallback: React.FC = () => {
 };
 
 const CalendarApp: React.FC = () => {
-  const [RemoteCalendar, setRemoteCalendar] = useState<React.ComponentType | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadRemote = async () => {
-      if (!ENABLE_MFE) {
-        setError('MFE disabled');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const Component = await loadRemoteComponent<React.ComponentType>(
-          REMOTE_URL,
-          REMOTE_SCOPE,
-          REMOTE_MODULE
-        );
-        setRemoteCalendar(() => Component);
-        setIsLoading(false);
-      } catch (err) {
-        console.warn('Calendar MF load failed, using fallback:', err);
-        setError('Failed to load remote module');
-        setIsLoading(false);
-      }
-    };
-
-    loadRemote();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Calendar Module...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !RemoteCalendar) {
+  if (!ENABLE_MFE) {
     return <LocalCalendarFallback />;
   }
 
-  const sharedData = useSharedModuleState((state) => state.sharedData);
-  return React.createElement(RemoteCalendar as any, { theme: 'light', mode: 'light', sharedData });
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading Calendar Module...</p>
+          </div>
+        </div>
+      }
+    >
+      <RemoteCalendarApp theme="light" mode="light" />
+    </Suspense>
+  );
 };
 
 interface ModuleFederationCalendarProps {

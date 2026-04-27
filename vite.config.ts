@@ -3,12 +3,26 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import federation from "@originjs/vite-plugin-federation";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: "client",                // tell Vite where index.html is
-  plugins: [react()],
+  plugins: [
+    react(),
+    federation({
+      name: 'crm-app',
+      remotes: {
+        ContactsApp: 'https://contacts.smartcrm.vip/assets/remoteEntry.js',
+        AnalyticsApp: 'https://analytics.smartcrm.vip/assets/remoteEntry.js',
+        CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
+        PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
+        AgencyApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',
+      },
+      shared: ['react', 'react-dom', 'react-router-dom'],
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'client/src'),

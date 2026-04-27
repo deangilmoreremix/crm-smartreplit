@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { loadRemoteComponent } from '../utils/dynamicModuleFederation';
+import React, { lazy, Suspense } from 'react';
 import {
   moduleFederationOrchestrator,
   useSharedModuleState,
 } from '../utils/moduleFederationOrchestrator';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
-const REMOTE_URL = 'https://contacts.smartcrm.vip';
-const REMOTE_SCOPE = 'ContactsApp';
-const REMOTE_MODULE = './ContactsApp';
+
+// Lazy load the remote ContactsApp
+const RemoteContactsApp = lazy(() => import('ContactsApp/ContactsApp'));
 
 // Local fallback component when Module Federation is not available
 const LocalContactsFallback: React.FC = () => {
@@ -27,7 +26,7 @@ const LocalContactsFallback: React.FC = () => {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Contact List</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contact List</h3>
         </div>
 
         <div className="overflow-x-auto">
@@ -71,6 +70,27 @@ const LocalContactsFallback: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const ContactsApp: React.FC = () => {
+  if (!ENABLE_MFE) {
+    return <LocalContactsFallback />;
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading Contacts Module...</p>
+          </div>
+        </div>
+      }
+    >
+      <RemoteContactsApp theme="light" mode="light" />
+    </Suspense>
   );
 };
 

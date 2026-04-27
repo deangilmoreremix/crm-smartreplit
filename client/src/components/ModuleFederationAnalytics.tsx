@@ -1,10 +1,9 @@
-import React, { useState, useEffect, Suspense } from 'react';
-import { loadRemoteComponent } from '../utils/dynamicModuleFederation';
+import React, { lazy, Suspense } from 'react';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
-const REMOTE_URL = 'https://ai-analytics.smartcrm.vip';
-const REMOTE_SCOPE = 'AnalyticsApp';
-const REMOTE_MODULE = './AnalyticsApp';
+
+// Lazy load the remote AnalyticsApp
+const RemoteAnalyticsApp = lazy(() => import('AnalyticsApp/AnalyticsApp'));
 
 // Local development analytics dashboard
 const LocalAnalyticsDashboard: React.FC = () => {
@@ -251,52 +250,24 @@ class AnalyticsErrorBoundary extends React.Component<
 }
 
 const AnalyticsApp: React.FC = () => {
-  const [RemoteAnalytics, setRemoteAnalytics] = useState<React.ComponentType | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadRemote = async () => {
-      if (!ENABLE_MFE) {
-        setError('MFE disabled');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const Component = await loadRemoteComponent<React.ComponentType>(
-          REMOTE_URL,
-          REMOTE_SCOPE,
-          REMOTE_MODULE
-        );
-        setRemoteAnalytics(() => Component);
-        setIsLoading(false);
-      } catch (err) {
-        console.warn('Analytics MF load failed, using local dashboard:', err);
-        setError('Failed to load remote module');
-        setIsLoading(false);
-      }
-    };
-
-    loadRemote();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Analytics Module...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !RemoteAnalytics) {
+  if (!ENABLE_MFE) {
     return <LocalAnalyticsDashboard />;
   }
 
-  return React.createElement(RemoteAnalytics as any, { theme: 'light', mode: 'light' });
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading Analytics Module...</p>
+          </div>
+        </div>
+      }
+    >
+      <RemoteAnalyticsApp theme="light" mode="light" />
+    </Suspense>
+  );
 };
 
 interface ModuleFederationAnalyticsProps {
