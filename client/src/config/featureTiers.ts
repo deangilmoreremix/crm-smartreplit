@@ -109,7 +109,7 @@ export const featureTiers: Record<string, string[]> = {
   whitelabel: ['super_admin', 'whitelabel'],
 
   // Admin
-  admin: ['super_admin'],
+  admin: ['super_admin', 'whitelabel'],
 };
 
 export type FeatureKey = keyof typeof featureTiers;
