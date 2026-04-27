@@ -238,3 +238,61 @@ export const requestSizeLimit = (req: any, res: any, next: any) => {
 
   next();
 };
+
+export const tenantSecurityMiddleware = (req: any, res: Response, next: NextFunction) => {
+  // Extract tenant from domain or header
+  const hostname = req.headers.host || '';
+  const tenantId = getTenantFromDomain(hostname);
+
+  // Apply tenant-specific security policies
+  if (tenantId) {
+    // Check rate limiting per tenant
+    const rateLimitKey = `tenant_${tenantId}_${req.ip}`;
+    // Implementation would use Redis or similar for rate limiting
+
+    // Check for tenant-specific CORS policies
+    const allowedOrigins = getTenantAllowedOrigins(tenantId);
+    if (allowedOrigins && req.headers.origin) {
+      if (!allowedOrigins.includes(req.headers.origin)) {
+        return res.status(403).json({ error: 'Origin not allowed for this tenant' });
+      }
+    }
+
+    // Add tenant context to request
+    req.tenantId = tenantId;
+  }
+
+  next();
+};
+
+// Helper functions for tenant security
+function getTenantFromDomain(domain: string): string | null {
+  // Map domain to tenant - simplified version
+  const domainMap: Record<string, string> = {
+    'pipeline.smartcrm.vip': 'pipeline-tenant',
+    'contacts.smartcrm.vip': 'contacts-tenant',
+    'analytics.smartcrm.vip': 'analytics-tenant',
+    'agency.smartcrm.vip': 'agency-tenant',
+    'calendar.smartcrm.vip': 'calendar-tenant',
+    'research.smartcrm.vip': 'research-tenant',
+    'white-label.smartcrm.vip': 'whitelabel-tenant',
+  };
+
+  return domainMap[domain] || null;
+}
+
+function getTenantAllowedOrigins(tenantId: string): string[] | null {
+  // Return tenant-specific allowed origins for CORS
+  const tenantOrigins: Record<string, string[]> = {
+    'default-tenant': ['https://app.smartcrm.vip'],
+    'pipeline-tenant': ['https://pipeline.smartcrm.vip'],
+    'contacts-tenant': ['https://contacts.smartcrm.vip'],
+    'analytics-tenant': ['https://analytics.smartcrm.vip'],
+    'agency-tenant': ['https://agency.smartcrm.vip'],
+    'calendar-tenant': ['https://calendar.smartcrm.vip'],
+    'research-tenant': ['https://research.smartcrm.vip'],
+    'whitelabel-tenant': ['https://white-label.smartcrm.vip'],
+  };
+
+  return tenantOrigins[tenantId] || null;
+}

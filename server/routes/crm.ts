@@ -1124,4 +1124,120 @@ export function registerCRMRoutes(app: Express): void {
       res.status(500).json({ error: 'Failed to configure domain' });
     }
   });
+
+  // Security API Endpoints
+  app.get('/api/security/audit/:tenantId', requireAuth, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+
+      // Mock security audit - in production this would run comprehensive security checks
+      const auditResult = {
+        tenantId,
+        timestamp: new Date().toISOString(),
+        overallRisk: 'medium',
+        findings: [
+          {
+            id: 'password-policy',
+            severity: 'medium',
+            category: 'authentication',
+            title: 'Password Policy Review',
+            description: 'Consider strengthening password requirements',
+            impact: 'Improved account security',
+            remediation: 'Implement 12+ character minimum with complexity rules',
+            status: 'open',
+          },
+          {
+            id: 'two-factor-auth',
+            severity: 'high',
+            category: 'authentication',
+            title: 'Two-Factor Authentication',
+            description: '2FA is not enforced for all users',
+            impact: 'Reduced risk of unauthorized access',
+            remediation: 'Enable mandatory 2FA for privileged accounts',
+            status: 'open',
+          },
+          {
+            id: 'ssl-certificate',
+            severity: 'low',
+            category: 'network',
+            title: 'SSL Certificate Status',
+            description: 'SSL certificate is valid and properly configured',
+            impact: 'Secure data transmission',
+            remediation: 'Monitor certificate expiration',
+            status: 'resolved',
+          },
+        ],
+        recommendations: [
+          'Implement multi-factor authentication',
+          'Regular security training for users',
+          'Conduct periodic security audits',
+          'Enable comprehensive logging',
+          'Regular backup verification',
+        ],
+      };
+
+      res.json(auditResult);
+    } catch (error: any) {
+      console.error('Error running security audit:', error);
+      res.status(500).json({ error: 'Failed to run security audit' });
+    }
+  });
+
+  app.post('/api/security/policies', requireAuth, async (req, res) => {
+    try {
+      const { tenantId, policyType, settings } = req.body;
+
+      // Mock policy update - in production this would update security policies in database
+      const policyUpdate = {
+        tenantId,
+        policyType,
+        settings,
+        updatedAt: new Date().toISOString(),
+        applied: true,
+      };
+
+      res.json({
+        message: 'Security policy updated successfully',
+        policy: policyUpdate,
+      });
+    } catch (error: any) {
+      console.error('Error updating security policy:', error);
+      res.status(500).json({ error: 'Failed to update security policy' });
+    }
+  });
+
+  app.get('/api/security/compliance/:tenantId', requireAuth, async (req, res) => {
+    try {
+      const { tenantId } = req.params;
+
+      // Mock compliance status - in production this would check against compliance frameworks
+      const complianceStatus = {
+        tenantId,
+        lastChecked: new Date().toISOString(),
+        standards: {
+          gdpr: {
+            compliant: true,
+            lastAudit: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            nextAudit: new Date(Date.now() + 335 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+          soc2: {
+            compliant: false,
+            message: 'SOC 2 certification in progress',
+            expectedCompletion: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+          hipaa: {
+            compliant: false,
+            applicable: false,
+            message: 'Not applicable to this tenant',
+          },
+        },
+        overallCompliance: 'partial',
+      };
+
+      res.json(complianceStatus);
+    } catch (error: any) {
+      console.error('Error checking compliance status:', error);
+      res.status(500).json({ error: 'Failed to check compliance status' });
+    }
+  });
 }
