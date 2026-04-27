@@ -28,7 +28,7 @@ const RemoteSmartCRMLoader: React.FC = () => {
     <div className="w-full h-full bg-white">
       <iframe
         ref={iframeRef}
-        src="https://analytics.smartcrm.vip/"
+        src="https://agency.smartcrm.vip/"
         className="w-full h-full border-0"
         title="SmartCRM Closer Platform"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

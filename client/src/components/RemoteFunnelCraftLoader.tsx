@@ -28,7 +28,7 @@ const RemoteFunnelCraftLoader: React.FC = () => {
     <div className="w-full h-full bg-white">
       <iframe
         ref={iframeRef}
-        src="https://agency.smartcrm.vip/"
+        src="https://landing.smartcrm.vip/"
         className="w-full h-full border-0"
         title="FunnelCraft AI Platform"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
