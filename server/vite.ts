@@ -21,13 +21,12 @@ export function log(message: string, source = 'express') {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = Object.assign(
-    {
-      middlewareMode: true,
-      hmr: { server },
-    },
-    customViteServerConfig
-  );
+  const serverOptions = {
+    middlewareMode: true,
+    ...customViteServerConfig,
+    // Ensure HMR is disabled for Codespaces
+    hmr: false,
+  };
 
   const vite = await createViteServer({
     ...viteConfig,
