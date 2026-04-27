@@ -8,6 +8,7 @@ import { queryClient } from './lib/queryClient';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TenantProvider } from './contexts/TenantProvider';
 import { WhitelabelProvider, useWhitelabel } from './contexts/WhitelabelContext';
+import { useDomainRouting } from './hooks/useDomainRouting';
 import { CompanyProvider } from './contexts/CompanyContext';
 import { AIToolsProvider } from './components/AIToolsProvider';
 import { ModalsProvider } from './components/ModalsProvider';
@@ -259,6 +260,8 @@ function AppContent() {
   const { loading } = useAuth();
   const { setPosition } = useNavbarPosition();
   const navigate = useNavigate();
+  const { currentTenantId, isLoading: domainLoading } = useDomainRouting();
+  const { switchTenant } = useWhitelabel();
 
   // Handle messages from MF apps (iframes)
   useEffect(() => {
@@ -275,6 +278,13 @@ function AppContent() {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [navigate]);
+
+  // Handle domain-based tenant switching
+  useEffect(() => {
+    if (!domainLoading && currentTenantId && switchTenant) {
+      switchTenant(currentTenantId);
+    }
+  }, [currentTenantId, domainLoading, switchTenant]);
 
   // Handle navbar drag end
   const handleNavbarDragEnd = (result: DropResult) => {

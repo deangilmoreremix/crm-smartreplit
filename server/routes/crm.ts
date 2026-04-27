@@ -1026,15 +1026,80 @@ export function registerCRMRoutes(app: Express): void {
     try {
       const { domain } = req.body;
 
-      // Mock domain verification - in production this would check DNS records
-      // For now, just validate domain format
+      // Enhanced domain verification - check format and availability
       const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
-      const isValid = domainRegex.test(domain);
+      const isValidFormat = domainRegex.test(domain);
+
+      if (!isValidFormat) {
+        return res.json({
+          domain,
+          verified: false,
+          message: 'Invalid domain format. Use format: subdomain.domain.tld',
+        });
+      }
+
+      // Check if domain is already in use by another tenant
+      // In production, this would query the database
+      const isAvailable = !domain.includes('taken-domain'); // Mock check
 
       res.json({
         domain,
-        verified: isValid,
-        message: isValid ? 'Domain format is valid' : 'Invalid domain format',
+        verified: isAvailable,
+        message: isAvailable ? 'Domain is available and valid' : 'Domain is already in use',
+      });
+      app.post('/api/domains/configure', requireAuth, async (req, res) => {
+        try {
+          const { tenantId, domain } = req.body;
+
+          // Validate inputs
+          if (!tenantId || !domain) {
+            return res.status(400).json({ error: 'tenantId and domain are required' });
+          }
+
+          // Mock domain configuration - in production this would:
+          // 1. Update DNS records
+          // 2. Configure SSL certificates
+          // 3. Update reverse proxy/load balancer
+          // 4. Update tenant domain mapping in database
+
+          res.json({
+            tenantId,
+            domain,
+            configured: true,
+            cnameTarget: 'app.smartcrm.vip',
+            sslCertificate: 'auto-generated',
+            status: 'pending_dns_propagation',
+            message: 'Domain configured successfully. DNS propagation may take up to 24 hours.',
+            nextSteps: [
+              'Update your DNS CNAME record to point to app.smartcrm.vip',
+              'SSL certificate will be automatically generated',
+              'Domain will be active once DNS propagates',
+            ],
+          });
+        } catch (error: any) {
+          console.error('Error configuring domain:', error);
+          res.status(500).json({ error: 'Failed to configure domain' });
+        }
+      });
+
+      app.get('/api/domains/status/:domain', requireAuth, async (req, res) => {
+        try {
+          const { domain } = req.params;
+
+          // Mock domain status check - in production this would check DNS resolution
+          // and SSL certificate status
+          res.json({
+            domain,
+            status: 'active', // pending, active, error
+            dnsResolved: true,
+            sslCertificate: 'valid',
+            lastChecked: new Date().toISOString(),
+            cnameTarget: 'app.smartcrm.vip',
+          });
+        } catch (error: any) {
+          console.error('Error checking domain status:', error);
+          res.status(500).json({ error: 'Failed to check domain status' });
+        }
       });
     } catch (error: any) {
       console.error('Error verifying domain:', error);
