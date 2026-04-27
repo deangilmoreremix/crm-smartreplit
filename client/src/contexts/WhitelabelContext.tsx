@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import {
   WhitelabelConfig,
   WhitelabelContextType,
+  Tenant,
   DEFAULT_WHITELABEL_CONFIG,
 } from '../types/whitelabel';
 
@@ -39,6 +40,9 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     return DEFAULT_WHITELABEL_CONFIG;
   });
+
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
 
   // Load from URL parameters on mount
   useEffect(() => {
@@ -292,6 +296,48 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, []);
 
+  // Tenant management functions
+  const updateTenant = useCallback((tenantId: string, updates: Partial<Tenant>) => {
+    setTenants((prev) =>
+      prev.map((tenant) =>
+        tenant.id === tenantId
+          ? { ...tenant, ...updates, updatedAt: new Date().toISOString() }
+          : tenant
+      )
+    );
+  }, []);
+
+  const createTenant = useCallback((tenantData: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newTenant: Tenant = {
+      ...tenantData,
+      id: `tenant-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setTenants((prev) => [...prev, newTenant]);
+  }, []);
+
+  const deleteTenant = useCallback(
+    (tenantId: string) => {
+      setTenants((prev) => prev.filter((tenant) => tenant.id !== tenantId));
+      if (currentTenant?.id === tenantId) {
+        setCurrentTenant(null);
+      }
+    },
+    [currentTenant]
+  );
+
+  const switchTenant = useCallback(
+    (tenantId: string) => {
+      const tenant = tenants.find((t) => t.id === tenantId);
+      if (tenant) {
+        setCurrentTenant(tenant);
+        setConfig(tenant.config);
+      }
+    },
+    [tenants]
+  );
+
   // Apply CSS custom properties for dynamic theming
   useEffect(() => {
     const root = document.documentElement;
@@ -301,7 +347,13 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const value: WhitelabelContextType = {
     config,
+    tenants,
+    currentTenant,
     updateConfig,
+    updateTenant,
+    createTenant,
+    deleteTenant,
+    switchTenant,
     resetToDefault,
     loadFromUrl,
     exportConfig,

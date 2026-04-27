@@ -115,9 +115,30 @@ export interface WhitelabelConfig {
   metaDescription?: string;
 }
 
+export interface Tenant {
+  id: string;
+  name: string;
+  domain: string;
+  config: WhitelabelConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MultiTenantConfig {
+  tenants: Tenant[];
+  defaultTenant: string;
+  domainMapping: Record<string, string>;
+}
+
 export interface WhitelabelContextType {
   config: WhitelabelConfig;
+  tenants: Tenant[];
+  currentTenant: Tenant | null;
   updateConfig: (updates: Partial<WhitelabelConfig>) => void;
+  updateTenant: (tenantId: string, updates: Partial<Tenant>) => void;
+  createTenant: (tenant: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  deleteTenant: (tenantId: string) => void;
+  switchTenant: (tenantId: string) => void;
   resetToDefault: () => void;
   loadFromUrl: (urlParams: URLSearchParams) => void;
   exportConfig: () => string;

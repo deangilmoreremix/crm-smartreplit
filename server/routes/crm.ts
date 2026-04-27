@@ -24,7 +24,10 @@ const checkAuth = (req: any): { userId: string | null; isAuthenticated: boolean 
   const userId = (req.session as any)?.userId;
   const authHeader = req.headers.authorization;
   const hostname = req.headers.host || '';
-  const isDevHost = hostname.includes('localhost') || hostname.includes('replit.dev') || hostname.includes('127.0.0.1');
+  const isDevHost =
+    hostname.includes('localhost') ||
+    hostname.includes('replit.dev') ||
+    hostname.includes('127.0.0.1');
 
   // Check for session first
   if (userId) {
@@ -942,6 +945,118 @@ export function registerCRMRoutes(app: Express): void {
     } catch (error: any) {
       console.error('Error deleting document:', error);
       res.status(500).json({ error: 'Failed to delete document' });
+    }
+  });
+
+  // Tenant Management Endpoints
+  app.get('/api/tenants', requireAuth, async (req, res) => {
+    try {
+      // For now, return mock data - in production this would query a tenants table
+      const mockTenants = [
+        {
+          id: 'default',
+          name: 'Default Tenant',
+          domain: 'app.smartcrm.vip',
+          config: {},
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+      res.json(mockTenants);
+    } catch (error: any) {
+      console.error('Error fetching tenants:', error);
+      res.status(500).json({ error: 'Failed to fetch tenants' });
+    }
+  });
+
+  app.post('/api/tenants', requireAuth, async (req, res) => {
+    try {
+      const { name, domain, config } = req.body;
+
+      // Mock tenant creation - in production this would insert into database
+      const newTenant = {
+        id: `tenant-${Date.now()}`,
+        name,
+        domain,
+        config: config || {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      res.status(201).json(newTenant);
+    } catch (error: any) {
+      console.error('Error creating tenant:', error);
+      res.status(500).json({ error: 'Failed to create tenant' });
+    }
+  });
+
+  app.put('/api/tenants/:id', requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      // Mock tenant update - in production this would update database
+      const updatedTenant = {
+        id,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+
+      res.json(updatedTenant);
+    } catch (error: any) {
+      console.error('Error updating tenant:', error);
+      res.status(500).json({ error: 'Failed to update tenant' });
+    }
+  });
+
+  app.delete('/api/tenants/:id', requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Mock tenant deletion - in production this would delete from database
+      res.json({ message: 'Tenant deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting tenant:', error);
+      res.status(500).json({ error: 'Failed to delete tenant' });
+    }
+  });
+
+  // Domain Management Endpoints
+  app.post('/api/domains/verify', requireAuth, async (req, res) => {
+    try {
+      const { domain } = req.body;
+
+      // Mock domain verification - in production this would check DNS records
+      // For now, just validate domain format
+      const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
+      const isValid = domainRegex.test(domain);
+
+      res.json({
+        domain,
+        verified: isValid,
+        message: isValid ? 'Domain format is valid' : 'Invalid domain format',
+      });
+    } catch (error: any) {
+      console.error('Error verifying domain:', error);
+      res.status(500).json({ error: 'Failed to verify domain' });
+    }
+  });
+
+  app.post('/api/domains/configure', requireAuth, async (req, res) => {
+    try {
+      const { tenantId, domain } = req.body;
+
+      // Mock domain configuration - in production this would update DNS/CNAME records
+      res.json({
+        tenantId,
+        domain,
+        configured: true,
+        cnameTarget: 'app.smartcrm.vip',
+        message: 'Domain configured successfully. Please update your DNS records.',
+      });
+    } catch (error: any) {
+      console.error('Error configuring domain:', error);
+      res.status(500).json({ error: 'Failed to configure domain' });
     }
   });
 }
