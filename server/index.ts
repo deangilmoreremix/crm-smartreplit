@@ -89,7 +89,7 @@ app.use((req, res, next) => {
     server.listen(
       {
         port: requestedPort,
-        host: '0.0.0.0',
+        host: '127.0.0.1',
         reusePort: true,
       },
       () => {
