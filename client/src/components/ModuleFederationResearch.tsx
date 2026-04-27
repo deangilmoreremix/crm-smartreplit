@@ -5,7 +5,7 @@ import React from 'react';
 
 const ResearchApp: React.FC = () => (
   <iframe
-    src="https://clever-syrniki-4df87f.netlify.app"
+    src="https://research.smartcrm.vip"
     className="w-full h-full border-0"
     title="Product Research Module"
     allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"

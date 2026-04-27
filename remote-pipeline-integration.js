@@ -1,5 +1,5 @@
 // Remote Pipeline Integration Code
-// Add this JavaScript to your remote pipeline app (https://cheery-syrniki-b5b6ca.netlify.app)
+// Add this JavaScript to your remote pipeline app (https://pipeline.smartcrm.vip)
 
 (function () {
   'use strict';

@@ -17,7 +17,7 @@ const IframeOverlapDetector: React.FC = () => {
     {
       id: 'wl-main',
       name: 'White Label Suite',
-      url: 'https://moonlit-tarsier-239e70.netlify.app/',
+      url: 'https://white-label.smartcrm.vip/',
       location: 'Navbar WL Dropdown',
     },
     {
@@ -29,7 +29,7 @@ const IframeOverlapDetector: React.FC = () => {
     {
       id: 'intel',
       name: 'Intel Dashboard',
-      url: 'https://clever-syrniki-4df87f.netlify.app/',
+      url: 'https://research.smartcrm.vip/',
       location: 'Navbar Intel Dropdown',
     },
     {

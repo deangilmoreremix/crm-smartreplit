@@ -1258,7 +1258,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       case 'open_remote_app': {
         const remoteApps: Record<string, { url: string; module: string; description: string }> = {
           pipeline: {
-            url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+            url: 'https://pipeline.smartcrm.vip',
             module: './PipelineApp',
             description: 'Pipeline Management Remote App',
           },
@@ -1283,7 +1283,32 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             description: 'AI Agency App',
           },
           research: {
-            url: 'https://clever-syrniki-4df87f.netlify.app',
+            url: 'https://research.smartcrm.vip',
+            module: './ProductResearchApp',
+            description: 'Product Research App',
+          },
+          analytics: {
+            url: 'https://ai-analytics.smartcrm.vip',
+            module: './AnalyticsApp',
+            description: 'AI Analytics Dashboard',
+          },
+          contacts: {
+            url: 'https://contacts.smartcrm.vip',
+            module: './ContactsApp',
+            description: 'Contacts Management App',
+          },
+          calendar: {
+            url: 'https://calendar.smartcrm.vip',
+            module: './CalendarApp',
+            description: 'Calendar App',
+          },
+          agency: {
+            url: 'https://agency.smartcrm.vip',
+            module: './AIAgencyApp',
+            description: 'AI Agency App',
+          },
+          research: {
+            url: 'https://research.smartcrm.vip',
             module: './ProductResearchApp',
             description: 'Product Research App',
           },
@@ -2088,7 +2113,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const remotes = [
           {
             name: 'pipeline',
-            url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+            url: 'https://pipeline.smartcrm.vip',
             module: './PipelineApp',
           },
           { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
@@ -2097,7 +2122,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIAgencyApp' },
           {
             name: 'research',
-            url: 'https://clever-syrniki-4df87f.netlify.app',
+            url: 'https://research.smartcrm.vip',
             module: './ProductResearchApp',
           },
         ];

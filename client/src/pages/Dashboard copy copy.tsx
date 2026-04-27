@@ -568,7 +568,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* FunnelCraft AI - Marketing Team */}
           <a
-            href="https://serene-valkyrie-fec320.netlify.app/"
+            href="https://agency.smartcrm.vip/"
             target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100"
@@ -591,7 +591,7 @@ const Dashboard: React.FC = () => {
 
           {/* SmartCRM Closer - Outreach Team */}
           <a
-            href="https://stupendous-twilight-64389a.netlify.app/"
+            href="https://analytics.smartcrm.vip/"
             target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100"
@@ -614,7 +614,7 @@ const Dashboard: React.FC = () => {
 
           {/* ContentAI - Content & Support Team */}
           <a
-            href="https://capable-mermaid-3c73fa.netlify.app/"
+            href="https://calendar.smartcrm.vip/"
             target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100"
@@ -637,7 +637,7 @@ const Dashboard: React.FC = () => {
 
           {/* White-Label Platform Management */}
           <a
-            href="https://moonlit-tarsier-239e70.netlify.app"
+            href="https://white-label.smartcrm.vip"
             target="_blank"
             rel="noopener noreferrer"
             className="group p-4 rounded-lg border border-gray-200 hover:border-orange-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100"

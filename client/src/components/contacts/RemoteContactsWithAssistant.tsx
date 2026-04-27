@@ -235,7 +235,7 @@ const RemoteContactsWithAssistant: React.FC<RemoteContactsWithAssistantProps> = 
     <div className="w-full h-full relative">
       <iframe
         ref={iframeRef}
-        src="https://taupe-sprinkles-83c9ee.netlify.app"
+        src="https://contacts.smartcrm.vip"
         className="w-full h-full border-0"
         title="Remote Contacts with AI Assistant"
         allow="clipboard-read; clipboard-write"

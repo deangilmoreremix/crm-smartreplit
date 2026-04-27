@@ -26,7 +26,7 @@ const loadedRemotes = new Map<string, { success: boolean; timestamp: number }>()
  */
 export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
   pipeline: {
-    url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+    url: 'https://pipeline.smartcrm.vip',
     module: './PipelineApp',
   },
   analytics: {
@@ -34,7 +34,7 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
     module: './AnalyticsApp',
   },
   contacts: {
-    url: 'https://taupe-sprinkles-83c9ee.netlify.app',
+    url: 'https://contacts.smartcrm.vip',
     module: './ContactsApp',
   },
   calendar: {
@@ -46,7 +46,7 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
     module: './AIAgencyApp',
   },
   research: {
-    url: 'https://clever-syrniki-4df87f.netlify.app',
+    url: 'https://research.smartcrm.vip',
     module: './ProductResearchApp',
   },
 };

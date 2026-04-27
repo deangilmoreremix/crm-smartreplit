@@ -28,7 +28,7 @@ export class RemoteContactsBridge {
   private messageHandlers: Map<string, (data: any) => void> = new Map();
   private isConnected = false;
 
-  constructor(origin: string = 'https://taupe-sprinkles-83c9ee.netlify.app') {
+  constructor(origin: string = 'https://contacts.smartcrm.vip') {
     this.origin = origin;
     this.setupMessageListener();
   }

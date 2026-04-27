@@ -12,7 +12,7 @@ const RemotePipeline: React.FC = () => {
 
   const { deals, fetchDeals } = useDealStore();
 
-  const REMOTE_URL = 'https://cheery-syrniki-b5b6ca.netlify.app';
+  const REMOTE_URL = 'https://pipeline.smartcrm.vip';
 
   useEffect(() => {
     // Initialize the bridge
@@ -134,7 +134,7 @@ const RemotePipeline: React.FC = () => {
   };
 
   const handleOpenInNewTab = () => {
-    window.open('https://cheery-syrniki-b5b6ca.netlify.app', '_blank');
+    window.open('https://pipeline.smartcrm.vip', '_blank');
   };
 
   return (

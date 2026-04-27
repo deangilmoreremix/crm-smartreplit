@@ -1,5 +1,5 @@
 // Module Federation Configuration for Contacts App
-// File: vite.config.js (for https://taupe-sprinkles-83c9ee.netlify.app)
+// File: vite.config.js (for https://contacts.smartcrm.vip)
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'

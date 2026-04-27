@@ -14,12 +14,12 @@ class RemoteAppHealthService {
 
   // Remote apps to monitor
   private apps = [
-    { name: 'Remote Pipeline', url: 'https://cheery-syrniki-b5b6ca.netlify.app' },
-    { name: 'Remote Contacts', url: 'https://taupe-sprinkles-83c9ee.netlify.app' },
-    { name: 'FunnelCraft AI', url: 'https://serene-valkyrie-fec320.netlify.app' },
-    { name: 'ContentAI', url: 'https://capable-mermaid-3c73fa.netlify.app' },
-    { name: 'White Label Platform', url: 'https://moonlit-tarsier-239e70.netlify.app' },
-    { name: 'SmartCRM Closer', url: 'https://stupendous-twilight-64389a.netlify.app' },
+    { name: 'Remote Pipeline', url: 'https://pipeline.smartcrm.vip' },
+    { name: 'Remote Contacts', url: 'https://contacts.smartcrm.vip' },
+    { name: 'FunnelCraft AI', url: 'https://agency.smartcrm.vip' },
+    { name: 'ContentAI', url: 'https://calendar.smartcrm.vip' },
+    { name: 'White Label Platform', url: 'https://white-label.smartcrm.vip' },
+    { name: 'SmartCRM Closer', url: 'https://analytics.smartcrm.vip' },
   ];
 
   constructor() {

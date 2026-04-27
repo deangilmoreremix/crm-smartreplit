@@ -9,7 +9,7 @@ const ConnectedApps: React.FC = () => {
   const connectedApps = [
     {
       name: 'Remote Pipeline',
-      url: 'https://cheery-syrniki-b5b6ca.netlify.app/',
+      url: 'https://pipeline.smartcrm.vip/',
       icon: Grid3X3,
       team: 'Sales Team',
       description: 'Advanced pipeline management and analytics',
@@ -20,7 +20,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'Remote Contacts',
-      url: 'https://taupe-sprinkles-83c9ee.netlify.app/',
+      url: 'https://contacts.smartcrm.vip/',
       icon: Users,
       team: 'CRM Team',
       description: 'Advanced contact management and enrichment',
@@ -31,7 +31,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'FunnelCraft AI',
-      url: 'https://serene-valkyrie-fec320.netlify.app/',
+      url: 'https://agency.smartcrm.vip/',
       icon: Megaphone,
       team: 'Marketing Team',
       description: 'Create high-converting funnels with AI-powered optimization',
@@ -42,7 +42,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'SmartCRM Closer',
-      url: 'https://stupendous-twilight-64389a.netlify.app/',
+      url: 'https://analytics.smartcrm.vip/',
       icon: Users,
       team: 'Outreach Team',
       description: 'Advanced outreach automation and deal closing tools',
@@ -53,7 +53,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'ContentAI',
-      url: 'https://capable-mermaid-3c73fa.netlify.app/',
+      url: 'https://calendar.smartcrm.vip/',
       icon: FileText,
       team: 'Content & Support',
       description: 'AI-powered content creation and support documentation',
@@ -64,7 +64,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'White-Label Platform',
-      url: 'https://moonlit-tarsier-239e70.netlify.app/',
+      url: 'https://white-label.smartcrm.vip/',
       icon: Palette,
       team: 'Platform Management',
       description: 'Customize and manage your branded platform solutions',

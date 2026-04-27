@@ -58,7 +58,7 @@ const PipelineWithRemote: React.FC = () => {
       <div className="flex-1" style={{ height: 'calc(100vh - 100px)' }}>
         <iframe
           ref={iframeRef}
-          src="https://cheery-syrniki-b5b6ca.netlify.app"
+          src="https://pipeline.smartcrm.vip"
           style={{
             width: '100%',
             height: '100%',

@@ -14,7 +14,7 @@ export const DevBypassButton: React.FC = () => {
         hostname.includes('replit.dev') ||
         hostname.includes('github.dev') ||
         hostname.includes('app.github.dev') ||
-        hostname.includes('netlify.app') ||
+        hostname.includes('smartcrm.vip') ||
         hostname.includes('vercel.app')) &&
       !hostname.includes('replit.app');
 

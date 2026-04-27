@@ -2,7 +2,7 @@
 <script>
 /**
  * Smart CRM Navigation Integration Script
- * Add this script to your landing page at https://cerulean-crepe-9470cc.netlify.app
+ * Add this script to your landing page at https://landing.smartcrm.vip
  * This will ensure all login/signup buttons route to the new Smart CRM app
  */
 

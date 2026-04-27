@@ -63,7 +63,7 @@ const RemoteContactsIntegration: React.FC<RemoteContactsIntegrationProps> = ({
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       // Security: only accept messages from your trusted domain
-      if (!event.origin.includes('netlify.app') && !event.origin.includes('localhost')) {
+      if (!event.origin.includes('smartcrm.vip') && !event.origin.includes('localhost')) {
         return;
       }
 

@@ -9,7 +9,7 @@ interface WebComponentsRemoteContactsProps {
 
 const WebComponentsRemoteContacts: React.FC<WebComponentsRemoteContactsProps> = ({
   remoteUrls = [
-    'https://taupe-sprinkles-83c9ee.netlify.app',
+    'https://contacts.smartcrm.vip',
     'https://contacts-app.vercel.app',
     'https://bolt.new/~/sb1-your-contacts-app',
   ],

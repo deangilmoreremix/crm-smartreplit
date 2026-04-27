@@ -6,8 +6,8 @@ const RemoteWLLoader: React.FC = () => {
   const currentTheme = isDark ? 'dark' : 'light';
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const IFRAME_ORIGIN = 'https://moonlit-tarsier-239e70.netlify.app';
-  const REMOTE_URL = 'https://moonlit-tarsier-239e70.netlify.app';
+  const IFRAME_ORIGIN = 'https://white-label.smartcrm.vip';
+  const REMOTE_URL = 'https://white-label.smartcrm.vip';
 
   // Handle iframe load events
   useEffect(() => {

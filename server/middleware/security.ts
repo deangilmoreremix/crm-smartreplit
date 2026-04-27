@@ -37,7 +37,7 @@ export const corsConfig = cors({
       'https://smartcrm.vip',
       'https://www.smartcrm.vip',
       'https://app.smartcrm.vip',
-      'https://*.netlify.app', // Allow Netlify deployments
+      'https://*.smartcrm.vip', // Allow smartcrm deployments
       'https://*.vercel.app', // Allow Vercel deployments
     ];
 

@@ -92,7 +92,7 @@
       // Check if parent has specific classes or IDs
       window.parent !== window,
       // Check URL patterns that suggest this is an embedded app
-      window.location.href.includes('netlify.app'),
+      window.location.href.includes('smartcrm.vip'),
       window.location.href.includes('.bolt.host'),
       // Check if there are common navbar classes in parent
       true, // For now, always apply

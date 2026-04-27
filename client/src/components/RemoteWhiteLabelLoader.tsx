@@ -17,9 +17,9 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
   const { isDark, toggleTheme } = useTheme(); // Use global theme context
   const currentTheme = isDark ? 'dark' : 'light';
 
-  const REMOTE_URL = 'https://moonlit-tarsier-239e70.netlify.app';
+  const REMOTE_URL = 'https://white-label.smartcrm.vip';
   const IFRAME_ID = 'wl-remote-iframe';
-  const IFRAME_ORIGIN = 'https://moonlit-tarsier-239e70.netlify.app';
+  const IFRAME_ORIGIN = 'https://white-label.smartcrm.vip';
 
   const { manualRefresh, checkForUpdates, isChecking } = useRemoteAppUpdates(
     IFRAME_ID,

@@ -13,7 +13,7 @@ const RemoteAIAnalyticsLoader: React.FC<RemoteAIAnalyticsLoaderProps> = ({
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const REMOTE_URL = 'https://resilient-frangipane-6289c8.netlify.app';
+  const REMOTE_URL = 'https://analytics.smartcrm.vip';
 
   useEffect(() => {
     const iframe = iframeRef.current;

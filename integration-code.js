@@ -1,5 +1,5 @@
 // CRM Integration Bridge for Your React App
-// Add this code to your React app at https://cheery-syrniki-b5b6ca.netlify.app
+// Add this code to your React app at https://pipeline.smartcrm.vip
 
 class CRMBridge {
   constructor() {

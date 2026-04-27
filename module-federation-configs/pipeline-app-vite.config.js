@@ -1,5 +1,5 @@
 // Module Federation Configuration for Pipeline App
-// File: vite.config.js (for https://cheery-syrniki-b5b6ca.netlify.app)
+// File: vite.config.js (for https://pipeline.smartcrm.vip)
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'

@@ -6,7 +6,7 @@ interface RemotePipelineLoaderProps {
 }
 
 const RemotePipelineLoader: React.FC<RemotePipelineLoaderProps> = ({ showHeader = false }) => {
-  const REMOTE_URL = 'https://cheery-syrniki-b5b6ca.netlify.app';
+  const REMOTE_URL = 'https://pipeline.smartcrm.vip';
 
   return (
     <div className="h-full w-full">

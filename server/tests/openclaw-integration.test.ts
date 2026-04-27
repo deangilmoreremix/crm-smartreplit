@@ -230,7 +230,7 @@ describe('OpenClaw Integration Tests', () => {
 
     const remoteApps: Record<string, { url: string; module: string }> = {
       pipeline: {
-        url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+        url: 'https://pipeline.smartcrm.vip',
         module: './PipelineApp',
       },
       analytics: {
@@ -250,7 +250,7 @@ describe('OpenClaw Integration Tests', () => {
         module: './AIAgencyApp',
       },
       research: {
-        url: 'https://clever-syrniki-4df87f.netlify.app',
+        url: 'https://research.smartcrm.vip',
         module: './ProductResearchApp',
       },
     };
@@ -325,7 +325,7 @@ describe('OpenClaw Integration Tests', () => {
       it('should find pipeline remote app', () => {
         const app = remoteApps['pipeline'];
         expect(app).toBeDefined();
-        expect(app.url).toBe('https://cheery-syrniki-b5b6ca.netlify.app');
+        expect(app.url).toBe('https://pipeline.smartcrm.vip');
         expect(app.module).toBe('./PipelineApp');
       });
 
@@ -360,7 +360,7 @@ describe('OpenClaw Integration Tests', () => {
       it('should find research remote app', () => {
         const app = remoteApps['research'];
         expect(app).toBeDefined();
-        expect(app.url).toBe('https://clever-syrniki-4df87f.netlify.app');
+        expect(app.url).toBe('https://research.smartcrm.vip');
         expect(app.module).toBe('./ProductResearchApp');
       });
 
@@ -383,9 +383,7 @@ describe('OpenClaw Integration Tests', () => {
 
         expect(response.type).toBe('remote_app');
         expect(response.action).toBe('open');
-        expect(response.remoteEntry).toBe(
-          'https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js'
-        );
+        expect(response.remoteEntry).toBe('https://pipeline.smartcrm.vip/assets/remoteEntry.js');
       });
 
       it('should list all available remote apps', () => {
@@ -590,12 +588,12 @@ describe('OpenClaw Integration Tests', () => {
     it('should have matching remote app config between loadRemoteEntry.ts and openclaw.ts', () => {
       // These URLs must match between the client-side MFE loader and server-side OpenClaw handlers
       const expectedRemotes = {
-        pipeline: 'https://cheery-syrniki-b5b6ca.netlify.app',
+        pipeline: 'https://pipeline.smartcrm.vip',
         analytics: 'https://ai-analytics.smartcrm.vip',
         contacts: 'https://contacts.smartcrm.vip',
         calendar: 'https://calendar.smartcrm.vip',
         agency: 'https://agency.smartcrm.vip',
-        research: 'https://clever-syrniki-4df87f.netlify.app',
+        research: 'https://research.smartcrm.vip',
       };
 
       Object.entries(expectedRemotes).forEach(([, url]) => {
@@ -606,12 +604,12 @@ describe('OpenClaw Integration Tests', () => {
 
     it('should have consistent remote entry paths', () => {
       const urls = [
-        'https://cheery-syrniki-b5b6ca.netlify.app/assets/remoteEntry.js',
+        'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
         'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
         'https://contacts.smartcrm.vip/assets/remoteEntry.js',
         'https://calendar.smartcrm.vip/assets/remoteEntry.js',
         'https://agency.smartcrm.vip/assets/remoteEntry.js',
-        'https://clever-syrniki-4df87f.netlify.app/assets/remoteEntry.js',
+        'https://research.smartcrm.vip/assets/remoteEntry.js',
       ];
 
       urls.forEach((url) => {

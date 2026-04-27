@@ -1,5 +1,5 @@
 // Module Federation Configuration for Analytics App
-// File: vite.config.js (for https://resilient-frangipane-6289c8.netlify.app)
+// File: vite.config.js (for https://analytics.smartcrm.vip)
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'

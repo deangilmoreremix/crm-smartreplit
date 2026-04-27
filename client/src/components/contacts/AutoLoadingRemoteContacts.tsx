@@ -9,9 +9,9 @@ interface AutoLoadingRemoteContactsProps {
 
 const AutoLoadingRemoteContacts: React.FC<AutoLoadingRemoteContactsProps> = ({
   remoteUrls = [
-    'https://taupe-sprinkles-83c9ee.netlify.app',
+    'https://contacts.smartcrm.vip',
     'https://contacts-app.vercel.app',
-    'https://your-backup-contacts.netlify.app',
+    'https://your-backup-contacts.smartcrm.vip',
   ],
   fallbackComponent: FallbackComponent,
   onContactSync,
