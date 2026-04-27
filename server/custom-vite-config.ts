@@ -18,11 +18,7 @@ export const customViteServerConfig = {
     '40909',
   ],
   host: '0.0.0.0',
-  // HMR configuration for GitHub Codespaces tunnel - disable WebSocket connections
-  hmr: {
-    port: false, // Disable HMR WebSocket server
-    host: false, // Don't specify host to prevent connections
-  },
+  // HMR is disabled in server/vite.ts to prevent WebSocket errors in Codespaces
 };
 
 // Export a function to merge this with existing config
