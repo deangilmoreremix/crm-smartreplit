@@ -14,39 +14,147 @@ const REMOTE_MODULE = './CalendarApp';
 // Local fallback component when Module Federation is not available
 const LocalCalendarFallback: React.FC = () => {
   const { isDark } = useTheme();
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const events = [
+    { id: 1, title: 'Team Meeting', date: '2026-04-27', time: '10:00 AM' },
+    { id: 2, title: 'Client Call', date: '2026-04-27', time: '2:00 PM' },
+    { id: 3, title: 'Project Review', date: '2026-04-28', time: '11:00 AM' },
+  ];
+
+  const todayEvents = events.filter(
+    (event) => event.date === currentDate.toISOString().split('T')[0]
+  );
 
   return (
-    <div
-      className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}
-    >
-      <div className="text-center p-8">
-        <div className="mb-4">
-          <svg
-            className="w-16 h-16 mx-auto text-cyan-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
+    <div className={`w-full h-full p-6 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendar</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Schedule and manage your events (Local Fallback)
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Calendar Module
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-          The Calendar module is currently unavailable.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm"
-        >
-          Retry Loading
-        </button>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendar View */}
+          <div className="lg:col-span-2">
+            <div className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      setCurrentDate(
+                        new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+                      )
+                    }
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setCurrentDate(new Date())}
+                    className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentDate(
+                        new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+                      )
+                    }
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              {/* Simple calendar grid placeholder */}
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div
+                    key={day}
+                    className="p-2 text-center text-sm font-medium text-gray-500 dark:text-gray-400"
+                  >
+                    {day}
+                  </div>
+                ))}
+                {Array.from({ length: 35 }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`p-2 text-center text-sm ${
+                      i + 1 === currentDate.getDate()
+                        ? 'bg-blue-600 text-white rounded'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-700 rounded'
+                    }`}
+                  >
+                    {i + 1 <= 31 ? i + 1 : ''}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Events Sidebar */}
+          <div className="space-y-6">
+            <div className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6`}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Today's Events
+              </h3>
+              {todayEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {todayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded"
+                    >
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{event.title}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{event.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">No events scheduled for today</p>
+              )}
+            </div>
+
+            <div className={`bg-white dark:bg-gray-800 rounded-lg shadow p-6`}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Upcoming Events
+              </h3>
+              <div className="space-y-3">
+                {events.slice(0, 3).map((event) => (
+                  <div key={event.id} className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white text-sm">
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {new Date(event.date).toLocaleDateString()} at {event.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This is a local fallback implementation. The full calendar module is being loaded
+            remotely.
+          </p>
+        </div>
       </div>
     </div>
   );

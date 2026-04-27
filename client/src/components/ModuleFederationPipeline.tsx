@@ -7,36 +7,106 @@ import {
 
 // Local fallback component when Module Federation is not available
 const LocalPipelineFallback: React.FC = () => {
+  const stages = [
+    { id: 'lead', name: 'Lead', count: 12, color: 'bg-gray-100 dark:bg-gray-700' },
+    { id: 'contact', name: 'Contact Made', count: 8, color: 'bg-blue-100 dark:bg-blue-900' },
+    { id: 'qualified', name: 'Qualified', count: 5, color: 'bg-yellow-100 dark:bg-yellow-900' },
+    { id: 'proposal', name: 'Proposal', count: 3, color: 'bg-purple-100 dark:bg-purple-900' },
+    { id: 'closed', name: 'Closed Won', count: 2, color: 'bg-green-100 dark:bg-green-900' },
+  ];
+
+  const deals = [
+    { id: 1, name: 'Acme Corp Deal', value: '$25,000', stage: 'qualified' },
+    { id: 2, name: 'Tech Startup', value: '$50,000', stage: 'proposal' },
+    { id: 3, name: 'Manufacturing Co', value: '$15,000', stage: 'contact' },
+  ];
+
   return (
-    <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="text-center p-8">
-        <div className="mb-4">
-          <svg
-            className="w-16 h-16 mx-auto text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
-            />
-          </svg>
+    <div className="w-full h-full p-6 bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sales Pipeline</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Track and manage your sales opportunities (Local Fallback)
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Pipeline Module
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-          The Pipeline module is currently unavailable.
-        </p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-        >
-          Retry Loading
-        </button>
+
+        {/* Pipeline Stages */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          {stages.map((stage) => (
+            <div key={stage.id} className={`${stage.color} p-4 rounded-lg`}>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                  {stage.name}
+                </h3>
+                <span className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-2 py-1 rounded text-xs font-medium">
+                  {stage.count}
+                </span>
+              </div>
+              <div className="w-full bg-white dark:bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${(stage.count / 15) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent Deals */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Deals</h2>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Deal Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Value
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Stage
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                {deals.map((deal) => (
+                  <tr key={deal.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      {deal.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {deal.value}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {stages.find((s) => s.id === deal.stage)?.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                        Active
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            This is a local fallback implementation. The full pipeline module is being loaded
+            remotely.
+          </p>
+        </div>
       </div>
     </div>
   );
