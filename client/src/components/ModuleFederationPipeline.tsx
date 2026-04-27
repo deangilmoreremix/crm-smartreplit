@@ -1,9 +1,148 @@
 import React, { lazy, Suspense } from 'react';
+import { moduleFederationOrchestrator } from '../utils/moduleFederationOrchestrator';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Lazy load the remote PipelineApp
 const RemotePipelineApp = lazy(() => import('PipelineApp/PipelineApp'));
+
+// Local fallback component when Module Federation is not available
+const LocalPipelineFallback: React.FC = () => {
+  const dummyDeals = [
+    {
+      id: 1,
+      title: 'Enterprise Software Deal',
+      company: 'TechCorp Inc',
+      value: 150000,
+      stage: 'proposal',
+      probability: 75,
+    },
+    {
+      id: 2,
+      title: 'Cloud Migration Project',
+      company: 'StartupXYZ',
+      value: 85000,
+      stage: 'negotiation',
+      probability: 90,
+    },
+    {
+      id: 3,
+      title: 'Consulting Services',
+      company: 'LocalBusiness LLC',
+      value: 25000,
+      stage: 'qualification',
+      probability: 45,
+    },
+  ];
+
+  return (
+    <div className="w-full h-full p-6 bg-white dark:bg-gray-900">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sales Pipeline</h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Manage your deals and sales pipeline (Local Fallback)
+        </p>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Pipeline Overview</h3>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-800">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Deal
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Company
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Value
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Stage
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Probability
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {dummyDeals.map((deal) => (
+                <tr key={deal.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    {deal.title}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {deal.company}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    ${deal.value.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        deal.stage === 'negotiation'
+                          ? 'bg-green-100 text-green-800'
+                          : deal.stage === 'proposal'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {deal.stage}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {deal.probability}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-500 dark:text-gray-400">
+              Showing {dummyDeals.length} sample deals
+            </span>
+            <span className="text-gray-500 dark:text-gray-400">
+              Total Value: ${dummyDeals.reduce((sum, deal) => sum + deal.value, 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              Module Federation Disabled
+            </h3>
+            <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+              <p>
+                This is a local fallback interface. Enable Module Federation in your environment to
+                load the full remote Pipeline application.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PipelineApp: React.FC = () => {
   if (!ENABLE_MFE) {

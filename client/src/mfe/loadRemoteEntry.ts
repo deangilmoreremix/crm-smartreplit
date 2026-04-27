@@ -1,8 +1,8 @@
 /**
  * Safe Module Federation Remote Entry Loader
- * 
+ *
  * Feature flag: VITE_ENABLE_MFE (default: false)
- * 
+ *
  * Provides:
  * - Single attempt per remote per session
  * - 4 second timeout
@@ -34,7 +34,7 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
     module: './AnalyticsApp',
   },
   contacts: {
-    url: 'https://contacts.smartcrm.vip',
+    url: 'https://taupe-sprinkles-83c9ee.netlify.app',
     module: './ContactsApp',
   },
   calendar: {
@@ -86,6 +86,18 @@ export async function loadRemoteEntry(remoteName: string): Promise<boolean> {
   console.log(`[MFE] Loading ${remoteName} from ${remoteUrl}...`);
 
   try {
+    // First, try to fetch the remote entry to check if it exists
+    const response = await fetch(remoteUrl, {
+      method: 'HEAD',
+      mode: 'cors',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    console.log(`[MFE] Remote entry exists for ${remoteName}, proceeding with import`);
+
     // Create timeout promise
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('MFE load timeout')), LOAD_TIMEOUT);
@@ -95,7 +107,7 @@ export async function loadRemoteEntry(remoteName: string): Promise<boolean> {
     const loadPromise = new Promise<boolean>((resolve, reject) => {
       // Use dynamic import to load the remote entry
       // Note: This requires the remote to be configured in vite.config.ts
-      import(/* @vite-ignore */ `${remote.url}/assets/remoteEntry.js`)
+      import(/* @vite-ignore */ remoteUrl)
         .then(() => {
           console.log(`[MFE] Successfully loaded ${remoteName}`);
           loadedRemotes.set(remoteName, { success: true, timestamp: Date.now() });

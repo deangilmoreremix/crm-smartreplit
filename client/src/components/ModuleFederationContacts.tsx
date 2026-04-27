@@ -94,7 +94,7 @@ const ContactsApp: React.FC = () => {
   );
 };
 
-const ContactsApp: React.FC = () => {
+const ModuleFederationContacts: React.FC = () => {
   const [RemoteContacts, setRemoteContacts] = useState<React.ComponentType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,7 +148,7 @@ interface ModuleFederationContactsProps {
   showHeader?: boolean;
 }
 
-const ModuleFederationContacts: React.FC<ModuleFederationContactsProps> = ({
+const ModuleFederationContactsContainer: React.FC<ModuleFederationContactsProps> = ({
   showHeader = false,
 }) => {
   return (
@@ -181,4 +181,4 @@ const ModuleFederationContacts: React.FC<ModuleFederationContactsProps> = ({
   );
 };
 
-export default ModuleFederationContacts;
+export default ModuleFederationContactsContainer;
