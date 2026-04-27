@@ -6,8 +6,10 @@ import {
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Lazy load the remote AgencyApp
-const RemoteAgencyApp = lazy(() => import('AgencyApp/AIAgencyApp'));
+// Lazy load the remote AgencyApp only if MFE is enabled
+const RemoteAgencyApp = ENABLE_MFE
+  ? lazy(() => import('AgencyApp/AIAgencyApp'))
+  : LocalAgencyFallback;
 
 // Local fallback component when Module Federation is not available
 const LocalAgencyFallback: React.FC = () => {

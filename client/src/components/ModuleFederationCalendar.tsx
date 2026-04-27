@@ -3,8 +3,10 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Lazy load the remote CalendarApp
-const RemoteCalendarApp = lazy(() => import('CalendarApp/CalendarApp'));
+// Lazy load the remote CalendarApp only if MFE is enabled
+const RemoteCalendarApp = ENABLE_MFE
+  ? lazy(() => import('CalendarApp/CalendarApp'))
+  : LocalCalendarFallback;
 
 // Local fallback component when Module Federation is not available
 const LocalCalendarFallback: React.FC = () => {

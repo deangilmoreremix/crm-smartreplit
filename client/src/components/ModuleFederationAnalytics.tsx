@@ -3,13 +3,18 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Lazy load the remote AnalyticsApp
-const RemoteAnalyticsApp = lazy(() =>
-  import('AnalyticsApp/AnalyticsApp').catch(() => {
-    // Fallback when remote fails to load
-    return { default: () => <LocalAnalyticsDashboard /> };
-  })
-);
+// Only import remote modules if MFE is enabled
+let RemoteAnalyticsApp: React.ComponentType<any>;
+
+if (ENABLE_MFE) {
+  RemoteAnalyticsApp = lazy(() =>
+    import('AnalyticsApp/AnalyticsApp').catch(() => ({
+      default: LocalAnalyticsDashboard,
+    }))
+  );
+} else {
+  RemoteAnalyticsApp = LocalAnalyticsDashboard;
+}
 
 // Local development analytics dashboard
 const LocalAnalyticsDashboard: React.FC = () => {

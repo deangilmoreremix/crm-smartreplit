@@ -11,18 +11,15 @@ export default defineConfig({
   root: "client",                // tell Vite where index.html is
   plugins: [
     react(),
-    federation({
-      name: 'crm-app',
-    remotes: {
-      ContactsApp: 'https://contacts.smartcrm.vip/assets/remoteEntry.js',
-      AnalyticsApp: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
-      CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
-      PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
-      AgencyApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',
-    },
-      shared: ['react', 'react-dom', 'react-router-dom'],
-    }),
+    // Disable federation in development to avoid remote loading issues
   ],
+  server: {
+    host: '0.0.0.0',
+    port: 5173, // Use Vite's default port instead of conflicting with main server
+    hmr: {
+      port: 24678,
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'client/src'),

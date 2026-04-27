@@ -4,13 +4,18 @@ import { moduleFederationOrchestrator } from '../utils/moduleFederationOrchestra
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Lazy load the remote PipelineApp
-const RemotePipelineApp = lazy(() =>
-  import('PipelineApp/PipelineApp').catch(() => {
-    // Fallback when remote fails to load
-    return { default: () => <LocalPipelineFallback /> };
-  })
-);
+// Only import remote modules if MFE is enabled
+let RemotePipelineApp: React.ComponentType<any>;
+
+if (ENABLE_MFE) {
+  RemotePipelineApp = lazy(() =>
+    import('PipelineApp/PipelineApp').catch(() => ({
+      default: LocalPipelineFallback,
+    }))
+  );
+} else {
+  RemotePipelineApp = LocalPipelineFallback;
+}
 
 // Local fallback component when Module Federation is not available
 const LocalPipelineFallback: React.FC = () => {

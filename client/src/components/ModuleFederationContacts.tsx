@@ -6,8 +6,14 @@ import {
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Lazy load the remote ContactsApp
-const RemoteContactsApp = lazy(() => import('ContactsApp/ContactsApp'));
+// Only import remote modules if MFE is enabled
+let RemoteContactsApp: React.ComponentType<any>;
+
+if (ENABLE_MFE) {
+  RemoteContactsApp = lazy(() => import('ContactsApp/ContactsApp'));
+} else {
+  RemoteContactsApp = LocalContactsFallback;
+}
 
 // Local fallback component when Module Federation is not available
 const LocalContactsFallback: React.FC = () => {
