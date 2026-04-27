@@ -1,10 +1,16 @@
 import React, { lazy, Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { moduleFederationOrchestrator } from '../utils/moduleFederationOrchestrator';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Lazy load the remote PipelineApp
-const RemotePipelineApp = lazy(() => import('PipelineApp/PipelineApp'));
+const RemotePipelineApp = lazy(() =>
+  import('PipelineApp/PipelineApp').catch(() => {
+    // Fallback when remote fails to load
+    return { default: () => <LocalPipelineFallback /> };
+  })
+);
 
 // Local fallback component when Module Federation is not available
 const LocalPipelineFallback: React.FC = () => {
@@ -150,24 +156,26 @@ const PipelineApp: React.FC = () => {
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="w-full h-full flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading Pipeline Module...</p>
+    <ErrorBoundary fallback={<LocalPipelineFallback />}>
+      <Suspense
+        fallback={
+          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading Pipeline Module...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <RemotePipelineApp
-        theme="light"
-        mode="light"
-        onDataUpdate={(data: any) => {
-          moduleFederationOrchestrator.broadcastToAllModules('PIPELINE_DATA_UPDATE', data);
-        }}
-      />
-    </Suspense>
+        }
+      >
+        <RemotePipelineApp
+          theme="light"
+          mode="light"
+          onDataUpdate={(data: any) => {
+            moduleFederationOrchestrator.broadcastToAllModules('PIPELINE_DATA_UPDATE', data);
+          }}
+        />
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 

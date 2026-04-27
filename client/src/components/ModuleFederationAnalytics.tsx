@@ -1,9 +1,15 @@
 import React, { lazy, Suspense } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Lazy load the remote AnalyticsApp
-const RemoteAnalyticsApp = lazy(() => import('AnalyticsApp/AnalyticsApp'));
+const RemoteAnalyticsApp = lazy(() =>
+  import('AnalyticsApp/AnalyticsApp').catch(() => {
+    // Fallback when remote fails to load
+    return { default: () => <LocalAnalyticsDashboard /> };
+  })
+);
 
 // Local development analytics dashboard
 const LocalAnalyticsDashboard: React.FC = () => {
@@ -255,18 +261,20 @@ const AnalyticsApp: React.FC = () => {
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="w-full h-full flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading Analytics Module...</p>
+    <ErrorBoundary fallback={<LocalAnalyticsDashboard />}>
+      <Suspense
+        fallback={
+          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading Analytics Module...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <RemoteAnalyticsApp theme="light" mode="light" />
-    </Suspense>
+        }
+      >
+        <RemoteAnalyticsApp theme="light" mode="light" />
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 
