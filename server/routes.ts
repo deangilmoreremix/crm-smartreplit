@@ -1304,13 +1304,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Import and use auth routes (after dev overrides)
-  if (process.env.NODE_ENV !== 'development') {
-    const { registerAuthRoutes } = await import('./routes/auth.js');
-    registerAuthRoutes(app);
-  } else {
-    console.log('🔧 Development mode: Using dev auth endpoints');
-  }
+  // Auth routes are already registered in routes/index.ts
+  console.log('🔧 Auth routes registered via routes/index.ts');
 
   // Admin management endpoints
   app.post('/api/admin/resend-confirmations', async (req, res) => {

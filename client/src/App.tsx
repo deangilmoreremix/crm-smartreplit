@@ -29,6 +29,8 @@ import RemoteAppRefreshManager from './components/RemoteAppRefreshManager';
 import { universalDataSync } from './services/universalDataSync';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
+import OpenClawSetupModal from './components/OpenClawSetupModal';
+import { useOpenClawStatus } from './hooks/useOpenClawStatus';
 
 // Eager pages
 import Dashboard from './pages/Dashboard';
@@ -65,6 +67,14 @@ const PhoneSystem = lazy(() => import('./pages/PhoneSystem'));
 // Sales pages
 import WinRateIntelligence from './pages/WinRateIntelligence';
 import AISalesForecast from './pages/AISalesForecast';
+
+// BI Analytics pages
+const DealIntelligenceDashboard = lazy(
+  () => import('./components/analytics/DealIntelligenceDashboard')
+);
+const ContactAnalyticsDashboard = lazy(
+  () => import('./components/analytics/ContactAnalyticsDashboard')
+);
 import LiveDealAnalysis from './pages/LiveDealAnalysis';
 import CompetitorInsights from './pages/CompetitorInsights';
 import RevenueIntelligence from './pages/RevenueIntelligence';
@@ -263,6 +273,31 @@ function AppContent() {
   const { currentTenantId, isLoading: domainLoading } = useDomainRouting();
   const { switchTenant } = useWhitelabel();
 
+  // OpenClaw setup modal state
+  const [showOpenClawSetup, setShowOpenClawSetup] = React.useState(false);
+  const { status: openClawStatus } = useOpenClawStatus();
+
+  // Check for OpenClaw setup on app load
+  React.useEffect(() => {
+    if (!loading && !openClawStatus.hasApiKey) {
+      // Delay showing modal to avoid interrupting initial app load
+      const timer = setTimeout(() => {
+        setShowOpenClawSetup(true);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, openClawStatus.hasApiKey]);
+
+  // Listen for OpenClaw setup requests from dashboard banner
+  React.useEffect(() => {
+    const handleOpenClawSetup = () => {
+      setShowOpenClawSetup(true);
+    };
+
+    window.addEventListener('openclaw-setup-requested', handleOpenClawSetup);
+    return () => window.removeEventListener('openclaw-setup-requested', handleOpenClawSetup);
+  }, []);
+
   // Handle messages from MF apps (iframes)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -408,6 +443,24 @@ function AppContent() {
                 <ProtectedRoute>
                   <Navbar />
                   <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/deals"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <DealIntelligenceDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics/contacts"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <ContactAnalyticsDashboard />
                 </ProtectedRoute>
               }
             />
@@ -1061,6 +1114,13 @@ function AppContent() {
 
         {/* Toaster for notifications */}
         <Toaster />
+
+        {/* OpenClaw Setup Modal */}
+        <OpenClawSetupModal
+          isOpen={showOpenClawSetup}
+          onClose={() => setShowOpenClawSetup(false)}
+          onComplete={() => setShowOpenClawSetup(false)}
+        />
 
         {/* ElevenLabs widgets removed to prevent performance issues */}
       </div>

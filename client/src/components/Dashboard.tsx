@@ -21,6 +21,8 @@ import AIConfigurationStatusWidget from './ui/AIConfigurationStatusWidget';
 import AIProviderSettingsModal from './modals/AIProviderSettingsModal';
 import { OnboardingWidget } from './OnboardingWidget';
 import { useAIConfiguration } from '../contexts/AIConfigurationContext';
+import OpenClawStatusBanner from './OpenClawStatusBanner';
+import { useOpenClawStatus } from '../hooks/useOpenClawStatus';
 
 // Import section components
 import ExecutiveOverviewSection from './sections/ExecutiveOverviewSection';
@@ -75,7 +77,9 @@ const Dashboard: React.FC = React.memo(() => {
   const initializedRef = useRef(false);
   const [dashboardError, setDashboardError] = React.useState<string | null>(null);
   const [isInitialized, setIsInitialized] = React.useState(false);
+  const [showOpenClawBanner, setShowOpenClawBanner] = React.useState(true);
   const { showAIProviderModal, setShowAIProviderModal } = useAIConfiguration();
+  const { status: openClawStatus } = useOpenClawStatus();
 
   useEffect(() => {
     // Only fetch data once
@@ -405,6 +409,18 @@ const Dashboard: React.FC = React.memo(() => {
 
       {/* Onboarding Widget - Show for new users */}
       <OnboardingWidget />
+
+      {/* OpenClaw Status Banner - Show if no API key */}
+      {!openClawStatus.hasApiKey && showOpenClawBanner && (
+        <OpenClawStatusBanner
+          onSetupClick={() => {
+            // This will be handled by the parent App component
+            window.dispatchEvent(new CustomEvent('openclaw-setup-requested'));
+          }}
+          onDismiss={() => setShowOpenClawBanner(false)}
+          className="mb-6"
+        />
+      )}
 
       {/* Dashboard Layout Controls - RESTORED */}
       <DashboardLayoutControls />

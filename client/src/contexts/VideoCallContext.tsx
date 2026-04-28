@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
 import * as SimplePeer from 'simple-peer';
+import { signalingService, SignalingMessage } from '../services/signalingService';
 
 export interface CallParticipant {
   id: string;
@@ -124,8 +125,7 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const messageCallbackRef = useRef<((message: string) => void) | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const currentUserIdRef = useRef<string>(`user-${Math.random().toString(36).substr(2, 9)}`);
+  const currentUserIdRef = useRef<string>(signalingService.getCurrentUserId());
   const pendingSignalsRef = useRef<any[]>([]);
 
   const isInCall = callStatus === 'connected';
@@ -156,14 +156,11 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsRecording(false);
     }
 
-    // Leave WebSocket room
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          type: 'leave-room',
-          roomId: currentCall?.id,
-        })
-      );
+    // Leave signaling room
+    if (signalingService.isConnected()) {
+      signalingService.leaveRoom().catch((error) => {
+        console.error('Error leaving signaling room:', error);
+      });
     }
 
     // Clear any buffered signals
@@ -178,112 +175,79 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setParticipants([]);
   }, [isRecording, currentCall?.id]);
 
-  // WebSocket connection setup
+  // Signaling service setup
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/signaling`;
+    // Set up signaling callbacks
+    const signalingCallbacks = {
+      onOffer: (message: SignalingMessage) => {
+        if (peerRef.current && !peerRef.current.destroyed) {
+          try {
+            peerRef.current.signal(message.data);
+          } catch (error) {
+            console.error('Error processing offer:', error);
+          }
+        } else {
+          // Buffer the offer until peer is created
+          pendingSignalsRef.current.push(message.data);
 
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {};
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-
-        switch (message.type) {
-          case 'joined-room':
-            break;
-
-          case 'user-joined':
-            break;
-
-          case 'user-left':
-            break;
-
-          case 'offer':
-            if (peerRef.current && !peerRef.current.destroyed) {
-              try {
-                peerRef.current.signal(message.data);
-              } catch (error) {
-                console.error('Error processing offer:', error);
-              }
-            } else {
-              // Buffer the offer until peer is created
-              pendingSignalsRef.current.push(message.data);
-
-              // Auto-create an incoming call notification
-              const incomingCall: CallData = {
-                id: Date.now().toString(),
-                caller: {
-                  id: message.sender,
-                  name: message.sender,
-                  email: `${message.sender}@example.com`,
-                },
-                recipient: {
-                  id: currentUserIdRef.current,
-                  name: 'Current User',
-                  email: 'user@example.com',
-                },
-                startTime: new Date(),
-                status: 'ringing',
-                type: 'video',
-              };
-              setCurrentCall(incomingCall);
-              setCallStatus('ringing');
-            }
-            break;
-
-          case 'answer':
-            if (peerRef.current && !peerRef.current.destroyed) {
-              try {
-                peerRef.current.signal(message.data);
-              } catch (error) {
-                console.error('Error processing answer:', error);
-              }
-            } else {
-              // Buffer the answer
-              pendingSignalsRef.current.push(message.data);
-            }
-            break;
-
-          case 'ice-candidate':
-            if (peerRef.current && !peerRef.current.destroyed) {
-              try {
-                peerRef.current.signal(message.data);
-              } catch (error) {
-                console.error('Error processing ICE candidate:', error);
-              }
-            } else {
-              // Buffer ICE candidates
-              pendingSignalsRef.current.push(message.data);
-            }
-            break;
-
-          case 'error':
-            console.error('❌ Signaling error:', message.error);
-            break;
-
-          default:
-            console.warn('Unknown message type:', message.type);
+          // Auto-create an incoming call notification
+          const incomingCall: CallData = {
+            id: Date.now().toString(),
+            caller: {
+              id: message.sender,
+              name: message.sender,
+              email: `${message.sender}@example.com`,
+            },
+            recipient: {
+              id: currentUserIdRef.current,
+              name: 'Current User',
+              email: 'user@example.com',
+            },
+            startTime: new Date(),
+            status: 'ringing',
+            type: 'video',
+          };
+          setCurrentCall(incomingCall);
+          setCallStatus('ringing');
         }
-      } catch (error) {
-        console.error('Error handling WebSocket message:', error);
-      }
+      },
+
+      onAnswer: (message: SignalingMessage) => {
+        if (peerRef.current && !peerRef.current.destroyed) {
+          try {
+            peerRef.current.signal(message.data);
+          } catch (error) {
+            console.error('Error processing answer:', error);
+          }
+        } else {
+          // Buffer the answer
+          pendingSignalsRef.current.push(message.data);
+        }
+      },
+
+      onIceCandidate: (message: SignalingMessage) => {
+        if (peerRef.current && !peerRef.current.destroyed) {
+          try {
+            peerRef.current.signal(message.data);
+          } catch (error) {
+            console.error('Error processing ICE candidate:', error);
+          }
+        } else {
+          // Buffer ICE candidates
+          pendingSignalsRef.current.push(message.data);
+        }
+      },
+
+      onError: (error: Error) => {
+        console.error('❌ Signaling error:', error);
+      },
     };
 
-    ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-    };
-
-    ws.onclose = () => {};
-
-    wsRef.current = ws;
+    // Note: We don't set up the signaling service here because it will be set up
+    // when we join a room for a specific call. The service maintains its own connection.
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
-      }
+      // Cleanup will be handled by the signaling service when leaving rooms
     };
   }, []);
 
@@ -382,28 +346,30 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     []
   );
 
-  // WebSocket signaling - real peer-to-peer communication
-  const handleSignaling = useCallback(
-    (signal: any, isInitiator: boolean) => {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket not connected, cannot send signal');
-        return;
-      }
+  // Supabase Realtime signaling - real peer-to-peer communication
+  const handleSignaling = useCallback(async (signal: any, isInitiator: boolean) => {
+    if (!signalingService.isConnected()) {
+      console.error('Signaling service not connected, cannot send signal');
+      return;
+    }
 
+    try {
       // Send signal to signaling server
       const messageType =
-        signal.type === 'offer' ? 'offer' : signal.type === 'answer' ? 'answer' : 'ice-candidate';
+        signal.type === 'offer'
+          ? ('offer' as const)
+          : signal.type === 'answer'
+            ? ('answer' as const)
+            : ('ice-candidate' as const);
 
-      wsRef.current.send(
-        JSON.stringify({
-          type: messageType,
-          roomId: currentCall?.id || 'default-room',
-          data: signal,
-        })
-      );
-    },
-    [currentCall?.id]
-  );
+      await signalingService.sendSignalingMessage({
+        type: messageType,
+        data: signal,
+      });
+    } catch (error) {
+      console.error('Error sending signaling message:', error);
+    }
+  }, []);
 
   // Create peer connection with real WebRTC
   const createPeer = useCallback(
@@ -554,18 +520,48 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         setCurrentCall(callData);
 
-        // Join WebSocket room
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(
-            JSON.stringify({
-              type: 'join-room',
-              roomId: callData.id,
-              userId: currentUserIdRef.current,
-            })
-          );
-        } else {
-          throw new Error('WebSocket not connected');
-        }
+        // Join signaling room
+        await signalingService.joinRoom(callData.id, {
+          onOffer: (message) => {
+            if (peerRef.current && !peerRef.current.destroyed) {
+              try {
+                peerRef.current.signal(message.data);
+              } catch (error) {
+                console.error('Error processing offer:', error);
+              }
+            } else {
+              // Buffer the offer until peer is created
+              pendingSignalsRef.current.push(message.data);
+            }
+          },
+          onAnswer: (message) => {
+            if (peerRef.current && !peerRef.current.destroyed) {
+              try {
+                peerRef.current.signal(message.data);
+              } catch (error) {
+                console.error('Error processing answer:', error);
+              }
+            } else {
+              // Buffer the answer
+              pendingSignalsRef.current.push(message.data);
+            }
+          },
+          onIceCandidate: (message) => {
+            if (peerRef.current && !peerRef.current.destroyed) {
+              try {
+                peerRef.current.signal(message.data);
+              } catch (error) {
+                console.error('Error processing ICE candidate:', error);
+              }
+            } else {
+              // Buffer ICE candidates
+              pendingSignalsRef.current.push(message.data);
+            }
+          },
+          onError: (error) => {
+            console.error('❌ Signaling error:', error);
+          },
+        });
 
         // Get real user media
         const stream = await getUserMedia(type === 'video', true);
@@ -765,18 +761,48 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!currentCall) return;
 
     try {
-      // Join WebSocket room
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(
-          JSON.stringify({
-            type: 'join-room',
-            roomId: currentCall.id,
-            userId: currentUserIdRef.current,
-          })
-        );
-      } else {
-        throw new Error('WebSocket not connected');
-      }
+      // Join signaling room
+      await signalingService.joinRoom(currentCall.id, {
+        onOffer: (message) => {
+          if (peerRef.current && !peerRef.current.destroyed) {
+            try {
+              peerRef.current.signal(message.data);
+            } catch (error) {
+              console.error('Error processing offer:', error);
+            }
+          } else {
+            // Buffer the offer
+            pendingSignalsRef.current.push(message.data);
+          }
+        },
+        onAnswer: (message) => {
+          if (peerRef.current && !peerRef.current.destroyed) {
+            try {
+              peerRef.current.signal(message.data);
+            } catch (error) {
+              console.error('Error processing answer:', error);
+            }
+          } else {
+            // Buffer the answer
+            pendingSignalsRef.current.push(message.data);
+          }
+        },
+        onIceCandidate: (message) => {
+          if (peerRef.current && !peerRef.current.destroyed) {
+            try {
+              peerRef.current.signal(message.data);
+            } catch (error) {
+              console.error('Error processing ICE candidate:', error);
+            }
+          } else {
+            // Buffer ICE candidates
+            pendingSignalsRef.current.push(message.data);
+          }
+        },
+        onError: (error) => {
+          console.error('❌ Signaling error:', error);
+        },
+      });
 
       // Get real user media
       const stream = await getUserMedia(currentCall.type === 'video', true);

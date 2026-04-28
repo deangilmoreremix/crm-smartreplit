@@ -11,14 +11,34 @@ export default defineConfig({
   root: "client",                // tell Vite where index.html is
   plugins: [
     react(),
-    // Disable federation in development to avoid remote loading issues
+    // Only enable federation in production to avoid development issues
+    ...(process.env.NODE_ENV === 'production' ? [
+      federation({
+        name: 'host',
+        remotes: {
+          PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
+          AnalyticsApp: 'https://analytics.smartcrm.vip/assets/remoteEntry.js',
+          ContactsApp: 'https://contacts.smartcrm.vip/assets/remoteEntry.js',
+          CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
+          AIGoalsApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',
+        },
+        shared: {
+          react: {
+            singleton: true,
+            requiredVersion: '^18.0.0'
+          },
+          'react-dom': {
+            singleton: true,
+            requiredVersion: '^18.0.0'
+          }
+        }
+      })
+    ] : [])
   ],
   server: {
     host: '0.0.0.0',
     port: 5173, // Use Vite's default port instead of conflicting with main server
-    hmr: {
-      port: 24678,
-    },
+    hmr: false, // Disable HMR entirely in Codespaces to avoid WebSocket issues
   },
   resolve: {
     alias: {

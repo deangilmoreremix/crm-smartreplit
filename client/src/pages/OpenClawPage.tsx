@@ -22,6 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import OpenClawFeatureGate from '../components/OpenClawFeatureGate';
+import { useOpenClawStatus } from '../hooks/useOpenClawStatus';
 import {
   Brain,
   MessageSquare,
@@ -192,6 +194,7 @@ const ChatMessageComponent: React.FC<{ message: ChatMessage }> = ({ message }) =
 const OpenClawPage: React.FC = () => {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { status: openClawStatus } = useOpenClawStatus();
 
   // State
   const [healthStatus, setHealthStatus] = useState<OpenClawHealthStatus | null>(null);
@@ -403,6 +406,21 @@ const OpenClawPage: React.FC = () => {
 
   // Group tools by category
   const toolsByCategory = openclawService.getToolsByCategory();
+
+  // Feature gate check - require API key
+  if (!openClawStatus.hasApiKey) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-8">
+        <OpenClawFeatureGate
+          feature="OpenClaw AI Chat"
+          onSetupClick={() => {
+            // Dispatch event to show setup modal
+            window.dispatchEvent(new CustomEvent('openclaw-setup-requested'));
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
