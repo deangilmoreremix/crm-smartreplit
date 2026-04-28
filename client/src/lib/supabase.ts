@@ -52,6 +52,11 @@ if (supabaseIsConfigured) {
       detectSessionInUrl: true,
       flowType: 'pkce',
       storageKey: 'smartcrm-auth-token',
+      cookieOptions: {
+        domain: '.smartcrm.vip',
+        path: '/',
+        sameSite: 'lax',
+      },
     },
   });
 
