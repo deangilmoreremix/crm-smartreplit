@@ -7,10 +7,10 @@ const AIGoalsWithRemote: React.FC = () => {
   const { isDark } = useTheme();
 
   return (
-    <div className="w-full overflow-hidden relative" style={{ height: 'calc(100vh - 80px)' }}>
-      {/* Full Screen AI Goals Component - Positioned below navbar */}
+    <div className="fixed inset-0 w-full overflow-hidden z-40">
+      {/* Full Screen AI Goals Component - Module Federation */}
       <div className="h-full w-full">
-        <ModuleFederationAIGoals showHeader={false} />
+        <ModuleFederationAIGoals />
 
         {/* Module Federation Status Indicator - Floating */}
         <div className="absolute top-4 right-4 z-30">

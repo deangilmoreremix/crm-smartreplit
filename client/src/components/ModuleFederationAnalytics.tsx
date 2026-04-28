@@ -1,32 +1,41 @@
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Only import remote modules if MFE is enabled
-let RemoteAnalyticsApp: React.ComponentType<any>;
+// Remote configuration
+const ANALYTICS_REMOTE_URL = 'https://analytics.smartcrm.vip';
+const ANALYTICS_SCOPE = 'analytics_app';
+const ANALYTICS_MODULE = './AnalyticsApp';
 
-if (ENABLE_MFE) {
-  RemoteAnalyticsApp = lazy(() =>
-    import('AnalyticsApp/AnalyticsApp').catch(() => ({
-      default: LocalAnalyticsDashboard,
-    }))
+const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({
+  showHeader = false,
+}) => {
+  const {
+    component: RemoteAnalyticsApp,
+    loading,
+    error,
+  } = useRemoteComponent(
+    ENABLE_MFE ? ANALYTICS_REMOTE_URL : null,
+    ANALYTICS_SCOPE,
+    ANALYTICS_MODULE
   );
-} else {
-  RemoteAnalyticsApp = LocalAnalyticsDashboard;
-}
 
-// Local development analytics dashboard
-const LocalAnalyticsDashboard: React.FC = () => {
-  const [selectedMetric, setSelectedMetric] = React.useState('revenue');
-  const [timeRange, setTimeRange] = React.useState('30d');
+  if (!ENABLE_MFE || error) {
+    return <LocalAnalyticsDashboard />;
+  }
 
-  const metrics = {
-    revenue: { value: '$124,583', change: '+12.5%', trend: 'up', color: 'text-green-600' },
-    users: { value: '8,492', change: '+8.3%', trend: 'up', color: 'text-blue-600' },
-    conversion: { value: '3.24%', change: '-0.8%', trend: 'down', color: 'text-red-600' },
-    sessions: { value: '24,891', change: '+15.2%', trend: 'up', color: 'text-purple-600' },
-  };
+  if (loading || !RemoteAnalyticsApp) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading Analytics Module...</p>
+        </div>
+      </div>
+    );
+  }
 
   const chartData = [
     { month: 'Jan', revenue: 85000, users: 6500 },

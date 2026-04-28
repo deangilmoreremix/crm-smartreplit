@@ -13,12 +13,12 @@ const ContactsWorking: React.FC = () => {
   ];
 
   return (
-    <div
-      className="absolute inset-0 w-full overflow-hidden"
-      style={{ top: '80px', height: 'calc(100vh - 80px)' }}
-    >
+    <div className="fixed inset-0 w-full overflow-hidden z-40">
       {/* Tab Navigation */}
-      <div className={`border-b ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'} px-6 py-3`}>
+      <div
+        className={`border-b ${isDark ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'} px-6 py-3`}
+        style={{ position: 'relative', zIndex: 10 }}
+      >
         <nav className="flex space-x-8">
           {tabs.map((tab) => (
             <button
@@ -28,8 +28,8 @@ const ContactsWorking: React.FC = () => {
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
                   : isDark
-                  ? 'border-transparent text-gray-400 hover:text-gray-300'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? 'border-transparent text-gray-400 hover:text-gray-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <span>{tab.icon}</span>
@@ -55,8 +55,8 @@ const ContactsWorking: React.FC = () => {
                   Contact AI Analytics & Insights
                 </h2>
                 <p className="text-gray-600">
-                  AI-powered recommendations and analytics for your contact management.
-                  Get intelligent insights to improve engagement and conversion rates.
+                  AI-powered recommendations and analytics for your contact management. Get
+                  intelligent insights to improve engagement and conversion rates.
                 </p>
               </div>
 
