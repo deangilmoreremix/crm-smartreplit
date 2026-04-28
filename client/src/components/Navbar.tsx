@@ -291,13 +291,18 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
   // Business Intelligence Tools - Dropdown Items
   const businessIntelligenceTools = [
-    { name: 'KPI Analysis', tool: 'business-kpi', icon: BarChart3 },
-    { name: 'Deal Intelligence', tool: 'business-deals', icon: Briefcase },
-    { name: 'Contact Analytics', tool: 'business-contacts', icon: Users },
-    { name: 'Task Intelligence', tool: 'business-tasks', icon: CheckSquare },
-    { name: 'Revenue Forecast', tool: 'business-revenue', icon: TrendingUp },
-    { name: 'Productivity Metrics', tool: 'business-productivity', icon: Activity },
-    { name: 'AI Business Insights', tool: 'business-insights', icon: Brain },
+    { name: 'KPI Analysis', url: '/analytics/kpi', icon: BarChart3, isExternal: false },
+    { name: 'Deal Intelligence', url: '/analytics/deals', icon: Briefcase, isExternal: false },
+    { name: 'Contact Analytics', url: '/analytics/contacts', icon: Users, isExternal: false },
+    { name: 'Task Intelligence', url: '/analytics/tasks', icon: CheckSquare, isExternal: false },
+    { name: 'Revenue Forecast', url: '/analytics/revenue', icon: TrendingUp, isExternal: false },
+    {
+      name: 'Productivity Metrics',
+      url: '/analytics/productivity',
+      icon: Activity,
+      isExternal: false,
+    },
+    { name: 'AI Business Insights', url: '/analytics/insights', icon: Brain, isExternal: false },
     { name: 'External Analytics', url: '/business-analytics', icon: Globe, isExternal: false },
   ];
 
