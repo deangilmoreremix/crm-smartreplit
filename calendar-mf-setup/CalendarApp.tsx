@@ -14,6 +14,7 @@ interface CalendarAppProps {
     appointments?: any[];
     contacts?: any[];
     user?: any;
+    isAuthenticated?: boolean;
   };
   onDataUpdate?: (data: any) => void;
 }

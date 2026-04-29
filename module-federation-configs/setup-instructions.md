@@ -31,31 +31,66 @@ npm install @originjs/vite-plugin-federation
 Modify your main `src/App.tsx` or create a new entry point that exports the Module Federation component:
 
 ```tsx
-// Example for contacts app
-import ContactsApp from './ContactsApp';
+// Example for analytics app
+import AnalyticsApp from './AnalyticsApp';
 
 // Export for Module Federation
-export default ContactsApp;
+export default AnalyticsApp;
 
 // Also render normally for standalone use
 import { createRoot } from 'react-dom/client';
 
 const root = createRoot(document.getElementById('root')!);
-root.render(<ContactsApp />);
+root.render(<AnalyticsApp />);
 ```
 
-### 5. Build and Deploy
+### 5. Update Authentication to Use Shared State
+
+**IMPORTANT**: When loaded as Module Federation remotes, apps should use the shared authentication state from the parent CRM instead of their own authentication system.
+
+Update your app components to check for `sharedData.user` and `sharedData.isAuthenticated` first before falling back to local authentication:
+
+```tsx
+// In your app component (ContactsApp, PipelineApp, etc.)
+const YourApp: React.FC<{ sharedData?: any }> = ({ sharedData }) => {
+  // Check if we have authentication from parent app
+  const isAuthenticatedViaParent = sharedData?.isAuthenticated && sharedData?.user;
+  const userFromParent = sharedData?.user;
+
+  // If authenticated via parent, skip local auth checks
+  if (isAuthenticatedViaParent) {
+    return <YourMainComponent user={userFromParent} />;
+  }
+
+  // Fallback to local authentication for standalone use
+  return <YourAuthComponent />;
+};
+```
+
+For Supabase-based apps, still include environment variables for standalone deployment:
+
+```env
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+### 6. Build and Deploy
 
 ```bash
 npm run build
 ```
 
+**Important for Analytics App:** Deploy with the `_headers` file to allow public access to `remoteEntry.js`:
+
+- Copy `_headers` to your build output directory (usually `dist/`)
+- Or configure your deployment platform (Netlify/Vercel) to allow public access to `/assets/*`
+
 After deployment, each app will expose:
 
-- `https://taupe-sprinkles-83c9ee.netlify.app/remoteEntry.js`
-- `https://cheery-syrniki-b5b6ca.netlify.app/remoteEntry.js`
-- `https://resilient-frangipane-6289c8.netlify.app/remoteEntry.js`
-- `https://calendar.smartcrm.vip/remoteEntry.js`
+- `https://contacts.smartcrm.vip/assets/remoteEntry.js`
+- `https://pipeline.smartcrm.vip/assets/remoteEntry.js`
+- `https://ai-analytics.smartcrm.vip/assets/remoteEntry.js`
+- `https://calendar.smartcrm.vip/assets/remoteEntry.js`
 
 ## Testing Module Federation
 

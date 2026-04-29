@@ -2,6 +2,13 @@
 // File: src/AnalyticsApp.tsx (for analytics app)
 
 import React, { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client with same config as host app
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface AnalyticsData {
   totalContacts: number;
@@ -16,11 +23,19 @@ interface AnalyticsData {
 }
 
 interface AnalyticsAppProps {
+  sharedData?: {
+    user?: any;
+    isAuthenticated?: boolean;
+  };
   onInsightGenerated?: (insight: any) => void;
   initialData?: Partial<AnalyticsData>;
 }
 
-const AnalyticsApp: React.FC<AnalyticsAppProps> = ({ onInsightGenerated, initialData = {} }) => {
+const AnalyticsApp: React.FC<AnalyticsAppProps> = ({
+  sharedData,
+  onInsightGenerated,
+  initialData = {},
+}) => {
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalContacts: 0,
     totalDeals: 0,
@@ -33,6 +48,49 @@ const AnalyticsApp: React.FC<AnalyticsAppProps> = ({ onInsightGenerated, initial
     revenueByMonth: [],
     ...initialData,
   });
+
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      // FIRST: Check if we have shared auth from parent CRM (Module Federation mode)
+      if (sharedData?.isAuthenticated && sharedData?.user) {
+        setUser(sharedData.user);
+        setLoading(false);
+        return;
+      }
+
+      // FALLBACK: Check local Supabase auth for standalone direct access
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes (only needed for standalone mode)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only update if not in Module Federation mode (no sharedData)
+      if (!sharedData?.isAuthenticated) {
+        setUser(session?.user || null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [sharedData]);
 
   // Listen for messages from parent CRM
   useEffect(() => {
@@ -88,6 +146,33 @@ const AnalyticsApp: React.FC<AnalyticsAppProps> = ({ onInsightGenerated, initial
   const formatPercentage = (value: number) => {
     return `${Math.round(value)}%`;
   };
+
+  // Show loading
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
+          <p className="text-gray-600 mb-4">Please log in to access Analytics</p>
+          <button
+            onClick={() => supabase.auth.signInWithOAuth({ provider: 'google' })}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Sign In with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">

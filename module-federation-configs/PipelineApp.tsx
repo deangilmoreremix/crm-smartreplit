@@ -19,6 +19,11 @@ interface Deal {
 }
 
 interface PipelineAppProps {
+  sharedData?: {
+    user?: any;
+    isAuthenticated?: boolean;
+    deals?: Deal[];
+  };
   onDealSelect?: (deal: Deal) => void;
   onDealCreate?: (deal: Deal) => void;
   onDealUpdate?: (deal: Deal) => void;
@@ -27,6 +32,7 @@ interface PipelineAppProps {
 }
 
 const PipelineApp: React.FC<PipelineAppProps> = ({
+  sharedData,
   onDealSelect,
   onDealCreate,
   onDealUpdate,

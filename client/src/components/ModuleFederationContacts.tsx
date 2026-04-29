@@ -9,18 +9,8 @@ const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Remote configuration
 const CONTACTS_REMOTE_URL = 'https://contacts.smartcrm.vip';
-const CONTACTS_SCOPE = 'contacts_app';
+const CONTACTS_SCOPE = 'ContactsApp';
 const CONTACTS_MODULE = './ContactsApp';
-
-// Only import remote modules if MFE is enabled
-let RemoteContactsApp: React.ComponentType<any>;
-
-if (ENABLE_MFE) {
-  // Will use dynamic loading via useRemoteComponent hook
-  RemoteContactsApp = () => null; // Placeholder, actual loading handled in component
-} else {
-  RemoteContactsApp = LocalContactsFallback;
-}
 
 // Local fallback component when Module Federation is not available
 const LocalContactsFallback: React.FC = () => {
@@ -166,6 +156,7 @@ const ModuleFederationContactsContainer: React.FC<ModuleFederationContactsProps>
     );
   }
 
+  const sharedData = useSharedModuleState((state) => state.sharedData);
   const ContactsApp = RemoteContactsApp as React.ComponentType<any>;
 
   return (
@@ -188,81 +179,10 @@ const ModuleFederationContactsContainer: React.FC<ModuleFederationContactsProps>
         </div>
       )}
       <div className="flex-1 overflow-auto">
-        <ContactsApp />
+        <ContactsApp sharedData={sharedData} />
       </div>
     </div>
   );
-};
-
-const ContactsApp: React.FC = () => {
-  if (!ENABLE_MFE) {
-    return <LocalContactsFallback />;
-  }
-
-  return (
-    <Suspense
-      fallback={
-        <div className="w-full h-full flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading Contacts Module...</p>
-          </div>
-        </div>
-      }
-    >
-      <RemoteContactsApp theme="light" mode="light" />
-    </Suspense>
-  );
-};
-
-const ModuleFederationContacts: React.FC = () => {
-  const [RemoteContacts, setRemoteContacts] = useState<React.ComponentType | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadRemote = async () => {
-      if (!ENABLE_MFE) {
-        setError('MFE disabled');
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const Component = await loadRemoteComponent<React.ComponentType>(
-          REMOTE_URL,
-          REMOTE_SCOPE,
-          REMOTE_MODULE
-        );
-        setRemoteContacts(() => Component);
-        setIsLoading(false);
-      } catch (err) {
-        console.warn('Contacts MF load failed, using fallback:', err);
-        setError('Failed to load remote module');
-        setIsLoading(false);
-      }
-    };
-
-    loadRemote();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Contacts Module...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !RemoteContacts) {
-    return <LocalContactsFallback />;
-  }
-
-  const sharedData = useSharedModuleState((state) => state.sharedData);
-  return React.createElement(RemoteContacts as any, { theme: 'light', mode: 'light', sharedData });
 };
 
 interface ModuleFederationContactsProps {

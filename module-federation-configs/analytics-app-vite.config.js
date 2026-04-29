@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     federation({
       name: 'AnalyticsApp',
-      filename: 'remoteEntry.js',
+      filename: 'assets/remoteEntry.js',
       exposes: {
         './AnalyticsApp': './src/AnalyticsApp.tsx',
         './InsightsModule': './src/InsightsModule.tsx'
@@ -35,7 +35,7 @@ export default defineConfig({
       external: [],
       output: {
         format: 'systemjs',
-        entryFileNames: 'remoteEntry.js',
+        entryFileNames: 'assets/remoteEntry.js',
         minifyInternalExports: false
       }
     }

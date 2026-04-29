@@ -1,4 +1,5 @@
-// Dynamic Module Federation Loader - Works without Vite config changes
+// Dynamic Module Federation Loader - Updated for ES Module remoteEntry.js
+// Uses dynamic import() to load ESM-based remoteEntry from Vite Module Federation
 
 export interface RemoteModuleConfig {
   url: string;
@@ -11,29 +12,16 @@ interface ModuleContainer {
   get(module: string): Promise<() => unknown>;
 }
 
-declare global {
-  interface Window {
-    [key: string]: ModuleContainer;
-  }
-}
-
 class DynamicModuleFederation {
-  private loadedScripts = new Set<string>();
-  private loadedContainers = new Map<string, ModuleContainer>();
+  private loadedRemotes = new Map<string, ModuleContainer>();
 
   async loadRemoteModule<T = unknown>(config: RemoteModuleConfig): Promise<T> {
     const { url, scope, module } = config;
 
-    // Load the remote script if not already loaded
-    if (!this.loadedScripts.has(url)) {
-      await this.loadScript(url);
-      this.loadedScripts.add(url);
-    }
+    // Load/reuse the remote entry container
+    const container = await this.getOrLoadContainer(url);
 
-    // Get the container
-    const container = await this.getContainer(scope);
-
-    // Initialize container with shared dependencies
+    // Initialize container with shared dependencies (idempotent)
     await this.initContainer(container);
 
     // Get the module factory
@@ -43,134 +31,62 @@ class DynamicModuleFederation {
     return (Module.default || Module) as T;
   }
 
-  private async loadScript(url: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Try different possible script URLs (root path FIRST for optimal config)
-      const possibleUrls = [
-        url.endsWith('.js') ? url : `${url}/remoteEntry.js`, // Root path FIRST (e.g., https://ai-analytics.smartcrm.vip/remoteEntry.js)
-        `${url}/assets/remoteEntry.js`,
-        `${url}/static/js/remoteEntry.js`,
-      ];
-
-      let currentUrlIndex = 0;
-
-      const tryNextUrl = async () => {
-        if (currentUrlIndex >= possibleUrls.length) {
-          const error = new Error(
-            `Failed to load remote script from any of: ${possibleUrls.join(', ')}`
-          );
-          console.error('❌ Module Federation script loading failed:', error);
-          reject(error);
-          return;
-        }
-
-        const scriptUrl = possibleUrls[currentUrlIndex];
-        currentUrlIndex++;
-
-        console.log(`🔄 Trying Module Federation script: ${scriptUrl}`);
-
-        try {
-          const script = document.createElement('script');
-          script.type = 'text/javascript';
-          script.async = true;
-
-          await new Promise<void>((scriptResolve, scriptReject) => {
-            script.onload = () => {
-              console.log(`✅ Module Federation script loaded: ${scriptUrl}`);
-              scriptResolve();
-            };
-
-            script.onerror = (error: Event | string) => {
-              const errorMessage = (error as any)?.message || String(error);
-              const errorDetails = {
-                error: errorMessage,
-                scriptUrl,
-                event: error,
-                timestamp: new Date().toISOString(),
-                userAgent:
-                  typeof navigator !== 'undefined' ? (navigator as Navigator).userAgent : 'unknown',
-                isDev:
-                  window.location.hostname.includes('github.dev') ||
-                  window.location.hostname.includes('localhost'),
-              };
-              console.warn(`❌ Failed to load script from: ${scriptUrl}`, errorDetails);
-
-              // Check if it's a certificate error
-              if (errorMessage.includes('ERR_CERT') || errorMessage.includes('certificate')) {
-                console.warn(
-                  `🔒 Certificate error detected for ${scriptUrl}. This is common in development with self-signed certificates.`
-                );
-              }
-
-              scriptReject(error);
-            };
-
-            // Timeout fallback
-            setTimeout(() => {
-              scriptReject(new Error(`Script load timeout: ${scriptUrl}`));
-            }, 5000);
-
-            script.src = scriptUrl;
-            document.head.appendChild(script);
-          }).catch(() => {
-            // On error, try the next URL
-            tryNextUrl();
-          });
-
-          resolve();
-        } catch (error) {
-          console.error('Error during script load attempt:', error);
-          tryNextUrl();
-        }
-      };
-
-      tryNextUrl();
-    });
-  }
-
-  private async getContainer(scope: string): Promise<ModuleContainer> {
-    if (this.loadedContainers.has(scope)) {
-      console.log(`♻️ Using cached Module Federation container: ${scope}`);
-      return this.loadedContainers.get(scope)!;
+  private async getOrLoadContainer(url: string): Promise<ModuleContainer> {
+    // Reuse cached container if available
+    if (this.loadedRemotes.has(url)) {
+      console.log(`♻️ Using cached Module Federation container: ${url}`);
+      return this.loadedRemotes.get(url)!;
     }
 
-    // Wait for the global to be available (reduced for faster fallback)
-    let retries = 0;
-    const maxRetries = 20; // 2 seconds max wait
+    // Try multiple possible remoteEntry.js locations
+    const possibleUrls = this.buildPossibleUrls(url);
 
-    console.log(`🔍 Looking for Module Federation container: ${scope}`);
+    for (let i = 0; i < possibleUrls.length; i++) {
+      const remoteEntryUrl = possibleUrls[i];
+      try {
+        console.log(`🔄 Attempting to load Module Federation remoteEntry from: ${remoteEntryUrl}`);
+        // Use dynamic import to load ES module
+        // @vite-ignore: prevent Vite from trying to analyze the dynamic import
+        const namespace = await import(/* @vite-ignore */ remoteEntryUrl);
 
-    while (!window[scope] && retries < maxRetries) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      retries++;
-
-      if (retries % 10 === 0) {
-        console.log(`⏳ Still waiting for container "${scope}" (${retries}/${maxRetries})`);
+        // The remoteEntry should export init and get functions
+        if (namespace.init && namespace.get) {
+          console.log(`✅ Module Federation remoteEntry loaded successfully: ${remoteEntryUrl}`);
+          this.loadedRemotes.set(url, namespace as ModuleContainer);
+          return namespace as ModuleContainer;
+        } else {
+          console.warn(`⚠️ RemoteEntry at ${remoteEntryUrl} missing init/get exports`);
+          continue;
+        }
+      } catch (err) {
+        console.warn(`❌ Failed to load remoteEntry from ${remoteEntryUrl}:`, err);
+        continue;
       }
     }
 
-    if (!window[scope]) {
-      const availableContainers = Object.keys(window).filter(
-        (key) =>
-          typeof window[key] === 'object' &&
-          window[key] !== null &&
-          typeof (window[key] as any).get === 'function'
-      );
-      const error = new Error(
-        `Remote container "${scope}" not found. Available containers: ${availableContainers.join(', ') || 'none'}`
-      );
-      console.error('❌ Module Federation container not found:', error);
-      throw error;
+    const errorMsg = `Failed to load Module Federation remoteEntry from all attempted URLs: ${possibleUrls.join(', ')}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  private buildPossibleUrls(baseUrl: string): string[] {
+    const urls = [];
+
+    // If the URL already ends with .js, treat it as direct remoteEntry
+    if (baseUrl.endsWith('.js')) {
+      urls.push(baseUrl);
+    } else {
+      // Try common locations
+      urls.push(`${baseUrl}/remoteEntry.js`);
+      urls.push(`${baseUrl}/assets/remoteEntry.js`);
+      urls.push(`${baseUrl}/static/js/remoteEntry.js`);
     }
 
-    console.log(`✅ Module Federation container found: ${scope}`);
-    const container = window[scope] as ModuleContainer;
-    this.loadedContainers.set(scope, container);
-    return container;
+    return urls;
   }
 
   private async initContainer(container: ModuleContainer): Promise<void> {
-    // Get shared dependencies dynamically
+    // Shared dependencies - these will be resolved from host app
     const shared = {
       react: () => import('react'),
       'react-dom': () => import('react-dom'),
@@ -180,7 +96,7 @@ class DynamicModuleFederation {
     await container.init(shared);
   }
 
-  // Preload a remote module for better performance
+  // Preload a remote module
   async preloadRemoteModule(config: RemoteModuleConfig): Promise<void> {
     try {
       await this.loadRemoteModule(config);
@@ -191,8 +107,7 @@ class DynamicModuleFederation {
 
   // Clear cache if needed
   clearCache(): void {
-    this.loadedScripts.clear();
-    this.loadedContainers.clear();
+    this.loadedRemotes.clear();
   }
 }
 

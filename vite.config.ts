@@ -17,7 +17,7 @@ export default defineConfig({
         name: 'host',
         remotes: {
           PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
-          AnalyticsApp: 'https://analytics.smartcrm.vip/assets/remoteEntry.js',
+          AnalyticsApp: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
           ContactsApp: 'https://contacts.smartcrm.vip/assets/remoteEntry.js',
           CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
           AIGoalsApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',

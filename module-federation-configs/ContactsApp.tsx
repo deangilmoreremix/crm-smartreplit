@@ -17,6 +17,11 @@ interface Contact {
 }
 
 interface ContactsAppProps {
+  sharedData?: {
+    user?: any;
+    isAuthenticated?: boolean;
+    contacts?: Contact[];
+  };
   onContactSelect?: (contact: Contact) => void;
   onContactCreate?: (contact: Contact) => void;
   onContactUpdate?: (contact: Contact) => void;
@@ -25,6 +30,7 @@ interface ContactsAppProps {
 }
 
 const ContactsApp: React.FC<ContactsAppProps> = ({
+  sharedData,
   onContactSelect,
   onContactCreate,
   onContactUpdate,

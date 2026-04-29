@@ -1,13 +1,16 @@
 import React, { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRemoteComponent } from '../utils/dynamicModuleFederation';
-import { moduleFederationOrchestrator } from '../utils/moduleFederationOrchestrator';
+import {
+  moduleFederationOrchestrator,
+  useSharedModuleState,
+} from '../utils/moduleFederationOrchestrator';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Remote configuration
+// Remote configuration - try both root and assets paths
 const PIPELINE_REMOTE_URL = 'https://pipeline.smartcrm.vip';
-const PIPELINE_SCOPE = 'pipeline_app';
+const PIPELINE_SCOPE = 'PipelineApp';
 const PIPELINE_MODULE = './PipelineApp';
 
 // Local fallback component
@@ -53,6 +56,7 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
     );
   }
 
+  const sharedData = useSharedModuleState((state) => state.sharedData);
   const PipelineApp = RemotePipelineApp as React.ComponentType<any>;
 
   return (
@@ -75,7 +79,7 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
         </div>
       )}
       <div className="flex-1 h-full">
-        <PipelineApp />
+        <PipelineApp sharedData={sharedData} />
       </div>
     </div>
   );

@@ -1,0 +1,117 @@
+
+🔍 Module Federation Integration Test
+
+Base URL: https://app.smartcrm.vip
+Timestamp: 2026-04-29T12:16:44.246Z
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 Testing Routes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Testing: Contacts MFE (/contacts)
+  ✅ Status 200 OK
+  ✅ No "Module Unavailable" fallback detected
+  ⚠️ Page title may be incorrect: "SmartCRM - AI-Powered Sales Platform"
+  Status: PASSED
+
+Testing: Pipeline MFE (/pipeline)
+  ✅ Status 200 OK
+  ✅ No "Module Unavailable" fallback detected
+  ⚠️ Page title may be incorrect: "SmartCRM - AI-Powered Sales Platform"
+  Status: PASSED
+
+Testing: Calendar MFE (/calendar)
+  ✅ Status 200 OK
+  ✅ No "Module Unavailable" fallback detected
+  ⚠️ Page title may be incorrect: "SmartCRM - AI-Powered Sales Platform"
+  Status: PASSED
+
+Testing: AI Goals (Coming Soon) (/ai-goals)
+  ✅ Status 200 OK
+  ✅ No "Module Unavailable" fallback detected
+  ✅ Page title: "SmartCRM - AI-Powered Sales Platform"
+  ⚠️ Expected "Coming Soon" message not found
+  Status: PASSED
+
+Testing: Analytics Iframe (/analytics-remote)
+  ✅ Status 200 OK
+  ✅ No "Module Unavailable" fallback detected
+  ⚠️ Page title may be incorrect: "SmartCRM - AI-Powered Sales Platform"
+  ❌ Expected iframe not found
+  Status: FAILED
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦 Testing RemoteEntry.js Files
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Testing: Contacts
+  ✅ remoteEntry.js accessible (200)
+  ❌ Request failed: Cannot read properties of undefined (reading 'push')
+  Status: ERROR
+  CORS: Missing
+
+Testing: Pipeline
+  ✅ remoteEntry.js accessible (200)
+  ✅ access-control-allow-origin: *
+  ✅ access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+  ✅ access-control-allow-headers: Content-Type, Authorization
+  ✅ Content-Type is JavaScript
+  ✅ Appears to be valid Module Federation remoteEntry
+  Status: PASSED
+  CORS: Present
+
+Testing: Calendar
+  ✅ remoteEntry.js accessible (200)
+  ✅ access-control-allow-origin: *
+  ✅ access-control-allow-methods: GET, POST, PUT, DELETE, OPTIONS
+  ✅ access-control-allow-headers: Content-Type, Authorization, X-Client-Info, Apikey
+  ✅ Content-Type is JavaScript
+  ✅ Appears to be valid Module Federation remoteEntry
+  Status: PASSED
+  CORS: Present
+
+Testing: Agency (AI Goals)
+  ❌ Expected 200, got 404
+  Status: FAILED
+  CORS: Missing
+
+Testing: Analytics
+  ✅ remoteEntry.js accessible (200)
+  ❌ Request failed: Cannot read properties of undefined (reading 'push')
+  Status: ERROR
+  CORS: Missing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🖼️  Testing Excluded Iframes (Optional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Testing: FunnelCraft AI
+  ❌ Request failed: getaddrinfo ENOTFOUND landing.smartcrm.vip
+  Status: ERROR
+
+Testing: SmartCRM Closer
+  ❌ Request failed: read ECONNRESET
+  Status: ERROR
+
+════════════════════════════════════════════════════════════
+📊 TEST REPORT
+════════════════════════════════════════════════════════════
+
+Base URL: https://app.smartcrm.vip
+Total: 12 tests
+✅ Passed: 6
+❌ Failed: 6
+⚠️  Warnings: 5
+
+🔴 FAILED ITEMS:
+  • Analytics Iframe (/analytics-remote): ❌ Expected iframe not found
+  • Agency (AI Goals) remoteEntry: ❌ Expected 200, got 404
+
+💡 RECOMMENDATIONS:
+  • Verify that all MFE apps are deployed and accessible
+  • Check that remoteEntry.js files are at the correct paths
+  • Ensure CORS headers are properly configured on remote servers
+  • Confirm VITE_ENABLE_MFE=true is set in production environment
+  • Check NODE_ENV=production (MFEs only load in production mode per vite.config.ts:15)
+
+

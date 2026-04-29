@@ -1,12 +1,13 @@
 import React, { Suspense } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useRemoteComponent } from '../utils/dynamicModuleFederation';
+import { useSharedModuleState } from '../utils/moduleFederationOrchestrator';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Remote configuration
 const CALENDAR_REMOTE_URL = 'https://calendar.smartcrm.vip';
-const CALENDAR_SCOPE = 'calendar_app';
+const CALENDAR_SCOPE = 'CalendarApp';
 const CALENDAR_MODULE = './CalendarApp';
 
 const ModuleFederationCalendar: React.FC<ModuleFederationCalendarProps> = ({
@@ -33,6 +34,7 @@ const ModuleFederationCalendar: React.FC<ModuleFederationCalendarProps> = ({
     );
   }
 
+  const sharedData = useSharedModuleState((state) => state.sharedData);
   const CalendarApp = RemoteCalendarApp as React.ComponentType<any>;
 
   return (
@@ -55,7 +57,7 @@ const ModuleFederationCalendar: React.FC<ModuleFederationCalendarProps> = ({
         </div>
       )}
       <div className="flex-1 overflow-auto">
-        <CalendarApp theme="light" mode="light" />
+        <CalendarApp theme="light" mode="light" sharedData={sharedData} />
       </div>
     </div>
   );
