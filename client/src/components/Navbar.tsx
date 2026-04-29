@@ -285,7 +285,13 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     { name: 'FunnelCraft AI', url: '/funnelcraft-ai', icon: Megaphone, isExternal: false },
     { name: 'SmartCRM Closer', url: '/smartcrm-closer', icon: Users, isExternal: false },
     { name: 'ContentAI', url: '/content-ai', icon: FileText, isExternal: false },
-    { name: 'OpenClaw AI Chat', url: '/openclaw', icon: Bot, isExternal: false },
+    {
+      name: 'OpenClaw AI Chat',
+      url: '/openclaw',
+      icon: Bot,
+      isExternal: false,
+      requiresAccess: 'super_admin',
+    },
   ];
 
   const analyticsOptions = [
@@ -440,6 +446,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       action: (e?: React.MouseEvent) => handleNavigation('/dashboard', 'dashboard'),
       badge: 1,
       color: 'from-indigo-500 to-purple-500',
+      requiresAccess: 'core_crm',
     },
     {
       id: 'contacts',
@@ -448,6 +455,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       action: (e?: React.MouseEvent) => handleNavigation('/contacts', 'contacts'),
       badge: 10,
       color: 'from-purple-500 to-indigo-500',
+      requiresAccess: 'core_crm',
     },
     {
       id: 'pipeline',
@@ -456,6 +464,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       action: (e?: React.MouseEvent) => handleNavigation('/pipeline', 'pipeline'),
       badge: 5,
       color: 'from-green-500 to-emerald-500',
+      requiresAccess: 'core_crm',
     },
     {
       id: 'analytics',
@@ -465,7 +474,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       badge: 30,
       color: 'from-blue-500 to-cyan-500',
       hasDropdown: true,
-      requiresAccess: 'ai_tools', // Requires AI Boost Unlimited
+      requiresAccess: 'analytics', // Requires Analytics feature
     },
     {
       id: 'ai-goals',
@@ -492,6 +501,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       action: (e?: React.MouseEvent) => handleNavigation('/calendar', 'calendar'),
       badge: 15,
       color: 'from-cyan-500 to-blue-500',
+      requiresAccess: 'core_crm',
     },
   ];
 
@@ -522,6 +532,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       badge: communicationTools.length,
       color: 'from-blue-500 to-sky-500',
       badgeColor: 'bg-blue-500',
+      requiresAccess: 'communication_hub',
     },
     // { id: 'sales', label: 'Sales', icon: DollarSign, badge: salesTools.length, color: 'from-green-500 to-teal-500', badgeColor: 'bg-green-500', requiresAccess: 'ai_tools' },
     // { id: 'intel', label: 'Business Intel', icon: BarChart3, badge: 35, color: 'from-amber-500 to-orange-500', badgeColor: 'bg-amber-500', requiresAccess: 'ai_tools' },
@@ -532,7 +543,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       badge: wlApps.length,
       color: 'from-indigo-500 to-purple-500',
       badgeColor: 'bg-indigo-500',
-      requiresAccess: 'ai_tools',
+      requiresAccess: 'white_label_customization',
     },
     {
       id: 'apps',
@@ -1007,48 +1018,52 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                             className={`absolute top-full mt-2 right-0 w-72 ${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl z-[9999] overflow-hidden`}
                           >
                             <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                              {connectedApps.map((app, index) =>
-                                app.isExternal ? (
-                                  <a
-                                    key={index}
-                                    href={app.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`w-full text-left flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
-                                  >
-                                    <div className="flex items-center space-x-3">
-                                      <app.icon
-                                        size={16}
-                                        className="block overflow-visible shrink-0 text-purple-500"
-                                      />
-                                      <span className="text-sm font-medium">{app.name}</span>
-                                    </div>
-                                    <ExternalLink
-                                      size={12}
-                                      className="block overflow-visible shrink-0 opacity-50"
-                                    />
-                                  </a>
-                                ) : (
-                                  <button
-                                    key={index}
-                                    onClick={() => handleNavigation(app.url, 'white-label')}
-                                    className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
-                                  >
-                                    {app.name === 'OpenClaw AI Chat' ? (
-                                      <OpenClawNavbarIndicator
-                                        hasApiKey={openClawStatus.hasApiKey}
-                                        onClick={() => handleNavigation(app.url, 'white-label')}
-                                      />
-                                    ) : (
-                                      <app.icon
-                                        size={16}
-                                        className="block overflow-visible shrink-0 text-purple-500"
-                                      />
-                                    )}
-                                    <span className="text-sm font-medium">{app.name}</span>
-                                  </button>
+                              {connectedApps
+                                .filter(
+                                  (app) => !app.requiresAccess || canAccess(app.requiresAccess)
                                 )
-                              )}
+                                .map((app, index) =>
+                                  app.isExternal ? (
+                                    <a
+                                      key={index}
+                                      href={app.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`w-full text-left flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+                                    >
+                                      <div className="flex items-center space-x-3">
+                                        <app.icon
+                                          size={16}
+                                          className="block overflow-visible shrink-0 text-purple-500"
+                                        />
+                                        <span className="text-sm font-medium">{app.name}</span>
+                                      </div>
+                                      <ExternalLink
+                                        size={12}
+                                        className="block overflow-visible shrink-0 opacity-50"
+                                      />
+                                    </a>
+                                  ) : (
+                                    <button
+                                      key={index}
+                                      onClick={() => handleNavigation(app.url, 'white-label')}
+                                      className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+                                    >
+                                      {app.name === 'OpenClaw AI Chat' ? (
+                                        <OpenClawNavbarIndicator
+                                          hasApiKey={openClawStatus.hasApiKey}
+                                          onClick={() => handleNavigation(app.url, 'white-label')}
+                                        />
+                                      ) : (
+                                        <app.icon
+                                          size={16}
+                                          className="block overflow-visible shrink-0 text-purple-500"
+                                        />
+                                      )}
+                                      <span className="text-sm font-medium">{app.name}</span>
+                                    </button>
+                                  )
+                                )}
                             </div>
                           </div>
                         )}
@@ -1441,42 +1456,47 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
         isDark={isDark}
       >
         <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-          {connectedApps.map((app, index) =>
-            app.isExternal ? (
-              <a
-                key={index}
-                href={app.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  closeDropdown();
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
-                data-testid={`external-app-${app.name.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                <div className="flex items-center space-x-3">
+          {connectedApps
+            .filter((app) => !app.requiresAccess || canAccess(app.requiresAccess))
+            .map((app, index) =>
+              app.isExternal ? (
+                <a
+                  key={index}
+                  href={app.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    closeDropdown();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left flex items-center justify-between p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+                  data-testid={`external-app-${app.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <app.icon
+                      size={16}
+                      className="block overflow-visible shrink-0 text-purple-500"
+                    />
+                    <span className="text-sm font-medium">{app.name}</span>
+                  </div>
+                  <ExternalLink size={12} className="block overflow-visible shrink-0 opacity-50" />
+                </a>
+              ) : (
+                <button
+                  key={index}
+                  onClick={() => {
+                    navigate(app.url);
+                    closeDropdown();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+                  data-testid={`internal-app-${app.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
                   <app.icon size={16} className="block overflow-visible shrink-0 text-purple-500" />
                   <span className="text-sm font-medium">{app.name}</span>
-                </div>
-                <ExternalLink size={12} className="block overflow-visible shrink-0 opacity-50" />
-              </a>
-            ) : (
-              <button
-                key={index}
-                onClick={() => {
-                  navigate(app.url);
-                  closeDropdown();
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
-                data-testid={`internal-app-${app.name.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                <app.icon size={16} className="block overflow-visible shrink-0 text-purple-500" />
-                <span className="text-sm font-medium">{app.name}</span>
-              </button>
-            )
-          )}
+                </button>
+              )
+            )}
         </div>
       </DropdownPortal>
 
