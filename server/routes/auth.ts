@@ -15,9 +15,7 @@ const serviceRoleKey =
 
 // DEV BYPASS EMAILS - Development users who can bypass auth
 // These should ONLY be used in development environments
-const DEV_BYPASS_EMAILS = [
-  'dev@smartcrm.local',
-];
+const DEV_BYPASS_EMAILS = ['dev@smartcrm.local'];
 
 // Check if we're in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -28,63 +26,38 @@ const isDevelopment = process.env.NODE_ENV === 'development';
  */
 function isDevelopmentEnvironment(hostname?: string): boolean {
   if (!isDevelopment) return false;
-  
+
   const devHosts = ['localhost', '127.0.0.1', 'replit.dev', 'replit.app', 'dev.'];
   const checkHost = hostname || 'localhost';
-  return devHosts.some(host => checkHost.includes(host));
+  return devHosts.some((host) => checkHost.includes(host));
 }
 
 /**
  * requireAuth Middleware
- * Checks if user is authenticated via session
+ * Checks if user is authenticated via session AND has valid entitlement (not no_access)
  * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
  */
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
-  const userId = (req.session as any)?.userId;
-  const hostname = req.get('host') || '';
-
-  // Check for dev bypass ONLY in development with explicit emails
-  if (isDevelopment && isDevelopmentEnvironment(hostname)) {
-    const userEmail = (req.session as any)?.userEmail;
-    if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-      (req as any).user = {
-        id: 'dev-user-12345',
-        email: userEmail,
-        role: 'super_admin',
-        productTier: 'super_admin',
-      };
-      return next();
-    }
-  }
-
-  if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
-  }
-
-  // Attach user ID to request for downstream handlers
-  (req as any).userId = userId;
-  next();
-};
-
-/**
- * requireAdmin Middleware
- * Checks if user is a super admin
- * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
- */
-export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req.session as any)?.userId;
+    const userEmail = (req.session as any)?.userEmail;
     const hostname = req.get('host') || '';
 
     // Check for dev bypass ONLY in development with explicit emails
     if (isDevelopment && isDevelopmentEnvironment(hostname)) {
-      const userEmail = (req.session as any)?.userEmail;
       if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
         (req as any).user = {
           id: 'dev-user-12345',
           email: userEmail,
           role: 'super_admin',
           productTier: 'super_admin',
+        };
+        (req as any).userId = 'dev-user-12345';
+        (req as any).userEmail = userEmail;
+        (req as any).entitlement = {
+          package: 'super_admin',
+          openclaw_enabled: true,
+          admin_enabled: true,
         };
         return next();
       }
@@ -94,24 +67,102 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
     }
 
-    // Check if user is admin by looking up their profile
+    // Attach identity for downstream
+    (req as any).userId = userId;
+    if (userEmail) {
+      (req as any).userEmail = userEmail;
+    }
+
+    // Check user entitlement to block no_access accounts
+    if (supabaseUrl && serviceRoleKey) {
+      const supabase = createClient(supabaseUrl, serviceRoleKey);
+      const { data: entitlement } = await supabase
+        .from('user_entitlements')
+        .select('package')
+        .eq('user_id', userId)
+        .single();
+
+      if (entitlement && entitlement.package === 'no_access') {
+        return res.status(403).json({
+          error: 'Forbidden - No subscription',
+          message:
+            'Your account has no active subscription. Please upgrade to access this feature.',
+        });
+      }
+    }
+
+    next();
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(500).json({ error: 'Internal server error during authentication' });
+  }
+};
+
+/**
+ * requireAdmin Middleware
+ * Checks if user is a super admin AND has super_admin entitlement package
+ * DEV BYPASS: Only works in development with explicit DEV_BYPASS_EMAILS
+ */
+export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req.session as any)?.userId;
+    const userEmail = (req.session as any)?.userEmail;
+    const hostname = req.get('host') || '';
+
+    // Check for dev bypass ONLY in development with explicit emails
+    if (isDevelopment && isDevelopmentEnvironment(hostname)) {
+      if (userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
+        (req as any).user = {
+          id: 'dev-user-12345',
+          email: userEmail,
+          role: 'super_admin',
+          productTier: 'super_admin',
+        };
+        (req as any).entitlement = {
+          package: 'super_admin',
+          openclaw_enabled: true,
+          admin_enabled: true,
+        };
+        return next();
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
+    }
+
     if (!supabaseUrl || !serviceRoleKey) {
       return res.status(500).json({ error: 'Supabase not configured' });
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('role, product_tier')
-      .eq('id', userId)
-      .single();
 
-    if (error || !profile) {
+    // Check profile role AND entitlement in parallel
+    const [profileResult, entitlementResult] = await Promise.all([
+      supabase.from('profiles').select('role, product_tier').eq('id', userId).single(),
+      userEmail
+        ? supabase.rpc('user_has_feature', {
+            input_email: userEmail,
+            input_feature_key: 'admin_panel',
+          })
+        : null,
+    ]);
+
+    const profile = profileResult.data;
+    if (profileResult.error || !profile) {
       return res.status(403).json({ error: 'Forbidden - User not found' });
     }
 
     if (profile.role !== 'super_admin') {
       return res.status(403).json({ error: 'Forbidden - Admin access required' });
+    }
+
+    // Verify entitlement allows admin_panel feature
+    if (entitlementResult && entitlementResult.data !== true) {
+      return res.status(403).json({
+        error: 'Forbidden - Admin entitlement not found',
+        message: 'Your account does not have admin privileges. Please contact support.',
+      });
     }
 
     (req as any).user = profile;

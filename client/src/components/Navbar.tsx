@@ -147,17 +147,21 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   const { config } = useWhitelabel();
   const { openAITool } = useNavigation(); // expected from your AIToolsProvider/Navigation layer
   const { signOut, user } = useAuth();
-  const { canAccess, isSuperAdmin, isWLUser, isRegularUser } = useRole();
+  const { canAccess } = useRole();
+  const { entitlement } = useEntitlements();
   const { position, isMinimized, toggleMinimized } = useNavbarPosition();
   const { status: openClawStatus } = useOpenClawStatus();
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check access levels using new role system
-  const isAdmin = isSuperAdmin();
+  // Derived eligibility flags from entitlement
+  const isSuperAdmin = entitlement?.package === 'super_admin';
+  const isWLUser = entitlement?.package === 'whitelabel';
+  const isRegularUser = entitlement?.package === 'regular';
+  const isAdmin = isSuperAdmin;
   const hasAITools = canAccess('ai_tools');
-  const hasAdvancedFeatures = canAccess('advanced_features');
+  const hasAdvancedFeatures = canAccess('business_intelligence');
 
   // Data sources
   const { deals } = useDealStore();

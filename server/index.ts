@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from 'express';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
+import { createClient } from '@supabase/supabase-js';
 
 export const app = express();
 app.use(express.json());
@@ -48,6 +49,40 @@ app.use((req, res, next) => {
       log(logLine);
     }
   });
+
+  next();
+});
+
+// Global entitlement check: block no_access users from all API endpoints
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const supabaseServiceKey =
+  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseAdmin =
+  supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+
+app.use('/api', async (req, res, next) => {
+  const userId = (req.session as any)?.userId;
+  if (!userId) return next();
+
+  if (!supabaseAdmin) return next();
+
+  try {
+    const { data } = await supabaseAdmin
+      .from('user_entitlements')
+      .select('package')
+      .eq('user_id', userId)
+      .single();
+
+    if (data?.package === 'no_access') {
+      return res.status(403).json({
+        error: 'Forbidden - No subscription',
+        message: 'Your account has no active subscription. Please upgrade to access this feature.',
+      });
+    }
+  } catch (err) {
+    // On error, allow request to proceed (fail open)
+    console.debug('Entitlement global check error:', err);
+  }
 
   next();
 });

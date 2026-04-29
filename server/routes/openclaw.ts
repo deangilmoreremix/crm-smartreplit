@@ -17,8 +17,22 @@ import {
 } from '../../shared/schema';
 import { supabase } from '../supabase';
 import OpenAI from 'openai';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 const router = Router();
+
+// Apply authentication to all OpenClaw routes
+router.use(requireAuth);
+
+// Apply entitlement check to all routes except health
+router.use((req, res, next) => {
+  if (req.path === '/health') {
+    return next();
+  }
+  return requireEntitlement(FeatureKey.OPENCLAW)(req, res, next);
+});
 
 // OpenClaw API Configuration
 const OPENCLAW_API_URL = process.env.OPENCLAW_API_URL || 'http://localhost:3001';

@@ -1,4 +1,7 @@
 import type { Express } from 'express';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 // In-memory storage for messaging (temporary until database schema is added)
 interface MessageProvider {
@@ -93,6 +96,9 @@ const messagingStats: MessagingStats = {
 };
 
 export function registerMessagingRoutes(app: Express): void {
+  // Protect all messaging routes: require auth + text_messages entitlement
+  app.use('/api/messaging', requireAuth, requireEntitlement(FeatureKey.TEXT_MESSAGES));
+
   // Get all message providers
   app.get('/api/messaging/providers', async (req, res) => {
     try {

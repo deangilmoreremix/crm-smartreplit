@@ -1,4 +1,7 @@
 import type { Express } from 'express';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 // In-memory storage for appointments (temporary until database schema is added)
 interface Appointment {
@@ -69,6 +72,9 @@ const meetingStats: MeetingStats = {
 };
 
 export function registerAppointmentRoutes(app: Express): void {
+  // Protect all appointment routes: require auth + appointments entitlement
+  app.use('/api/appointments', requireAuth, requireEntitlement(FeatureKey.APPOINTMENTS));
+
   // Get all appointments for the authenticated user
   app.get('/api/appointments', async (req, res) => {
     try {

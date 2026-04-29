@@ -3,8 +3,16 @@ import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { productTiers } from '../../shared/schema';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 const router = Router();
+
+// Apply authentication and entitlement check to all billing routes
+// Users must have 'buy_credits' feature (SmartMarketer+)
+router.use(requireAuth);
+router.use(requireEntitlement(FeatureKey.BUY_CREDITS));
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -21,13 +29,13 @@ const upgradePricing = {
   smartcrm_bundle: {
     priceId: process.env.STRIPE_SMARTCRM_BUNDLE_PRICE_ID!,
     amount: 97,
-    name: 'SmartCRM Bundle'
+    name: 'SmartCRM Bundle',
   },
   sales_maximizer: {
     priceId: process.env.STRIPE_SALES_MAXIMIZER_PRICE_ID!,
     amount: 67,
-    name: 'Sales Maximizer'
-  }
+    name: 'Sales Maximizer',
+  },
 };
 
 /**
@@ -59,20 +67,25 @@ router.post('/upgrade', async (req: Request, res: Response) => {
     }
 
     // Check if tier is valid for upgrade
-    const openClawEnabledTiers = ['super_admin', 'whitelabel', 'smartcrm_bundle', 'sales_maximizer'];
+    const openClawEnabledTiers = [
+      'super_admin',
+      'whitelabel',
+      'smartcrm_bundle',
+      'sales_maximizer',
+    ];
     if (!openClawEnabledTiers.includes(tierId)) {
       return res.status(400).json({ error: 'Tier does not include OpenClaw access' });
     }
 
     // Check if user already has this tier or higher
     const tierHierarchy = {
-      'ai_communication': 1,
-      'ai_boost_unlimited': 2,
-      'sales_maximizer': 3,
-      'smartcrm': 4,
-      'smartcrm_bundle': 5,
-      'whitelabel': 6,
-      'super_admin': 7
+      ai_communication: 1,
+      ai_boost_unlimited: 2,
+      sales_maximizer: 3,
+      smartcrm: 4,
+      smartcrm_bundle: 5,
+      whitelabel: 6,
+      super_admin: 7,
     };
 
     const currentTierLevel = tierHierarchy[profile.productTier as keyof typeof tierHierarchy] || 0;
@@ -97,7 +110,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       metadata: {
         userId,
         tierId,
-        upgradeType: 'openclaw'
+        upgradeType: 'openclaw',
       },
       customer_email: profile.email,
     });
@@ -106,9 +119,8 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       sessionId: session.id,
       url: session.url,
       tier: tierId,
-      amount: upgradePricing[tierId as keyof typeof upgradePricing].amount
+      amount: upgradePricing[tierId as keyof typeof upgradePricing].amount,
     });
-
   } catch (error: any) {
     console.error('Upgrade error:', error);
     res.status(500).json({ error: 'Failed to create upgrade session' });
@@ -135,7 +147,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      
+
       if (session.metadata?.upgradeType === 'openclaw') {
         const userId = session.metadata.userId;
         const tierId = session.metadata.tierId;
@@ -143,9 +155,9 @@ router.post('/webhook', async (req: Request, res: Response) => {
         // Update user tier in database
         const { error } = await supabase
           .from('profiles')
-          .update({ 
+          .update({
             productTier: tierId,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           })
           .eq('id', userId);
 
@@ -174,7 +186,7 @@ router.get('/plans', async (req: Request, res: Response) => {
       id: tierId,
       name: config.name,
       price: config.amount,
-      priceId: config.priceId
+      priceId: config.priceId,
     }));
 
     res.json({ plans });

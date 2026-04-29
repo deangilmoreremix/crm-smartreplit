@@ -6,8 +6,15 @@
 import { Router, Request, Response } from 'express';
 import { tenantProvisioner, TenantConfig } from '../services/whitelabel/tenantProvisioner';
 import { errorLogger } from '../services/errorLogger';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 const router = Router();
+
+// All provisioning routes require partner onboarding access
+router.use(requireAuth);
+router.use(requireEntitlement(FeatureKey.PARTNER_ONBOARDING));
 
 /**
  * POST /api/provisioning/create

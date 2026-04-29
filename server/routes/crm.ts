@@ -17,7 +17,7 @@ import {
   updateNoteSchema,
   insertDocumentSchema,
 } from '../../shared/schema.js';
-import { requireAuth, requireProductTier } from './auth';
+import { requireAuth } from './auth';
 
 // Helper function to check authentication with dev bypass support
 const checkAuth = (req: any): { userId: string | null; isAuthenticated: boolean } => {

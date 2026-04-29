@@ -1,4 +1,7 @@
 import type { Express } from 'express';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 // In-memory storage for video emails (temporary until database schema is added)
 interface VideoEmail {
@@ -42,6 +45,9 @@ const videoStats = {
 };
 
 export function registerVideoRoutes(app: Express): void {
+  // Protect all video routes: require auth + video_email entitlement
+  app.use('/api/videos', requireAuth, requireEntitlement(FeatureKey.VIDEO_EMAIL));
+
   // Get all videos for the authenticated user
   app.get('/api/videos', async (req, res) => {
     try {

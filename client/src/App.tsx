@@ -19,9 +19,12 @@ import { DashboardLayoutProvider } from './contexts/DashboardLayoutContext';
 import { AIProvider } from './contexts/AIContext';
 import { AIConfigurationProvider } from './contexts/AIConfigurationContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { EntitlementProvider } from './contexts/EntitlementContext';
 import { RoleProvider } from './components/RoleBasedAccess';
+import { FeatureKey } from './types/entitlements';
 import { NavbarPositionProvider, useNavbarPosition } from './contexts/NavbarPositionContext';
 import { DemoDataProvider } from './contexts/DemoDataContext';
+import { useSharedModuleState } from './utils/moduleFederationOrchestrator';
 import Navbar from './components/Navbar';
 import { EdgeZones } from './components/EdgeZones';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
@@ -229,41 +232,58 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
-          <DemoDataProvider>
-            <TenantProvider>
-              <WhitelabelProvider>
-                <CompanyProvider>
-                  <AIToolsProvider>
-                    <ModalsProvider>
-                      <EnhancedHelpProvider>
-                        <VideoCallProvider>
-                          <NavigationProvider>
-                            <DashboardLayoutProvider>
-                              <AIConfigurationProvider>
-                                <AIProvider>
-                                  <RoleProvider>
-                                    <NavbarPositionProvider>
-                                      <AppContent />
-                                    </NavbarPositionProvider>
-                                  </RoleProvider>
-                                </AIProvider>
-                              </AIConfigurationProvider>
-                            </DashboardLayoutProvider>
-                          </NavigationProvider>
-                        </VideoCallProvider>
-                      </EnhancedHelpProvider>
-                    </ModalsProvider>
-                  </AIToolsProvider>
-                </CompanyProvider>
-              </WhitelabelProvider>
-            </TenantProvider>
-          </DemoDataProvider>
-        </ThemeProvider>
+        <EntitlementProvider>
+          <ThemeProvider>
+            <DemoDataProvider>
+              <TenantProvider>
+                <WhitelabelProvider>
+                  <CompanyProvider>
+                    <AIToolsProvider>
+                      <ModalsProvider>
+                        <EnhancedHelpProvider>
+                          <VideoCallProvider>
+                            <NavigationProvider>
+                              <DashboardLayoutProvider>
+                                <AIConfigurationProvider>
+                                  <AIProvider>
+                                    <RoleProvider>
+                                      <NavbarPositionProvider>
+                                        <AppContent />
+                                      </NavbarPositionProvider>
+                                    </RoleProvider>
+                                  </AIProvider>
+                                </AIConfigurationProvider>
+                              </DashboardLayoutProvider>
+                            </NavigationProvider>
+                          </VideoCallProvider>
+                        </EnhancedHelpProvider>
+                      </ModalsProvider>
+                    </AIToolsProvider>
+                  </CompanyProvider>
+                </WhitelabelProvider>
+              </TenantProvider>
+            </DemoDataProvider>
+          </ThemeProvider>
+        </EntitlementProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+// Component to sync auth state with module federation
+const AuthStateSync = () => {
+  const { user, session, isAuthenticated } = useAuth();
+  const { updateSharedData } = useSharedModuleState();
+
+  useEffect(() => {
+    // Sync authentication state to shared module state
+    updateSharedData('user', user);
+    updateSharedData('session', session);
+    updateSharedData('isAuthenticated', isAuthenticated);
+  }, [user, session, isAuthenticated, updateSharedData]);
+
+  return null;
+};
 
 // AppContent component with all the routing logic
 function AppContent() {
@@ -341,6 +361,7 @@ function AppContent() {
   return (
     <DragDropContext onDragEnd={handleNavbarDragEnd}>
       <div className="min-h-screen">
+        <AuthStateSync />
         <EdgeZones />
         <LinkRedirect />
         <RemoteAppRefreshManager />
@@ -368,7 +389,7 @@ function AppContent() {
             <Route
               path="/automations/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey="lead_automation">
                   <Navbar />
                   <AutomationConfig />
                 </ProtectedRoute>
@@ -382,7 +403,7 @@ function AppContent() {
             <Route
               path="/buy-credits"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey="buy_credits">
                   <Navbar />
                   <CreditPurchasePage />
                 </ProtectedRoute>
@@ -478,7 +499,7 @@ function AppContent() {
             <Route
               path="/white-label"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.WHITE_LABEL_CUSTOMIZATION}>
                   <Navbar />
                   <WhiteLabelCustomization />
                 </ProtectedRoute>
@@ -489,7 +510,7 @@ function AppContent() {
             <Route
               path="/white-label-management"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.WHITE_LABEL_MANAGEMENT}>
                   <Navbar />
                   <WhiteLabelManagementDashboard />
                 </ProtectedRoute>
@@ -498,7 +519,7 @@ function AppContent() {
             <Route
               path="/package-builder"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PACKAGE_BUILDER}>
                   <Navbar />
                   <WhiteLabelPackageBuilder />
                 </ProtectedRoute>
@@ -507,7 +528,7 @@ function AppContent() {
             <Route
               path="/revenue-sharing"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.REVENUE_SHARING}>
                   <Navbar />
                   <RevenueSharingPage />
                 </ProtectedRoute>
@@ -516,7 +537,7 @@ function AppContent() {
             <Route
               path="/partner-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PARTNER_DASHBOARD}>
                   <Navbar />
                   <PartnerDashboard />
                 </ProtectedRoute>
@@ -525,7 +546,7 @@ function AppContent() {
             <Route
               path="/partner-onboarding"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PARTNER_ONBOARDING}>
                   <Navbar />
                   <PartnerOnboardingPage />
                 </ProtectedRoute>
@@ -536,7 +557,7 @@ function AppContent() {
             <Route
               path="/ai-goals"
               element={
-                <ProtectedRoute resource="ai_goals">
+                <ProtectedRoute featureKey={FeatureKey.AI_GOALS}>
                   <Navbar />
                   <AIGoalsWithRemote />
                 </ProtectedRoute>
@@ -547,7 +568,7 @@ function AppContent() {
             <Route
               path="/ai-tools"
               element={
-                <ProtectedRoute resource="ai_tools">
+                <ProtectedRoute featureKey={FeatureKey.AI_TOOLS}>
                   <Navbar />
                   <AITools />
                 </ProtectedRoute>
@@ -558,7 +579,7 @@ function AppContent() {
             <Route
               path="/gtm-prompt-hub"
               element={
-                <ProtectedRoute resource="ai_tools">
+                <ProtectedRoute featureKey={FeatureKey.AI_TOOLS}>
                   <Navbar />
                   <GTMPromptHub />
                 </ProtectedRoute>
@@ -629,7 +650,7 @@ function AppContent() {
             <Route
               path="/text-messages"
               element={
-                <ProtectedRoute featureKey="sms_automation">
+                <ProtectedRoute featureKey={FeatureKey.TEXT_MESSAGES}>
                   <Navbar />
                   <TextMessagingDashboard />
                 </ProtectedRoute>
@@ -638,7 +659,7 @@ function AppContent() {
             <Route
               path="/phone-system"
               element={
-                <ProtectedRoute featureKey="voip_phone">
+                <ProtectedRoute featureKey={FeatureKey.PHONE_SYSTEM}>
                   <Navbar />
                   <PhoneSystemDashboard />
                 </ProtectedRoute>
@@ -912,7 +933,7 @@ function AppContent() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.ADMIN_PANEL}>
                   <AdminLayout />
                 </ProtectedRoute>
               }
@@ -1100,7 +1121,7 @@ function AppContent() {
             <Route
               path="/openclaw"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.OPENCLAW}>
                   <Navbar />
                   <OpenClawPage />
                 </ProtectedRoute>

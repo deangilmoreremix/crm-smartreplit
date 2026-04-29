@@ -6,8 +6,15 @@
 import { Router, Request, Response } from 'express';
 import { domainManager, DomainConfig } from '../services/whitelabel/domainManager';
 import { errorLogger } from '../services/errorLogger';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 const router = Router();
+
+// All domain routes require whitelabel access
+router.use(requireAuth);
+router.use(requireEntitlement(FeatureKey.DOMAIN_MANAGEMENT));
 
 /**
  * POST /api/domains/verify

@@ -1,4 +1,7 @@
 import type { Express } from 'express';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 // In-memory storage for phone calls (temporary until database schema is added)
 interface Call {
@@ -64,6 +67,9 @@ const phoneStats: PhoneStats = {
 };
 
 export function registerPhoneRoutes(app: Express): void {
+  // Protect all phone routes: require auth + phone_system entitlement
+  app.use('/api/phone', requireAuth, requireEntitlement(FeatureKey.PHONE_SYSTEM));
+
   // Get all calls for the authenticated user
   app.get('/api/phone/calls', async (req, res) => {
     try {

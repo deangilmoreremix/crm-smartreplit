@@ -5,6 +5,9 @@
 
 import type { Express } from 'express';
 import OpenAI from 'openai';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 // Google AI interface
 interface GoogleAIResponse {
@@ -20,6 +23,9 @@ export function registerAIRoutes(
   openai: OpenAI | null,
   googleAIKey: string | undefined
 ) {
+  // Middleware to protect AI endpoints - require auth + ai_tools entitlement
+  const requireAITools = [requireAuth, requireEntitlement(FeatureKey.AI_TOOLS)];
+
   // Google AI helper
   async function callGoogleAI(prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
     if (!googleAIKey) {
@@ -152,385 +158,435 @@ export function registerAIRoutes(
   });
 
   // Google AI Test
-  app.post('/api/googleai/test', async (req, res) => {
-    try {
-      const prompt = req.body.prompt || 'Generate a business insight';
-      const response = await callGoogleAI(prompt);
-      res.json({ success: true, model: 'gemini-1.5-flash', output: response });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+  app.post(
+    '/api/googleai/test',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      try {
+        const prompt = req.body.prompt || 'Generate a business insight';
+        const response = await callGoogleAI(prompt);
+        res.json({ success: true, model: 'gemini-1.5-flash', output: response });
+      } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+      }
     }
-  });
+  );
 
   // OpenAI Test
-  app.post('/api/openai/test', async (req, res) => {
-    try {
-      if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: 'Generate a business insight' }],
-        max_tokens: 50,
-      });
-      res.json({
-        success: true,
-        model: 'gpt-4o-mini',
-        output: response.choices[0].message.content,
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+  app.post(
+    '/api/openai/test',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      try {
+        if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: 'Generate a business insight' }],
+          max_tokens: 50,
+        });
+        res.json({
+          success: true,
+          model: 'gpt-4o-mini',
+          output: response.choices[0].message.content,
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
     }
-  });
+  );
 
   // Embeddings
-  app.post('/api/openai/embeddings', async (req, res) => {
-    try {
-      const { text, model = 'text-embedding-3-small' } = req.body;
-      if (!text) return res.status(400).json({ error: 'Text required' });
-      if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
+  app.post(
+    '/api/openai/embeddings',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      try {
+        const { text, model = 'text-embedding-3-small' } = req.body;
+        if (!text) return res.status(400).json({ error: 'Text required' });
+        if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
 
-      const response = await openai.embeddings.create({
-        model,
-        input: text,
-        encoding_format: 'float',
-      });
-      res.json({ success: true, embedding: response.data[0].embedding, model });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+        const response = await openai.embeddings.create({
+          model,
+          input: text,
+          encoding_format: 'float',
+        });
+        res.json({ success: true, embedding: response.data[0].embedding, model });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
     }
-  });
+  );
 
   // Image Generation
-  app.post('/api/openai/images/generate', async (req, res) => {
-    try {
-      const { prompt, model = 'dall-e-3', size = '1024x1024' } = req.body;
-      if (!prompt) return res.status(400).json({ error: 'Prompt required' });
-      if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
+  app.post(
+    '/api/openai/images/generate',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      try {
+        const { prompt, model = 'dall-e-3', size = '1024x1024' } = req.body;
+        if (!prompt) return res.status(400).json({ error: 'Prompt required' });
+        if (!openai) return res.status(400).json({ error: 'OpenAI not configured' });
 
-      const response = await openai.images.generate({ model, prompt, size, n: 1 });
-      res.json({ success: true, data: response.data, model });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+        const response = await openai.images.generate({ model, prompt, size, n: 1 });
+        res.json({ success: true, data: response.data, model });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
     }
-  });
+  );
 
   // Smart Greeting
-  app.post('/api/openai/smart-greeting', async (req, res) => {
-    const { userMetrics, timeOfDay } = req.body;
-
-    if (!openai) {
-      return res.json({
-        greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
-        insight: userMetrics?.totalValue > 50000 ? 'Strong momentum' : 'Growing steadily',
-        source: 'fallback',
-      });
-    }
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: 'Generate personalized greetings' }],
-        temperature: 0.7,
-        max_tokens: 200,
-      });
-      res.json({
-        ...JSON.parse(response.choices[0].message.content || '{}'),
-        source: 'gpt-4o-mini',
-      });
-    } catch (error) {
-      res.json({
-        greeting: `Good ${timeOfDay}!`,
-        insight: 'Your pipeline is growing',
-        source: 'fallback',
-      });
-    }
-  });
-
-  // KPI Analysis
-  app.post('/api/openai/kpi-analysis', async (req, res) => {
-    if (!openai) {
-      return res.json({
-        summary: 'Configure API key for analysis',
-        recommendations: ['Set up API'],
-      });
-    }
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: 'Analyze KPI trends' }],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 800,
-      });
-      res.json(JSON.parse(response.choices[0].message.content || '{}'));
-    } catch (error) {
-      res.json({ summary: 'Analysis unavailable', recommendations: ['Retry'] });
-    }
-  });
-
-  // Deal Intelligence
-  app.post('/api/openai/deal-intelligence', async (req, res) => {
-    if (!openai) {
-      return res.json({
-        probability_score: 65,
-        risk_level: 'medium',
-        recommendations: ['Configure API'],
-      });
-    }
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: 'Provide deal intelligence' }],
-        response_format: { type: 'json_object' },
-        temperature: 0.2,
-        max_tokens: 600,
-      });
-      res.json(JSON.parse(response.choices[0].message.content || '{}'));
-    } catch (error) {
-      res.json({ probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] });
-    }
-  });
-
-  // Business Intelligence
-  app.post('/api/openai/business-intelligence', async (req, res) => {
-    if (!openai) {
-      return res.json({
-        market_insights: ['Configure API'],
-        strategic_recommendations: ['Set up OpenAI'],
-      });
-    }
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: 'Generate business intelligence' }],
-        response_format: { type: 'json_object' },
-        temperature: 0.4,
-        max_tokens: 1000,
-      });
-      res.json(JSON.parse(response.choices[0].message.content || '{}'));
-    } catch (error) {
-      res.json({ market_insights: ['Retry analysis'] });
-    }
-  });
-
-  // AI Respond endpoint - Enhanced version with tools support
-  app.post('/api/respond', async (req, res) => {
-    try {
-      const {
-        prompt,
-        imageUrl,
-        schema,
-        useThinking,
-        conversationId,
-        temperature = 0.4,
-        top_p = 1,
-        max_output_tokens = 2048,
-        metadata,
-        forceToolName,
-      } = req.body;
+  app.post(
+    '/api/openai/smart-greeting',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      const { userMetrics, timeOfDay } = req.body;
 
       if (!openai) {
-        return res.status(400).json({
-          error: 'OpenAI API key not configured',
-          message: 'Please configure OpenAI API key for AI features',
+        return res.json({
+          greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
+          insight: userMetrics?.totalValue > 50000 ? 'Strong momentum' : 'Growing steadily',
+          source: 'fallback',
         });
       }
 
-      const messages: any[] = [
-        {
-          role: 'system',
-          content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
-        },
-        {
-          role: 'user',
-          content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
-        },
-      ];
-
-      // Determine model - try GPT-5.2 first, fallback to gpt-4o-mini if unavailable
-      let model = 'gpt-5.2';
       try {
         const response = await openai.chat.completions.create({
-          model,
-          messages,
-          temperature,
-          max_tokens: max_output_tokens,
-          response_format: schema ? { type: 'json_object' } : undefined,
-          tools: [
-            {
-              type: 'function',
-              function: {
-                name: 'analyzeBusinessData',
-                description: 'Analyze business data and provide insights',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    dataType: { type: 'string' },
-                    analysisType: { type: 'string' },
-                    timeRange: { type: 'string' },
-                  },
-                  required: ['dataType'],
-                },
-              },
-            },
-            {
-              type: 'function',
-              function: {
-                name: 'generateRecommendations',
-                description: 'Generate business recommendations based on data',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    context: { type: 'string' },
-                    goals: { type: 'array', items: { type: 'string' } },
-                    constraints: { type: 'array', items: { type: 'string' } },
-                  },
-                },
-              },
-            },
-          ],
-          tool_choice: forceToolName
-            ? { type: 'function', function: { name: forceToolName } }
-            : 'auto',
-        });
-      } catch (primaryError: any) {
-        // Fallback to gpt-4o-mini if GPT-5.2 unavailable
-        console.log('GPT-5.2 unavailable, falling back to gpt-4o-mini');
-        const fallbackResponse = await openai.chat.completions.create({
           model: 'gpt-4o-mini',
-          messages,
-          temperature,
-          max_tokens: max_output_tokens,
-          response_format: schema ? { type: 'json_object' } : undefined,
+          messages: [{ role: 'system', content: 'Generate personalized greetings' }],
+          temperature: 0.7,
+          max_tokens: 200,
         });
+        res.json({
+          ...JSON.parse(response.choices[0].message.content || '{}'),
+          source: 'gpt-4o-mini',
+        });
+      } catch (error) {
+        res.json({
+          greeting: `Good ${timeOfDay}!`,
+          insight: 'Your pipeline is growing',
+          source: 'fallback',
+        });
+      }
+    }
+  );
 
-        // Handle tool calls for fallback response
-        const toolCalls = fallbackResponse.choices[0].message.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (tc) => ({
-              tool_call_id: tc.id,
-              output: await executeWLTool(tc),
-            }))
-          );
+  // KPI Analysis
+  app.post(
+    '/api/openai/kpi-analysis',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      if (!openai) {
+        return res.json({
+          summary: 'Configure API key for analysis',
+          recommendations: ['Set up API'],
+        });
+      }
 
-          const continuedMessages = [
-            ...messages,
-            fallbackResponse.choices[0].message,
-            ...toolOutputs.map((o) => ({
-              role: 'tool' as const,
-              content: o.output,
-              tool_call_id: o.tool_call_id,
-            })),
-          ];
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'system', content: 'Analyze KPI trends' }],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 800,
+        });
+        res.json(JSON.parse(response.choices[0].message.content || '{}'));
+      } catch (error) {
+        res.json({ summary: 'Analysis unavailable', recommendations: ['Retry'] });
+      }
+    }
+  );
 
-          const continuedResponse = await openai.chat.completions.create({
+  // Deal Intelligence
+  app.post(
+    '/api/openai/deal-intelligence',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      if (!openai) {
+        return res.json({
+          probability_score: 65,
+          risk_level: 'medium',
+          recommendations: ['Configure API'],
+        });
+      }
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'system', content: 'Provide deal intelligence' }],
+          response_format: { type: 'json_object' },
+          temperature: 0.2,
+          max_tokens: 600,
+        });
+        res.json(JSON.parse(response.choices[0].message.content || '{}'));
+      } catch (error) {
+        res.json({ probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] });
+      }
+    }
+  );
+
+  // Business Intelligence
+  app.post(
+    '/api/openai/business-intelligence',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      if (!openai) {
+        return res.json({
+          market_insights: ['Configure API'],
+          strategic_recommendations: ['Set up OpenAI'],
+        });
+      }
+
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'system', content: 'Generate business intelligence' }],
+          response_format: { type: 'json_object' },
+          temperature: 0.4,
+          max_tokens: 1000,
+        });
+        res.json(JSON.parse(response.choices[0].message.content || '{}'));
+      } catch (error) {
+        res.json({ market_insights: ['Retry analysis'] });
+      }
+    }
+  );
+
+  // AI Respond endpoint - Enhanced version with tools support
+  app.post(
+    '/api/respond',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      try {
+        const {
+          prompt,
+          imageUrl,
+          schema,
+          useThinking,
+          conversationId,
+          temperature = 0.4,
+          top_p = 1,
+          max_output_tokens = 2048,
+          metadata,
+          forceToolName,
+        } = req.body;
+
+        if (!openai) {
+          return res.status(400).json({
+            error: 'OpenAI API key not configured',
+            message: 'Please configure OpenAI API key for AI features',
+          });
+        }
+
+        const messages: any[] = [
+          {
+            role: 'system',
+            content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
+          },
+          {
+            role: 'user',
+            content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
+          },
+        ];
+
+        // Determine model - try GPT-5.2 first, fallback to gpt-4o-mini if unavailable
+        let model = 'gpt-5.2';
+        try {
+          const response = await openai.chat.completions.create({
+            model,
+            messages,
+            temperature,
+            max_tokens: max_output_tokens,
+            response_format: schema ? { type: 'json_object' } : undefined,
+            tools: [
+              {
+                type: 'function',
+                function: {
+                  name: 'analyzeBusinessData',
+                  description: 'Analyze business data and provide insights',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      dataType: { type: 'string' },
+                      analysisType: { type: 'string' },
+                      timeRange: { type: 'string' },
+                    },
+                    required: ['dataType'],
+                  },
+                },
+              },
+              {
+                type: 'function',
+                function: {
+                  name: 'generateRecommendations',
+                  description: 'Generate business recommendations based on data',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      context: { type: 'string' },
+                      goals: { type: 'array', items: { type: 'string' } },
+                      constraints: { type: 'array', items: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+            ],
+            tool_choice: forceToolName
+              ? { type: 'function', function: { name: forceToolName } }
+              : 'auto',
+          });
+        } catch (primaryError: any) {
+          // Fallback to gpt-4o-mini if GPT-5.2 unavailable
+          console.log('GPT-5.2 unavailable, falling back to gpt-4o-mini');
+          const fallbackResponse = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
-            messages: continuedMessages,
+            messages,
             temperature,
             max_tokens: max_output_tokens,
             response_format: schema ? { type: 'json_object' } : undefined,
           });
 
+          // Handle tool calls for fallback response
+          const toolCalls = fallbackResponse.choices[0].message.tool_calls;
+          if (toolCalls && toolCalls.length > 0) {
+            const toolOutputs = await Promise.all(
+              toolCalls.map(async (tc) => ({
+                tool_call_id: tc.id,
+                output: await executeWLTool(tc),
+              }))
+            );
+
+            const continuedMessages = [
+              ...messages,
+              fallbackResponse.choices[0].message,
+              ...toolOutputs.map((o) => ({
+                role: 'tool' as const,
+                content: o.output,
+                tool_call_id: o.tool_call_id,
+              })),
+            ];
+
+            const continuedResponse = await openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: continuedMessages,
+              temperature,
+              max_tokens: max_output_tokens,
+              response_format: schema ? { type: 'json_object' } : undefined,
+            });
+
+            return res.json({
+              output_text: continuedResponse.choices[0].message.content,
+              output: [
+                {
+                  content: [
+                    {
+                      type: 'output_text',
+                      text: continuedResponse.choices[0].message.content,
+                    },
+                  ],
+                },
+              ],
+              tool_calls: toolCalls,
+              continued: true,
+            });
+          }
+
           return res.json({
-            output_text: continuedResponse.choices[0].message.content,
+            output_text: fallbackResponse.choices[0].message.content,
             output: [
               {
                 content: [
                   {
                     type: 'output_text',
-                    text: continuedResponse.choices[0].message.content,
+                    text: fallbackResponse.choices[0].message.content,
                   },
                 ],
               },
             ],
-            tool_calls: toolCalls,
-            continued: true,
+            model: fallbackResponse.model,
+            usage: fallbackResponse.usage,
+            fallback: true,
+          });
+        }
+      } catch (error: any) {
+        console.error('AI API error:', error);
+        res.status(500).json({
+          error: 'Failed to process AI request',
+          message: error.message,
+          fallback: 'Basic analysis available without AI',
+        });
+      }
+    }
+  );
+
+  // Streaming endpoint - Enhanced version with useThinking support
+  app.post(
+    '/api/stream',
+    requireAuth,
+    requireEntitlement(FeatureKey.AI_TOOLS),
+    async (req, res) => {
+      try {
+        const { prompt, useThinking, temperature = 0.4, max_output_tokens = 2048 } = req.body;
+
+        if (!openai) {
+          return res.status(400).json({
+            error: 'OpenAI API key not configured',
+            message: 'Please configure OpenAI API key for streaming features',
           });
         }
 
-        return res.json({
-          output_text: fallbackResponse.choices[0].message.content,
-          output: [
-            {
-              content: [
-                {
-                  type: 'output_text',
-                  text: fallbackResponse.choices[0].message.content,
-                },
-              ],
-            },
-          ],
-          model: fallbackResponse.model,
-          usage: fallbackResponse.usage,
-          fallback: true,
-        });
-      }
-    } catch (error: any) {
-      console.error('AI API error:', error);
-      res.status(500).json({
-        error: 'Failed to process AI request',
-        message: error.message,
-        fallback: 'Basic analysis available without AI',
-      });
-    }
-  });
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
 
-  // Streaming endpoint - Enhanced version with useThinking support
-  app.post('/api/stream', async (req, res) => {
-    try {
-      const { prompt, useThinking, temperature = 0.4, max_output_tokens = 2048 } = req.body;
-
-      if (!openai) {
-        return res.status(400).json({
-          error: 'OpenAI API key not configured',
-          message: 'Please configure OpenAI API key for streaming features',
-        });
-      }
-
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-
-      // Try GPT-5.2 first, fallback to gpt-4o-mini if unavailable
-      let stream;
-      try {
-        stream = await openai.chat.completions.create({
-          model: 'gpt-5.2',
-          messages: [{ role: 'user', content: prompt }],
-          temperature,
-          max_tokens: max_output_tokens,
-          stream: true,
-        });
-      } catch (primaryError: any) {
-        // Fallback to gpt-4o-mini if GPT-5.2 unavailable
-        console.log('GPT-5.2 unavailable, falling back to gpt-4o-mini');
-        stream = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          temperature,
-          max_tokens: max_output_tokens,
-          stream: true,
-        });
-      }
-
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        // Try GPT-5.2 first, fallback to gpt-4o-mini if unavailable
+        let stream;
+        try {
+          stream = await openai.chat.completions.create({
+            model: 'gpt-5.2',
+            messages: [{ role: 'user', content: prompt }],
+            temperature,
+            max_tokens: max_output_tokens,
+            stream: true,
+          });
+        } catch (primaryError: any) {
+          // Fallback to gpt-4o-mini if GPT-5.2 unavailable
+          console.log('GPT-5.2 unavailable, falling back to gpt-4o-mini');
+          stream = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            temperature,
+            max_tokens: max_output_tokens,
+            stream: true,
+          });
         }
-      }
 
-      res.write('data: [DONE]\n\n');
-      res.end();
-    } catch (error: any) {
-      console.error('Streaming error:', error);
-      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
-      res.end();
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          }
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } catch (error: any) {
+        console.error('Streaming error:', error);
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+      }
     }
-  });
+  );
 
   // Tool execution function for WL apps
   async function executeWLTool(tc: any): Promise<string> {

@@ -7,8 +7,15 @@ import { Router, Request, Response } from 'express';
 import { analyticsEngine } from '../services/whitelabel/analyticsEngine';
 import { errorLogger } from '../services/errorLogger';
 import { getDateRange, calculatePeriodDays, MILLISECONDS_PER_DAY } from '../utils/analyticsUtils';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 const router = Router();
+
+// All analytics routes require analytics feature access
+router.use(requireAuth);
+router.use(requireEntitlement(FeatureKey.ANALYTICS));
 
 /**
  * POST /api/analytics/metrics
@@ -87,9 +94,10 @@ router.get('/summary/:tenantId', async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
 
     // Use provided dates or default to last 30 days
-    const { start, end } = startDate && endDate
-      ? { start: new Date(startDate as string), end: new Date(endDate as string) }
-      : getDateRange();
+    const { start, end } =
+      startDate && endDate
+        ? { start: new Date(startDate as string), end: new Date(endDate as string) }
+        : getDateRange();
 
     const summary = await analyticsEngine.getAnalyticsSummary(tenantId, start, end);
 

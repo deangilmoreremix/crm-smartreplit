@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTenant } from '../contexts/TenantProvider';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { useEntitlements } from '../contexts/EntitlementContext';
+import { canAccessFeature, FeatureKey } from '../types/entitlements';
 
 interface User {
   id: string;
@@ -8,11 +11,16 @@ interface User {
   firstName?: string;
   lastName?: string;
   role: 'super_admin' | 'wl_user' | 'regular_user';
-  productTier?: 'super_admin' | 'whitelabel' | 'smartcrm' | 'sales_maximizer' | 'ai_boost_unlimited' | 'ai_communication' | 'smartcrm_bundle' | 'dev_all_access';
+  productTier?: string;
   tenantId: string;
   permissions: string[];
   lastActive: string;
   status: 'active' | 'inactive' | 'suspended';
+  entitlement?: {
+    package: 'no_access' | 'regular' | 'smartmarketer' | 'whitelabel' | 'super_admin';
+    openclaw_enabled: boolean;
+    admin_enabled: boolean;
+  };
 }
 
 interface RoleContextType {
@@ -45,18 +53,18 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { tenant } = useTenant();
+  const { user: authUser } = useAuth(); // Get auth user
+  const { entitlement, isLoading: entitlementsLoading } = useEntitlements();
 
   useEffect(() => {
     fetchUserRole();
-  }, [tenant]);
+  }, [tenant, authUser, entitlement]);
 
   const fetchUserRole = async () => {
     try {
       setIsLoading(true);
 
-      // Get current user
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      
+      // Wait for auth user to be available
       if (!authUser) {
         setIsLoading(false);
         return;
@@ -84,15 +92,26 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
           role: profile.role || 'regular_user',
           productTier: profile.product_tier,
           tenantId: tenant?.id || 'default',
-          permissions: [], // TODO: implement permissions
+          permissions: [], // Using entitlements-based permissions now
           lastActive: new Date().toISOString(),
-          status: 'active'
+          status: 'active',
+          // Attach entitlement data for feature gating
+          entitlement: entitlement
+            ? {
+                package: entitlement.package as any,
+                openclaw_enabled: entitlement.openclaw_enabled,
+                admin_enabled: entitlement.admin_enabled,
+              }
+            : undefined,
         };
 
         setUser(userData);
       }
     } catch (error) {
-      console.debug('User role fetch skipped:', error instanceof Error ? error.message : 'Unknown error');
+      console.debug(
+        'User role fetch skipped:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -111,112 +130,36 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const canAccess = (resource: string): boolean => {
     if (!user) return false;
 
-    // Super admin can access everything (including dev bypass)
-    if (user.role === 'super_admin' || user.email === 'dev@smartcrm.local') return true;
+    // Super admin always has access
+    if (user.role === 'super_admin') return true;
 
-    // SECURITY: Users with null productTier have NO access to any premium features
-    // They must purchase a subscription before accessing anything beyond basic auth
-    const productTier = user.productTier;
-    if (!productTier) {
-      console.warn('🚫 Access denied: User has no product tier. Upgrade required.');
-      return false;
+    // Use entitlement-based feature gating
+    if (user.entitlement) {
+      return canAccessFeature(user.entitlement, resource);
     }
 
-    // Resource-specific access control combining role and product tier
-    const resourcePermissions: Record<string, string[]> = {
-      // Super Admin only
-      'admin_dashboard': ['super_admin'],
-      'user_management': ['super_admin'], 
-      'bulk_import_users': ['super_admin'],
-      'system_settings': ['super_admin'],
-      'billing_management': ['super_admin'],
-      
-      // WL Users and Super Admin (legacy)
-      'advanced_analytics': ['super_admin', 'wl_user'],
-      'custom_branding': ['super_admin', 'wl_user'],
-      'api_access': ['super_admin', 'wl_user'],
-      'advanced_features': ['super_admin', 'wl_user'],
-      
-      // Core CRM features - All users
-      'dashboard': ['super_admin', 'wl_user', 'regular_user'],
-      'contacts': ['super_admin', 'wl_user', 'regular_user'],
-      'contacts_csv': ['super_admin', 'wl_user', 'regular_user'],
-      'pipeline': ['super_admin', 'wl_user', 'regular_user'],
-      'pipeline_csv': ['super_admin', 'wl_user', 'regular_user'],
-      'calendar': ['super_admin', 'wl_user', 'regular_user'],
-      'communication': ['super_admin', 'wl_user', 'regular_user'],
-    };
-
-    // Product tier-based access (7-tier system + dev access)
-    const productTierAccess: Record<string, string[]> = {
-      // Core CRM features - ALL paid tiers get baseline CRM access
-      'smartcrm_base': ['super_admin', 'whitelabel', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-
-      // AI Goals & AI Tools - Sales Maximizer and higher tiers
-      'ai_goals': ['super_admin', 'whitelabel', 'sales_maximizer', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],
-      'ai_tools': ['super_admin', 'whitelabel', 'sales_maximizer', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],
-
-      // AI Communication features - AI Communication tier
-      'video_email': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-      'sms_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-      'voip_phone': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-      'invoicing': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-      'lead_automation': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-      'circle_prospecting': ['super_admin', 'whitelabel', 'ai_communication', 'smartcrm_bundle', 'dev_all_access'],
-      'forms_surveys': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
-      'content_library': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
-      'voice_profiles': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
-      'business_analysis': ['super_admin', 'whitelabel', 'smartcrm_bundle', 'dev_all_access'],
-
-      // AI Boost Unlimited - unlimited AI credits (platform-wide)
-      'ai_credits_unlimited': ['super_admin', 'whitelabel', 'ai_boost_unlimited', 'smartcrm_bundle', 'dev_all_access'],
-
-      // Whitelabel features - Whitelabel tier only
-      'whitelabel_branding': ['super_admin', 'whitelabel', 'dev_all_access'],
-      'whitelabel_settings': ['super_admin', 'whitelabel', 'dev_all_access'],
-    };
-
-    // Check role-based access first
-    const allowedRoles = resourcePermissions[resource];
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-      return false;
-    }
-
-    // Check product tier-based access
-    const requiredTiers = productTierAccess[resource];
-    if (requiredTiers) {
-      return requiredTiers.includes(productTier);
-    }
-
-    // If resource not explicitly defined, check role permissions
-    return allowedRoles ? allowedRoles.includes(user.role) : false;
+    // No entitlements yet - deny (will be granted after entitlement loads)
+    return false;
   };
 
   const isSuperAdmin = (): boolean => {
     if (!user) return false;
-    
-    // Super admin emails
-    const superAdminEmails = [
-      'dev@smartcrm.local',
-      'dean@smartcrm.vip',
-      'dean@videoremix.io',
-      'samuel@videoremix.io',
-      'victor@videoremix.io'
-    ];
-    
-    return user.role === 'super_admin' || superAdminEmails.includes(user.email?.toLowerCase());
+    return user.role === 'super_admin' || user.entitlement?.package === 'super_admin';
   };
-  
+
   const hasProductTier = (): boolean => {
-    if (!user) return false;
-    // Super admins always have access regardless of productTier field
-    if (user.role === 'super_admin') return true;
-    // Check if user has any valid product tier (not null/undefined)
-    return !!user.productTier;
+    if (!user?.entitlement) return false;
+    // Consider any paid package as having product tier
+    const paidPackages: Array<'smartmarketer' | 'whitelabel' | 'super_admin'> = [
+      'smartmarketer',
+      'whitelabel',
+      'super_admin',
+    ];
+    return paidPackages.includes(user.entitlement.package);
   };
-  
-  const isWLUser = (): boolean => user?.role === 'wl_user';
-  const isRegularUser = (): boolean => user?.role === 'regular_user';
+
+  const isWLUser = (): boolean => user?.entitlement?.package === 'whitelabel';
+  const isRegularUser = (): boolean => user?.entitlement?.package === 'regular';
 
   return (
     <RoleContext.Provider
@@ -251,7 +194,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   requiredPermission,
   resource,
-  fallback = <div className="p-8 text-center text-red-600">Access Denied</div>
+  fallback = <div className="p-8 text-center text-red-600">Access Denied</div>,
 }) => {
   const { user, isLoading, hasRole, hasPermission, canAccess } = useRole();
 
@@ -299,7 +242,7 @@ export const ConditionalRender: React.FC<ConditionalRenderProps> = ({
   role,
   permission,
   resource,
-  inverse = false
+  inverse = false,
 }) => {
   const { hasRole, hasPermission, canAccess } = useRole();
 

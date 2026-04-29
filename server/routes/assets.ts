@@ -7,8 +7,15 @@ import { Router, Request, Response } from 'express';
 import { assetManager, Asset } from '../services/whitelabel/assetManager';
 import { errorLogger } from '../services/errorLogger';
 import multer from 'multer';
+import { requireAuth } from './auth';
+import { requireEntitlement } from '../middleware/entitlements';
+import { FeatureKey } from '../types/entitlements';
 
 const router = Router();
+
+// All asset routes require brand asset management access
+router.use(requireAuth);
+router.use(requireEntitlement(FeatureKey.BRAND_ASSET_MANAGEMENT));
 
 // Configure multer for file uploads (memory storage)
 const upload = multer({
