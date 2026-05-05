@@ -12,6 +12,7 @@ import { DateTime } from "luxon";
 
 // server/db.ts
 import { drizzle } from "drizzle-orm/postgres-js";
+import { Pool } from "pg";
 
 // shared/schema.ts
 var schema_exports = {};
@@ -1644,8 +1645,17 @@ var userRolesTable = pgTable("user_roles", {
 });
 
 // server/db.ts
-var pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
-var db = pool ? drizzle(pool, { schema: schema_exports }) : null;
+var pool = null;
+var db = null;
+if (process.env.DATABASE_URL) {
+  try {
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    db = drizzle(pool, { schema: schema_exports });
+    console.log("\u2705 Database connected successfully");
+  } catch (error) {
+    console.warn("Database initialization failed, continuing without database:", error);
+  }
+}
 
 // server/entitlements-utils.ts
 import { eq } from "drizzle-orm";

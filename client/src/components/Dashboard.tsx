@@ -311,7 +311,7 @@ const Dashboard: React.FC = React.memo(() => {
           >
             <div
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
-              style={{ height: '500px' }}
+              style={{ minHeight: '600px', height: 'calc(100vh - 200px)' }}
             >
               <ModuleFederationPipeline showHeader={true} />
             </div>
@@ -342,7 +342,7 @@ const Dashboard: React.FC = React.memo(() => {
           >
             <div
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
-              style={{ height: '500px' }}
+              style={{ minHeight: '600px', height: 'calc(100vh - 200px)' }}
             >
               <RemoteWhiteLabelLoader showHeader={true} />
             </div>
@@ -353,7 +353,7 @@ const Dashboard: React.FC = React.memo(() => {
         return (
           <div
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
-            style={{ height: '500px' }}
+            style={{ minHeight: '600px', height: 'calc(100vh - 200px)' }}
           >
             <RemoteProductResearchLoader showHeader={true} />
           </div>
@@ -363,7 +363,7 @@ const Dashboard: React.FC = React.memo(() => {
         return (
           <div
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
-            style={{ height: '500px' }}
+            style={{ minHeight: '600px', height: 'calc(100vh - 200px)' }}
           >
             <ModuleFederationAnalytics showHeader={true} />
           </div>
@@ -373,7 +373,7 @@ const Dashboard: React.FC = React.memo(() => {
         return (
           <div
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
-            style={{ height: '500px' }}
+            style={{ minHeight: '600px', height: 'calc(100vh - 200px)' }}
           >
             <RemoteAIGoalsLoader showHeader={true} />
           </div>

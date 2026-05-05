@@ -1658,13 +1658,23 @@ __export(db_exports, {
   pool: () => pool
 });
 import { drizzle } from "drizzle-orm/postgres-js";
+import { Pool } from "pg";
 var pool, db, isDbAvailable;
 var init_db = __esm({
   "server/db.ts"() {
     "use strict";
     init_schema();
-    pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
-    db = pool ? drizzle(pool, { schema: schema_exports }) : null;
+    pool = null;
+    db = null;
+    if (process.env.DATABASE_URL) {
+      try {
+        pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        db = drizzle(pool, { schema: schema_exports });
+        console.log("\u2705 Database connected successfully");
+      } catch (error) {
+        console.warn("Database initialization failed, continuing without database:", error);
+      }
+    }
     isDbAvailable = () => pool !== null && db !== null;
   }
 });

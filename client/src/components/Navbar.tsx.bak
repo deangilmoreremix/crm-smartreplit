@@ -282,21 +282,9 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
   // General connected apps
   const connectedApps = [
-    { name: 'Contacts', url: 'https://contacts.smartcrm.vip', icon: Users, isExternal: true },
-    {
-      name: 'Pipeline Deals',
-      url: 'https://pipeline.smartcrm.vip',
-      icon: Briefcase,
-      isExternal: true,
-    },
-    { name: 'Calendar', url: 'https://calendar.smartcrm.vip', icon: Calendar, isExternal: true },
-    { name: 'Agency', url: 'https://agency.smartcrm.vip', icon: Megaphone, isExternal: true },
-    {
-      name: 'Analytics',
-      url: 'https://ai-analytics.smartcrm.vip',
-      icon: BarChart3,
-      isExternal: true,
-    },
+    { name: 'FunnelCraft AI', url: '/funnelcraft-ai', icon: Megaphone, isExternal: false },
+    { name: 'SmartCRM Closer', url: '/smartcrm-closer', icon: Users, isExternal: false },
+    { name: 'ContentAI', url: '/content-ai', icon: FileText, isExternal: false },
     {
       name: 'OpenClaw AI Chat',
       url: '/openclaw',

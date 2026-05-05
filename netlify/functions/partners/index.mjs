@@ -1642,8 +1642,18 @@ import { eq, desc, sql as sql2, and } from "drizzle-orm";
 
 // server/db.ts
 import { drizzle } from "drizzle-orm/postgres-js";
-var pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : null;
-var db = pool ? drizzle(pool, { schema: schema_exports }) : null;
+import { Pool } from "pg";
+var pool = null;
+var db = null;
+if (process.env.DATABASE_URL) {
+  try {
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    db = drizzle(pool, { schema: schema_exports });
+    console.log("\u2705 Database connected successfully");
+  } catch (error) {
+    console.warn("Database initialization failed, continuing without database:", error);
+  }
+}
 
 // server/storage.ts
 var DatabaseStorage = class {

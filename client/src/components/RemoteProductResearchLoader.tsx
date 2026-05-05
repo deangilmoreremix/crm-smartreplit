@@ -113,8 +113,10 @@ const RemoteProductResearchLoader: React.FC<RemoteProductResearchLoaderProps> = 
           src={REMOTE_URL}
           className="w-full h-full border-0"
           title="Product Research Module"
-          allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+          style={{ minHeight: '600px', height: 'calc(100vh - 120px)' }}
+          allow="clipboard-read; clipboard-write; fullscreen; microphone; camera; web-share"
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"
+          allowFullScreen
           loading="lazy"
         />
       </div>
