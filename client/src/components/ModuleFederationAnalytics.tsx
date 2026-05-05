@@ -5,7 +5,7 @@ import { useSharedModuleState } from '../utils/moduleFederationOrchestrator';
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Remote configuration
-const ANALYTICS_REMOTE_URL = 'https://analytics.smartcrm.vip';
+const ANALYTICS_REMOTE_URL = 'https://ai-analytics.smartcrm.vip';
 const ANALYTICS_SCOPE = 'AnalyticsApp';
 const ANALYTICS_MODULE = './AnalyticsApp';
 
