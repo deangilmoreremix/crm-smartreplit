@@ -1,15 +1,26 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Grid3X3, ExternalLink, Megaphone, Users, FileText, Palette } from 'lucide-react';
+import {
+  Grid3X3,
+  ExternalLink,
+  Megaphone,
+  Users,
+  FileText,
+  Calendar,
+  BarChart3,
+  Briefcase,
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ConnectedApps: React.FC = () => {
   const { isDark } = useTheme();
+  const navigate = useNavigate();
 
   // Connected apps
   const connectedApps = [
     {
       name: 'Contacts',
-      url: 'https://contacts.smartcrm.vip',
+      url: '/contacts',
       icon: Users,
       team: 'CRM Team',
       description: 'Advanced contact management and enrichment',
@@ -20,7 +31,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'Pipeline Deals',
-      url: 'https://pipeline.smartcrm.vip',
+      url: '/pipeline',
       icon: Briefcase,
       team: 'Sales Team',
       description: 'Advanced pipeline management and deal tracking',
@@ -31,7 +42,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'Calendar',
-      url: 'https://calendar.smartcrm.vip',
+      url: '/calendar',
       icon: Calendar,
       team: 'Scheduling Team',
       description: 'Smart calendar and appointment management',
@@ -42,7 +53,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'Agency',
-      url: 'https://agency.smartcrm.vip',
+      url: '/agency',
       icon: Megaphone,
       team: 'Marketing Team',
       description: 'AI-powered agency automation and optimization',
@@ -53,14 +64,50 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'Analytics',
-      url: 'https://ai-analytics.smartcrm.vip',
+      url: '/analytics',
       icon: BarChart3,
       team: 'Analytics Team',
       description: 'AI-powered analytics and business intelligence',
       color: isDark
         ? 'from-emerald-500/10 to-green-500/10 border-white/10 hover:border-emerald-400/30'
         : 'from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 border-gray-200 hover:border-emerald-300',
-      iconColor: isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600',
+      iconColor: isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-green-600',
+    },
+    {
+      name: 'FunnelCraft AI',
+      url: 'https://landing.smartcrm.vip',
+      icon: FileText,
+      team: 'Marketing Team',
+      description: 'AI-powered landing page and funnel creation',
+      color: isDark
+        ? 'from-pink-500/10 to-rose-500/10 border-white/10 hover:border-pink-400/30'
+        : 'from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 border-gray-200 hover:border-pink-300',
+      iconColor: isDark ? 'bg-pink-500/20 text-pink-400' : 'bg-pink-100 text-pink-600',
+      isExternal: true,
+    },
+    {
+      name: 'SmartCRM Closer',
+      url: 'https://agency.smartcrm.vip',
+      icon: Users,
+      team: 'Sales Team',
+      description: 'Advanced outreach automation and deal closing tools',
+      color: isDark
+        ? 'from-orange-500/10 to-amber-500/10 border-white/10 hover:border-orange-400/30'
+        : 'from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 border-gray-200 hover:border-orange-300',
+      iconColor: isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600',
+      isExternal: true,
+    },
+    {
+      name: 'ContentAI',
+      url: 'https://social-media-calenda-75j1.bolt.host',
+      icon: FileText,
+      team: 'Content & Support',
+      description: 'AI-powered content creation and social media calendar',
+      color: isDark
+        ? 'from-indigo-500/10 to-violet-500/10 border-white/10 hover:border-indigo-400/30'
+        : 'from-indigo-50 to-violet-50 hover:from-indigo-100 hover:to-violet-100 border-gray-200 hover:border-indigo-300',
+      iconColor: isDark ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-100 text-indigo-600',
+      isExternal: true,
     },
   ];
 
@@ -90,34 +137,63 @@ const ConnectedApps: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {connectedApps.map((app, index) => (
-          <a
-            key={index}
-            href={app.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`group p-4 rounded-lg bg-gradient-to-br ${app.color} transition-all duration-200`}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className={`p-2 rounded-lg ${app.iconColor} transition-colors`}>
-                <app.icon size={20} />
+        {connectedApps.map((app, index) => {
+          const isExternal = app.isExternal || app.url.startsWith('http');
+
+          if (isExternal) {
+            return (
+              <a
+                key={index}
+                href={app.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`group p-4 rounded-lg bg-gradient-to-br ${app.color} transition-all duration-200`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`p-2 rounded-lg ${app.iconColor} transition-colors`}>
+                    <app.icon size={20} />
+                  </div>
+                  <ExternalLink
+                    size={14}
+                    className={`${isDark ? 'text-gray-400 group-hover:text-purple-400' : 'text-gray-400 group-hover:text-purple-600'} transition-colors`}
+                  />
+                </div>
+                <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+                  {app.name}
+                </h4>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
+                  {app.team}
+                </p>
+                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  {app.description}
+                </p>
+              </a>
+            );
+          }
+
+          return (
+            <button
+              key={index}
+              onClick={() => navigate(app.url)}
+              className={`group p-4 rounded-lg bg-gradient-to-br ${app.color} transition-all duration-200 text-left w-full`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className={`p-2 rounded-lg ${app.iconColor} transition-colors`}>
+                  <app.icon size={20} />
+                </div>
               </div>
-              <ExternalLink
-                size={14}
-                className={`${isDark ? 'text-gray-400 group-hover:text-purple-400' : 'text-gray-400 group-hover:text-purple-600'} transition-colors`}
-              />
-            </div>
-            <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
-              {app.name}
-            </h4>
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
-              {app.team}
-            </p>
-            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-              {app.description}
-            </p>
-          </a>
-        ))}
+              <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'} mb-1`}>
+                {app.name}
+              </h4>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
+                {app.team}
+              </p>
+              <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                {app.description}
+              </p>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

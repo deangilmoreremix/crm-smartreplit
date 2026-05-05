@@ -282,19 +282,27 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
   // General connected apps
   const connectedApps = [
-    { name: 'Contacts', url: 'https://contacts.smartcrm.vip', icon: Users, isExternal: true },
+    { name: 'Contacts', url: '/contacts', icon: Users, isExternal: false },
+    { name: 'Pipeline Deals', url: '/pipeline', icon: Briefcase, isExternal: false },
+    { name: 'Calendar', url: '/calendar', icon: Calendar, isExternal: false },
+    { name: 'Agency', url: '/agency', icon: Megaphone, isExternal: false },
+    { name: 'Analytics', url: '/analytics', icon: BarChart3, isExternal: false },
     {
-      name: 'Pipeline Deals',
-      url: 'https://pipeline.smartcrm.vip',
-      icon: Briefcase,
+      name: 'FunnelCraft AI',
+      url: 'https://landing.smartcrm.vip',
+      icon: Megaphone,
       isExternal: true,
     },
-    { name: 'Calendar', url: 'https://calendar.smartcrm.vip', icon: Calendar, isExternal: true },
-    { name: 'Agency', url: 'https://agency.smartcrm.vip', icon: Megaphone, isExternal: true },
     {
-      name: 'Analytics',
-      url: 'https://ai-analytics.smartcrm.vip',
-      icon: BarChart3,
+      name: 'SmartCRM Closer',
+      url: 'https://agency.smartcrm.vip',
+      icon: Users,
+      isExternal: true,
+    },
+    {
+      name: 'ContentAI',
+      url: 'https://social-media-calenda-75j1.bolt.host',
+      icon: FileText,
       isExternal: true,
     },
     {
