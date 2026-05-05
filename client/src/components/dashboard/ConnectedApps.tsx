@@ -75,7 +75,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'FunnelCraft AI',
-      url: 'https://landing.smartcrm.vip',
+      url: 'https://ai-funnelcraft.videoremix.vip',
       icon: FileText,
       team: 'Marketing Team',
       description: 'AI-powered landing page and funnel creation',
@@ -87,7 +87,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'SmartCRM Closer',
-      url: 'https://agency.smartcrm.vip',
+      url: 'https://smartcrmcloser.netlify.app',
       icon: Users,
       team: 'Sales Team',
       description: 'Advanced outreach automation and deal closing tools',
@@ -99,7 +99,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'ContentAI',
-      url: 'https://social-media-calenda-75j1.bolt.host',
+      url: 'https://contentai.smartcrm.vip',
       icon: FileText,
       team: 'Content & Support',
       description: 'AI-powered content creation and social media calendar',

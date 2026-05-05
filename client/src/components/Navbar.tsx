@@ -289,19 +289,19 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     { name: 'Analytics', url: '/analytics', icon: BarChart3, isExternal: false },
     {
       name: 'FunnelCraft AI',
-      url: 'https://landing.smartcrm.vip',
+      url: 'https://ai-funnelcraft.videoremix.vip',
       icon: Megaphone,
       isExternal: true,
     },
     {
       name: 'SmartCRM Closer',
-      url: 'https://agency.smartcrm.vip',
+      url: 'https://smartcrmcloser.netlify.app',
       icon: Users,
       isExternal: true,
     },
     {
       name: 'ContentAI',
-      url: 'https://social-media-calenda-75j1.bolt.host',
+      url: 'https://contentai.smartcrm.vip',
       icon: FileText,
       isExternal: true,
     },

@@ -14,6 +14,122 @@ SmartCRM is an advanced, AI-powered customer relationship management platform th
 
 ---
 
+## 🔗 Remote Applications & URLs
+
+### Quick Reference: All Remote App URLs
+
+> **Note:** All URLs are production endpoints. Internal routes are embedded via Module Federation; external URLs open in new browser tabs.
+
+| App Name | Type | URL | Access Method | Primary Use |
+|----------|------|-----|---------------|-------------|
+| **Contacts** | Monorepo | `/contacts` | Embedded MFE | Core CRM contact management |
+| **Pipeline Deals** | Monorepo | `/pipeline` | Embedded MFE | Sales pipeline & deals |
+| **Calendar** | Monorepo | `/calendar` | Embedded MFE | Appointments & scheduling |
+| **Agency** | Monorepo | `/agency` | Embedded MFE | AI agency automation |
+| **Analytics** | Monorepo | `/analytics` | Embedded MFE | AI analytics dashboard |
+| **FunnelCraft AI** | External | https://ai-funnelcraft.videoremix.vip | New tab | AI landing page & funnel builder |
+| **SmartCRM Closer** | External | https://smartcrmcloser.netlify.app | New tab | Outreach automation & closing |
+| **ContentAI** | External | https://contentai.smartcrm.vip | New tab | AI content & social calendar |
+| **White Label Suite** | External | `/wl` → iframe | In-app route | White-label customization |
+| **Product Research** | External | N/A (dashboard only) | Dashboard section | Market analysis tools |
+
+### Monorepo Applications (Module Federation)
+
+These five core apps are part of the SmartCRM monorepo and are embedded directly in the interface via [Module Federation](https://vitejs.dev/guide/features.html#module-federation):
+
+#### 1. Contacts
+- **Route:** `/contacts`
+- **Domain:** contacts.smartcrm.vip (configured in `vite.config.ts`)
+- **Component:** `ModuleFederationContacts.tsx` + `RemoteContactsLoader.tsx`
+- **Integration:** Bidirectional data sync with main CRM via `RemoteContactsBridge`
+- **Features:** Contact CRUD, enrichment, AI scoring, activity logging
+
+#### 2. Pipeline Deals
+- **Route:** `/pipeline`
+- **Domain:** pipeline.smartcrm.vip
+- **Component:** `ModuleFederationPipeline.tsx` + `RemotePipelineLoader.tsx`
+- **Integration:** Real-time deal sync with `useDealStore`
+- **Features:** Kanban board, deal tracking, pipeline analytics
+
+#### 3. Calendar
+- **Route:** `/calendar`
+- **Domain:** calendar.smartcrm.vip
+- **Component:** `ModuleFederationCalendar.tsx`
+- **Integration:** Appointment management with CRM events
+- **Features:** Calendar view, scheduling, reminders
+
+#### 4. Agency
+- **Route:** `/agency`
+- **Domain:** agency.smartcrm.vip
+- **Component:** `RemoteSmartCRMLoader.tsx` (iframe) + `AIGoalsWithRemote.tsx`
+- **Integration:** AI goals & automation via iframe bridge
+- **Features:** AI automation, outreach campaigns
+
+#### 5. Analytics
+- **Route:** `/analytics` and `/analytics-remote`, `/business-intel`, `/intel`
+- **Domain:** ai-analytics.smartcrm.vip
+- **Components:** 
+  - `RemoteAnalyticsLoader.tsx` (iframe)
+  - `RemoteBusinessIntelLoader.tsx` (iframe)
+  - `RemoteIntelLoader.tsx` (full-page)
+  - `ModuleFederationAnalytics.tsx` (MFE)
+- **Features:** AI-powered analytics, business intelligence, KPI tracking
+
+### External Standalone Applications
+
+These applications are hosted separately and opened in new browser tabs or embedded as iframes:
+
+#### FunnelCraft AI
+- **Production URL:** https://ai-funnelcraft.videoremix.vip
+- **How it opens:** External link (new tab) from Connected Apps dropdown or dashboard
+- **Loader component:** `RemoteFunnelCraftLoader.tsx` (full-page iframe on `/funnelcraft-ai` route)
+- **Icon:** Megaphone
+- **Description:** AI-powered landing page and funnel creation platform
+- **Legacy URLs:** Previously deployed on Netlify (`cerulean-crepe-9470cc.netlify.app`) and `funnelcraft-ai.videoremix.io`
+
+#### SmartCRM Closer
+- **Production URL:** https://smartcrmcloser.netlify.app
+- **How it opens:** External link (new tab) from Connected Apps dropdown
+- **Loader component:** `RemoteSmartCRMLoader.tsx` (iframe on `/smartcrm-closer` route)
+- **Icon:** Users
+- **Description:** Advanced outreach automation and deal closing tools
+- **Legacy URLs:** `agency.smartcrm.vip` (old), `serene-valkyrie-fec320.netlify.app` (dev)
+
+#### ContentAI
+- **Production URL:** https://contentai.smartcrm.vip
+- **How it opens:** External link (new tab) from Connected Apps dropdown
+- **Loader component:** `RemoteContentAILoader.tsx` (iframe on `/content-ai` route)
+- **Icon:** FileText
+- **Description:** AI-powered content creation and social media calendar
+- **Legacy URLs:** `social-media-calenda-75j1.bolt.host` (old), `content-ai.videoremix.io` (old)
+
+### Infrastructure & Configuration
+
+#### URL Configuration Files
+- **Vite Module Federation:** `vite.config.ts` - defines MFE remotes for Contacts, Pipeline, Calendar, Analytics, Agency
+- **Navbar menu items:** `client/src/components/Navbar.tsx` - `connectedApps` and `wlApps` arrays
+- **Dashboard widgets:** `client/src/components/dashboard/ConnectedApps.tsx` - defines connected apps grid
+- **App routes:** `client/src/App.tsx` - React Router routes for protected access
+
+#### URL Patterns
+```
+Internal (Monorepo):
+  https://app.smartcrm.vip/contacts
+  https://app.smartcrm.vip/pipeline
+  https://app.smartcrm.vip/calendar
+  https://app.smartcrm.vip/agency
+  https://app.smartcrm.vip/analytics
+
+External (Standalone):
+  https://ai-funnelcraft.videoremix.vip
+  https://smartcrmcloser.netlify.app
+  https://contentai.smartcrm.vip
+  https://white-label.smartcrm.vip
+  https://product-research-mod-uay0.bolt.host
+```
+
+---
+
 ## 🏗️ Platform Architecture & Foundation
 
 ### twentyCRM Integration & Enhancements
