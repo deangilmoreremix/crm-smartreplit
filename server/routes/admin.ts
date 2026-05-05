@@ -756,41 +756,41 @@ export function registerAdminRoutes(app: Express): void {
     async (req: any, res) => {
       try {
         const { users, send_notifications } = req.body;
-        
+
         if (!Array.isArray(users)) {
           return res.status(400).json({ error: 'Users array is required' });
         }
-        
+
         const { db } = await import('../db');
-        
+
         let success = 0;
         let failed = 0;
         const errors: string[] = [];
         const importedUsers: string[] = [];
-        
+
         for (const userData of users) {
           try {
             const { email, first_name, last_name, company, phone, role, product_tier } = userData;
-            
+
             if (!email) {
               errors.push(`Missing email for user: ${first_name} ${last_name}`);
               failed++;
               continue;
             }
-            
+
             // Check if user already exists
             const existingUser = await db
               .select()
               .from(profiles)
               .where(eq(profiles.username, email.toLowerCase()))
               .limit(1);
-            
+
             if (existingUser.length > 0) {
               errors.push(`User already exists: ${email}`);
               failed++;
               continue;
             }
-            
+
             // Create user
             const newUser = await db
               .insert(profiles)
@@ -807,10 +807,10 @@ export function registerAdminRoutes(app: Express): void {
                 updatedAt: new Date(),
               })
               .returning();
-            
+
             importedUsers.push(email);
             success++;
-            
+
             // TODO: Send welcome email if send_notifications is true
           } catch (error) {
             console.error('Failed to import user:', userData, error);
@@ -820,7 +820,7 @@ export function registerAdminRoutes(app: Express): void {
             failed++;
           }
         }
-        
+
         res.json({
           success: true,
           result: {
@@ -837,8 +837,4 @@ export function registerAdminRoutes(app: Express): void {
       }
     }
   );
-
-  // Export middleware for use in other modules
-  export { adminRateLimit } from '../middleware/rateLimit';
-  export { validateUserData, validateBulkImport } from '../middleware/validation';
 }

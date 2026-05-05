@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from 'express';
-import { requireAuth, requireAdmin, requireRole } from '../auth.js';
+import { requireAuth, requireAdmin, requireRole } from './auth.js';
 import { AIPricingService } from '../services/aiPricingService.js';
 import { db } from '../db.js';
 import { aiFeatureDefinitions, aiResellerPricing, aiFeatureUsage } from '../../shared/schema.js';

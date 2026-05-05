@@ -1,8 +1,9 @@
 import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
 import express, { type Request, Response, NextFunction } from 'express';
 import { registerRoutes } from './routes';
+import { createServer } from 'http';
 import { setupVite, serveStatic, log } from './vite';
-import { createClient } from '@supabase/supabase-js';
 
 export const app = express();
 app.use(express.json());
@@ -114,16 +115,17 @@ app.use('/api', async (req, res, next) => {
       serveStatic(app);
     }
 
-    // Serve on port 3000 for Codespaces compatibility, fallback to PORT env var, then 5000
+    // Create HTTP server and listen
+    const httpServer = createServer(app);
     const requestedPort = process.env.PORT || 3000;
-    server.listen(
+    httpServer.listen(
       {
         port: requestedPort,
         host: '127.0.0.1',
         reusePort: true,
       },
       () => {
-        const actualPort = (server.address() as any)?.port || requestedPort;
+        const actualPort = (httpServer.address() as any)?.port || requestedPort;
         log(`🎉 Server running on port ${actualPort}`);
         log(`🌐 Access your app at: http://localhost:${actualPort}`);
       }

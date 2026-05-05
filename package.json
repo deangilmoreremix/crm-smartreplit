@@ -24,7 +24,18 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write .",
     "db:push": "drizzle-kit push",
-    "prepare": "husky"
+    "prepare": "husky",
+    "demo:overview": "playwright test demos/smartcrm/01-overview.spec.js --config=demos/playwright.config.js",
+    "demo:contacts": "playwright test demos/smartcrm/02-contacts-ai-lead-scoring.spec.ts --config=demos/playwright.config.js",
+    "demo:pipeline": "playwright test demos/smartcrm/03-pipeline-deal-intelligence.spec.ts --config=demos/playwright.config.js",
+    "demo:openclaw": "playwright test demos/smartcrm/04-openclaw-control.spec.ts --config=demos/playwright.config.js",
+    "demo:ai-tools": "playwright test demos/smartcrm/05-ai-tools.spec.ts --config=demos/playwright.config.js",
+    "demo:communication": "playwright test demos/smartcrm/06-communication-hub.spec.ts --config=demos/playwright.config.js",
+    "demo:analytics": "playwright test demos/smartcrm/07-analytics.spec.ts --config=demos/playwright.config.js",
+    "demo:white-label": "playwright test demos/smartcrm/08-white-label.spec.ts --config=demos/playwright.config.js",
+    "demo:tasks": "playwright test demos/smartcrm/09-tasks.spec.ts --config=demos/playwright.config.js",
+    "demo:remote-apps": "playwright test demos/smartcrm/10-remote-apps.spec.ts --config=demos/playwright.config.js",
+    "demo:all": "playwright test demos/smartcrm/ --config=demos/playwright.config.js"
   },
   "dependencies": {
     "@elevenlabs/react": "^0.6.1",

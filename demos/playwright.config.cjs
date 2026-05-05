@@ -1,7 +1,8 @@
 const { defineConfig } = require('@playwright/test');
+const path = require('path');
 
 module.exports = defineConfig({
-  testDir: './tests',
+  testDir: path.resolve(__dirname, 'smartcrm'),
   timeout: 120_000,
   use: {
     headless: true,
@@ -12,15 +13,6 @@ module.exports = defineConfig({
     screenshot: 'only-on-failure',
     baseURL: process.env.SMARTCRM_URL || 'http://localhost:5000',
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { 
-        video: { 
-          size: { width: 1440, height: 900 }
-        }
-      }
-    }
-  ],
-  outputDir: 'demo-videos',
+  outputDir: path.resolve(__dirname, 'demo-videos'),
+  retries: 1,
 });

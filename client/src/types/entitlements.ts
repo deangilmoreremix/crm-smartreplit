@@ -127,6 +127,86 @@ export enum FeatureKey {
 }
 
 // Package feature mappings (client-side copy for quick checks)
+// Package feature mappings (client-side copy for quick checks)
+// Fixed: Extract smartmarketer features as separate constant to avoid circular reference
+const SMARTMARKETER_FEATURES: string[] = [
+  // Core
+  FeatureKey.CORE_CRM,
+  FeatureKey.DASHBOARD,
+  FeatureKey.CONTACTS,
+  FeatureKey.PIPELINE,
+  FeatureKey.CALENDAR,
+
+  // Enhanced CRM
+  FeatureKey.CONTACT_ENHANCEMENTS,
+  FeatureKey.AI_CONTACT_ENRICHMENT,
+  FeatureKey.AI_LEAD_SCORING,
+  FeatureKey.CUSTOM_FIELDS,
+  FeatureKey.CONTACT_ACTIVITY_TRACKING,
+  FeatureKey.BULK_CONTACT_OPERATIONS,
+  FeatureKey.PIPELINE_MANAGEMENT,
+  FeatureKey.TASK_MANAGEMENT,
+
+  // AI Tools
+  FeatureKey.AI_TOOLS,
+  FeatureKey.EMAIL_ANALYSIS,
+  FeatureKey.MEETING_SUMMARIZER,
+  FeatureKey.PROPOSAL_GENERATOR,
+  FeatureKey.CALL_SCRIPT_GENERATOR,
+  FeatureKey.SUBJECT_LINE_OPTIMIZER,
+  FeatureKey.VISION_ANALYZER,
+  FeatureKey.IMAGE_GENERATOR,
+  FeatureKey.SEMANTIC_SEARCH,
+  FeatureKey.FUNCTION_ASSISTANT,
+  FeatureKey.STREAMING_CHAT,
+  FeatureKey.LIVE_DEAL_ANALYSIS,
+  FeatureKey.INSTANT_RESPONSE_GENERATOR,
+  FeatureKey.AI_GOALS,
+
+  // Analytics
+  FeatureKey.ANALYTICS,
+  FeatureKey.ADVANCED_ANALYTICS,
+  FeatureKey.BUSINESS_INTELLIGENCE,
+  FeatureKey.SALES_INTELLIGENCE,
+  FeatureKey.DEAL_INTELLIGENCE_DASHBOARD,
+  FeatureKey.CONTACT_ANALYTICS_DASHBOARD,
+  FeatureKey.PIPELINE_INTELLIGENCE,
+  FeatureKey.DEAL_RISK_MONITOR,
+  FeatureKey.SMART_CONVERSION_INSIGHTS,
+  FeatureKey.PIPELINE_HEALTH_DASHBOARD,
+  FeatureKey.SALES_CYCLE_ANALYTICS,
+  FeatureKey.WIN_RATE_INTELLIGENCE,
+  FeatureKey.AI_SALES_FORECAST,
+  FeatureKey.COMPETITOR_INSIGHTS,
+  FeatureKey.REVENUE_INTELLIGENCE,
+
+  // Communication
+  FeatureKey.COMMUNICATION_HUB,
+  FeatureKey.APPOINTMENTS,
+  FeatureKey.VIDEO_EMAIL,
+  FeatureKey.TEXT_MESSAGES,
+  FeatureKey.PHONE_SYSTEM,
+  FeatureKey.VOICE_PROFILES,
+
+  // Smart Marketer tools
+  FeatureKey.INVOICING,
+  FeatureKey.LEAD_AUTOMATION,
+  FeatureKey.FORMS_SURVEYS,
+  FeatureKey.BUSINESS_ANALYZER,
+  FeatureKey.CONTENT_LIBRARY,
+  FeatureKey.CIRCLE_PROSPECTING,
+
+  // Connected apps
+  FeatureKey.CONNECTED_APPS,
+  FeatureKey.FUNNELCRAFT_AI,
+  FeatureKey.SMARTCRM_CLOSER,
+  FeatureKey.CONTENT_AI,
+
+  // Billing
+  FeatureKey.BILLING_CREDITS,
+  FeatureKey.BUY_CREDITS,
+];
+
 export const PACKAGE_FEATURES: Record<PackageType, string[]> = {
   regular: [
     FeatureKey.CORE_CRM,
@@ -136,87 +216,10 @@ export const PACKAGE_FEATURES: Record<PackageType, string[]> = {
     FeatureKey.CALENDAR,
   ],
 
-  smartmarketer: [
-    // Core
-    FeatureKey.CORE_CRM,
-    FeatureKey.DASHBOARD,
-    FeatureKey.CONTACTS,
-    FeatureKey.PIPELINE,
-    FeatureKey.CALENDAR,
-
-    // Enhanced CRM
-    FeatureKey.CONTACT_ENHANCEMENTS,
-    FeatureKey.AI_CONTACT_ENRICHMENT,
-    FeatureKey.AI_LEAD_SCORING,
-    FeatureKey.CUSTOM_FIELDS,
-    FeatureKey.CONTACT_ACTIVITY_TRACKING,
-    FeatureKey.BULK_CONTACT_OPERATIONS,
-    FeatureKey.PIPELINE_MANAGEMENT,
-    FeatureKey.TASK_MANAGEMENT,
-
-    // AI Tools
-    FeatureKey.AI_TOOLS,
-    FeatureKey.EMAIL_ANALYSIS,
-    FeatureKey.MEETING_SUMMARIZER,
-    FeatureKey.PROPOSAL_GENERATOR,
-    FeatureKey.CALL_SCRIPT_GENERATOR,
-    FeatureKey.SUBJECT_LINE_OPTIMIZER,
-    FeatureKey.VISION_ANALYZER,
-    FeatureKey.IMAGE_GENERATOR,
-    FeatureKey.SEMANTIC_SEARCH,
-    FeatureKey.FUNCTION_ASSISTANT,
-    FeatureKey.STREAMING_CHAT,
-    FeatureKey.LIVE_DEAL_ANALYSIS,
-    FeatureKey.INSTANT_RESPONSE_GENERATOR,
-    FeatureKey.AI_GOALS,
-
-    // Analytics
-    FeatureKey.ANALYTICS,
-    FeatureKey.ADVANCED_ANALYTICS,
-    FeatureKey.BUSINESS_INTELLIGENCE,
-    FeatureKey.SALES_INTELLIGENCE,
-    FeatureKey.DEAL_INTELLIGENCE_DASHBOARD,
-    FeatureKey.CONTACT_ANALYTICS_DASHBOARD,
-    FeatureKey.PIPELINE_INTELLIGENCE,
-    FeatureKey.DEAL_RISK_MONITOR,
-    FeatureKey.SMART_CONVERSION_INSIGHTS,
-    FeatureKey.PIPELINE_HEALTH_DASHBOARD,
-    FeatureKey.SALES_CYCLE_ANALYTICS,
-    FeatureKey.WIN_RATE_INTELLIGENCE,
-    FeatureKey.AI_SALES_FORECAST,
-    FeatureKey.COMPETITOR_INSIGHTS,
-    FeatureKey.REVENUE_INTELLIGENCE,
-
-    // Communication
-    FeatureKey.COMMUNICATION_HUB,
-    FeatureKey.APPOINTMENTS,
-    FeatureKey.VIDEO_EMAIL,
-    FeatureKey.TEXT_MESSAGES,
-    FeatureKey.PHONE_SYSTEM,
-    FeatureKey.VOICE_PROFILES,
-
-    // Smart Marketer tools
-    FeatureKey.INVOICING,
-    FeatureKey.LEAD_AUTOMATION,
-    FeatureKey.FORMS_SURVEYS,
-    FeatureKey.BUSINESS_ANALYZER,
-    FeatureKey.CONTENT_LIBRARY,
-    FeatureKey.CIRCLE_PROSPECTING,
-
-    // Connected apps
-    FeatureKey.CONNECTED_APPS,
-    FeatureKey.FUNNELCRAFT_AI,
-    FeatureKey.SMARTCRM_CLOSER,
-    FeatureKey.CONTENT_AI,
-
-    // Billing
-    FeatureKey.BILLING_CREDITS,
-    FeatureKey.BUY_CREDITS,
-  ],
+  smartmarketer: SMARTMARKETER_FEATURES,
 
   whitelabel: [
-    // Everything from smartmarketer
-    ...PACKAGE_FEATURES.smartmarketer,
+    ...SMARTMARKETER_FEATURES,
     // Plus white label features
     FeatureKey.WHITE_LABEL,
     FeatureKey.WHITE_LABEL_CUSTOMIZATION,

@@ -1,6 +1,5 @@
 import type { Express } from 'express';
 import { Router, Request, Response } from 'express';
-import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { productTiers } from '../../shared/schema';
 import { requireAuth } from './auth';
@@ -14,10 +13,23 @@ const router = Router();
 router.use(requireAuth);
 router.use(requireEntitlement(FeatureKey.BUY_CREDITS));
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-});
+// Initialize Stripe (optional for demo)
+let stripe: any = null;
+try {
+  if (
+    process.env.STRIPE_SECRET_KEY &&
+    process.env.STRIPE_SECRET_KEY !== 'sk_test_demo_stripe_key_placeholder'
+  ) {
+    const Stripe = await import('stripe');
+    stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16',
+    });
+  } else {
+    console.warn('Stripe not configured, billing features disabled for demo');
+  }
+} catch (error) {
+  console.warn('Stripe initialization failed, billing features disabled:', error);
+}
 
 // Initialize Supabase
 const supabaseUrl = process.env.SUPABASE_URL!;
