@@ -35,11 +35,15 @@ SmartCRM is an advanced, AI-powered customer relationship management platform th
 
 ### Monorepo Applications (Module Federation)
 
-These five core apps are part of the SmartCRM monorepo and are embedded directly in the interface via [Module Federation](https://vitejs.dev/guide/features.html#module-federation):
+These five core apps are part of the SmartCRM monorepo and are embedded directly in the interface via [Module Federation](https://vitejs.dev/guide/features.html#module-federation).
+
+> **Remote Entry URLs**: Each app exposes its Module Federation entry at `https://{app}.smartcrm.vip/remoteEntry.js`
 
 #### 1. Contacts
 - **Route:** `/contacts`
-- **Domain:** contacts.smartcrm.vip (configured in `vite.config.ts`)
+- **Domain:** contacts.smartcrm.vip
+- **Remote Entry:** `https://contacts.smartcrm.vip/remoteEntry.js`
+- **MFE Scope:** `ContactsApp` | **Module:** `./ContactsApp`
 - **Component:** `ModuleFederationContacts.tsx` + `RemoteContactsLoader.tsx`
 - **Integration:** Bidirectional data sync with main CRM via `RemoteContactsBridge`
 - **Features:** Contact CRUD, enrichment, AI scoring, activity logging
@@ -47,6 +51,8 @@ These five core apps are part of the SmartCRM monorepo and are embedded directly
 #### 2. Pipeline Deals
 - **Route:** `/pipeline`
 - **Domain:** pipeline.smartcrm.vip
+- **Remote Entry:** `https://pipeline.smartcrm.vip/assets/remoteEntry.js`
+- **MFE Scope:** `PipelineApp` | **Module:** `./PipelineApp`
 - **Component:** `ModuleFederationPipeline.tsx` + `RemotePipelineLoader.tsx`
 - **Integration:** Real-time deal sync with `useDealStore`
 - **Features:** Kanban board, deal tracking, pipeline analytics
@@ -54,6 +60,8 @@ These five core apps are part of the SmartCRM monorepo and are embedded directly
 #### 3. Calendar
 - **Route:** `/calendar`
 - **Domain:** calendar.smartcrm.vip
+- **Remote Entry:** `https://calendar.smartcrm.vip/assets/remoteEntry.js`
+- **MFE Scope:** `CalendarApp` | **Module:** `./CalendarApp`
 - **Component:** `ModuleFederationCalendar.tsx`
 - **Integration:** Appointment management with CRM events
 - **Features:** Calendar view, scheduling, reminders
@@ -61,14 +69,17 @@ These five core apps are part of the SmartCRM monorepo and are embedded directly
 #### 4. Agency
 - **Route:** `/agency`
 - **Domain:** agency.smartcrm.vip
-- **Component:** `RemoteSmartCRMLoader.tsx` (iframe) + `AIGoalsWithRemote.tsx`
-- **Integration:** AI goals & automation via iframe bridge
+- **Remote Entry:** Not available (uses iframe embedding instead of MFE)
+- **Loader:** `RemoteAIGoalsLoader.tsx` (iframe on `/agency` route)
+- **iframe src:** `https://agency.smartcrm.vip/`
 - **Features:** AI automation, outreach campaigns
 
 #### 5. Analytics
 - **Route:** `/analytics` and `/analytics-remote`, `/business-intel`, `/intel`
 - **Domain:** ai-analytics.smartcrm.vip
-- **Components:** 
+- **Remote Entry:** `https://ai-analytics.smartcrm.vip/remoteEntry.js`
+- **MFE Scope:** `AnalyticsApp` | **Module:** `./AnalyticsApp`
+- **Components:**
   - `RemoteAnalyticsLoader.tsx` (iframe)
   - `RemoteBusinessIntelLoader.tsx` (iframe)
   - `RemoteIntelLoader.tsx` (full-page)
