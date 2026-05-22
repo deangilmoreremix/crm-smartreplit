@@ -9,11 +9,18 @@ import { useAIApiKeys } from '../../hooks/useAIApiKeys';
 interface AIApiKeySettingsProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * When true, the dialog will skip the provider-selection step and
+   * go directly to OpenClaw API key entry. Used for the "Setup OpenClaw"
+   * auto-trigger flow so returning users don't have to re-select the provider.
+   */
+  preferOpenClawOnOpen?: boolean;
 }
 
 export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   open,
-  onOpenChange
+  onOpenChange,
+  preferOpenClawOnOpen = false
 }) => {
   const { user } = useAuthStore();
   const { apiConfig, isLoading, saveApiKeys, testConnection } = useAIApiKeys();
@@ -67,12 +74,19 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
           gemini: { apiKey: apiConfig.gemini?.apiKey || '', model: apiConfig.gemini?.model || 'gemini-1.5-flash' },
           openclaw: { apiKey: apiConfig.openclaw?.apiKey || '', model: apiConfig.openclaw?.model || 'default', baseUrl: apiConfig.openclaw?.baseUrl || '' }
         });
-        // Auto-select the provider that has a saved key (or default to openai)
-        const savedProvider = apiConfig.openclaw?.apiKey ? 'openclaw' : apiConfig.gemini?.apiKey ? 'gemini' : apiConfig.openai?.apiKey ? 'openai' : 'openai';
-        setProvider(savedProvider);
+        // Auto-select the provider that has a saved key (or default to openai / openclaw)
+        if (preferOpenClawOnOpen) {
+          // For "setup OpenClaw" trigger — go straight to OpenClaw provider + step 2 (API key)
+          setProvider('openclaw');
+          // If they already have a key, go to step 3 (review), otherwise step 2 (enter key)
+          setCurrentStep(apiConfig.openclaw?.apiKey ? 2 : 2);
+        } else {
+          const savedProvider = apiConfig.openclaw?.apiKey ? 'openclaw' : apiConfig.gemini?.apiKey ? 'gemini' : apiConfig.openai?.apiKey ? 'openai' : 'openai';
+          setProvider(savedProvider);
+        }
       }
     }
-  }, [isOpen, apiConfig]);
+  }, [isOpen, apiConfig, preferOpenClawOnOpen]);
 
   const handleProviderSelect = (selectedProvider: 'openai' | 'gemini' | 'openclaw') => {
     setProvider(selectedProvider);
