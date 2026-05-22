@@ -20,6 +20,13 @@ import { registerVideoRoutes } from './videos';
 import { registerAppointmentRoutes } from './appointments';
 import { registerAIPricingRoutes } from './aiPricing';
 import { registerAIRoutes } from './ai';
+import { registerApiKeyRoutes } from './apiKeys';
+import { registerAISalesToolsRoutes } from './aiSalesTools';
+import { registerAICommunicationRoutes } from './aiCommunication';
+import { registerAIContentRoutes } from './aiContent';
+import { registerAIProductivityRoutes } from './aiProductivity';
+import { registerAIAdvancedRoutes } from './aiAdvanced';
+import { registerAIAutomationRoutes } from './aiAutomation';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -91,4 +98,32 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register assets routes
   console.log('Registering assets routes at /api/assets');
   app.use('/api/assets', assetsRoutes);
+
+  // Register API key routes
+  console.log('Registering API key routes');
+  registerApiKeyRoutes(app);
+
+  // Register AI Sales Tools routes
+  console.log('Registering AI Sales Tools routes');
+  registerAISalesToolsRoutes(app);
+
+  // Register AI Communication Tools routes
+  console.log('Registering AI Communication Tools routes');
+  registerAICommunicationRoutes(app);
+
+  // Register Content & Marketing Tools routes
+  console.log('Registering Content & Marketing Tools routes');
+  registerAIContentRoutes(app);
+
+  // Register Meeting & Productivity Tools routes
+  console.log('Registering Meeting & Productivity Tools routes');
+  registerAIProductivityRoutes(app);
+
+  // Register Advanced AI Tools routes
+  console.log('Registering Advanced AI Tools routes');
+  registerAIAdvancedRoutes(app);
+
+  // Register Automation Tools routes
+  console.log('Registering Automation Tools routes');
+  registerAIAutomationRoutes(app);
 }

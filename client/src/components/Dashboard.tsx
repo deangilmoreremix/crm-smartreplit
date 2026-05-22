@@ -22,7 +22,7 @@ import AIProviderSettingsModal from './modals/AIProviderSettingsModal';
 import { OnboardingWidget } from './OnboardingWidget';
 import { useAIConfiguration } from '../contexts/AIConfigurationContext';
 import OpenClawStatusBanner from './OpenClawStatusBanner';
-import { useOpenClawStatus } from '../hooks/useOpenClawStatus';
+import { useAIApiKeys } from '../hooks/useAIApiKeys';
 
 // Import section components
 import ExecutiveOverviewSection from './sections/ExecutiveOverviewSection';
@@ -79,7 +79,8 @@ const Dashboard: React.FC = React.memo(() => {
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [showOpenClawBanner, setShowOpenClawBanner] = React.useState(true);
   const { showAIProviderModal, setShowAIProviderModal } = useAIConfiguration();
-  const { status: openClawStatus } = useOpenClawStatus();
+  const { apiConfig: openclawConfig } = useAIApiKeys();
+  const hasOpenClawKey = Boolean(openclawConfig?.openclaw?.apiKey?.trim());
 
   useEffect(() => {
     // Only fetch data once
@@ -411,7 +412,7 @@ const Dashboard: React.FC = React.memo(() => {
       <OnboardingWidget />
 
       {/* OpenClaw Status Banner - Show if no API key */}
-      {!openClawStatus.hasApiKey && showOpenClawBanner && (
+      {!hasOpenClawKey && showOpenClawBanner && (
         <OpenClawStatusBanner
           onSetupClick={() => {
             // This will be handled by the parent App component

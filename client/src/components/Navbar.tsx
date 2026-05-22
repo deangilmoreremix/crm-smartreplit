@@ -71,7 +71,7 @@ import { useNavbarPosition } from '../contexts/NavbarPositionContext';
 import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import DevBypassButton from './DevBypassButton';
 import OpenClawNavbarIndicator from './OpenClawNavbarIndicator';
-import { useOpenClawStatus } from '../hooks/useOpenClawStatus';
+import { useAIApiKeys } from '../hooks/useAIApiKeys';
 
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
@@ -150,7 +150,8 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   const { canAccess } = useRole();
   const { entitlement } = useEntitlements();
   const { position, isMinimized, toggleMinimized } = useNavbarPosition();
-  const { status: openClawStatus } = useOpenClawStatus();
+  const { apiConfig: openclawConfig } = useAIApiKeys();
+  const hasOpenClawKey = Boolean(openclawConfig?.openclaw?.apiKey?.trim());
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -1071,7 +1072,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                                     >
                                       {app.name === 'OpenClaw AI Chat' ? (
                                         <OpenClawNavbarIndicator
-                                          hasApiKey={openClawStatus.hasApiKey}
+                                          hasApiKey={hasOpenClawKey}
                                           onClick={() => handleNavigation(app.url, 'white-label')}
                                         />
                                       ) : (

@@ -175,3 +175,65 @@ To run from source:
 # Go >= 1.22
 go run . help
 ```
+
+---
+
+## Agent Memory Integration
+
+SmartCRM integrates [agentmemory](https://github.com/rohitg00/agentmemory) for persistent AI agent memory. This allows AI agents (Kilo Code, Claude Code, Cursor, etc.) to remember past interactions, decisions, and patterns across sessions.
+
+### Setup
+
+1. **Install dependencies** (already included):
+   ```bash
+   npm install @agentmemory/agentmemory iii-sdk @xenova/transformers
+   ```
+
+2. **Start the memory server** (in a separate terminal):
+   ```bash
+   npm run memory
+   ```
+   The memory server runs on `http://localhost:3111` with a real-time viewer at `http://localhost:3113`.
+
+3. **Verify**:
+   ```bash
+   curl http://localhost:3111/agentmemory/health
+   ```
+
+4. **Run demo** (optional):
+   ```bash
+   npx @agentmemory/agentmemory demo
+   ```
+
+### How It Works
+
+The memory service (`server/memory.ts`) records:
+- AI chat interactions (`/api/openai/*` endpoints)
+- Tool usage and results
+- System events (server startup, errors)
+- User prompts and agent responses
+
+All memories are tagged with project `smartcrm` and user IDs for tenant isolation. They are searchable via hybrid search (BM25 + vector) through MCP tools.
+
+### Kilo Agent Configuration
+
+Kilo Code agents are pre-configured via `kilo.json` MCP section. The following MCP tools are available:
+
+- `memory_smart_search` — Semantic + keyword memory search
+- `memory_recall` — Retrieve past observations
+- `memory_save` — Save insights manually
+- `memory_sessions` — List recent sessions
+- `memory_profile` — Project intelligence profile
+- And 46 additional memory governance, team, and knowledge graph tools
+
+See `.kilo/command/agentmemory.md` for full usage instructions.
+
+### Environment Variables
+
+Add to your `.env`:
+```bash
+AGENTMEMORY_URL=http://localhost:3111
+```
+
+This is already included in `.env.example`.
+

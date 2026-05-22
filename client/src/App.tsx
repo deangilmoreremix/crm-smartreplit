@@ -25,6 +25,7 @@ import { FeatureKey } from './types/entitlements';
 import { NavbarPositionProvider, useNavbarPosition } from './contexts/NavbarPositionContext';
 import { DemoDataProvider } from './contexts/DemoDataContext';
 import { useSharedModuleState } from './utils/moduleFederationOrchestrator';
+import { FederationProvider, useWhitelabelFederation, useFederation } from './shared/federation';
 import Navbar from './components/Navbar';
 import { EdgeZones } from './components/EdgeZones';
 import { LoadingSpinner } from './components/ui/LoadingSpinner';
@@ -33,7 +34,7 @@ import { universalDataSync } from './services/universalDataSync';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
 import OpenClawSetupModal from './components/OpenClawSetupModal';
-import { useOpenClawStatus } from './hooks/useOpenClawStatus';
+import { useAIApiKeys } from './hooks/useAIApiKeys';
 
 // Eager pages
 import Dashboard from './pages/Dashboard';
@@ -161,6 +162,9 @@ import UpgradePage from './pages/UpgradePage';
 // Credit purchase page
 const CreditPurchasePage = lazy(() => import('./pages/CreditPurchasePage'));
 
+// User API Key Settings page
+const UserApiSettings = lazy(() => import('./pages/Settings'));
+
 // Feature pages
 import AiAssistantFeaturePage from './pages/landing/FeaturePage/AiAssistantFeaturePage';
 import AiToolsFeaturePage from './pages/landing/FeaturePage/AiToolsFeaturePage';
@@ -237,29 +241,31 @@ function App() {
             <DemoDataProvider>
               <TenantProvider>
                 <WhitelabelProvider>
-                  <CompanyProvider>
-                    <AIToolsProvider>
-                      <ModalsProvider>
-                        <EnhancedHelpProvider>
-                          <VideoCallProvider>
-                            <NavigationProvider>
-                              <DashboardLayoutProvider>
-                                <AIConfigurationProvider>
-                                  <AIProvider>
-                                    <RoleProvider>
-                                      <NavbarPositionProvider>
-                                        <AppContent />
-                                      </NavbarPositionProvider>
-                                    </RoleProvider>
-                                  </AIProvider>
-                                </AIConfigurationProvider>
-                              </DashboardLayoutProvider>
-                            </NavigationProvider>
-                          </VideoCallProvider>
-                        </EnhancedHelpProvider>
-                      </ModalsProvider>
-                    </AIToolsProvider>
-                  </CompanyProvider>
+                  <FederationProvider>
+                    <CompanyProvider>
+                      <AIToolsProvider>
+                        <ModalsProvider>
+                          <EnhancedHelpProvider>
+                            <VideoCallProvider>
+                              <NavigationProvider>
+                                <DashboardLayoutProvider>
+                                  <AIConfigurationProvider>
+                                    <AIProvider>
+                                      <RoleProvider>
+                                        <NavbarPositionProvider>
+                                          <AppContent />
+                                        </NavbarPositionProvider>
+                                      </RoleProvider>
+                                    </AIProvider>
+                                  </AIConfigurationProvider>
+                                </DashboardLayoutProvider>
+                              </NavigationProvider>
+                            </VideoCallProvider>
+                          </EnhancedHelpProvider>
+                        </ModalsProvider>
+                      </AIToolsProvider>
+                    </CompanyProvider>
+                  </FederationProvider>
                 </WhitelabelProvider>
               </TenantProvider>
             </DemoDataProvider>
@@ -270,53 +276,85 @@ function App() {
   );
 }
 
-// Component to sync auth state with module federation
+// Component to sync auth state with module federation remotes
 const AuthStateSync = () => {
   const { user, session, isAuthenticated } = useAuth();
   const { updateSharedData } = useSharedModuleState();
+  const { updateSharedState, broadcastToRemotes } = useFederation();
 
   useEffect(() => {
-    // Sync authentication state to shared module state
+    // Sync to legacy shared module state (for iframe-based remotes)
     updateSharedData('user', user);
     updateSharedData('session', session);
     updateSharedData('isAuthenticated', isAuthenticated);
-  }, [user, session, isAuthenticated, updateSharedData]);
+
+    // Sync to federation shared state
+    updateSharedState({ user, session, isAuthenticated });
+
+    // Broadcast auth to all registered remote iframes
+    broadcastToRemotes('AUTH_STATE_CHANGED', {
+      user,
+      session,
+      isAuthenticated
+    });
+  }, [user, session, isAuthenticated, updateSharedData, updateSharedState, broadcastToRemotes]);
+
+  return null;
+};
+
+// Component to sync whitelabel config with federation
+const WhitelabelFederationSync = () => {
+  const { config } = useWhitelabel();
+  const { syncWhitelabelConfig } = useWhitelabelFederation();
+
+  useEffect(() => {
+    syncWhitelabelConfig(config);
+  }, [config, syncWhitelabelConfig]);
 
   return null;
 };
 
 // AppContent component with all the routing logic
 function AppContent() {
-  const { loading } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
   const { setPosition } = useNavbarPosition();
   const navigate = useNavigate();
   const { currentTenantId, isLoading: domainLoading } = useDomainRouting();
   const { switchTenant } = useWhitelabel();
 
-  // OpenClaw setup modal state
+  // OpenClaw setup modal state - now uses unified AI API key system
   const [showOpenClawSetup, setShowOpenClawSetup] = React.useState(false);
-  const { status: openClawStatus } = useOpenClawStatus();
-
-  // Check for OpenClaw setup on app load
+  const { apiConfig } = useAIApiKeys();
+  const hasOpenClawKey = Boolean(apiConfig?.openclaw?.apiKey?.trim());
+ 
+  // Check for OpenClaw setup on app load - only for authenticated users
+  // Uses the unified key system (Option A integration)
   React.useEffect(() => {
-    if (!loading && !openClawStatus.hasApiKey) {
+    if (isAuthenticated && !loading && !hasOpenClawKey) {
+      // Only show once per user (prevents nagging on every login)
+      const hasSeenSetup = localStorage.getItem('openclaw-setup-seen');
+      if (hasSeenSetup) return;
+
       // Delay showing modal to avoid interrupting initial app load
       const timer = setTimeout(() => {
         setShowOpenClawSetup(true);
-      }, 2000);
+        localStorage.setItem('openclaw-setup-seen', 'true');
+      }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [loading, openClawStatus.hasApiKey]);
+  }, [isAuthenticated, loading, hasOpenClawKey]);
 
-  // Listen for OpenClaw setup requests from dashboard banner
+  // Listen for OpenClaw setup requests from dashboard banner (only when logged in)
   React.useEffect(() => {
+    if (!isAuthenticated) return;
+
     const handleOpenClawSetup = () => {
       setShowOpenClawSetup(true);
     };
 
     window.addEventListener('openclaw-setup-requested', handleOpenClawSetup);
     return () => window.removeEventListener('openclaw-setup-requested', handleOpenClawSetup);
-  }, []);
+  }, [isAuthenticated]);
 
   // Handle messages from MF apps (iframes)
   useEffect(() => {
@@ -362,6 +400,7 @@ function AppContent() {
     <DragDropContext onDragEnd={handleNavbarDragEnd}>
       <div className="min-h-screen">
         <AuthStateSync />
+        <WhitelabelFederationSync />
         <EdgeZones />
         <LinkRedirect />
         <RemoteAppRefreshManager />
@@ -966,6 +1005,17 @@ function AppContent() {
               }
             />
 
+            {/* User API Key Settings */}
+            <Route
+              path="/settings/api-keys"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <UserApiSettings />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Sales Intelligence Routes */}
             <Route
               path="/pipeline-intelligence"
@@ -1136,12 +1186,14 @@ function AppContent() {
         {/* Toaster for notifications */}
         <Toaster />
 
-        {/* OpenClaw Setup Modal */}
-        <OpenClawSetupModal
-          isOpen={showOpenClawSetup}
-          onClose={() => setShowOpenClawSetup(false)}
-          onComplete={() => setShowOpenClawSetup(false)}
-        />
+        {/* OpenClaw Setup Modal - only shown to authenticated users */}
+        {isAuthenticated && (
+          <OpenClawSetupModal
+            isOpen={showOpenClawSetup}
+            onClose={() => setShowOpenClawSetup(false)}
+            onComplete={() => setShowOpenClawSetup(false)}
+          />
+        )}
 
         {/* ElevenLabs widgets removed to prevent performance issues */}
       </div>

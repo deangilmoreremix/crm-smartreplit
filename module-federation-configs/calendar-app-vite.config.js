@@ -10,10 +10,10 @@ export default defineConfig({
     react(),
     federation({
       name: 'CalendarApp',
-      filename: 'remoteEntry.js',
+      filename: 'assets/remoteEntry.js',
       exposes: {
-        './CalendarApp': './src/CalendarApp.tsx',
-        './CalendarModule': './src/CalendarModule.tsx'
+        './CalendarApp': './CalendarApp.tsx',
+        './CalendarModule': './CalendarModule.tsx'
       },
       shared: {
         'react': {
@@ -35,8 +35,10 @@ export default defineConfig({
       external: [],
       output: {
         format: 'systemjs',
-        entryFileNames: 'remoteEntry.js',
-        minifyInternalExports: false
+        entryFileNames: 'assets/remoteEntry.js',
+        minifyInternalExports: false,
+        assetFileNames: 'assets/[name].[hash][extname]',
+        chunkFileNames: 'assets/[name].[hash].js'
       }
     }
   },

@@ -12,8 +12,8 @@ export default defineConfig({
       name: 'AnalyticsApp',
       filename: 'assets/remoteEntry.js',
       exposes: {
-        './AnalyticsApp': './src/AnalyticsApp.tsx',
-        './InsightsModule': './src/InsightsModule.tsx'
+        './AnalyticsApp': './AnalyticsApp.tsx',
+        './InsightsModule': './InsightsModule.tsx'
       },
       shared: {
         'react': {
@@ -36,7 +36,9 @@ export default defineConfig({
       output: {
         format: 'systemjs',
         entryFileNames: 'assets/remoteEntry.js',
-        minifyInternalExports: false
+        minifyInternalExports: false,
+        assetFileNames: 'assets/[name].[hash][extname]',
+        chunkFileNames: 'assets/[name].[hash].js'
       }
     }
   },

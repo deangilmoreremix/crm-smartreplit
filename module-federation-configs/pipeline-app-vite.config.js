@@ -10,10 +10,10 @@ export default defineConfig({
     react(),
     federation({
       name: 'PipelineApp',
-      filename: 'remoteEntry.js',
+      filename: 'assets/remoteEntry.js',
       exposes: {
-        './PipelineApp': './src/PipelineApp.tsx',
-        './DealsModule': './src/DealsModule.tsx'
+        './PipelineApp': './PipelineApp.tsx',
+        './DealsModule': './DealsModule.tsx'
       },
       shared: {
         'react': {
@@ -35,8 +35,10 @@ export default defineConfig({
       external: [],
       output: {
         format: 'systemjs',
-        entryFileNames: 'remoteEntry.js',
-        minifyInternalExports: false
+        entryFileNames: 'assets/remoteEntry.js',
+        minifyInternalExports: false,
+        assetFileNames: 'assets/[name].[hash][extname]',
+        chunkFileNames: 'assets/[name].[hash].js'
       }
     }
   },

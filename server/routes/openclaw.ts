@@ -1,25 +1,26 @@
-import { Router } from 'express';
-import { eq, and, or, like, desc, asc } from 'drizzle-orm';
-import { db, isDbAvailable } from '../db';
-import {
-  contacts,
-  deals,
-  tasks,
-  appointments,
-  communications,
-  notes,
-  insertContactSchema,
-  insertDealSchema,
-  insertTaskSchema,
-  insertAppointmentSchema,
-  insertCommunicationSchema,
-  insertNoteSchema,
-} from '../../shared/schema';
-import { supabase } from '../supabase';
-import OpenAI from 'openai';
-import { requireAuth } from './auth';
-import { requireEntitlement } from '../middleware/entitlements';
-import { FeatureKey } from '../types/entitlements';
+ import { Router } from 'express';
+ import { eq, and, or, like, desc, asc } from 'drizzle-orm';
+ import { db, isDbAvailable } from '../db';
+ import {
+   contacts,
+   deals,
+   tasks,
+   appointments,
+   communications,
+   notes,
+   insertContactSchema,
+   insertDealSchema,
+   insertTaskSchema,
+   insertAppointmentSchema,
+   insertCommunicationSchema,
+   insertNoteSchema,
+ } from '../../shared/schema';
+ import { supabase } from '../supabase';
+ import OpenAI from 'openai';
+ import { requireAuth } from './auth';
+ import { requireEntitlement } from '../middleware/entitlements';
+ import { FeatureKey } from '../types/entitlements';
+ import { memoryService } from '../memory';
 
 const router = Router();
 
@@ -37,6 +38,37 @@ router.use((req, res, next) => {
 // OpenClaw API Configuration
 const OPENCLAW_API_URL = process.env.OPENCLAW_API_URL || 'http://localhost:3001';
 const OPENCLAW_API_KEY = process.env.OPENCLAW_API_KEY || '';
+
+/**
+ * Get the effective OpenClaw API key and base URL for a given user.
+ * Priority: per-user key from user_api_keys > server-level env var
+ * Priority for base URL: per-user baseUrl from user_api_keys > OPENCLAW_API_URL
+ */
+async function getOpenClawConfigForUser(userId: string): Promise<{ apiKey: string; baseUrl: string }> {
+  let apiKey = OPENCLAW_API_KEY;
+  let baseUrl = OPENCLAW_API_URL;
+
+  try {
+    if (supabase && userId) {
+      const { data } = await supabase
+        .from('user_api_keys')
+        .select('openclaw_api_key, openclaw_base_url')
+        .eq('user_id', userId)
+        .single();
+
+      if (data?.openclaw_api_key) {
+        apiKey = data.openclaw_api_key;
+      }
+      if (data?.openclaw_base_url) {
+        baseUrl = data.openclaw_base_url;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not fetch per-user OpenClaw config, using server defaults:', err);
+  }
+
+  return { apiKey, baseUrl };
+}
 
 // Cached OpenAI client
 let openaiClient: OpenAI | null = null;
@@ -609,6 +641,9 @@ router.post('/chat', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
+    // Get per-user OpenClaw config (falls back to server env vars if no per-user key)
+    const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } = await getOpenClawConfigForUser(userId);
+
     // Build the request to OpenClaw
     const openclawRequest = {
       message,
@@ -623,12 +658,12 @@ router.post('/chat', async (req, res) => {
 
     // Call OpenClaw API with timeout
     const response = await fetchWithTimeout(
-      `${OPENCLAW_API_URL}/api/v1/chat/completions`,
+      `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(OPENCLAW_API_KEY ? { Authorization: `Bearer ${OPENCLAW_API_KEY}` } : {}),
+          ...(effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}),
         },
         body: JSON.stringify(openclawRequest),
       },
@@ -664,6 +699,9 @@ router.post('/chat/stream', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
+    // Get per-user OpenClaw config (falls back to server env vars if no per-user key)
+    const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } = await getOpenClawConfigForUser(userId);
+
     // Set up SSE headers
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -682,12 +720,12 @@ router.post('/chat/stream', async (req, res) => {
     };
 
     const response = await fetchWithTimeout(
-      `${OPENCLAW_API_URL}/api/v1/chat/completions`,
+      `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(OPENCLAW_API_KEY ? { Authorization: `Bearer ${OPENCLAW_API_KEY}` } : {}),
+          ...(effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}),
         },
         body: JSON.stringify(openclawRequest),
       },
@@ -1536,252 +1574,575 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         return { interactions: interactions.slice(0, limit), count: interactions.length };
       }
 
-      // AI Features
-      case 'analyze_lead_score': {
-        const contactId = parseInt(params.contactId);
-        const [contact] = await db!
-          .select()
-          .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+       // AI Features
+       case 'analyze_lead_score': {
+         const contactId = parseInt(params.contactId);
+         const [contact] = await db!
+           .select()
+           .from(contacts)
+           .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
-        if (!contact) return { error: 'Contact not found' };
+         if (!contact) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `analyze_lead_score: Contact ${contactId} not found`,
+             { tool: 'analyze_lead_score', contactId }
+           ).catch(() => {});
+           return { error: 'Contact not found' };
+         }
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'analyze_lead_score: OpenAI not configured',
+             { tool: 'analyze_lead_score', contactId }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a sales AI expert. Analyze the lead and provide a lead score from 1-100 with detailed reasoning. Return JSON with fields: score, reasoning, strengths, weaknesses, recommendations.',
-            },
-            {
-              role: 'user',
-              content: `Analyze this lead: ${JSON.stringify(contact)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.3,
-          max_tokens: 1000,
-        });
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o',
+             messages: [
+               {
+                 role: 'system',
+                 content:
+                   'You are a sales AI expert. Analyze the lead and provide a lead score from 1-100 with detailed reasoning. Return JSON with fields: score, reasoning, strengths, weaknesses, recommendations.',
+               },
+               {
+                 role: 'user',
+                 content: `Analyze this lead: ${JSON.stringify(contact)}`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.3,
+             max_tokens: 1000,
+           });
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
 
-      case 'generate_personalization': {
-        const contactId = parseInt(params.contactId);
-        const [contact] = await db!
-          .select()
-          .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+           // Record successful analysis
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Lead score analysis for ${contact.firstName} ${contact.lastName}: score=${result.score}`,
+             {
+               tool: 'analyze_lead_score',
+               contactId,
+               contactName: `${contact.firstName} ${contact.lastName}`,
+               score: result.score,
+               strengthsCount: result.strengths?.length || 0,
+               weaknessesCount: result.weaknesses?.length || 0,
+             }
+           ).catch(() => {});
 
-        if (!contact) return { error: 'Contact not found' };
+           return result;
+         } catch (error: unknown) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `analyze_lead_score failed: ${error instanceof Error ? error.message : String(error)}`,
+             { tool: 'analyze_lead_score', contactId }
+           ).catch(() => {});
+           
+           return { error: 'Analysis failed', details: error instanceof Error ? error.message : String(error) };
+         }
+       }
 
-        const comms = await db!
-          .select()
-          .from(communications)
-          .where(and(eq(communications.contactId, contactId), eq(communications.profileId, userId)))
-          .limit(10);
+       case 'generate_personalization': {
+         const contactId = parseInt(params.contactId);
+         const [contact] = await db!
+           .select()
+           .from(contacts)
+           .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+         if (!contact) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `generate_personalization: Contact ${contactId} not found`,
+             { tool: 'generate_personalization', contactId }
+           ).catch(() => {});
+           return { error: 'Contact not found' };
+         }
 
-        const previousInteractions = comms.map(
-          (c) => `${c.type}: ${c.subject || ''} - ${c.content || ''}`
-        );
+         const comms = await db!
+           .select()
+           .from(communications)
+           .where(and(eq(communications.contactId, contactId), eq(communications.profileId, userId)))
+           .limit(10);
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a personalization expert. Generate personalized outreach strategies based on contact data and interaction history. Return JSON with fields: recommendations (array of objects with title, description, priority), talkingPoints (array), bestApproach, suggestedTiming.',
-            },
-            {
-              role: 'user',
-              content: `Contact: ${JSON.stringify(contact)}. Previous interactions: ${JSON.stringify(previousInteractions)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.7,
-          max_tokens: 1500,
-        });
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'generate_personalization: OpenAI not configured',
+             { tool: 'generate_personalization', contactId }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+         const previousInteractions = comms.map(
+           (c) => `${c.type}: ${c.subject || ''} - ${c.content || ''}`
+         );
 
-      case 'enrich_contact': {
-        const contactId = parseInt(params.contactId);
-        const [contact] = await db!
-          .select()
-          .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o',
+             messages: [
+               {
+                 role: 'system',
+                 content:
+                   'You are a personalization expert. Generate personalized outreach strategies based on contact data and interaction history. Return JSON with fields: recommendations (array of objects with title, description, priority), talkingPoints (array), bestApproach, suggestedTiming.',
+               },
+               {
+                 role: 'user',
+                 content: `Contact: ${JSON.stringify(contact)}. Previous interactions: ${JSON.stringify(previousInteractions)}`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.7,
+             max_tokens: 1500,
+           });
 
-        if (!contact) return { error: 'Contact not found' };
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Personalization generated for ${contact.firstName} ${contact.lastName}`,
+             {
+               tool: 'generate_personalization',
+               contactId,
+               recommendationsCount: result.recommendations?.length || 0,
+               talkingPointsCount: result.talkingPoints?.length || 0,
+             }
+           ).catch(() => {});
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
-            },
-            {
-              role: 'user',
-              content: `Research and enrich this contact: ${JSON.stringify(contact)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.5,
-          max_tokens: 1500,
-        });
+           return result;
+         } catch (error: unknown) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `generate_personalization failed: ${error instanceof Error ? error.message : String(error)}`,
+             { tool: 'generate_personalization', contactId }
+           ).catch(() => {});
+           
+           return { error: 'Personalization failed', details: error instanceof Error ? error.message : String(error) };
+         }
+       }
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+       case 'enrich_contact': {
+         const contactId = parseInt(params.contactId);
+         const [contact] = await db!
+           .select()
+           .from(contacts)
+           .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
-      case 'social_media_research': {
-        const contactId = parseInt(params.contactId);
-        const [contact] = await db!
-          .select()
-          .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+         if (!contact) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `enrich_contact: Contact ${contactId} not found`,
+             { tool: 'enrich_contact', contactId }
+           ).catch(() => {});
+           return { error: 'Contact not found' };
+         }
 
-        if (!contact) return { error: 'Contact not found' };
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'enrich_contact: OpenAI not configured',
+             { tool: 'enrich_contact', contactId }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o',
+             messages: [
+               {
+                 role: 'system',
+                 content:
+                   'You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
+               },
+               {
+                 role: 'user',
+                 content: `Research and enrich this contact: ${JSON.stringify(contact)}`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.5,
+             max_tokens: 1500,
+           });
 
-        const platforms = params.platforms
-          ? params.platforms.split(',').map((p: string) => p.trim())
-          : ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'];
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(', ')}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
-            },
-            {
-              role: 'user',
-              content: `Research social media for: ${JSON.stringify(contact)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.5,
-          max_tokens: 2000,
-        });
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Contact enrichment via OpenClaw: ${contact.firstName} ${contact.lastName}`,
+             {
+               tool: 'enrich_contact',
+               contactId,
+               confidence: result.confidence,
+               suggestedFieldsCount: Object.keys(result.suggestedFields || {}).length,
+               hasSocialProfiles: !!result.socialProfiles,
+               hasCompanyInfo: !!result.companyInfo,
+             }
+           ).catch(() => {});
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+           return result;
+         } catch (error: unknown) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `enrich_contact failed: ${error instanceof Error ? error.message : String(error)}`,
+             { tool: 'enrich_contact', contactId }
+           ).catch(() => {});
+           
+           return { error: 'Enrichment failed', details: error instanceof Error ? error.message : String(error) };
+         }
+       }
 
-      case 'analyze_sentiment': {
-        const text = params.text;
-        if (!text) return { error: 'Text is required for sentiment analysis' };
+       case 'social_media_research': {
+         const contactId = parseInt(params.contactId);
+         const [contact] = await db!
+           .select()
+           .from(contacts)
+           .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+         if (!contact) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `social_media_research: Contact ${contactId} not found`,
+             { tool: 'social_media_research', contactId }
+           ).catch(() => {});
+           return { error: 'Contact not found' };
+         }
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a sentiment analysis expert. Analyze the sentiment and return JSON with: sentiment (positive/negative/neutral/mixed), score (1-100), confidence, keyPhrases (array), emotionalTone.',
-            },
-            {
-              role: 'user',
-              content: `Analyze the sentiment of: "${text}"`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.3,
-          max_tokens: 500,
-        });
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'social_media_research: OpenAI not configured',
+             { tool: 'social_media_research', contactId }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+         const platforms = params.platforms
+           ? params.platforms.split(',').map((p: string) => p.trim())
+           : ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'];
 
-      case 'generate_email_draft': {
-        const contactId = parseInt(params.contactId);
-        const [contact] = await db!
-          .select()
-          .from(contacts)
-          .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o',
+             messages: [
+               {
+                 role: 'system',
+                 content: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(', ')}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
+               },
+               {
+                 role: 'user',
+                 content: `Research social media for: ${JSON.stringify(contact)}`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.5,
+             max_tokens: 1500,
+           });
 
-        if (!contact) return { error: 'Contact not found' };
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
 
-        const purpose = params.purpose || 'follow-up';
-        const context = params.context || '';
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Social media research for ${contact.firstName} ${contact.lastName} on ${platforms.join(', ')}`,
+             {
+               tool: 'social_media_research',
+               contactId,
+               platforms: platforms.join(', '),
+               profilesFound: result.profiles?.length || 0,
+               hasPersonalityInsights: !!result.personalityInsights,
+               hasEngagementMetrics: !!result.engagementMetrics,
+             }
+           ).catch(() => {});
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+           return result;
+          } catch (error: unknown) {
+            memoryService.recordObservation(
+              userId,
+              'error',
+              `social_media_research failed: ${error instanceof Error ? error.message : String(error)}`,
+              { tool: 'social_media_research', contactId }
+            ).catch(() => {});
+            
+            return { error: 'Research failed', details: error instanceof Error ? error.message : String(error) };
+          }
+        }
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a sales email expert. Draft professional, personalized emails. Return JSON with: subject, body, suggestedSendTime.',
-            },
-            {
-              role: 'user',
-              content: `Draft a ${purpose} email to ${contact.name} (${contact.position} at ${contact.company}). Additional context: ${context}. Contact info: ${JSON.stringify(contact)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.7,
-          max_tokens: 1000,
-        });
+       case 'analyze_sentiment': {
+         const text = params.text;
+         if (!text) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             'analyze_sentiment: missing text parameter',
+             { tool: 'analyze_sentiment' }
+           ).catch(() => {});
+           return { error: 'Text is required for sentiment analysis' };
+         }
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'analyze_sentiment: OpenAI not configured',
+             { tool: 'analyze_sentiment' }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
 
-      // Bulk Operations
-      case 'bulk_analyze_contacts': {
-        const contactIds: number[] = (params.contactIds || '')
-          .split(',')
-          .map((id: string) => parseInt(id.trim()))
-          .filter((id: number) => !isNaN(id));
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o-mini',
+             messages: [
+               {
+                 role: 'system',
+                 content:
+                   'You are a sentiment analysis expert. Analyze the sentiment and return JSON with: sentiment (positive/negative/neutral/mixed), score (1-100), confidence, keyPhrases (array), emotionalTone.',
+               },
+               {
+                 role: 'user',
+                 content: `Analyze the sentiment of: "${text}"`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.3,
+             max_tokens: 500,
+           });
 
-        if (contactIds.length === 0) return { error: 'No valid contact IDs provided' };
-        if (contactIds.length > 50) return { error: 'Maximum 50 contacts per bulk analysis' };
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Sentiment analysis: ${result.sentiment} (score: ${result.score})`,
+             {
+               tool: 'analyze_sentiment',
+               sentiment: result.sentiment,
+               score: result.score,
+               confidence: result.confidence,
+               textLength: text.length,
+               keyPhrasesCount: result.keyPhrases?.length || 0,
+             }
+           ).catch(() => {});
 
-        const results = [];
-        for (const contactId of contactIds) {
-          const [contact] = await db!
-            .select()
-            .from(contacts)
-            .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+           return result;
+         } catch (error: unknown) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `analyze_sentiment failed: ${error instanceof Error ? error.message : String(error)}`,
+             { tool: 'analyze_sentiment', textLength: text.length }
+           ).catch(() => {});
+           
+           return { error: 'Sentiment analysis failed', details: error instanceof Error ? error.message : String(error) };
+         }
+       }
 
-          if (contact) {
-            try {
-              const response = await client.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [
-                  {
-                    role: 'system',
-                    content:
-                      'Analyze this lead. Return JSON with: score (1-100), reasoning, recommendations.',
-                  },
-                  { role: 'user', content: `Contact: ${JSON.stringify(contact)}` },
-                ],
-                response_format: { type: 'json_object' },
-                temperature: 0.3,
-                max_tokens: 300,
-              });
+       case 'generate_email_draft': {
+         const contactId = parseInt(params.contactId);
+         const [contact] = await db!
+           .select()
+           .from(contacts)
+           .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+         if (!contact) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `generate_email_draft: Contact ${contactId} not found`,
+             { tool: 'generate_email_draft', contactId }
+           ).catch(() => {});
+           return { error: 'Contact not found' };
+         }
+
+         const purpose = params.purpose || 'follow-up';
+         const context = params.context || '';
+
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'generate_email_draft: OpenAI not configured',
+             { tool: 'generate_email_draft', contactId, purpose }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
+
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o',
+             messages: [
+               {
+                 role: 'system',
+                 content:
+                   'You are a sales email expert. Draft professional, personalized emails. Return JSON with: subject, body, suggestedSendTime.',
+               },
+               {
+                 role: 'user',
+                 content: `Draft a ${purpose} email to ${contact.name} (${contact.position} at ${contact.company}). Additional context: ${context}. Contact info: ${JSON.stringify(contact)}`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.7,
+             max_tokens: 1000,
+           });
+
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
+
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Email draft generated for ${contact.name}: ${result.subject?.slice(0, 50) || 'No subject'}`,
+             {
+               tool: 'generate_email_draft',
+               contactId,
+               purpose,
+               hasSubject: !!result.subject,
+               hasBody: !!result.body,
+               bodyLength: result.body?.length || 0,
+             }
+           ).catch(() => {});
+
+           return result;
+         } catch (error: unknown) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `generate_email_draft failed: ${error instanceof Error ? error.message : String(error)}`,
+             { tool: 'generate_email_draft', contactId, purpose }
+           ).catch(() => {});
+           
+           return { error: 'Email draft failed', details: error instanceof Error ? error.message : String(error) };
+         }
+       }
+
+       // Bulk Operations
+       case 'bulk_analyze_contacts': {
+         const contactIds: number[] = (params.contactIds || '')
+           .split(',')
+           .map((id: string) => parseInt(id.trim()))
+           .filter((id: number) => !isNaN(id));
+
+         if (contactIds.length === 0) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             'bulk_analyze_contacts: no valid contact IDs',
+             { tool: 'bulk_analyze_contacts', contactIdsCount: 0 }
+           ).catch(() => {});
+           return { error: 'No valid contact IDs provided' };
+         }
+         if (contactIds.length > 50) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             'bulk_analyze_contacts: exceeded limit',
+             { tool: 'bulk_analyze_contacts', requested: contactIds.length }
+           ).catch(() => {});
+           return { error: 'Maximum 50 contacts per bulk analysis' };
+         }
+
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'bulk_analyze_contacts: OpenAI not configured',
+             { tool: 'bulk_analyze_contacts', contactIdsCount: contactIds.length }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
+
+         const results = [];
+         let successCount = 0;
+         let errorCount = 0;
+
+         for (const contactId of contactIds) {
+           try {
+             const [contact] = await db!
+               .select()
+               .from(contacts)
+               .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+             if (contact) {
+               try {
+                 const response = await client.chat.completions.create({
+                   model: 'gpt-4o-mini',
+                   messages: [
+                     {
+                       role: 'system',
+                       content:
+                         'Analyze this lead. Return JSON with: score (1-100), reasoning, recommendations.',
+                     },
+                     { role: 'user', content: `Contact: ${JSON.stringify(contact)}` },
+                   ],
+                   response_format: { type: 'json_object' },
+                   temperature: 0.3,
+                   max_tokens: 300,
+                 });
+                 
+                 const result = safeJsonParse(response.choices[0].message.content || '{}');
+                 results.push({ contactId, contactName: contact.name, ...result });
+                 successCount++;
+               } catch (e: unknown) {
+                 errorCount++;
+                 results.push({ 
+                   contactId, 
+                   contactName: contact.name, 
+                   error: e instanceof Error ? e.message : 'Analysis failed' 
+                 });
+               }
+             } else {
+               errorCount++;
+               results.push({ contactId, error: 'Contact not found' });
+             }
+           } catch (e: unknown) {
+             errorCount++;
+             results.push({ contactId, error: e instanceof Error ? e.message : 'Processing error' });
+           }
+         }
+
+         // Record bulk analysis summary
+         memoryService.recordObservation(
+           userId,
+           'tool_use',
+           `Bulk analysis completed: ${successCount} succeeded, ${errorCount} failed out of ${contactIds.length} contacts`,
+           {
+             tool: 'bulk_analyze_contacts',
+             totalContacts: contactIds.length,
+             successCount,
+             errorCount,
+             successRate: successCount / contactIds.length,
+           }
+         ).catch(() => {});
+
+         return { results, summary: { total: contactIds.length, success: successCount, failed: errorCount } };
+       }
               const analysis = safeJsonParse(response.choices[0].message.content || '{}');
               results.push({ contactId, name: contact.name, ...analysis });
             } catch {
@@ -1886,47 +2247,92 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       // Deal AI
-      case 'analyze_deal': {
-        const dealId = parseInt(params.dealId);
-        const [deal] = await db!
-          .select()
-          .from(deals)
-          .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)));
+       case 'analyze_deal': {
+         const dealId = parseInt(params.dealId);
+         const [deal] = await db!
+           .select()
+           .from(deals)
+           .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)));
 
-        if (!deal) return { error: 'Deal not found' };
+         if (!deal) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `analyze_deal: Deal ${dealId} not found`,
+             { tool: 'analyze_deal', dealId }
+           ).catch(() => {});
+           return { error: 'Deal not found' };
+         }
 
-        let contact = null;
-        if ((deal as any).contactId) {
-          const [found] = await db!
-            .select()
-            .from(contacts)
-            .where(eq(contacts.id, (deal as any).contactId));
-          contact = found;
-        }
+         let contact = null;
+         if ((deal as any).contactId) {
+           const [found] = await db!
+             .select()
+             .from(contacts)
+             .where(eq(contacts.id, (deal as any).contactId));
+           contact = found;
+         }
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+         const client = getOpenAIClient();
+         if (!client) {
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             'analyze_deal: OpenAI not configured',
+             { tool: 'analyze_deal', dealId, dealName: deal.name }
+           ).catch(() => {});
+           return { error: 'OpenAI API key not configured' };
+         }
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a sales strategy expert. Analyze this deal and return JSON with: winProbability, strengths (array), risks (array), recommendedActions (array), timeline, competitivePosition, pricingRecommendation.',
-            },
-            {
-              role: 'user',
-              content: `Deal: ${JSON.stringify(deal)}. Contact: ${JSON.stringify(contact)}. Analyze this deal strategically.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.4,
-          max_tokens: 1500,
-        });
+         try {
+           const response = await client.chat.completions.create({
+             model: 'gpt-4o',
+             messages: [
+               {
+                 role: 'system',
+                 content:
+                   'You are a sales strategy expert. Analyze this deal and return JSON with: winProbability, strengths (array), risks (array), recommendedActions (array), timeline, competitivePosition, pricingRecommendation.',
+               },
+               {
+                 role: 'user',
+                 content: `Deal: ${JSON.stringify(deal)}. Contact: ${JSON.stringify(contact)}. Analyze this deal strategically.`,
+               },
+             ],
+             response_format: { type: 'json_object' },
+             temperature: 0.4,
+             max_tokens: 1500,
+           });
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
-      }
+           const result = safeJsonParse(response.choices[0].message.content || '{}');
+
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Deal analysis for ${deal.name}: win probability ${result.winProbability}%, ${result.strengths?.length || 0} strengths, ${result.risks?.length || 0} risks`,
+             {
+               tool: 'analyze_deal',
+               dealId,
+               dealName: deal.name,
+               dealValue: deal.value,
+               winProbability: result.winProbability,
+               strengthsCount: result.strengths?.length || 0,
+               risksCount: result.risks?.length || 0,
+               recommendedActionsCount: result.recommendedActions?.length || 0,
+             }
+           ).catch(() => {});
+
+           return result;
+         } catch (error: unknown) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `analyze_deal failed: ${error instanceof Error ? error.message : String(error)}`,
+             { tool: 'analyze_deal', dealId, dealName: deal.name }
+           ).catch(() => {});
+           
+           return { error: 'Deal analysis failed', details: error instanceof Error ? error.message : String(error) };
+         }
+       }
 
       // Deal Analytics
       case 'get_deal_analytics': {

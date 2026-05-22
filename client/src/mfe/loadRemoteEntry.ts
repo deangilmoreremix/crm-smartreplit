@@ -43,7 +43,7 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
   },
   agency: {
     url: 'https://agency.smartcrm.vip',
-    module: './AIAgencyApp',
+    module: './AIGoalsApp',
   },
   research: {
     url: 'https://research.smartcrm.vip',

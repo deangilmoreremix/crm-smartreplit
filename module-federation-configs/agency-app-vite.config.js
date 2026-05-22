@@ -10,10 +10,10 @@ export default defineConfig({
     react(),
     federation({
       name: 'AIGoalsApp',
-      filename: 'remoteEntry.js',
+      filename: 'assets/remoteEntry.js',
       exposes: {
-        './AIGoalsApp': './src/AIGoalsApp.tsx',
-        './GoalsModule': './src/GoalsModule.tsx'
+        './AIGoalsApp': './AIGoalsApp.tsx',
+        './GoalsModule': './GoalsModule.tsx'
       },
       shared: {
         'react': {
@@ -35,8 +35,10 @@ export default defineConfig({
       external: [],
       output: {
         format: 'systemjs',
-        entryFileNames: 'remoteEntry.js',
-        minifyInternalExports: false
+        entryFileNames: 'assets/remoteEntry.js',
+        minifyInternalExports: false,
+        assetFileNames: 'assets/[name].[hash][extname]',
+        chunkFileNames: 'assets/[name].[hash].js'
       }
     }
   },

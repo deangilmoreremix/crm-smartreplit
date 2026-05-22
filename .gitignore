@@ -51,3 +51,9 @@ apps/
 
 # Git worktrees
 .worktrees
+
+# Temporary session files
+cookies.txt
+test-memory-import.ts
+
+

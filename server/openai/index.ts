@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { aiResponseCache } from '../services/enhancedCache';
 import { getRedisRateLimiter } from '../services/redisRateLimiter';
+import { memoryService } from '../memory';
 
 const userOpenAIKey = process.env.OPENAI_API_KEY;
 const openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
@@ -293,22 +294,97 @@ export const handler = async (
       };
     }
 
-    // POST /api/openai/embeddings - OpenAI embeddings
-    if (
-      pathParts.length >= 2 &&
-      pathParts[0] === 'openai' &&
-      pathParts[1] === 'embeddings' &&
-      httpMethod === 'POST'
-    ) {
-      const { text, model = 'text-embedding-3-small' } = JSON.parse(body);
+     // POST /api/openai/embeddings - OpenAI embeddings
+     if (
+       pathParts.length >= 2 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'embeddings' &&
+       httpMethod === 'POST'
+     ) {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
+       const { text, model = 'text-embedding-3-small' } = JSON.parse(body);
 
-      if (!text) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'Text is required for embedding generation' }),
-        };
-      }
+       if (!text) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           'Embeddings request rejected: missing text',
+           { sessionId, endpoint: 'embeddings' }
+         ).catch(() => {});
+         
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({ error: 'Text is required for embedding generation' }),
+         };
+       }
+
+       if (!openai) {
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           'OpenAI not configured - embeddings endpoint called',
+           { sessionId, model }
+         ).catch(() => {});
+         
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({
+             error: 'OpenAI API key not configured',
+             message: 'Please configure OpenAI API key for embeddings',
+           }),
+         };
+       }
+
+       try {
+         const response = await openai.embeddings.create({
+           model,
+           input: text,
+           encoding_format: 'float',
+         });
+
+         memoryService.recordObservation(
+           userId,
+           'tool_use',
+           `Generated embeddings for ${text?.slice(0, 100)} using ${model}`,
+           { 
+             sessionId, 
+             endpoint: 'embeddings', 
+             model,
+             dimension: response.data[0]?.embedding?.length 
+           }
+         ).catch(() => {});
+
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             success: true,
+             embedding: response.data[0].embedding,
+             model,
+             usage: response.usage,
+           }),
+         };
+       } catch (error: unknown) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Embeddings generation failed: ${error instanceof Error ? error.message : String(error)}`,
+           { endpoint: 'embeddings', sessionId }
+         ).catch(() => {});
+
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             error: 'Embeddings generation failed',
+             message: error instanceof Error ? error.message : 'Service unavailable',
+           }),
+         };
+       }
+     }
 
       if (!openai) {
         return {
@@ -339,93 +415,165 @@ export const handler = async (
       };
     }
 
-    // POST /api/openai/images/generate - Image generation
-    if (
-      pathParts.length >= 3 &&
-      pathParts[0] === 'openai' &&
-      pathParts[1] === 'images' &&
-      pathParts[2] === 'generate' &&
-      httpMethod === 'POST'
-    ) {
-      const {
-        prompt,
-        model = 'dall-e-3',
-        size = '1024x1024',
-        quality = 'standard',
-        style = 'vivid',
-        n = 1,
-      } = JSON.parse(body);
+     // POST /api/openai/images/generate - Image generation
+     if (
+       pathParts.length >= 3 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'images' &&
+       pathParts[2] === 'generate' &&
+       httpMethod === 'POST'
+     ) {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
+       
+       const {
+         prompt,
+         model = 'dall-e-3',
+         size = '1024x1024',
+         quality = 'standard',
+         style = 'vivid',
+         n = 1,
+       } = JSON.parse(body);
 
-      if (!prompt) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'Prompt is required for image generation' }),
-        };
-      }
+       if (!prompt) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           'Image generation rejected: missing prompt',
+           { sessionId, endpoint: 'images/generate' }
+         ).catch(() => {});
+         
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({ error: 'Prompt is required for image generation' }),
+         };
+       }
 
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: 'OpenAI API key not configured',
-            message: 'Please configure OpenAI API key for image generation',
-          }),
-        };
-      }
+       if (!openai) {
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           'OpenAI not configured - images/generate endpoint called',
+           { sessionId, prompt: prompt?.slice(0, 100), model }
+         ).catch(() => {});
+         
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({
+             error: 'OpenAI API key not configured',
+             message: 'Please configure OpenAI API key for image generation',
+           }),
+         };
+       }
 
-      const response = await openai.images.generate({
-        model: model as 'dall-e-2' | 'dall-e-3',
-        prompt: prompt,
-        size: size as '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792',
-        quality: quality as 'standard' | 'hd',
-        style: style as 'vivid' | 'natural',
-        n: n,
-      });
+       try {
+         const response = await openai.images.generate({
+           model: model as 'dall-e-2' | 'dall-e-3',
+           prompt: prompt,
+           size: size as '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792',
+           quality: quality as 'standard' | 'hd',
+           style: style as 'vivid' | 'natural',
+           n: n,
+         });
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          data: response.data,
-          model: model,
-          usage: response.data?.length || 0,
-        }),
-      };
-    }
+         memoryService.recordObservation(
+           userId,
+           'tool_use',
+           `Generated ${response.data?.length || 0} image(s) with ${model} for: ${prompt?.slice(0, 100)}`,
+           { 
+             sessionId, 
+             endpoint: 'images/generate',
+             model,
+             size,
+             quality,
+             count: response.data?.length 
+           }
+         ).catch(() => {});
 
-    // GET /api/openai/usage - AI usage monitoring
-    if (
-      pathParts.length >= 2 &&
-      pathParts[0] === 'openai' &&
-      pathParts[1] === 'usage' &&
-      httpMethod === 'GET'
-    ) {
-      const userId = event.headers['x-user-id'];
-      const includeStats = event.queryStringParameters?.stats === 'true';
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             success: true,
+             data: response.data,
+             model,
+             usage: response.data?.length || 0,
+           }),
+         };
+       } catch (error: unknown) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Image generation failed: ${error instanceof Error ? error.message : String(error)}`,
+           { endpoint: 'images/generate', sessionId, prompt: prompt?.slice(0, 100) }
+         ).catch(() => {});
 
-      if (includeStats && userId) {
-        // Check if user is within budget (example: $5/day limit)
-        const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1000);
-        const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
-        const budgetLimit = 5.0; // $5 per day
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             error: 'Image generation failed',
+             message: error instanceof Error ? error.message : 'Service unavailable',
+           }),
+         };
+       }
+     }
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            userId,
-            dailyUsage: dailyCost,
-            budgetLimit,
-            budgetRemaining: Math.max(0, budgetLimit - dailyCost),
-            isOverBudget: dailyCost > budgetLimit,
-            recentRequests: dailyUsage.slice(-10),
-            circuitBreakerStatus: aiCircuitBreaker.getStatus(),
-          }),
-        };
-      }
+     // GET /api/openai/usage - AI usage monitoring
+     if (
+       pathParts.length >= 2 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'usage' &&
+       httpMethod === 'GET'
+     ) {
+       const userId = event.headers['x-user-id'] || 'anonymous';
+       const includeStats = event.queryStringParameters?.stats === 'true';
+
+       if (includeStats && userId) {
+         // Check if user is within budget (example: $5/day limit)
+         const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1000);
+         const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
+         const budgetLimit = 5.0; // $5 per day
+
+         // Record usage check
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           `Usage check: daily cost $${dailyCost.toFixed(2)}, limit $${budgetLimit}`,
+           { 
+             endpoint: 'usage',
+             dailyCost,
+             budgetLimit,
+             isOverBudget: dailyCost > budgetLimit
+           }
+         ).catch(() => {});
+
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             userId,
+             dailyUsage: dailyCost,
+             budgetLimit,
+             budgetRemaining: Math.max(0, budgetLimit - dailyCost),
+             isOverBudget: dailyCost > budgetLimit,
+             recentRequests: dailyUsage.slice(-10),
+             circuitBreakerStatus: aiCircuitBreaker.getStatus(),
+           }),
+         };
+       }
+
+       return {
+         statusCode: 200,
+         headers,
+         body: JSON.stringify({
+           message: 'Usage endpoint requires user authentication',
+           note: 'Include x-user-id header to see usage stats',
+         }),
+       };
+     }
 
       return {
         statusCode: 200,
@@ -434,75 +582,99 @@ export const handler = async (
       };
     }
 
-    // POST /api/openai/smart-greeting - Smart greeting generation
-    if (
-      pathParts.length >= 2 &&
-      pathParts[0] === 'openai' &&
-      pathParts[1] === 'smart-greeting' &&
-      httpMethod === 'POST'
-    ) {
-      const { userMetrics, timeOfDay, recentActivity } = JSON.parse(body);
-      const userId = event.headers['x-user-id'];
+     // POST /api/openai/smart-greeting - Smart greeting generation
+     if (
+       pathParts.length >= 2 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'smart-greeting' &&
+       httpMethod === 'POST'
+     ) {
+       const { userMetrics, timeOfDay, recentActivity } = JSON.parse(body);
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
 
-      // Check budget before proceeding
-      if (userId) {
-        const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1000);
-        const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
-        const budgetLimit = 5.0; // $5 per day
+       // Check budget before proceeding
+       if (userId) {
+         const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1000);
+         const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
+         const budgetLimit = 5.0; // $5 per day
 
-        if (dailyCost >= budgetLimit) {
-          return {
-            statusCode: 402,
-            headers,
-            body: JSON.stringify({
-              error: 'AI budget exceeded',
-              message: `Daily AI budget of $${budgetLimit} exceeded. Current usage: $${dailyCost.toFixed(2)}`,
-              greeting: `Good ${timeOfDay}! Your pipeline looks strong.`,
-              insight: 'AI insights temporarily unavailable due to budget limits.',
-              source: 'budget_limit_fallback',
-              model: 'fallback',
-            }),
-          };
-        }
-      }
+         if (dailyCost >= budgetLimit) {
+           // Record budget exceeded event
+           memoryService.recordObservation(
+             userId,
+             'system_event',
+             `AI budget exceeded for smart-greeting. Daily usage: $${dailyCost.toFixed(2)}`,
+             { endpoint: 'smart-greeting', budgetLimit, dailyCost, sessionId }
+           ).catch(() => {});
+           return {
+             statusCode: 402,
+             headers,
+             body: JSON.stringify({
+               error: 'AI budget exceeded',
+               message: `Daily AI budget of $${budgetLimit} exceeded. Current usage: $${dailyCost.toFixed(2)}`,
+               greeting: `Good ${timeOfDay}! Your pipeline looks strong.`,
+               insight: 'AI insights temporarily unavailable due to budget limits.',
+               source: 'budget_limit_fallback',
+               model: 'fallback',
+             }),
+           };
+         }
+       }
 
-      if (!openai) {
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals worth $${(userMetrics?.totalValue || 0).toLocaleString()}.`,
-            insight:
-              userMetrics?.totalValue > 50000
-                ? 'Your pipeline shows strong momentum. Focus on your highest-value opportunities to maximize Q4 performance.'
-                : 'Your pipeline is growing steadily. Consider expanding your outreach to increase deal flow.',
-            source: 'intelligent_fallback',
-            model: 'fallback',
-          }),
-        };
-      }
+       if (!openai) {
+         // Record OpenAI not configured
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           'OpenAI not configured - serving fallback greeting',
+           { endpoint: 'smart-greeting', sessionId }
+         ).catch(() => {});
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals worth $${(userMetrics?.totalValue || 0).toLocaleString()}.`,
+             insight:
+               userMetrics?.totalValue > 50000
+                 ? 'Your pipeline shows strong momentum. Focus on your highest-value opportunities to maximize Q4 performance.'
+                 : 'Your pipeline is growing steadily. Consider expanding your outreach to increase deal flow.',
+             source: 'intelligent_fallback',
+             model: 'fallback',
+           }),
+         };
+       }
 
-      try {
-        // Check cache first
-        const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
-        const cachedResult = await aiResponseCache.get(cacheKey);
+       try {
+         // Check cache first
+         const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
+         const cachedResult = await aiResponseCache.get(cacheKey);
 
-        if (cachedResult) {
-          // Track cache hit (no cost)
-          aiUsageTracker.trackUsage({
-            userId: event.headers['x-user-id'] || 'anonymous',
-            endpoint: 'smart-greeting',
-            tokensUsed: 0,
-            cost: 0,
-            timestamp: Date.now(),
-            model: 'cache',
-            success: true,
-          });
+         if (cachedResult) {
+           // Track cache hit (no cost)
+           aiUsageTracker.trackUsage({
+             userId: event.headers['x-user-id'] || 'anonymous',
+             endpoint: 'smart-greeting',
+             tokensUsed: 0,
+             cost: 0,
+             timestamp: Date.now(),
+             model: 'cache',
+             success: true,
+           });
 
-          return cachedResult;
-        }
+           // Record cached interaction
+           memoryService.recordChatInteraction(
+             userId,
+             sessionId,
+             `Smart greeting request (cached) - time: ${timeOfDay}, deals: ${userMetrics?.totalDeals || 0}`,
+             `Cached greeting: ${cachedResult.greeting?.slice(0, 100) || 'N/A'}`,
+             { endpoint: 'smart-greeting', cached: true, userMetrics, recentActivity }
+           ).catch(() => {});
 
-        const result = await aiCircuitBreaker.execute(async () => {
+           return cachedResult;
+         }
+
+         const result = await aiCircuitBreaker.execute(async () => {
           const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [
@@ -521,26 +693,35 @@ export const handler = async (
             max_tokens: 200,
           });
 
-          const parsedResult = JSON.parse(response.choices[0].message.content || '{}');
+           const parsedResult = JSON.parse(response.choices[0].message.content || '{}');
 
-          // Cache the result
-          await aiResponseCache.set(cacheKey, parsedResult);
+           // Cache the result
+           await aiResponseCache.set(cacheKey, parsedResult);
 
-          // Track usage
-          const tokensUsed = response.usage?.total_tokens || 200;
-          const estimatedCost = (tokensUsed / 1000) * 0.15; // GPT-4o-mini pricing
-          aiUsageTracker.trackUsage({
-            userId: event.headers['x-user-id'] || 'anonymous',
-            endpoint: 'smart-greeting',
-            tokensUsed,
-            cost: estimatedCost,
-            timestamp: Date.now(),
-            model: 'gpt-4o-mini',
-            success: true,
-          });
+           // Track usage
+           const tokensUsed = response.usage?.total_tokens || 200;
+           const estimatedCost = (tokensUsed / 1000) * 0.15; // GPT-4o-mini pricing
+           aiUsageTracker.trackUsage({
+             userId: event.headers['x-user-id'] || 'anonymous',
+             endpoint: 'smart-greeting',
+             tokensUsed,
+             cost: estimatedCost,
+             timestamp: Date.now(),
+             model: 'gpt-4o-mini',
+             success: true,
+           });
 
-          return parsedResult;
-        });
+           // Record successful AI interaction in memory
+           memoryService.recordChatInteraction(
+             userId,
+             sessionId,
+             `Smart greeting request - time: ${timeOfDay}, deals: ${userMetrics?.totalDeals || 0}, value: ${userMetrics?.totalValue || 0}`,
+             `Generated: ${parsedResult.greeting?.slice(0, 100) || 'N/A'}, Insight: ${parsedResult.insight?.slice(0, 100) || 'N/A'}`,
+             { endpoint: 'smart-greeting', tokensUsed, estimatedCost, userMetrics, recentActivity }
+           ).catch(() => {});
+
+           return parsedResult;
+         });
 
         return {
           statusCode: 200,
@@ -551,189 +732,328 @@ export const handler = async (
             model: 'gpt-4o-mini',
           }),
         };
-      } catch (error: unknown) {
-        console.error(
-          'Smart greeting circuit breaker error:',
-          error instanceof Error ? error.message : String(error)
-        );
+       } catch (error: unknown) {
+         console.error(
+           'Smart greeting circuit breaker error:',
+           error instanceof Error ? error.message : String(error)
+         );
 
-        // Track failed usage
-        aiUsageTracker.trackUsage({
-          userId: event.headers['x-user-id'] || 'anonymous',
-          endpoint: 'smart-greeting',
-          tokensUsed: 0,
-          cost: 0,
-          timestamp: Date.now(),
-          model: 'gpt-4o-mini',
-          success: false,
-        });
+         // Track failed usage
+         aiUsageTracker.trackUsage({
+           userId: event.headers['x-user-id'] || 'anonymous',
+           endpoint: 'smart-greeting',
+           tokensUsed: 0,
+           cost: 0,
+           timestamp: Date.now(),
+           model: 'gpt-4o-mini',
+           success: false,
+         });
 
-        return {
-          statusCode: 503,
-          headers,
-          body: JSON.stringify({
-            greeting: `Good ${timeOfDay}! Your pipeline is looking strong.`,
-            insight: 'AI service temporarily unavailable. Using intelligent defaults.',
-            source: 'circuit_breaker_fallback',
-            model: 'fallback',
-            error: error instanceof Error ? error.message : String(error),
-          }),
-        };
-      }
+         // Record error in memory
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Smart greeting failed: ${error instanceof Error ? error.message : String(error)}`,
+           { endpoint: 'smart-greeting', sessionId }
+         ).catch(() => {});
+
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             greeting: `Good ${timeOfDay}! Your pipeline is looking strong.`,
+             insight: 'AI service temporarily unavailable. Using intelligent defaults.',
+             source: 'circuit_breaker_fallback',
+             model: 'fallback',
+             error: error instanceof Error ? error.message : String(error),
+           }),
+         };
+       }
     }
 
-    // POST /api/openai/kpi-analysis - KPI analysis
-    if (
-      pathParts.length >= 2 &&
-      pathParts[0] === 'openai' &&
-      pathParts[1] === 'kpi-analysis' &&
-      httpMethod === 'POST'
-    ) {
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: 'OpenAI API key not configured',
-            summary:
-              'Your KPI trends show steady performance. Configure OpenAI API key for detailed analysis.',
-            recommendations: ['Set up API credentials', 'Enable advanced analytics'],
-          }),
-        };
-      }
+     // POST /api/openai/kpi-analysis - KPI analysis
+     if (
+       pathParts.length >= 2 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'kpi-analysis' &&
+       httpMethod === 'POST'
+     ) {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
 
-      const { historicalData, currentMetrics } = JSON.parse(body);
+       if (!openai) {
+         // Record system event
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           'OpenAI not configured - KPI analysis fallback',
+           { endpoint: 'kpi-analysis', sessionId }
+         ).catch(() => {});
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({
+             error: 'OpenAI API key not configured',
+             summary:
+               'Your KPI trends show steady performance. Configure OpenAI API key for detailed analysis.',
+             recommendations: ['Set up API credentials', 'Enable advanced analytics'],
+           }),
+         };
+       }
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations.',
-          },
-          {
-            role: 'user',
-            content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 800,
-      });
+       const { historicalData, currentMetrics } = JSON.parse(body);
 
-      let result;
-      try {
-        const content = response.choices[0].message.content || '{}';
-        result = JSON.parse(content);
-      } catch (_parseError: unknown) {
-        result = {
-          error: 'Failed to parse AI response',
-          summary: 'Analysis completed but response parsing failed',
-          recommendations: ['Review data format', 'Check API response'],
-          parsed_content: response.choices[0].message.content,
-        };
-      }
+       try {
+         const response = await openai.chat.completions.create({
+           model: 'gpt-4o-mini',
+           messages: [
+             {
+               role: 'system',
+               content:
+                 'You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations.',
+             },
+             {
+               role: 'user',
+               content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
+             },
+           ],
+           response_format: { type: 'json_object' },
+           temperature: 0.3,
+           max_tokens: 800,
+         });
 
-      return { statusCode: 200, headers, body: JSON.stringify(result) };
-    }
+         let result;
+         try {
+           const content = response.choices[0].message.content || '{}';
+           result = JSON.parse(content);
+         } catch (_parseError: unknown) {
+           result = {
+             error: 'Failed to parse AI response',
+             summary: 'Analysis completed but response parsing failed',
+             recommendations: ['Review data format', 'Check API response'],
+             parsed_content: response.choices[0].message.content,
+           };
+         }
 
-    // POST /api/googleai/test - Google AI test
-    if (
-      pathParts.length >= 2 &&
-      pathParts[0] === 'googleai' &&
-      pathParts[1] === 'test' &&
-      httpMethod === 'POST'
-    ) {
-      const { prompt } = JSON.parse(body);
-      const response = await callGoogleAI(prompt || 'Generate a business insight in one sentence.');
+         // Record successful analysis in memory
+         const tokensUsed = response.usage?.total_tokens || 0;
+         memoryService.recordChatInteraction(
+           userId,
+           sessionId,
+           `KPI analysis request - historical: ${JSON.stringify(historicalData).slice(0, 200)}...`,
+           `Summary: ${result.summary?.slice(0, 100) || 'N/A'}, Trends: ${result.trends?.length || 0} items, Predictions: ${result.predictions?.length || 0} items`,
+           { endpoint: 'kpi-analysis', tokensUsed, historicalData, currentMetrics }
+         ).catch(() => {});
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          model: 'gemini-1.5-flash',
-          output: response,
-          message: 'Google AI working perfectly!',
-        }),
-      };
-    }
+         return { statusCode: 200, headers, body: JSON.stringify(result) };
+       } catch (error: unknown) {
+         console.error('KPI analysis error:', error);
 
-    // POST /api/openai/test-gpt5-direct - Direct GPT test
-    if (
-      pathParts.length >= 3 &&
-      pathParts[0] === 'openai' &&
-      pathParts[1] === 'test-gpt5-direct' &&
-      httpMethod === 'POST'
-    ) {
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: 'OpenAI API key not configured',
-            message: 'Please configure OpenAI API key for testing',
-          }),
-        };
-      }
+         // Record error
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `KPI analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+           { endpoint: 'kpi-analysis', sessionId }
+         ).catch(() => {});
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'user',
-            content: 'Generate a business insight about CRM efficiency in exactly 1 sentence.',
-          },
-        ],
-        max_tokens: 50,
-      });
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             error: 'Analysis failed',
+             summary: 'KPI analysis temporarily unavailable.',
+             recommendations: ['Try again later', 'Contact support if issue persists'],
+           }),
+         };
+       }
+     }
 
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          model: 'gpt-4o-mini',
-          output: response.choices[0].message.content,
-          message: 'AI working perfectly!',
-        }),
-      };
-    }
+     // POST /api/googleai/test - Google AI test
+     if (
+       pathParts.length >= 2 &&
+       pathParts[0] === 'googleai' &&
+       pathParts[1] === 'test' &&
+       httpMethod === 'POST'
+     ) {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
+       
+       const { prompt } = JSON.parse(body);
+       
+       try {
+         const response = await callGoogleAI(prompt || 'Generate a business insight in one sentence.');
 
-    // POST /api/respond - Main AI response endpoint
-    if (pathParts.length === 1 && pathParts[0] === 'respond' && httpMethod === 'POST') {
-      const {
-        prompt,
-        imageUrl,
-        schema,
-        useThinking,
-        temperature = 0.4,
-        max_output_tokens = 2048,
-        forceToolName,
-      } = JSON.parse(body);
+         memoryService.recordChatInteraction(
+           userId,
+           sessionId,
+           `Google AI test request - prompt: ${prompt?.slice(0, 100)}`,
+           `Response: ${response?.slice(0, 100)}`,
+           { endpoint: 'googleai/test', provider: 'gemini' }
+         ).catch(() => {});
 
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: 'OpenAI API key not configured',
-            message: 'Please configure OpenAI API key for AI features',
-          }),
-        };
-      }
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             success: true,
+             model: 'gemini-1.5-flash',
+             output: response,
+             message: 'Google AI working perfectly!',
+           }),
+         };
+       } catch (error: unknown) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Google AI test failed: ${error instanceof Error ? error.message : String(error)}`,
+           { endpoint: 'googleai/test', sessionId }
+         ).catch(() => {});
 
-      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-        {
-          role: 'system',
-          content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
-        },
-        {
-          role: 'user',
-          content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
-        },
-      ];
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             error: 'Google AI test failed',
+             message: error instanceof Error ? error.message : 'Service unavailable',
+           }),
+         };
+       }
+     }
+
+     // POST /api/openai/test-gpt5-direct - Direct GPT test
+     if (
+       pathParts.length >= 3 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'test-gpt5-direct' &&
+       httpMethod === 'POST'
+     ) {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
+
+       if (!openai) {
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           'OpenAI not configured - test-gpt5-direct endpoint called',
+           { sessionId }
+         ).catch(() => {});
+
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({
+             error: 'OpenAI API key not configured',
+             message: 'Please configure OpenAI API key for testing',
+           }),
+         };
+       }
+
+       try {
+         const response = await openai.chat.completions.create({
+           model: 'gpt-4o-mini',
+           messages: [
+             {
+               role: 'user',
+               content: 'Generate a business insight about CRM efficiency in exactly 1 sentence.',
+             },
+           ],
+           max_tokens: 50,
+         });
+
+         const output = response.choices[0].message.content;
+
+         // Record successful test in memory
+         memoryService.recordChatInteraction(
+           userId,
+           sessionId,
+           'Direct GPT test request',
+           `Test response: ${output?.slice(0, 100) || 'N/A'}`,
+           { endpoint: 'test-gpt5-direct', model: 'gpt-4o-mini', tokensUsed: response.usage?.total_tokens }
+         ).catch(() => {});
+
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             success: true,
+             model: 'gpt-4o-mini',
+             output,
+             message: 'AI working perfectly!',
+           }),
+         };
+       } catch (error: unknown) {
+         console.error('Test GPT5 direct error:', error);
+
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Test GPT5 direct failed: ${error instanceof Error ? error.message : String(error)}`,
+           { endpoint: 'test-gpt5-direct', sessionId }
+         ).catch(() => {});
+
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             error: 'Test failed',
+             message: 'AI service temporarily unavailable',
+           }),
+         };
+       }
+     }
+
+     // POST /api/respond - Main AI response endpoint
+     if (pathParts.length === 1 && pathParts[0] === 'respond' && httpMethod === 'POST') {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
+       
+       const {
+         prompt,
+         imageUrl,
+         schema,
+         useThinking,
+         temperature = 0.4,
+         max_output_tokens = 2048,
+         forceToolName,
+       } = JSON.parse(body);
+
+       if (!openai) {
+         memoryService.recordObservation(
+           userId,
+           'system_event',
+           'OpenAI not configured - respond endpoint called',
+           { sessionId, prompt: prompt?.slice(0, 200) }
+         ).catch(() => {});
+
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({
+             error: 'OpenAI API key not configured',
+             message: 'Please configure OpenAI API key for AI features',
+           }),
+         };
+       }
+
+       // Record user prompt
+       memoryService.recordObservation(
+         userId,
+         'user_prompt',
+         imageUrl ? `${prompt}\n[Image: ${imageUrl}]` : prompt,
+         { sessionId, endpoint: 'respond', hasImage: !!imageUrl, schema: !!schema }
+       ).catch(() => {});
+
+       const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+         {
+           role: 'system',
+           content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
+         },
+         {
+           role: 'user',
+           content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
+         },
+       ];
 
       const response = await openai.chat.completions.create({
         model: useThinking ? 'gpt-4o' : 'gpt-4o-mini',
@@ -779,52 +1099,123 @@ export const handler = async (
           : 'auto',
       });
 
-      const toolCalls = response.choices[0].message.tool_calls;
-      if (toolCalls && toolCalls.length > 0) {
-        const toolOutputs = await Promise.all(
-          toolCalls.map(async (tc) => ({
-            tool_call_id: tc.id,
-            output: await executeWLTool(tc),
-          }))
-        );
+       const toolCalls = response.choices[0].message.tool_calls;
+       if (toolCalls && toolCalls.length > 0) {
+         // Record tool use in memory
+         memoryService.recordObservation(
+           userId,
+           'tool_use',
+           `Tools invoked: ${toolCalls.map(tc => tc.function.name).join(', ')}`,
+           { sessionId, endpoint: 'respond', toolCalls: toolCalls.map(tc => tc.function.name) }
+         ).catch(() => {});
 
-        const continuedMessages = [
-          ...messages,
-          response.choices[0].message,
-          ...toolOutputs.map((o) => ({
-            role: 'tool' as const,
-            content: o.output,
-            tool_call_id: o.tool_call_id,
-          })),
-        ];
+         const toolOutputs = await Promise.all(
+           toolCalls.map(async (tc) => ({
+             tool_call_id: tc.id,
+             output: await executeWLTool(tc),
+           }))
+         );
 
-        const continuedResponse = await openai.chat.completions.create({
-          model: useThinking ? 'gpt-4o' : 'gpt-4o-mini',
-          messages: continuedMessages,
-          temperature,
-          max_tokens: max_output_tokens,
-          response_format: schema ? { type: 'json_object' } : undefined,
-        });
+         // Record tool results
+         for (const tool of toolOutputs) {
+           memoryService.recordObservation(
+             userId,
+             'tool_use',
+             `Tool result: ${tool.output?.slice(0, 200) || 'empty'}`,
+             { sessionId, endpoint: 'respond', tool_call_id: tool.tool_call_id }
+           ).catch(() => {});
+         }
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            output_text: continuedResponse.choices[0].message.content,
-            output: [
-              {
-                content: [
-                  {
-                    type: 'output_text',
-                    text: continuedResponse.choices[0].message.content,
-                  },
-                ],
-              },
-            ],
-            tool_calls: toolCalls,
-            continued: true,
-          }),
-        };
+         const continuedMessages = [
+           ...messages,
+           response.choices[0].message,
+           ...toolOutputs.map((o) => ({
+             role: 'tool' as const,
+             content: o.output,
+             tool_call_id: o.tool_call_id,
+           })),
+         ];
+
+         const continuedResponse = await openai.chat.completions.create({
+           model: useThinking ? 'gpt-4o' : 'gpt-4o-mini',
+           messages: continuedMessages,
+           temperature,
+           max_tokens: max_output_tokens,
+           response_format: schema ? { type: 'json_object' } : undefined,
+         });
+
+         const finalOutput = continuedResponse.choices[0].message.content;
+         
+         // Record final response
+         memoryService.recordChatInteraction(
+           userId,
+           sessionId,
+           `AI respond (with tools) - prompt: ${prompt?.slice(0, 150)}...`,
+           `Final response: ${finalOutput?.slice(0, 200) || 'N/A'}`,
+           { 
+             endpoint: 'respond', 
+             hadToolCalls: true, 
+             toolCount: toolCalls.length,
+             tokensUsed: continuedResponse.usage?.total_tokens 
+           }
+         ).catch(() => {});
+
+         return {
+           statusCode: 200,
+           headers,
+           body: JSON.stringify({
+             output_text: finalOutput,
+             output: [
+               {
+                 content: [
+                   {
+                     type: 'output_text',
+                     text: finalOutput,
+                   },
+                 ],
+               },
+             ],
+             tool_calls: toolCalls,
+             continued: true,
+           }),
+         };
+       }
+
+       const outputText = response.choices[0].message.content;
+
+       // Record direct response
+       memoryService.recordChatInteraction(
+         userId,
+         sessionId,
+         `AI respond (direct) - prompt: ${prompt?.slice(0, 150)}...`,
+         `Response: ${outputText?.slice(0, 200) || 'N/A'}`,
+         { 
+           endpoint: 'respond', 
+           hadToolCalls: false,
+           tokensUsed: response.usage?.total_tokens,
+           model: response.model
+         }
+       ).catch(() => {});
+
+       return {
+         statusCode: 200,
+         headers,
+         body: JSON.stringify({
+           output_text: outputText,
+           output: [
+             {
+               content: [
+                 {
+                   type: 'output_text',
+                   text: outputText,
+                 },
+               ],
+             },
+           ],
+           model: response.model,
+           usage: response.usage,
+         }),
+       };
       }
 
       return {
@@ -854,17 +1245,32 @@ export const handler = async (
       headers,
       body: JSON.stringify({ error: 'OpenAI endpoint not found' }),
     };
-  } catch (error: unknown) {
-    console.error('OpenAI function error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : String(error),
-      }),
-    };
-  }
+   } catch (error: unknown) {
+     console.error('OpenAI function error:', error);
+     
+     // Record error in memory (if we have session context from a known endpoint)
+     // We can't reliably get userId/sessionId here as they're endpoint-scoped
+     // Each endpoint already records errors individually, so this is a fallback
+     memoryService.recordObservation(
+       'system',
+       'error',
+       `OpenAI handler error: ${error instanceof Error ? error.message : String(error)}`,
+       { 
+         path: event.path,
+         httpMethod,
+         headers: { 'x-user-id': event.headers['x-user-id'], 'x-session-id': event.headers['x-session-id'] }
+       }
+     ).catch(() => {});
+
+     return {
+       statusCode: 500,
+       headers,
+       body: JSON.stringify({
+         error: 'Internal server error',
+         message: error instanceof Error ? error.message : String(error),
+       }),
+     };
+   }
 };
 
 // Tool execution function for WL apps

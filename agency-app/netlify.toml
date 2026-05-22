@@ -1,0 +1,31 @@
+[build]
+  publish = "dist"
+  command = "npm install && npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Allow public access to assets directory for Module Federation
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+  force = true
+
+# CORS headers for Module Federation remoteEntry.js
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, HEAD"
+    Access-Control-Allow-Headers = "*"
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/assets/remoteEntry.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, HEAD"
+    Access-Control-Allow-Headers = "*"
+    Cache-Control = "public, max-age=31536000"
+    X-Frame-Options = "ALLOWALL"

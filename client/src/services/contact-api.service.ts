@@ -623,25 +623,108 @@ class ContactAPIService {
     return stats;
   }
 
-  // AI and Enhancement Methods (placeholder for Edge Functions integration)
+  // AI and Enhancement Methods - call Edge Functions directly for remote app compatibility
   async enrichContact(contactId: string): Promise<Contact> {
-    const contact = await this.getContact(contactId);
+    if (this.shouldUseFallback()) {
+      // Local storage fallback
+      const contact = this.getLocalContacts().find(c => c.id === contactId);
+      if (!contact) throw new Error(`Contact with ID ${contactId} not found`);
+      return contact;
+    }
 
-    // This would call ai-enrichment Edge Function
-    // For now, return the contact as-is
-    logger.info('Contact enrichment not implemented yet');
-    return contact;
+    try {
+      const response = await fetch(`${this.baseURL}/${contactId}/enrich`, {
+        method: 'POST',
+        headers: this.getSupabaseHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Edge Function error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const contactData = result.contact || result.data || result;
+
+      const enrichedContact: Contact = {
+        id: contactData.id,
+        firstName: contactData.firstName || contactData.first_name || '',
+        lastName: contactData.lastName || contactData.last_name || '',
+        name: `${contactData.firstName || contactData.first_name || ''} ${contactData.lastName || contactData.last_name || ''}`.trim(),
+        email: contactData.email || '',
+        phone: contactData.phone || '',
+        title: contactData.title || contactData.position || '',
+        company: contactData.company || '',
+        industry: contactData.industry || '',
+        avatarSrc: contactData.avatarSrc || '',
+        sources: contactData.sources || [contactData.source || 'Website'].filter(Boolean),
+        interestLevel: contactData.interestLevel || 'medium',
+        status: contactData.status || 'lead',
+        lastConnected: contactData.lastConnected || contactData.last_contacted,
+        aiScore: contactData.aiScore || contactData.ai_score || contactData.lead_score,
+        tags: contactData.tags || [],
+        createdAt: contactData.createdAt || contactData.created_at || new Date().toISOString(),
+        updatedAt: contactData.updatedAt || contactData.updated_at || new Date().toISOString(),
+      };
+
+      cacheService.set('contact', contactId, enrichedContact, 300, ['contact']);
+      return enrichedContact;
+    } catch (error) {
+      logger.error('Edge Function unavailable, using localStorage fallback', error as Error);
+      const contact = this.getLocalContacts().find(c => c.id === contactId);
+      if (!contact) throw new Error(`Contact with ID ${contactId} not found`);
+      return contact;
+    }
   }
 
   async scoreContact(contactId: string): Promise<Contact> {
-    const contact = await this.getContact(contactId);
+    if (this.shouldUseFallback()) {
+      const contact = this.getLocalContacts().find(c => c.id === contactId);
+      if (!contact) throw new Error(`Contact with ID ${contactId} not found`);
+      return contact;
+    }
 
-    // This would call smart-score Edge Function
-    // For now, return the contact as-is
-    logger.info('Contact scoring not implemented yet');
-    return contact;
+    try {
+      const response = await fetch(`${this.baseURL}/${contactId}/score`, {
+        method: 'POST',
+        headers: this.getSupabaseHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Edge Function error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const contactData = result.contact || result.data || result;
+
+      const scoredContact: Contact = {
+        id: contactData.id,
+        firstName: contactData.firstName || contactData.first_name || '',
+        lastName: contactData.lastName || contactData.last_name || '',
+        name: `${contactData.firstName || contactData.first_name || ''} ${contactData.lastName || contactData.last_name || ''}`.trim(),
+        email: contactData.email || '',
+        phone: contactData.phone || '',
+        title: contactData.title || contactData.position || '',
+        company: contactData.company || '',
+        industry: contactData.industry || '',
+        avatarSrc: contactData.avatarSrc || '',
+        sources: contactData.sources || [contactData.source || 'Website'].filter(Boolean),
+        interestLevel: contactData.interestLevel || 'medium',
+        status: contactData.status || 'lead',
+        lastConnected: contactData.lastConnected || contactData.last_contacted,
+        aiScore: result.score !== undefined ? result.score / 100 : (contactData.aiScore || contactData.ai_score || 0),
+        tags: contactData.tags || [],
+        createdAt: contactData.createdAt || contactData.created_at || new Date().toISOString(),
+        updatedAt: contactData.updatedAt || contactData.updated_at || new Date().toISOString(),
+      };
+
+      cacheService.set('contact', contactId, scoredContact, 300, ['contact']);
+      return scoredContact;
+    } catch (error) {
+      logger.error('Edge Function unavailable, using localStorage fallback', error as Error);
+      const contact = this.getLocalContacts().find(c => c.id === contactId);
+      if (!contact) throw new Error(`Contact with ID ${contactId} not found`);
+      return contact;
+    }
   }
-}
-
 export const contactAPIService = new ContactAPIService();
 export default contactAPIService;

@@ -306,6 +306,7 @@ export const profilesRelations = relations(profiles, ({ many, one }) => ({
     fields: [profiles.id],
     references: [entitlements.userId],
   }),
+  apiKeys: many(userApiKeys),
 }));
 
 export const contactsRelations = relations(contacts, ({ one, many }) => ({
@@ -1620,6 +1621,57 @@ export const insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect;
 export type InsertWebhookEvent = z.infer<typeof insertWebhookEventSchema>;
+
+// ============================================================================
+// User API Keys Table - For storing user-provided AI API keys
+// ============================================================================
+
+// API provider types enum
+export const apiProviderTypes = ['openai', 'gemini'] as const;
+export type ApiProviderType = (typeof apiProviderTypes)[number];
+
+// User API Keys table
+export const userApiKeys = pgTable('user_api_keys', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => profiles.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(), // 'openai' | 'gemini'
+  apiKey: text('api_key').notNull(), // Encrypted or plaintext (plaintext for now, can be encrypted later)
+  apiKeyName: text('api_key_name'), // Optional name given by user
+  model: text('model'), // Optional specific model to use
+  isDefault: boolean('is_default').default(false), // Default key for this provider
+  isActive: boolean('is_active').default(true), // Can be deactivated
+  lastTestedAt: timestamp('last_tested_at'), // When the key was last validated
+  testStatus: text('test_status'), // 'success', 'failed', 'pending'
+  testError: text('test_error'), // Error message if test failed
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Relations for user API keys
+export const userApiKeysRelations = relations(userApiKeys, ({ one }) => ({
+  user: one(profiles, {
+    fields: [userApiKeys.userId],
+    references: [profiles.id],
+  }),
+}));
+
+// Insert schema for user API keys
+export const insertUserApiKeySchema = createInsertSchema(userApiKeys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastTestedAt: true,
+  testStatus: true,
+  testError: true,
+});
+
+// Types for user API keys
+export type UserApiKey = typeof userApiKeys.$inferSelect;
+export type InsertUserApiKey = z.infer<typeof insertUserApiKeySchema>;
 
 // ============================================================================
 // TWENTY-INSPIRED METADATA TABLES (EAV Pattern)

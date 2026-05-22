@@ -1,23 +1,26 @@
-import type { Express } from 'express';
-import { eq, and, desc } from 'drizzle-orm';
-import {
-  contacts,
-  deals,
-  tasks,
-  appointments,
-  communications,
-  notes,
-  documents,
-  insertContactSchema,
-  insertDealSchema,
-  insertTaskSchema,
-  insertAppointmentSchema,
-  insertCommunicationSchema,
-  insertNoteSchema,
-  updateNoteSchema,
-  insertDocumentSchema,
-} from '../../shared/schema.js';
-import { requireAuth } from './auth';
+ import type { Express } from 'express';
+ import { eq, and, desc } from 'drizzle-orm';
+ import {
+   contacts,
+   deals,
+   tasks,
+   appointments,
+   communications,
+   notes,
+   documents,
+   insertContactSchema,
+   insertDealSchema,
+   insertTaskSchema,
+   insertAppointmentSchema,
+   insertCommunicationSchema,
+   insertNoteSchema,
+   updateNoteSchema,
+   insertDocumentSchema,
+   contactActivities,
+   contactCustomFields,
+ } from '../../shared/schema.js';
+ import { requireAuth } from './auth';
+ import { memoryService } from '../memory';
 
 // Helper function to check authentication with dev bypass support
 const checkAuth = (req: any): { userId: string | null; isAuthenticated: boolean } => {
@@ -1237,7 +1240,483 @@ export function registerCRMRoutes(app: Express): void {
       res.json(complianceStatus);
     } catch (error: any) {
       console.error('Error checking compliance status:', error);
-      res.status(500).json({ error: 'Failed to check compliance status' });
+        res.status(500).json({ error: 'Failed to check compliance status' });
+      }
+    });
+
+    // Enrich contact with AI data
+   app.post('/api/contacts/:id/enrich', async (req, res) => {
+     const userId = (req.session as any)?.userId || 'anonymous';
+     const contactId = parseInt(req.params.id);
+     
+     try {
+       const { isAuthenticated } = checkAuth(req);
+       if (!isAuthenticated) {
+         return res.status(401).json({ error: 'Not authenticated' });
+       }
+
+       const { db } = await import('../db');
+       const { OpenAI } = await import('openai');
+
+       // Verify contact exists and belongs to user
+       const [contact] = await db
+         .select()
+         .from(contacts)
+         .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+       if (!contact) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Enrichment failed: Contact ${contactId} not found`,
+           { endpoint: '/api/contacts/:id/enrich', contactId }
+         ).catch(() => {});
+         
+         return res.status(404).json({ error: 'Contact not found' });
+       }
+
+       let enrichedData;
+       try {
+         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+         const prompt = `Enrich this contact's information with additional professional details:
+Name: ${contact.firstName} ${contact.lastName}
+Title: ${contact.title || ''}
+Company: ${contact.company || ''}
+Industry: ${contact.industry || ''}
+Email: ${contact.email || ''}
+
+Return as JSON with keys: companySize, industry, socialProfiles, insights`;
+
+         const completion = await openai.chat.completions.create({
+           model: 'gpt-4',
+           messages: [{ role: 'user', content: prompt }],
+           temperature: 0.3,
+         });
+
+         try {
+           enrichedData = JSON.parse(completion.choices[0].message.content || '{}');
+         } catch (parseError) {
+           memoryService.recordObservation(
+             userId,
+             'error',
+             `Enrichment parsing failed for contact ${contactId}`,
+             { endpoint: '/api/contacts/:id/enrich', contactId, error: 'JSON parse error' }
+           ).catch(() => {});
+           
+           return res.status(500).json({ error: 'Failed to parse enrichment data' });
+         }
+       } catch (aiError) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Enrichment AI call failed for contact ${contactId}: ${aiError instanceof Error ? aiError.message : 'Unknown'}`,
+           { endpoint: '/api/contacts/:id/enrich', contactId }
+         ).catch(() => {});
+         
+         return res.status(500).json({ error: 'Enrichment failed' });
+       }
+
+       const [updatedContact] = await db
+         .update(contacts)
+         .set({
+           enrichmentData: enrichedData,
+           lastEnrichedAt: new Date(),
+           updatedAt: new Date(),
+         })
+         .where(eq(contacts.id, contactId))
+         .returning();
+
+       await db.insert(contactActivities).values({
+         contactId: contactId,
+         activityType: 'enrichment',
+         description: 'AI enrichment completed',
+         metadata: { enrichedFields: Object.keys(enrichedData) },
+       });
+
+       // Record successful enrichment in memory
+       memoryService.recordObservation(
+         userId,
+         'tool_use',
+         `Contact enrichment completed for ${contact.firstName} ${contact.lastName} (ID: ${contactId})`,
+         {
+           endpoint: 'contact_enrichment',
+           contactId,
+           contactName: `${contact.firstName} ${contact.lastName}`,
+           enrichedFields: Object.keys(enrichedData),
+           fieldsCount: Object.keys(enrichedData).length,
+           company: contact.company,
+           industry: enrichedData.industry || contact.industry,
+         }
+       ).catch(() => {});
+
+       res.json({ enriched: true, data: enrichedData, contact: updatedContact });
+     } catch (error: any) {
+       console.error('Error enriching contact:', error);
+       
+       memoryService.recordObservation(
+         userId,
+         'error',
+         `Enrichment exception for contact ${contactId}: ${error.message}`,
+         { endpoint: '/api/contacts/:id/enrich', contactId, stack: error.stack?.slice(0, 200) }
+       ).catch(() => {});
+       
+       res.status(500).json({ error: 'Enrichment failed', details: error.message });
+     }
+    });
+
+   // Get enrichment history
+   app.get('/api/contacts/:id/enrichment-history', async (req, res) => {
+    try {
+      const { userId, isAuthenticated } = checkAuth(req);
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { db } = await import('../db');
+      const contactId = parseInt(req.params.id);
+
+      const [contact] = await db.select().from(contacts).where(eq(contacts.id, contactId));
+      if (!contact) {
+        return res.status(404).json({ error: 'Contact not found' });
+      }
+
+      const history = await db
+        .select()
+        .from(contactActivities)
+        .where(and(eq(contactActivities.contactId, contactId), eq(contactActivities.activityType, 'enrichment')))
+        .orderBy(desc(contactActivities.createdAt));
+
+      res.json(history.map((h: any) => ({
+        timestamp: h.createdAt,
+        source: 'OpenAI',
+        data: h.metadata,
+      })));
+    } catch (error) {
+      console.error('Error fetching enrichment history:', error);
+      res.status(500).json({ error: 'Failed to fetch enrichment history' });
+    }
+  });
+
+   // Score contact with AI
+   app.post('/api/contacts/:id/score', async (req, res) => {
+     const userId = (req.session as any)?.userId || 'anonymous';
+     const contactId = parseInt(req.params.id);
+     
+     try {
+       const { isAuthenticated } = checkAuth(req);
+       if (!isAuthenticated) {
+         return res.status(401).json({ error: 'Not authenticated' });
+       }
+
+       const { db } = await import('../db');
+       const { OpenAI } = await import('openai');
+
+       const [contact] = await db
+         .select()
+         .from(contacts)
+         .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+       if (!contact) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Scoring failed: Contact ${contactId} not found`,
+           { endpoint: '/api/contacts/:id/score', contactId }
+         ).catch(() => {});
+         
+         return res.status(404).json({ error: 'Contact not found' });
+       }
+
+       let scoreData;
+       try {
+         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+         const prompt = `Score this contact's sales potential on a scale of 0-100:
+Name: ${contact.firstName} ${contact.lastName}
+Title: ${contact.title || ''}
+Company: ${contact.company || ''}
+Industry: ${contact.industry || ''}
+Status: ${contact.status || ''}
+Notes: ${contact.notes || ''}
+
+Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
+
+         const completion = await openai.chat.completions.create({
+           model: 'gpt-4',
+           messages: [{ role: 'user', content: prompt }],
+           temperature: 0.3,
+         });
+
+         scoreData = JSON.parse(completion.choices[0].message.content || '{}');
+       } catch (aiError) {
+         memoryService.recordObservation(
+           userId,
+           'error',
+           `Scoring AI call failed for contact ${contactId}: ${aiError instanceof Error ? aiError.message : 'Unknown'}`,
+           { endpoint: '/api/contacts/:id/score', contactId }
+         ).catch(() => {});
+         
+         return res.status(500).json({ error: 'Scoring failed' });
+       }
+
+       const [updatedContact] = await db
+         .update(contacts)
+         .set({
+           score: String(scoreData.score / 100),
+           aiScoreRationale: scoreData.rationale,
+           updatedAt: new Date(),
+         })
+         .where(eq(contacts.id, contactId))
+         .returning();
+
+       await db.insert(contactActivities).values({
+         contactId: contactId,
+         activityType: 'scoring',
+         description: 'AI scoring completed',
+         metadata: scoreData,
+       });
+
+       // Record successful scoring in memory
+       memoryService.recordObservation(
+         userId,
+         'tool_use',
+         `Contact scoring completed for ${contact.firstName} ${contact.lastName} (ID: ${contactId})`,
+         {
+           endpoint: 'contact_scoring',
+           contactId,
+           contactName: `${contact.firstName} ${contact.lastName}`,
+           score: scoreData.score,
+           leadScore: scoreData.lead_score,
+           engagementScore: scoreData.engagement_score,
+           rationale: scoreData.rationale?.slice(0, 200),
+           company: contact.company,
+         }
+       ).catch(() => {});
+
+       res.json({
+         score: scoreData.score,
+         rationale: scoreData.rationale,
+         leadScore: scoreData.lead_score,
+         engagementScore: scoreData.engagement_score,
+         contact: updatedContact,
+       });
+     } catch (error: any) {
+       console.error('Error scoring contact:', error);
+       
+       memoryService.recordObservation(
+         userId,
+         'error',
+         `Scoring exception for contact ${contactId}: ${error.message}`,
+         { endpoint: '/api/contacts/:id/score', contactId, stack: error.stack?.slice(0, 200) }
+       ).catch(() => {});
+       
+       res.status(500).json({ error: 'Scoring failed', details: error.message });
+     }
+   });
+
+  // Get scoring stats
+  app.get('/api/contacts/scoring-stats', async (req, res) => {
+    try {
+      const { userId, isAuthenticated } = checkAuth(req);
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { db } = await import('../db');
+
+      const userContacts = await db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.profileId, userId));
+
+      const scores = userContacts
+        .map((c: any) => parseFloat(c.score || '0'))
+        .filter((s: number) => !isNaN(s));
+
+      const averageScore = scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0;
+      const highPriority = userContacts.filter((c: any) => parseFloat(c.score || '0') > 0.7).length;
+
+      res.json({
+        averageAiScore: Math.round(averageScore * 100),
+        totalContacts: userContacts.length,
+        highPriorityCount: highPriority,
+      });
+    } catch (error) {
+      console.error('Error fetching scoring stats:', error);
+      res.status(500).json({ error: 'Failed to fetch scoring stats' });
+    }
+  });
+
+  // Update custom fields (with merge support)
+  app.put('/api/contacts/:id/custom-fields', async (req, res) => {
+    try {
+      const { userId, isAuthenticated } = checkAuth(req);
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { db } = await import('../db');
+      const contactId = parseInt(req.params.id);
+      const { customFields } = req.body;
+
+      const [contact] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+      if (!contact) {
+        return res.status(404).json({ error: 'Contact not found' });
+      }
+
+      if (customFields) {
+        const validKey = (key: string) => /^[a-zA-Z][a-zA-Z0-9_]*$/.test(key);
+        const invalidKeys = Object.keys(customFields).filter((k) => !validKey(k));
+        if (invalidKeys.length > 0) {
+          return res.status(400).json({ error: 'Invalid custom field keys' });
+        }
+      }
+
+      // Merge with existing custom fields
+      const mergedFields = { ...(contact.customFields || {}), ...(customFields || {}) };
+
+      await db.delete(contactCustomFields).where(eq(contactCustomFields.contactId, contactId));
+
+      if (mergedFields && Object.keys(mergedFields).length > 0) {
+        await db.insert(contactCustomFields).values(
+          Object.entries(mergedFields).map(([key, value]) => ({
+            contactId: contactId,
+            fieldKey: key,
+            fieldValue: value,
+          }))
+        );
+      }
+
+      await db.update(contacts).set({ customFields: mergedFields }).where(eq(contacts.id, contactId));
+
+      res.json({ updated: true, customFields: mergedFields });
+    } catch (error) {
+      console.error('Error updating custom fields:', error);
+      res.status(500).json({ error: 'Failed to update custom fields' });
+    }
+  });
+
+  // Delete specific custom field
+  app.delete('/api/contacts/:id/custom-fields/:key', async (req, res) => {
+    try {
+      const { userId, isAuthenticated } = checkAuth(req);
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { db } = await import('../db');
+      const contactId = parseInt(req.params.id);
+      const fieldKey = req.params.key;
+
+      const [contact] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+      if (!contact) {
+        return res.status(404).json({ error: 'Contact not found' });
+      }
+
+      await db
+        .delete(contactCustomFields)
+        .where(and(eq(contactCustomFields.contactId, contactId), eq(contactCustomFields.fieldKey, fieldKey)));
+
+      const updatedFields = { ...(contact.customFields || {}) };
+      delete updatedFields[fieldKey];
+
+      await db.update(contacts).set({ customFields: updatedFields }).where(eq(contacts.id, contactId));
+
+      res.json({ deleted: true });
+    } catch (error) {
+      console.error('Error deleting custom field:', error);
+      res.status(500).json({ error: 'Failed to delete custom field' });
+    }
+  });
+
+  // Get contact activities
+  app.get('/api/contacts/:id/activities', async (req, res) => {
+    try {
+      const { userId, isAuthenticated } = checkAuth(req);
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { db } = await import('../db');
+      const contactId = parseInt(req.params.id);
+      const type = req.query.type as string | undefined;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const [contact] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+      if (!contact) {
+        return res.status(404).json({ error: 'Contact not found' });
+      }
+
+      const conditions = [eq(contactActivities.contactId, contactId)];
+      if (type) {
+        conditions.push(eq(contactActivities.activityType, type));
+      }
+
+      const offset = (page - 1) * limit;
+      const activities = await db
+        .select()
+        .from(contactActivities)
+        .where(and(...conditions))
+        .orderBy(desc(contactActivities.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      res.json(activities);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      res.status(500).json({ error: 'Failed to fetch activities' });
+    }
+  });
+
+  // Create activity
+  app.post('/api/contacts/:id/activities', async (req, res) => {
+    try {
+      const { userId, isAuthenticated } = checkAuth(req);
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const { db } = await import('../db');
+      const contactId = parseInt(req.params.id);
+      const { activityType, description, metadata } = req.body;
+
+      const [contact] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)));
+
+      if (!contact) {
+        return res.status(404).json({ error: 'Contact not found' });
+      }
+
+      const validTypes = ['email', 'call', 'meeting', 'note', 'enrichment', 'scoring', 'task_completed'];
+      if (!validTypes.includes(activityType)) {
+        return res.status(400).json({ error: 'Invalid activity type' });
+      }
+
+      const [activity] = await db.insert(contactActivities).values({
+        contactId: contactId,
+        activityType: activityType,
+        description: description || '',
+        metadata: metadata || {},
+      }).returning();
+
+      res.status(201).json(activity);
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      res.status(500).json({ error: 'Failed to create activity' });
     }
   });
 }

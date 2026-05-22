@@ -76,9 +76,12 @@ class DynamicModuleFederation {
     if (baseUrl.endsWith('.js')) {
       urls.push(baseUrl);
     } else {
-      // Try common locations
-      urls.push(`${baseUrl}/remoteEntry.js`);
+      // Vite Module Federation typically outputs to /assets/remoteEntry.js
+      // Check this path FIRST as it's the most common for Vite MF apps
       urls.push(`${baseUrl}/assets/remoteEntry.js`);
+      // Also check root as some deployments use this
+      urls.push(`${baseUrl}/remoteEntry.js`);
+      // Fallback for Create React App style deployments
       urls.push(`${baseUrl}/static/js/remoteEntry.js`);
     }
 

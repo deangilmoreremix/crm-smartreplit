@@ -9,6 +9,8 @@ export { useSmartAI } from './useSmartAI';
 export { useUniversalRemoteIntegration } from './useUniversalRemoteIntegration';
 export { useVoiceAgent } from './useVoiceAgent';
 export { useUserWLSettings as useWLSettings } from './useWLSettings';
+export { useAIApiKeys } from './useAIApiKeys';
+export { useApiKeyStatus } from './useApiKeyStatus';
 
 // Re-export React hooks for convenience
 export { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';

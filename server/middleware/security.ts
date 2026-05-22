@@ -26,22 +26,24 @@ export const securityHeaders = helmet({
 });
 
 // CORS configuration
+const defaultOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://smartcrm.vip',
+  'https://www.smartcrm.vip',
+  'https://app.smartcrm.vip',
+  'https://*.smartcrm.vip',
+  'https://*.vercel.app',
+];
+
 export const corsConfig = cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, etc.)
     if (!origin) return callback(null, true);
 
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'https://smartcrm.vip',
-      'https://www.smartcrm.vip',
-      'https://app.smartcrm.vip',
-      'https://*.smartcrm.vip', // Allow smartcrm deployments
-      'https://*.vercel.app', // Allow Vercel deployments
-    ];
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+      : defaultOrigins;
 
-    // Check if origin matches any allowed pattern
     const isAllowed = allowedOrigins.some((allowed) => {
       if (allowed.includes('*')) {
         const regex = new RegExp(allowed.replace('*', '.*'));

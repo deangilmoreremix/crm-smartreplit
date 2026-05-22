@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
@@ -6,329 +6,187 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import Avatar from '../components/ui/Avatar';
 import PageLayout from '../components/PageLayout';
+import { useConversionOptimization } from '../hooks/useAIAnalysis';
 import {
-  Zap,
-  TrendingUp,
-  Target,
-  Users,
-  ArrowUpRight,
-  ArrowDownRight,
-  Star,
-  Activity,
-  Lightbulb,
-  CheckCircle,
+  Zap, TrendingUp, Target, Users, ArrowUpRight, ArrowDownRight,
+  Star, Activity, Lightbulb, CheckCircle, Sparkles,
 } from 'lucide-react';
 
 const SmartConversionInsights: React.FC = () => {
   const { isDark } = useTheme();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
+  const { loading, optimization, optimize } = useConversionOptimization();
 
-  // Calculate conversion metrics
   const dealsArray = Object.values(deals);
+  const contactsArray = Object.values(contacts);
   const totalDeals = dealsArray.length;
-  const wonDeals = dealsArray.filter((d) => String(d.stage) === 'closed-won');
+  const wonDeals = dealsArray.filter(d => String(d.stage) === 'closed-won');
   const conversionRate = totalDeals > 0 ? (wonDeals.length / totalDeals) * 100 : 0;
-
-  // Identify high-potential conversions
-  const highPotentialDeals = dealsArray.filter(
-    (deal) => deal.probability >= 70 && !['closed-won', 'closed-lost'].includes(String(deal.stage))
-  );
-
-  const stuckDeals = dealsArray.filter((deal) => {
-    const daysSinceUpdate = Math.floor(
-      (Date.now() - new Date(deal.updatedAt).getTime()) / (1000 * 60 * 60 * 24)
-    );
-    return daysSinceUpdate > 14 && !['closed-won', 'closed-lost'].includes(String(deal.stage));
+  const highPotentialDeals = dealsArray.filter(d => d.probability >= 70 && !['closed-won', 'closed-lost'].includes(String(d.stage)));
+  const stuckDeals = dealsArray.filter(d => {
+    const days = Math.floor((Date.now() - new Date(d.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+    return days > 14 && !['closed-won', 'closed-lost'].includes(String(d.stage));
   });
+  const topContacts = contactsArray.slice(0, 6);
 
-  // Get top contacts by conversion potential
-  const topContacts = Object.values(contacts).slice(0, 6);
+  useEffect(() => {
+    if (dealsArray.length > 0) optimize(dealsArray, contactsArray);
+  }, []);
 
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const optData = optimization || {};
+  const aiConversionRate = optData.conversion_rate || conversionRate;
+  const dropOffPoints = optData.drop_off_points || [];
+  const optimizationOpportunities = optData.optimization_opportunities || [];
+  const abTestSuggestions = optData.a_b_test_suggestions || [];
+  const projectedImprovement = optData.projected_improvement || 0;
 
-  // Get contact info from contactId
-  const getContactInfo = (contactId: number | string | null) => {
-    if (!contactId) return { name: 'Unknown Contact', initials: 'UC' };
-    const contact = contacts[contactId];
-    if (!contact) return { name: 'Unknown Contact', initials: 'UC' };
-    const name = `${contact.firstName} ${contact.lastName}`;
-    const initials = `${contact.firstName?.[0] || ''}${contact.lastName?.[0] || ''}`.toUpperCase();
-    return { name, initials };
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
-  // Get initials for avatar (for contacts)
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase();
-  };
+  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
     <PageLayout
       title="Smart Conversion Insights"
-      description="AI-powered insights to maximize your conversion opportunities"
+      description="AI-powered conversion optimization and funnel analysis"
       actions={
-        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-          <Zap className="h-3 w-3 mr-1" />
-          AI Insights
-        </Badge>
+        <div className="flex items-center gap-2">
+          {optimization && <Badge className="bg-purple-100 text-purple-700 border-purple-200"><Sparkles className="h-3 w-3 mr-1" />AI-Powered</Badge>}
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><Zap className="h-3 w-3 mr-1" />Conversion AI</Badge>
+        </div>
       }
     >
-      {/* Conversion Metrics */}
+      {/* Conversion KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle
-              className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-            >
-              Conversion Rate
-            </CardTitle>
-            <Target className="h-4 w-4 text-green-500" />
+            <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Conversion Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {conversionRate.toFixed(1)}%
-            </div>
-            <p className="text-xs text-green-600 flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" />
-              +3.2% from last month
-            </p>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{aiConversionRate.toFixed(1)}%</div>
+            <p className="text-xs text-green-600 flex items-center mt-1"><ArrowUpRight className="h-3 w-3 mr-1" />{projectedImprovement > 0 ? `+${projectedImprovement}% projected` : 'Optimizing'}</p>
           </CardContent>
         </Card>
 
-        <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle
-              className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-            >
-              High Potential Deals
-            </CardTitle>
+            <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>High Potential</CardTitle>
             <Star className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {highPotentialDeals.length}
-            </div>
-            <p className="text-xs text-blue-600 flex items-center mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              70%+ probability
-            </p>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{highPotentialDeals.length}</div>
+            <p className="text-xs text-yellow-600 flex items-center mt-1"><ArrowUpRight className="h-3 w-3 mr-1" />Ready to close</p>
           </CardContent>
         </Card>
 
-        <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle
-              className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-            >
-              Stuck Deals
-            </CardTitle>
-            <Activity className="h-4 w-4 text-orange-500" />
+            <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Stuck Deals</CardTitle>
+            <Activity className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {stuckDeals.length}
-            </div>
-            <p className="text-xs text-orange-600 flex items-center mt-1">
-              <ArrowDownRight className="h-3 w-3 mr-1" />
-              Need attention
-            </p>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stuckDeals.length}</div>
+            <p className="text-xs text-red-600 flex items-center mt-1"><ArrowDownRight className="h-3 w-3 mr-1" />Need attention</p>
           </CardContent>
         </Card>
 
-        <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle
-              className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
-            >
-              Won This Month
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CardTitle className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Won Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {wonDeals.length}
-            </div>
-            <p className="text-xs text-green-600 flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" />
-              Strong performance
-            </p>
+            <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(wonDeals.reduce((s, d) => s + d.value, 0))}</div>
+            <p className="text-xs text-green-600 flex items-center mt-1"><CheckCircle className="h-3 w-3 mr-1" />Total won</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* AI Conversion Recommendations */}
-      <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <Lightbulb className="h-5 w-5 mr-2 text-yellow-500" />
-            AI Conversion Recommendations
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}
-          >
-            <div className="flex items-start space-x-3">
-              <Zap className="h-5 w-5 text-blue-500 mt-0.5" />
-              <div>
-                <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Focus on High-Probability Deals
-                </h4>
-                <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  You have {highPotentialDeals.length} deals with 70%+ probability. Prioritize
-                  follow-ups to close these quickly.
-                </p>
-              </div>
+      {/* AI Optimization Opportunities */}
+      {optimizationOpportunities.length > 0 && (
+        <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-l-4 border-purple-500`}>
+          <CardHeader>
+            <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Sparkles className="h-5 w-5 mr-2 text-purple-500" /> AI Optimization Opportunities
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {optimizationOpportunities.map((opp: string, i: number) => (
+                <div key={i} className={`flex items-center p-3 rounded-lg ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
+                  <Lightbulb className="h-4 w-4 text-purple-500 mr-3 flex-shrink-0" />
+                  <span className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{opp}</span>
+                </div>
+              ))}
             </div>
-          </div>
+          </CardContent>
+        </Card>
+      )}
 
-          <div
-            className={`p-4 rounded-lg ${isDark ? 'bg-orange-900/20 border border-orange-800' : 'bg-orange-50 border border-orange-200'}`}
-          >
-            <div className="flex items-start space-x-3">
-              <Activity className="h-5 w-5 text-orange-500 mt-0.5" />
-              <div>
-                <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Re-engage Stuck Deals
-                </h4>
-                <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {stuckDeals.length} deals haven't been updated in 2+ weeks. Schedule follow-up
-                  calls to prevent lost opportunities.
-                </p>
-              </div>
+      {/* Drop-off Points */}
+      {dropOffPoints.length > 0 && (
+        <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
+          <CardHeader>
+            <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <ArrowDownRight className="h-5 w-5 mr-2 text-red-500" /> Identified Drop-off Points
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {dropOffPoints.map((point: string, i: number) => (
+                <div key={i} className={`p-3 rounded-lg ${isDark ? 'bg-red-900/20 border border-red-800' : 'bg-red-50 border border-red-200'}`}>
+                  <p className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{point}</p>
+                </div>
+              ))}
             </div>
-          </div>
+          </CardContent>
+        </Card>
+      )}
 
-          <div
-            className={`p-4 rounded-lg ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}
-          >
-            <div className="flex items-start space-x-3">
-              <Target className="h-5 w-5 text-green-500 mt-0.5" />
-              <div>
-                <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Optimize Conversion Timing
-                </h4>
-                <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Best conversion times: Tuesday-Thursday, 10-11 AM. Schedule important calls during
-                  these peak hours.
-                </p>
-              </div>
+      {/* A/B Test Suggestions */}
+      {abTestSuggestions.length > 0 && (
+        <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
+          <CardHeader>
+            <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <Zap className="h-5 w-5 mr-2 text-yellow-500" /> A/B Test Suggestions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {abTestSuggestions.map((suggestion: string, i: number) => (
+                <div key={i} className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}>
+                  <p className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>{suggestion}</p>
+                </div>
+              ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* High Potential Deals */}
-      <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+      <Card className={isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}>
         <CardHeader>
           <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <Star className="h-5 w-5 mr-2 text-yellow-500" />
-            High Conversion Potential
+            <Target className="h-5 w-5 mr-2 text-green-500" /> High Conversion Potential Deals
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {highPotentialDeals.length === 0 ? (
-            <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              <Target className="h-12 w-12 mx-auto mb-4 text-blue-500" />
-              <p>No high-potential deals at the moment. Keep nurturing your pipeline!</p>
-            </div>
+            <p className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No high-potential deals identified yet.</p>
           ) : (
-            highPotentialDeals.map((deal) => (
-              <div
-                key={deal.id}
-                className={`flex items-center space-x-3 p-4 rounded-lg border ${
-                  isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'
-                }`}
-              >
-                <Avatar size="md" fallback={getContactInfo(deal.contactId).initials} />
+            highPotentialDeals.map(deal => (
+              <div key={deal.id} className={`flex items-center space-x-3 p-4 rounded-lg border ${isDark ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'}`}>
+                <Avatar size="md" fallback={getInitials(deal.title || 'UN')} />
                 <div className="flex-1 min-w-0">
-                  <p
-                    className={`font-medium text-sm truncate ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}
-                  >
-                    {deal.title}
-                  </p>
-                  <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {getContactInfo(deal.contactId).name} • {formatCurrency(deal.value)}
-                  </p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Badge
-                      variant="outline"
-                      className="text-xs bg-green-50 text-green-700 border-green-200"
-                    >
-                      {deal.probability}% probability
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="text-xs bg-blue-50 text-blue-700 border-blue-200"
-                    >
-                      {String(deal.stage)}
-                    </Badge>
-                  </div>
+                  <p className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{deal.title}</p>
+                  <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{formatCurrency(deal.value)} • {deal.probability}% probability</p>
                 </div>
-                <div className="flex flex-col items-end">
-                  <Star className="h-5 w-5 text-yellow-500 mb-1" />
-                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    High Potential
-                  </span>
-                </div>
+                <Badge className="bg-green-100 text-green-800">High Potential</Badge>
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
-
-      {/* Top Converting Contacts */}
-      <Card className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <Users className="h-5 w-5 mr-2 text-blue-500" />
-            Top Converting Contacts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topContacts.map((contact) => (
-              <div
-                key={contact.id}
-                className={`flex items-center space-x-3 p-4 rounded-lg ${
-                  isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'
-                } transition-colors cursor-pointer`}
-              >
-                <Avatar src={contact.avatarSrc} size="md" fallback={getInitials(contact.name)} />
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`font-medium text-sm truncate ${
-                      isDark ? 'text-white' : 'text-gray-900'
-                    }`}
-                  >
-                    {contact.name}
-                  </p>
-                  <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {contact.company || 'No company'}
-                  </p>
-                  <div className="flex items-center mt-1">
-                    <Badge variant="secondary" className="text-xs">
-                      {(contact as any).leadScore || 85}/100 score
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </PageLayout>
