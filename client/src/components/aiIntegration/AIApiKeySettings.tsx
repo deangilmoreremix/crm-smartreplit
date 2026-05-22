@@ -383,8 +383,18 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
                   )}
                   {provider === 'openclaw' && (
                     <>
-                      {localApiConfig.openclaw.model !== 'default' && <> with model <strong>{localApiConfig.openclaw.model}</strong></>}
-                      {localApiConfig.openclaw.baseUrl && <> (custom endpoint: <strong>{localApiConfig.openclaw.baseUrl}</strong>)}</>
+                      {localApiConfig.openclaw.model !== 'default' && (
+                        <>
+                          {' '}
+                          with model <strong>{localApiConfig.openclaw.model}</strong>
+                        </>
+                      )}
+                      {localApiConfig.openclaw.baseUrl && (
+                        <>
+                          {' '}
+                          (custom endpoint: <strong>{localApiConfig.openclaw.baseUrl}</strong>)
+                        </>
+                      )}
                     </>
                   )}
                 </p>
