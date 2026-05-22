@@ -23,6 +23,7 @@ import { OnboardingWidget } from './OnboardingWidget';
 import { useAIConfiguration } from '../contexts/AIConfigurationContext';
 import OpenClawStatusBanner from './OpenClawStatusBanner';
 import { useAIApiKeys } from '../hooks/useAIApiKeys';
+import AIApiKeySettings from './aiIntegration/AIApiKeySettings';
 
 // Import section components
 import ExecutiveOverviewSection from './sections/ExecutiveOverviewSection';
@@ -78,6 +79,7 @@ const Dashboard: React.FC = React.memo(() => {
   const [dashboardError, setDashboardError] = React.useState<string | null>(null);
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [showOpenClawBanner, setShowOpenClawBanner] = React.useState(true);
+  const [showOpenClawSettings, setShowOpenClawSettings] = React.useState(false);
   const { showAIProviderModal, setShowAIProviderModal } = useAIConfiguration();
   const { apiConfig: openclawConfig } = useAIApiKeys();
   const hasOpenClawKey = Boolean(openclawConfig?.openclaw?.apiKey?.trim());
@@ -415,8 +417,8 @@ const Dashboard: React.FC = React.memo(() => {
       {!hasOpenClawKey && showOpenClawBanner && (
         <OpenClawStatusBanner
           onSetupClick={() => {
-            // This will be handled by the parent App component
-            window.dispatchEvent(new CustomEvent('openclaw-setup-requested'));
+            // Open the unified AIApiKeySettings directly with OpenClaw pre-selected
+            setShowOpenClawSettings(true);
           }}
           onDismiss={() => setShowOpenClawBanner(false)}
           className="mb-6"
@@ -483,6 +485,13 @@ const Dashboard: React.FC = React.memo(() => {
         onKeyConfigured={() => {
           setShowAIProviderModal(false);
         }}
+      />
+
+      {/* OpenClaw Setup - unified AI key settings with OpenClaw pre-selected */}
+      <AIApiKeySettings
+        open={showOpenClawSettings}
+        onOpenChange={setShowOpenClawSettings}
+        preferOpenClawOnOpen={true}
       />
     </main>
   );

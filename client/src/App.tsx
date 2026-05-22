@@ -33,8 +33,8 @@ import RemoteAppRefreshManager from './components/RemoteAppRefreshManager';
 import { universalDataSync } from './services/universalDataSync';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
-import OpenClawSetupModal from './components/OpenClawSetupModal';
 import { useAIApiKeys } from './hooks/useAIApiKeys';
+import AIApiKeySettings from './components/aiIntegration/AIApiKeySettings';
 
 // Eager pages
 import Dashboard from './pages/Dashboard';
@@ -322,7 +322,7 @@ function AppContent() {
   const { currentTenantId, isLoading: domainLoading } = useDomainRouting();
   const { switchTenant } = useWhitelabel();
 
-  // OpenClaw setup modal state - now uses unified AI API key system
+  // OpenClaw setup trigger state - uses unified AIApiKeySettings with OpenClaw pre-selected
   const [showOpenClawSetup, setShowOpenClawSetup] = React.useState(false);
   const { apiConfig } = useAIApiKeys();
   const hasOpenClawKey = Boolean(apiConfig?.openclaw?.apiKey?.trim());
@@ -345,6 +345,7 @@ function AppContent() {
   }, [isAuthenticated, loading, hasOpenClawKey]);
 
   // Listen for OpenClaw setup requests from dashboard banner (only when logged in)
+  // This opens the unified AIApiKeySettings with OpenClaw pre-selected
   React.useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -354,7 +355,7 @@ function AppContent() {
 
     window.addEventListener('openclaw-setup-requested', handleOpenClawSetup);
     return () => window.removeEventListener('openclaw-setup-requested', handleOpenClawSetup);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, hasOpenClawKey]);
 
   // Handle messages from MF apps (iframes)
   useEffect(() => {
@@ -1186,12 +1187,12 @@ function AppContent() {
         {/* Toaster for notifications */}
         <Toaster />
 
-        {/* OpenClaw Setup Modal - only shown to authenticated users */}
+        {/* OpenClaw Setup - uses unified AIApiKeySettings with OpenClaw pre-selected */}
         {isAuthenticated && (
-          <OpenClawSetupModal
-            isOpen={showOpenClawSetup}
-            onClose={() => setShowOpenClawSetup(false)}
-            onComplete={() => setShowOpenClawSetup(false)}
+          <AIApiKeySettings
+            open={showOpenClawSetup}
+            onOpenChange={setShowOpenClawSetup}
+            preferOpenClawOnOpen={true}
           />
         )}
 
