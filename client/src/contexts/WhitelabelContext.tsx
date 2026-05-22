@@ -10,6 +10,47 @@ const WhitelabelContext = createContext<WhitelabelContextType | undefined>(undef
 
 const STORAGE_KEY = 'whitelabel_config';
 
+/**
+ * Agent/external-service company name blocklist.
+ * These values come from the Module Federation remote registry and must NOT
+ * become the landing-page brand, even if they ended up in localStorage.
+ */
+const BLOCKED_COMPANY_NAMES = ['AI Agency Suite', 'bytealign', 'ByteAlign'];
+
+/**
+ * Returns true when the agent name would corrupt the landing page brand.
+ */
+const isBlockedCompanyName = (name: string | undefined): boolean => {
+  if (!name) return false;
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  return BLOCKED_COMPANY_NAMES.some(
+    (blocked) => trimmed.toLowerCase().replace(/\s+/g, '') === blocked.toLowerCase().replace(/\s+/g, '')
+  );
+};
+
+/**
+ * Sanitise a partial config read from localStorage / URL params.
+ * Blocks companyName values that originate from MF-remote registry names.
+ */
+const sanitiseWhitelabelConfig = (
+  partial: Record<string, unknown>,
+  fallback: WhitelabelConfig
+): WhitelabelConfig => {
+  const merged = { ...fallback, ...partial } as WhitelabelConfig;
+
+  if (isBlockedCompanyName(merged.companyName)) {
+    console.warn(
+      `[WhitelabelContext] Blocked rogue companyName in whitelabel config: "${merged.companyName}". ` +
+        `Resetting to default: "${fallback.companyName}". ` +
+        `The "AI Agency Suite" brand belongs exclusively to the Agency MFE module-federation remote.`
+    );
+    return { ...fallback, companyName: fallback.companyName };
+  }
+
+  return merged;
+};
+
 export const useWhitelabel = () => {
   const context = useContext(WhitelabelContext);
   if (!context) {
@@ -33,7 +74,9 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...DEFAULT_WHITELABEL_CONFIG, ...parsed };
+        // CRITICAL: sanitise the loaded config to block rogue MF remote names
+        // (e.g. "AI Agency Suite" from the remote registry overriding SmartCRM)
+        return sanitiseWhitelabelConfig(parsed, DEFAULT_WHITELABEL_CONFIG);
       }
     } catch (error) {
       console.error('Error loading whitelabel config:', error);
@@ -69,6 +112,14 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [config]);
 
   const updateConfig = useCallback((updates: Partial<WhitelabelConfig>) => {
+    // Never silently accept a blocked companyName through updateConfig either
+    if (updates.companyName && isBlockedCompanyName(updates.companyName)) {
+      console.warn(
+        `[WhitelabelContext] Blocked blocked companyName in updateConfig: "${updates.companyName}". ` +
+          `Discarding the update.`
+      );
+      delete updates.companyName;
+    }
     setConfig((prev) => ({ ...prev, ...updates }));
   }, []);
 
@@ -109,7 +160,9 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               sanitized[key] = parsedConfig[key];
             }
           }
-          setConfig((prev) => ({ ...prev, ...sanitized }));
+          // CRITICAL: sanitize after URL decoding before applying
+          const sanitised = sanitiseWhitelabelConfig(sanitized, DEFAULT_WHITELABEL_CONFIG);
+          setConfig((prev) => ({ ...prev, ...sanitised }));
         } else {
           console.error('Invalid whitelabel config structure from URL');
         }
@@ -126,7 +179,15 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (companyName || primaryColor || heroTitle) {
       const updates: Partial<WhitelabelConfig> = {};
       if (companyName && typeof companyName === 'string' && companyName.length <= 100) {
-        updates.companyName = companyName;
+        // CRITICAL: block blocked companyName values from URL params too
+        if (!isBlockedCompanyName(companyName)) {
+          updates.companyName = companyName;
+        } else {
+          console.warn(
+            `[WhitelabelContext] Blocked blocked companyName from URL param: "${companyName}". ` +
+              `The "AI Agency Suite" brand belongs exclusively to the Agency MFE module-federation remote.`
+          );
+        }
       }
       if (
         primaryColor &&
@@ -173,7 +234,15 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const validatedConfig: Partial<WhitelabelConfig> = {};
 
         if (parsed.companyName && typeof parsed.companyName === 'string') {
-          validatedConfig.companyName = parsed.companyName;
+          // CRITICAL: block blocked companyName from imported config
+          if (!isBlockedCompanyName(parsed.companyName)) {
+            validatedConfig.companyName = parsed.companyName;
+          } else {
+            console.warn(
+              `[WhitelabelContext] Blocked blocked companyName in importConfig: "${parsed.companyName}". ` +
+                `The "AI Agency Suite" brand belongs exclusively to the Agency MFE module-federation remote.`
+            );
+          }
         }
         if (
           parsed.primaryColor &&

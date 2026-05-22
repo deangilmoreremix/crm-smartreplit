@@ -726,5 +726,6 @@ class ContactAPIService {
       return contact;
     }
   }
+}
 export const contactAPIService = new ContactAPIService();
 export default contactAPIService;

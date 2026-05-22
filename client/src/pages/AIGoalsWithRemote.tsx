@@ -1,9 +1,11 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { ExternalLink, Brain } from 'lucide-react';
 
 const AIGoalsWithRemote: React.FC = () => {
   const { isDark } = useTheme();
+  const { config } = useWhitelabel();
 
   return (
     <div className="fixed inset-0 w-full overflow-hidden z-40">
@@ -28,7 +30,7 @@ const AIGoalsWithRemote: React.FC = () => {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              AI Goals & Agency Suite
+              {config.companyName} Goals & Agency
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 max-w-md">
               The AI Goals module is under development and will be available soon. This module will
@@ -59,7 +61,7 @@ const AIGoalsWithRemote: React.FC = () => {
             title="Agency remote is not deployed yet"
           >
             <ExternalLink className="h-4 w-4" />
-            <span className="text-sm">Agency (Not Deployed)</span>
+            <span className="text-sm">{config.companyName} Agency (Not Deployed)</span>
           </a>
         </div>
       </div>

@@ -43,6 +43,38 @@ interface TenantProviderProps {
   children: React.ReactNode;
 }
 
+/**
+ * Names that originate from the Module Federation remote registry and must
+ * never be propagated as a tenant's visual branding via CSS variables.
+ */
+const BLOCKED_BRAND_NAMES = ['AI Agency Suite', 'bytealign', 'ByteAlign'];
+
+const isBlocked = (name: string | undefined) => {
+  if (!name) return false;
+  return BLOCKED_BRAND_NAMES.some(
+    (b) => name.trim().toLowerCase().replace(/\s+/g, '') === b.toLowerCase().replace(/\s+/g, '')
+  );
+};
+
+/**
+ * Sanitise a branding object so that rogue MF-remote registry names cannot
+ * leak into CSS custom properties or the document title.
+ */
+const sanitiseBranding = (branding: Tenant['branding']): Tenant['branding'] => {
+  if (isBlocked(branding.companyName)) {
+    console.warn(
+      `[TenantProvider] Blocked blocked brand name "${branding.companyName}" from tenant branding. ` +
+        `The "AI Agency Suite" brand is exclusive to the Agency MFE remote; ` +
+        `reverting to SmartCRM defaults for tenant-level branding.`
+    );
+    return {
+      ...branding,
+      companyName: 'SmartCRM',
+    };
+  }
+  return branding;
+};
+
 export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,18 +153,22 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ children }) => {
   };
 
   const applyTenantBranding = (tenantData: Tenant) => {
+    // CRITICAL: sanitise tenant branding before applying it globally.
+    // "AI Agency Suite" originates from the remote registry name in RemoteRegistry.ts
+    // and must never appear as CSS branding on the SmartCRM landing page.
+    const safeBranding = sanitiseBranding(tenantData.branding);
     const root = document.documentElement;
 
     // Apply custom CSS variables for branding
-    root.style.setProperty('--primary-color', tenantData.branding.primaryColor);
-    root.style.setProperty('--secondary-color', tenantData.branding.secondaryColor);
+    root.style.setProperty('--primary-color', safeBranding.primaryColor);
+    root.style.setProperty('--secondary-color', safeBranding.secondaryColor);
 
-    // Update document title
-    document.title = `${tenantData.branding.companyName} - Smart CRM`;
+    // Update document title using sanitized brand name
+    document.title = `${safeBranding.companyName} - Smart CRM`;
 
     // Update favicon if custom logo exists
-    if (tenantData.branding.logo) {
-      updateFavicon(tenantData.branding.logo);
+    if (safeBranding.logo) {
+      updateFavicon(safeBranding.logo);
     }
   };
 
