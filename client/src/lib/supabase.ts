@@ -3,8 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 // Get environment variables with fallbacks
 const supabaseUrl =
   (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey =
+
+// Support both the legacy ANON_KEY and the newer PUBLISHABLE_KEY naming (Supabase publishable keys)
+const rawAnonKey =
   (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY || '';
+const rawPublishableKey =
+  (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+const supabaseAnonKey = rawAnonKey || rawPublishableKey;
 
 // Debug logging for environment variables - MORE DETAILED
 console.log('🔍 Supabase Config Debug:');
@@ -13,7 +18,9 @@ console.log(
   !!supabaseUrl,
   supabaseUrl ? supabaseUrl.substring(0, 50) + '...' : 'NOT SET'
 );
-console.log('  - VITE_SUPABASE_ANON_KEY present:', !!supabaseAnonKey);
+console.log('  - VITE_SUPABASE_ANON_KEY present:', !!rawAnonKey);
+console.log('  - VITE_SUPABASE_PUBLISHABLE_KEY present (fallback):', !!rawPublishableKey);
+console.log('  - Effective anon/publishable key present:', !!supabaseAnonKey);
 
 // Check each condition separately for debugging
 const hasUrl = !!supabaseUrl;
@@ -21,7 +28,11 @@ const hasKey = !!supabaseAnonKey;
 const urlNotUndefined = supabaseUrl !== 'undefined';
 const keyNotUndefined = supabaseAnonKey !== 'undefined';
 const hasSupabaseDomain = supabaseUrl.includes('supabase.co');
-const noPlaceholder = !supabaseUrl.includes('placeholder');
+const noPlaceholder =
+  !supabaseUrl.includes('placeholder') &&
+  !supabaseUrl.includes('your_supabase') &&
+  !supabaseUrl.includes('your-project');
+const looksLikeRealUrl = supabaseUrl.startsWith('http://') || supabaseUrl.startsWith('https://');
 
 console.log('🔍 Config validation:');
 console.log('  - hasUrl:', hasUrl);
@@ -30,10 +41,11 @@ console.log('  - urlNotUndefined:', urlNotUndefined);
 console.log('  - keyNotUndefined:', keyNotUndefined);
 console.log('  - hasSupabaseDomain:', hasSupabaseDomain);
 console.log('  - noPlaceholder:', noPlaceholder);
+console.log('  - looksLikeRealUrl:', looksLikeRealUrl);
 
 // Check if Supabase is properly configured
 const supabaseIsConfigured =
-  hasUrl && hasKey && urlNotUndefined && keyNotUndefined && hasSupabaseDomain && noPlaceholder;
+  hasUrl && hasKey && urlNotUndefined && keyNotUndefined && hasSupabaseDomain && noPlaceholder && looksLikeRealUrl;
 
 console.log('🔍 Final supabaseIsConfigured:', supabaseIsConfigured);
 

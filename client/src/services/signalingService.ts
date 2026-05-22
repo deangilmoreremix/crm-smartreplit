@@ -17,18 +17,32 @@ export interface SignalingCallbacks {
 }
 
 export class SupabaseSignalingService {
-  private supabase: SupabaseClient;
+  private supabase: SupabaseClient | null = null;
   private currentRoomId: string | null = null;
   private currentUserId: string;
   private channel: any = null;
   private callbacks: SignalingCallbacks | null = null;
+  private isConfigured: boolean = false;
 
   constructor() {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase URL and key must be configured');
+    // Support both legacy ANON_KEY and the new PUBLISHABLE_KEY (used in root .env / Netlify)
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseKey = anonKey || publishableKey;
+
+    // Check if properly configured before creating client
+    this.isConfigured = !!supabaseUrl && 
+                         !!supabaseKey && 
+                         supabaseUrl.includes('supabase.co') &&
+                         !supabaseUrl.includes('placeholder') &&
+                         supabaseUrl.startsWith('http');
+
+    if (!this.isConfigured) {
+      console.warn('⚠️ Supabase not configured properly in signalingService. Using fallback mode.');
+      this.currentUserId = `user-${Math.random().toString(36).substr(2, 9)}`;
+      return;
     }
 
     this.supabase = createClient(supabaseUrl, supabaseKey);
@@ -39,6 +53,12 @@ export class SupabaseSignalingService {
    * Join a signaling room/channel for a video call
    */
   async joinRoom(roomId: string, callbacks: SignalingCallbacks): Promise<void> {
+    if (!this.isConfigured || !this.supabase) {
+      console.warn('⚠️ Supabase not configured, cannot join room');
+      callbacks.onError(new Error('Supabase not configured'));
+      return;
+    }
+
     try {
       // Leave any existing room first
       await this.leaveRoom();
@@ -103,11 +123,14 @@ export class SupabaseSignalingService {
    * Leave the current signaling room
    */
   async leaveRoom(): Promise<void> {
-    if (this.channel) {
+    if (this.channel && this.supabase) {
       await this.channel.untrack();
       await this.supabase.removeChannel(this.channel);
       this.channel = null;
       console.log('📤 Left signaling room');
+    } else if (this.channel) {
+      // Just clean up locally if no supabase client
+      this.channel = null;
     }
 
     this.currentRoomId = null;

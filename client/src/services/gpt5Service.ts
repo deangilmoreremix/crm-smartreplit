@@ -10,7 +10,15 @@ export class GPT5Service {
   private async checkApiStatus(): Promise<void> {
     try {
       const response = await fetch('/api/openai/status');
-      const status = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const text = await response.text();
+      // Check if response is HTML (error page) rather than JSON
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        throw new Error('Backend returned HTML instead of JSON');
+      }
+      const status = JSON.parse(text);
       this.isConfigured = status.configured;
       console.log('GPT5Service: API status checked', status);
     } catch (error) {
