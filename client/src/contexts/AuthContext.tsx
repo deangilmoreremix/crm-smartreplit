@@ -169,21 +169,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   /**
    * Refresh the current session
+   *
+   * CRITICAL FIX (2026-05-22): Explicitly calls refreshSession() and detects 400/invalid refresh tokens.
+   * Previously, stale dev-bypass or expired tokens caused repeated 400 failures on /auth/v1/token.
+   * This handler now performs one-time cleanup + signOut so the error never repeats.
+   * DO NOT revert to plain getSession() without the error classification below.
    */
   const refreshSession = useCallback(async () => {
     if (!isSupabaseConfigured()) return;
 
     try {
-      const {
-        data: { session: newSession },
-        error,
-      } = await supabase.auth.getSession();
+      // Use explicit refresh to surface token errors
+      const { data, error } = await supabase.auth.refreshSession();
       if (error) {
+        const msg = error.message || '';
+        const status = (error as any).status;
+        if (status === 400 || /invalid|expired|refresh token/i.test(msg)) {
+          console.warn('[AuthContext] Bad/expired refresh token (400). Clearing session to stop repeated failures.');
+          localStorage.removeItem('smartcrm-auth-token');
+          localStorage.removeItem('sb-supabase-auth-token');
+          setUser(null);
+          setSession(null);
+          // Best effort signout to clear server-side too
+          await supabase.auth.signOut().catch(() => {});
+          return;
+        }
         console.warn('Session refresh warning:', error);
         return;
       }
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
     } catch (error) {
       console.warn('Session refresh failed:', error);
     }

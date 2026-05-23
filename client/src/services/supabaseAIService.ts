@@ -203,12 +203,17 @@ class SupabaseAIService {
         console.warn('Supabase connection failed. Using fallback configurations:', error);
         this.supabaseAvailable = false;
       } else {
-        // Test connection with a simple query
+        // CRITICAL FIX (2026-05-22): Use auth.getSession() instead of querying 'ai_models'.
+        // The table is defined in schema/migrations but not yet created in the live Supabase project.
+        // Querying it produced a 404 on every app load. This probe is table-agnostic and safe.
+        // When ai_models (and related tables) are created, the fallback logic in this service
+        // will automatically use real data. Do not change this back to a custom table probe.
         try {
-          const { error } = await supabase.from('ai_models').select('id').limit(1);
+          const { error } = await supabase.auth.getSession();
           if (error) {
-            console.warn('Supabase connection failed. Using fallback configurations:', error);
-            this.supabaseAvailable = false;
+            console.warn('Supabase auth check warning (non-fatal):', error);
+            // Still mark available for REST usage; individual AI calls will fallback if needed
+            this.supabaseAvailable = true;
           } else {
             this.supabaseAvailable = true;
             console.info('Supabase AI service connected successfully');

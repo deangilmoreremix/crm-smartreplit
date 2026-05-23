@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDemoData } from '../../contexts/DemoDataContext';
@@ -52,11 +52,23 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const timeOfDay =
     currentDate.getHours() < 12 ? 'morning' : currentDate.getHours() < 18 ? 'afternoon' : 'evening';
 
+  // CRITICAL FIX (2026-05-22): Use primitive counts instead of full object/array references.
+  // Using `[deals, contacts]` from Zustand caused "Maximum update depth exceeded" because
+  // every store mutation produced a new reference, re-triggering the effect + setState in a loop.
+  // These stable primitives + the isGeneratingRef guard below permanently prevent the loop.
+  const dealsCount = deals?.length ?? 0;
+  const contactsCount = Object.keys(contacts || {}).length;
+
+  // Guard to prevent overlapping async generations during rapid re-renders
+  const isGeneratingRef = useRef(false);
+
   // GPT-5 Smart Greeting Generation
   useEffect(() => {
     const generateSmartGreeting = async () => {
       if (!deals || deals.length === 0) return;
+      if (isGeneratingRef.current) return; // prevent re-entrancy
 
+      isGeneratingRef.current = true;
       setIsLoadingAI(true);
       try {
         // Prepare metrics for GPT-5 analysis
@@ -94,13 +106,14 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           `Good ${timeOfDay}! Your pipeline looks strong with ${deals.length} deals in progress.`
         );
       } finally {
+        isGeneratingRef.current = false;
         setIsLoadingAI(false);
       }
     };
 
     // Generate smart greeting immediately when data is available
     generateSmartGreeting();
-  }, [deals, contacts, timeOfDay]);
+  }, [dealsCount, contactsCount, timeOfDay]);
 
   return (
     <div className="mb-8">
