@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import * as edgeFunctionService from '../../services/edgeFunctionService';
+import { copyToClipboard, saveToFile, generateFilename } from '../../services/openaiStreamService';
 import FileUpload from '../shared/FileUpload';
 import AIToolContent from '../shared/AIToolContent';
-import { MessageSquare, Upload } from 'lucide-react';
+import { MessageSquare, Upload, Copy, Check, Save, AlertCircle } from 'lucide-react';
 
 const MeetingSummaryContent: React.FC = () => {
   const [transcript, setTranscript] = useState('');
@@ -11,6 +12,8 @@ const MeetingSummaryContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +32,25 @@ const MeetingSummaryContent: React.FC = () => {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (result) {
+      const success = await copyToClipboard(result);
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
+  };
+
+  const handleSave = () => {
+    if (result) {
+      const filename = generateFilename('meeting-summary', 'txt');
+      saveToFile(result, filename, 'text/plain');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     }
   };
 
@@ -132,6 +154,36 @@ const MeetingSummaryContent: React.FC = () => {
           </div>
         </form>
       </AIToolContent>
+
+      {result && !isLoading && !error && (
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={handleSave}
+            className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
+              saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {saved ? <Check size={14} className="mr-1" /> : <Save size={14} className="mr-1" />}
+            {saved ? 'Saved!' : 'Save'}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
+              copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 flex items-center text-red-600 text-sm">
+          <AlertCircle size={14} className="mr-1" />
+          {error}
+        </div>
+      )}
     </div>
   );
 };

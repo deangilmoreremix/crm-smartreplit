@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import * as edgeFunctionService from '../../services/edgeFunctionService';
+import { copyToClipboard, saveToFile, generateFilename } from '../../services/openaiStreamService';
 import AIToolContent from '../shared/AIToolContent';
-import { BarChart3, PieChart } from 'lucide-react';
+import { BarChart3, PieChart, Copy, Check, Save, AlertCircle } from 'lucide-react';
 
 const SalesForecastContent: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ const SalesForecastContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -20,6 +23,25 @@ const SalesForecastContent: React.FC = () => {
     });
   };
 
+  const handleCopy = async () => {
+    if (result) {
+      const success = await copyToClipboard(result);
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
+  };
+
+  const handleSave = () => {
+    if (result) {
+      const filename = generateFilename('sales-forecast', 'txt');
+      saveToFile(result, filename, 'text/plain');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -27,42 +49,16 @@ const SalesForecastContent: React.FC = () => {
     setError(null);
 
     try {
-      // Sample deals data for analysis
       const deals = [
-        {
-          title: 'Enterprise License',
-          value: 75000,
-          stage: 'negotiation',
-          probability: 0.7,
-        },
-        {
-          title: 'Support Contract',
-          value: 25000,
-          stage: 'proposal',
-          probability: 0.5,
-        },
-        {
-          title: 'Software Renewal',
-          value: 45000,
-          stage: 'closed-won',
-          probability: 1.0,
-        },
-        {
-          title: 'Cloud Migration',
-          value: 95000,
-          stage: 'initial',
-          probability: 0.3,
-        },
-        {
-          title: 'Consulting Services',
-          value: 50000,
-          stage: 'negotiation',
-          probability: 0.6,
-        },
+        { title: 'Enterprise License', value: 75000, stage: 'negotiation', probability: 0.7 },
+        { title: 'Support Contract', value: 25000, stage: 'proposal', probability: 0.5 },
+        { title: 'Software Renewal', value: 45000, stage: 'closed-won', probability: 1.0 },
+        { title: 'Cloud Migration', value: 95000, stage: 'initial', probability: 0.3 },
+        { title: 'Consulting Services', value: 50000, stage: 'negotiation', probability: 0.6 },
       ];
 
-      const result = await edgeFunctionService.generateSalesForecast(deals, formData.timeframe);
-      setResult(result);
+      const resultText = await edgeFunctionService.generateSalesForecast(deals, formData.timeframe);
+      setResult(resultText);
     } catch (err) {
       console.error('Error generating sales forecast:', err);
       setError(
@@ -155,6 +151,36 @@ const SalesForecastContent: React.FC = () => {
           </form>
         </div>
       </AIToolContent>
+
+      {result && !isLoading && !error && (
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            onClick={handleSave}
+            className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
+              saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {saved ? <Check size={14} className="mr-1" /> : <Save size={14} className="mr-1" />}
+            {saved ? 'Saved!' : 'Save'}
+          </button>
+          <button
+            onClick={handleCopy}
+            className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
+              copied ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 flex items-center text-red-600 text-sm">
+          <AlertCircle size={14} className="mr-1" />
+          {error}
+        </div>
+      )}
     </div>
   );
 };

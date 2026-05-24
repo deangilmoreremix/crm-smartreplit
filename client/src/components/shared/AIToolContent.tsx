@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
-import { Copy, Download, RefreshCw, Eye, FileText } from 'lucide-react';
+import { Copy, Download, RefreshCw, Eye, FileText, Save, Check } from 'lucide-react';
 import { CSVLink } from 'react-csv';
+import { copyToClipboard, saveToFile, generateFilename } from '../../services/openaiStreamService';
 
 interface AIToolContentProps {
   isLoading: boolean;
@@ -20,25 +21,24 @@ const AIToolContent: React.FC<AIToolContentProps> = ({
   children,
 }) => {
   const [copySuccess, setCopySuccess] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const handleCopyToClipboard = () => {
+  const handleCopyToClipboard = async () => {
     if (result) {
-      navigator.clipboard.writeText(result);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
+      const success = await copyToClipboard(result);
+      if (success) {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      }
     }
   };
 
-  const handleDownload = () => {
+  const handleSave = () => {
     if (!result) return;
-
-    const element = document.createElement('a');
-    const file = new Blob([result], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${resultTitle.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const filename = generateFilename(resultTitle.toLowerCase().replace(/\s+/g, '-'), 'txt');
+    saveToFile(result, filename, 'text/plain');
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
   };
 
   const handlePreview = () => {
@@ -137,8 +137,20 @@ const AIToolContent: React.FC<AIToolContentProps> = ({
                   {copySuccess ? 'Copied!' : 'Copy'}
                 </button>
                 <button
+                  onClick={handleSave}
+                  className={`inline-flex items-center px-3 py-1.5 rounded-md transition-all ${
+                    saveSuccess
+                      ? 'bg-green-100 text-green-700 ring-1 ring-green-200'
+                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 ring-1 ring-indigo-200'
+                  }`}
+                  title="Save as text file"
+                >
+                  {saveSuccess ? <Check className="h-4 w-4 mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                  {saveSuccess ? 'Saved!' : 'Save'}
+                </button>
+                <button
                   onClick={handleDownload}
-                  className="inline-flex items-center px-3 py-1.5 rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors ring-1 ring-indigo-200"
+                  className="inline-flex items-center px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors ring-1 ring-gray-200"
                   title="Download as text file"
                 >
                   <Download className="h-4 w-4 mr-1" />

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { useOpenAI } from '../../services/openaiLegacyService';
+import openAIService from '../../services/openAIService';
+import { useApiStore } from '../../store/apiStore';
 import AIToolContent from '../shared/AIToolContent';
+import { copyToClipboard, saveToFile, generateFilename } from '../../services/openaiStreamService';
 import {
   Image,
   PlusCircle,
@@ -12,6 +14,8 @@ import {
   Palette,
   FileText,
   BarChart2,
+  Save,
+  AlertCircle,
 } from 'lucide-react';
 
 const VisualContentGeneratorContent: React.FC = () => {
@@ -28,8 +32,9 @@ const VisualContentGeneratorContent: React.FC = () => {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const openai = useOpenAI();
+  const { apiKeys } = useApiStore();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -69,10 +74,14 @@ const VisualContentGeneratorContent: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Filter out empty key points
     const validKeyPoints = formData.keyPoints.filter((point) => point.trim() !== '');
     if (validKeyPoints.length === 0) {
       setError('Please add at least one key point');
+      return;
+    }
+
+    if (!apiKeys.openai) {
+      setError('Please configure your OpenAI API key in Settings to use this feature.');
       return;
     }
 
@@ -80,16 +89,33 @@ const VisualContentGeneratorContent: React.FC = () => {
     setError(null);
 
     try {
-      // Add color scheme and audience to the content type for better results
-      const enhancedType = `${formData.contentType} with a ${formData.primaryColor}/${formData.secondaryColor} color scheme for ${formData.targetAudience || 'a general business audience'}`;
+      const contentTitle = 'Visual Content';
+      const prompt = `Create a detailed visual content design idea for a ${formData.contentType} in the ${formData.industry || 'general business'} industry.
 
-      const visualContent = await openai.generateVisualContentIdea(
-        enhancedType,
-        formData.industry || 'general business',
-        validKeyPoints
-      );
+Target Audience: ${formData.targetAudience || 'General business audience'}
+Key Points to Include: ${validKeyPoints.join(', ')}
+Color Scheme: Primary ${formData.primaryColor}, Secondary ${formData.secondaryColor}
 
-      setResult(visualContent);
+Provide a comprehensive visual content idea including:
+1. Layout and structure recommendations
+2. Visual hierarchy and flow
+3. Color palette details
+4. Typography suggestions
+5. Icon and imagery recommendations
+6. Key design elements to highlight`;
+
+      const response = await openAIService.generateContent({
+        messages: [
+          { role: 'system', content: `You are an expert visual content designer specializing in ${formData.contentType}s.` },
+          { role: 'user', content: prompt }
+        ],
+        model: 'gpt-4o-mini',
+        featureUsed: 'visual-content-generator',
+        temperature: 0.7,
+        maxTokens: 1200,
+      });
+
+      setResult(response.content);
       setCopied(false);
     } catch (err) {
       console.error('Error generating visual content idea:', err);
@@ -103,11 +129,22 @@ const VisualContentGeneratorContent: React.FC = () => {
     }
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (result) {
-      navigator.clipboard.writeText(result);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      const success = await copyToClipboard(result);
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
+  };
+
+  const handleSave = () => {
+    if (result) {
+      const filename = generateFilename('visual-content', 'txt');
+      saveToFile(result, filename, 'text/plain');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     }
   };
 
@@ -308,6 +345,17 @@ const VisualContentGeneratorContent: React.FC = () => {
         <div className="mt-6">
           <div className="flex justify-end space-x-2 mb-2">
             <button
+              onClick={handleSave}
+              className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
+                saved
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {saved ? <Check size={16} className="mr-1" /> : <Save size={16} className="mr-1" />}
+              {saved ? 'Saved!' : 'Save'}
+            </button>
+            <button
               onClick={handleCopy}
               className={`inline-flex items-center px-3 py-1.5 rounded text-sm transition-colors ${
                 copied
@@ -332,6 +380,13 @@ const VisualContentGeneratorContent: React.FC = () => {
               Download Brief
             </button>
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 flex items-center text-red-600 text-sm">
+          <AlertCircle size={14} className="mr-1" />
+          {error}
         </div>
       )}
     </div>
