@@ -15,6 +15,19 @@ import {
   Image,
   Search,
   Zap,
+  Video,
+  Calendar,
+  DollarSign,
+  Target,
+  Users as UsersIcon,
+  Settings,
+  Mail,
+  Phone,
+  FileText,
+  Palette,
+  Workflow,
+  Megaphone,
+  Code,
 } from 'lucide-react';
 
 import LandingHeader from './landing/components/LandingHeader';
@@ -33,6 +46,10 @@ import FeatureDemo from '../components/landing/FeatureDemo';
 import InteractiveFeaturesGrid from '../components/landing/InteractiveFeaturesGrid';
 import ParticleBackground from '../components/landing/ParticleBackground';
 import NewFeaturesSection from '../components/landing/NewFeaturesSection';
+
+// New showcase components for comprehensive feature coverage
+import VideoCallShowcase from '../components/landing/VideoCallShowcase';
+import AIToolsShowcase from '../components/landing/AIToolsShowcase';
 
 // Import the embedded dashboard demo
 import EmbeddedDashboardDemo from '../components/landing/EmbeddedDashboardDemo';
@@ -316,6 +333,12 @@ const LandingPage = () => {
 
           {/* New Features Section */}
           <NewFeaturesSection />
+
+          {/* Video Calling Showcase */}
+          <VideoCallShowcase />
+
+          {/* AI Tools Showcase - 68+ AI Tools */}
+          <AIToolsShowcase />
 
           {/* AI Highlights Section */}
           <section className="py-20 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 content-stable gpu-accelerated">

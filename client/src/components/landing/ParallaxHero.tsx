@@ -13,18 +13,21 @@ interface ParallaxHeroProps {
 
 const ParallaxHero: React.FC<ParallaxHeroProps> = ({
   title = "Experience the Future of Sales Technology",
-  subtitle = "Our AI-powered CRM transforms how sales teams work by automating routine tasks, providing deep insights, and helping you close more deals.",
+  subtitle = "Unlock advanced AI contact intelligence with automated enrichment, smart scoring, custom fields, comprehensive activity tracking, HD video calling, and powerful bulk operations to supercharge your sales pipeline.",
   ctaButtons = []
 }) => {
   const { isDark } = useTheme();
   const [scrollY, setScrollY] = useState(0);
   const [hasRendered, setHasRendered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iconsRef = useRef<HTMLDivElement>(null);
 
   // Track when component has rendered
   useEffect(() => {
     setHasRendered(true);
+    // Trigger entrance animation
+    setTimeout(() => setIsVisible(true), 100);
   }, []);
 
   // Track scroll position
@@ -54,14 +57,14 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
       speed: 0.3, 
       startY: 20, 
       startX: 20,
-      label: 'AI Assistant' 
+      label: 'AI Enrichment' 
     },
     { 
       icon: <Users size={32} className={isDark ? "text-blue-400" : "text-blue-600"} />, 
       speed: 0.2, 
       startY: 60, 
       startX: 15,
-      label: 'Contacts' 
+      label: 'Lead Scoring' 
     },
     { 
       icon: <BarChart3 size={36} className={isDark ? "text-purple-400" : "text-purple-600"} />, 
@@ -82,21 +85,21 @@ const ParallaxHero: React.FC<ParallaxHeroProps> = ({
       speed: 0.15, 
       startY: 50, 
       startX: 10,
-      label: 'Search' 
+      label: 'Custom Fields' 
     },
     { 
       icon: <Image size={34} className={isDark ? "text-emerald-400" : "text-emerald-600"} />, 
       speed: 0.35, 
       startY: 80, 
       startX: 70,
-      label: 'Visuals' 
+      label: 'Timeline' 
     },
     { 
       icon: <Mail size={30} className={isDark ? "text-rose-400" : "text-rose-600"} />, 
       speed: 0.3, 
       startY: 40, 
       startX: 90, 
-      label: 'Communication'
+      label: 'Video Calls'
     }
   ];
 

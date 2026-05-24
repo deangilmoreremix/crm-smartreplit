@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { useOpenAI } from '../../services/openaiLegacyService';
+import openAIService from '../../services/openAIService';
+import { useApiStore } from '../../store/apiStore';
 import AIToolContent from '../shared/AIToolContent';
+import { copyToClipboard, saveToFile, generateFilename } from '../../services/openaiStreamService';
 import {
   Brain,
   FileText,
@@ -16,6 +18,7 @@ import {
   Phone,
   Shield,
   Hash,
+  Save,
 } from 'lucide-react';
 
 interface ReasoningContentGeneratorProps {
@@ -25,7 +28,7 @@ interface ReasoningContentGeneratorProps {
 const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
   contentType = 'email',
 }) => {
-  const openai = useOpenAI();
+  const { apiKeys } = useApiStore();
 
   const [formData, setFormData] = useState({
     audience: '',
@@ -40,6 +43,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [reasoningVisible, setReasoningVisible] = useState(false);
   const [reasoningInsights, setReasoningInsights] = useState<string | null>(null);
 
@@ -53,18 +57,40 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
     });
   };
 
+  const handleCopy = async () => {
+    if (result) {
+      const success = await copyToClipboard(result);
+      if (success) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
+  };
+
+  const handleSave = () => {
+    if (result) {
+      const filename = generateFilename(`${contentType}-content`, 'txt');
+      saveToFile(result, filename, 'text/plain');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.audience || !formData.objective) return;
+
+    if (!apiKeys.openai) {
+      setError('Please configure your OpenAI API key in Settings to use this feature.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Get the content title based on type
       const contentTitle = getContentTitle();
 
-      // Generate reasoning insights first
       const reasoningPrompt = `
         You are an expert AI reasoning engine for ${contentTitle} creation.
         
@@ -89,10 +115,18 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
         Format your response as a strategic analysis that would help a sales or marketing professional understand the reasoning behind the content creation approach.
       `;
 
-      const reasoningText = await openai.generateReasoning(reasoningPrompt);
-      setReasoningInsights(reasoningText);
+      const reasoningResponse = await openAIService.generateContent({
+        messages: [
+          { role: 'system', content: 'You are an expert AI reasoning engine for content creation.' },
+          { role: 'user', content: reasoningPrompt }
+        ],
+        model: 'gpt-4o-mini',
+        featureUsed: 'reasoning-content-generator',
+        temperature: 0.7,
+        maxTokens: 1000,
+      });
+      setReasoningInsights(reasoningResponse.content);
 
-      // Now generate the actual content using the reasoning insights
       const contentPrompt = `
         You are an expert ${contentTitle} creator.
         
@@ -106,30 +140,31 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
         Tone: ${formData.tone}
         
         Strategic Reasoning:
-        ${reasoningText}
+        ${reasoningResponse.content}
         
         Now, create the ${contentType} content that implements this strategic reasoning. The content should be ready to use without further editing.
         
         ${getContentSpecificInstructions()}
       `;
 
-      const contentText = await openai.generateScript(contentPrompt);
+      const contentResponse = await openAIService.generateContent({
+        messages: [
+          { role: 'system', content: `You are an expert ${contentTitle} creator.` },
+          { role: 'user', content: contentPrompt }
+        ],
+        model: 'gpt-4o-mini',
+        featureUsed: 'reasoning-content-generator',
+        temperature: 0.7,
+        maxTokens: 1500,
+      });
 
-      setResult(contentText);
+      setResult(contentResponse.content);
       setCopied(false);
     } catch (err) {
       console.error('Error generating content:', err);
       setError(err instanceof Error ? err.message : 'An error occurred while generating content');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleCopy = () => {
-    if (result) {
-      navigator.clipboard.writeText(result);
-      setCopied(true);
-      // TODO: Replace with real AI implementation;
     }
   };
 
@@ -346,17 +381,30 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
               <Brain className="h-4 w-4 mr-2" />
               {reasoningVisible ? 'Hide AI Reasoning' : 'Show AI Reasoning'}
             </button>
-            <button
-              onClick={handleCopy}
-              className="flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-            >
-              {copied ? (
-                <Check className="h-4 w-4 mr-1 text-green-600" />
-              ) : (
-                <Copy className="h-4 w-4 mr-1" />
-              )}
-              {copied ? 'Copied!' : 'Copy Result'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSave}
+                className={`flex items-center px-3 py-1 text-sm rounded transition-colors ${
+                  saved
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                {saved ? <Check className="h-4 w-4 mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                {saved ? 'Saved!' : 'Save'}
+              </button>
+              <button
+                onClick={handleCopy}
+                className="flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 mr-1 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-1" />
+                )}
+                {copied ? 'Copied!' : 'Copy Result'}
+              </button>
+            </div>
           </div>
 
           {reasoningVisible && reasoningInsights && (
