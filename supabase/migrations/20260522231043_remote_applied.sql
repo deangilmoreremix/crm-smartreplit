@@ -1,0 +1,13 @@
+-- ============================================================================
+-- Remote Applied Migration (Reconciliation)
+-- ============================================================================
+-- Version: 20260522231043
+--
+-- This migration was applied directly on the remote Supabase database
+-- and did not exist as a local file at the time of reconciliation (2026-05-24).
+-- 
+-- Created to keep local migration history in sync with production.
+-- No statements — changes already exist remotely.
+-- ============================================================================
+
+-- (Placeholder - applied on remote)
