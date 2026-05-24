@@ -33,7 +33,6 @@ import LiveDealAnalysis from '../components/aiTools/LiveDealAnalysis';
 import InstantAIResponseGenerator from '../components/aiTools/InstantAIResponseGenerator';
 import DocumentAnalyzerRealtime from '../components/aiTools/DocumentAnalyzerRealtime';
 import RealTimeEmailComposer from '../components/aiTools/RealTimeEmailComposer';
-import VoiceAnalysisRealtime from '../components/aiTools/VoiceAnalysisRealtime';
 import SmartSearchRealtime from '../components/aiTools/SmartSearchRealtime';
 import AutoFormCompleter from '../components/aiTools/AutoFormCompleter';
 
@@ -342,12 +341,6 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
           title: 'Real-time Email Composer',
           icon: <Mail size={24} />,
           component: <RealTimeEmailComposer />,
-        };
-      case 'voice-analysis-realtime':
-        return {
-          title: 'Real-time Voice Analysis',
-          icon: <Mic size={24} />,
-          component: <VoiceAnalysisRealtime />,
         };
       case 'smart-search-realtime':
         return {

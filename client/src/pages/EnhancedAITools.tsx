@@ -43,7 +43,6 @@ import LiveDealAnalysis from '../components/aiTools/LiveDealAnalysis';
 import InstantAIResponseGenerator from '../components/aiTools/InstantAIResponseGenerator';
 import DocumentAnalyzerRealtime from '../components/aiTools/DocumentAnalyzerRealtime';
 import RealTimeEmailComposer from '../components/aiTools/RealTimeEmailComposer';
-import VoiceAnalysisRealtime from '../components/aiTools/VoiceAnalysisRealtime';
 import SmartSearchRealtime from '../components/aiTools/SmartSearchRealtime';
 import AutoFormCompleter from '../components/aiTools/AutoFormCompleter';
 
@@ -490,7 +489,6 @@ const AITools: React.FC = () => {
               {activeDemoTool === 'instant-response' && <InstantAIResponseGenerator />}
               {activeDemoTool === 'document-analyzer' && <DocumentAnalyzerRealtime />}
               {activeDemoTool === 'realtime-email' && <RealTimeEmailComposer />}
-              {activeDemoTool === 'voice-analysis' && <VoiceAnalysisRealtime />}
               {activeDemoTool === 'smart-search' && <SmartSearchRealtime />}
               {activeDemoTool === 'auto-form' && <AutoFormCompleter />}
             </div>
