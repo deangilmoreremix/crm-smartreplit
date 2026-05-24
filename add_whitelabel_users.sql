@@ -86,8 +86,9 @@ SELECT
   NOW(),
   NOW()
 FROM public.profiles p
+JOIN auth.users au ON p.id = au.id
 WHERE p.product_tier = 'whitelabel'
-  AND p.email IN (
+  AND au.email IN (
     'fredrik.kaada@gmail.com',
     'bayonnca@yahoo.com',
     'trcole3@theritegroup.com',
@@ -105,17 +106,79 @@ ON CONFLICT (user_id) DO UPDATE SET
   plan_name = 'Smart CRM Whitelabel Lifetime',
   updated_at = NOW();
 
+-- Insert user_entitlements for feature access (this is what the app checks!)
+INSERT INTO public.user_entitlements (
+  email, user_id, package, openclaw_enabled, admin_enabled, source, notes, created_at, updated_at
+)
+SELECT
+  au.email,
+  au.id,
+  'whitelabel',
+  false,
+  false,
+  'Smart CRM Whitelabel Lifetime',
+  CONCAT(
+    CASE
+      WHEN au.email = 'fredrik.kaada@gmail.com' THEN 'Fredrik Asche Kaa'
+      WHEN au.email = 'bayonnca@yahoo.com' THEN 'Carolyn Bayonne'
+      WHEN au.email = 'trcole3@theritegroup.com' THEN 'Truman Cole'
+      WHEN au.email = 'charles@charlesedge.net' THEN 'Charles Edgerton'
+      WHEN au.email = 'james.otto.gray@gmail.com' THEN 'James Gray'
+      WHEN au.email = 'tomnus@msn.com' THEN 'Thomas Omnus'
+      WHEN au.email = 'jehpruitt@gmail.com' THEN 'Jermelle Pruitt'
+      WHEN au.email = 'rinslr@earthlink.net' THEN 'William Roberts'
+      WHEN au.email = 'jwnet2044@yahoo.com' THEN 'Joseph Steffey'
+      WHEN au.email = 'rthompson98@yahoo.com' THEN 'Rodney Thompson'
+    END,
+    ' - Whitelabel lifetime buyer'
+  ),
+  NOW(),
+  NOW()
+FROM auth.users au
+WHERE au.email IN (
+  'fredrik.kaada@gmail.com',
+  'bayonnca@yahoo.com',
+  'trcole3@theritegroup.com',
+  'charles@charlesedge.net',
+  'james.otto.gray@gmail.com',
+  'tomnus@msn.com',
+  'jehpruitt@gmail.com',
+  'rinslr@earthlink.net',
+  'jwnet2044@yahoo.com',
+  'rthompson98@yahoo.com'
+)
+ON CONFLICT (email) DO UPDATE SET
+  package = 'whitelabel',
+  openclaw_enabled = false,
+  admin_enabled = false,
+  source = excluded.source,
+  notes = excluded.notes,
+  updated_at = NOW();
+
 -- Verify the insertions
 SELECT
+  au.email,
   p.first_name,
   p.last_name,
-  p.email,
   p.product_tier,
-  e.status,
+  e.status as entitlement_status,
   e.product_type,
-  e.plan_name
-FROM public.profiles p
-LEFT JOIN public.entitlements e ON p.id = e.user_id
-WHERE p.product_tier = 'whitelabel'
-ORDER BY p.created_at DESC
-LIMIT 10;
+  e.plan_name,
+  ue.package as user_entitlement_package
+FROM auth.users au
+JOIN public.profiles p ON au.id = p.id
+LEFT JOIN public.entitlements e ON au.id = e.user_id
+LEFT JOIN public.user_entitlements ue ON au.email = ue.email
+WHERE au.email IN (
+  'fredrik.kaada@gmail.com',
+  'bayonnca@yahoo.com',
+  'trcole3@theritegroup.com',
+  'charles@charlesedge.net',
+  'james.otto.gray@gmail.com',
+  'tomnus@msn.com',
+  'jehpruitt@gmail.com',
+  'rinslr@earthlink.net',
+  'jwnet2044@yahoo.com',
+  'rthompson98@yahoo.com'
+)
+ORDER BY au.created_at DESC;

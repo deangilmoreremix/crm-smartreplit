@@ -82,7 +82,7 @@
 - **Superpowers skills**: Full suite adapted from [obra/superpowers](https://github.com/obra/superpowers) for Kilo
 - **Skills directory**: `.kilo/skills/` contains all 14 core skills
 - **Commands available**: `/brainstorm`, `/plan`, `/tdd`, `/execute`, `/review`, `/debug`, `/verify`, `/finish-branch`
-- **Agents available**: `plan-executor`, `brainstormer`, `plan-writer`, `skeptic-reviewer`
+- **Agents available**: `plan-executor`, `brainstormer`, `plan-writer`, `skeptic-reviewer` (plus 10+ more from Superpowers + external collections — see External Agent Skills Collections section)
 - **Workflow**: Brainstorm → Plan → Execute (TDD) → Review → Finish
 
 ### Available Skills
@@ -108,11 +108,50 @@
 
 - **Skill**: `karpathy-guidelines` — Behavioral guidelines to reduce common LLM coding mistakes
 - **Command**: `/guidelines` — Reference the four principles
-- **Source**: [deangilmoreremix/andrej-karpathy-skills](https://github.com/deangilmoreremix/andrej-karpathy-skills)
+- **Source**: [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) (latest) + local in `.kilo/skills/karpathy-guidelines`
 - **Principles**: Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution
 - **CLAUDE.md**: Project-level guidelines loaded automatically
 
 These guidelines are applied automatically when writing, reviewing, or refactoring code.
+
+## External Agent Skills Collections
+
+Installed via skills ecosystem and wired as selectable agents in the Kilo agents dropdown (in addition to the Superpowers set).
+
+- **awesome-design-md** ([VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md))
+  - 70+ production DESIGN.md files from real brands (Vercel, Supabase, Linear, Stripe, xAI, Cursor, Figma, etc.)
+  - Skill: `awesome-design-md`
+  - Agent: `awesome-design-md-agent` — recommends and applies brand design systems for UI work
+  - Complements the existing `impeccable` design system
+
+- **HyperFrames** ([heygen-com/hyperframes](https://github.com/heygen-com/hyperframes))
+  - HTML-native video composition framework for agents (write HTML → render video)
+  - Skills: `hyperframes`, `gsap`, `lottie`, `three`, `waapi`, `hyperframes-cli`, `hyperframes-media`, adapters, remotion migration, website-to-video, etc. (~15 total)
+  - Agent: `hyperframes-agent` — full video authoring, animation timelines, asset prep, preview/render loop
+
+- **Matt Pocock Skills** ([mattpocock/skills](https://github.com/mattpocock/skills))
+  - 14 battle-tested skills for real engineering (not vibe coding): grilling, TDD, diagnosis, architecture improvement, handoff, caveman mode, etc.
+  - Key Skills: `grill-me`, `grill-with-docs`, `diagnose`, `tdd`, `improve-codebase-architecture`, `zoom-out`, `write-a-skill`, `prototype`, ...
+  - Agents: `mattpocock-grill-agent`, `mattpocock-diagnose-agent`, `mattpocock-architect-agent`
+
+- **Karpathy Guidelines** ([multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills))
+  - Updated installation of the 4 principles (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution)
+  - Skill: `karpathy-guidelines` (also available via `/guidelines`)
+  - Agent: `karpathy-guidelines-agent`
+
+- **Superpowers** ([obra/superpowers](https://github.com/obra/superpowers))
+  - All 14 core skills now have corresponding primary agents in the dropdown for direct selection (in addition to command-driven usage):
+    - Added `systematic-debugging-agent` (and existing `debugger`, `tdd-agent`, `brainstorming-agent`, `plan-executor-agent`, `writing-skills-agent`, `using-superpowers-agent`, `mattpocock-*` crossovers, etc.)
+
+**Total skills in `.kilo/skills/`**: 45 (core Superpowers + Karpathy + new collections)
+
+**New agents in dropdown** (use Tab or `/agents` or leader+a to cycle/switch):
+`karpathy-guidelines-agent`, `awesome-design-md-agent`, `hyperframes-agent`, `mattpocock-grill-agent`, `mattpocock-diagnose-agent`, `mattpocock-architect-agent`, `systematic-debugging-agent` + one dedicated `mode: "all"` agent **for every single skill** from the four collections (hyperframes-*, mattpocock-*, adapters, etc.)
+
+**1200% usability**:
+- Every one of the 45 skills in `.kilo/skills/` now has a matching agent entry.
+- All new agents (and all debug/code-related ones) are set to `mode: "all"`.
+- This guarantees they are available in the main dropdown, in every "code", "debug", and "other" agent selector, **and** fully dispatchable as sub-agents via the Task tool inside any workflow.
 
 ## agentmemory Support
 
