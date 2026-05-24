@@ -1,5 +1,11 @@
 {
   "$schema": "https://app.kilo.ai/config.json",
+  "skills": {
+    "paths": ["./.kilo/skills"],
+    "urls": [
+      "https://raw.githubusercontent.com/pbakaus/impeccable/main/source/skills/impeccable/SKILL.md"
+    ]
+  },
   "agent": {
     "plan-executor": {
       "mode": "primary",
@@ -194,6 +200,369 @@
       "mode": "primary",
       "description": "Introduction to the skills system",
       "prompt": "I'm using the using-superpowers skill.\n\nInvoke relevant skills before any action. One question at a time.\n\nReference: `.kilo/skills/using-superpowers/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "karpathy-guidelines-agent": {
+      "mode": "primary",
+      "description": "Karpathy-inspired coding guidelines for surgical, simple, assumption-free changes",
+      "prompt": "I'm using the karpathy-guidelines skill.\n\nApply Think Before Coding, Simplicity First, Surgical Changes, and Goal-Driven Execution on every task.\n\nReference: `.kilo/skills/karpathy-guidelines/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "awesome-design-md-agent": {
+      "mode": "primary",
+      "description": "Design system specialist using curated real-brand DESIGN.md files from awesome-design-md collection",
+      "prompt": "I'm using the awesome-design-md skill.\n\nRecommend and apply appropriate DESIGN.md from the VoltAgent collection for pixel-perfect brand-aligned UIs. Combine with impeccable when executing.\n\nReference: `.kilo/skills/awesome-design-md/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "hyperframes-agent": {
+      "mode": "primary",
+      "description": "HyperFrames HTML video composition expert — create, animate, preview and render videos from HTML+CSS+GSAP",
+      "prompt": "I'm using the hyperframes skill (and related gsap, lottie, three, waapi adapters).\n\nBuild deterministic HTML compositions, use frame adapters, handle media assets, and drive the hyperframes CLI for preview/render.\n\nReference: `.kilo/skills/hyperframes/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "mattpocock-grill-agent": {
+      "mode": "primary",
+      "description": "Deep requirements grilling and shared language builder (grill-me / grill-with-docs)",
+      "prompt": "I'm using the grill-me and grill-with-docs skills from mattpocock.\n\nRelentlessly interview the user to clarify goals, build CONTEXT.md and ADRs, reduce verbosity with domain language.\n\nReference: `.kilo/skills/grill-me/SKILL.md` and `.kilo/skills/grill-with-docs/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "mattpocock-diagnose-agent": {
+      "mode": "primary",
+      "description": "Rigorous debugging and performance diagnosis following mattpocock disciplined loop",
+      "prompt": "I'm using the diagnose skill from mattpocock/skills.\n\nFollow reproduce → minimise → hypothesise → instrument → fix → regression-test. Use for hard bugs and perf issues.\n\nReference: `.kilo/skills/diagnose/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "mattpocock-architect-agent": {
+      "mode": "primary",
+      "description": "Codebase architecture improver and deep module designer (mattpocock)",
+      "prompt": "I'm using the improve-codebase-architecture and zoom-out skills.\n\nRegularly invest in system design, find deepening opportunities, explain code in full system context.\n\nReference: `.kilo/skills/improve-codebase-architecture/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "systematic-debugging-agent": {
+      "mode": "all",
+      "description": "4-phase root cause debugging (superpowers systematic-debugging)",
+      "prompt": "I'm using the systematic-debugging skill.\n\nFollow the 4 phases: Root Cause Investigation → Pattern Analysis → Hypothesis and Testing → Implementation. Always verify.\n\nReference: `.kilo/skills/systematic-debugging/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "animejs-agent": {
+      "mode": "all",
+      "description": "Anime.js adapter patterns for HyperFrames (window.__hfAnime, seek-driven deterministic timelines)",
+      "prompt": "I'm using the animejs skill.\n\nRegister Anime.js animations on window.__hfAnime so HyperFrames can seek and render them deterministically.\n\nReference: `.kilo/skills/animejs/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "caveman-agent": {
+      "mode": "all",
+      "description": "Ultra-compressed communication mode (cuts token usage ~75% while keeping full technical accuracy)",
+      "prompt": "I'm using the caveman skill from mattpocock.\n\nUse ultra-compressed mode for all communication to reduce tokens while preserving precision.\n\nReference: `.kilo/skills/caveman/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "contribute-catalog-agent": {
+      "mode": "all",
+      "description": "Author and ship new HyperFrames registry blocks/components upstream",
+      "prompt": "I'm using the contribute-catalog skill.\n\nCreate new caption styles, VFX blocks, transitions or components and prepare PRs to the hyperframes catalog.\n\nReference: `.kilo/skills/contribute-catalog/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "css-animations-agent": {
+      "mode": "all",
+      "description": "CSS keyframes adapter for HyperFrames (seek-driven, animation-play-state control)",
+      "prompt": "I'm using the css-animations skill.\n\nAuthor CSS-only motion that HyperFrames can pause, seek and render deterministically.\n\nReference: `.kilo/skills/css-animations/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "grill-with-docs-agent": {
+      "mode": "all",
+      "description": "Grilling session that builds shared domain language + updates CONTEXT.md and ADRs",
+      "prompt": "I'm using the grill-with-docs skill from mattpocock.\n\nChallenge plans against existing domain model, sharpen terminology, and maintain living documentation.\n\nReference: `.kilo/skills/grill-with-docs/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "gsap-agent": {
+      "mode": "all",
+      "description": "GSAP timelines for HyperFrames (deterministic seeking, labels, performance)",
+      "prompt": "I'm using the gsap skill.\n\nWrite GSAP timelines registered for HyperFrames seek events so they are frame-accurate during preview and render.\n\nReference: `.kilo/skills/gsap/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "handoff-agent": {
+      "mode": "all",
+      "description": "Compact conversation into handoff document for another agent",
+      "prompt": "I'm using the handoff skill from mattpocock.\n\nCreate a concise handoff document so the next agent can continue exactly where this session left off.\n\nReference: `.kilo/skills/handoff/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "hyperframes-cli-agent": {
+      "mode": "all",
+      "description": "HyperFrames dev-loop CLI (init, lint, inspect, preview, render, doctor)",
+      "prompt": "I'm using the hyperframes-cli skill.\n\nRun the full HyperFrames CLI workflow: scaffold, validate, preview in browser, and render final video.\n\nReference: `.kilo/skills/hyperframes-cli/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "hyperframes-media-agent": {
+      "mode": "all",
+      "description": "HyperFrames media preprocessing (TTS with Kokoro, Whisper transcription, background removal)",
+      "prompt": "I'm using the hyperframes-media skill.\n\nPrepare voice, captions, and visual assets before composition authoring.\n\nReference: `.kilo/skills/hyperframes-media/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "hyperframes-registry-agent": {
+      "mode": "all",
+      "description": "Install and use pre-built HyperFrames blocks/components from the public registry",
+      "prompt": "I'm using the hyperframes-registry skill.\n\nAdd catalog blocks (captions, transitions, overlays, charts) via `hyperframes add` and integrate them.\n\nReference: `.kilo/skills/hyperframes-registry/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "improve-codebase-architecture-agent": {
+      "mode": "all",
+      "description": "Deep module design and codebase architecture rescue (mattpocock)",
+      "prompt": "I'm using the improve-codebase-architecture skill.\n\nRegularly find opportunities to deepen modules and rescue ball-of-mud codebases.\n\nReference: `.kilo/skills/improve-codebase-architecture/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "lottie-agent": {
+      "mode": "all",
+      "description": "Lottie / dotLottie adapter for HyperFrames (paused, seek-driven playback)",
+      "prompt": "I'm using the lottie skill.\n\nRegister lottie-web players on window.__hfLottie so HyperFrames controls them deterministically.\n\nReference: `.kilo/skills/lottie/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "prototype-agent": {
+      "mode": "all",
+      "description": "Rapid throwaway prototypes (terminal or multiple UI variations) to explore designs",
+      "prompt": "I'm using the prototype skill from mattpocock.\n\nBuild quick disposable prototypes (CLI or UI variants) to validate ideas before committing to production code.\n\nReference: `.kilo/skills/prototype/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "remotion-to-hyperframes-agent": {
+      "mode": "all",
+      "description": "Translate existing Remotion (React) compositions into HyperFrames HTML",
+      "prompt": "I'm using the remotion-to-hyperframes skill.\n\nMigrate React-based Remotion projects to deterministic HTML + GSAP HyperFrames compositions.\n\nReference: `.kilo/skills/remotion-to-hyperframes/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "setup-matt-pocock-skills-agent": {
+      "mode": "all",
+      "description": "One-time per-repo setup for mattpocock skills (issue tracker, triage labels, CONTEXT.md layout)",
+      "prompt": "I'm using the setup-matt-pocock-skills skill.\n\nConfigure the project for the full mattpocock engineering skills suite (triage, to-prd, diagnose, etc.).\n\nReference: `.kilo/skills/setup-matt-pocock-skills/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "tailwind-agent": {
+      "mode": "all",
+      "description": "Tailwind v4 runtime for HyperFrames compositions",
+      "prompt": "I'm using the tailwind skill.\n\nInitialize and use Tailwind v4 inside HyperFrames HTML compositions for styling.\n\nReference: `.kilo/skills/tailwind/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "tdd-mattpocock-agent": {
+      "mode": "all",
+      "description": "Test-driven development (mattpocock red-green-refactor loop)",
+      "prompt": "I'm using the tdd skill from mattpocock.\n\nEnforce strict RED-GREEN-REFACTOR with excellent test quality.\n\nReference: `.kilo/skills/tdd/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "three-agent": {
+      "mode": "all",
+      "description": "Three.js scenes driven by HyperFrames seek events (window.__hfThreeTime)",
+      "prompt": "I'm using the three skill.\n\nBuild Three.js content that responds to HyperFrames hf-seek events instead of wall-clock time.\n\nReference: `.kilo/skills/three/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "to-issues-agent": {
+      "mode": "all",
+      "description": "Break plans/PRDs into independently grab-able GitHub issues using vertical slices (mattpocock)",
+      "prompt": "I'm using the to-issues skill.\n\nDecompose work into vertical-slice GitHub issues that agents or humans can pick up independently.\n\nReference: `.kilo/skills/to-issues/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "to-prd-agent": {
+      "mode": "all",
+      "description": "Synthesize conversation into a PRD and submit as GitHub issue (mattpocock)",
+      "prompt": "I'm using the to-prd skill.\n\nTurn the current discussion into a well-structured PRD issue without extra interviewing.\n\nReference: `.kilo/skills/to-prd/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "triage-agent": {
+      "mode": "all",
+      "description": "Triage issues through a state machine of triage roles (mattpocock)",
+      "prompt": "I'm using the triage skill.\n\nMove issues through defined triage states and apply the correct labels for the project.\n\nReference: `.kilo/skills/triage/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "typegpu-agent": {
+      "mode": "all",
+      "description": "TypeGPU / WebGPU compute shaders inside HyperFrames",
+      "prompt": "I'm using the typegpu skill.\n\nIntegrate TypeGPU shaders and compute passes into HyperFrames video compositions.\n\nReference: `.kilo/skills/typegpu/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "waapi-agent": {
+      "mode": "all",
+      "description": "Web Animations API (WAAPI) adapter for HyperFrames (document.getAnimations seek control)",
+      "prompt": "I'm using the waapi skill.\n\nUse native element.animate() in a way that HyperFrames can discover, pause and seek.\n\nReference: `.kilo/skills/waapi/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "website-to-hyperframes-agent": {
+      "mode": "all",
+      "description": "Capture any URL and turn it into a HyperFrames video composition",
+      "prompt": "I'm using the website-to-hyperframes skill.\n\nScrape a live website and generate a faithful animated video version using HyperFrames.\n\nReference: `.kilo/skills/website-to-hyperframes/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "write-a-skill-agent": {
+      "mode": "all",
+      "description": "Create new well-structured skills with progressive disclosure and tests (mattpocock)",
+      "prompt": "I'm using the write-a-skill skill.\n\nAuthor new SKILL.md files following the exact structure and testing methodology.\n\nReference: `.kilo/skills/write-a-skill/SKILL.md`",
+      "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "edit": "allow",
+        "mcp": "allow"
+      }
+    },
+    "zoom-out-agent": {
+      "mode": "all",
+      "description": "Zoom out to give higher-level system context on any code section (mattpocock)",
+      "prompt": "I'm using the zoom-out skill.\n\nExplain any piece of code in the context of the entire architecture and domain model.\n\nReference: `.kilo/skills/zoom-out/SKILL.md`",
       "permission": {
         "read": "allow",
         "bash": "allow",

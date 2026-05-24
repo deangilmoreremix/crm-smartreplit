@@ -182,6 +182,9 @@ const WhiteLabelCustomization = lazy(() => import('./pages/WhiteLabelCustomizati
 // Landing page import
 import LandingPage from './pages/LandingPage';
 
+// New Landing Page - Isolated preview (doesn't affect existing LandingPage)
+import NewLandingPage from './pages/NewLandingPage';
+
 // Dashboard embed import
 import DashboardEmbed from './pages/DashboardEmbed';
 
@@ -409,6 +412,9 @@ function AppContent() {
           <Routes>
             {/* Landing page as root - no navbar */}
             <Route path="/" element={<LandingPage />} />
+
+            {/* NEW Landing Page - Preview at /new-landing (isolated, won't affect existing page) */}
+            <Route path="/new-landing" element={<NewLandingPage />} />
 
             {/* Dashboard embed - no navbar */}
             <Route path="/dashboard-embed" element={<DashboardEmbed />} />
