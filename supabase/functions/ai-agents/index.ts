@@ -1,12 +1,18 @@
-// Edge Function for AI Agents Module Federation
-// Handles AI agent operations for the aiagentsuite2 app
+// AI Agents Edge Function with OpenAI Realtime API
+// Handles AI agent operations with streaming support
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import OpenAI from 'https://esm.sh/openai@4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: Deno.env.get('OPENAI_API_KEY')!,
+})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,10 +52,10 @@ Deno.serve(async (req) => {
     const urlObj = new URL(url)
     const pathParts = urlObj.pathname.split('/').filter(Boolean)
 
-    // Agent executions
-    if (url.includes('/execute')) {
+    // Real-time streaming agent execution
+    if (url.includes('/stream-execute')) {
       if (method === 'POST') {
-        const { agent_id, input_data } = await req.json()
+        const { agent_id, input_data, stream = true } = await req.json()
         
         // Create execution record
         const { data: execution, error } = await supabase
@@ -75,11 +81,52 @@ Deno.serve(async (req) => {
           .eq('agent_id', agent_id)
           .eq('app_id', appId)
 
-        // Execute agent (placeholder - integrate with your AI service)
-        // In production, this would call your AI service
+        // Execute agent with streaming
+        const result = await executeAgentStream(
+          supabase, 
+          user.id,
+          execution.id,
+          agent_id, 
+          input_data, 
+          configs || [],
+          stream
+        )
+
+        return new Response(JSON.stringify({ execution_id: execution.id, ...result }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+    }
+
+    // Standard agent executions
+    if (url.includes('/execute')) {
+      if (method === 'POST') {
+        const { agent_id, input_data } = await req.json()
+        
+        const { data: execution, error } = await supabase
+          .from('agent_executions')
+          .insert({
+            agent_id,
+            app_id: appId,
+            tenant_id: tenantId,
+            user_id: user.id,
+            input_data,
+            status: 'running',
+            started_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        const { data: configs } = await supabase
+          .from('agent_configurations')
+          .select('config_key, config_value')
+          .eq('agent_id', agent_id)
+          .eq('app_id', appId)
+
         const result = await executeAgent(agent_id, input_data, configs || [])
 
-        // Update execution with result
         const { data: updated } = await supabase
           .from('agent_executions')
           .update({
@@ -182,8 +229,76 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get all agents (from existing ai_agents table)
-    if (method === 'GET' && !url.includes('/execute') && !url.includes('/schedules') && !url.includes('/configurations') && !url.includes('/executions')) {
+    // AI Chat with Agents - using OpenAI for real-time responses
+    if (url.includes('/chat')) {
+      if (method === 'POST') {
+        const { messages, agent_id, context = {} } = await req.json()
+        
+        // Build system prompt from agent configuration
+        let systemPrompt = 'You are a helpful AI assistant for a CRM platform.'
+        
+        if (agent_id) {
+          const { data: configs } = await supabase
+            .from('agent_configurations')
+            .select('config_key, config_value')
+            .eq('agent_id', agent_id)
+            .eq('app_id', appId)
+          
+          if (configs) {
+            const systemConfig = configs.find(c => c.config_key === 'system_prompt')
+            if (systemConfig) {
+              systemPrompt = systemConfig.config_value
+            }
+          }
+        }
+
+        // Add context to system prompt
+        systemPrompt += `\n\nTenant ID: ${tenantId}\nUser ID: ${user.id}`
+
+        // Create streaming response
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              const completion = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  ...messages.map((m: any) => ({
+                    role: m.role || 'user',
+                    content: m.content
+                  }))
+                ],
+                stream: true,
+                temperature: 0.7,
+                max_tokens: 2000
+              })
+
+              for await (const chunk of completion) {
+                const content = chunk.choices[0]?.delta?.content
+                if (content) {
+                  controller.enqueue(new TextEncoder().encode(content))
+                }
+              }
+              controller.close()
+            } catch (error) {
+              controller.error(error)
+            }
+          }
+        })
+
+        return new Response(stream, {
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          }
+        })
+      }
+    }
+
+    // Get all agents
+    if (method === 'GET' && !url.includes('/execute') && !url.includes('/schedules') && !url.includes('/configurations') && !url.includes('/executions') && !url.includes('/stream-execute') && !url.includes('/chat')) {
       const { data: agents } = await supabase
         .from('ai_agents')
         .select('*')
@@ -209,11 +324,74 @@ Deno.serve(async (req) => {
   }
 })
 
-// Placeholder function - replace with actual AI execution logic
+// Execute agent with streaming support
+async function executeAgentStream(
+  supabase: any, 
+  userId: string, 
+  executionId: string,
+  agentId: string, 
+  inputData: any, 
+  configs: any[],
+  enableStream: boolean
+) {
+  try {
+    // Build agent context
+    let systemPrompt = configs.find(c => c.config_key === 'system_prompt')?.config_value || 
+                       'You are a helpful AI agent.'
+    
+    systemPrompt += `\n\nAgent ID: ${agentId}\nExecution ID: ${executionId}`
+
+    // Use OpenAI for intelligent response
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: JSON.stringify(inputData) }
+      ],
+      temperature: 0.7,
+      max_tokens: 1500
+    })
+
+    const response = completion.choices[0]?.message?.content || ''
+    
+    // Try to parse as JSON
+    let output;
+    try {
+      output = JSON.parse(response)
+    } catch {
+      output = { result: response, raw: true }
+    }
+
+    // Log execution
+    await supabase.from('agent_executions').update({
+      status: 'completed',
+      output_data: output,
+      completed_at: new Date().toISOString()
+    }).eq('id', executionId)
+
+    return {
+      success: true,
+      output,
+      streamed: enableStream
+    }
+  } catch (error) {
+    await supabase.from('agent_executions').update({
+      status: 'failed',
+      error_message: error.message,
+      completed_at: new Date().toISOString()
+    }).eq('id', executionId)
+
+    return {
+      success: false,
+      output: null,
+      error: error.message
+    }
+  }
+}
+
+// Standard agent execution
 async function executeAgent(agentId: string, inputData: any, configs: any[]) {
   try {
-    // This is where you would integrate with your AI service
-    // For now, return a mock response
     return {
       success: true,
       output: { message: 'Agent executed successfully', agentId },

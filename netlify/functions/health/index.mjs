@@ -25,6 +25,7 @@ __export(schema_exports, {
   aiQueriesRelations: () => aiQueriesRelations,
   aiResellerPricing: () => aiResellerPricing,
   aiResellerPricingRelations: () => aiResellerPricingRelations,
+  apiProviderTypes: () => apiProviderTypes,
   appointments: () => appointments,
   appointmentsRelations: () => appointmentsRelations,
   automationRules: () => automationRules,
@@ -94,6 +95,7 @@ __export(schema_exports, {
   insertUsageEventSchema: () => insertUsageEventSchema,
   insertUsagePlanSchema: () => insertUsagePlanSchema,
   insertUserAiTokensSchema: () => insertUserAiTokensSchema,
+  insertUserApiKeySchema: () => insertUserApiKeySchema,
   insertUserCreditsSchema: () => insertUserCreditsSchema,
   insertUserFeatureSchema: () => insertUserFeatureSchema,
   insertUserGeneratedImageSchema: () => insertUserGeneratedImageSchema,
@@ -137,6 +139,8 @@ __export(schema_exports, {
   usagePlans: () => usagePlans,
   usagePlansRelations: () => usagePlansRelations,
   userAiTokens: () => userAiTokens,
+  userApiKeys: () => userApiKeys,
+  userApiKeysRelations: () => userApiKeysRelations,
   userCredits: () => userCredits,
   userCreditsRelations: () => userCreditsRelations,
   userFeatures: () => userFeatures,
@@ -172,7 +176,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-var userRoles, productTiers, profiles, contacts, contactCustomFields, contactActivities, deals, tasks, appointments, communications, notes, documents, automationRules, aiQueries, userAiTokens, tokenTransactions, entitlements, profilesRelations, contactsRelations, dealsRelations, tasksRelations, appointmentsRelations, communicationsRelations, notesRelations, documentsRelations, contactCustomFieldsRelations, contactActivitiesRelations, automationRulesRelations, aiQueriesRelations, entitlementsRelations, insertProfileSchema, insertContactSchema, insertDealSchema, insertTaskSchema, updateTaskSchema, insertAppointmentSchema, updateAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema, insertContactCustomFieldSchema, insertContactActivitySchema, insertAutomationRuleSchema, insertAiQuerySchema, insertEntitlementSchema, partners, partnerTiers, commissions, payouts, partnerCustomers, featurePackages, partnerMetrics, partnersRelations, partnerTiersRelations, commissionsRelations, payoutsRelations, partnerCustomersRelations, partnerMetricsRelations, insertPartnerSchema, insertPartnerTierSchema, insertCommissionSchema, insertPayoutSchema, insertPartnerCustomerSchema, insertFeaturePackageSchema, insertPartnerMetricsSchema, tenantConfigs, whiteLabelPackages, userWLSettings, partnerWLConfigs, insertTenantConfigSchema, insertWhiteLabelPackageSchema, insertUserWLSettingsSchema, insertPartnerWLConfigSchema, userGeneratedImages, userGeneratedImagesRelations, insertUserGeneratedImageSchema, automations, insertAutomationSchema, features, userFeatures, tierFeatures, featureUsage, insertFeatureSchema, insertUserFeatureSchema, insertTierFeatureSchema, insertFeatureUsageSchema, insertUserAiTokensSchema, insertTokenTransactionSchema, usagePlans, usageEvents, billingCycles, userUsageLimits, billingNotifications, usagePlansRelations, usageEventsRelations, billingCyclesRelations, userUsageLimitsRelations, insertUsagePlanSchema, insertUsageEventSchema, insertBillingCycleSchema, insertUserUsageLimitSchema, insertBillingNotificationSchema, userCredits, creditTransactions, userCreditsRelations, creditTransactionsRelations, insertUserCreditsSchema, insertCreditTransactionSchema, aiFeatureDefinitions, aiResellerPricing, aiFeatureUsage, resellerCredits, resellerCreditTransactions, aiFeatureDefinitionsRelations, aiResellerPricingRelations, aiFeatureUsageRelations, resellerCreditsRelations, resellerCreditTransactionsRelations, insertAIFeatureDefinitionSchema, insertAIResellerPricingSchema, insertAIFeatureUsageSchema, insertResellerCreditsSchema, insertResellerCreditTransactionSchema, webhookEvents, insertWebhookEventSchema, fieldTypes, objectMetadata, fieldMetadata, viewTypes, views, workflowTriggerTypes, workflowRunStatuses, workflows, workflowRuns, roles, permissions, userRolesTable;
+var userRoles, productTiers, profiles, contacts, contactCustomFields, contactActivities, deals, tasks, appointments, communications, notes, documents, automationRules, aiQueries, userAiTokens, tokenTransactions, entitlements, profilesRelations, contactsRelations, dealsRelations, tasksRelations, appointmentsRelations, communicationsRelations, notesRelations, documentsRelations, contactCustomFieldsRelations, contactActivitiesRelations, automationRulesRelations, aiQueriesRelations, entitlementsRelations, insertProfileSchema, insertContactSchema, insertDealSchema, insertTaskSchema, updateTaskSchema, insertAppointmentSchema, updateAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema, insertContactCustomFieldSchema, insertContactActivitySchema, insertAutomationRuleSchema, insertAiQuerySchema, insertEntitlementSchema, partners, partnerTiers, commissions, payouts, partnerCustomers, featurePackages, partnerMetrics, partnersRelations, partnerTiersRelations, commissionsRelations, payoutsRelations, partnerCustomersRelations, partnerMetricsRelations, insertPartnerSchema, insertPartnerTierSchema, insertCommissionSchema, insertPayoutSchema, insertPartnerCustomerSchema, insertFeaturePackageSchema, insertPartnerMetricsSchema, tenantConfigs, whiteLabelPackages, userWLSettings, partnerWLConfigs, insertTenantConfigSchema, insertWhiteLabelPackageSchema, insertUserWLSettingsSchema, insertPartnerWLConfigSchema, userGeneratedImages, userGeneratedImagesRelations, insertUserGeneratedImageSchema, automations, insertAutomationSchema, features, userFeatures, tierFeatures, featureUsage, insertFeatureSchema, insertUserFeatureSchema, insertTierFeatureSchema, insertFeatureUsageSchema, insertUserAiTokensSchema, insertTokenTransactionSchema, usagePlans, usageEvents, billingCycles, userUsageLimits, billingNotifications, usagePlansRelations, usageEventsRelations, billingCyclesRelations, userUsageLimitsRelations, insertUsagePlanSchema, insertUsageEventSchema, insertBillingCycleSchema, insertUserUsageLimitSchema, insertBillingNotificationSchema, userCredits, creditTransactions, userCreditsRelations, creditTransactionsRelations, insertUserCreditsSchema, insertCreditTransactionSchema, aiFeatureDefinitions, aiResellerPricing, aiFeatureUsage, resellerCredits, resellerCreditTransactions, aiFeatureDefinitionsRelations, aiResellerPricingRelations, aiFeatureUsageRelations, resellerCreditsRelations, resellerCreditTransactionsRelations, insertAIFeatureDefinitionSchema, insertAIResellerPricingSchema, insertAIFeatureUsageSchema, insertResellerCreditsSchema, insertResellerCreditTransactionSchema, webhookEvents, insertWebhookEventSchema, apiProviderTypes, userApiKeys, userApiKeysRelations, insertUserApiKeySchema, fieldTypes, objectMetadata, fieldMetadata, viewTypes, views, workflowTriggerTypes, workflowRunStatuses, workflows, workflowRuns, roles, permissions, userRolesTable;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -472,7 +476,8 @@ var init_schema = __esm({
       entitlement: one(entitlements, {
         fields: [profiles.id],
         references: [entitlements.userId]
-      })
+      }),
+      apiKeys: many(userApiKeys)
     }));
     contactsRelations = relations(contacts, ({ one, many }) => ({
       profile: one(profiles, {
@@ -1503,6 +1508,45 @@ var init_schema = __esm({
       processedAt: true,
       createdAt: true
     });
+    apiProviderTypes = ["openai", "gemini"];
+    userApiKeys = pgTable("user_api_keys", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+      provider: text("provider").notNull(),
+      // 'openai' | 'gemini'
+      apiKey: text("api_key").notNull(),
+      // Encrypted or plaintext (plaintext for now, can be encrypted later)
+      apiKeyName: text("api_key_name"),
+      // Optional name given by user
+      model: text("model"),
+      // Optional specific model to use
+      isDefault: boolean("is_default").default(false),
+      // Default key for this provider
+      isActive: boolean("is_active").default(true),
+      // Can be deactivated
+      lastTestedAt: timestamp("last_tested_at"),
+      // When the key was last validated
+      testStatus: text("test_status"),
+      // 'success', 'failed', 'pending'
+      testError: text("test_error"),
+      // Error message if test failed
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    userApiKeysRelations = relations(userApiKeys, ({ one }) => ({
+      user: one(profiles, {
+        fields: [userApiKeys.userId],
+        references: [profiles.id]
+      })
+    }));
+    insertUserApiKeySchema = createInsertSchema(userApiKeys).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      lastTestedAt: true,
+      testStatus: true,
+      testError: true
+    });
     fieldTypes = [
       "TEXT",
       "NUMBER",
@@ -1654,28 +1698,46 @@ var init_schema = __esm({
 var db_exports = {};
 __export(db_exports, {
   db: () => db,
+  initDb: () => initDb,
   isDbAvailable: () => isDbAvailable,
-  pool: () => pool
+  pool: () => pool,
+  waitForDb: () => waitForDb
 });
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Pool } from "pg";
-var pool, db, isDbAvailable;
+function initDb() {
+  if (!process.env.DATABASE_URL) {
+    console.warn("\u26A0\uFE0F  DATABASE_URL not set \u2014 database features disabled");
+    return Promise.resolve();
+  }
+  if (dbPromise) return dbPromise;
+  dbPromise = (async () => {
+    try {
+      pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      await pool.query("SELECT 1");
+      db = drizzle(pool, { schema: schema_exports });
+      console.log("\u2705 Database connected successfully");
+    } catch (error) {
+      console.error("\u274C Database connection failed:", error);
+      throw error;
+    }
+  })();
+  return dbPromise;
+}
+var pool, db, dbPromise, isDbAvailable, waitForDb;
 var init_db = __esm({
   "server/db.ts"() {
     "use strict";
     init_schema();
     pool = null;
     db = null;
+    dbPromise = null;
     if (process.env.DATABASE_URL) {
-      try {
-        pool = new Pool({ connectionString: process.env.DATABASE_URL });
-        db = drizzle(pool, { schema: schema_exports });
-        console.log("\u2705 Database connected successfully");
-      } catch (error) {
-        console.warn("Database initialization failed, continuing without database:", error);
-      }
+      initDb().catch(() => {
+      });
     }
     isDbAvailable = () => pool !== null && db !== null;
+    waitForDb = () => initDb();
   }
 });
 

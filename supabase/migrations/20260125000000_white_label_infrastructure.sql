@@ -4,6 +4,14 @@
 
 -- Enable UUID extension if not already enabled
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Create uuid_generate_v4 function using gen_random_uuid if needed
+CREATE OR REPLACE FUNCTION uuid_generate_v4() RETURNS uuid AS $$
+BEGIN
+  RETURN gen_random_uuid();
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
 
 -- ============================================================================
 -- DOMAINS TABLE

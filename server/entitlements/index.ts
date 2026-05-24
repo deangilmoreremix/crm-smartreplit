@@ -4,7 +4,7 @@ import {
   isUserActive,
   handleSuccessfulPurchase,
 } from '../entitlements-utils.js';
-import { db } from '../db.js';
+import { db, waitForDb } from '../db.js';
 // Inline schema definition to avoid bundling issues
 import {
   pgTable,
@@ -44,6 +44,8 @@ const supabase =
   supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 export const handler = async (event: any, context: any) => {
+  await waitForDb();
+
   const { httpMethod, path, body } = event;
   const pathParts = path.split('/').filter(Boolean);
 

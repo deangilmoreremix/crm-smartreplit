@@ -5,21 +5,32 @@ import * as schema from '../shared/schema';
 // Database connection — fail fast if DATABASE_URL is set but connection fails
 let pool: Pool | null = null;
 let db: ReturnType<typeof drizzle> | null = null;
+let dbPromise: Promise<void> | null = null;
 
-if (process.env.DATABASE_URL) {
-  try {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    // Test connection — this will throw if DB is unreachable or credentials invalid
-    await pool.query('SELECT 1');
-    db = drizzle(pool, { schema });
-    console.log('✅ Database connected successfully');
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    throw error; // Fail fast — don't continue without DB
+function initDb(): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    console.warn('⚠️  DATABASE_URL not set — database features disabled');
+    return Promise.resolve();
   }
-} else {
-  console.warn('⚠️  DATABASE_URL not set — database features disabled');
+  if (dbPromise) return dbPromise;
+  dbPromise = (async () => {
+    try {
+      pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      await pool.query('SELECT 1');
+      db = drizzle(pool, { schema });
+      console.log('✅ Database connected successfully');
+    } catch (error) {
+      console.error('❌ Database connection failed:', error);
+      throw error;
+    }
+  })();
+  return dbPromise;
 }
 
-export { pool, db };
+if (process.env.DATABASE_URL) {
+  initDb().catch(() => {});
+}
+
+export { pool, db, initDb };
 export const isDbAvailable = () => pool !== null && db !== null;
+export const waitForDb = () => initDb();

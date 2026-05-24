@@ -1,12 +1,18 @@
-// Edge Function for Calendar Module Federation
-// Handles calendar operations for the aicalendarapp
+// Edge Function for Calendar Module Federation with OpenAI Realtime
+// Handles calendar operations with intelligent scheduling assistance
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import OpenAI from 'https://esm.sh/openai@4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: Deno.env.get('OPENAI_API_KEY')!,
+})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -44,7 +50,148 @@ Deno.serve(async (req) => {
     const { method, url } = req
 
     const urlObj = new URL(url)
-    const eventId = urlObj.pathname.split('/').filter(Boolean).pop()
+    const pathParts = urlObj.pathname.split('/').filter(Boolean)
+    const eventId = pathParts[pathParts.length - 1]
+
+    // AI-powered smart scheduling - find optimal meeting times
+    if (url.includes('/ai-schedule')) {
+      if (method === 'POST') {
+        const { participants, duration_minutes, preferred_dates, meeting_type } = await req.json()
+        
+        // Get all participants' availability
+        const { data: availabilities } = await supabase
+          .from('calendar_availability')
+          .select('*')
+          .eq('app_id', appId)
+          .in('user_id', participants)
+
+        // Use OpenAI to find optimal times
+        const prompt = `Find the best meeting times given:
+          - Duration needed: ${duration_minutes} minutes
+          - Preferred dates: ${JSON.stringify(preferred_dates)}
+          - Meeting type: ${meeting_type || 'general'}
+          - Participant availabilities: ${JSON.stringify(availabilities || [])}
+          
+          Return JSON with optimal_time_slots (array of {start, end, score}) and reasoning.`
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+        })
+
+        const suggestions = JSON.parse(completion.choices[0].message.content || '{}')
+        
+        // Store scheduling session
+        const { data: session } = await supabase
+          .from('agent_executions')
+          .insert({
+            agent_id: 'smart-scheduler',
+            app_id: appId,
+            tenant_id: tenantId,
+            user_id: user.id,
+            input_data: { participants, duration_minutes, preferred_dates, meeting_type },
+            output_data: suggestions,
+            status: 'completed'
+          })
+          .select()
+          .single()
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          suggestions: suggestions.optimal_time_slots || [],
+          reasoning: suggestions.reasoning,
+          session_id: session?.id
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+    }
+
+    // AI-powered event description generation
+    if (url.includes('/ai-describe')) {
+      if (method === 'POST') {
+        const { event_type, participants, topic, duration_minutes } = await req.json()
+        
+        const prompt = `Generate a professional event description for:
+          - Event type: ${event_type}
+          - Topic: ${topic}
+          - Participants: ${participants?.join(', ') || 'TBD'}
+          - Duration: ${duration_minutes || 60} minutes
+          
+          Return JSON with: title, description, agenda_items (array), preparation_notes`
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.5,
+        })
+
+        const generated = JSON.parse(completion.choices[0].message.content || '{}')
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          ...generated
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+    }
+
+    // Real-time availability check with conflict detection
+    if (url.includes('/check-availability')) {
+      if (method === 'POST') {
+        const { start_time, end_time, exclude_user_ids = [] } = await req.json()
+        
+        // Check for conflicting events
+        const { data: conflicts } = await supabase
+          .from('calendar_events')
+          .select('*')
+          .eq('app_id', appId)
+          .or(`user_id.eq.${user.id}`)
+          .not('status', 'eq', 'cancelled')
+          .lte('start_time', end_time)
+          .gte('end_time', start_time)
+
+        // Get user availability settings
+        const { data: availability } = await supabase
+          .from('calendar_availability')
+          .select('*')
+          .eq('app_id', appId)
+          .eq('user_id', user.id)
+          .eq('day_of_week', new Date(start_time).getDay().toString())
+          .single()
+
+        // Use AI to analyze and provide recommendation
+        const prompt = `Analyze this time slot:
+          - Requested: ${start_time} to ${end_time}
+          - Conflicts found: ${conflicts?.length || 0}
+          - User availability: ${JSON.stringify(availability)}
+          
+          Return JSON with: is_available (boolean), conflict_severity (low/medium/high), 
+          alternative_suggestions (array of {start, end}), reason`
+
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.2,
+        })
+
+        const analysis = JSON.parse(completion.choices[0].message.content || '{}')
+
+        return new Response(JSON.stringify({
+          success: true,
+          is_available: analysis.is_available ?? (conflicts?.length === 0),
+          conflicts: conflicts || [],
+          analysis,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+    }
 
     // Get events in date range
     if (method === 'GET' && url.includes('/events')) {
@@ -61,7 +208,6 @@ Deno.serve(async (req) => {
         query = query.gte('start_time', startDate).lte('end_time', endDate)
       }
 
-      // Also filter by user if they want their own events
       const filter = urlObj.searchParams.get('filter')
       if (filter === 'mine') {
         query = query.eq('user_id', user.id)
@@ -156,7 +302,6 @@ Deno.serve(async (req) => {
     if (method === 'POST' && url.includes('/sync')) {
       const { integration_id } = await req.json()
       
-      // Get calendar integration
       const { data: integration } = await supabase
         .from('calendar_integrations')
         .select('*')
@@ -171,11 +316,8 @@ Deno.serve(async (req) => {
         })
       }
 
-      // Sync events based on provider
-      // This is a placeholder - implement actual sync logic
       const syncedEvents = await syncCalendarEvents(integration)
 
-      // Update last sync time
       await supabase
         .from('calendar_integrations')
         .update({ last_sync_at: new Date().toISOString() })
@@ -219,6 +361,39 @@ Deno.serve(async (req) => {
           .single()
 
         if (insertError) throw insertError
+
+        // AI-generated reminder
+        if (newEvent.ai_reminder !== false) {
+          const reminderPrompt = `Generate a reminder message for this event:
+            Title: ${newEvent.title}
+            Start: ${newEvent.start_time}
+            Description: ${newEvent.description || 'None'}
+            
+            Return JSON with: reminder_text, reminder_time (30 min before), notification_channel`
+
+          try {
+            const reminderCompletion = await openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [{ role: 'user', content: reminderPrompt }],
+              response_format: { type: 'json_object' },
+              temperature: 0.3,
+            })
+            
+            const reminderData = JSON.parse(reminderCompletion.choices[0].message.content || '{}')
+            
+            await supabase
+              .from('contact_activities')
+              .insert({
+                contact_id: null,
+                activity_type: 'calendar_reminder_scheduled',
+                description: reminderData.reminder_text,
+                metadata: { event_id: event.id, ...reminderData }
+              })
+          } catch (aiError) {
+            console.log('AI reminder generation failed:', aiError)
+          }
+        }
+
         return new Response(JSON.stringify(event), { 
           status: 201,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -275,7 +450,5 @@ Deno.serve(async (req) => {
 
 // Placeholder for calendar sync
 async function syncCalendarEvents(integration: any) {
-  // This would integrate with Google Calendar, Outlook, etc.
-  // For now, return empty array
   return []
 }

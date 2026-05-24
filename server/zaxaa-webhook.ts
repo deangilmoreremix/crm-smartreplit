@@ -7,6 +7,54 @@ import {
   handleRefund,
   ProductType,
 } from './entitlements-utils';
+import { supabase } from './supabase';
+import { ProductTier } from '../shared/schema';
+
+/**
+ * Map product type string from Zaxaa to entitlement package
+ */
+function getPackageFromZaxaaProduct(productType: string): 'smartmarketer' | 'super_admin' | 'regular' {
+  const type = productType?.toLowerCase() || '';
+  if (type.includes('super_admin')) return 'super_admin';
+  if (type.includes('whitelabel')) return 'whitelabel';
+  // Default paid products to smartmarketer
+  if (type && type !== 'no_access') return 'smartmarketer';
+  return 'regular';
+}
+
+/**
+ * Update user_entitlements table when Zaxaa purchase occurs
+ */
+async function updateUserEntitlement(userId: string, productType: string) {
+  if (!supabase) return;
+
+  try {
+    // Get user's email from Supabase
+    const { data: userData } = await supabase.auth.admin.getUserById(userId);
+    const email = userData?.user?.email;
+
+    if (email) {
+      const packageType = getPackageFromZaxaaProduct(productType);
+      const { error } = await supabase
+        .from('user_entitlements')
+        .upsert({
+          email,
+          package: packageType,
+          openclaw_enabled: packageType === 'super_admin',
+          admin_enabled: packageType === 'super_admin',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email' });
+
+      if (error) {
+        console.error('❌ Error updating user_entitlements from Zaxaa:', error);
+      } else {
+        console.log(`✅ Updated user_entitlements from Zaxaa: ${email} -> ${packageType}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error updating user_entitlement from Zaxaa:', error);
+  }
+}
 
 interface ZaxaaWebhookPayload {
   event_type: string;
@@ -52,6 +100,9 @@ export async function handleZaxaaWebhook(req: Request, res: Response) {
           currency: payload.currency?.toUpperCase(),
         });
 
+        // CRITICAL FIX: Also update user_entitlements
+        await updateUserEntitlement(user_id, product_type);
+
         console.log(
           `Processed Zaxaa successful purchase for user ${user_id}, type: ${product_type}`
         );
@@ -78,6 +129,23 @@ export async function handleZaxaaWebhook(req: Request, res: Response) {
       case 'subscription_ended': {
         await handleCancellation(user_id, product_type as ProductType);
 
+        // Reset entitlement on cancellation
+        if (supabase) {
+          const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+          const email = userData?.user?.email;
+          if (email) {
+            await supabase
+              .from('user_entitlements')
+              .upsert({
+                email,
+                package: 'no_access',
+                openclaw_enabled: false,
+                admin_enabled: false,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'email' });
+          }
+        }
+
         console.log(`Processed Zaxaa cancellation for user ${user_id}, type: ${product_type}`);
         break;
       }
@@ -85,6 +153,23 @@ export async function handleZaxaaWebhook(req: Request, res: Response) {
       case 'refund_issued':
       case 'chargeback_created': {
         await handleRefund(user_id, product_type as ProductType);
+
+        // Reset entitlement on refund
+        if (supabase) {
+          const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+          const email = userData?.user?.email;
+          if (email) {
+            await supabase
+              .from('user_entitlements')
+              .upsert({
+                email,
+                package: 'no_access',
+                openclaw_enabled: false,
+                admin_enabled: false,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'email' });
+          }
+        }
 
         console.log(`Processed Zaxaa refund for user ${user_id}, type: ${product_type}`);
         break;

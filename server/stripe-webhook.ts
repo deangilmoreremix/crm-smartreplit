@@ -50,6 +50,27 @@ function determineProductTypeFromInterval(interval?: string): ProductType {
   return 'lifetime';
 }
 
+/**
+ * Map product tier to entitlement package
+ * smartcrm, sales_maximizer, ai_boost_unlimited, ai_communication, smartcrm_bundle -> smartmarketer
+ * super_admin -> super_admin
+ */
+function getPackageFromTier(productTier: ProductTier): 'smartmarketer' | 'super_admin' | 'regular' {
+  if (productTier === 'super_admin') return 'super_admin';
+  if (productTier === 'whitelabel') return 'whitelabel';
+  // All paid tiers map to smartmarketer for full feature access
+  if (
+    productTier === 'smartcrm' ||
+    productTier === 'sales_maximizer' ||
+    productTier === 'ai_boost_unlimited' ||
+    productTier === 'ai_communication' ||
+    productTier === 'smartcrm_bundle'
+  ) {
+    return 'smartmarketer';
+  }
+  return 'regular';
+}
+
 async function updateUserProductTier(
   userId: string,
   email: string,
@@ -84,6 +105,26 @@ async function updateUserProductTier(
         product_tier_updated_at: new Date().toISOString(),
       },
     });
+
+    // CRITICAL FIX: Also update user_entitlements table so client can access purchased apps
+    const packageType = getPackageFromTier(productTier);
+    if (email) {
+      const { error: entError } = await supabase
+        .from('user_entitlements')
+        .upsert({
+          email,
+          package: packageType,
+          openclaw_enabled: productTier === 'super_admin' || productTier === 'smartcrm_bundle',
+          admin_enabled: productTier === 'super_admin',
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email' });
+
+      if (entError) {
+        console.error('❌ Error updating user_entitlements:', entError);
+      } else {
+        console.log('✅ Updated user_entitlements:', { email, package: packageType });
+      }
+    }
   } catch (error) {
     console.error('Error updating user product tier:', error);
   }
@@ -113,6 +154,19 @@ async function revokeUserAccess(userId: string, email: string, reason: string) {
         [`${reason}_at`]: new Date().toISOString(),
       },
     });
+
+    // CRITICAL FIX: Update user_entitlements to no_access when subscription ends
+    if (email) {
+      await supabase
+        .from('user_entitlements')
+        .upsert({
+          email,
+          package: 'no_access',
+          openclaw_enabled: false,
+          admin_enabled: false,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email' });
+    }
 
     console.log(`✅ Revoked access for user ${email} due to ${reason}`);
   } catch (error) {

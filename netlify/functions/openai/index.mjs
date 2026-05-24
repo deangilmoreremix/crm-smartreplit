@@ -271,6 +271,15 @@ process.on("SIGINT", async () => {
   }
 });
 
+// server/memory.ts
+var MemoryService = class {
+  async recordObservation(_userId, _type, _content, _metadata) {
+  }
+  async recordSystemEvent(_eventType, _content, _metadata) {
+  }
+};
+var memoryService = new MemoryService();
+
 // server/openai/index.ts
 var userOpenAIKey = process.env.OPENAI_API_KEY;
 var openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
@@ -374,7 +383,7 @@ async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
   if (!googleAIKey) {
     throw new Error("Google AI API key not configured");
   }
-  const response = await fetch(
+  const response2 = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`,
     {
       method: "POST",
@@ -390,10 +399,10 @@ async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
       })
     }
   );
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
+  if (!response2.ok) {
+    throw new Error(`Google AI API error: ${response2.status} ${response2.statusText}`);
   }
-  const data = await response.json();
+  const data = await response2.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 var handler = async (event, _context) => {
@@ -463,456 +472,548 @@ var handler = async (event, _context) => {
       } catch (_error) {
         gpt5Available = false;
       }
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          configured: true,
-          model: gpt5Available ? "gpt-4o" : "gpt-4o",
-          status: "ready",
-          gpt5Available,
-          capabilities: gpt5Available ? [
-            "94.6% AIME mathematical accuracy",
-            "74.9% SWE-bench coding accuracy",
-            "84.2% MMMU multimodal performance",
-            "Unified reasoning system",
-            "Advanced verbosity and reasoning_effort controls"
-          ] : [
-            "GPT-4 Omni model available",
-            "Advanced reasoning and analysis",
-            "Multimodal capabilities",
-            "JSON output formatting"
-          ]
-        })
-      };
-    }
-    if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "embeddings" && httpMethod === "POST") {
-      const { text, model = "text-embedding-3-small" } = JSON.parse(body);
-      if (!text) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: "Text is required for embedding generation" })
-        };
-      }
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: "OpenAI API key not configured",
-            message: "Please configure OpenAI API key for embeddings"
-          })
-        };
-      }
-      const response = await openai.embeddings.create({
-        model,
-        input: text,
-        encoding_format: "float"
-      });
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          embedding: response.data[0].embedding,
-          model,
-          usage: response.usage
-        })
-      };
-    }
-    if (pathParts.length >= 3 && pathParts[0] === "openai" && pathParts[1] === "images" && pathParts[2] === "generate" && httpMethod === "POST") {
-      const {
-        prompt,
-        model = "dall-e-3",
-        size = "1024x1024",
-        quality = "standard",
-        style = "vivid",
-        n = 1
-      } = JSON.parse(body);
-      if (!prompt) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: "Prompt is required for image generation" })
-        };
-      }
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: "OpenAI API key not configured",
-            message: "Please configure OpenAI API key for image generation"
-          })
-        };
-      }
-      const response = await openai.images.generate({
-        model,
-        prompt,
-        size,
-        quality,
-        style,
-        n
-      });
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          data: response.data,
-          model,
-          usage: response.data?.length || 0
-        })
-      };
-    }
-    if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "usage" && httpMethod === "GET") {
-      const userId = event.headers["x-user-id"];
-      const includeStats = event.queryStringParameters?.stats === "true";
-      if (includeStats && userId) {
-        const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1e3);
-        const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
-        const budgetLimit = 5;
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
+      if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "smart-greeting" && httpMethod === "POST") {
+        const { userMetrics, timeOfDay, recentActivity } = JSON.parse(body);
+        const userId = event.headers["x-user-id"] || event.headers["x-forwarded-for"] || "anonymous";
+        const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
+        if (userId) {
+          const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1e3);
+          const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
+          const budgetLimit = 5;
+          if (dailyCost >= budgetLimit) {
+            memoryService.recordObservation(
+              userId,
+              "system_event",
+              `AI budget exceeded for smart-greeting. Daily usage: $${dailyCost.toFixed(2)}`,
+              { endpoint: "smart-greeting", budgetLimit, dailyCost, sessionId }
+            ).catch(() => {
+            });
+            return {
+              statusCode: 402,
+              headers,
+              body: JSON.stringify({
+                error: "AI budget exceeded",
+                message: `Daily AI budget of $${budgetLimit} exceeded. Current usage: $${dailyCost.toFixed(2)}`,
+                greeting: `Good ${timeOfDay}! Your pipeline looks strong.`,
+                insight: "AI insights temporarily unavailable due to budget limits.",
+                source: "budget_limit_fallback",
+                model: "fallback"
+              })
+            };
+          }
+        }
+        if (!openai) {
+          memoryService.recordObservation(
             userId,
-            dailyUsage: dailyCost,
-            budgetLimit,
-            budgetRemaining: Math.max(0, budgetLimit - dailyCost),
-            isOverBudget: dailyCost > budgetLimit,
-            recentRequests: dailyUsage.slice(-10),
-            circuitBreakerStatus: aiCircuitBreaker.getStatus()
-          })
-        };
-      }
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify(aiUsageTracker.getUsageStats())
-      };
-    }
-    if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "smart-greeting" && httpMethod === "POST") {
-      const { userMetrics, timeOfDay, recentActivity } = JSON.parse(body);
-      const userId = event.headers["x-user-id"];
-      if (userId) {
-        const dailyUsage = aiUsageTracker.getUserUsage(userId, 24 * 60 * 60 * 1e3);
-        const dailyCost = dailyUsage.reduce((sum, record) => sum + record.cost, 0);
-        const budgetLimit = 5;
-        if (dailyCost >= budgetLimit) {
+            "system_event",
+            "OpenAI not configured - serving fallback greeting",
+            { endpoint: "smart-greeting", sessionId }
+          ).catch(() => {
+          });
           return {
-            statusCode: 402,
+            statusCode: 200,
             headers,
             body: JSON.stringify({
-              error: "AI budget exceeded",
-              message: `Daily AI budget of $${budgetLimit} exceeded. Current usage: $${dailyCost.toFixed(2)}`,
-              greeting: `Good ${timeOfDay}! Your pipeline looks strong.`,
-              insight: "AI insights temporarily unavailable due to budget limits.",
-              source: "budget_limit_fallback",
+              greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals worth $${(userMetrics?.totalValue || 0).toLocaleString()}.`,
+              insight: userMetrics?.totalValue > 5e4 ? "Your pipeline shows strong momentum. Focus on your highest-value opportunities to maximize Q4 performance." : "Your pipeline is growing steadily. Consider expanding your outreach to increase deal flow.",
+              source: "intelligent_fallback",
               model: "fallback"
             })
           };
         }
-      }
-      if (!openai) {
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals worth $${(userMetrics?.totalValue || 0).toLocaleString()}.`,
-            insight: userMetrics?.totalValue > 5e4 ? "Your pipeline shows strong momentum. Focus on your highest-value opportunities to maximize Q4 performance." : "Your pipeline is growing steadily. Consider expanding your outreach to increase deal flow.",
-            source: "intelligent_fallback",
-            model: "fallback"
-          })
-        };
-      }
-      try {
-        const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
-        const cachedResult = await aiResponseCache.get(cacheKey);
-        if (cachedResult) {
+        try {
+          const cacheKey = `greeting_${timeOfDay}_${userMetrics?.totalDeals || 0}_${userMetrics?.totalValue || 0}`;
+          const cachedResult = await aiResponseCache.get(cacheKey);
+          if (cachedResult) {
+            aiUsageTracker.trackUsage({
+              userId: event.headers["x-user-id"] || "anonymous",
+              endpoint: "smart-greeting",
+              tokensUsed: 0,
+              cost: 0,
+              timestamp: Date.now(),
+              model: "cache",
+              success: true
+            });
+            memoryService.recordChatInteraction(
+              userId,
+              sessionId,
+              `Smart greeting request (cached) - time: ${timeOfDay}, deals: ${userMetrics?.totalDeals || 0}`,
+              `Cached greeting: ${cachedResult.greeting?.slice(0, 100) || "N/A"}`,
+              { endpoint: "smart-greeting", cached: true, userMetrics, recentActivity }
+            ).catch(() => {
+            });
+            return cachedResult;
+          }
+          const result = await aiCircuitBreaker.execute(async () => {
+            const response2 = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                {
+                  role: "system",
+                  content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
+                },
+                {
+                  role: "user",
+                  content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
+                }
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.7,
+              max_tokens: 200
+            });
+            const parsedResult = JSON.parse(response2.choices[0].message.content || "{}");
+            await aiResponseCache.set(cacheKey, parsedResult);
+            const tokensUsed = response2.usage?.total_tokens || 200;
+            const estimatedCost = tokensUsed / 1e3 * 0.15;
+            aiUsageTracker.trackUsage({
+              userId: event.headers["x-user-id"] || "anonymous",
+              endpoint: "smart-greeting",
+              tokensUsed,
+              cost: estimatedCost,
+              timestamp: Date.now(),
+              model: "gpt-4o-mini",
+              success: true
+            });
+            memoryService.recordChatInteraction(
+              userId,
+              sessionId,
+              `Smart greeting request - time: ${timeOfDay}, deals: ${userMetrics?.totalDeals || 0}, value: ${userMetrics?.totalValue || 0}`,
+              `Generated: ${parsedResult.greeting?.slice(0, 100) || "N/A"}, Insight: ${parsedResult.insight?.slice(0, 100) || "N/A"}`,
+              { endpoint: "smart-greeting", tokensUsed, estimatedCost, userMetrics, recentActivity }
+            ).catch(() => {
+            });
+            return parsedResult;
+          });
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              ...result,
+              source: "gpt-4o-mini",
+              model: "gpt-4o-mini"
+            })
+          };
+        } catch (error) {
+          console.error(
+            "Smart greeting circuit breaker error:",
+            error instanceof Error ? error.message : String(error)
+          );
           aiUsageTracker.trackUsage({
             userId: event.headers["x-user-id"] || "anonymous",
             endpoint: "smart-greeting",
             tokensUsed: 0,
             cost: 0,
             timestamp: Date.now(),
-            model: "cache",
-            success: true
+            model: "gpt-4o-mini",
+            success: false
           });
-          return cachedResult;
+          memoryService.recordObservation(
+            userId,
+            "error",
+            `Smart greeting failed: ${error instanceof Error ? error.message : String(error)}`,
+            { endpoint: "smart-greeting", sessionId }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 503,
+            headers,
+            body: JSON.stringify({
+              greeting: `Good ${timeOfDay}! Your pipeline is looking strong.`,
+              insight: "AI service temporarily unavailable. Using intelligent defaults.",
+              source: "circuit_breaker_fallback",
+              model: "fallback",
+              error: error instanceof Error ? error.message : String(error)
+            })
+          };
         }
-        const result = await aiCircuitBreaker.execute(async () => {
-          const response = await openai.chat.completions.create({
+      }
+      if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "kpi-analysis" && httpMethod === "POST") {
+        const userId = event.headers["x-user-id"] || event.headers["x-forwarded-for"] || "anonymous";
+        const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
+        if (!openai) {
+          memoryService.recordObservation(
+            userId,
+            "system_event",
+            "OpenAI not configured - KPI analysis fallback",
+            { endpoint: "kpi-analysis", sessionId }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({
+              error: "OpenAI API key not configured",
+              summary: "Your KPI trends show steady performance. Configure OpenAI API key for detailed analysis.",
+              recommendations: ["Set up API credentials", "Enable advanced analytics"]
+            })
+          };
+        }
+        const { historicalData, currentMetrics } = JSON.parse(body);
+        try {
+          const response2 = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
               {
                 role: "system",
-                content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
+                content: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations."
               },
               {
                 role: "user",
-                content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
+                content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
               }
             ],
             response_format: { type: "json_object" },
-            temperature: 0.7,
-            max_tokens: 200
+            temperature: 0.3,
+            max_tokens: 800
           });
-          const parsedResult = JSON.parse(response.choices[0].message.content || "{}");
-          await aiResponseCache.set(cacheKey, parsedResult);
-          const tokensUsed = response.usage?.total_tokens || 200;
-          const estimatedCost = tokensUsed / 1e3 * 0.15;
-          aiUsageTracker.trackUsage({
-            userId: event.headers["x-user-id"] || "anonymous",
-            endpoint: "smart-greeting",
-            tokensUsed,
-            cost: estimatedCost,
-            timestamp: Date.now(),
+          let result;
+          try {
+            const content = response2.choices[0].message.content || "{}";
+            result = JSON.parse(content);
+          } catch (_parseError) {
+            result = {
+              error: "Failed to parse AI response",
+              summary: "Analysis completed but response parsing failed",
+              recommendations: ["Review data format", "Check API response"],
+              parsed_content: response2.choices[0].message.content
+            };
+          }
+          const tokensUsed = response2.usage?.total_tokens || 0;
+          memoryService.recordChatInteraction(
+            userId,
+            sessionId,
+            `KPI analysis request - historical: ${JSON.stringify(historicalData).slice(0, 200)}...`,
+            `Summary: ${result.summary?.slice(0, 100) || "N/A"}, Trends: ${result.trends?.length || 0} items, Predictions: ${result.predictions?.length || 0} items`,
+            { endpoint: "kpi-analysis", tokensUsed, historicalData, currentMetrics }
+          ).catch(() => {
+          });
+          return { statusCode: 200, headers, body: JSON.stringify(result) };
+        } catch (error) {
+          console.error("KPI analysis error:", error);
+          memoryService.recordObservation(
+            userId,
+            "error",
+            `KPI analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+            { endpoint: "kpi-analysis", sessionId }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 503,
+            headers,
+            body: JSON.stringify({
+              error: "Analysis failed",
+              summary: "KPI analysis temporarily unavailable.",
+              recommendations: ["Try again later", "Contact support if issue persists"]
+            })
+          };
+        }
+      }
+      if (pathParts.length >= 2 && pathParts[0] === "googleai" && pathParts[1] === "test" && httpMethod === "POST") {
+        const userId = event.headers["x-user-id"] || event.headers["x-forwarded-for"] || "anonymous";
+        const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
+        const { prompt } = JSON.parse(body);
+        try {
+          const response2 = await callGoogleAI(prompt || "Generate a business insight in one sentence.");
+          memoryService.recordChatInteraction(
+            userId,
+            sessionId,
+            `Google AI test request - prompt: ${prompt?.slice(0, 100)}`,
+            `Response: ${response2?.slice(0, 100)}`,
+            { endpoint: "googleai/test", provider: "gemini" }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              model: "gemini-1.5-flash",
+              output: response2,
+              message: "Google AI working perfectly!"
+            })
+          };
+        } catch (error) {
+          memoryService.recordObservation(
+            userId,
+            "error",
+            `Google AI test failed: ${error instanceof Error ? error.message : String(error)}`,
+            { endpoint: "googleai/test", sessionId }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 503,
+            headers,
+            body: JSON.stringify({
+              error: "Google AI test failed",
+              message: error instanceof Error ? error.message : "Service unavailable"
+            })
+          };
+        }
+      }
+      if (pathParts.length >= 3 && pathParts[0] === "openai" && pathParts[1] === "test-gpt5-direct" && httpMethod === "POST") {
+        const userId = event.headers["x-user-id"] || event.headers["x-forwarded-for"] || "anonymous";
+        const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
+        if (!openai) {
+          memoryService.recordObservation(
+            userId,
+            "system_event",
+            "OpenAI not configured - test-gpt5-direct endpoint called",
+            { sessionId }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({
+              error: "OpenAI API key not configured",
+              message: "Please configure OpenAI API key for testing"
+            })
+          };
+        }
+        try {
+          const response2 = await openai.chat.completions.create({
             model: "gpt-4o-mini",
-            success: true
+            messages: [
+              {
+                role: "user",
+                content: "Generate a business insight about CRM efficiency in exactly 1 sentence."
+              }
+            ],
+            max_tokens: 50
           });
-          return parsedResult;
-        });
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            ...result,
-            source: "gpt-4o-mini",
-            model: "gpt-4o-mini"
-          })
-        };
-      } catch (error) {
-        console.error(
-          "Smart greeting circuit breaker error:",
-          error instanceof Error ? error.message : String(error)
-        );
-        aiUsageTracker.trackUsage({
-          userId: event.headers["x-user-id"] || "anonymous",
-          endpoint: "smart-greeting",
-          tokensUsed: 0,
-          cost: 0,
-          timestamp: Date.now(),
-          model: "gpt-4o-mini",
-          success: false
-        });
-        return {
-          statusCode: 503,
-          headers,
-          body: JSON.stringify({
-            greeting: `Good ${timeOfDay}! Your pipeline is looking strong.`,
-            insight: "AI service temporarily unavailable. Using intelligent defaults.",
-            source: "circuit_breaker_fallback",
-            model: "fallback",
-            error: error instanceof Error ? error.message : String(error)
-          })
-        };
+          const output = response2.choices[0].message.content;
+          memoryService.recordChatInteraction(
+            userId,
+            sessionId,
+            "Direct GPT test request",
+            `Test response: ${output?.slice(0, 100) || "N/A"}`,
+            { endpoint: "test-gpt5-direct", model: "gpt-4o-mini", tokensUsed: response2.usage?.total_tokens }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              model: "gpt-4o-mini",
+              output,
+              message: "AI working perfectly!"
+            })
+          };
+        } catch (error) {
+          console.error("Test GPT5 direct error:", error);
+          memoryService.recordObservation(
+            userId,
+            "error",
+            `Test GPT5 direct failed: ${error instanceof Error ? error.message : String(error)}`,
+            { endpoint: "test-gpt5-direct", sessionId }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 503,
+            headers,
+            body: JSON.stringify({
+              error: "Test failed",
+              message: "AI service temporarily unavailable"
+            })
+          };
+        }
       }
-    }
-    if (pathParts.length >= 2 && pathParts[0] === "openai" && pathParts[1] === "kpi-analysis" && httpMethod === "POST") {
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: "OpenAI API key not configured",
-            summary: "Your KPI trends show steady performance. Configure OpenAI API key for detailed analysis.",
-            recommendations: ["Set up API credentials", "Enable advanced analytics"]
-          })
-        };
-      }
-      const { historicalData, currentMetrics } = JSON.parse(body);
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
+      if (pathParts.length === 1 && pathParts[0] === "respond" && httpMethod === "POST") {
+        const userId = event.headers["x-user-id"] || event.headers["x-forwarded-for"] || "anonymous";
+        const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
+        const {
+          prompt,
+          imageUrl,
+          schema,
+          useThinking,
+          temperature = 0.4,
+          max_output_tokens = 2048,
+          forceToolName
+        } = JSON.parse(body);
+        if (!openai) {
+          memoryService.recordObservation(
+            userId,
+            "system_event",
+            "OpenAI not configured - respond endpoint called",
+            { sessionId, prompt: prompt?.slice(0, 200) }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({
+              error: "OpenAI API key not configured",
+              message: "Please configure OpenAI API key for AI features"
+            })
+          };
+        }
+        memoryService.recordObservation(
+          userId,
+          "user_prompt",
+          imageUrl ? `${prompt}
+[Image: ${imageUrl}]` : prompt,
+          { sessionId, endpoint: "respond", hasImage: !!imageUrl, schema: !!schema }
+        ).catch(() => {
+        });
+        const messages = [
           {
             role: "system",
-            content: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations."
+            content: "You are a helpful sales + ops assistant for white-label CRM applications."
           },
           {
             role: "user",
-            content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
-          }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 800
-      });
-      let result;
-      try {
-        const content = response.choices[0].message.content || "{}";
-        result = JSON.parse(content);
-      } catch (_parseError) {
-        result = {
-          error: "Failed to parse AI response",
-          summary: "Analysis completed but response parsing failed",
-          recommendations: ["Review data format", "Check API response"],
-          parsed_content: response.choices[0].message.content
-        };
-      }
-      return { statusCode: 200, headers, body: JSON.stringify(result) };
-    }
-    if (pathParts.length >= 2 && pathParts[0] === "googleai" && pathParts[1] === "test" && httpMethod === "POST") {
-      const { prompt } = JSON.parse(body);
-      const response = await callGoogleAI(prompt || "Generate a business insight in one sentence.");
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          model: "gemini-1.5-flash",
-          output: response,
-          message: "Google AI working perfectly!"
-        })
-      };
-    }
-    if (pathParts.length >= 3 && pathParts[0] === "openai" && pathParts[1] === "test-gpt5-direct" && httpMethod === "POST") {
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: "OpenAI API key not configured",
-            message: "Please configure OpenAI API key for testing"
-          })
-        };
-      }
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: "Generate a business insight about CRM efficiency in exactly 1 sentence."
-          }
-        ],
-        max_tokens: 50
-      });
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          success: true,
-          model: "gpt-4o-mini",
-          output: response.choices[0].message.content,
-          message: "AI working perfectly!"
-        })
-      };
-    }
-    if (pathParts.length === 1 && pathParts[0] === "respond" && httpMethod === "POST") {
-      const {
-        prompt,
-        imageUrl,
-        schema,
-        useThinking,
-        temperature = 0.4,
-        max_output_tokens = 2048,
-        forceToolName
-      } = JSON.parse(body);
-      if (!openai) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: "OpenAI API key not configured",
-            message: "Please configure OpenAI API key for AI features"
-          })
-        };
-      }
-      const messages = [
-        {
-          role: "system",
-          content: "You are a helpful sales + ops assistant for white-label CRM applications."
-        },
-        {
-          role: "user",
-          content: imageUrl ? `${prompt}
+            content: imageUrl ? `${prompt}
 
 Image URL: ${imageUrl}` : prompt
-        }
-      ];
-      const response = await openai.chat.completions.create({
-        model: useThinking ? "gpt-4o" : "gpt-4o-mini",
-        messages,
-        temperature,
-        max_tokens: max_output_tokens,
-        response_format: schema ? { type: "json_object" } : void 0,
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "analyzeBusinessData",
-              description: "Analyze business data and provide insights",
-              parameters: {
-                type: "object",
-                properties: {
-                  dataType: { type: "string" },
-                  analysisType: { type: "string" },
-                  timeRange: { type: "string" }
-                },
-                required: ["dataType"]
+          }
+        ];
+        const response2 = await openai.chat.completions.create({
+          model: useThinking ? "gpt-4o" : "gpt-4o-mini",
+          messages,
+          temperature,
+          max_tokens: max_output_tokens,
+          response_format: schema ? { type: "json_object" } : void 0,
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "analyzeBusinessData",
+                description: "Analyze business data and provide insights",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    dataType: { type: "string" },
+                    analysisType: { type: "string" },
+                    timeRange: { type: "string" }
+                  },
+                  required: ["dataType"]
+                }
               }
-            }
-          },
-          {
-            type: "function",
-            function: {
-              name: "generateRecommendations",
-              description: "Generate business recommendations based on data",
-              parameters: {
-                type: "object",
-                properties: {
-                  context: { type: "string" },
-                  goals: { type: "array", items: { type: "string" } },
-                  constraints: { type: "array", items: { type: "string" } }
+            },
+            {
+              type: "function",
+              function: {
+                name: "generateRecommendations",
+                description: "Generate business recommendations based on data",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    context: { type: "string" },
+                    goals: { type: "array", items: { type: "string" } },
+                    constraints: { type: "array", items: { type: "string" } }
+                  }
                 }
               }
             }
+          ],
+          tool_choice: forceToolName ? { type: "function", function: { name: forceToolName } } : "auto"
+        });
+        const toolCalls = response2.choices[0].message.tool_calls;
+        if (toolCalls && toolCalls.length > 0) {
+          memoryService.recordObservation(
+            userId,
+            "tool_use",
+            `Tools invoked: ${toolCalls.map((tc) => tc.function.name).join(", ")}`,
+            { sessionId, endpoint: "respond", toolCalls: toolCalls.map((tc) => tc.function.name) }
+          ).catch(() => {
+          });
+          const toolOutputs = await Promise.all(
+            toolCalls.map(async (tc) => ({
+              tool_call_id: tc.id,
+              output: await executeWLTool(tc)
+            }))
+          );
+          for (const tool of toolOutputs) {
+            memoryService.recordObservation(
+              userId,
+              "tool_use",
+              `Tool result: ${tool.output?.slice(0, 200) || "empty"}`,
+              { sessionId, endpoint: "respond", tool_call_id: tool.tool_call_id }
+            ).catch(() => {
+            });
           }
-        ],
-        tool_choice: forceToolName ? { type: "function", function: { name: forceToolName } } : "auto"
-      });
-      const toolCalls = response.choices[0].message.tool_calls;
-      if (toolCalls && toolCalls.length > 0) {
-        const toolOutputs = await Promise.all(
-          toolCalls.map(async (tc) => ({
-            tool_call_id: tc.id,
-            output: await executeWLTool(tc)
-          }))
-        );
-        const continuedMessages = [
-          ...messages,
-          response.choices[0].message,
-          ...toolOutputs.map((o) => ({
-            role: "tool",
-            content: o.output,
-            tool_call_id: o.tool_call_id
-          }))
-        ];
-        const continuedResponse = await openai.chat.completions.create({
-          model: useThinking ? "gpt-4o" : "gpt-4o-mini",
-          messages: continuedMessages,
-          temperature,
-          max_tokens: max_output_tokens,
-          response_format: schema ? { type: "json_object" } : void 0
+          const continuedMessages = [
+            ...messages,
+            response2.choices[0].message,
+            ...toolOutputs.map((o) => ({
+              role: "tool",
+              content: o.output,
+              tool_call_id: o.tool_call_id
+            }))
+          ];
+          const continuedResponse = await openai.chat.completions.create({
+            model: useThinking ? "gpt-4o" : "gpt-4o-mini",
+            messages: continuedMessages,
+            temperature,
+            max_tokens: max_output_tokens,
+            response_format: schema ? { type: "json_object" } : void 0
+          });
+          const finalOutput = continuedResponse.choices[0].message.content;
+          memoryService.recordChatInteraction(
+            userId,
+            sessionId,
+            `AI respond (with tools) - prompt: ${prompt?.slice(0, 150)}...`,
+            `Final response: ${finalOutput?.slice(0, 200) || "N/A"}`,
+            {
+              endpoint: "respond",
+              hadToolCalls: true,
+              toolCount: toolCalls.length,
+              tokensUsed: continuedResponse.usage?.total_tokens
+            }
+          ).catch(() => {
+          });
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              output_text: finalOutput,
+              output: [
+                {
+                  content: [
+                    {
+                      type: "output_text",
+                      text: finalOutput
+                    }
+                  ]
+                }
+              ],
+              tool_calls: toolCalls,
+              continued: true
+            })
+          };
+        }
+        const outputText = response2.choices[0].message.content;
+        memoryService.recordChatInteraction(
+          userId,
+          sessionId,
+          `AI respond (direct) - prompt: ${prompt?.slice(0, 150)}...`,
+          `Response: ${outputText?.slice(0, 200) || "N/A"}`,
+          {
+            endpoint: "respond",
+            hadToolCalls: false,
+            tokensUsed: response2.usage?.total_tokens,
+            model: response2.model
+          }
+        ).catch(() => {
         });
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
-            output_text: continuedResponse.choices[0].message.content,
+            output_text: outputText,
             output: [
               {
                 content: [
                   {
                     type: "output_text",
-                    text: continuedResponse.choices[0].message.content
+                    text: outputText
                   }
                 ]
               }
             ],
-            tool_calls: toolCalls,
-            continued: true
+            model: response2.model,
+            usage: response2.usage
           })
         };
       }
@@ -943,6 +1044,17 @@ Image URL: ${imageUrl}` : prompt
     };
   } catch (error) {
     console.error("OpenAI function error:", error);
+    memoryService.recordObservation(
+      "system",
+      "error",
+      `OpenAI handler error: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        path: event.path,
+        httpMethod,
+        headers: { "x-user-id": event.headers["x-user-id"], "x-session-id": event.headers["x-session-id"] }
+      }
+    ).catch(() => {
+    });
     return {
       statusCode: 500,
       headers,

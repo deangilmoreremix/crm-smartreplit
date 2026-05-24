@@ -18,6 +18,7 @@ __export(schema_exports, {
   aiQueriesRelations: () => aiQueriesRelations,
   aiResellerPricing: () => aiResellerPricing,
   aiResellerPricingRelations: () => aiResellerPricingRelations,
+  apiProviderTypes: () => apiProviderTypes,
   appointments: () => appointments,
   appointmentsRelations: () => appointmentsRelations,
   automationRules: () => automationRules,
@@ -87,6 +88,7 @@ __export(schema_exports, {
   insertUsageEventSchema: () => insertUsageEventSchema,
   insertUsagePlanSchema: () => insertUsagePlanSchema,
   insertUserAiTokensSchema: () => insertUserAiTokensSchema,
+  insertUserApiKeySchema: () => insertUserApiKeySchema,
   insertUserCreditsSchema: () => insertUserCreditsSchema,
   insertUserFeatureSchema: () => insertUserFeatureSchema,
   insertUserGeneratedImageSchema: () => insertUserGeneratedImageSchema,
@@ -130,6 +132,8 @@ __export(schema_exports, {
   usagePlans: () => usagePlans,
   usagePlansRelations: () => usagePlansRelations,
   userAiTokens: () => userAiTokens,
+  userApiKeys: () => userApiKeys,
+  userApiKeysRelations: () => userApiKeysRelations,
   userCredits: () => userCredits,
   userCreditsRelations: () => userCreditsRelations,
   userFeatures: () => userFeatures,
@@ -461,7 +465,8 @@ var profilesRelations = relations(profiles, ({ many, one }) => ({
   entitlement: one(entitlements, {
     fields: [profiles.id],
     references: [entitlements.userId]
-  })
+  }),
+  apiKeys: many(userApiKeys)
 }));
 var contactsRelations = relations(contacts, ({ one, many }) => ({
   profile: one(profiles, {
@@ -1492,6 +1497,45 @@ var insertWebhookEventSchema = createInsertSchema(webhookEvents).omit({
   processedAt: true,
   createdAt: true
 });
+var apiProviderTypes = ["openai", "gemini"];
+var userApiKeys = pgTable("user_api_keys", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  // 'openai' | 'gemini'
+  apiKey: text("api_key").notNull(),
+  // Encrypted or plaintext (plaintext for now, can be encrypted later)
+  apiKeyName: text("api_key_name"),
+  // Optional name given by user
+  model: text("model"),
+  // Optional specific model to use
+  isDefault: boolean("is_default").default(false),
+  // Default key for this provider
+  isActive: boolean("is_active").default(true),
+  // Can be deactivated
+  lastTestedAt: timestamp("last_tested_at"),
+  // When the key was last validated
+  testStatus: text("test_status"),
+  // 'success', 'failed', 'pending'
+  testError: text("test_error"),
+  // Error message if test failed
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var userApiKeysRelations = relations(userApiKeys, ({ one }) => ({
+  user: one(profiles, {
+    fields: [userApiKeys.userId],
+    references: [profiles.id]
+  })
+}));
+var insertUserApiKeySchema = createInsertSchema(userApiKeys).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastTestedAt: true,
+  testStatus: true,
+  testError: true
+});
 var fieldTypes = [
   "TEXT",
   "NUMBER",
@@ -1645,14 +1689,29 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { Pool } from "pg";
 var pool = null;
 var db = null;
-if (process.env.DATABASE_URL) {
-  try {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    db = drizzle(pool, { schema: schema_exports });
-    console.log("\u2705 Database connected successfully");
-  } catch (error) {
-    console.warn("Database initialization failed, continuing without database:", error);
+var dbPromise = null;
+function initDb() {
+  if (!process.env.DATABASE_URL) {
+    console.warn("\u26A0\uFE0F  DATABASE_URL not set \u2014 database features disabled");
+    return Promise.resolve();
   }
+  if (dbPromise) return dbPromise;
+  dbPromise = (async () => {
+    try {
+      pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      await pool.query("SELECT 1");
+      db = drizzle(pool, { schema: schema_exports });
+      console.log("\u2705 Database connected successfully");
+    } catch (error) {
+      console.error("\u274C Database connection failed:", error);
+      throw error;
+    }
+  })();
+  return dbPromise;
+}
+if (process.env.DATABASE_URL) {
+  initDb().catch(() => {
+  });
 }
 
 // server/storage.ts
