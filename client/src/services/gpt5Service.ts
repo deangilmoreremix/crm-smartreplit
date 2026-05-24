@@ -1,11 +1,12 @@
 // GPT-5 Enhanced Service for Dashboard Components
 // Using OpenAI's o1-preview model (GPT-5) with unified reasoning system
 export class GPT5Service {
-  private isConfigured = false;
+private isConfigured = false;
+   private statusCheckPromise: Promise<void> | null = null;
 
-  constructor() {
-    this.checkApiStatus();
-  }
+   constructor() {
+     // Don't call async code in constructor - defer to first method call
+   }
 
   private async checkApiStatus(): Promise<void> {
     try {

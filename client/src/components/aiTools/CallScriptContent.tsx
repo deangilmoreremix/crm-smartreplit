@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Phone, User, Building, Tag, RefreshCw, Copy } from 'lucide-react';
+import { Phone, User, Building, Tag, RefreshCw, Copy, AlertCircle } from 'lucide-react';
 import AIToolContent from '../shared/AIToolContent';
-import { useOpenAI } from '../../services/openaiLegacyService';
+import openAIService from '../../services/openAIService';
+import { useApiStore } from '../../store/apiStore';
 
 const CallScriptContent: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -15,28 +16,63 @@ const CallScriptContent: React.FC = () => {
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reasoning, setReasoning] = useState<string | null>(null);
-  const openai = useOpenAI();
+  const { apiKeys } = useApiStore();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerate = async (e: React.FormEvent) => {
+  const handleGenerating = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     setResult(null);
     setReasoning(null);
 
+    if (!apiKeys.openai) {
+      setError('Please configure your OpenAI API key in Settings to use this feature.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const prompt = `Create a personalized sales call script to ${formData.callPurpose} for ${formData.prospectName} at ${formData.companyName}, a company in the ${formData.industry} industry.`;
-      const script = await openai.generateScript(prompt); // <- replace with your actual function
-      const reason = await openai.generateReasoning(
-        `Explain the strategy behind the call script for: ${formData.callPurpose}`
-      );
-      setResult(script);
-      setReasoning(reason);
+      const prompt = `Create a personalized sales call script to ${formData.callPurpose} for ${formData.prospectName} at ${formData.companyName}, a company in the ${formData.industry || 'general'} industry.
+
+Include:
+1. Opening statement
+2. Value proposition
+3. Key questions to ask
+4. Handling objections
+5. Close
+
+Format with clear sections and speaking points.`;
+
+      const response = await openAIService.generateContent({
+        messages: [
+          { role: 'system', content: 'You are an expert sales call script generator. Create personalized, effective call scripts that are persuasive and professional.' },
+          { role: 'user', content: prompt }
+        ],
+        model: 'gpt-4o-mini',
+        featureUsed: 'call-script-generator',
+        temperature: 0.7,
+        maxTokens: 1500,
+      });
+
+      setResult(response.content);
+
+      const reasoningPrompt = `Explain the strategic reasoning behind this call script for: ${formData.callPurpose}. Why were certain approaches chosen?`;
+      const reasoningResponse = await openAIService.generateContent({
+        messages: [
+          { role: 'system', content: 'You are an AI assistant that provides strategic reasoning for sales and marketing decisions.' },
+          { role: 'user', content: reasoningPrompt }
+        ],
+        model: 'gpt-4o-mini',
+        featureUsed: 'call-script-reasoning',
+        temperature: 0.4,
+        maxTokens: 500,
+      });
+      setReasoning(reasoningResponse.content);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Something went wrong');
@@ -55,7 +91,7 @@ const CallScriptContent: React.FC = () => {
   return (
     <div className="w-full">
       <AIToolContent>
-        <form onSubmit={handleGenerate} className="space-y-6">
+        <form onSubmit={handleGenerating} className="space-y-6">
           <div>
             <h3 className="font-semibold text-indigo-800">Call Script Generator</h3>
             <p className="text-sm text-indigo-600">
@@ -121,7 +157,12 @@ const CallScriptContent: React.FC = () => {
             {isLoading ? 'Generating...' : 'Generate Call Script'}
           </button>
 
-          {error && <p className="text-red-500">{error}</p>}
+          {error && (
+            <div className="flex items-center text-red-600 text-sm mt-2">
+              <AlertCircle size={14} className="mr-1" />
+              {error}
+            </div>
+          )}
 
           {result && (
             <div className="mt-6">
