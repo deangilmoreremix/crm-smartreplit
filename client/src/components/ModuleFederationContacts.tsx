@@ -10,7 +10,7 @@ const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 // Remote configuration
 const CONTACTS_REMOTE_URL = 'https://contacts.smartcrm.vip';
 const CONTACTS_SCOPE = 'ContactsApp';
-const CONTACTS_MODULE = './ContactsApp';
+const CONTACTS_MODULE = './SmartCRMApp';
 
 // Local fallback component when Module Federation is not available
 const LocalContactsFallback: React.FC = () => {
