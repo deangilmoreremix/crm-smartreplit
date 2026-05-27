@@ -16,13 +16,15 @@ export default defineConfig({
         './CalendarModule': './CalendarModule.tsx'
       },
       shared: {
-        'react': {
+        react: {
           singleton: true,
-          requiredVersion: '^18.0.0'
+          requiredVersion: false,
+          eager: true,
         },
         'react-dom': {
           singleton: true,
-          requiredVersion: '^18.0.0'
+          requiredVersion: false,
+          eager: true,
         }
       }
     })

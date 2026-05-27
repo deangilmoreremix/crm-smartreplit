@@ -14,13 +14,26 @@ export default defineConfig({
     federation({
       name: 'crm-app',
       remotes: {
-        ContactsApp: 'https://contacts.smartcrm.vip',
-        AnalyticsApp: 'https://ai-analytics.smartcrm.vip',
-        CalendarApp: 'https://calendar.smartcrm.vip',
-        PipelineApp: 'https://pipeline.smartcrm.vip',
-        AgencyApp: 'https://agency.smartcrm.vip',
+        ContactsApp: 'https://contacts.smartcrm.vip/assets/remoteEntry.js',
+        AnalyticsApp: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
+        CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
+        PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
+        AIGoalsApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',
       },
-      shared: ['react', 'react-dom', 'react-router-dom']
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: '^18.0.0',
+        },
+        'react-dom': {
+          singleton: true,
+          requiredVersion: '^18.0.0',
+        },
+        'react-router-dom': {
+          singleton: true,
+          requiredVersion: '^6.0.0',
+        }
+      }
     }),
     ],
   server: {

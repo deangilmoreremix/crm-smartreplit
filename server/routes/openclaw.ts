@@ -1331,37 +1331,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           },
           agency: {
             url: 'https://agency.smartcrm.vip',
-            module: './AIAgencyApp',
+            module: './AIGoalsApp',
             description: 'AI Agency App',
           },
           research: {
             url: 'https://research.smartcrm.vip',
-            module: './ProductResearchApp',
-            description: 'Product Research App',
-          },
-          analytics: {
-            url: 'https://ai-analytics.smartcrm.vip',
-            module: './AnalyticsApp',
-            description: 'AI Analytics Dashboard',
-          },
-          contacts: {
-            url: 'https://contacts.smartcrm.vip',
-            module: './ContactsApp',
-            description: 'Contacts Management App',
-          },
-          calendar: {
-            url: 'https://calendar.smartcrm.vip',
-            module: './CalendarApp',
-            description: 'Calendar App',
-          },
-          agency: {
-            url: 'https://agency.smartcrm.vip',
-            module: './AIAgencyApp',
-            description: 'AI Agency App',
-          },
-          research: {
-            url: 'https://research.smartcrm.vip',
-            module: './ProductResearchApp',
+            module: './ResearchApp',
             description: 'Product Research App',
           },
         };
@@ -2539,11 +2514,11 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
           { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './ContactsApp' },
           { name: 'calendar', url: 'https://calendar.smartcrm.vip', module: './CalendarApp' },
-          { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIAgencyApp' },
+          { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIGoalsApp' },
           {
             name: 'research',
             url: 'https://research.smartcrm.vip',
-            module: './ProductResearchApp',
+            module: './ResearchApp',
           },
         ];
 

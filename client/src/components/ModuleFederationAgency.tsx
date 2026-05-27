@@ -5,10 +5,19 @@ import { useWhitelabel } from '../contexts/WhitelabelContext';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Remote configuration - agency.smartcrm.vip uses /assets/remoteEntry.js
+// Remote configuration - agency.smartcrm.vip
 const AGENCY_REMOTE_URL = 'https://agency.smartcrm.vip';
 const AGENCY_SCOPE = 'AIGoalsApp';
 const AGENCY_MODULE = './AIGoalsApp';
+
+// Diagnostics for federation debugging
+if (import.meta.env.DEV) {
+  console.log('🔍 Agency Federation Config:', {
+    url: AGENCY_REMOTE_URL,
+    scope: AGENCY_SCOPE,
+    module: AGENCY_MODULE
+  });
+}
 
 // Local fallback component when Module Federation is not available
 interface LocalAgencyFallbackProps {

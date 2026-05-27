@@ -47,7 +47,7 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
   },
   research: {
     url: 'https://research.smartcrm.vip',
-    module: './ProductResearchApp',
+    module: './ResearchApp',
   },
 };
 
