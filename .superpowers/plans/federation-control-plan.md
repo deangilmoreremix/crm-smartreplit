@@ -179,8 +179,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'Enhanced Contacts Module',
     domain: 'contacts.smartcrm.vip',
     url: 'https://taupe-sprinkles-83c9ee.netlify.app',
-    scope: 'enhanced_contacts',
-    modules: ['./ContactsApp', './ContactDetail', './LeadScore'],
+    scope: 'ContactsApp',
+    modules: ['./ContactsApp', './ContactsModule'],
     capabilities: ['contacts', 'ai-scoring', 'import-export']
   },
   {
@@ -188,8 +188,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'AI Agency Suite',
     domain: 'agency.smartcrm.vip',
     url: 'https://tubular-choux-2a9b3c.netlify.app',
-    scope: 'ai_agency',
-    modules: ['./AgencyApp', './CampaignBuilder'],
+    scope: 'AIGoalsApp',
+    modules: ['./AIGoalsApp', './GoalsModule'],
     capabilities: ['campaigns', 'automation', 'ai-content']
   },
   {
@@ -197,8 +197,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'AI Analytics Dashboard',
     domain: 'analytics.smartcrm.vip',
     url: 'https://subtle-florentine-8fd315.netlify.app',
-    scope: 'ai_analytics',
-    modules: ['./AnalyticsApp', './InsightsPanel'],
+    scope: 'AnalyticsApp',
+    modules: ['./AnalyticsApp', './InsightsModule'],
     capabilities: ['analytics', 'insights', 'forecasting']
   },
   {
@@ -206,8 +206,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'Enhanced Pipeline Deals',
     domain: 'pipeline.smartcrm.vip',
     url: 'https://cheery-syrniki-b5b6ca.netlify.app',
-    scope: 'pipeline_deals',
-    modules: ['./PipelineApp', './DealTracker'],
+    scope: 'PipelineApp',
+    modules: ['./PipelineApp', './DealsModule'],
     capabilities: ['pipeline', 'deals', 'forecasting']
   },
   {
@@ -215,8 +215,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'Product Research Module',
     domain: 'research.smartcrm.vip',
     url: 'https://clever-syrniki-4df87f.netlify.app',
-    scope: 'product_research',
-    modules: ['./ResearchApp', './ProductInsights'],
+    scope: 'ResearchApp',
+    modules: ['./ResearchApp', './ResearchModule'],
     capabilities: ['research', 'market-analysis']
   },
   {
@@ -224,8 +224,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'Advanced AI Calendar',
     domain: 'calendar.smartcrm.vip',
     url: 'https://voluble-vacherin-add80d.netlify.app',
-    scope: 'ai_calendar',
-    modules: ['./CalendarApp', './ScheduleOptimizer'],
+    scope: 'CalendarApp',
+    modules: ['./CalendarApp', './CalendarModule'],
     capabilities: ['calendar', 'scheduling', 'ai-suggestions']
   },
   {
@@ -233,8 +233,8 @@ const REMOTE_APPS: RemoteApp[] = [
     name: 'AI-Powered Analytics Dashboard',
     domain: 'ai-analytics.smartcrm.vip',
     url: 'https://dulcet-salmiakki-445c47.netlify.app',
-    scope: 'multi_analytics',
-    modules: ['./MultiAnalyticsApp', './CrossAppInsights'],
+    scope: 'AnalyticsApp',
+    modules: ['./AnalyticsApp', './InsightsModule'],
     capabilities: ['analytics', 'cross-app', 'ai-insights']
   }
 ];

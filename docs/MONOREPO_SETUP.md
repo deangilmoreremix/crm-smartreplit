@@ -6,13 +6,13 @@ Single repo managing all 7 Module Federation apps with unified authentication.
 
 | App | Scope | Directory | Exposes |
 |-----|-------|-----------|---------|
-| Contacts | enhanced_contacts | apps/contacts/ | ContactsApp, ContactsModule |
-| Agency | ai_agency | apps/agency/ | AgencyApp, AgencyModule |
-| Analytics | ai_analytics | apps/analytics/ | AnalyticsApp, AnalyticsModule |
-| Pipeline | pipeline_deals | apps/pipeline/ | PipelineApp, PipelineModule |
-| Research | product_research | apps/research/ | ResearchApp, ResearchModule |
-| Calendar | ai_calendar | apps/calendar/ | CalendarApp, CalendarModule |
-| AI Analytics | multi_analytics | apps/ai-analytics/ | MultiAnalyticsApp, CrossAppInsights |
+| Contacts | ContactsApp | apps/contacts/ | ContactsApp, ContactsModule |
+| Agency | AIGoalsApp | apps/agency/ | AIGoalsApp, GoalsModule |
+| Analytics | AnalyticsApp | apps/analytics/ | AnalyticsApp, InsightsModule |
+| Pipeline | PipelineApp | apps/pipeline/ | PipelineApp, DealsModule |
+| Research | ResearchApp | apps/research/ | ResearchApp, ResearchModule |
+| Calendar | CalendarApp | apps/calendar/ | CalendarApp, CalendarModule |
+| AI Analytics | AnalyticsApp | apps/ai-analytics/ | AnalyticsApp, InsightsModule |
 
 ## Unified Authentication Flow
 

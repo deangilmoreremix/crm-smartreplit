@@ -247,11 +247,11 @@ describe('OpenClaw Integration Tests', () => {
       },
       agency: {
         url: 'https://agency.smartcrm.vip',
-        module: './AIAgencyApp',
+        module: './AIGoalsApp',
       },
       research: {
         url: 'https://research.smartcrm.vip',
-        module: './ProductResearchApp',
+        module: './ResearchApp',
       },
     };
 
@@ -354,14 +354,14 @@ describe('OpenClaw Integration Tests', () => {
         const app = remoteApps['agency'];
         expect(app).toBeDefined();
         expect(app.url).toBe('https://agency.smartcrm.vip');
-        expect(app.module).toBe('./AIAgencyApp');
+        expect(app.module).toBe('./AIGoalsApp');
       });
 
       it('should find research remote app', () => {
         const app = remoteApps['research'];
         expect(app).toBeDefined();
         expect(app.url).toBe('https://research.smartcrm.vip');
-        expect(app.module).toBe('./ProductResearchApp');
+        expect(app.module).toBe('./ResearchApp');
       });
 
       it('should handle unknown remote app', () => {

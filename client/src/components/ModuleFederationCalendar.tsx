@@ -10,6 +10,15 @@ const CALENDAR_REMOTE_URL = 'https://calendar.smartcrm.vip';
 const CALENDAR_SCOPE = 'CalendarApp';
 const CALENDAR_MODULE = './CalendarApp';
 
+// Diagnostics for federation debugging
+if (import.meta.env.DEV) {
+  console.log('🔍 Calendar Federation Config:', {
+    url: CALENDAR_REMOTE_URL,
+    scope: CALENDAR_SCOPE,
+    module: CALENDAR_MODULE
+  });
+}
+
 // Local fallback component when Module Federation is not available
 const LocalCalendarFallback: React.FC = () => {
   return (

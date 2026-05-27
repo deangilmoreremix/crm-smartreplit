@@ -18,6 +18,8 @@ class DynamicModuleFederation {
   async loadRemoteModule<T = unknown>(config: RemoteModuleConfig): Promise<T> {
     const { url, scope, module } = config;
 
+    console.log(`[DynamicMF] Loading module: ${scope}/${module} from ${url}`);
+
     // Load/reuse the remote entry container
     const container = await this.getOrLoadContainer(url);
 
@@ -26,7 +28,16 @@ class DynamicModuleFederation {
 
     // Get the module factory
     const factory = await container.get(module);
+    
+    if (!factory) {
+      throw new Error(`Module factory not found for ${scope}/${module}. Check if module is exposed in remote.`);
+    }
+    
     const Module = factory() as { default?: unknown };
+
+    if (!Module.default) {
+      console.warn(`[DynamicMF] Module ${scope}/${module} has no default export`);
+    }
 
     return (Module.default || Module) as T;
   }
@@ -52,10 +63,11 @@ class DynamicModuleFederation {
         // The remoteEntry should export init and get functions
         if (namespace.init && namespace.get) {
           console.log(`✅ Module Federation remoteEntry loaded successfully: ${remoteEntryUrl}`);
+          console.log(`[DynamicMF] Container exports:`, Object.keys(namespace));
           this.loadedRemotes.set(url, namespace as ModuleContainer);
           return namespace as ModuleContainer;
         } else {
-          console.warn(`⚠️ RemoteEntry at ${remoteEntryUrl} missing init/get exports`);
+          console.warn(`⚠️ RemoteEntry at ${remoteEntryUrl} missing init/get exports`, namespace);
           continue;
         }
       } catch (err) {

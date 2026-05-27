@@ -7,19 +7,21 @@ export default defineConfig({
     react(),
     federation({
       name: 'AIGoalsApp',
-      filename: 'remoteEntry.js',
+      filename: 'assets/remoteEntry.js',
       exposes: {
         './AIGoalsApp': './src/AIGoalsApp.tsx',
         './GoalsModule': './src/GoalsModule.tsx'
       },
       shared: {
-        'react': {
+        react: {
           singleton: true,
-          requiredVersion: '^18.0.0'
+          requiredVersion: false,
+          eager: true,
         },
         'react-dom': {
           singleton: true,
-          requiredVersion: '^18.0.0'
+          requiredVersion: false,
+          eager: true,
         }
       }
     })

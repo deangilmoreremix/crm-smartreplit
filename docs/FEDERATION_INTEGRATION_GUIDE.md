@@ -50,7 +50,7 @@ createRoot(document.getElementById('root')!).render(
 
 Add request handlers for each capability your app provides:
 
-#### Contacts App (enhanced_contacts scope)
+#### Contacts App (ContactsApp scope)
 ```tsx
 // In your contacts app initialization
 import { eventBus } from './shared/federation';
@@ -70,7 +70,7 @@ eventBus.onRequest('contacts', async (action, data) => {
 });
 ```
 
-#### Pipeline App (pipeline_deals scope)
+#### Pipeline App (PipelineApp scope)
 ```tsx
 eventBus.onRequest('pipeline', async (action, data) => {
   switch (action) {
@@ -86,7 +86,7 @@ eventBus.onRequest('pipeline', async (action, data) => {
 });
 ```
 
-#### Analytics App (ai_analytics scope)
+#### Analytics App (AnalyticsApp scope)
 ```tsx
 eventBus.onRequest('analytics', async (action, data) => {
   switch (action) {
@@ -163,13 +163,13 @@ The host app at `/client/src/App.tsx` now:
 
 | App ID | Domain | Netlify URL | Scope | Request Prefix |
 |--------|--------|-------------|-------|----------------|
-| contacts | contacts.smartcrm.vip | taupe-sprinkles...netlify.app | enhanced_contacts | 'contacts' |
-| agency | agency.smartcrm.vip | tubular-choux...netlify.app | ai_agency | 'agency' |
-| analytics | analytics.smartcrm.vip | subtle-florentine...netlify.app | ai_analytics | 'analytics' |
-| pipeline | pipeline.smartcrm.vip | cheery-syrniki...netlify.app | pipeline_deals | 'pipeline' |
-| research | research.smartcrm.vip | clever-syrniki...netlify.app | product_research | 'research' |
-| calendar | calendar.smartcrm.vip | voluble-vacherin...netlify.app | ai_calendar | 'calendar' |
-| ai-analytics | ai-analytics.smartcrm.vip | dulcet-salmiakki...netlify.app | multi_analytics | 'ai-analytics' |
+| contacts | contacts.smartcrm.vip | taupe-sprinkles...netlify.app | ContactsApp | 'contacts' |
+| agency | agency.smartcrm.vip | tubular-choux...netlify.app | AIGoalsApp | 'agency' |
+| analytics | analytics.smartcrm.vip | subtle-florentine...netlify.app | AnalyticsApp | 'analytics' |
+| pipeline | pipeline.smartcrm.vip | cheery-syrniki...netlify.app | PipelineApp | 'pipeline' |
+| research | research.smartcrm.vip | clever-syrniki...netlify.app | ResearchApp | 'research' |
+| calendar | calendar.smartcrm.vip | voluble-vacherin...netlify.app | CalendarApp | 'calendar' |
+| ai-analytics | ai-analytics.smartcrm.vip | dulcet-salmiakki...netlify.app | AnalyticsApp | 'ai-analytics' |
 
 ## Available Hooks
 

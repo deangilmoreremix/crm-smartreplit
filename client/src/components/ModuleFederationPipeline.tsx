@@ -8,10 +8,19 @@ import {
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Remote configuration - try both root and assets paths
+// Remote configuration
 const PIPELINE_REMOTE_URL = 'https://pipeline.smartcrm.vip';
 const PIPELINE_SCOPE = 'PipelineApp';
 const PIPELINE_MODULE = './PipelineApp';
+
+// Diagnostics for federation debugging
+if (import.meta.env.DEV) {
+  console.log('🔍 Pipeline Federation Config:', {
+    url: PIPELINE_REMOTE_URL,
+    scope: PIPELINE_SCOPE,
+    module: PIPELINE_MODULE
+  });
+}
 
 // Local fallback component
 const LocalPipelineFallback: React.FC = () => {

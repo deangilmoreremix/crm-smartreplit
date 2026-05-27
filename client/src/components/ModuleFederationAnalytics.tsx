@@ -9,6 +9,15 @@ const ANALYTICS_REMOTE_URL = 'https://ai-analytics.smartcrm.vip';
 const ANALYTICS_SCOPE = 'AnalyticsApp';
 const ANALYTICS_MODULE = './AnalyticsApp';
 
+// Diagnostics for federation debugging
+if (import.meta.env.DEV) {
+  console.log('🔍 Analytics Federation Config:', {
+    url: ANALYTICS_REMOTE_URL,
+    scope: ANALYTICS_SCOPE,
+    module: ANALYTICS_MODULE
+  });
+}
+
 // Local fallback component
 const LocalAnalyticsFallback: React.FC = () => {
   return (
