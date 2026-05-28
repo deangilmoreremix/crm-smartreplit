@@ -325,4 +325,60 @@ router.patch('/users/:id', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/auth/dev-bypass
+ * Development-only endpoint to create a mock session
+ * SECURITY: Only works on localhost/replit.dev with NODE_ENV=development
+ */
+router.post('/dev-bypass', async (req: Request, res: Response) => {
+  // SECURITY: Check both NODE_ENV and hostname
+  const hostname = req.get('host') || '';
+  const isProductionDomain = hostname.includes('replit.app') || hostname.includes('smartcrm.vip');
+
+  if (process.env.NODE_ENV !== 'development' || isProductionDomain) {
+    console.log('🔒 Dev bypass blocked - ENV:', process.env.NODE_ENV, 'Host:', hostname);
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const devUser = {
+    id: 'dev-user-12345',
+    email: 'dev@smartcrm.local',
+    username: 'developer',
+    firstName: 'Development',
+    lastName: 'User',
+    role: 'super_admin',
+    permissions: ['all'],
+    tenantId: 'development',
+    status: 'active',
+    lastActive: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    app_context: 'smartcrm',
+  };
+
+  const devSession = {
+    access_token: 'dev-bypass-token-' + Date.now(),
+    refresh_token: 'dev-bypass-refresh-' + Date.now(),
+    expires_at: Date.now() + 24 * 60 * 60 * 1000,
+    user: devUser,
+  };
+
+  console.log('✅ Dev bypass session created for:', devUser.email);
+
+  res.json({
+    success: true,
+    user: devUser,
+    session: devSession,
+    hasAccess: true,
+    permissions: ['all'],
+  });
+});
+
+/**
+ * registerAuthRoutes - Register authentication routes with Express app
+ * This function is called by the main routes index to set up /api/auth endpoints
+ */
+export const registerAuthRoutes = (app: any) => {
+  app.use('/api/auth', router);
+};
+
 export default router;

@@ -31,7 +31,7 @@ import { registerAIAutomationRoutes } from './aiAutomation';
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
   console.log('Registering auth routes at /api/auth');
-  app.use('/api/auth', authRoutes);
+  registerAuthRoutes(app);
 
   // Register CRM routes
   registerCRMRoutes(app);

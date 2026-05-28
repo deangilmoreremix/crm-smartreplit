@@ -1,6 +1,6 @@
 import helmet from 'helmet';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 // Security headers middleware
 export const securityHeaders = helmet({
@@ -41,7 +41,7 @@ export const corsConfig = cors({
     if (!origin) return callback(null, true);
 
     const allowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+      ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
       : defaultOrigins;
 
     const isAllowed = allowedOrigins.some((allowed) => {
@@ -92,9 +92,9 @@ export const createRateLimit = (options: {
     legacyHeaders: false,
     skipSuccessfulRequests: options.skipSuccessfulRequests || false,
     skipFailedRequests: options.skipFailedRequests || false,
-    // Use IP address for rate limiting
+    // Use proper IP key generator for IPv6 support
     keyGenerator: (req) => {
-      return req.ip || req.connection.remoteAddress || 'unknown';
+      return ipKeyGenerator({}).keyGenerator(req);
     },
     // Custom handler for rate limit exceeded
     handler: (req, res) => {
