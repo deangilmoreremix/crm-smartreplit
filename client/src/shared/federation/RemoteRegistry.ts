@@ -8,7 +8,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'contacts',
     name: 'Enhanced Contacts Module',
     domain: 'contacts.smartcrm.vip',
-    url: 'https://taupe-sprinkles-83c9ee.netlify.app',
+    url: 'https://contacts.smartcrm.vip',
     scope: 'ContactsApp',
     modules: ['./ContactsApp', './ContactsModule'],
     capabilities: ['contacts', 'ai-scoring', 'import-export']
@@ -17,7 +17,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'agency',
     name: 'AI Agency Suite',
     domain: 'agency.smartcrm.vip',
-    url: 'https://tubular-choux-2a9b3c.netlify.app',
+    url: 'https://agency.smartcrm.vip',
     scope: 'AIGoalsApp',
     modules: ['./AIGoalsApp', './GoalsModule'],
     capabilities: ['campaigns', 'automation', 'ai-content']
@@ -26,7 +26,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'analytics',
     name: 'AI Analytics Dashboard',
     domain: 'analytics.smartcrm.vip',
-    url: 'https://subtle-florentine-8fd315.netlify.app',
+    url: 'https://ai-analytics.smartcrm.vip',
     scope: 'AnalyticsApp',
     modules: ['./AnalyticsApp', './InsightsModule'],
     capabilities: ['analytics', 'insights', 'forecasting']
@@ -35,7 +35,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'pipeline',
     name: 'Enhanced Pipeline Deals',
     domain: 'pipeline.smartcrm.vip',
-    url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+    url: 'https://pipeline.smartcrm.vip',
     scope: 'PipelineApp',
     modules: ['./PipelineApp', './DealsModule'],
     capabilities: ['pipeline', 'deals', 'forecasting']
@@ -44,7 +44,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'research',
     name: 'Product Research Module',
     domain: 'research.smartcrm.vip',
-    url: 'https://clever-syrniki-4df87f.netlify.app',
+    url: 'https://research.smartcrm.vip',
     scope: 'ResearchApp',
     modules: ['./ResearchApp', './ResearchModule'],
     capabilities: ['research', 'market-analysis']
@@ -53,7 +53,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'calendar',
     name: 'Advanced AI Calendar',
     domain: 'calendar.smartcrm.vip',
-    url: 'https://voluble-vacherin-add80d.netlify.app',
+    url: 'https://calendar.smartcrm.vip',
     scope: 'CalendarApp',
     modules: ['./CalendarApp', './CalendarModule'],
     capabilities: ['calendar', 'scheduling', 'ai-suggestions']
@@ -62,7 +62,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'ai-analytics',
     name: 'AI-Powered Analytics Dashboard',
     domain: 'ai-analytics.smartcrm.vip',
-    url: 'https://dulcet-salmiakki-445c47.netlify.app',
+    url: 'https://ai-analytics.smartcrm.vip',
     scope: 'AnalyticsApp',
     modules: ['./AnalyticsApp', './InsightsModule'],
     capabilities: ['analytics', 'cross-app', 'ai-insights']
