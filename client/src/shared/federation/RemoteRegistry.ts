@@ -3,6 +3,7 @@ import { RemoteApp, AppCapability } from './types';
 
 // Complete registry of all module federation apps
 // NOTE: scope values MUST match the federation plugin `name` property in each remote's vite.config.js
+// NOTE: modules are checked against actual remoteEntry.js output (see verify-mfe-remotes.js)
 export const REMOTE_APPS: Record<string, RemoteApp> = {
   contacts: {
     id: 'contacts',
@@ -10,7 +11,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'contacts.smartcrm.vip',
     url: 'https://contacts.smartcrm.vip',
     scope: 'ContactsApp',
-    modules: ['./ContactsApp', './ContactsModule'],
+    modules: ['./SmartCRMApp', './App', './mount'], // Actual exposed modules
     capabilities: ['contacts', 'ai-scoring', 'import-export']
   },
   agency: {
@@ -20,7 +21,8 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     url: 'https://agency.smartcrm.vip',
     scope: 'AIGoalsApp',
     modules: ['./AIGoalsApp', './GoalsModule'],
-    capabilities: ['campaigns', 'automation', 'ai-content']
+    capabilities: ['campaigns', 'automation', 'ai-content'],
+    available: false, // Temporarily disabled until properly deployed
   },
   analytics: {
     id: 'analytics',
@@ -28,7 +30,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'analytics.smartcrm.vip',
     url: 'https://ai-analytics.smartcrm.vip',
     scope: 'AnalyticsApp',
-    modules: ['./AnalyticsApp', './InsightsModule'],
+    modules: ['./AnalyticsApp', './Dashboard', './AnalyticsWidget'], // Actual exposed modules
     capabilities: ['analytics', 'insights', 'forecasting']
   },
   pipeline: {
@@ -37,7 +39,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'pipeline.smartcrm.vip',
     url: 'https://pipeline.smartcrm.vip',
     scope: 'PipelineApp',
-    modules: ['./PipelineApp', './DealsModule'],
+    modules: ['./PipelineApp', './Pipeline', './DealDetailView'], // Actual exposed modules
     capabilities: ['pipeline', 'deals', 'forecasting']
   },
   research: {
@@ -47,7 +49,8 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     url: 'https://research.smartcrm.vip',
     scope: 'ResearchApp',
     modules: ['./ResearchApp', './ResearchModule'],
-    capabilities: ['research', 'market-analysis']
+    capabilities: ['research', 'market-analysis'],
+    available: false, // Temporarily disabled - returns HTML not remoteEntry
   },
   calendar: {
     id: 'calendar',
@@ -55,7 +58,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'calendar.smartcrm.vip',
     url: 'https://calendar.smartcrm.vip',
     scope: 'CalendarApp',
-    modules: ['./CalendarApp', './CalendarModule'],
+    modules: ['./CalendarApp', './CalendarModule', './ContactsModal'], // Actual exposed modules
     capabilities: ['calendar', 'scheduling', 'ai-suggestions']
   },
   'ai-analytics': {
@@ -64,7 +67,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'ai-analytics.smartcrm.vip',
     url: 'https://ai-analytics.smartcrm.vip',
     scope: 'AnalyticsApp',
-    modules: ['./AnalyticsApp', './InsightsModule'],
+    modules: ['./AnalyticsApp', './Dashboard', './AnalyticsWidget'],
     capabilities: ['analytics', 'cross-app', 'ai-insights']
   }
 };

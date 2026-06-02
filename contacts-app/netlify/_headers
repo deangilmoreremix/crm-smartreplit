@@ -1,7 +1,7 @@
 # CORS headers for Module Federation support
 # Allow cross-origin requests from app.smartcrm.vip for dynamic imports
 
-*.js
+/*.js
   Access-Control-Allow-Origin: *
   Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization, X-Client-Info, Apikey
@@ -13,3 +13,9 @@ remoteEntry.js
   Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
   Access-Control-Allow-Headers: Content-Type, Authorization, X-Client-Info, Apikey
   Cache-Control: public, max-age=1800, s-maxage=3600
+
+# CSP headers for Module Federation iframe embedding
+# Note: Update app.smartcrm.vip to match your actual host domain
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.pexels.com https://*.supabase.co; connect-src 'self' https://*.supabase.co https://api.openai.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-ancestors 'self' https://*.smartcrm.vip https://app.smartcrm.vip; frame-src 'self' https://*.smartcrm.vip;
+  X-Frame-Options: ALLOW-FROM https://*.smartcrm.vip https://app.smartcrm.vip

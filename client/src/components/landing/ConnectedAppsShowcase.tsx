@@ -27,7 +27,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'funnelcraft',
       name: 'FunnelCraft AI',
-      url: 'https://serene-valkyrie-fec320.netlify.app/',
+      url: 'https://landing.smartcrm.vip/',
       icon: <Target size={24} />,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100',
@@ -38,7 +38,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'closer',
       name: 'SmartCRM Closer',
-      url: 'https://stupendous-twilight-64389a.netlify.app/',
+      url: 'https://agency.smartcrm.vip/',
       icon: <Briefcase size={24} />,
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-100',
@@ -49,7 +49,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'contentai',
       name: 'ContentAI',
-      url: 'https://capable-mermaid-3c73fa.netlify.app/',
+      url: 'https://calendar.smartcrm.vip/',
       icon: <FileText size={24} />,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100',
@@ -60,7 +60,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'whitelabel',
       name: 'White-Label Platform',
-      url: 'https://moonlit-tarsier-239e70.netlify.app',
+      url: 'https://white-label.smartcrm.vip',
       icon: <Palette size={24} />,
       color: 'text-pink-600',
       bgColor: 'bg-pink-100',
@@ -71,7 +71,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'pipeline',
       name: 'Remote Pipeline',
-      url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+      url: 'https://pipeline.smartcrm.vip',
       icon: <Workflow size={24} />,
       color: 'text-cyan-600',
       bgColor: 'bg-cyan-100',
@@ -82,7 +82,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'aigoals',
       name: 'AI Goals',
-      url: 'https://tubular-choux-2a9b3c.netlify.app',
+      url: 'https://agency.smartcrm.vip',
       icon: <Target size={24} />,
       color: 'text-amber-600',
       bgColor: 'bg-amber-100',
@@ -93,7 +93,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'contacts',
       name: 'Remote Contacts',
-      url: 'https://taupe-sprinkles-83c9ee.netlify.app',
+      url: 'https://contacts.smartcrm.vip',
       icon: <Users size={24} />,
       color: 'text-violet-600',
       bgColor: 'bg-violet-100',
@@ -104,7 +104,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'analytics',
       name: 'Business Intelligence',
-      url: 'https://ai-powered-analytics-fibd.bolt.host',
+      url: 'https://ai-analytics.smartcrm.vip',
       icon: <BarChart3 size={24} />,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-100',
@@ -115,7 +115,7 @@ const ConnectedAppsShowcase: React.FC = () => {
     {
       id: 'research',
       name: 'Product Research',
-      url: 'https://product-research-mod-uay0.bolt.host/',
+      url: 'https://research.smartcrm.vip/',
       icon: <Globe size={24} />,
       color: 'text-teal-600',
       bgColor: 'bg-teal-100',

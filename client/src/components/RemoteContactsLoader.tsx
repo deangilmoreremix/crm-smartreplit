@@ -5,8 +5,8 @@ import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 
 interface RemoteContactsProps {
   remoteUrl: string | null; // URL of your deployed Bolt contacts app
-  scope?: string; // Module federation scope (default: 'contacts_remote')
-  module?: string; // Module path (default: './ContactsApp')
+  scope?: string; // Module federation scope (default: 'ContactsApp')
+  module?: string; // Module path (default: './SmartCRMApp' - actual exposed module)
   onContactSelect?: (contact: any) => void;
   onContactCreate?: (contact: any) => void;
   onContactUpdate?: (contact: any) => void;
@@ -18,8 +18,8 @@ interface RemoteContactsProps {
 
 const RemoteContactsLoader: React.FC<RemoteContactsProps> = ({
   remoteUrl,
-  scope = 'contacts_remote',
-  module = './ContactsApp',
+  scope = 'ContactsApp',
+  module = './SmartCRMApp', // Fixed: actual exposed module name
   fallbackComponent: FallbackComponent,
   ...contactProps
 }) => {

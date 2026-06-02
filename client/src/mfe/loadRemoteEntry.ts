@@ -35,7 +35,7 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
   },
   contacts: {
     url: 'https://contacts.smartcrm.vip',
-    module: './ContactsApp',
+    module: './SmartCRMApp', // Fixed: actual exposed module name from remote
   },
   calendar: {
     url: 'https://calendar.smartcrm.vip',

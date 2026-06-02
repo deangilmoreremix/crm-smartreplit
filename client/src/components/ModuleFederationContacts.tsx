@@ -7,10 +7,10 @@ import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Remote configuration
+// Remote configuration - Note: contacts.smartcrm.vip exposes 'SmartCRMApp' not 'ContactsApp'
 const CONTACTS_REMOTE_URL = 'https://contacts.smartcrm.vip';
 const CONTACTS_SCOPE = 'ContactsApp';
-const CONTACTS_MODULE = './ContactsApp';
+const CONTACTS_MODULE = './SmartCRMApp'; // Actual exposed module name
 
 // Local fallback component when Module Federation is not available
 const LocalContactsFallback: React.FC = () => {
