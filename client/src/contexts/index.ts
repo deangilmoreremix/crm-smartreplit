@@ -9,6 +9,7 @@ export { VideoCallProvider, useVideoCall } from './VideoCallContext';
 export { WhitelabelProvider, useWhitelabel } from './WhitelabelContext';
 export { EnhancedHelpProvider, useEnhancedHelp } from './EnhancedHelpContext';
 export { NavbarPositionProvider, useNavbarPosition } from './NavbarPositionContext';
+export { EntitlementProvider, useEntitlements } from './EntitlementContext';
 
 // Re-export React context utilities
 export { createContext, useContext } from 'react';
