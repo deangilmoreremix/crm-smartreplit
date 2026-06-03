@@ -3,7 +3,8 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import federation from "@originjs/vite-plugin-federation";
+const federationModule = require("@originjs/vite-plugin-federation");
+const federation = federationModule.default || federationModule;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

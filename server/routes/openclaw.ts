@@ -2095,13 +2095,17 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
              } else {
                errorCount++;
                results.push({ contactId, error: 'Contact not found' });
+            }
+          } catch (e: unknown) {
+            errorCount++;
+            results.push({ contactId, error: e instanceof Error ? e.message : 'Processing error' });
           }
         }
       }
-    }
+     }
 
-    // Record bulk analysis summary
-         memoryService.recordObservation(
+     // Record bulk analysis summary
+     memoryService.recordObservation(
            userId,
            'tool_use',
            `Bulk analysis completed: ${successCount} succeeded, ${errorCount} failed out of ${contactIds.length} contacts`,
@@ -2114,122 +2118,13 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
            }
          ).catch(() => {});
 
-         return { results, summary: { total: contactIds.length, success: successCount, failed: errorCount } };
+          return { results, count: results.length };
         }
-            try {
-               const analysis = safeJsonParse(response.choices[0].message.content || '{}');
-               results.push({ contactId, name: contact.name, ...analysis });
-             } catch {
-              results.push({ contactId, name: contact.name, error: 'Analysis failed' });
-            }
-          }
-        }
-
-        return { results, count: results.length };
       }
+    }
 
-      case 'bulk_export_contacts': {
-        let contactList;
-
-        if (params.contactIds) {
-          const ids = params.contactIds
-            .split(',')
-            .map((id: string) => parseInt(id.trim()))
-            .filter((id: number) => !isNaN(id));
-          contactList = await db!
-            .select()
-            .from(contacts)
-            .where(and(eq(contacts.profileId, userId), ...ids.map((id) => eq(contacts.id, id))));
-        } else if (params.filters) {
-          const conditions = [eq(contacts.profileId, userId)];
-          if (params.filters.status) conditions.push(eq(contacts.status, params.filters.status));
-          if (params.filters.industry)
-            conditions.push(eq(contacts.industry, params.filters.industry));
-          contactList = await db!
-            .select()
-            .from(contacts)
-            .where(and(...conditions))
-            .limit(1000);
-        } else {
-          contactList = await db!
-            .select()
-            .from(contacts)
-            .where(eq(contacts.profileId, userId))
-            .limit(1000);
-        }
-
-        const csvHeader =
-          'Name,Email,Phone,Company,Position,Status,Industry,Score,Location,Last Contact\n';
-        const csvRows = contactList
-          .map(
-            (c) =>
-              `"${c.name}","${c.email}","${c.phone || ''}","${c.company || ''}","${c.position || ''}","${c.status}","${c.industry || ''}","${c.score || ''}","${c.location || ''}","${c.lastContact || ''}"`
-          )
-          .join('\n');
-
-        return {
-          csv: csvHeader + csvRows,
-          count: contactList.length,
-          exportedAt: new Date().toISOString(),
-        };
-      }
-
-      case 'search_contacts_advanced': {
-        const conditions = [eq(contacts.profileId, userId)];
-
-        if (params.status) conditions.push(eq(contacts.status, params.status));
-        if (params.industry) conditions.push(eq(contacts.industry, params.industry));
-        if (params.source) conditions.push(eq(contacts.source, params.source));
-        if (params.location) conditions.push(like(contacts.location, `%${params.location}%`));
-        if (params.query) {
-          conditions.push(
-            or(
-              like(contacts.name, `%${params.query}%`),
-              like(contacts.email, `%${params.query}%`),
-              like(contacts.company, `%${params.query}%`)
-            )
-          );
-        }
-
-        const limit = params.limit || 50;
-        let results = await db!
-          .select()
-          .from(contacts)
-          .where(and(...conditions))
-          .limit(limit);
-
-        if (params.interestLevel) {
-          results = results.filter((c) => (c as any).interestLevel === params.interestLevel);
-        }
-        if (params.minScore !== undefined) {
-          results = results.filter((c) => (c.score || 0) >= params.minScore);
-        }
-        if (params.maxScore !== undefined) {
-          results = results.filter((c) => (c.score || 0) <= params.maxScore);
-        }
-        if (params.favoritesOnly) {
-          results = results.filter((c) => (c as any).isFavorite === true);
-        }
-        if (params.tags) {
-          const tagList = params.tags.split(',').map((t: string) => t.trim());
-          results = results.filter((c) =>
-            tagList.some((tag: string) => (c as any).tags?.includes(tag))
-          );
-        }
-
-        return { contacts: results, count: results.length };
-      }
-
-      // Deal AI
-       case 'analyze_deal': {
-         const dealId = parseInt(params.dealId);
-         const [deal] = await db!
-           .select()
-           .from(deals)
-           .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)));
-
-         if (!deal) {
-           memoryService.recordObservation(
+    // Record bulk analysis summary
+    memoryService.recordObservation(
              userId,
              'error',
              `analyze_deal: Deal ${dealId} not found`,
