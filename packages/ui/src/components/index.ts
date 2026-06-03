@@ -1,5 +1,5 @@
 export { Button } from './Button';
-export { Card } from './Card';
+export { Card, CardHeader, CardContent, CardFooter } from './Card';
 export { Input } from './Input';
 export { Select } from './Select';
 export { Badge } from './Badge';
@@ -7,6 +7,9 @@ export { Avatar } from './Avatar';
 export { Modal } from './Modal';
 export { Dropdown } from './Dropdown';
 export { Tooltip } from './Tooltip';
+export { Icon } from './Icon';
+export { Chip } from './Chip';
+export { Callout } from './Callout';
 export { LoadingSpinner } from './LoadingSpinner';
 export { EmptyState } from './EmptyState';
 export { DynamicFieldRenderer } from './DynamicFieldRenderer';
