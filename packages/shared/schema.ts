@@ -580,6 +580,117 @@ export const userGeneratedImages = pgTable('user_generated_images', {
 });
 
 // ============================================================================
+// PARTNER & BILLING TABLES
+// ============================================================================
+
+export const partners = pgTable('partners', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  company: text('company'),
+  phone: text('phone'),
+  status: text('status').default('active'),
+  tierId: uuid('tier_id'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const partnerTiers = pgTable('partner_tiers', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  commissionRate: decimal('commission_rate', { precision: 5, scale: 2 }).default('0'),
+  tierFeatures: jsonb('tier_features').default([]),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const partnerMetrics = pgTable('partner_metrics', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  period: text('period').notNull(),
+  totalSales: decimal('total_sales', { precision: 12, scale: 2 }).default('0'),
+  totalCommission: decimal('total_commission', { precision: 12, scale: 2 }).default('0'),
+  totalCustomers: integer('total_customers').default(0),
+  newCustomers: integer('new_customers').default(0),
+  churnedCustomers: integer('churned_customers').default(0),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const partnerCustomers = pgTable('partner_customers', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  customerEmail: text('customer_email').notNull(),
+  customerName: text('customer_name'),
+  subscriptionStatus: text('subscription_status').default('active'),
+  subscriptionTier: text('subscription_tier'),
+  mrr: decimal('mrr', { precision: 10, scale: 2 }).default('0'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const commissions = pgTable('commissions', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  customerId: uuid('customer_id').references(() => partnerCustomers.id),
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+  status: text('status').default('pending'),
+  payoutId: uuid('payout_id'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const payouts = pgTable('payouts', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+  status: text('status').default('pending'),
+  paidAt: timestamp('paid_at'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const whiteLabelPackages = pgTable('white_label_packages', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  description: text('description'),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  interval: text('interval').default('month'),
+  features: jsonb('features').default([]),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const partnerWLConfigs = pgTable('partner_wl_configs', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  packageId: uuid('package_id').references(() => whiteLabelPackages.id),
+  customDomain: text('custom_domain'),
+  branding: jsonb('branding').default({}),
+  settings: jsonb('settings').default({}),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const userWLSettings = pgTable('user_wl_settings', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  partnerId: uuid('partner_id').references(() => partners.id),
+  wlConfigId: uuid('wl_config_id').references(() => partnerWLConfigs.id),
+  preferences: jsonb('preferences').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// ============================================================================
 // SUBSCRIPTION & BILLING TABLES (preserved)
 // ============================================================================
 
@@ -715,6 +826,40 @@ export const rolesRelations = relations(roles, ({ many }) => ({
   userRoles: many(userRoles),
 }));
 
+export const partnersRelations = relations(partners, ({ one, many }) => ({
+  tier: one(partnerTiers, {
+    fields: [partners.tierId],
+    references: [partnerTiers.id],
+  }),
+  metrics: many(partnerMetrics),
+  customers: many(partnerCustomers),
+  commissions: many(commissions),
+  payouts: many(payouts),
+  wlConfigs: many(partnerWLConfigs),
+}));
+
+export const partnerWLConfigsRelations = relations(partnerWLConfigs, ({ one }) => ({
+  partner: one(partners, {
+    fields: [partnerWLConfigs.partnerId],
+    references: [partners.id],
+  }),
+  package: one(whiteLabelPackages, {
+    fields: [partnerWLConfigs.packageId],
+    references: [whiteLabelPackages.id],
+  }),
+}));
+
+export const commissionsRelations = relations(commissions, ({ one }) => ({
+  partner: one(partners, {
+    fields: [commissions.partnerId],
+    references: [partners.id],
+  }),
+  customer: one(partnerCustomers, {
+    fields: [commissions.customerId],
+    references: [partnerCustomers.id],
+  }),
+}));
+
 // ============================================================================
 // INSERT SCHEMAS
 // ============================================================================
@@ -785,6 +930,24 @@ export const insertPermissionSchema = createInsertSchema(permissions).omit({
   updatedAt: true,
 });
 
+export const insertPartnerSchema = createInsertSchema(partners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPartnerWLConfigSchema = createInsertSchema(partnerWLConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserWLSettingsSchema = createInsertSchema(userWLSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -821,3 +984,13 @@ export type InsertRole = z.infer<typeof insertRoleSchema>;
 
 export type Permission = typeof permissions.$inferSelect;
 export type InsertPermission = z.infer<typeof insertPermissionSchema>;
+
+export type Partner = typeof partners.$inferSelect;
+export type InsertPartner = z.infer<typeof insertPartnerSchema>;
+export type PartnerTier = typeof partnerTiers.$inferSelect;
+export type Commission = typeof commissions.$inferSelect;
+export type Payout = typeof payouts.$inferSelect;
+export type WhiteLabelPackage = typeof whiteLabelPackages.$inferSelect;
+export type PartnerWLConfig = typeof partnerWLConfigs.$inferSelect;
+export type UserWLSettings = typeof userWLSettings.$inferSelect;
+export type InsertUserWLSettings = z.infer<typeof insertUserWLSettingsSchema>;

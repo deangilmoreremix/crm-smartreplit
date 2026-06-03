@@ -17,7 +17,7 @@
     "build:auth": "esbuild server/auth/index.ts --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/auth --out-extension:.js=.mjs",
     "build:entitlements": "esbuild server/entitlements/index.ts --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/entitlements --out-extension:.js=.mjs --loader:.ts=ts --alias:@shared=./shared",
     "build:ai-proxy": "esbuild netlify/functions/ai-proxy.js --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/ai-proxy --out-extension:.js=.mjs",
-    "build:gtm-prompt-library": "esbuild netlify/functions/gtm-prompt-library/index.mjs --platform=node --packages=external --bundle --format=esm --outdir=netlify/functions/gtm-prompt-library --allow-overwrite",
+    "build:gtm-prompt-library": "esbuild netlify/functions/gtm-prompt-library/index.js --platform=node --bundle --format=esm --outdir=netlify/functions/gtm-prompt-library --out-extension:.js=.mjs --allow-overwrite",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "lint": "eslint . --ext .ts,.tsx",
