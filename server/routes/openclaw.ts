@@ -2095,14 +2095,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
              } else {
                errorCount++;
                results.push({ contactId, error: 'Contact not found' });
-             }
-           } catch (e: unknown) {
-             errorCount++;
-             results.push({ contactId, error: e instanceof Error ? e.message : 'Processing error' });
-           }
-         }
+          }
+        }
+      }
+    }
 
-         // Record bulk analysis summary
+    // Record bulk analysis summary
          memoryService.recordObservation(
            userId,
            'tool_use',
@@ -2117,10 +2115,11 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
          ).catch(() => {});
 
          return { results, summary: { total: contactIds.length, success: successCount, failed: errorCount } };
-       }
-              const analysis = safeJsonParse(response.choices[0].message.content || '{}');
-              results.push({ contactId, name: contact.name, ...analysis });
-            } catch {
+        }
+            try {
+               const analysis = safeJsonParse(response.choices[0].message.content || '{}');
+               results.push({ contactId, name: contact.name, ...analysis });
+             } catch {
               results.push({ contactId, name: contact.name, error: 'Analysis failed' });
             }
           }

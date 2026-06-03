@@ -10,10 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node16",
-    "paths": {
-      "@shared/*": ["./shared/*"]
-    }
+    "moduleResolution": "Node16",
+    "allowSyntheticDefaultImports": true
   },
   "ts-node": {
     "esm": false
