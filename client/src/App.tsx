@@ -35,6 +35,7 @@ import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAIApiKeys } from './hooks/useAIApiKeys';
 import AIApiKeySettings from './components/aiIntegration/AIApiKeySettings';
+import { useCommandMenu, CommandMenu } from './components/CommandMenu';
 
 // Eager pages
 import Dashboard from './pages/Dashboard';
@@ -329,6 +330,7 @@ function AppContent() {
   const [showOpenClawSetup, setShowOpenClawSetup] = React.useState(false);
   const { apiConfig } = useAIApiKeys();
   const hasOpenClawKey = Boolean(apiConfig?.openclaw?.apiKey?.trim());
+  const { CommandMenuComponent } = useCommandMenu();
  
   // Check for OpenClaw setup on app load - only for authenticated users
   // Uses the unified key system (Option A integration)
@@ -1201,6 +1203,8 @@ function AppContent() {
             preferOpenClawOnOpen={true}
           />
         )}
+
+        <CommandMenuComponent />
 
         {/* ElevenLabs widgets removed to prevent performance issues */}
       </div>
