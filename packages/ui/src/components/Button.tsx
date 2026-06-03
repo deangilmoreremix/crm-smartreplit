@@ -39,7 +39,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           if (accent === 'danger') {
             return 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600';
           }
-          return 'bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600';
+          return 'bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary';
         case 'secondary':
           return 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-500 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700';
         case 'tertiary':
@@ -49,7 +49,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         case 'danger':
           return 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600';
         default:
-          return 'bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-600';
+          return 'bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary';
       }
     };
 
