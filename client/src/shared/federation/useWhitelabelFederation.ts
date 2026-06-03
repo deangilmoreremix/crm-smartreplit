@@ -1,4 +1,5 @@
 // Whitelabel Federation - Sync whitelabel config across all federated apps
+import { useCallback } from 'react';
 import { WhitelabelConfig } from '../../types/whitelabel';
 import { eventBus } from './EventBus';
 import { useFederation } from './FederationProvider';
@@ -9,29 +10,28 @@ import { useFederation } from './FederationProvider';
 export function useWhitelabelFederation() {
   const { updateSharedState } = useFederation();
 
-  const syncWhitelabelConfig = (config: WhitelabelConfig) => {
+  const syncWhitelabelConfig = useCallback((config: WhitelabelConfig) => {
     eventBus.publish({
       type: 'whitelabel:config-updated',
       payload: { config },
       source: 'host'
     });
 
-    // Use functional update to avoid stale closure
     updateSharedState((prev) => ({
       userPreferences: {
         ...prev.userPreferences,
         whitelabelConfig: config
       }
     }));
-  };
+  }, [updateSharedState]);
 
-  const onWhitelabelConfigUpdate = (handler: (config: WhitelabelConfig) => void) => {
+  const onWhitelabelConfigUpdate = useCallback((handler: (config: WhitelabelConfig) => void) => {
     return eventBus.subscribe('whitelabel:config-updated', (event) => {
       handler(event.payload.config);
     });
-  };
+  }, []);
 
-  const broadcastTenantSwitch = (tenantId: string) => {
+  const broadcastTenantSwitch = useCallback((tenantId: string) => {
     eventBus.publish({
       type: 'whitelabel:tenant-changed',
       payload: { tenantId },
@@ -39,13 +39,13 @@ export function useWhitelabelFederation() {
     });
 
     updateSharedState({ currentTenant: tenantId });
-  };
+  }, [updateSharedState]);
 
-  const onTenantChange = (handler: (tenantId: string) => void) => {
+  const onTenantChange = useCallback((handler: (tenantId: string) => void) => {
     return eventBus.subscribe('whitelabel:tenant-changed', (event) => {
       handler(event.payload.tenantId);
     });
-  };
+  }, []);
 
   return {
     syncWhitelabelConfig,

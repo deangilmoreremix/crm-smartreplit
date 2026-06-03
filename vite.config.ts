@@ -32,6 +32,18 @@ export default defineConfig({
         'react-router-dom': {
           singleton: true,
           requiredVersion: '^6.0.0',
+        },
+        '@emotion/react': {
+          singleton: true,
+          requiredVersion: '^11.0.0',
+        },
+        '@emotion/styled': {
+          singleton: true,
+          requiredVersion: '^11.0.0',
+        },
+        '@emotion/is-prop-valid': {
+          singleton: true,
+          requiredVersion: '^1.3.0',
         }
       }
     }),
