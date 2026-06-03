@@ -296,7 +296,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     },
     {
       name: 'SmartCRM Closer',
-      url: 'https://smartcrmcloser.netlify.app',
+      url: 'https://agency.smartcrm.vip',
       icon: Users,
       isExternal: true,
     },

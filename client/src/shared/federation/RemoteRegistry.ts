@@ -3,68 +3,71 @@ import { RemoteApp, AppCapability } from './types';
 
 // Complete registry of all module federation apps
 // NOTE: scope values MUST match the federation plugin `name` property in each remote's vite.config.js
+// NOTE: modules are checked against actual remoteEntry.js output (see verify-mfe-remotes.js)
 export const REMOTE_APPS: Record<string, RemoteApp> = {
   contacts: {
     id: 'contacts',
     name: 'Enhanced Contacts Module',
     domain: 'contacts.smartcrm.vip',
-    url: 'https://taupe-sprinkles-83c9ee.netlify.app',
+    url: 'https://contacts.smartcrm.vip',
     scope: 'ContactsApp',
-    modules: ['./ContactsApp', './ContactsModule'],
+    modules: ['./SmartCRMApp', './App', './mount'], // Actual exposed modules
     capabilities: ['contacts', 'ai-scoring', 'import-export']
   },
   agency: {
     id: 'agency',
     name: 'AI Agency Suite',
     domain: 'agency.smartcrm.vip',
-    url: 'https://tubular-choux-2a9b3c.netlify.app',
+    url: 'https://agency.smartcrm.vip',
     scope: 'AIGoalsApp',
     modules: ['./AIGoalsApp', './GoalsModule'],
-    capabilities: ['campaigns', 'automation', 'ai-content']
+    capabilities: ['campaigns', 'automation', 'ai-content'],
+    available: false, // Temporarily disabled until properly deployed
   },
   analytics: {
     id: 'analytics',
     name: 'AI Analytics Dashboard',
     domain: 'analytics.smartcrm.vip',
-    url: 'https://subtle-florentine-8fd315.netlify.app',
+    url: 'https://ai-analytics.smartcrm.vip',
     scope: 'AnalyticsApp',
-    modules: ['./AnalyticsApp', './InsightsModule'],
+    modules: ['./AnalyticsApp', './Dashboard', './AnalyticsWidget'], // Actual exposed modules
     capabilities: ['analytics', 'insights', 'forecasting']
   },
   pipeline: {
     id: 'pipeline',
     name: 'Enhanced Pipeline Deals',
     domain: 'pipeline.smartcrm.vip',
-    url: 'https://cheery-syrniki-b5b6ca.netlify.app',
+    url: 'https://pipeline.smartcrm.vip',
     scope: 'PipelineApp',
-    modules: ['./PipelineApp', './DealsModule'],
+    modules: ['./PipelineApp', './Pipeline', './DealDetailView'], // Actual exposed modules
     capabilities: ['pipeline', 'deals', 'forecasting']
   },
   research: {
     id: 'research',
     name: 'Product Research Module',
     domain: 'research.smartcrm.vip',
-    url: 'https://clever-syrniki-4df87f.netlify.app',
+    url: 'https://research.smartcrm.vip',
     scope: 'ResearchApp',
     modules: ['./ResearchApp', './ResearchModule'],
-    capabilities: ['research', 'market-analysis']
+    capabilities: ['research', 'market-analysis'],
+    available: false, // Temporarily disabled - returns HTML not remoteEntry
   },
   calendar: {
     id: 'calendar',
     name: 'Advanced AI Calendar',
     domain: 'calendar.smartcrm.vip',
-    url: 'https://voluble-vacherin-add80d.netlify.app',
+    url: 'https://calendar.smartcrm.vip',
     scope: 'CalendarApp',
-    modules: ['./CalendarApp', './CalendarModule'],
+    modules: ['./CalendarApp', './CalendarModule', './ContactsModal'], // Actual exposed modules
     capabilities: ['calendar', 'scheduling', 'ai-suggestions']
   },
   'ai-analytics': {
     id: 'ai-analytics',
     name: 'AI-Powered Analytics Dashboard',
     domain: 'ai-analytics.smartcrm.vip',
-    url: 'https://dulcet-salmiakki-445c47.netlify.app',
+    url: 'https://ai-analytics.smartcrm.vip',
     scope: 'AnalyticsApp',
-    modules: ['./AnalyticsApp', './InsightsModule'],
+    modules: ['./AnalyticsApp', './Dashboard', './AnalyticsWidget'],
     capabilities: ['analytics', 'cross-app', 'ai-insights']
   }
 };

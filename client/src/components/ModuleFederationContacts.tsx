@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import {
   moduleFederationOrchestrator,
   useSharedModuleState,
@@ -6,13 +6,47 @@ import {
 import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
+const USE_IFRAME_FALLBACK = import.meta.env.VITE_USE_IFRAME_FALLBACK !== 'false'; // Allow iframe fallback
 
-// Remote configuration
+// Remote configuration - Note: contacts.smartcrm.vip exposes 'SmartCRMApp' not 'ContactsApp'
 const CONTACTS_REMOTE_URL = 'https://contacts.smartcrm.vip';
 const CONTACTS_SCOPE = 'ContactsApp';
-const CONTACTS_MODULE = './ContactsApp';
+const CONTACTS_MODULE = './SmartCRMApp'; // Actual exposed module name
 
-// Local fallback component when Module Federation is not available
+// Iframe fallback component - loads the contacts app directly
+const ContactsIframeFallback: React.FC<{ showHeader?: boolean }> = ({ showHeader = false }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div className="h-full w-full flex flex-col">
+      {showHeader && (
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Contacts</h2>
+        </div>
+      )}
+      <div className="flex-1 relative">
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900 z-10">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading Contacts...</p>
+            </div>
+          </div>
+        )}
+        <iframe
+          src={`${CONTACTS_REMOTE_URL}?embedded=true`}
+          className={`w-full h-full border-0 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setIsLoaded(true)}
+          title="Remote Contacts Application"
+          // Note: CSP on remote may block this - check headers
+          style={{ minHeight: '500px' }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Local fallback for when both MFE and iframe fail
 const LocalContactsFallback: React.FC = () => {
   return (
     <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -25,19 +59,26 @@ const LocalContactsFallback: React.FC = () => {
           The remote contacts application is currently unavailable. This may be due to:
         </p>
         <ul className="text-sm text-gray-600 dark:text-gray-400 text-left mb-4 space-y-1">
+          <li>• CSP header blocking iframe embedding</li>
           <li>• Network connectivity issues</li>
           <li>• Remote server maintenance</li>
-          <li>• CORS policy restrictions</li>
           <li>• Module Federation configuration</li>
         </ul>
         <div className="space-y-2">
+          <a
+            href={CONTACTS_REMOTE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors text-center"
+          >
+            Open Contacts in New Tab
+          </a>
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Retry Connection
           </button>
-          <p className="text-xs text-gray-500">If this issue persists, contact support.</p>
         </div>
       </div>
     </div>
@@ -49,6 +90,7 @@ const ModuleFederationContactsContainer: React.FC<ModuleFederationContactsProps>
 }) => {
   const [retryCount, setRetryCount] = React.useState(0);
   const [isRetrying, setIsRetrying] = React.useState(false);
+  const [useIframe, setUseIframe] = React.useState(false);
 
   const {
     component: RemoteContactsApp,
@@ -59,14 +101,27 @@ const ModuleFederationContactsContainer: React.FC<ModuleFederationContactsProps>
   const handleRetry = () => {
     setIsRetrying(true);
     setRetryCount((prev) => prev + 1);
-    // Force a reload by clearing any cached state
+    if (useIframe) {
+      window.location.reload();
+    } else {
+      setUseIframe(true);
+    }
     setTimeout(() => {
       window.location.reload();
     }, 1000);
   };
 
+  // If MFE is disabled, try iframe fallback or show local fallback
   if (!ENABLE_MFE) {
+    if (USE_IFRAME_FALLBACK) {
+      return <ContactsIframeFallback showHeader={showHeader} />;
+    }
     return <LocalContactsFallback />;
+  }
+
+  // If MFE failed but we have iframe fallback enabled, use it
+  if (error && USE_IFRAME_FALLBACK) {
+    return <ContactsIframeFallback showHeader={showHeader} />;
   }
 
   if (error) {

@@ -69,7 +69,7 @@ describe('RemoteRegistry', () => {
   describe('getRemoteEntryUrl', () => {
     it('returns correct remote entry URL with /assets path', () => {
       const url = remoteRegistry.getRemoteEntryUrl('contacts');
-      expect(url).toBe('https://taupe-sprinkles-83c9ee.netlify.app/assets/remoteEntry.js');
+      expect(url).toBe('https://contacts.smartcrm.vip/assets/remoteEntry.js');
     });
 
     it('throws for non-existent app', () => {

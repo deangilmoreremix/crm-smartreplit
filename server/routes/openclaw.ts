@@ -1308,7 +1308,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       case 'open_remote_app': {
-        const remoteApps: Record<string, { url: string; module: string; description: string }> = {
+        const remoteApps: Record<string, { url: string; module: string; description: string; available?: boolean }> = {
           pipeline: {
             url: 'https://pipeline.smartcrm.vip',
             module: './PipelineApp',
@@ -1321,7 +1321,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           },
           contacts: {
             url: 'https://contacts.smartcrm.vip',
-            module: './ContactsApp',
+            module: './SmartCRMApp', // Fixed: actual exposed module name
             description: 'Contacts Management App',
           },
           calendar: {
@@ -1333,11 +1333,13 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             url: 'https://agency.smartcrm.vip',
             module: './AIGoalsApp',
             description: 'AI Agency App',
+            available: false, // Temporarily disabled until properly deployed
           },
           research: {
             url: 'https://research.smartcrm.vip',
             module: './ResearchApp',
             description: 'Product Research App',
+            available: false, // Temporarily disabled - returns HTML not remoteEntry
           },
         };
         const appNameKey = (params.appName || '').toLowerCase();
@@ -2512,7 +2514,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             module: './PipelineApp',
           },
           { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
-          { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './ContactsApp' },
+          { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './SmartCRMApp' }, // Fixed: actual exposed module
           { name: 'calendar', url: 'https://calendar.smartcrm.vip', module: './CalendarApp' },
           { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIGoalsApp' },
           {

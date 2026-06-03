@@ -10,6 +10,7 @@ export interface RemoteApp {
   scope: string;
   modules: string[];
   capabilities: AppCapability[];
+  available?: boolean; // Optional flag to mark temporarily unavailable remotes
 }
 
 export type AppCapability = 

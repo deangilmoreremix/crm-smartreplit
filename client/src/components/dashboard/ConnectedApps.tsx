@@ -87,7 +87,7 @@ const ConnectedApps: React.FC = () => {
     },
     {
       name: 'SmartCRM Closer',
-      url: 'https://smartcrmcloser.netlify.app',
+      url: 'https://agency.smartcrm.vip',
       icon: Users,
       team: 'Sales Team',
       description: 'Advanced outreach automation and deal closing tools',
