@@ -161,7 +161,7 @@ const AuthConfirm: React.FC<AuthConfirmProps> = () => {
         </div>
 
         <div
-          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-2xl p-8 shadow-lg`}
         >
           <div className="text-center">
             {status === 'loading' && (

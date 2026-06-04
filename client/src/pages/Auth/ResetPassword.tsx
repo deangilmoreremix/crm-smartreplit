@@ -189,7 +189,7 @@ const ResetPassword = () => {
         className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center p-4`}
       >
         <div
-          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg max-w-md w-full text-center`}
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-2xl p-8 shadow-lg max-w-md w-full text-center`}
         >
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className={`${isDark ? 'text-gray-200' : 'text-gray-700'}`}>Verifying reset link...</p>
@@ -211,7 +211,7 @@ const ResetPassword = () => {
         </div>
 
         <div
-          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} backdrop-blur-xl border rounded-2xl p-8 shadow-lg`}
+          className={`${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-2xl p-8 shadow-lg`}
         >
           {error && (
             <div
