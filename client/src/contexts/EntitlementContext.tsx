@@ -21,6 +21,8 @@ interface EntitlementContextType {
 
 const EntitlementContext = createContext<EntitlementContextType | undefined>(undefined);
 
+export { EntitlementContext };
+
 export const useEntitlements = () => {
   const context = useContext(EntitlementContext);
   if (context === undefined) {

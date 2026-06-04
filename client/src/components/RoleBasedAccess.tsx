@@ -2,8 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTenant } from '../contexts/TenantProvider';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { useEntitlements } from '../contexts/EntitlementContext';
 import { canAccessFeature, FeatureKey } from '../types/entitlements';
+import { EntitlementContext } from '../contexts/EntitlementContext';
 
 interface User {
   id: string;
@@ -54,7 +54,9 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { tenant } = useTenant();
   const { user: authUser } = useAuth(); // Get auth user
-  const { entitlement, isLoading: entitlementsLoading } = useEntitlements();
+  const entitlementContext = useContext(EntitlementContext);
+  const entitlement = entitlementContext?.entitlement;
+  const entitlementsLoading = entitlementContext?.isLoading ?? false;
 
   useEffect(() => {
     fetchUserRole();

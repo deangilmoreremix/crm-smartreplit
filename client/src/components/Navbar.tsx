@@ -1,5 +1,5 @@
 // src/components/Navbar.tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -16,6 +16,7 @@ import {
   Zap,
   TrendingUp,
   Calendar,
+import { useEntitlements } from '../contexts/EntitlementContext';
   Phone,
   Receipt,
   BookOpen,
@@ -68,6 +69,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useRole } from './RoleBasedAccess';
 import { useNavbarPosition } from '../contexts/NavbarPositionContext';
+import { EntitlementContext } from '../contexts/EntitlementContext';
 import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import DevBypassButton from './DevBypassButton';
 import OpenClawNavbarIndicator from './OpenClawNavbarIndicator';
@@ -148,9 +150,10 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   const { openAITool } = useNavigation(); // expected from your AIToolsProvider/Navigation layer
   const { signOut, user } = useAuth();
   const { canAccess } = useRole();
-  const { entitlement } = useEntitlements();
+  const entitlementContext = useContext(EntitlementContext);
   const { position, isMinimized, toggleMinimized } = useNavbarPosition();
   const { apiConfig: openclawConfig } = useAIApiKeys();
+  const entitlement = entitlementContext?.entitlement;
   const hasOpenClawKey = Boolean(openclawConfig?.openclaw?.apiKey?.trim());
 
   const navigate = useNavigate();

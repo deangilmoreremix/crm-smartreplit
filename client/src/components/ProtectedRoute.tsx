@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useEntitlements } from '../contexts/EntitlementContext';
+import { EntitlementContext } from '../contexts/EntitlementContext';
 import { canAccessFeature, getFeatureForRoute } from '../types/entitlements';
 import { LoadingSpinner } from './ui/LoadingSpinner';
 
@@ -31,7 +31,9 @@ interface ProtectedRouteProps {
  */
 const ProtectedRoute = ({ children, featureKey }: ProtectedRouteProps) => {
   const { user, loading: authLoading, isSessionReady, isAuthenticated } = useAuth();
-  const { entitlement, isLoading: entitlementsLoading } = useEntitlements();
+  const entitlementContext = useContext(EntitlementContext);
+  const entitlement = entitlementContext?.entitlement;
+  const entitlementsLoading = entitlementContext?.isLoading ?? false;
   const location = useLocation();
 
   // Show loading while session resolves

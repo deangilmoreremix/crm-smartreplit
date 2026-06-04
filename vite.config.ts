@@ -41,10 +41,6 @@ export default defineConfig({
           singleton: true,
           requiredVersion: '^11.0.0',
         },
-        '@emotion/is-prop-valid': {
-          singleton: true,
-          requiredVersion: '^1.3.0',
-        }
       }
     }),
     ],
