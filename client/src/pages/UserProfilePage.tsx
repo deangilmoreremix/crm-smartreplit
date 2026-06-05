@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../hooks/use-toast';
 import { useTheme } from '../contexts/ThemeContext';
+import { validatePassword, getPasswordStrengthColor, getPasswordStrengthText } from '../utils/passwordValidation';
 import GlassCard from '../components/GlassCard';
 import {
   User,
@@ -104,10 +105,10 @@ interface SecuritySettings {
 }
 
 export default function UserProfilePage() {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+   const { user, changePassword } = useAuth();
+   const { toast } = useToast();
+   const [loading, setLoading] = useState(false);
+   const [uploading, setUploading] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     id: '',
     username: '',
@@ -224,11 +225,24 @@ export default function UserProfilePage() {
     confirm: false,
   });
 
+  // Password strength state
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
+
   useEffect(() => {
     if (user) {
       loadUserProfile();
     }
   }, [user]);
+
+  // Update password strength when new password changes
+  useEffect(() => {
+    if (security.newPassword) {
+      const result = validatePassword(security.newPassword);
+      setPasswordStrength(result.strength);
+    } else {
+      setPasswordStrength(null);
+    }
+  }, [security.newPassword]);
 
   const loadUserProfile = async () => {
     try {
@@ -356,6 +370,16 @@ export default function UserProfilePage() {
 
   const updatePassword = async () => {
     try {
+      // Require current password to be provided
+      if (!security.currentPassword) {
+        toast({
+          title: 'Error',
+          description: 'Current password is required to change your password',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (security.newPassword !== security.confirmPassword) {
         toast({
           title: 'Error',
@@ -365,6 +389,7 @@ export default function UserProfilePage() {
         return;
       }
 
+      // Validate password strength
       if (security.newPassword.length < 8) {
         toast({
           title: 'Error',
@@ -374,13 +399,24 @@ export default function UserProfilePage() {
         return;
       }
 
+      if (!/[a-z]/.test(security.newPassword) || !/[A-Z]/.test(security.newPassword) || !/[0-9]/.test(security.newPassword)) {
+        toast({
+          title: 'Error',
+          description: 'Password must contain uppercase, lowercase, and a number',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setLoading(true);
 
-      const { error } = await supabase.auth.updateUser({
-        password: security.newPassword,
-      });
+      // Use the secure changePassword method from AuthContext
+      // This validates the current password on the server before changing
+      const { error } = await changePassword(security.currentPassword, security.newPassword);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       setSecurity({
         currentPassword: '',
@@ -390,7 +426,7 @@ export default function UserProfilePage() {
 
       toast({
         title: 'Success',
-        description: 'Password updated successfully',
+        description: 'Password updated successfully. Please sign in again.',
       });
     } catch (error: any) {
       console.error('Error updating password:', error);
@@ -1028,8 +1064,36 @@ export default function UserProfilePage() {
                       )}
                     </button>
                   </div>
+
+                  {/* Password Strength Indicator */}
+                  {passwordStrength && (
+                    <div className="mt-2">
+                      <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getPasswordStrengthColor(passwordStrength)}`}>
+                        {getPasswordStrengthText(passwordStrength)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Password Requirements */}
+                  <div className="mt-2 text-xs text-gray-500">
+                    <p>Password requirements:</p>
+                    <ul className="list-disc list-inside ml-2 mt-1 space-y-1">
+                      <li className={security.newPassword.length >= 8 ? 'text-green-600' : ''}>
+                        At least 8 characters
+                      </li>
+                      <li className={/[a-z]/.test(security.newPassword) ? 'text-green-600' : ''}>
+                        One lowercase letter
+                      </li>
+                      <li className={/[A-Z]/.test(security.newPassword) ? 'text-green-600' : ''}>
+                        One uppercase letter
+                      </li>
+                      <li className={/[0-9]/.test(security.newPassword) ? 'text-green-600' : ''}>
+                        One number
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-                <Button onClick={updatePassword} disabled={loading || !security.newPassword}>
+                <Button onClick={updatePassword} disabled={loading || !security.newPassword || !security.currentPassword}>
                   Update Password
                 </Button>
               </div>

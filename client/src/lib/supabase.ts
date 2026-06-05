@@ -55,6 +55,18 @@ let supabaseClient: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let authClient: any;
 
+// Determine the cookie domain based on environment
+const getCookieDomain = (): string | undefined => {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
+    return undefined; // No domain restriction for local development
+  }
+  if (currentOrigin.includes('replit.dev') || currentOrigin.includes('replit.app')) {
+    return undefined; // No domain restriction for Replit environments
+  }
+  return '.smartcrm.vip'; // Production domain
+};
+
 if (supabaseIsConfigured) {
   // Create real Supabase client
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -65,7 +77,7 @@ if (supabaseIsConfigured) {
       flowType: 'pkce',
       storageKey: 'smartcrm-auth-token',
       cookieOptions: {
-        domain: '.smartcrm.vip',
+        domain: getCookieDomain(),
         path: '/',
         sameSite: 'lax',
       },
@@ -112,7 +124,7 @@ if (supabaseIsConfigured) {
         options: { redirectTo },
       });
     },
-    signInWithMagicLink: async (email: string) => {
+signInWithMagicLink: async (email: string) => {
       const currentOrigin = window.location.origin;
       const isDevelopment =
         currentOrigin.includes('localhost') ||
@@ -146,6 +158,22 @@ if (supabaseIsConfigured) {
     },
     updatePassword: async (password: string) => {
       return await supabaseClient.auth.updateUser({ password });
+    },
+    // changePassword requires current password and uses server endpoint
+    changePassword: async (currentPassword: string, newPassword: string) => {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { error: { message: data.message || data.error || 'Failed to change password' } };
+      }
+      // Sign out after password change
+      await supabaseClient.auth.signOut().catch(() => {});
+      return { data: { success: true } };
     },
     getSession: async () => {
       const { data, error } = await supabaseClient.auth.getSession();
@@ -206,6 +234,15 @@ if (supabaseIsConfigured) {
         error: { message: 'Supabase not configured', name: 'ConfigurationError' },
       }),
       updateUser: async () => ({
+        data: null,
+        error: { message: 'Supabase not configured', name: 'ConfigurationError' },
+      }),
+      // changePassword requires server endpoint which isn't available in mock mode
+      changePassword: async () => ({
+        data: null,
+        error: { message: 'Supabase not configured', name: 'ConfigurationError' },
+      }),
+      updatePassword: async () => ({
         data: null,
         error: { message: 'Supabase not configured', name: 'ConfigurationError' },
       }),

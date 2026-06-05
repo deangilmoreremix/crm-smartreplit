@@ -3,7 +3,28 @@
  * Simple and focused on email/password auth only.
  */
 
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+
+// Password validation utility
+const validatePasswordStrength = (password: string): { valid: boolean; error?: string } => {
+  if (!password || password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters long' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one number' };
+  }
+  const weakPasswords = ['password', 'password123', 'Password123', '12345678', 'qwerty123'];
+  if (weakPasswords.includes(password)) {
+    return { valid: false, error: 'Password is too common. Please choose a stronger password' };
+  }
+  return { valid: true };
+};
 
 // ==================== SIGN UP ====================
 
@@ -44,6 +65,49 @@ export const resetPasswordForEmail = async (email: string) => {
   return await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 };
 
+// ==================== PASSWORD CHANGE (SECURE) ====================
+
+/**
+ * Change password for authenticated user with current password verification
+ * This is the SECURE way to change passwords - it validates the current password
+ * via a server endpoint before allowing the change.
+ */
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  // Validate password strength
+  const validation = validatePasswordStrength(newPassword);
+  if (!validation.valid) {
+    return { error: { message: validation.error } };
+  }
+
+  if (!isSupabaseConfigured()) {
+    return { error: { message: 'Authentication service not configured' } };
+  }
+
+  try {
+    const response = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include session cookies
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { error: { message: data.message || data.error || 'Failed to change password' } };
+    }
+
+    // Sign out after successful password change
+    await signOut();
+
+    return { data: { success: true } };
+  } catch (error: any) {
+    return { error: { message: error.message || 'Failed to change password' } };
+  }
+};
+
 // ==================== UPDATE USER ====================
 
 export const updateUser = async (options: {
@@ -63,7 +127,13 @@ export const updateUserEmail = async (email: string) => {
   return await supabase.auth.updateUser({ email });
 };
 
+/**
+ * @deprecated USE changePassword() INSTEAD
+ * This function is insecure as it doesn't verify the current password.
+ * It's kept for backward compatibility with ResetPassword flow.
+ */
 export const updateUserPassword = async (password: string) => {
+  console.warn('⚠️ updateUserPassword called without current password verification. Consider using changePassword() instead.');
   return await supabase.auth.updateUser({ password });
 };
 
@@ -82,7 +152,31 @@ export const getSession = async () => {
 
 export const signOut = async () => {
   console.log('👋 Sign Out');
-  return await supabase.auth.signOut();
+
+  // Clear all auth-related storage before calling signOut
+  const authKeysToRemove = [
+    'sb-supabase-auth-token',
+    'smartcrm-auth-token',
+    'supabase.auth.token',
+    'supabase.auth.token-videoremix',
+    'supabase.auth.token-smartcrm',
+  ];
+
+  authKeysToRemove.forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignore localStorage errors
+    }
+  });
+
+  try {
+    return await supabase.auth.signOut();
+  } catch (error) {
+    console.warn('Supabase signOut failed:', error);
+    // Still return a resolved promise to allow clean signout flow
+    return { error: null };
+  }
 };
 
 // ==================== EVENT LISTENERS ====================
@@ -120,6 +214,7 @@ const authService = {
   signUpWithEmail,
   signInWithEmail,
   resetPasswordForEmail,
+  changePassword,
   updateUser,
   updateUserEmail,
   updateUserPassword,

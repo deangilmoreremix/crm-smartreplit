@@ -53,6 +53,7 @@ interface AuthContextType extends AuthState {
   signUp: (email: string, password: string, options?: any) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ error: AuthError | null }>;
   refreshSession: () => Promise<void>;
 }
 
@@ -475,19 +476,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
 
-      // Clear all auth-related data
-      localStorage.removeItem('dev-user-session');
-      localStorage.removeItem('sb-supabase-auth-token');
-      localStorage.removeItem('smartcrm-auth-token');
-      localStorage.removeItem('supabase.auth.token');
+      // Clear all auth-related data from localStorage (in order of priority)
+      const authKeysToRemove = [
+        'dev-user-session',
+        'sb-supabase-auth-token',
+        'smartcrm-auth-token',
+        'supabase.auth.token',
+        'supabase.auth.token-videoremix',
+        'supabase.auth.token-smartcrm',
+        'supabase.auth.token-ai-video-agent-studio',
+      ];
+
+      authKeysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      // Also clear sessionStorage for complete cleanup
+      const sessionKeysToRemove = [
+        'dev-user-session',
+        'sb-supabase-auth-token',
+        'smartcrm-auth-token',
+        'supabase.auth.token',
+      ];
+      sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
 
       // Clear any user-specific data
       if (user?.id) {
         localStorage.removeItem(`onboarding-${user.id}`);
       }
 
-      // Sign out from Supabase
-      await supabase.auth.signOut();
+      // Clear the zustand auth store
+      const authStore = localStorage.getItem('auth-storage');
+      if (authStore) {
+        try {
+          const parsed = JSON.parse(authStore);
+          if (parsed.state) {
+            localStorage.setItem('auth-storage', JSON.stringify({
+              ...parsed,
+              state: { user: null, session: null, loading: false },
+            }));
+          }
+        } catch {
+          localStorage.removeItem('auth-storage');
+        }
+      }
+
+      // Sign out from Supabase (best effort)
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.warn('Supabase signOut failed, continuing with local cleanup:', signOutError);
+      }
 
       // Clear state
       setUser(null);
@@ -498,17 +535,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       broadcastSessionChange('signout');
     } catch (error) {
       console.error('Sign out error:', error);
-      // Still clear local state even if signOut fails
+      // Still clear local state even if signOut fails - this is critical for security
       setUser(null);
       setSession(null);
+      setAuthError(null);
+
+      // Try to broadcast signout even on error
+      try {
+        broadcastSessionChange('signout');
+      } catch {
+        // Ignore broadcast errors
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Reset password for email
-   */
+/**
+    * Reset password for email
+    */
   const resetPassword = async (email: string) => {
     try {
       const currentOrigin = window.location.origin;
@@ -528,6 +573,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  /**
+   * Change password for authenticated user with current password verification
+   * This is a SECURE implementation that requires knowing the current password
+   * Before allowing the change - prevents session hijacking attacks
+   */
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      // Validate password strength on client
+      if (newPassword.length < 8) {
+        return { error: { message: 'Password must be at least 8 characters long' } as AuthError };
+      }
+      if (!/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        return { error: { message: 'Password must contain uppercase, lowercase, and a number' } as AuthError };
+      }
+
+      // Call server-side endpoint that validates current password
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include session cookies
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: { message: data.message || data.error || 'Failed to change password' } as AuthError };
+      }
+
+      // Sign out the user from all tabs after password change
+      // This is a security best practice
+      await signOut();
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -540,6 +626,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUp,
     signOut,
     resetPassword,
+    changePassword,
     refreshSession,
   };
 

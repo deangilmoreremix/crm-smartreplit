@@ -5,13 +5,32 @@ import { registerRoutes } from './routes';
 import { createServer } from 'http';
 import { setupVite, serveStatic, log } from './vite';
 import { memoryService } from './memory';
+import session from 'express-session';
+import memorystore from 'memorystore';
 // Temporarily bypass security middleware for testing
 // import { corsConfig, securityHeaders } from './middleware/security';
 import { healthCheckMiddleware } from './health';
 
-export const app = express();
+const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Session configuration with secure defaults
+const MemoryStore = memorystore(session);
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    store: new MemoryStore({ checkPeriod: 86400000 }), // 24 hours
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    },
+  })
+);
 
 // Security middleware bypassed for testing
 // app.use(securityHeaders);
@@ -177,3 +196,4 @@ memoryService.recordSystemEvent('server_startup', 'SmartCRM server started', {
 }).catch(() => {}); // Fire and forget, don't block startup
 
 // Export for testing
+export { app };
