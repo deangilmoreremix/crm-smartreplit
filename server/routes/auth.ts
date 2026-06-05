@@ -443,6 +443,16 @@ router.post('/change-password', async (req: Request, res: Response) => {
     });
 
     if (error) {
+      // Log failed attempt to audit table
+      await supabase.from('password_change_audit_log').insert({
+        user_id: userId,
+        user_email: userData.user.email,
+        ip_address: req.ip || req.headers['x-forwarded-for'] as string,
+        user_agent: req.get('user-agent') || '',
+        success: false,
+        error_message: error.message,
+      }).catch(() => {}); // Don't block on audit log failure
+
       console.error('Password update error:', error);
       return res.status(400).json({
         error: 'Password update failed',
@@ -450,7 +460,15 @@ router.post('/change-password', async (req: Request, res: Response) => {
       });
     }
 
-    // Log the password change for audit purposes
+    // Log the password change to audit table in Supabase
+    await supabase.from('password_change_audit_log').insert({
+      user_id: userId,
+      user_email: userData.user.email,
+      ip_address: req.ip || req.headers['x-forwarded-for'] as string,
+      user_agent: req.get('user-agent') || '',
+      success: true,
+    }).catch(() => {}); // Don't block on audit log failure if it fails
+
     console.log(`[audit] Password changed for user ${userId} at ${new Date().toISOString()}`);
 
     // Clear the session to force re-authentication on other tabs/devices
