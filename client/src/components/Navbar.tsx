@@ -16,7 +16,6 @@ import {
   Zap,
   TrendingUp,
   Calendar,
-import { useEntitlements } from '../contexts/EntitlementContext';
   Phone,
   Receipt,
   BookOpen,
@@ -69,7 +68,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useRole } from './RoleBasedAccess';
 import { useNavbarPosition } from '../contexts/NavbarPositionContext';
-import { EntitlementContext } from '../contexts/EntitlementContext';
+import { EntitlementContext, useEntitlements } from '../contexts/EntitlementContext';
 import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import DevBypassButton from './DevBypassButton';
 import OpenClawNavbarIndicator from './OpenClawNavbarIndicator';
