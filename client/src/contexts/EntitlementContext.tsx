@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
   UserEntitlement,
   canAccessFeature,
@@ -39,7 +39,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
   const [entitlement, setEntitlement] = useState<UserEntitlement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, isAuthenticated, isSupabaseConfigured } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   /**
    * Fetch entitlements for the current user's email

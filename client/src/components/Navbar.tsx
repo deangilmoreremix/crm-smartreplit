@@ -529,11 +529,8 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     },
   ];
 
-  // Filter tabs based on user access
-  const mainTabs = allTabs.filter((tab) => {
-    if (!tab.requiresAccess) return true;
-    return canAccess(tab.requiresAccess);
-  });
+  // Show all main navigation tabs to every user (entitlement gating removed)
+  const mainTabs = [...allTabs];
 
   // Add admin panel link to navigation if user is admin
   if (isAdmin) {
@@ -556,7 +553,6 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       badge: communicationTools.length,
       color: 'from-blue-500 to-sky-500',
       badgeColor: 'bg-blue-500',
-      requiresAccess: 'communication_hub',
     },
     // { id: 'sales', label: 'Sales', icon: DollarSign, badge: salesTools.length, color: 'from-green-500 to-teal-500', badgeColor: 'bg-green-500', requiresAccess: 'ai_tools' },
     // { id: 'intel', label: 'Business Intel', icon: BarChart3, badge: 35, color: 'from-amber-500 to-orange-500', badgeColor: 'bg-amber-500', requiresAccess: 'ai_tools' },
@@ -567,7 +563,6 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       badge: wlApps.length,
       color: 'from-indigo-500 to-purple-500',
       badgeColor: 'bg-indigo-500',
-      requiresAccess: 'white_label_customization',
     },
     {
       id: 'apps',
@@ -576,7 +571,6 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       badge: connectedApps.length,
       color: 'from-purple-500 to-violet-500',
       badgeColor: 'bg-purple-500',
-      requiresAccess: 'ai_tools',
     },
   ];
 
@@ -1042,11 +1036,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                             className={`absolute top-full mt-2 right-0 w-72 ${isDark ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-2xl border ${isDark ? 'border-white/10' : 'border-gray-200'} rounded-2xl shadow-2xl z-[9999] overflow-hidden`}
                           >
                             <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                              {connectedApps
-                                .filter(
-                                  (app) => !app.requiresAccess || canAccess(app.requiresAccess)
-                                )
-                                .map((app, index) =>
+                              {connectedApps.map((app, index) =>
                                   app.isExternal ? (
                                     <a
                                       key={index}
@@ -1480,9 +1470,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
         isDark={isDark}
       >
         <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-          {connectedApps
-            .filter((app) => !app.requiresAccess || canAccess(app.requiresAccess))
-            .map((app, index) =>
+          {connectedApps.map((app, index) =>
               app.isExternal ? (
                 <a
                   key={index}
