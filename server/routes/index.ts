@@ -37,14 +37,6 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register CRM routes
   registerCRMRoutes(app);
 
-export async function registerRoutes(app: Express): Promise<void> {
-  // Register authentication routes
-  console.log('Registering auth routes at /api/auth');
-  app.use('/api/auth', authRoutes);
-
-  // Register CRM routes
-  registerCRMRoutes(app);
-
   // Register workflow routes
   registerWorkflowRoutes(app);
 

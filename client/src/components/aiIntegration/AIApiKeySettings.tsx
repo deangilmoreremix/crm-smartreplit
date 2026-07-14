@@ -160,11 +160,11 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
         <div className="flex items-center mb-4">
           {steps.map((step, index) => (
             <React.Fragment key={index}>
-              <div className={`flex items-center ${currentStep >= index ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div className={`flex items-center ${currentStep >= index ? 'text-blue-600' : 'text-gray-500'}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   currentStep >= index 
-                    ? 'bg-blue-100 text-blue-600' 
-                    : 'bg-gray-200 text-gray-400'
+                  ? 'bg-blue-100 text-blue-600' 
+                  : 'bg-gray-200 text-gray-600'
                 }`}>
                   {currentStep > index ? <Check size={16} /> : index + 1}
                 </div>

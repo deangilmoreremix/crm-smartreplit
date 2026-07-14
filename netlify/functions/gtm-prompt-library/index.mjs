@@ -558,9 +558,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/helper.js
+// node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/helper.js
 var require_helper = __commonJS({
-  "node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/helper.js"(exports) {
+  "node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/helper.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.resolveFetch = void 0;
@@ -574,9 +574,9 @@ var require_helper = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/types.js
+// node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/types.js
 var require_types = __commonJS({
-  "node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/types.js"(exports) {
+  "node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.FunctionRegion = exports.FunctionsHttpError = exports.FunctionsRelayError = exports.FunctionsFetchError = exports.FunctionsError = void 0;
@@ -634,9 +634,9 @@ var require_types = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/FunctionsClient.js
+// node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/FunctionsClient.js
 var require_FunctionsClient = __commonJS({
-  "node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/FunctionsClient.js"(exports) {
+  "node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/FunctionsClient.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.FunctionsClient = void 0;
@@ -714,7 +714,7 @@ var require_FunctionsClient = __commonJS({
        * ```
        *
        * @exampleDescription Error handling
-       * A `FunctionsHttpError` error is returned if your function throws an error, `FunctionsRelayError` if the Supabase Relay has an error processing your function and `FunctionsFetchError` if there is a network error in calling your function. Log the full error object so fields like `name`, `context`, and any structured body aren't hidden.
+       * A `FunctionsHttpError` error is returned if your function throws an error, `FunctionsRelayError` if the Supabase Relay has an error processing your function and `FunctionsFetchError` if there is a network error in calling your function.
        *
        * @example Error handling
        * ```js
@@ -729,11 +729,11 @@ var require_FunctionsClient = __commonJS({
        *
        * if (error instanceof FunctionsHttpError) {
        *   const errorMessage = await error.context.json()
-       *   console.error('Function returned an error', errorMessage)
+       *   console.log('Function returned an error', errorMessage)
        * } else if (error instanceof FunctionsRelayError) {
-       *   console.error('Relay error:', error)
+       *   console.log('Relay error:', error.message)
        * } else if (error instanceof FunctionsFetchError) {
-       *   console.error('Fetch error:', error)
+       *   console.log('Fetch error:', error.message)
        * }
        * ```
        *
@@ -912,9 +912,9 @@ var require_FunctionsClient = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/index.js
+// node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/index.js
 var require_main = __commonJS({
-  "node_modules/.pnpm/@supabase+functions-js@2.107.0/node_modules/@supabase/functions-js/dist/main/index.js"(exports) {
+  "node_modules/.pnpm/@supabase+functions-js@2.106.1/node_modules/@supabase/functions-js/dist/main/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.FunctionRegion = exports.FunctionsRelayError = exports.FunctionsHttpError = exports.FunctionsFetchError = exports.FunctionsError = exports.FunctionsClient = void 0;
@@ -941,9 +941,9 @@ var require_main = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js
 var require_websocket_factory = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/websocket-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.WebSocketFactory = void 0;
@@ -1064,19 +1064,19 @@ Suggested solution: ${env.workaround}`;
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/version.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/version.js
 var require_version = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/version.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.version = void 0;
-    exports.version = "2.107.0";
+    exports.version = "2.106.1";
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/constants.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/constants.js
 var require_constants = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CONNECTION_STATE = exports.TRANSPORTS = exports.CHANNEL_EVENTS = exports.CHANNEL_STATES = exports.SOCKET_STATES = exports.MAX_PUSH_BUFFER_SIZE = exports.WS_CLOSE_NORMAL = exports.DEFAULT_TIMEOUT = exports.VERSION = exports.DEFAULT_VSN = exports.VSN_2_0_0 = exports.VSN_1_0_0 = exports.DEFAULT_VERSION = void 0;
@@ -1122,9 +1122,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/serializer.js
 var require_serializer = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/serializer.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Serializer = class {
@@ -1269,9 +1269,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/transformers.js
 var require_transformers = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/transformers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.httpEndpointURL = exports.toTimestampString = exports.toArray = exports.toJson = exports.toNumber = exports.toBoolean = exports.convertCell = exports.convertColumn = exports.convertChangeData = exports.PostgresTypes = void 0;
@@ -3256,9 +3256,9 @@ var require_phoenix_cjs = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js
 var require_presenceAdapter = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/phoenix/presenceAdapter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var phoenix_1 = require_phoenix_cjs();
@@ -3354,9 +3354,9 @@ var require_presenceAdapter = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js
 var require_RealtimePresence = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/RealtimePresence.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.REALTIME_PRESENCE_LISTEN_EVENTS = void 0;
@@ -3398,9 +3398,9 @@ var require_RealtimePresence = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js
 var require_normalizeChannelError = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/lib/normalizeChannelError.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.normalizeChannelError = normalizeChannelError;
@@ -3424,9 +3424,9 @@ var require_normalizeChannelError = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js
 var require_channelAdapter = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/phoenix/channelAdapter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var constants_1 = require_constants();
@@ -3531,9 +3531,9 @@ var require_channelAdapter = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js
 var require_RealtimeChannel = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/RealtimeChannel.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.REALTIME_CHANNEL_STATES = exports.REALTIME_SUBSCRIBE_STATES = exports.REALTIME_LISTEN_TYPES = exports.REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = void 0;
@@ -3639,23 +3639,8 @@ var require_RealtimeChannel = __commonJS({
         }
       }
       /**
-       * Subscribe registers your client with the server.
-       *
-       * The optional `callback` receives a `status` and, on failure, an `err` argument.
-       * Log the full `err` so its `cause`, `name`, and any structured fields aren't hidden
-       * behind `err.message`.
-       *
+       * Subscribe registers your client with the server
        * @category Realtime
-       *
-       * @example Handling errors
-       * ```js
-       * supabase.channel('room1').subscribe((status, err) => {
-       *   if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-       *     // Log the full error: its `cause` often holds the underlying reason.
-       *     console.error(status, err)
-       *   }
-       * })
-       * ```
        */
       subscribe(callback, timeout = this.timeout) {
         var _a, _b, _c;
@@ -3933,9 +3918,6 @@ var require_RealtimeChannel = __commonJS({
        * This method always uses the REST API endpoint regardless of WebSocket connection state.
        * Useful when you want to guarantee REST delivery or when gradually migrating from implicit REST fallback.
        *
-       * Payloads that are `ArrayBuffer` or `ArrayBufferView` (e.g. `Uint8Array`) are sent as
-       * `application/octet-stream`; all other payloads are JSON-encoded.
-       *
        * @param event The name of the broadcast event
        * @param payload Payload to be sent (required)
        * @param opts Options including timeout
@@ -3948,25 +3930,28 @@ var require_RealtimeChannel = __commonJS({
         if (payload === void 0 || payload === null) {
           return Promise.reject(new Error("Payload is required for httpSend()"));
         }
-        const isBinary = payload instanceof ArrayBuffer || ArrayBuffer.isView(payload);
         const headers = {
           apikey: this.socket.apiKey ? this.socket.apiKey : "",
-          "Content-Type": isBinary ? "application/octet-stream" : "application/json"
+          "Content-Type": "application/json"
         };
         if (this.socket.accessTokenValue) {
           headers["Authorization"] = `Bearer ${this.socket.accessTokenValue}`;
         }
-        const url = new URL(this.broadcastEndpointURL);
-        url.pathname += `/${encodeURIComponent(this.subTopic)}/events/${encodeURIComponent(event)}`;
-        if (this.private) {
-          url.searchParams.set("private", "true");
-        }
         const options = {
           method: "POST",
           headers,
-          body: isBinary ? payload : JSON.stringify(payload)
+          body: JSON.stringify({
+            messages: [
+              {
+                topic: this.subTopic,
+                event,
+                payload,
+                private: this.private
+              }
+            ]
+          })
         };
-        const response = await this._fetchWithTimeout(url.toString(), options, (_a = opts.timeout) !== null && _a !== void 0 ? _a : this.timeout);
+        const response = await this._fetchWithTimeout(this.broadcastEndpointURL, options, (_a = opts.timeout) !== null && _a !== void 0 ? _a : this.timeout);
         if (response.status === 202) {
           return { success: true };
         }
@@ -4242,9 +4227,9 @@ var require_RealtimeChannel = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js
 var require_socketAdapter = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/phoenix/socketAdapter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var phoenix_1 = require_phoenix_cjs();
@@ -4360,9 +4345,9 @@ var require_socketAdapter = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js
 var require_RealtimeClient = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/RealtimeClient.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -5029,9 +5014,9 @@ Option 2: Install and provide the "ws" package:
   }
 });
 
-// node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/index.js
+// node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/index.js
 var require_main2 = __commonJS({
-  "node_modules/.pnpm/@supabase+realtime-js@2.107.0/node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
+  "node_modules/.pnpm/@supabase+realtime-js@2.106.1/node_modules/@supabase/realtime-js/dist/main/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.WebSocketFactory = exports.REALTIME_CHANNEL_STATES = exports.REALTIME_SUBSCRIBE_STATES = exports.REALTIME_PRESENCE_LISTEN_EVENTS = exports.REALTIME_POSTGRES_CHANGES_LISTEN_EVENT = exports.REALTIME_LISTEN_TYPES = exports.RealtimeClient = exports.RealtimeChannel = exports.RealtimePresence = void 0;
@@ -5062,19 +5047,19 @@ var require_main2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/version.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/version.js
 var require_version2 = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/version.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/version.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.version = void 0;
-    exports.version = "2.107.0";
+    exports.version = "2.106.1";
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/constants.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/constants.js
 var require_constants2 = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/constants.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/constants.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.JWKS_TTL = exports.BASE64URL_REGEX = exports.API_VERSIONS = exports.API_VERSION_HEADER_NAME = exports.NETWORK_FAILURE = exports.DEFAULT_HEADERS = exports.AUDIENCE = exports.STORAGE_KEY = exports.GOTRUE_URL = exports.EXPIRY_MARGIN_MS = exports.AUTO_REFRESH_TICK_THRESHOLD = exports.AUTO_REFRESH_TICK_DURATION_MS = void 0;
@@ -5103,19 +5088,18 @@ var require_constants2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/errors.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/errors.js
 var require_errors = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/errors.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/errors.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.AuthInvalidJwtError = exports.AuthWeakPasswordError = exports.AuthRefreshDiscardedError = exports.AuthRetryableFetchError = exports.AuthPKCECodeVerifierMissingError = exports.AuthPKCEGrantCodeExchangeError = exports.AuthImplicitGrantRedirectError = exports.AuthInvalidCredentialsError = exports.AuthInvalidTokenResponseError = exports.AuthSessionMissingError = exports.CustomAuthError = exports.AuthUnknownError = exports.AuthApiError = exports.AuthError = void 0;
+    exports.AuthInvalidJwtError = exports.AuthWeakPasswordError = exports.AuthRetryableFetchError = exports.AuthPKCECodeVerifierMissingError = exports.AuthPKCEGrantCodeExchangeError = exports.AuthImplicitGrantRedirectError = exports.AuthInvalidCredentialsError = exports.AuthInvalidTokenResponseError = exports.AuthSessionMissingError = exports.CustomAuthError = exports.AuthUnknownError = exports.AuthApiError = exports.AuthError = void 0;
     exports.isAuthError = isAuthError;
     exports.isAuthApiError = isAuthApiError;
     exports.isAuthSessionMissingError = isAuthSessionMissingError;
     exports.isAuthImplicitGrantRedirectError = isAuthImplicitGrantRedirectError;
     exports.isAuthPKCECodeVerifierMissingError = isAuthPKCECodeVerifierMissingError;
     exports.isAuthRetryableFetchError = isAuthRetryableFetchError;
-    exports.isAuthRefreshDiscardedError = isAuthRefreshDiscardedError;
     exports.isAuthWeakPasswordError = isAuthWeakPasswordError;
     var AuthError = class extends Error {
       constructor(message, status, code) {
@@ -5230,15 +5214,6 @@ var require_errors = __commonJS({
     function isAuthRetryableFetchError(error) {
       return isAuthError(error) && error.name === "AuthRetryableFetchError";
     }
-    var AuthRefreshDiscardedError = class extends CustomAuthError {
-      constructor(message = "Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)") {
-        super(message, "AuthRefreshDiscardedError", 409, void 0);
-      }
-    };
-    exports.AuthRefreshDiscardedError = AuthRefreshDiscardedError;
-    function isAuthRefreshDiscardedError(error) {
-      return isAuthError(error) && error.name === "AuthRefreshDiscardedError";
-    }
     var AuthWeakPasswordError = class extends CustomAuthError {
       constructor(message, status, reasons) {
         super(message, "AuthWeakPasswordError", status, "weak_password");
@@ -5261,9 +5236,9 @@ var require_errors = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/base64url.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/base64url.js
 var require_base64url = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/base64url.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/base64url.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.byteToBase64URL = byteToBase64URL;
@@ -5451,9 +5426,9 @@ var require_base64url = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/helpers.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/helpers.js
 var require_helpers = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/helpers.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Deferred = exports.removeItemAsync = exports.getItemAsync = exports.setItemAsync = exports.looksLikeFetchResponse = exports.resolveFetch = exports.supportsLocalStorage = exports.isBrowser = void 0;
@@ -5773,9 +5748,9 @@ var require_helpers = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/fetch.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/fetch.js
 var require_fetch = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/fetch.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/fetch.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.handleError = handleError2;
@@ -5896,7 +5871,7 @@ var require_fetch = __commonJS({
           session.expires_at = (0, helpers_1.expiresAt)(data.expires_in);
         }
       }
-      const user = (_a = data.user) !== null && _a !== void 0 ? _a : typeof (data === null || data === void 0 ? void 0 : data.id) === "string" ? data : null;
+      const user = (_a = data.user) !== null && _a !== void 0 ? _a : null;
       return { data: { session, user }, error: null };
     }
     function _sessionResponsePassword(data) {
@@ -5941,9 +5916,9 @@ var require_fetch = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/types.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/types.js
 var require_types2 = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/types.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SIGN_OUT_SCOPES = void 0;
@@ -5951,9 +5926,9 @@ var require_types2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/GoTrueAdminApi.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/GoTrueAdminApi.js
 var require_GoTrueAdminApi = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/GoTrueAdminApi.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/GoTrueAdminApi.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -5962,6 +5937,12 @@ var require_GoTrueAdminApi = __commonJS({
     var types_1 = require_types2();
     var errors_1 = require_errors();
     var GoTrueAdminApi = class {
+      _encodePathSegment(segment) {
+        if (segment === "." || segment === "..") {
+          throw new errors_1.AuthError("Invalid path segment");
+        }
+        return encodeURIComponent(segment);
+      }
       /**
        * Creates an admin API client that can be used to manage users and OAuth clients.
        *
@@ -6801,7 +6782,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _getOAuthClient(clientId) {
         try {
-          return await (0, fetch_1._request)(this.fetch, "GET", `${this.url}/admin/oauth/clients/${clientId}`, {
+          const encodedClientId = this._encodePathSegment(clientId);
+          return await (0, fetch_1._request)(this.fetch, "GET", `${this.url}/admin/oauth/clients/${encodedClientId}`, {
             headers: this.headers,
             xform: (client) => {
               return { data: client, error: null };
@@ -6822,7 +6804,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _updateOAuthClient(clientId, params) {
         try {
-          return await (0, fetch_1._request)(this.fetch, "PUT", `${this.url}/admin/oauth/clients/${clientId}`, {
+          const encodedClientId = this._encodePathSegment(clientId);
+          return await (0, fetch_1._request)(this.fetch, "PUT", `${this.url}/admin/oauth/clients/${encodedClientId}`, {
             body: params,
             headers: this.headers,
             xform: (client) => {
@@ -6844,7 +6827,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _deleteOAuthClient(clientId) {
         try {
-          await (0, fetch_1._request)(this.fetch, "DELETE", `${this.url}/admin/oauth/clients/${clientId}`, {
+          const encodedClientId = this._encodePathSegment(clientId);
+          await (0, fetch_1._request)(this.fetch, "DELETE", `${this.url}/admin/oauth/clients/${encodedClientId}`, {
             headers: this.headers,
             noResolveJson: true
           });
@@ -6864,7 +6848,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _regenerateOAuthClientSecret(clientId) {
         try {
-          return await (0, fetch_1._request)(this.fetch, "POST", `${this.url}/admin/oauth/clients/${clientId}/regenerate_secret`, {
+          const encodedClientId = this._encodePathSegment(clientId);
+          return await (0, fetch_1._request)(this.fetch, "POST", `${this.url}/admin/oauth/clients/${encodedClientId}/regenerate_secret`, {
             headers: this.headers,
             xform: (client) => {
               return { data: client, error: null };
@@ -6937,7 +6922,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _getCustomProvider(identifier) {
         try {
-          return await (0, fetch_1._request)(this.fetch, "GET", `${this.url}/admin/custom-providers/${identifier}`, {
+          const encodedIdentifier = this._encodePathSegment(identifier);
+          return await (0, fetch_1._request)(this.fetch, "GET", `${this.url}/admin/custom-providers/${encodedIdentifier}`, {
             headers: this.headers,
             xform: (provider) => {
               return { data: provider, error: null };
@@ -6962,7 +6948,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _updateCustomProvider(identifier, params) {
         try {
-          return await (0, fetch_1._request)(this.fetch, "PUT", `${this.url}/admin/custom-providers/${identifier}`, {
+          const encodedIdentifier = this._encodePathSegment(identifier);
+          return await (0, fetch_1._request)(this.fetch, "PUT", `${this.url}/admin/custom-providers/${encodedIdentifier}`, {
             body: params,
             headers: this.headers,
             xform: (provider) => {
@@ -6983,7 +6970,8 @@ var require_GoTrueAdminApi = __commonJS({
        */
       async _deleteCustomProvider(identifier) {
         try {
-          await (0, fetch_1._request)(this.fetch, "DELETE", `${this.url}/admin/custom-providers/${identifier}`, {
+          const encodedIdentifier = this._encodePathSegment(identifier);
+          await (0, fetch_1._request)(this.fetch, "DELETE", `${this.url}/admin/custom-providers/${encodedIdentifier}`, {
             headers: this.headers,
             noResolveJson: true
           });
@@ -7040,9 +7028,9 @@ var require_GoTrueAdminApi = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/local-storage.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/local-storage.js
 var require_local_storage = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/local-storage.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/local-storage.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.memoryLocalStorageAdapter = memoryLocalStorageAdapter;
@@ -7062,9 +7050,9 @@ var require_local_storage = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/locks.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/locks.js
 var require_locks = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/locks.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/locks.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ProcessLockAcquireTimeoutError = exports.NavigatorLockAcquireTimeoutError = exports.LockAcquireTimeoutError = exports.internals = void 0;
@@ -7240,9 +7228,9 @@ var require_locks = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/polyfills.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/polyfills.js
 var require_polyfills = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/polyfills.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/polyfills.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.polyfillGlobalThis = polyfillGlobalThis;
@@ -7267,9 +7255,9 @@ var require_polyfills = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/web3/ethereum.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/web3/ethereum.js
 var require_ethereum = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/web3/ethereum.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/web3/ethereum.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.getAddress = getAddress;
@@ -7345,9 +7333,9 @@ ${suffix}`;
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/webauthn.errors.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/webauthn.errors.js
 var require_webauthn_errors = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/webauthn.errors.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/webauthn.errors.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.WebAuthnUnknownError = exports.WebAuthnError = void 0;
@@ -7536,9 +7524,9 @@ var require_webauthn_errors = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/webauthn.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/webauthn.js
 var require_webauthn = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/lib/webauthn.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/lib/webauthn.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.WebAuthnApi = exports.DEFAULT_REQUEST_OPTIONS = exports.DEFAULT_CREATION_OPTIONS = exports.webAuthnAbortService = exports.WebAuthnAbortService = exports.identifyAuthenticationError = exports.identifyRegistrationError = exports.isWebAuthnError = exports.WebAuthnError = void 0;
@@ -8095,9 +8083,9 @@ var require_webauthn = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js
 var require_GoTrueClient = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/GoTrueClient.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -8126,10 +8114,13 @@ var require_GoTrueClient = __commonJS({
       hasCustomAuthorizationHeader: false,
       throwOnError: false,
       lockAcquireTimeout: 5e3,
-      // 5 seconds. Only used when a custom `lock` is supplied. TODO(v3): remove.
+      // 5 seconds
       skipAutoInitialize: false,
       experimental: {}
     };
+    async function lockNoOp(name, acquireTimeout, fn) {
+      return await fn();
+    }
     var GLOBAL_JWKS = {};
     var GoTrueClient = class _GoTrueClient {
       /**
@@ -8172,7 +8163,7 @@ var require_GoTrueClient = __commonJS({
        * ```
        */
       constructor(options) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         this.userStorage = null;
         this.memoryStorage = null;
         this.stateChangeEmitters = /* @__PURE__ */ new Map();
@@ -8180,12 +8171,10 @@ var require_GoTrueClient = __commonJS({
         this.autoRefreshTickTimeout = null;
         this.visibilityChangedCallback = null;
         this.refreshingDeferred = null;
-        this._sessionRemovalEpoch = 0;
         this.initializePromise = null;
         this.detectSessionInUrl = true;
         this.hasCustomAuthorizationHeader = false;
         this.suppressGetSessionWarning = false;
-        this.lock = null;
         this.lockAcquired = false;
         this.pendingInLock = [];
         this.broadcastChannel = null;
@@ -8217,13 +8206,18 @@ var require_GoTrueClient = __commonJS({
         this.url = settings.url;
         this.headers = settings.headers;
         this.fetch = (0, helpers_1.resolveFetch)(settings.fetch);
+        this.lock = settings.lock || lockNoOp;
         this.detectSessionInUrl = settings.detectSessionInUrl;
         this.flowType = settings.flowType;
         this.hasCustomAuthorizationHeader = settings.hasCustomAuthorizationHeader;
         this.throwOnError = settings.throwOnError;
         this.lockAcquireTimeout = settings.lockAcquireTimeout;
-        if (settings.lock != null) {
+        if (settings.lock) {
           this.lock = settings.lock;
+        } else if (this.persistSession && (0, helpers_1.isBrowser)() && ((_c = globalThis === null || globalThis === void 0 ? void 0 : globalThis.navigator) === null || _c === void 0 ? void 0 : _c.locks)) {
+          this.lock = locks_1.navigatorLock;
+        } else {
+          this.lock = lockNoOp;
         }
         if (!this.jwks) {
           this.jwks = { keys: [] };
@@ -8279,7 +8273,7 @@ var require_GoTrueClient = __commonJS({
           } catch (e) {
             console.error("Failed to create a new BroadcastChannel, multi-tab state changes will not be available", e);
           }
-          (_c = this.broadcastChannel) === null || _c === void 0 ? void 0 : _c.addEventListener("message", async (event) => {
+          (_d = this.broadcastChannel) === null || _d === void 0 ? void 0 : _d.addEventListener("message", async (event) => {
             this._debug("received broadcast notification from other tab or client", event);
             try {
               await this._notifyAllSubscribers(event.data.event, event.data.session, false);
@@ -8332,12 +8326,9 @@ var require_GoTrueClient = __commonJS({
           return await this.initializePromise;
         }
         this.initializePromise = (async () => {
-          if (this.lock != null) {
-            return await this._acquireLock(this.lockAcquireTimeout, async () => {
-              return await this._initialize();
-            });
-          }
-          return await this._initialize();
+          return await this._acquireLock(this.lockAcquireTimeout, async () => {
+            return await this._initialize();
+          });
         })();
         return await this.initializePromise;
       }
@@ -8854,21 +8845,6 @@ var require_GoTrueClient = __commonJS({
        *   password: 'some-password',
        * })
        * ```
-       *
-       * @exampleDescription Handling errors
-       * Log the full `error` object so fields like `code`, `status`, and `name` aren't hidden. The `error.code` (e.g. `'invalid_credentials'`, `'email_not_confirmed'`) is often more useful for branching than `error.message`, and the full object surfaces both.
-       *
-       * @example Handling errors
-       * ```js
-       * const { data, error } = await supabase.auth.signInWithPassword({
-       *   email: 'example@email.com',
-       *   password: 'example-password',
-       * })
-       * if (error) {
-       *   console.error(error)
-       *   return
-       * }
-       * ```
        */
       async signInWithPassword(credentials) {
         try {
@@ -9180,12 +9156,9 @@ var require_GoTrueClient = __commonJS({
        */
       async exchangeCodeForSession(authCode) {
         await this.initializePromise;
-        if (this.lock != null) {
-          return this._acquireLock(this.lockAcquireTimeout, async () => {
-            return this._exchangeCodeForSession(authCode);
-          });
-        }
-        return this._exchangeCodeForSession(authCode);
+        return this._acquireLock(this.lockAcquireTimeout, async () => {
+          return this._exchangeCodeForSession(authCode);
+        });
       }
       /**
        * Signs in a user by verifying a message signed by the user's private key.
@@ -10030,12 +10003,9 @@ var require_GoTrueClient = __commonJS({
        */
       async reauthenticate() {
         await this.initializePromise;
-        if (this.lock != null) {
-          return await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return await this._reauthenticate();
-          });
-        }
-        return await this._reauthenticate();
+        return await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return await this._reauthenticate();
+        });
       }
       async _reauthenticate() {
         try {
@@ -10175,7 +10145,7 @@ var require_GoTrueClient = __commonJS({
        * - If the session's access token is expired or is about to expire, this method will use the refresh token to refresh the session.
        * - When using in a browser, or you've called `startAutoRefresh()` in your environment (React Native, etc.) this function always returns a valid access token without refreshing the session itself, as this is done in the background. This function returns very fast.
        * - **IMPORTANT SECURITY NOTICE:** If using an insecure storage medium, such as cookies or request headers, the user object returned by this function **must not be trusted**. Always verify the JWT using `getClaims()` or your own JWT verification library to securely establish the user's identity and access. You can also use `getUser()` to fetch the user object directly from the Auth server for this purpose.
-       * - Cross-tab refresh races are handled by the GoTrue server (the rotated token from the first tab is returned to subsequent tabs via the parent-of-active mechanism), so no client-side serialization is needed.
+       * - When using in a browser, this function is synchronized across all tabs using the [LockManager](https://developer.mozilla.org/en-US/docs/Web/API/LockManager) API. In other environments make sure you've defined a proper `lock` property, if necessary, to make sure there are no race conditions while the session is being refreshed.
        *
        * @example Get the session data
        * ```js
@@ -10242,23 +10212,15 @@ var require_GoTrueClient = __commonJS({
        */
       async getSession() {
         await this.initializePromise;
-        if (this.lock != null) {
-          return await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return this._useSession(async (result) => {
-              return result;
-            });
+        const result = await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return this._useSession(async (result2) => {
+            return result2;
           });
-        }
-        return await this._useSession(async (result) => {
-          return result;
         });
+        return result;
       }
       /**
        * Acquires a global lock based on the storage key.
-       *
-       * TODO(v3): remove along with the legacy lock path. Only called when
-       * `this.lock` is non-null (custom lock supplied via constructor). The
-       * default lockless path bypasses this entirely.
        */
       async _acquireLock(acquireTimeout, fn) {
         this._debug("#_acquireLock", "begin", acquireTimeout);
@@ -10305,9 +10267,10 @@ var require_GoTrueClient = __commonJS({
         }
       }
       /**
-       * Use instead of {@link #getSession} inside the library. Loads the session
-       * via `__loadSession` (which may trigger a refresh if the access token is
-       * within the expiry margin) and runs `fn` with the result.
+       * Use instead of {@link #getSession} inside the library. It is
+       * semantically usually what you want, as getting a session involves some
+       * processing afterwards that requires only one client operating on the
+       * session at once across multiple tabs or processes.
        */
       async _useSession(fn) {
         this._debug("#_useSession", "begin");
@@ -10325,7 +10288,7 @@ var require_GoTrueClient = __commonJS({
        */
       async __loadSession() {
         this._debug("#__loadSession()", "begin");
-        if (this.lock != null && !this.lockAcquired) {
+        if (!this.lockAcquired) {
           this._debug("#__loadSession()", "used outside of an acquired lock!", new Error().stack);
         }
         try {
@@ -10453,14 +10416,9 @@ var require_GoTrueClient = __commonJS({
           return await this._getUser(jwt);
         }
         await this.initializePromise;
-        let result;
-        if (this.lock != null) {
-          result = await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return await this._getUser();
-          });
-        } else {
-          result = await this._getUser();
-        }
+        const result = await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return await this._getUser();
+        });
         if (result.data.user) {
           this.suppressGetSessionWarning = true;
         }
@@ -10617,12 +10575,9 @@ var require_GoTrueClient = __commonJS({
        */
       async updateUser(attributes, options = {}) {
         await this.initializePromise;
-        if (this.lock != null) {
-          return await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return await this._updateUser(attributes, options);
-          });
-        }
-        return await this._updateUser(attributes, options);
+        return await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return await this._updateUser(attributes, options);
+        });
       }
       async _updateUser(attributes, options = {}) {
         try {
@@ -10790,12 +10745,9 @@ var require_GoTrueClient = __commonJS({
        */
       async setSession(currentSession) {
         await this.initializePromise;
-        if (this.lock != null) {
-          return await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return await this._setSession(currentSession);
-          });
-        }
-        return await this._setSession(currentSession);
+        return await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return await this._setSession(currentSession);
+        });
       }
       async _setSession(currentSession) {
         try {
@@ -10971,12 +10923,9 @@ var require_GoTrueClient = __commonJS({
        */
       async refreshSession(currentSession) {
         await this.initializePromise;
-        if (this.lock != null) {
-          return await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return await this._refreshSession(currentSession);
-          });
-        }
-        return await this._refreshSession(currentSession);
+        return await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return await this._refreshSession(currentSession);
+        });
       }
       async _refreshSession(currentSession) {
         try {
@@ -11104,7 +11053,7 @@ var require_GoTrueClient = __commonJS({
         if (typeof this.detectSessionInUrl === "function") {
           return this.detectSessionInUrl(new URL(window.location.href), params);
         }
-        return Boolean(params.access_token || params.error || params.error_description || params.error_code);
+        return Boolean(params.access_token || params.error_description);
       }
       /**
        * Checks if the current URL and backing storage contain parameters given by a PKCE flow
@@ -11156,12 +11105,9 @@ var require_GoTrueClient = __commonJS({
        */
       async signOut(options = { scope: "global" }) {
         await this.initializePromise;
-        if (this.lock != null) {
-          return await this._acquireLock(this.lockAcquireTimeout, async () => {
-            return await this._signOut(options);
-          });
-        }
-        return await this._signOut(options);
+        return await this._acquireLock(this.lockAcquireTimeout, async () => {
+          return await this._signOut(options);
+        });
       }
       async _signOut({ scope } = { scope: "global" }) {
         return await this._useSession(async (result) => {
@@ -11193,8 +11139,18 @@ var require_GoTrueClient = __commonJS({
        * - Subscribes to important events occurring on the user's session.
        * - Use on the frontend/client. It is less useful on the server.
        * - Events are emitted across tabs to keep your application's UI up-to-date. Some events can fire very frequently, based on the number of tabs open. Use a quick and efficient callback function, and defer or debounce as many operations as you can to be performed outside of the callback.
-       * - Callbacks can be `async` and can safely call other Supabase auth methods (`getUser`, `setSession`, etc.) from inside the callback.
-       * - Keep callbacks quick. Events are awaited in order, so a slow callback delays subsequent events to subscribers in this tab.
+       * - **Important:** A callback can be an `async` function and it runs synchronously during the processing of the changes causing the event. You can easily create a dead-lock by using `await` on a call to another method of the Supabase library.
+       *   - Avoid using `async` functions as callbacks.
+       *   - Limit the number of `await` calls in `async` callbacks.
+       *   - Do not use other Supabase functions in the callback function. If you must, dispatch the functions once the callback has finished executing. Use this as a quick way to achieve this:
+       *     ```js
+       *     supabase.auth.onAuthStateChange((event, session) => {
+       *       setTimeout(async () => {
+       *         // await on other Supabase function here
+       *         // this runs right after the callback has finished
+       *       }, 0)
+       *     })
+       *     ```
        * - Emitted events:
        *   - `INITIAL_SESSION`
        *     - Emitted right after the Supabase client is constructed and the initial session from storage is loaded.
@@ -11377,13 +11333,9 @@ var require_GoTrueClient = __commonJS({
         this.stateChangeEmitters.set(id, subscription);
         (async () => {
           await this.initializePromise;
-          if (this.lock != null) {
-            await this._acquireLock(this.lockAcquireTimeout, async () => {
-              this._emitInitialSession(id);
-            });
-          } else {
-            await this._emitInitialSession(id);
-          }
+          await this._acquireLock(this.lockAcquireTimeout, async () => {
+            this._emitInitialSession(id);
+          });
         })();
         return { data: { subscription } };
       }
@@ -11721,7 +11673,7 @@ var require_GoTrueClient = __commonJS({
        * @param refreshToken A valid refresh token that was returned on login.
        */
       async _refreshAccessToken(refreshToken) {
-        const debugName = `#_refreshAccessToken()`;
+        const debugName = `#_refreshAccessToken(${refreshToken.substring(0, 5)}...)`;
         this._debug(debugName, "begin");
         try {
           const startedAt = Date.now();
@@ -11809,14 +11761,10 @@ var require_GoTrueClient = __commonJS({
             if (this.autoRefreshToken && currentSession.refresh_token) {
               const { error } = await this._callRefreshToken(currentSession.refresh_token);
               if (error) {
-                if ((0, errors_1.isAuthRefreshDiscardedError)(error)) {
-                  this._debug(debugName, "refresh discarded by commit guard", error);
-                } else {
-                  console.error(error);
-                  if (!(0, errors_1.isAuthRetryableFetchError)(error)) {
-                    this._debug(debugName, "refresh failed with a non-retryable error, removing the session", error);
-                    await this._removeSession();
-                  }
+                console.error(error);
+                if (!(0, errors_1.isAuthRetryableFetchError)(error)) {
+                  this._debug(debugName, "refresh failed with a non-retryable error, removing the session", error);
+                  await this._removeSession();
                 }
               }
             }
@@ -11853,47 +11801,16 @@ var require_GoTrueClient = __commonJS({
         if (this.refreshingDeferred) {
           return this.refreshingDeferred.promise;
         }
-        const debugName = `#_callRefreshToken()`;
+        const debugName = `#_callRefreshToken(${refreshToken.substring(0, 5)}...)`;
         this._debug(debugName, "begin");
         try {
           this.refreshingDeferred = new helpers_1.Deferred();
-          const storedAtStart = await (0, helpers_1.getItemAsync)(this.storage, this.storageKey);
           const { data, error } = await this._refreshAccessToken(refreshToken);
           if (error)
             throw error;
           if (!data.session)
             throw new errors_1.AuthSessionMissingError();
-          const storedAfter = await (0, helpers_1.getItemAsync)(this.storage, this.storageKey);
-          const storageChangedUnderUs = storedAtStart !== null && (storedAfter === null || storedAfter.refresh_token !== storedAtStart.refresh_token);
-          if (storageChangedUnderUs) {
-            this._debug(debugName, "commit guard: storage changed since refresh started, discarding rotated tokens", {
-              // Presence indicators only — never log refresh token fragments,
-              // even partial. Logs may be forwarded to third-party services.
-              startedWith: "present",
-              nowHolds: storedAfter ? "replaced" : "cleared"
-            });
-            const discarded = {
-              data: null,
-              error: new errors_1.AuthRefreshDiscardedError()
-            };
-            this.refreshingDeferred.resolve(discarded);
-            return discarded;
-          }
-          const epochBeforeSave = this._sessionRemovalEpoch;
           await this._saveSession(data.session);
-          if (this._sessionRemovalEpoch !== epochBeforeSave) {
-            this._debug(debugName, "commit guard (post-save): _removeSession ran during _saveSession, undoing write");
-            await (0, helpers_1.removeItemAsync)(this.storage, this.storageKey);
-            if (this.userStorage) {
-              await (0, helpers_1.removeItemAsync)(this.userStorage, this.storageKey + "-user");
-            }
-            const discarded = {
-              data: null,
-              error: new errors_1.AuthRefreshDiscardedError()
-            };
-            this.refreshingDeferred.resolve(discarded);
-            return discarded;
-          }
           await this._notifyAllSubscribers("TOKEN_REFRESHED", data.session);
           const result = { data: data.session, error: null };
           this.refreshingDeferred.resolve(result);
@@ -11968,7 +11885,6 @@ var require_GoTrueClient = __commonJS({
         }
       }
       async _removeSession() {
-        this._sessionRemovalEpoch += 1;
         this._debug("#_removeSession()");
         this.suppressGetSessionWarning = false;
         await (0, helpers_1.removeItemAsync)(this.storage, this.storageKey);
@@ -12122,106 +12038,40 @@ var require_GoTrueClient = __commonJS({
         await this._stopAutoRefresh();
       }
       /**
-       * Tears down the client's background work: stops the auto-refresh interval,
-       * removes the `visibilitychange` listener, closes the cross-tab
-       * `BroadcastChannel`, and clears registered `onAuthStateChange` subscribers.
-       *
-       * Call this from cleanup hooks when the client is being replaced before
-       * its JS realm is destroyed. React Strict Mode and HMR are the common
-       * cases. Any in-flight `fetch` calls continue to completion and may still
-       * write to storage; dispose doesn't abort them or erase storage.
-       *
-       * Lifecycle caveat: because in-flight refreshes are not aborted, a
-       * disposed instance can still persist a rotated session to storage after
-       * `dispose()` returns. A subsequent `createClient` against the same
-       * `storageKey` will pick up that session on its next read. If you need
-       * strict isolation between client lifecycles, await any pending auth
-       * operation before calling `dispose()` (or change the `storageKey` for
-       * the replacement client).
-       *
-       * Safe to call repeatedly.
-       *
-       * @category Auth
-       *
-       * @example Cleanup on React unmount
-       * ```ts
-       * useEffect(() => {
-       *   const client = createClient(...)
-       *   return () => { client.auth.dispose() }
-       * }, [])
-       * ```
-       */
-      async dispose() {
-        var _a;
-        this._removeVisibilityChangedCallback();
-        await this._stopAutoRefresh();
-        (_a = this.broadcastChannel) === null || _a === void 0 ? void 0 : _a.close();
-        this.broadcastChannel = null;
-        this.stateChangeEmitters.clear();
-      }
-      /**
        * Runs the auto refresh token tick.
        */
       async _autoRefreshTokenTick() {
         this._debug("#_autoRefreshTokenTick()", "begin");
-        if (this.lock != null) {
-          try {
-            await this._acquireLock(0, async () => {
-              try {
-                const now = Date.now();
-                try {
-                  return await this._useSession(async (result) => {
-                    const { data: { session } } = result;
-                    if (!session || !session.refresh_token || !session.expires_at) {
-                      this._debug("#_autoRefreshTokenTick()", "no session");
-                      return;
-                    }
-                    const expiresInTicks = Math.floor((session.expires_at * 1e3 - now) / constants_1.AUTO_REFRESH_TICK_DURATION_MS);
-                    this._debug("#_autoRefreshTokenTick()", `access token expires in ${expiresInTicks} ticks, a tick lasts ${constants_1.AUTO_REFRESH_TICK_DURATION_MS}ms, refresh threshold is ${constants_1.AUTO_REFRESH_TICK_THRESHOLD} ticks`);
-                    if (expiresInTicks <= constants_1.AUTO_REFRESH_TICK_THRESHOLD) {
-                      await this._callRefreshToken(session.refresh_token);
-                    }
-                  });
-                } catch (e) {
-                  console.error("Auto refresh tick failed with error. This is likely a transient error.", e);
-                }
-              } finally {
-                this._debug("#_autoRefreshTokenTick()", "end");
-              }
-            });
-          } catch (e) {
-            if (e instanceof locks_1.LockAcquireTimeoutError) {
-              this._debug("auto refresh token tick lock not available");
-            } else {
-              throw e;
-            }
-          }
-          return;
-        }
-        if (this.refreshingDeferred !== null) {
-          this._debug("#_autoRefreshTokenTick()", "refresh already in flight, skipping");
-          return;
-        }
         try {
-          const now = Date.now();
-          try {
-            await this._useSession(async (result) => {
-              const { data: { session } } = result;
-              if (!session || !session.refresh_token || !session.expires_at) {
-                this._debug("#_autoRefreshTokenTick()", "no session");
-                return;
+          await this._acquireLock(0, async () => {
+            try {
+              const now = Date.now();
+              try {
+                return await this._useSession(async (result) => {
+                  const { data: { session } } = result;
+                  if (!session || !session.refresh_token || !session.expires_at) {
+                    this._debug("#_autoRefreshTokenTick()", "no session");
+                    return;
+                  }
+                  const expiresInTicks = Math.floor((session.expires_at * 1e3 - now) / constants_1.AUTO_REFRESH_TICK_DURATION_MS);
+                  this._debug("#_autoRefreshTokenTick()", `access token expires in ${expiresInTicks} ticks, a tick lasts ${constants_1.AUTO_REFRESH_TICK_DURATION_MS}ms, refresh threshold is ${constants_1.AUTO_REFRESH_TICK_THRESHOLD} ticks`);
+                  if (expiresInTicks <= constants_1.AUTO_REFRESH_TICK_THRESHOLD) {
+                    await this._callRefreshToken(session.refresh_token);
+                  }
+                });
+              } catch (e) {
+                console.error("Auto refresh tick failed with error. This is likely a transient error.", e);
               }
-              const expiresInTicks = Math.floor((session.expires_at * 1e3 - now) / constants_1.AUTO_REFRESH_TICK_DURATION_MS);
-              this._debug("#_autoRefreshTokenTick()", `access token expires in ${expiresInTicks} ticks, a tick lasts ${constants_1.AUTO_REFRESH_TICK_DURATION_MS}ms, refresh threshold is ${constants_1.AUTO_REFRESH_TICK_THRESHOLD} ticks`);
-              if (expiresInTicks <= constants_1.AUTO_REFRESH_TICK_THRESHOLD) {
-                await this._callRefreshToken(session.refresh_token);
-              }
-            });
-          } catch (e) {
-            console.error("Auto refresh tick failed with error. This is likely a transient error.", e);
+            } finally {
+              this._debug("#_autoRefreshTokenTick()", "end");
+            }
+          });
+        } catch (e) {
+          if (e instanceof locks_1.LockAcquireTimeoutError) {
+            this._debug("auto refresh token tick lock not available");
+          } else {
+            throw e;
           }
-        } finally {
-          this._debug("#_autoRefreshTokenTick()", "end");
         }
       }
       /**
@@ -12263,21 +12113,13 @@ var require_GoTrueClient = __commonJS({
           }
           if (!calledFromInitialize) {
             await this.initializePromise;
-            if (this.lock != null) {
-              await this._acquireLock(this.lockAcquireTimeout, async () => {
-                if (document.visibilityState !== "visible") {
-                  this._debug(methodName, "acquired the lock to recover the session, but the browser visibilityState is no longer visible, aborting");
-                  return;
-                }
-                await this._recoverAndRefresh();
-              });
-            } else {
+            await this._acquireLock(this.lockAcquireTimeout, async () => {
               if (document.visibilityState !== "visible") {
-                this._debug(methodName, "visibilityState is no longer visible, skipping recovery");
+                this._debug(methodName, "acquired the lock to recover the session, but the browser visibilityState is no longer visible, aborting");
                 return;
               }
               await this._recoverAndRefresh();
-            }
+            });
           }
         } else if (document.visibilityState === "hidden") {
           if (this.autoRefreshToken) {
@@ -12366,7 +12208,7 @@ var require_GoTrueClient = __commonJS({
         }
       }
       async _verify(params) {
-        const run = async () => {
+        return this._acquireLock(this.lockAcquireTimeout, async () => {
           try {
             return await this._useSession(async (result) => {
               var _a;
@@ -12395,14 +12237,10 @@ var require_GoTrueClient = __commonJS({
             }
             throw error;
           }
-        };
-        if (this.lock != null) {
-          return this._acquireLock(this.lockAcquireTimeout, run);
-        }
-        return run();
+        });
       }
       async _challenge(params) {
-        const run = async () => {
+        return this._acquireLock(this.lockAcquireTimeout, async () => {
           try {
             return await this._useSession(async (result) => {
               var _a;
@@ -12441,11 +12279,7 @@ var require_GoTrueClient = __commonJS({
             }
             throw error;
           }
-        };
-        if (this.lock != null) {
-          return this._acquireLock(this.lockAcquireTimeout, run);
-        }
-        return run();
+        });
       }
       /**
        * {@see GoTrueMFAApi#challengeAndVerify}
@@ -12802,11 +12636,7 @@ var require_GoTrueClient = __commonJS({
           }
           const { header, payload, signature, raw: { header: rawHeader, payload: rawPayload } } = (0, helpers_1.decodeJWT)(token);
           if (!(options === null || options === void 0 ? void 0 : options.allowExpired)) {
-            try {
-              (0, helpers_1.validateExp)(payload.exp);
-            } catch (e) {
-              throw new errors_1.AuthInvalidJwtError(e instanceof Error ? e.message : "JWT validation failed");
-            }
+            (0, helpers_1.validateExp)(payload.exp);
           }
           const signingKey = !header.alg || header.alg.startsWith("HS") || !header.kid || !("crypto" in globalThis && "subtle" in globalThis.crypto) ? null : await this.fetchJwk(header.kid, (options === null || options === void 0 ? void 0 : options.keys) ? { keys: options.keys } : options === null || options === void 0 ? void 0 : options.jwks);
           if (!signingKey) {
@@ -13166,9 +12996,9 @@ var require_GoTrueClient = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/AuthAdminApi.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/AuthAdminApi.js
 var require_AuthAdminApi = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/AuthAdminApi.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/AuthAdminApi.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -13178,9 +13008,9 @@ var require_AuthAdminApi = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/AuthClient.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/AuthClient.js
 var require_AuthClient = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/AuthClient.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/AuthClient.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -13190,9 +13020,9 @@ var require_AuthClient = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/index.js
+// node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/index.js
 var require_main3 = __commonJS({
-  "node_modules/.pnpm/@supabase+auth-js@2.107.0/node_modules/@supabase/auth-js/dist/main/index.js"(exports) {
+  "node_modules/.pnpm/@supabase+auth-js@2.106.1/node_modules/@supabase/auth-js/dist/main/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.processLock = exports.lockInternals = exports.NavigatorLockAcquireTimeoutError = exports.navigatorLock = exports.AuthClient = exports.AuthAdminApi = exports.GoTrueClient = exports.GoTrueAdminApi = void 0;
@@ -13223,7 +13053,7 @@ var require_main3 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@supabase+supabase-js@2.107.0/node_modules/@supabase/supabase-js/dist/index.mjs
+// node_modules/.pnpm/@supabase+supabase-js@2.106.1/node_modules/@supabase/supabase-js/dist/index.mjs
 var dist_exports = {};
 __export(dist_exports, {
   FunctionRegion: () => import_functions_js.FunctionRegion,
@@ -13238,7 +13068,7 @@ __export(dist_exports, {
 });
 var import_functions_js = __toESM(require_main(), 1);
 
-// node_modules/.pnpm/@supabase+postgrest-js@2.107.0/node_modules/@supabase/postgrest-js/dist/index.mjs
+// node_modules/.pnpm/@supabase+postgrest-js@2.106.1/node_modules/@supabase/postgrest-js/dist/index.mjs
 var DEFAULT_MAX_RETRIES = 3;
 var getRetryDelay = (attemptIndex) => Math.min(1e3 * 2 ** attemptIndex, 3e4);
 var RETRYABLE_STATUS_CODES = [520, 503];
@@ -13558,18 +13388,7 @@ ${cause.stack}`;
         if (body === "") {
         } else if (_this2.headers.get("Accept") === "text/csv") data = body;
         else if (_this2.headers.get("Accept") && ((_this$headers$get = _this2.headers.get("Accept")) === null || _this$headers$get === void 0 ? void 0 : _this$headers$get.includes("application/vnd.pgrst.plan+text"))) data = body;
-        else try {
-          data = JSON.parse(body);
-        } catch (_unused) {
-          error = { message: body };
-          data = null;
-          if (_this2.shouldThrowOnError) throw new PostgrestError({
-            message: body,
-            details: "",
-            hint: "",
-            code: ""
-          });
-        }
+        else data = JSON.parse(body);
       }
       const countHeader = (_this$headers$get2 = _this2.headers.get("Prefer")) === null || _this$headers$get2 === void 0 ? void 0 : _this$headers$get2.match(/count=(exact|planned|estimated)/);
       const contentRange = (_res$headers$get2 = res.headers.get("content-range")) === null || _res$headers$get2 === void 0 ? void 0 : _res$headers$get2.split("/");
@@ -13597,7 +13416,7 @@ ${cause.stack}`;
           status = 200;
           statusText = "OK";
         }
-      } catch (_unused2) {
+      } catch (_unused) {
         if (res.status === 404 && body === "") {
           status = 204;
           statusText = "No Content";
@@ -16444,33 +16263,6 @@ var PostgrestQueryBuilder = class {
   * }
   * ```
   *
-  * @exampleDescription Handling errors
-  * The most useful field on a Postgres error is usually `hint` — when the database knows the fix, it puts the literal SQL there. For example, a permission-denied error (`code: '42501'`) arrives with a `hint` like `"Grant the required privileges to the current role with: GRANT SELECT ON public.characters TO anon;"`. Log the full `error` object so the hint isn't hidden behind `error.message`.
-  *
-  * @example Handling errors
-  * ```js
-  * const { data, error } = await supabase.from('characters').select()
-  * if (error) {
-  *   // Logs the full error: message, code, details, and hint.
-  *   console.error(error)
-  *   return
-  * }
-  * ```
-  *
-  * @exampleResponse Handling errors
-  * ```json
-  * {
-  *   "error": {
-  *     "code": "42501",
-  *     "details": null,
-  *     "hint": "Grant the required privileges to the current role with: GRANT SELECT ON public.characters TO anon;",
-  *     "message": "permission denied for table characters"
-  *   },
-  *   "status": 401,
-  *   "statusText": "Unauthorized"
-  * }
-  * ```
-  *
   * @example Selecting specific columns
   * ```js
   * const { data, error } = await supabase
@@ -17248,15 +17040,6 @@ var PostgrestQueryBuilder = class {
   * }
   * ```
   *
-  * @exampleDescription Handling errors
-  * `error.hint` from Postgres often contains the actionable fix (e.g. `"Grant the required privileges to the current role with: GRANT INSERT ON public.countries TO anon;"` for a `42501` permission-denied error). Log the full `error` object so it isn't hidden behind `error.message`.
-  *
-  * @example Handling errors
-  * ```js
-  * const { error } = await supabase.from('countries').insert({ id: 1, name: 'Mordor' })
-  * if (error) console.error(error)
-  * ```
-  *
   * @example Create a record and return it
   * ```ts
   * const { data, error } = await supabase
@@ -17466,15 +17249,6 @@ var PostgrestQueryBuilder = class {
   * }
   * ```
   *
-  * @exampleDescription Handling errors
-  * `error.hint` from Postgres often contains the actionable fix (e.g. `"Grant the required privileges to the current role with: GRANT INSERT, UPDATE ON public.instruments TO anon;"` for a `42501` permission-denied error). Log the full `error` object so it isn't hidden behind `error.message`.
-  *
-  * @example Handling errors
-  * ```js
-  * const { data, error } = await supabase.from('instruments').upsert({ id: 1, name: 'piano' }).select()
-  * if (error) console.error(error)
-  * ```
-  *
   * @example Bulk Upsert your data
   * ```ts
   * const { data, error } = await supabase
@@ -17639,15 +17413,6 @@ var PostgrestQueryBuilder = class {
   * }
   * ```
   *
-  * @exampleDescription Handling errors
-  * `error.hint` from Postgres often contains the actionable fix (e.g. `"Grant the required privileges to the current role with: GRANT UPDATE ON public.instruments TO anon;"` for a `42501` permission-denied error). Log the full `error` object so it isn't hidden behind `error.message`.
-  *
-  * @example Handling errors
-  * ```js
-  * const { error } = await supabase.from('instruments').update({ name: 'piano' }).eq('id', 1)
-  * if (error) console.error(error)
-  * ```
-  *
   * @example Update a record and return it
   * ```ts
   * const { data, error } = await supabase
@@ -17805,15 +17570,6 @@ var PostgrestQueryBuilder = class {
   *   "status": 204,
   *   "statusText": "No Content"
   * }
-  * ```
-  *
-  * @exampleDescription Handling errors
-  * `error.hint` from Postgres often contains the actionable fix (e.g. `"Grant the required privileges to the current role with: GRANT DELETE ON public.countries TO anon;"` for a `42501` permission-denied error). Log the full `error` object so it isn't hidden behind `error.message`.
-  *
-  * @example Handling errors
-  * ```js
-  * const { error } = await supabase.from('countries').delete().eq('id', 1)
-  * if (error) console.error(error)
   * ```
   *
   * @example Delete a record and return it
@@ -18249,7 +18005,7 @@ var PostgrestClient = class PostgrestClient2 {
   }
 };
 
-// node_modules/.pnpm/@supabase+supabase-js@2.107.0/node_modules/@supabase/supabase-js/dist/index.mjs
+// node_modules/.pnpm/@supabase+supabase-js@2.106.1/node_modules/@supabase/supabase-js/dist/index.mjs
 var import_realtime_js = __toESM(require_main2(), 1);
 
 // node_modules/.pnpm/iceberg-js@0.8.1/node_modules/iceberg-js/dist/index.mjs
@@ -18785,7 +18541,7 @@ var IcebergRestCatalog = class {
   }
 };
 
-// node_modules/.pnpm/@supabase+storage-js@2.107.0/node_modules/@supabase/storage-js/dist/index.mjs
+// node_modules/.pnpm/@supabase+storage-js@2.106.1/node_modules/@supabase/storage-js/dist/index.mjs
 function _typeof2(o) {
   "@babel/helpers - typeof";
   return _typeof2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o$1) {
@@ -19257,21 +19013,6 @@ var StorageFileApi = class extends BaseApiClient {
   *   .upload('public/avatar1.png', decode('base64FileData'), {
   *     contentType: 'image/png'
   *   })
-  * ```
-  *
-  * @example Handling errors
-  * ```js
-  * const { data, error } = await supabase
-  *   .storage
-  *   .from('avatars')
-  *   .upload('public/avatar1.png', avatarFile)
-  *
-  * if (error) {
-  *   // Log the full error so fields like `statusCode` and `error` (the
-  *   // Storage error name, e.g. "Duplicate") aren't hidden behind `error.message`.
-  *   console.error(error)
-  *   return
-  * }
   * ```
   *
   * @remarks
@@ -20121,7 +19862,7 @@ var StorageFileApi = class extends BaseApiClient {
     return query;
   }
 };
-var version = "2.107.0";
+var version = "2.106.1";
 var DEFAULT_HEADERS = { "X-Client-Info": `storage-js/${version}` };
 var StorageBucketApi = class extends BaseApiClient {
   constructor(url, headers = {}, fetch$1, opts) {
@@ -21477,27 +21218,17 @@ var StorageClient = class extends StorageBucketApi {
   }
 };
 
-// node_modules/.pnpm/@supabase+supabase-js@2.107.0/node_modules/@supabase/supabase-js/dist/index.mjs
+// node_modules/.pnpm/@supabase+supabase-js@2.106.1/node_modules/@supabase/supabase-js/dist/index.mjs
 var import_auth_js = __toESM(require_main3(), 1);
 __reExport(dist_exports, __toESM(require_main2(), 1));
 __reExport(dist_exports, __toESM(require_main3(), 1));
-var version2 = "2.107.0";
+var version2 = "2.106.1";
 var JS_ENV = "";
-var JS_RUNTIME_VERSION;
-if (typeof Deno !== "undefined") {
-  JS_ENV = "deno";
-  JS_RUNTIME_VERSION = (_Deno$version = Deno.version) === null || _Deno$version === void 0 ? void 0 : _Deno$version.deno;
-} else if (typeof document !== "undefined") JS_ENV = "web";
+if (typeof Deno !== "undefined") JS_ENV = "deno";
+else if (typeof document !== "undefined") JS_ENV = "web";
 else if (typeof navigator !== "undefined" && navigator.product === "ReactNative") JS_ENV = "react-native";
-else {
-  JS_ENV = "node";
-  JS_RUNTIME_VERSION = typeof process !== "undefined" ? (_process$version = process.version) === null || _process$version === void 0 ? void 0 : _process$version.replace(/^v/, "") : void 0;
-}
-var _Deno$version;
-var _process$version;
-var _runtimeMeta = [`runtime=${JS_ENV}`];
-if (JS_RUNTIME_VERSION) _runtimeMeta.push(`runtime-version=${JS_RUNTIME_VERSION}`);
-var DEFAULT_HEADERS2 = { "X-Client-Info": `supabase-js/${version2}; ${_runtimeMeta.join("; ")}` };
+else JS_ENV = "node";
+var DEFAULT_HEADERS2 = { "X-Client-Info": `supabase-js-${JS_ENV}/${version2}` };
 var DEFAULT_GLOBAL_OPTIONS = { headers: DEFAULT_HEADERS2 };
 var DEFAULT_DB_OPTIONS = { schema: "public" };
 var DEFAULT_AUTH_OPTIONS = {
@@ -21948,30 +21679,6 @@ var SupabaseClient = class {
   * const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key')
   *
   * const { data } = await supabase.from('profiles').select('*')
-  * ```
-  *
-  * @exampleDescription With OpenTelemetry tracing
-  * Opt in to W3C trace context propagation so the `trace_id` from your
-  * client-side spans is attached to Supabase requests and appears in API
-  * Gateway and Edge Function logs. Requires `@opentelemetry/api` to be
-  * installed in your application. See [Tracing with the JS SDK](https://supabase.com/docs/guides/telemetry/client-side-tracing).
-  *
-  * @example With OpenTelemetry tracing
-  * ```ts
-  * import { createClient } from '@supabase/supabase-js'
-  * import { trace } from '@opentelemetry/api'
-  *
-  * const supabase = createClient('https://xyzcompany.supabase.co', 'your-publishable-key', {
-  *   tracePropagation: true,
-  * })
-  *
-  * const tracer = trace.getTracer('my-app')
-  *
-  * await tracer.startActiveSpan('fetch-users', async (span) => {
-  *   // Outgoing request carries the active trace context.
-  *   const { data, error } = await supabase.from('users').select('*')
-  *   span.end()
-  * })
   * ```
   */
   constructor(supabaseUrl, supabaseKey, options) {
