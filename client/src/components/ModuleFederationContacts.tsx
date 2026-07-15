@@ -8,10 +8,10 @@ import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 const USE_IFRAME_FALLBACK = import.meta.env.VITE_USE_IFRAME_FALLBACK !== 'false'; // Allow iframe fallback
 
-// Remote configuration - Note: contacts.smartcrm.vip exposes 'SmartCRMApp' not 'ContactsApp'
+// Remote configuration - Note: contacts.smartcrm.vip exposes 'ContactsApp'
 const CONTACTS_REMOTE_URL = 'https://contacts.smartcrm.vip';
 const CONTACTS_SCOPE = 'ContactsApp';
-const CONTACTS_MODULE = './SmartCRMApp'; // Actual exposed module name
+const CONTACTS_MODULE = './ContactsApp'; // Actual exposed module name
 
 // Iframe fallback component - loads the contacts app directly
 const ContactsIframeFallback: React.FC<{ showHeader?: boolean }> = ({ showHeader = false }) => {

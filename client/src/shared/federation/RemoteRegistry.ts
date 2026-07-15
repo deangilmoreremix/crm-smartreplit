@@ -11,7 +11,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'contacts.smartcrm.vip',
     url: 'https://contacts.smartcrm.vip',
     scope: 'ContactsApp',
-    modules: ['./SmartCRMApp', './App', './mount'], // Actual exposed modules
+    modules: ['./ContactsApp', './ContactsModule'], // Actual exposed modules
     capabilities: ['contacts', 'ai-scoring', 'import-export']
   },
   agency: {
@@ -39,7 +39,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     domain: 'pipeline.smartcrm.vip',
     url: 'https://pipeline.smartcrm.vip',
     scope: 'PipelineApp',
-    modules: ['./PipelineApp', './Pipeline', './DealDetailView'], // Actual exposed modules
+    modules: ['./PipelineApp', './PipelineModule'], // Actual exposed modules
     capabilities: ['pipeline', 'deals', 'forecasting']
   },
   research: {

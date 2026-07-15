@@ -46,7 +46,6 @@ replit.nix
 *.temp
 # Local Netlify folder
 .netlify
-apps/
 .kilo/
 
 # Git worktrees

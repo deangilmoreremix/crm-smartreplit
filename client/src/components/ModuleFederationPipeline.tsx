@@ -5,6 +5,7 @@ import {
   moduleFederationOrchestrator,
   useSharedModuleState,
 } from '../utils/moduleFederationOrchestrator';
+import { useDealStore } from '../store/dealStore';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
@@ -138,6 +139,7 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
   }
 
   const sharedData = useSharedModuleState((state) => state.sharedData);
+  const { deals } = useDealStore();
   const PipelineApp = RemotePipelineApp as React.ComponentType<any>;
 
   return (
@@ -148,7 +150,7 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
         </div>
       )}
       <div className="flex-1 h-full">
-        <PipelineApp sharedData={sharedData} />
+        <PipelineApp sharedData={sharedData} deals={deals} />
       </div>
     </div>
   );

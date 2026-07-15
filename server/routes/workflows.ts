@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { supabase } from '../../supabase';
+import { supabase } from '../supabase';
 import { workflowEngine } from '@smartcrm/workflows';
 import { registerAllTriggers, registerAllActions } from '@smartcrm/workflows';
 

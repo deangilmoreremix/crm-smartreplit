@@ -239,7 +239,7 @@ describe('OpenClaw Integration Tests', () => {
       },
       contacts: {
         url: 'https://contacts.smartcrm.vip',
-        module: './SmartCRMApp', // Fixed: actual exposed module name
+        module: './ContactsApp',
       },
       calendar: {
         url: 'https://calendar.smartcrm.vip',
@@ -340,7 +340,7 @@ describe('OpenClaw Integration Tests', () => {
         const app = remoteApps['contacts'];
         expect(app).toBeDefined();
         expect(app.url).toBe('https://contacts.smartcrm.vip');
-        expect(app.module).toBe('./SmartCRMApp'); // Fixed: actual exposed module name
+        expect(app.module).toBe('./ContactsApp');
       });
 
       it('should find calendar remote app', () => {

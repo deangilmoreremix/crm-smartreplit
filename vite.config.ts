@@ -11,6 +11,13 @@ export default defineConfig({
   root: "client",                // tell Vite where index.html is
   plugins: [
     react(),
+    // Module Federation remotes (declared config).
+    // LOAD PATH DECISION: the active loader for federated routes (e.g. Contacts)
+    // is the runtime loader in client/src/utils/dynamicModuleFederation.ts
+    // (useRemoteComponent), gated by VITE_ENABLE_MFE. Do NOT add a static
+    // React.lazy(() => import('ContactsApp/...')) for the same route — that would
+    // double-load the remote through two mechanisms. Remotes emit ESM (init/get);
+    // keep shared `react` a singleton ^18.0.0 and never use format:'systemjs'.
     federation({
       name: 'crm-app',
       remotes: {

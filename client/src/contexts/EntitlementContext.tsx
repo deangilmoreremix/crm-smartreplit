@@ -42,11 +42,61 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
   const { user, isAuthenticated } = useAuth();
 
   /**
+   * Derive an entitlement from the authenticated user's Supabase metadata.
+   *
+   * Admin/owner privileges live in the auth user's metadata
+   * (`app_metadata.role` / `app_metadata.product_tier`), NOT in the
+   * `user_entitlements` table. Deriving from metadata keeps super-admin
+   * accounts working even when that table is missing or empty.
+   */
+  const deriveEntitlementFromUser = useCallback(
+    (u: any): UserEntitlement | null => {
+      if (!u) return null;
+
+      const meta = u.app_metadata || {};
+      const umeta = u.user_metadata || {};
+      const role = meta.role || u.role || umeta.role || null;
+      const tier =
+        meta.product_tier || u.productTier || umeta.product_tier || null;
+
+      const isSuper =
+        role === 'super_admin' ||
+        tier === 'super_admin' ||
+        tier === 'dev_all_access';
+
+      if (isSuper) {
+        return {
+          id: 'derived-super-admin',
+          email: u.email || '',
+          package: 'super_admin',
+          openclaw_enabled: true,
+          admin_enabled: true,
+          source: 'Derived from auth metadata',
+          notes: 'Super admin privileges inherited from user metadata',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      }
+
+      return null;
+    },
+    []
+  );
+
+  /**
    * Fetch entitlements for the current user's email
    */
   const fetchEntitlement = useCallback(async () => {
-    if (!isSupabaseConfigured() || !user?.email) {
+    if (!user) {
+      setEntitlement(null);
       setIsLoading(false);
+      return;
+    }
+
+    // No Supabase configured → fall back to metadata (e.g. local/dev)
+    if (!isSupabaseConfigured()) {
+      setIsLoading(false);
+      setEntitlement(deriveEntitlementFromUser(user));
       return;
     }
 
@@ -61,8 +111,16 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
         .single();
 
       if (fetchError) {
-        // If no entitlement found, create a default regular user entitlement
+        // If no entitlement row exists yet, create a default regular package.
         if (fetchError.code === 'PGRST116') {
+          // Super admins are defined in auth metadata, not the table.
+          const derived = deriveEntitlementFromUser(user);
+          if (derived) {
+            console.log('Super admin detected from metadata — granting full access.');
+            setEntitlement(derived);
+            return;
+          }
+
           console.log('No entitlement found for user, creating default regular package...');
 
           // Create default entitlement for new user
@@ -80,11 +138,23 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
             .single();
 
           if (insertError) {
+            // Table may not exist yet — fall back to metadata so admins still work
+            const fallback = deriveEntitlementFromUser(user);
+            if (fallback) {
+              setEntitlement(fallback);
+              return;
+            }
             throw new Error(`Failed to create entitlement: ${insertError.message}`);
           }
 
           setEntitlement(newEntitlement);
         } else {
+          // Any other error (e.g. table missing) → fall back to metadata
+          const derived = deriveEntitlementFromUser(user);
+          if (derived) {
+            setEntitlement(derived);
+            return;
+          }
           throw fetchError;
         }
       } else {
@@ -93,12 +163,20 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch entitlement';
       console.error('Entitlement fetch error:', errorMessage);
-      setError(errorMessage);
-      setEntitlement(null);
+
+      // Don't lock the admin out — try metadata one last time
+      const derived = deriveEntitlementFromUser(user);
+      if (derived) {
+        setEntitlement(derived);
+        setError(null);
+      } else {
+        setError(errorMessage);
+        setEntitlement(null);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [user, isSupabaseConfigured]);
+  }, [user, isSupabaseConfigured, deriveEntitlementFromUser]);
 
   /**
    * Refresh entitlements - call after any package change

@@ -1,6 +1,3 @@
-// Module Federation Configuration for Contacts App
-// File: vite.config.js (for https://contacts.smartcrm.vip)
-
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import federation from '@originjs/vite-plugin-federation'
@@ -9,23 +6,15 @@ export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'ContactsApp',
+      name: 'AnalyticsApp',
       filename: 'assets/remoteEntry.js',
       exposes: {
-        './ContactsApp': './ContactsApp.tsx',
-        './ContactsModule': './ContactsModule.tsx'
+        './AnalyticsApp': './src/AnalyticsApp.tsx',
+        './AnalyticsModule': './src/AnalyticsModule.tsx'
       },
       shared: {
-        react: {
-          singleton: true,
-          requiredVersion: false,
-          eager: true,
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: false,
-          eager: true,
-        }
+        react: { singleton: true, requiredVersion: '^18.0.0' },
+        'react-dom': { singleton: true, requiredVersion: '^18.0.0' }
       }
     })
   ],
@@ -36,10 +25,6 @@ export default defineConfig({
     rollupOptions: {
       external: [],
       output: {
-        // ESM output — the host runtime loader imports remoteEntry expecting
-        // init/get. Do NOT set format:'systemjs' here; @originjs emits ESM by
-        // default and the host consumes it as ESM.
-        entryFileNames: 'assets/remoteEntry.js',
         minifyInternalExports: false,
         assetFileNames: 'assets/[name].[hash][extname]',
         chunkFileNames: 'assets/[name].[hash].js'

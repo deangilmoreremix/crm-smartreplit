@@ -1,5 +1,5 @@
-export { WorkflowEventEmitter, workflowEventEmitter } from './emitter';
-export type { WorkflowEvent, WorkflowEventHandler, WorkflowTriggerType } from './emitter';
+export { WorkflowEventEmitter, workflowEventEmitter } from './events/emitter';
+export type { WorkflowEvent, WorkflowEventHandler, WorkflowTriggerType } from './events/emitter';
 export {
   emitWorkflowEvent,
   emitRecordCreated,
@@ -8,7 +8,7 @@ export {
   emitAICompleted,
   triggerWorkflowsForEvent,
   setupWorkflowTriggerHandlers,
-} from './emitter';
+} from './events/emitter';
 export { WorkflowEngine, workflowEngine } from './engine/WorkflowEngine';
 export type {
   WorkflowContext,

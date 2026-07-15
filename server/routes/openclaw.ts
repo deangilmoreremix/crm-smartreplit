@@ -1375,7 +1375,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           },
           contacts: {
             url: 'https://contacts.smartcrm.vip',
-            module: './SmartCRMApp', // Fixed: actual exposed module name
+            module: './ContactsApp',
             description: 'Contacts Management App',
           },
           calendar: {
@@ -2629,7 +2629,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             module: './PipelineApp',
           },
           { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
-          { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './SmartCRMApp' }, // Fixed: actual exposed module
+          { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './ContactsApp' },
           { name: 'calendar', url: 'https://calendar.smartcrm.vip', module: './CalendarApp' },
           { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIGoalsApp' },
           {
