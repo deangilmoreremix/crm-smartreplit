@@ -15,7 +15,7 @@ const RemoteAIGoalsLoader: React.FC<RemoteAIGoalsLoaderProps> = ({ showHeader = 
       )}
 
       <iframe
-        src="https://videoagencyai.netlify.app/"
+        src="https://agency.smartcrm.vip/"
         style={{
           width: '100%',
           height: showHeader ? 'calc(100% - 50px)' : '100%',

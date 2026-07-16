@@ -12,7 +12,7 @@ APPS=(
   "pipeline:cheery-syrniki-b5b6ca:pipeline.smartcrm.vip"
   "analytics:dulcet-salmiakki-445c47:ai-analytics.smartcrm.vip"
   "calendar:voluble-vacherin-add80d:calendar.smartcrm.vip"
-  "agency:91317337-b416-4b44-94e9-a852ed448a79:videoagencyai.netlify.app"
+  "agency:91317337-b416-4b44-94e9-a852ed448a79:agency.smartcrm.vip"
 )
 
 echo "=========================================="
@@ -48,6 +48,5 @@ echo ""
 echo "  node verify-mfe-remotes.js"
 echo ""
 echo "CORS: each apps/<app>/public/_headers allows '*' on /assets/remoteEntry.js"
-echo "Agency TODO: switch URL to https://agency.smartcrm.vip once custom domain is live"
 echo ""
 echo "=========================================="

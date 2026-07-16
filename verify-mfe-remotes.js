@@ -12,8 +12,7 @@ const REMOTE_APPS = [
   { name: 'Contacts', url: 'https://contacts.smartcrm.vip/assets/remoteEntry.js', scope: 'ContactsApp', module: './ContactsApp' },
   { name: 'Analytics', url: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js', scope: 'AnalyticsApp', module: './AnalyticsApp' },
   { name: 'Calendar', url: 'https://calendar.smartcrm.vip/assets/remoteEntry.js', scope: 'CalendarApp', module: './CalendarApp' },
-  { name: 'Agency', url: 'https://videoagencyai.netlify.app/assets/remoteEntry.js', scope: 'AIGoalsApp', module: './AIGoalsApp' },
-  // TODO: switch Agency URL to https://agency.smartcrm.vip/assets/remoteEntry.js once custom domain is live
+  { name: 'Agency', url: 'https://agency.smartcrm.vip/assets/remoteEntry.js', scope: 'AIGoalsApp', module: './AIGoalsApp' },
 ];
 
 function checkRemoteEntry(app) {

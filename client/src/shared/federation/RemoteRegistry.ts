@@ -18,8 +18,7 @@ export const REMOTE_APPS: Record<string, RemoteApp> = {
     id: 'agency',
     name: 'AI Agency Suite',
     domain: 'agency.smartcrm.vip',
-    url: 'https://videoagencyai.netlify.app',
-    scope: 'AIGoalsApp',
+    url: 'https://agency.smartcrm.vip',
     modules: ['./AgencyApp', './AgencyModule'],
     capabilities: ['campaigns', 'automation', 'ai-content'],
     // TODO: switch url/domain back to agency.smartcrm.vip once custom domain is live

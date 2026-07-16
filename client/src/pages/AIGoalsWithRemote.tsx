@@ -38,7 +38,7 @@ const AIGoalsWithRemote: React.FC = () => {
         {/* External Link Button - opens the standalone Agency app */}
         <div className="absolute top-4 left-4 z-30">
           <a
-            href="https://videoagencyai.netlify.app/"
+            href="https://agency.smartcrm.vip/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center space-x-1 px-3 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors shadow-lg"

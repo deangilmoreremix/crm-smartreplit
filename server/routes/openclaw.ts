@@ -2631,7 +2631,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
           { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './ContactsApp' },
           { name: 'calendar', url: 'https://calendar.smartcrm.vip', module: './CalendarApp' },
-          { name: 'agency', url: 'https://videoagencyai.netlify.app', module: './AgencyApp' },
+          { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AgencyApp' },
           {
             name: 'research',
             url: 'https://research.smartcrm.vip',

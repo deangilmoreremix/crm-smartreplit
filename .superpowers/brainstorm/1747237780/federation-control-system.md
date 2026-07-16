@@ -195,7 +195,7 @@ interface DataSyncLayer {
 | App ID | Custom Domain | Current URL | Scope |
 |--------|---------------|-------------|-------|
 | contacts | contacts.smartcrm.vip | taupe-sprinkles-83c9ee.netlify.app | enhanced_contacts |
-| agency | agency.smartcrm.vip | tubular-choux-2a9b3c.netlify.app | ai_agency |
+| agency | agency.smartcrm.vip | videoagencyai.netlify.app (91317337-b416-4b44-94e9-a852ed448a79) | ai_agency |
 | analytics | analytics.smartcrm.vip | subtle-florentine-8fd315.netlify.app | ai_analytics |
 | pipeline | pipeline.smartcrm.vip | cheery-syrniki-b5b6ca.netlify.app | pipeline_deals |
 | research | research.smartcrm.vip | clever-syrniki-4df87f.netlify.app | product_research |

@@ -164,7 +164,7 @@ The host app at `/client/src/App.tsx` now:
 | App ID | Domain | Netlify URL | Scope | Request Prefix |
 |--------|--------|-------------|-------|----------------|
 | contacts | contacts.smartcrm.vip | taupe-sprinkles...netlify.app | ContactsApp | 'contacts' |
-| agency | agency.smartcrm.vip | tubular-choux...netlify.app | AIGoalsApp | 'agency' |
+| agency | agency.smartcrm.vip | videoagencyai...netlify.app (91317337-b416-4b44-94e9-a852ed448a79) | AIGoalsApp | 'agency' |
 | analytics | analytics.smartcrm.vip | subtle-florentine...netlify.app | AnalyticsApp | 'analytics' |
 | pipeline | pipeline.smartcrm.vip | cheery-syrniki...netlify.app | PipelineApp | 'pipeline' |
 | research | research.smartcrm.vip | clever-syrniki...netlify.app | ResearchApp | 'research' |
