@@ -5,10 +5,11 @@ import { useWhitelabel } from '../contexts/WhitelabelContext';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
-// Remote configuration - agency.smartcrm.vip
-const AGENCY_REMOTE_URL = 'https://agency.smartcrm.vip';
+// Remote configuration - deployed at videoagencyai.netlify.app
+// TODO: switch back to agency.smartcrm.vip once custom domain is live
+const AGENCY_REMOTE_URL = 'https://videoagencyai.netlify.app';
 const AGENCY_SCOPE = 'AIGoalsApp';
-const AGENCY_MODULE = './AIGoalsApp';
+const AGENCY_MODULE = './AgencyApp';
 
 // Diagnostics for federation debugging
 if (import.meta.env.DEV) {

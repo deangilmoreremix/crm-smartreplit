@@ -25,6 +25,8 @@ export default defineConfig({
         AnalyticsApp: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
         CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
         PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
+        AIGoalsApp: 'https://videoagencyai.netlify.app/assets/remoteEntry.js',
+        // TODO: switch to https://agency.smartcrm.vip/assets/remoteEntry.js once the custom domain is live
       },
       shared: {
         react: {

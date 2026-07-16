@@ -3,7 +3,7 @@ import React from 'react';
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 // Agency/AI Goals MFE is currently disabled because the remote app is not deployed
-// This component shows a placeholder until the agency.smartcrm.vip remote is built
+// This component shows a placeholder until the videoagencyai.netlify.app remote is built
 const LocalAIGoalsFallback: React.FC<ModuleFederationAIGoalsProps> = ({ showHeader = false }) => {
   return (
     <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">

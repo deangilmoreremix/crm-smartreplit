@@ -42,8 +42,8 @@ export const MFE_REMOTES: Record<string, { url: string; module: string }> = {
     module: './CalendarApp',
   },
   agency: {
-    url: 'https://agency.smartcrm.vip',
-    module: './AIGoalsApp',
+    url: 'https://videoagencyai.netlify.app',
+    module: './AgencyApp',
   },
   research: {
     url: 'https://research.smartcrm.vip',

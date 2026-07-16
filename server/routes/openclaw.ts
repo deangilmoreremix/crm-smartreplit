@@ -1384,10 +1384,10 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             description: 'Calendar App',
           },
           agency: {
-            url: 'https://agency.smartcrm.vip',
-            module: './AIGoalsApp',
+            url: 'https://videoagencyai.netlify.app',
+            module: './AgencyApp',
             description: 'AI Agency App',
-            available: false, // Temporarily disabled until properly deployed
+            // TODO: switch url back to https://agency.smartcrm.vip once custom domain is live
           },
           research: {
             url: 'https://research.smartcrm.vip',
@@ -2631,7 +2631,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           { name: 'analytics', url: 'https://ai-analytics.smartcrm.vip', module: './AnalyticsApp' },
           { name: 'contacts', url: 'https://contacts.smartcrm.vip', module: './ContactsApp' },
           { name: 'calendar', url: 'https://calendar.smartcrm.vip', module: './CalendarApp' },
-          { name: 'agency', url: 'https://agency.smartcrm.vip', module: './AIGoalsApp' },
+          { name: 'agency', url: 'https://videoagencyai.netlify.app', module: './AgencyApp' },
           {
             name: 'research',
             url: 'https://research.smartcrm.vip',
