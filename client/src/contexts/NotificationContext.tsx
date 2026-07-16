@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { Notification, NotificationType } from '../types/notifications';
+import type { Notification, NotificationType } from '../types/notifications';
 
 const STORAGE_KEY = 'smartcrm-notifications';
 
