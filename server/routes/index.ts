@@ -13,6 +13,7 @@ import domainsRoutes from './domains';
 import themesRoutes from './themes';
 import provisioningRoutes from './provisioning';
 import assetsRoutes from './assets';
+import whitelabelRoutes from './whitelabel';
 
 // Import register functions
 import { registerMessagingRoutes } from './messaging';
@@ -102,6 +103,10 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register assets routes
   console.log('Registering assets routes at /api/assets');
   app.use('/api/assets', assetsRoutes);
+
+  // Register white-label settings propagation routes
+  console.log('Registering white-label routes at /api/whitelabel');
+  app.use('/api/whitelabel', whitelabelRoutes);
 
   // Register API key routes
   console.log('Registering API key routes');

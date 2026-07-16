@@ -1,4 +1,6 @@
 // Enhanced Module Federation - Shared UI Components
+export { Icon, COMMON_ICONS } from './icon';
+export type { IconName, IconProps } from './icon';
 export { Button } from './button';
 export { Card } from './card';
 export { Input } from './input';

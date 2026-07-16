@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { applyThemePreset, getStoredThemePreset, listenToSystemThemeChanges } from '../services/themeService';
 
 interface ThemeContextType {
   isDark: boolean;
   toggleTheme: () => void;
   isThemeChanging: boolean;
+  applyThemePreset: (preset: 'light' | 'dark' | 'high-contrast' | 'system', options?: { smooth?: boolean }) => void;
+  currentPreset: 'light' | 'dark' | 'high-contrast' | 'system';
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -35,6 +38,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Add a state to track theme transitions
   const [isThemeChanging, setIsThemeChanging] = useState(false);
+
+  const [currentPreset, setCurrentPreset] = useState<'light' | 'dark' | 'high-contrast' | 'system'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    return getStoredThemePreset();
+  });
 
   // Broadcast theme changes to iframes for white label apps
   const broadcastThemeToIframes = useCallback((theme: string) => {
@@ -92,6 +100,27 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     themeColorMeta.setAttribute('content', isDark ? '#0f172a' : '#ffffff');
   }, [isDark, broadcastThemeToIframes]);
 
+  useEffect(() => {
+    const unsub = listenToSystemThemeChanges((theme) => {
+      if (currentPreset === 'system') {
+        applyThemePreset('system', { smooth: true });
+      }
+    });
+    return unsub;
+  }, [currentPreset]);
+
+  const applyThemePresetWrapper = useCallback((preset: 'light' | 'dark' | 'high-contrast' | 'system', options?: { smooth?: boolean }) => {
+    setIsThemeChanging(true);
+    setCurrentPreset(preset);
+    applyThemePreset(preset, options);
+    if (preset === 'dark' || (preset === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setIsDark(true);
+    } else if (preset !== 'system') {
+      setIsDark(false);
+    }
+    setTimeout(() => setIsThemeChanging(false), 300);
+  }, []);
+
   // Helper to handle theme transition state
   const handleThemeChange = useCallback(() => {
     setIsThemeChanging(true);
@@ -106,7 +135,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme, isThemeChanging }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme, isThemeChanging, applyThemePreset: applyThemePresetWrapper, currentPreset }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -590,3 +590,81 @@ textarea,
 /* Voice agent widget styles removed */
 
 /* ElevenLabs widget styles removed */
+
+/* Dynamic theme system variables and transitions */
+:root {
+  --wl-transition-duration: 300ms;
+  --wl-transition-timing: ease;
+}
+
+/* Smooth transitions for dynamic theme properties */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color var(--wl-transition-duration) var(--wl-transition-timing),
+    color var(--wl-transition-duration) var(--wl-transition-timing),
+    border-color var(--wl-transition-duration) var(--wl-transition-timing),
+    box-shadow var(--wl-transition-duration) var(--wl-transition-timing),
+    outline-color var(--wl-transition-duration) var(--wl-transition-timing) !important;
+}
+
+/* Responsive breakpoint utilities using CSS custom properties */
+@media (max-width: 639px) {
+  :root {
+    --wl-container-padding: 1rem;
+    --wl-font-scale: 0.95;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 767px) {
+  :root {
+    --wl-container-padding: 1.5rem;
+    --wl-font-scale: 1;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --wl-container-padding: 2rem;
+    --wl-font-scale: 1;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  :root {
+    --wl-container-padding: 2.5rem;
+    --wl-font-scale: 1.05;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1535px) {
+  :root {
+    --wl-container-padding: 3rem;
+    --wl-font-scale: 1.1;
+  }
+}
+
+@media (min-width: 1536px) {
+  :root {
+    --wl-container-padding: 4rem;
+    --wl-font-scale: 1.15;
+  }
+}
+
+/* Dynamic font family support */
+:root {
+  --wl-font-family: inherit;
+}
+
+body {
+  font-family: var(--wl-font-family);
+}
+
+/* Dynamic theme color variables used by white-label */
+:root {
+  --wl-primary-color: #3b82f6;
+  --wl-secondary-color: #6366f1;
+}
+

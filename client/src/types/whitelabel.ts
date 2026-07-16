@@ -143,6 +143,9 @@ export interface WhitelabelContextType {
   loadFromUrl: (urlParams: URLSearchParams) => void;
   exportConfig: () => string;
   importConfig: (configJson: string) => void;
+  applyTheme: (variables: Record<string, string>, smooth?: boolean) => void;
+  setFontFamily: (fontFamily: string) => void;
+  setCustomCSS: (css: string) => void;
 }
 
 export const DEFAULT_WHITELABEL_CONFIG: WhitelabelConfig = {

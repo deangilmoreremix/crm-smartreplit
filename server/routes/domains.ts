@@ -319,4 +319,145 @@ router.post('/monitor', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/domains/check-availability
+ * Check domain/subdomain availability
+ */
+router.post('/check-availability', async (req: Request, res: Response) => {
+  try {
+    const { domain, subdomain } = req.body;
+
+    if (!domain && !subdomain) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['domain or subdomain'],
+      });
+    }
+
+    let result;
+    if (subdomain && !domain) {
+      const isAvailable = await domainManager.isSubdomainAvailable(subdomain);
+      result = {
+        domain: `${subdomain}.${process.env.PLATFORM_DOMAIN || 'smartcrm.vip'}`,
+        available: isAvailable,
+        type: 'subdomain',
+      };
+    } else {
+      result = await domainManager.checkDomainAvailability(domain);
+    }
+
+    res.json(result);
+  } catch (error: any) {
+    await errorLogger.logError('Domain availability check failed', error, {
+      endpoint: '/api/domains/check-availability',
+      method: 'POST',
+    });
+
+    res.status(500).json({
+      error: 'Failed to check domain availability',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/domains/suggest
+ * Get alternative domain suggestions
+ */
+router.post('/suggest', async (req: Request, res: Response) => {
+  try {
+    const { domain, count } = req.body;
+
+    if (!domain) {
+      return res.status(400).json({
+        error: 'Domain is required',
+      });
+    }
+
+    const suggestions = await domainManager.suggestDomains(domain, count || 5);
+
+    res.json({
+      domain,
+      suggestions,
+      count: suggestions.length,
+    });
+  } catch (error: any) {
+    await errorLogger.logError('Domain suggestion failed', error, {
+      endpoint: '/api/domains/suggest',
+      method: 'POST',
+    });
+
+    res.status(500).json({
+      error: 'Failed to generate domain suggestions',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/domains/validate/:domain
+ * Validate domain format and availability
+ */
+router.get('/validate/:domain', async (req: Request, res: Response) => {
+  try {
+    const { domain } = req.params;
+
+    const validation = await domainManager.validateDomainFormat(domain);
+    const availability = await domainManager.checkDomainAvailability(validation.normalizedDomain || domain);
+
+    res.json({
+      domain,
+      validation,
+      availability,
+    });
+  } catch (error: any) {
+    await errorLogger.logError('Domain validation failed', error, {
+      endpoint: `/api/domains/validate/${req.params.domain}`,
+      method: 'GET',
+    });
+
+    res.status(500).json({
+      error: 'Failed to validate domain',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/domains/provision-subdomain
+ * Auto-provision subdomain for tenant
+ */
+router.post('/provision-subdomain', async (req: Request, res: Response) => {
+  try {
+    const { tenantId, subdomain } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['tenantId'],
+      });
+    }
+
+    const result = await domainManager.provisionSubdomainForTenant(tenantId, subdomain);
+
+    res.status(201).json({
+      message: 'Subdomain provisioned successfully',
+      ...result,
+    });
+  } catch (error: any) {
+    await errorLogger.logError('Subdomain provisioning failed', error, {
+      endpoint: '/api/domains/provision-subdomain',
+      method: 'POST',
+    });
+
+    const statusCode = error.message.includes('not found') ? 404 :
+                      error.message.includes('not available') ? 409 : 500;
+
+    res.status(statusCode).json({
+      error: 'Failed to provision subdomain',
+      message: error.message,
+    });
+  }
+});
+
 export default router;

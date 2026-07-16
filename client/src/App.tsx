@@ -19,6 +19,8 @@ import { DashboardLayoutProvider } from './contexts/DashboardLayoutContext';
 import { AIProvider } from './contexts/AIContext';
 import { AIConfigurationProvider } from './contexts/AIConfigurationContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { useNotificationsHelpers } from './hooks/useNotifications';
 import { EntitlementProvider } from './contexts/EntitlementContext';
 import { RoleProvider } from './components/RoleBasedAccess';
 import { FeatureKey } from './types/entitlements';
@@ -36,6 +38,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { useAIApiKeys } from './hooks/useAIApiKeys';
 import AIApiKeySettings from './components/aiIntegration/AIApiKeySettings';
 import { useCommandMenu, CommandMenu } from './components/CommandMenu';
+import NotificationCenter from './components/NotificationCenter';
 
 // Eager pages
 import Dashboard from './pages/Dashboard';
@@ -240,8 +243,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <EntitlementProvider>
-          <ThemeProvider>
+        <NotificationProvider>
+          <EntitlementProvider>
+            <ThemeProvider>
             <DemoDataProvider>
               <TenantProvider>
                 <WhitelabelProvider>
@@ -275,6 +279,7 @@ function App() {
             </DemoDataProvider>
           </ThemeProvider>
         </EntitlementProvider>
+      </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
@@ -361,6 +366,20 @@ function AppContent() {
     window.addEventListener('openclaw-setup-requested', handleOpenClawSetup);
     return () => window.removeEventListener('openclaw-setup-requested', handleOpenClawSetup);
   }, [isAuthenticated, hasOpenClawKey]);
+
+  // Demo: Show a welcome notification once per session
+  const { success: notifySuccess } = useNotificationsHelpers();
+  React.useEffect(() => {
+    if (!isAuthenticated || loading) return;
+    const seen = sessionStorage.getItem('welcome-notification-seen');
+    if (!seen) {
+      const timer = setTimeout(() => {
+        notifySuccess('Welcome back!', 'Your CRM dashboard is ready.', 6000);
+        sessionStorage.setItem('welcome-notification-seen', 'true');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, loading, notifySuccess]);
 
   // Handle messages from MF apps (iframes)
   useEffect(() => {

@@ -5,6 +5,7 @@ import {
   Tenant,
   DEFAULT_WHITELABEL_CONFIG,
 } from '../types/whitelabel';
+import { injectCSSVariables, setFontFamily as setThemeFontFamily, injectCustomCSS } from '../services/themeService';
 
 const WhitelabelContext = createContext<WhitelabelContextType | undefined>(undefined);
 
@@ -62,6 +63,9 @@ export const useWhitelabel = () => {
       loadFromUrl: () => {},
       exportConfig: () => btoa(JSON.stringify(DEFAULT_WHITELABEL_CONFIG)),
       importConfig: () => {},
+      applyTheme: () => {},
+      setFontFamily: () => {},
+      setCustomCSS: () => {},
     };
   }
   return context;
@@ -414,6 +418,25 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     root.style.setProperty('--wl-secondary-color', config.secondaryColor);
   }, [config.primaryColor, config.secondaryColor]);
 
+  const applyTheme = useCallback((variables: Record<string, string>, smooth: boolean = true) => {
+    const root = document.documentElement;
+    if (smooth) {
+      root.style.setProperty('transition', 'background-color 300ms ease, color 300ms ease, border-color 300ms ease, box-shadow 300ms ease');
+      setTimeout(() => {
+        root.style.removeProperty('transition');
+      }, 350);
+    }
+    injectCSSVariables(variables);
+  }, []);
+
+  const setFontFamily = useCallback((fontFamily: string) => {
+    setThemeFontFamily(fontFamily);
+  }, []);
+
+  const setCustomCSS = useCallback((css: string) => {
+    injectCustomCSS(css);
+  }, []);
+
   const value: WhitelabelContextType = {
     config,
     tenants,
@@ -427,6 +450,9 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     loadFromUrl,
     exportConfig,
     importConfig,
+    applyTheme,
+    setFontFamily,
+    setCustomCSS,
   };
 
   return <WhitelabelContext.Provider value={value}>{children}</WhitelabelContext.Provider>;

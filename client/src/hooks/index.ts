@@ -10,7 +10,9 @@ export { useUniversalRemoteIntegration } from './useUniversalRemoteIntegration';
 export { useVoiceAgent } from './useVoiceAgent';
 export { useUserWLSettings as useWLSettings } from './useWLSettings';
 export { useAIApiKeys } from './useAIApiKeys';
+export { useNotifications, useNotificationsHelpers } from './useNotifications';
 export { useApiKeyStatus } from './useApiKeyStatus';
+export { useDynamicTheme } from './useDynamicTheme';
 
 // Re-export React hooks for convenience
 export { useState, useEffect, useCallback, useMemo, useRef, useContext } from 'react';

@@ -73,11 +73,7 @@ import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import DevBypassButton from './DevBypassButton';
 import OpenClawNavbarIndicator from './OpenClawNavbarIndicator';
 import { useAIApiKeys } from '../hooks/useAIApiKeys';
-
-import { useDealStore } from '../store/dealStore';
-import { useContactStore } from '../hooks/useContactStore';
-import { useTaskStore } from '../store/taskStore';
-import { useAppointmentStore } from '../store/appointmentStore';
+import NotificationCenter from './NotificationCenter';
 
 interface NavbarProps {
   onOpenPipelineModal?: () => void;
@@ -166,41 +162,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   const hasAITools = canAccess('ai_tools');
   const hasAdvancedFeatures = canAccess('business_intelligence');
 
-  // Data sources
-  const { deals } = useDealStore();
-  const { contacts } = useContactStore();
-  const { tasks } = useTaskStore();
-  const { appointments } = useAppointmentStore();
-
-  // Counters
-  const counters = React.useMemo(() => {
-    const activeDeals = Object.values(deals).filter(
-      (deal) => String(deal.stage) !== 'closed-won' && String(deal.stage) !== 'closed-lost'
-    ).length;
-
-    const hotContacts = Object.values(contacts).filter(
-      (contact) =>
-        (contact as any)?.interestLevel === 'hot' ||
-        (contact as any)?.status?.toLowerCase?.() === 'hot'
-    ).length;
-
-    const pendingTasks = Object.values(tasks).filter((task) => !task.completed).length;
-
-    const todayAppointments = Object.values(appointments).filter((apt) => {
-      if (!apt.date) return false;
-      const today = new Date();
-      const aptDate = new Date(apt.date);
-      return aptDate.toDateString() === today.toDateString() && apt.status === 'scheduled';
-    }).length;
-
-    return {
-      activeDeals,
-      hotContacts,
-      pendingTasks,
-      todayAppointments,
-      totalNotifications: hotContacts + pendingTasks + todayAppointments,
-    };
-  }, [deals, contacts, tasks, appointments]);
+  // Data sources removed with old bell counter
 
   // ===== UNIFIED TASKS DROPDOWN: View Options + Quick Actions + AI Features =====
   const taskTools = [
@@ -1181,16 +1143,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                     className={`block overflow-visible shrink-0 ${isDark ? 'text-white' : 'text-gray-600'}`}
                   />
                 </button>
-                <button
-                  data-testid="button-notifications"
-                  className={`relative p-2 rounded-full transition-all duration-300 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
-                >
-                  <Bell
-                    size={16}
-                    className={`block overflow-visible shrink-0 ${isDark ? 'text-white' : 'text-gray-600'}`}
-                  />
-                  {counters.totalNotifications > 0 && renderBadge(counters.totalNotifications)}
-                </button>
+                <NotificationCenter />
                 <button
                   onClick={toggleTheme}
                   data-testid="button-theme-toggle"

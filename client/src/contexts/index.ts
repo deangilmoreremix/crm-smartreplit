@@ -1,4 +1,5 @@
 // Enhanced Module Federation - Shared Contexts
+export { NotificationProvider, useNotifications } from './NotificationContext';
 export { RemoteAppProvider, useRemoteApps } from './RemoteAppContext';
 export { AuthProvider, useAuth } from './AuthContext';
 export { ThemeProvider, useTheme } from './ThemeContext';

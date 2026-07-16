@@ -6,5 +6,7 @@ export { openAIService } from './openAIService';
 export { geminiService } from './geminiService';
 export { webSocketManager, useWebSocket } from './webSocketManager';
 
+export * from './themeService';
+
 // Re-export service utilities
 export * from './serviceUtils';
