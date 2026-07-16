@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import federation from "@originjs/vite-plugin-federation";
+import { federation } from "@module-federation/vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -25,7 +25,6 @@ export default defineConfig({
         AnalyticsApp: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
         CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
         PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
-        AIGoalsApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',
       },
       shared: {
         react: {

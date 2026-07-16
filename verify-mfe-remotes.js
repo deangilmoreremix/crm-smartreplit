@@ -11,7 +11,6 @@ const REMOTE_APPS = [
   { name: 'Pipeline', url: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js', scope: 'PipelineApp', module: './PipelineApp' },
   { name: 'Contacts', url: 'https://contacts.smartcrm.vip/assets/remoteEntry.js', scope: 'ContactsApp', module: './ContactsApp' },
   { name: 'Analytics', url: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js', scope: 'AnalyticsApp', module: './AnalyticsApp' },
-  { name: 'Agency', url: 'https://agency.smartcrm.vip/assets/remoteEntry.js', scope: 'AIGoalsApp', module: './AIGoalsApp' },
   { name: 'Calendar', url: 'https://calendar.smartcrm.vip/assets/remoteEntry.js', scope: 'CalendarApp', module: './CalendarApp' },
 ];
 
