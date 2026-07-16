@@ -1,49 +1,53 @@
 #!/bin/bash
 
 # Netlify Manual Deploy Helper
-# This script outputs the exact steps to manually deploy each app
+# Builds and lists deploy steps for all 5 Module Federation remote apps.
+# NOTE: `netlify create`/`sites:list` hang in non-interactive environments,
+# so deploys must be performed via the Netlify UI or `netlify deploy --prod`.
+
+set -e
+
+APPS=(
+  "contacts:taupe-sprinkles-83c9ee:contacts.smartcrm.vip"
+  "pipeline:cheery-syrniki-b5b6ca:pipeline.smartcrm.vip"
+  "analytics:dulcet-salmiakki-445c47:ai-analytics.smartcrm.vip"
+  "calendar:voluble-vacherin-add80d:calendar.smartcrm.vip"
+  "agency:91317337-b416-4b44-94e9-a852ed448a79:videoagencyai.netlify.app"
+)
 
 echo "=========================================="
-echo "  MODULE FEDERATION DEPLOYMENT GUIDE"
+echo "  MODULE FEDERATION DEPLOYMENT"
 echo "=========================================="
 echo ""
-echo "All apps have been built successfully:"
+echo "Step 1 - Build each remote app:"
 echo ""
-echo "1. Contacts App"
-echo "   Site: taupe-sprinkles-83c9ee"
-echo "   URL: https://contacts.smartcrm.vip"
-echo "   Dist: /workspaces/crm-smartreplit/apps/contacts/dist/"
-echo "   Deploy: https://app.netlify.com/projects/taupe-sprinkles-83c9ee"
+
+for entry in "${APPS[@]}"; do
+  IFS=':' read -r app site domain <<< "$entry"
+  echo "  cd apps/$app && npm run build"
+done
+
 echo ""
-echo "2. Pipeline App"
-echo "   Site: cheery-syrniki-b5b6ca"
-echo "   URL: https://pipeline.smartcrm.vip"
-echo "   Dist: /workspaces/crm-smartreplit/apps/pipeline/dist/"
-echo "   Deploy: https://app.netlify.com/projects/cheery-syrniki-b5b6ca"
+echo "Step 2 - Deploy each built dist/ folder:"
 echo ""
-echo "3. Analytics App"
-echo "   Site: subtle-florentine-8fd315"
-echo "   URL: https://analytics.smartcrm.vip"
-echo "   Dist: /workspaces/crm-smartreplit/apps/analytics/dist/"
-echo "   Deploy: https://app.netlify.com/projects/subtle-florentine-8fd315"
-echo ""
-echo "4. Calendar App"
-echo "   Site: voluble-vacherin-add80d"
-echo "   URL: https://calendar.smartcrm.vip"
-echo "   Dist: /workspaces/crm-smartreplit/apps/calendar/dist/"
-echo "   Deploy: https://app.netlify.com/projects/voluble-vacherin-add80d"
-echo ""
+
+for entry in "${APPS[@]}"; do
+  IFS=':' read -r app site domain <<< "$entry"
+  echo "  App: $app"
+  echo "    Site:     $site"
+  echo "    URL:      https://$domain"
+  echo "    Dist:     apps/$app/dist/"
+  echo "    Deploy:   netlify deploy --prod --no-build --dir=apps/$app/dist --site=$site"
+  echo ""
+done
+
 echo "=========================================="
-echo "  DEPLOYMENT STEPS (for each app)"
+echo "  VERIFY"
 echo "=========================================="
 echo ""
-echo "1. Go to the deploy URL listed above"
-echo "2. Click 'Deploy' → 'Deploy manually'"
-echo "3. Drag & drop the entire 'dist' folder"
-echo "4. Wait for deployment to complete"
-echo "5. Verify: the production URL matches the custom domain"
+echo "  node verify-mfe-remotes.js"
 echo ""
-echo "After all 4 are deployed, test:"
-echo "  node /workspaces/crm-smartreplit/test-mfe-integration.js"
+echo "CORS: each apps/<app>/public/_headers allows '*' on /assets/remoteEntry.js"
+echo "Agency TODO: switch URL to https://agency.smartcrm.vip once custom domain is live"
 echo ""
 echo "=========================================="
