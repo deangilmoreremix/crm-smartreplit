@@ -1,7 +1,10 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
-import { ExternalLink, Brain } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import ModuleFederationAgency from '../components/ModuleFederationAgency';
+
+const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
 const AIGoalsWithRemote: React.FC = () => {
   const { isDark } = useTheme();
@@ -9,59 +12,39 @@ const AIGoalsWithRemote: React.FC = () => {
 
   return (
     <div className="fixed inset-0 w-full overflow-hidden z-40">
-      {/* Full Screen AI Goals Component - Module Federation (Coming Soon) */}
+      {/* Full Screen AI Goals / Agency Component - Module Federation */}
       <div className="h-full w-full">
-        {/* Placeholder message */}
-        <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-          <div className="text-center p-8">
-            <div className="mb-4">
-              <svg
-                className="w-16 h-16 mx-auto text-purple-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              {config.companyName} Goals & Agency
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 max-w-md">
-              The AI Goals module is under development and will be available soon. This module will
-              provide AI-powered goal setting, progress tracking, and automated workflows.
-            </p>
-            <div className="inline-flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">
-              <span className="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>
-              Coming Soon
-            </div>
-          </div>
-        </div>
+        <ModuleFederationAgency showHeader />
 
         {/* Module Federation Status Indicator - Floating */}
         <div className="absolute top-4 right-4 z-30">
-          <div className="flex items-center space-x-2 px-3 py-2 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 shadow-lg">
-            <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
-            <span>Module Federation (Disabled)</span>
+          <div
+            className={
+              'flex items-center space-x-2 px-3 py-2 rounded-full text-xs font-medium shadow-lg ' +
+              (ENABLE_MFE
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                : 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400')
+            }
+          >
+            <div
+              className={
+                'w-2 h-2 rounded-full animate-pulse ' + (ENABLE_MFE ? 'bg-green-500' : 'bg-purple-500')
+              }
+            />
+            <span>{ENABLE_MFE ? 'Module Federation (Live)' : 'Module Federation (Fallback)'}</span>
           </div>
         </div>
 
-        {/* External Link Button - Disabled (remote not deployed) */}
+        {/* External Link Button - opens the standalone Agency app */}
         <div className="absolute top-4 left-4 z-30">
           <a
-            href="https://agency.smartcrm.vip/"
+            href="https://videoagencyai.netlify.app/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center space-x-1 px-3 py-2 rounded-full bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-800 transition-colors shadow-lg"
-            title="Agency remote is not deployed yet"
+            className="flex items-center space-x-1 px-3 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors shadow-lg"
           >
             <ExternalLink className="h-4 w-4" />
-            <span className="text-sm">{config.companyName} Agency (Not Deployed)</span>
+            <span className="text-sm">{config.companyName} Agency</span>
           </a>
         </div>
       </div>
