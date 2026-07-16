@@ -1,16 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { federation } from '@module-federation/vite'
+import federation from '@originjs/vite-plugin-federation'
 
 export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'CalendarApp',
+      name: 'product_research',
       filename: 'assets/remoteEntry.js',
       exposes: {
-        './CalendarApp': './src/CalendarApp.tsx',
-        './CalendarModule': './src/CalendarModule.tsx'
+        './ResearchApp': './src/ResearchApp.tsx',
+        './ResearchModule': './src/ResearchModule.tsx'
       },
       shared: {
         react: { singleton: true, requiredVersion: '^18.0.0' },
@@ -25,6 +25,8 @@ export default defineConfig({
     rollupOptions: {
       external: [],
       output: {
+        format: 'systemjs',
+        entryFileNames: 'assets/remoteEntry.js',
         minifyInternalExports: false,
         assetFileNames: 'assets/[name].[hash][extname]',
         chunkFileNames: 'assets/[name].[hash].js'
