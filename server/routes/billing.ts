@@ -13,22 +13,34 @@ const router = Router();
 router.use(requireAuth);
 router.use(requireEntitlement(FeatureKey.BUY_CREDITS));
 
-// Initialize Stripe (optional for demo)
+// Initialize Stripe lazily (top-level await is not supported in CJS transpilation)
 let stripe: any = null;
-try {
-  if (
-    process.env.STRIPE_SECRET_KEY &&
-    process.env.STRIPE_SECRET_KEY !== 'sk_test_demo_stripe_key_placeholder'
-  ) {
-    const Stripe = await import('stripe');
-    stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
-    });
-  } else {
+let stripeInitError: string | null = null;
+
+async function getStripe() {
+  if (stripe) return stripe;
+  if (stripeInitError) return null;
+
+  try {
+    if (
+      process.env.STRIPE_SECRET_KEY &&
+      process.env.STRIPE_SECRET_KEY !== 'sk_test_demo_stripe_key_placeholder'
+    ) {
+      const Stripe = await import('stripe');
+      stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+      });
+      return stripe;
+    }
+
+    stripeInitError = 'Stripe not configured';
     console.warn('Stripe not configured, billing features disabled for demo');
+    return null;
+  } catch (error) {
+    stripeInitError = error instanceof Error ? error.message : String(error);
+    console.warn('Stripe initialization failed, billing features disabled:', error);
+    return null;
   }
-} catch (error) {
-  console.warn('Stripe initialization failed, billing features disabled:', error);
 }
 
 // Initialize Supabase
@@ -108,7 +120,12 @@ router.post('/upgrade', async (req: Request, res: Response) => {
     }
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const stripeClient = await getStripe();
+    if (!stripeClient) {
+      return res.status(500).json({ error: 'Stripe not configured' });
+    }
+
+    const session = await stripeClient.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
@@ -147,10 +164,15 @@ router.post('/webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
+  const stripeClient = await getStripe();
+  if (!stripeClient) {
+    return res.status(500).json({ error: 'Stripe not configured' });
+  }
+
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    event = stripeClient.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err: any) {
     console.log(`Webhook signature verification failed.`, err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
