@@ -56,6 +56,23 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173, // Use Vite's default port instead of conflicting with main server
     hmr: false, // Disable HMR entirely in Codespaces to avoid WebSocket issues
+    cors: {
+      origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://contacts.smartcrm.vip',
+        'https://ai-analytics.smartcrm.vip',
+        'https://calendar.smartcrm.vip',
+        'https://pipeline.smartcrm.vip',
+        'https://videoagencyai.netlify.app',
+      ],
+      credentials: true,
+    },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
   },
   resolve: {
     alias: {
