@@ -8,7 +8,9 @@ interface AgencyModuleProps {
 const CampaignBuilder: React.FC<AgencyModuleProps> = ({ sharedData }) => {
   const isAuthenticated = sharedData?.isAuthenticated ?? false;
 
-  if (!isAuthenticated) {
+  // Only gate when embedded in the host CRM with explicit auth failure.
+  // When loaded standalone (no sharedData), render the full module.
+  if (sharedData && !isAuthenticated) {
     return (
       <div className="p-4 text-center">
         <p className="text-gray-600">Please log in via the main CRM.</p>

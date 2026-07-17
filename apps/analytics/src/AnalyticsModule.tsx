@@ -58,7 +58,9 @@ const AnalyticsModule: React.FC<AnalyticsModuleProps> = ({
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-  if (!isAuthenticated) {
+  // Only gate when embedded in the host CRM with explicit auth failure.
+  // When loaded standalone (no sharedData), render the full module.
+  if (sharedData && !isAuthenticated) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">

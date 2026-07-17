@@ -40,7 +40,9 @@ const AgencyApp: React.FC<AgencyAppProps> = ({ sharedData }) => {
     });
   }, []);
 
-  if (!authState.isAuthenticated) {
+  // Only gate when embedded in the host CRM with explicit auth failure.
+  // When loaded standalone (no sharedData), render the full app.
+  if (sharedData && !authState.isAuthenticated) {
     return (
       <div className="p-6 flex items-center justify-center min-h-screen">
         <div className="text-center">

@@ -34,7 +34,9 @@ const MultiAnalyticsApp: React.FC<MultiAnalyticsAppProps> = ({ sharedData }) => 
     });
   }, []);
 
-  if (!authState.isAuthenticated) {
+  // Only gate when embedded in the host CRM with explicit auth failure.
+  // When loaded standalone (no sharedData), render the full app.
+  if (sharedData && !authState.isAuthenticated) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">
