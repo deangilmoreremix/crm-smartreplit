@@ -40,10 +40,6 @@ const AnalyticsModule: React.FC<AnalyticsModuleProps> = ({
     ...initialData,
   });
 
-  // Use shared auth from host CRM — no separate auth needed
-  const isAuthenticated = sharedData?.isAuthenticated ?? false;
-  const user = sharedData?.user ?? null;
-
   // Listen for data sync from parent CRM via postMessage
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -58,18 +54,8 @@ const AnalyticsModule: React.FC<AnalyticsModuleProps> = ({
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-  // Only gate when embedded in the host CRM with explicit auth failure.
-  // When loaded standalone (no sharedData), render the full module.
-  if (sharedData && !isAuthenticated) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
-          <p className="text-gray-600">Please log in via the main CRM to access Analytics.</p>
-        </div>
-      </div>
-    );
-  }
+  // Auth is handled by the host CRM's ProtectedRoute.
+  // Remotes render their full UI regardless of sharedData.
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
