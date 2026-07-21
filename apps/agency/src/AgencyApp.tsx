@@ -27,6 +27,7 @@ const AgencyApp: React.FC<AgencyAppProps> = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold">Agency Suite</h1>
       <p className="text-gray-600 mb-4">AI Campaign Builder and Automation</p>
+      <p className="text-xs text-gray-400 mb-2">remote: agency.smartcrm.vip · auth: host-managed</p>
       <div className="space-y-2">
         {campaigns.map(c => (
           <div key={c.id} className="border rounded p-3">

@@ -10,3 +10,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 export { MultiAnalyticsApp } from './MultiAnalyticsApp'
 export { CrossAppInsights } from './CrossAppInsights'
+// cache-bust: 1784602070
