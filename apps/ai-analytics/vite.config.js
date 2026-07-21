@@ -16,7 +16,16 @@ export default defineConfig({
         react: { singleton: true, requiredVersion: '^18.0.0' },
         'react-dom': { singleton: true, requiredVersion: '^18.0.0' }
       }
-    })
+    }),
+    {
+      name: 'standalone-entry-injector',
+      transformIndexHtml(html) {
+        return html.replace(
+          '</body>',
+          `<script type="module" src="/src/main.tsx"></script></body>`
+        );
+      }
+    }
   ],
   build: {
     target: 'esnext',
