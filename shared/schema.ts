@@ -594,3 +594,118 @@ export const tasks = pgTable('tasks', {
   profileId: uuid('profile_id').references(() => profiles.id),
   assignedTo: uuid('assigned_to').references(() => profiles.id),
 });
+
+export const billingCycles = pgTable('billing_cycles', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  tenantId: uuid('tenant_id'),
+  billingPlanId: uuid('billing_plan_id'),
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date').notNull(),
+  status: text('status').default('active'),
+  totalUsage: jsonb('total_usage').default({}),
+  totalCostCents: integer('total_cost_cents').default(0),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const usageEvents = pgTable('usage_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  tenantId: uuid('tenant_id'),
+  eventType: text('event_type').notNull(),
+  featureName: text('feature_name').notNull(),
+  quantity: text('quantity').notNull(),
+  unit: text('unit').notNull(),
+  costCents: integer('cost_cents').default(0),
+  metadata: jsonb('metadata').default({}),
+  billingCycleId: uuid('billing_cycle_id'),
+  stripeSubscriptionItemId: text('stripe_subscription_item_id'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const userUsageLimits = pgTable('user_usage_limits', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  tenantId: uuid('tenant_id'),
+  featureName: text('feature_name').notNull(),
+  limitValue: text('limit_value').notNull(),
+  usedValue: text('used_value').default('0'),
+  billingCycleId: uuid('billing_cycle_id'),
+  isHardLimit: boolean('is_hard_limit').default(false),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const billingNotifications = pgTable('billing_notifications', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  notificationType: text('notification_type').notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  isRead: boolean('is_read').default(false),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const usagePlans = pgTable('usage_plans', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  planName: text('plan_name').notNull(),
+  displayName: text('display_name').notNull(),
+  description: text('description'),
+  billingType: text('billing_type').default('subscription'),
+  billingInterval: text('billing_interval').default('month'),
+  basePriceCents: integer('base_price_cents').default(0),
+  pricingTiers: jsonb('pricing_tiers').default([]),
+  features: jsonb('features').default([]),
+  limits: jsonb('limits').default({}),
+  isActive: boolean('is_active').default(true),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const userApiKeys = pgTable('user_api_keys', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  provider: text('provider').notNull(),
+  apiKey: text('api_key').notNull(),
+  model: text('model'),
+  isActive: boolean('is_active').default(true),
+  isDefault: boolean('is_default').default(false),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export type InsertBillingCycle = typeof billingCycles.$inferInsert;
+export type InsertUsageEvent = typeof usageEvents.$inferInsert;
+export type InsertUserUsageLimit = typeof userUsageLimits.$inferInsert;
+export type InsertBillingNotification = typeof billingNotifications.$inferInsert;
+export type InsertUsagePlan = typeof usagePlans.$inferInsert;
+export type InsertUserApiKey = typeof userApiKeys.$inferInsert;
+export type BillingCycle = typeof billingCycles.$inferSelect;
+export type UsageEvent = typeof usageEvents.$inferSelect;
+export type UserUsageLimit = typeof userUsageLimits.$inferSelect;
+export type BillingNotification = typeof billingNotifications.$inferSelect;
+export type UsagePlan = typeof usagePlans.$inferSelect;
+export type UserApiKey = typeof userApiKeys.$inferSelect;
+export type Payout = typeof payouts.$inferSelect;
+export type Commission = typeof commissions.$inferSelect;
+export type Partner = typeof partners.$inferSelect;
+export type PartnerTier = typeof partnerTiers.$inferSelect;
+export type Entitlement = typeof entitlements.$inferSelect;
+export type InsertEntitlement = typeof entitlements.$inferInsert;
+export type UserCredits = typeof userCredits.$inferSelect;
+export type InsertUserCredits = typeof userCredits.$inferInsert;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
+export type AIFeatureUsage = typeof aiFeatureUsage.$inferSelect;
+export type InsertAIFeatureUsage = typeof aiFeatureUsage.$inferInsert;
+export type InsertCommission = typeof commissions.$inferInsert;
+export type InsertPayout = typeof payouts.$inferInsert;

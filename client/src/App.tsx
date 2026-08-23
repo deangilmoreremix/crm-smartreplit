@@ -39,6 +39,8 @@ import { useAIApiKeys } from './hooks/useAIApiKeys';
 import AIApiKeySettings from './components/aiIntegration/AIApiKeySettings';
 import { useCommandMenu, CommandMenu } from './components/CommandMenu';
 import NotificationCenter from './components/NotificationCenter';
+import { ShortcutProvider } from './contexts/ShortcutContext';
+import GlobalShortcuts from './components/GlobalShortcuts';
 
 // Eager pages
 import Dashboard from './pages/Dashboard';
@@ -68,7 +70,6 @@ const DevBypassPage = lazy(() => import('./pages/DevBypassPage'));
 const VoiceProfiles = lazy(() => import('./pages/VoiceProfiles'));
 const Appointments = lazy(() => import('./pages/Appointments'));
 const CommunicationHub = lazy(() => import('./pages/CommunicationHub'));
-const RemoteCalendar = lazy(() => import('./pages/RemoteCalendar'));
 const DemoRecorder = lazy(() => import('./pages/DemoRecorder'));
 const PhoneSystem = lazy(() => import('./pages/PhoneSystem'));
 
@@ -108,11 +109,18 @@ const PartnerDashboard = lazy(() => import('./pages/PartnerDashboard'));
 const PartnerOnboardingPage = lazy(() => import('./pages/PartnerOnboardingPage'));
 
 // Communication Apps
-const AppointmentsDashboard = lazy(() => import('./pages/AppointmentsDashboard'));
 const VideoEmailDashboard = lazy(() => import('./pages/VideoEmailDashboard'));
 const TextMessagingDashboard = lazy(() => import('./pages/TextMessagingDashboard'));
 const PhoneSystemDashboard = lazy(() => import('./pages/PhoneSystemDashboard'));
 const VoiceProfilesDashboard = lazy(() => import('./pages/VoiceProfilesDashboard'));
+
+// Business Tool Dashboards
+const InvoicingDashboard = lazy(() => import('./pages/InvoicingDashboard'));
+const LeadAutomationDashboard = lazy(() => import('./pages/LeadAutomationDashboard'));
+const CircleProspectingDashboard = lazy(() => import('./pages/CircleProspectingDashboard'));
+const FormsSurveysDashboard = lazy(() => import('./pages/FormsSurveysDashboard'));
+const BusinessAnalyzerDashboard = lazy(() => import('./pages/BusinessAnalyzerDashboard'));
+const ContentLibraryDashboard = lazy(() => import('./pages/ContentLibraryDashboard'));
 
 // Connected Apps Remote Pages
 const FunnelCraftPage = lazy(() => import('./pages/FunnelCraftPage'));
@@ -185,9 +193,6 @@ const WhiteLabelCustomization = lazy(() => import('./pages/WhiteLabelCustomizati
 
 // Landing page import
 import LandingPage from './pages/LandingPage';
-
-// New Landing Page - Isolated preview (doesn't affect existing LandingPage)
-import NewLandingPage from './pages/NewLandingPage';
 
 // Dashboard embed import
 import DashboardEmbed from './pages/DashboardEmbed';
@@ -422,20 +427,21 @@ function AppContent() {
   }
 
   return (
-    <DragDropContext onDragEnd={handleNavbarDragEnd}>
-      <div className="min-h-screen">
-        <AuthStateSync />
-        <WhitelabelFederationSync />
-        <EdgeZones />
-        <LinkRedirect />
-        <RemoteAppRefreshManager />
-        <Suspense fallback={<LoadingSpinner message="Loading page..." size="lg" />}>
-          <Routes>
+    <ShortcutProvider>
+      <GlobalShortcuts>
+        <DragDropContext onDragEnd={handleNavbarDragEnd}>
+          <a href="#main-content" className="skip-nav">Skip to main content</a>
+          <div className="min-h-screen" role="banner">
+            <AuthStateSync />
+            <WhitelabelFederationSync />
+            <EdgeZones />
+            <LinkRedirect />
+            <RemoteAppRefreshManager />
+            <Suspense fallback={<LoadingSpinner message="Loading page..." size="lg" />}>
+              <main id="main-content" role="main">
+              <Routes>
             {/* Landing page as root - no navbar */}
             <Route path="/" element={<LandingPage />} />
-
-            {/* NEW Landing Page - Preview at /new-landing (isolated, won't affect existing page) */}
-            <Route path="/new-landing" element={<NewLandingPage />} />
 
             {/* Dashboard embed - no navbar */}
             <Route path="/dashboard-embed" element={<DashboardEmbed />} />
@@ -510,7 +516,7 @@ function AppContent() {
             <Route
               path="/system-overview"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.SYSTEM_MONITORING}>
                   <Navbar />
                   <SystemOverview />
                 </ProtectedRoute>
@@ -519,7 +525,7 @@ function AppContent() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.DASHBOARD}>
                   <Navbar />
                   <Dashboard />
                 </ProtectedRoute>
@@ -528,7 +534,7 @@ function AppContent() {
             <Route
               path="/analytics"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.ANALYTICS}>
                   <Navbar />
                   <Analytics />
                 </ProtectedRoute>
@@ -537,7 +543,7 @@ function AppContent() {
             <Route
               path="/analytics/deals"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.DEAL_INTELLIGENCE_DASHBOARD}>
                   <Navbar />
                   <DealIntelligenceDashboard />
                 </ProtectedRoute>
@@ -546,7 +552,7 @@ function AppContent() {
             <Route
               path="/analytics/contacts"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.CONTACT_ANALYTICS_DASHBOARD}>
                   <Navbar />
                   <ContactAnalyticsDashboard />
                 </ProtectedRoute>
@@ -657,7 +663,7 @@ function AppContent() {
             <Route
               path="/assistants"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.AI_TOOLS}>
                   <Navbar />
                   <AssistantsDashboard />
                 </ProtectedRoute>
@@ -668,47 +674,32 @@ function AppContent() {
             <Route
               path="/tasks"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.TASK_MANAGEMENT}>
                   <Navbar />
                   <TasksNew />
                 </ProtectedRoute>
               }
             />
 
-            {/* Calendar - Remote Calendar Moderation */}
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute>
-                  <Navbar />
-                  <RemoteCalendar />
-                </ProtectedRoute>
-              }
-            />
+            {/* Calendar - deprecated, redirect to appointments */}
+            <Route path="/calendar" element={<Navigate to="/appointments" replace />} />
 
             {/* Communication Apps */}
             <Route
               path="/appointments"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.APPOINTMENTS}>
                   <Navbar />
                   <Appointments />
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/appointments-dashboard"
-              element={
-                <ProtectedRoute>
-                  <Navbar />
-                  <AppointmentsDashboard />
-                </ProtectedRoute>
-              }
-            />
+            {/* Appointments Dashboard - deprecated, redirect to appointments */}
+            <Route path="/appointments-dashboard" element={<Navigate to="/appointments" replace />} />
             <Route
               path="/video-email"
               element={
-                <ProtectedRoute featureKey="video_email">
+                <ProtectedRoute featureKey={FeatureKey.VIDEO_EMAIL}>
                   <Navbar />
                   <VideoEmailDashboard />
                 </ProtectedRoute>
@@ -732,82 +723,64 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/invoicing"
-            element={
-              <ProtectedRoute featureKey="invoicing">
-                <Navbar />
-                <InvoicingDashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/lead-automation"
-            element={
-              <ProtectedRoute featureKey="lead_automation">
-                <Navbar />
-                <LeadAutomationDashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/circle-prospecting"
-            element={
-              <ProtectedRoute featureKey="circle_prospecting">
-                <Navbar />
-                <CircleProspectingDashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/forms"
-            element={
-              <ProtectedRoute featureKey="forms_surveys">
-                <Navbar />
-                <FormsSurveysDashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/business-analysis"
-            element={
-              <ProtectedRoute featureKey="business_analysis">
-                <Navbar />
-                <BusinessAnalyzerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/content-library"
-            element={
-              <ProtectedRoute featureKey="content_library">
-                <Navbar />
-                <ContentLibraryDashboard />
-              </ProtectedRoute>
-            }
-          />
-          */}
+            <Route
+              path="/invoicing"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.INVOICING}>
+                  <Navbar />
+                  <InvoicingDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lead-automation"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.LEAD_AUTOMATION}>
+                  <Navbar />
+                  <LeadAutomationDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/circle-prospecting"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.CIRCLE_PROSPECTING}>
+                  <Navbar />
+                  <CircleProspectingDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/forms"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.FORMS_SURVEYS}>
+                  <Navbar />
+                  <FormsSurveysDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/business-analysis"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.BUSINESS_ANALYZER}>
+                  <Navbar />
+                  <BusinessAnalyzerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/content-library"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.CONTENT_LIBRARY}>
+                  <Navbar />
+                  <ContentLibraryDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/voice-profiles"
               element={
-                <ProtectedRoute featureKey="voice_profiles">
+                <ProtectedRoute featureKey={FeatureKey.VOICE_PROFILES}>
                   <Navbar />
                   <VoiceProfilesDashboard />
                 </ProtectedRoute>
@@ -818,7 +791,7 @@ function AppContent() {
             <Route
               path="/communication"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.COMMUNICATION_HUB}>
                   <Navbar />
                   <Communication />
                 </ProtectedRoute>
@@ -840,7 +813,7 @@ function AppContent() {
             <Route
               path="/appointments-basic"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.APPOINTMENTS}>
                   <Navbar />
                   <Appointments />
                 </ProtectedRoute>
@@ -849,7 +822,7 @@ function AppContent() {
             <Route
               path="/video-email-basic"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.VIDEO_EMAIL}>
                   <Navbar />
                   <PlaceholderPage
                     title="Video Email"
@@ -861,7 +834,7 @@ function AppContent() {
             <Route
               path="/text-messages"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.TEXT_MESSAGES}>
                   <Navbar />
                   <TextMessages />
                 </ProtectedRoute>
@@ -870,88 +843,17 @@ function AppContent() {
             <Route
               path="/phone-system"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PHONE_SYSTEM}>
                   <Navbar />
                   <PhoneSystem />
                 </ProtectedRoute>
               }
             />
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/invoicing"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <Invoicing />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/lead-automation"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <PlaceholderPage title="Lead Automation" description="AI-powered lead automation tools coming soon..." />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/circle-prospecting"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <PlaceholderPage title="Circle Prospecting" description="Circle prospecting tools coming soon..." />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/forms"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <FormsAndSurveys />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/business-analysis"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <BusinessAnalysis />
-              </ProtectedRoute>
-            }
-          />
-          */}
-            {/* Business Tools - Hidden from UI */}
-            {/*
-          <Route
-            path="/content-library"
-            element={
-              <ProtectedRoute>
-                <Navbar />
-                <ContentLibrary />
-              </ProtectedRoute>
-            }
-          />
-          */}
+
             <Route
               path="/voice-profiles"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.VOICE_PROFILES}>
                   <Navbar />
                   <VoiceProfiles />
                 </ProtectedRoute>
@@ -960,7 +862,7 @@ function AppContent() {
             <Route
               path="/communication-hub"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.COMMUNICATION_HUB}>
                   <Navbar />
                   <CommunicationHub />
                 </ProtectedRoute>
@@ -971,7 +873,7 @@ function AppContent() {
             <Route
               path="/business-intel"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.BUSINESS_INTELLIGENCE}>
                   <Navbar />
                   <BusinessIntelPage />
                 </ProtectedRoute>
@@ -1017,7 +919,7 @@ function AppContent() {
             <Route
               path="/bulk-import"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.ADMIN_PANEL}>
                   <Navigate to="/admin/bulk-import" replace />
                 </ProtectedRoute>
               }
@@ -1027,7 +929,7 @@ function AppContent() {
             <Route
               path="/feature-management"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.FEATURE_MANAGEMENT}>
                   <Navigate to="/admin/feature-management" replace />
                 </ProtectedRoute>
               }
@@ -1048,7 +950,7 @@ function AppContent() {
             <Route
               path="/pipeline-intelligence"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PIPELINE_INTELLIGENCE}>
                   <Navbar />
                   <PipelineIntelligence />
                 </ProtectedRoute>
@@ -1057,7 +959,7 @@ function AppContent() {
             <Route
               path="/deal-risk-monitor"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.DEAL_RISK_MONITOR}>
                   <Navbar />
                   <DealRiskMonitor />
                 </ProtectedRoute>
@@ -1066,7 +968,7 @@ function AppContent() {
             <Route
               path="/smart-conversion-insights"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.SMART_CONVERSION_INSIGHTS}>
                   <Navbar />
                   <SmartConversionInsights />
                 </ProtectedRoute>
@@ -1075,7 +977,7 @@ function AppContent() {
             <Route
               path="/pipeline-health-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PIPELINE_HEALTH_DASHBOARD}>
                   <Navbar />
                   <PipelineHealthDashboard />
                 </ProtectedRoute>
@@ -1084,7 +986,7 @@ function AppContent() {
             <Route
               path="/sales-cycle-analytics"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.SALES_CYCLE_ANALYTICS}>
                   <Navbar />
                   <SalesCycleAnalytics />
                 </ProtectedRoute>
@@ -1093,7 +995,7 @@ function AppContent() {
             <Route
               path="/win-rate-intelligence"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.WIN_RATE_INTELLIGENCE}>
                   <Navbar />
                   <WinRateIntelligence />
                 </ProtectedRoute>
@@ -1102,7 +1004,7 @@ function AppContent() {
             <Route
               path="/ai-sales-forecast"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.AI_SALES_FORECAST}>
                   <Navbar />
                   <AISalesForecast />
                 </ProtectedRoute>
@@ -1111,7 +1013,7 @@ function AppContent() {
             <Route
               path="/live-deal-analysis"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.LIVE_DEAL_ANALYSIS}>
                   <Navbar />
                   <LiveDealAnalysis />
                 </ProtectedRoute>
@@ -1120,7 +1022,7 @@ function AppContent() {
             <Route
               path="/competitor-insights"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.COMPETITOR_INSIGHTS}>
                   <Navbar />
                   <CompetitorInsights />
                 </ProtectedRoute>
@@ -1129,7 +1031,7 @@ function AppContent() {
             <Route
               path="/revenue-intelligence"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.REVENUE_INTELLIGENCE}>
                   <Navbar />
                   <RevenueIntelligence />
                 </ProtectedRoute>
@@ -1140,7 +1042,7 @@ function AppContent() {
             <Route
               path="/contacts"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
                   <Navbar />
                   <ContactsWorking />
                 </ProtectedRoute>
@@ -1149,7 +1051,7 @@ function AppContent() {
             <Route
               path="/pipeline"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.PIPELINE}>
                   <Navbar />
                   <PipelinePage />
                 </ProtectedRoute>
@@ -1170,7 +1072,7 @@ function AppContent() {
             <Route
               path="/funnelcraft-ai"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.FUNNELCRAFT_AI}>
                   <Navbar />
                   <FunnelCraftPage />
                 </ProtectedRoute>
@@ -1179,7 +1081,7 @@ function AppContent() {
             <Route
               path="/smartcrm-closer"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.SMARTCRM_CLOSER}>
                   <Navbar />
                   <SmartCRMPage />
                 </ProtectedRoute>
@@ -1188,7 +1090,7 @@ function AppContent() {
             <Route
               path="/content-ai"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute featureKey={FeatureKey.CONTENT_AI}>
                   <Navbar />
                   <ContentAIPage />
                 </ProtectedRoute>
@@ -1209,6 +1111,7 @@ function AppContent() {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+              </main>
         </Suspense>
 
         {/* Toaster for notifications */}
@@ -1227,7 +1130,9 @@ function AppContent() {
 
         {/* ElevenLabs widgets removed to prevent performance issues */}
       </div>
-    </DragDropContext>
+        </DragDropContext>
+      </GlobalShortcuts>
+    </ShortcutProvider>
   );
 }
 

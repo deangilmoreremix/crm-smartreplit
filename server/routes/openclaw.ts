@@ -25,7 +25,7 @@ import { memoryService } from '../memory';
 const router = Router();
 
 // Apply authentication to all OpenClaw routes
-router.use(requireAuth);
+router.use(requireAuth());
 
 // Apply entitlement check to all routes except health
 router.use((req, res, next) => {
@@ -127,34 +127,6 @@ async function fetchWithTimeout(
   } finally {
     clearTimeout(timeout);
   }
-}
-
-// Auth helper - extracts userId from session or dev token
-function getUserId(req: any): string | null {
-  const sessionUserId = req.session?.userId;
-  if (sessionUserId) return sessionUserId;
-
-  const authHeader = req.headers.authorization;
-  const hostname = req.headers.host || '';
-  const isDevHost =
-    hostname.includes('localhost') ||
-    hostname.includes('replit.dev') ||
-    hostname.includes('127.0.0.1');
-
-  if (process.env.NODE_ENV === 'development' && isDevHost && authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    if (token.startsWith('dev-bypass-token-')) {
-      req.user = {
-        id: 'dev-user-12345',
-        email: 'dev@smartcrm.local',
-        username: 'dev@smartcrm.local',
-        role: 'super_admin',
-        productTier: 'super_admin',
-      };
-      return 'dev-user-12345';
-    }
-  }
-  return null;
 }
 
 // Validate numeric ID
@@ -688,10 +660,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // Authenticate
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const userId = req.userId;
 
     // Get per-user OpenClaw config (falls back to server env vars if no per-user key)
     const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } =
@@ -747,10 +716,7 @@ router.post('/chat/stream', async (req, res) => {
     }
 
     // Authenticate
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const userId = req.userId;
 
     // Get per-user OpenClaw config (falls back to server env vars if no per-user key)
     const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } =

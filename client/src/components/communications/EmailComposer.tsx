@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { useContactStore } from '../../store/contactStore';
+import openAIService from '../../services/openAIService';
 
 interface EmailComposerProps {
   isOpen?: boolean;
@@ -66,6 +67,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [aiMode, setAiMode] = useState<'ai' | 'template'>('ai');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -131,28 +133,24 @@ Best regards,
 
     setIsGeneratingAI(true);
     try {
-      // Simulate AI content generation
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const aiSubject = `Personalized outreach for ${recipient.company || 'your business'}`;
-      const aiBody = `Hi ${recipient.firstName || recipient.name.split(' ')[0]},
-
-I hope this message finds you well. I've been following ${recipient.company || 'your work'} and I'm impressed by your position as ${recipient.position || 'a leader'} in the ${recipient.industry || 'industry'}.
-
-Based on your background and ${recipient.company || 'your company'}'s focus, I believe there might be some interesting opportunities for collaboration.
-
-Would you be open to a brief conversation to explore potential synergies?
-
-Best regards,
-[Your Name]`;
+      const emailDraft = await openAIService.generateEmail({
+        recipient: recipient.email || recipient.name,
+        purpose: emailData.subject || 'outreach',
+        context: recipient.company ? `at ${recipient.company}` : '',
+      });
 
       setEmailData((prev) => ({
         ...prev,
-        subject: aiSubject,
-        body: aiBody,
+        subject: emailDraft.subject,
+        body: emailDraft.body,
       }));
-    } catch (error) {
-      console.error('Failed to generate AI content:', error);
+      setAiMode('ai');
+    } catch (err) {
+      console.error('AI email generation failed, using template fallback:', err);
+      setAiMode('template');
+      const aiSubject = `Personalized outreach for ${recipient.company || 'your business'}`;
+      const aiBody = `Hi ${recipient.firstName || recipient.name.split(' ')[0]},\n\nI hope this message finds you well. I've been following ${recipient.company || 'your work'} and I'm impressed by your position as ${recipient.position || 'a leader'} in the ${recipient.industry || 'industry'}.\n\nBased on your background and ${recipient.company || 'your company'}'s focus, I believe there might be some interesting opportunities for collaboration.\n\nWould you be open to a brief conversation to explore potential synergies?\n\nBest regards,\n[Your Name]`;
+      setEmailData((prev) => ({ ...prev, subject: aiSubject, body: aiBody }));
     } finally {
       setIsGeneratingAI(false);
     }
@@ -358,6 +356,9 @@ Best regards,
               >
                 <Brain size={16} className="mr-1" />
                 {isGeneratingAI ? 'Generating...' : 'AI Generate'}
+                {!isGeneratingAI && aiMode === 'template' && (
+                  <span className="ml-1.5 text-xs text-purple-500/80">(template)</span>
+                )}
               </button>
 
               <button

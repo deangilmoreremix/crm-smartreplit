@@ -39,18 +39,18 @@ const ProtectedRoute = ({ children, featureKey }: ProtectedRouteProps) => {
   // Show loading while session resolves
   if (!isSessionReady || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <main className="flex items-center justify-center min-h-screen">
         <LoadingSpinner message="Verifying session..." />
-      </div>
+      </main>
     );
   }
 
   // Show loading while entitlements are being fetched (if feature check required)
   if (featureKey && entitlementsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <main className="flex items-center justify-center min-h-screen">
         <LoadingSpinner message="Checking feature access..." />
-      </div>
+      </main>
     );
   }
 

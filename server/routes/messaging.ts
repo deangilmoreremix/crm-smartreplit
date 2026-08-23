@@ -97,16 +97,11 @@ const messagingStats: MessagingStats = {
 
 export function registerMessagingRoutes(app: Express): void {
   // Protect all messaging routes: require auth + text_messages entitlement
-  app.use('/api/messaging', requireAuth, requireEntitlement(FeatureKey.TEXT_MESSAGES));
+  app.use('/api/messaging', requireAuth(), requireEntitlement(FeatureKey.TEXT_MESSAGES));
 
   // Get all message providers
   app.get('/api/messaging/providers', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(messageProviders);
     } catch (error) {
       console.error('Error fetching message providers:', error);
@@ -117,11 +112,6 @@ export function registerMessagingRoutes(app: Express): void {
   // Get all messages
   app.get('/api/messaging/messages', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(messages);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -132,11 +122,6 @@ export function registerMessagingRoutes(app: Express): void {
   // Get messaging stats
   app.get('/api/messaging/stats', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(messagingStats);
     } catch (error) {
       console.error('Error fetching messaging stats:', error);
@@ -147,11 +132,6 @@ export function registerMessagingRoutes(app: Express): void {
   // Send a message
   app.post('/api/messaging/send', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { content, recipient, provider } = req.body;
 
       // Validate required fields
@@ -203,11 +183,6 @@ export function registerMessagingRoutes(app: Express): void {
   // Get a specific message
   app.get('/api/messaging/messages/:id', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const messageId = req.params.id;
       const message = messages.find((m) => m.id === messageId);
 
@@ -225,11 +200,6 @@ export function registerMessagingRoutes(app: Express): void {
   // Update message status (for delivery confirmations)
   app.put('/api/messaging/messages/:id/status', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const messageId = req.params.id;
       const { status } = req.body;
 

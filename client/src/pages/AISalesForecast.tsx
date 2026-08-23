@@ -46,6 +46,29 @@ const AISalesForecast: React.FC = () => {
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
+  const getConfidenceGrade = (confidence: number) => {
+    if (confidence >= 90) return 'A+';
+    if (confidence >= 80) return 'A';
+    if (confidence >= 70) return 'B+';
+    if (confidence >= 60) return 'B';
+    return 'C';
+  };
+
+  const getRiskLevel = (riskFactors: string[]) => {
+    if (riskFactors.length === 0) return 'Low';
+    if (riskFactors.length <= 2) return 'Medium';
+    return 'High';
+  };
+
+  const computeTrend = () => {
+    if (!monthlyBreakdown || monthlyBreakdown.length < 2) return '--';
+    const first = monthlyBreakdown[0].forecast || 0;
+    const last = monthlyBreakdown[monthlyBreakdown.length - 1].forecast || 0;
+    if (first === 0) return '--';
+    const pct = Math.round(((last - first) / first) * 100);
+    return `${pct >= 0 ? '+' : ''}${pct}%`;
+  };
+
   return (
     <PageLayout
       title="AI Sales Forecast"
@@ -58,7 +81,7 @@ const AISalesForecast: React.FC = () => {
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg"><Brain className="h-6 w-6 text-white" /></div>
-              <div className="flex items-center text-blue-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">+8.5%</span></div>
+              <div className="flex items-center text-blue-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">{computeTrend()}</span></div>
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(aiWeighted)}</h3>
@@ -94,7 +117,7 @@ const AISalesForecast: React.FC = () => {
               <div className="flex items-center text-purple-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">{confidence}%</span></div>
             </div>
             <div className="space-y-2">
-              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>A+</h3>
+              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{getConfidenceGrade(confidence)}</h3>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>AI Confidence</p>
             </div>
           </GlassCard>
@@ -124,18 +147,18 @@ const AISalesForecast: React.FC = () => {
                 <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Trend Analysis</h3>
                 <TrendingUp className="h-5 w-5 text-green-500" />
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>+15.3%</p>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Vs. last quarter</p>
+               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{computeTrend()}</p>
+               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Vs. last quarter</p>
             </div>
 
-            <div className={`p-6 rounded-xl ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Risk Factor</h3>
-                <Target className="h-5 w-5 text-purple-500" />
+              <div className={`p-6 rounded-xl ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Risk Factor</h3>
+                  <Target className="h-5 w-5 text-purple-500" />
+                </div>
+                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{getRiskLevel(riskFactors)}</p>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Strong pipeline health</p>
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Low</p>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Strong pipeline health</p>
-            </div>
           </div>
         </GlassCard>
 
@@ -233,11 +256,7 @@ const AISalesForecast: React.FC = () => {
                     <li key={i}>• {r}</li>
                   ))}
                   {recommendations.filter((_: string, i: number) => i % 2 === 0).length === 0 && (
-                    <>
-                      <li>• Focus on Enterprise deals (80% higher close rate)</li>
-                      <li>• Accelerate Q1 pipeline development</li>
-                      <li>• Prioritize warm leads for faster conversion</li>
-                    </>
+                    <li className="text-gray-500">Run AI analysis to get personalized recommendations</li>
                   )}
                 </ul>
               </div>
@@ -248,11 +267,7 @@ const AISalesForecast: React.FC = () => {
                     <li key={i}>• {r}</li>
                   ))}
                   {recommendations.filter((_: string, i: number) => i % 2 === 1).length === 0 && (
-                    <>
-                      <li>• 3 deals at risk of slipping to next quarter</li>
-                      <li>• Consider backup options for large deals</li>
-                      <li>• Increase touchpoints on stalled opportunities</li>
-                    </>
+                    <li className="text-gray-500">Run AI analysis to identify risks</li>
                   )}
                 </ul>
               </div>

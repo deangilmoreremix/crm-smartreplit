@@ -117,7 +117,6 @@ export default function SocialMediaGenerator() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedIndex(index);
-      // TODO: Replace with real AI implementation;
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
     }

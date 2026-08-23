@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../store/authStore';
 
 export interface ApiConfig {
   openai: {
@@ -34,7 +34,7 @@ export interface UseAIApiKeysReturn {
 export const useAIApiKeys = (): UseAIApiKeysReturn => {
   const { user } = useAuthStore();
   const [apiConfig, setApiConfig] = useState<ApiConfig>({
-    openai: { apiKey: '', model: 'gpt-4o-mini' },
+    openai: { apiKey: '', model: 'gpt-4.1' },
     gemini: { apiKey: '', model: 'gemini-1.5-flash' },
     openclaw: { apiKey: '', model: 'default', baseUrl: '' }
   });
@@ -78,7 +78,7 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
         setApiConfig({
           openai: {
             apiKey: data.openai_api_key || '',
-            model: data.openai_model || 'gpt-4o-mini'
+            model: data.openai_model || 'gpt-4.1'
           },
           gemini: {
             apiKey: data.gemini_api_key || '',

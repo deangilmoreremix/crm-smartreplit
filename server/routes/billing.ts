@@ -6,6 +6,14 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 
+const requireEnv = (name: string): string => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+};
+
 const router = Router();
 
 // Apply authentication and entitlement check to all billing routes
@@ -44,19 +52,19 @@ async function getStripe() {
 }
 
 // Initialize Supabase
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = requireEnv('SUPABASE_URL');
+const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Pricing for OpenClaw upgrade tiers
 const upgradePricing = {
   smartcrm_bundle: {
-    priceId: process.env.STRIPE_SMARTCRM_BUNDLE_PRICE_ID!,
+    priceId: requireEnv('STRIPE_SMARTCRM_BUNDLE_PRICE_ID'),
     amount: 97,
     name: 'SmartCRM Bundle',
   },
   sales_maximizer: {
-    priceId: process.env.STRIPE_SALES_MAXIMIZER_PRICE_ID!,
+    priceId: requireEnv('STRIPE_SALES_MAXIMIZER_PRICE_ID'),
     amount: 67,
     name: 'Sales Maximizer',
   },
@@ -162,7 +170,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
  */
 router.post('/webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+  const endpointSecret = requireEnv('STRIPE_WEBHOOK_SECRET');
 
   const stripeClient = await getStripe();
   if (!stripeClient) {

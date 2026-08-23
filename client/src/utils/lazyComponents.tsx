@@ -3,9 +3,6 @@ import { lazy } from 'react';
 // Lazy load page components for better performance
 export const Dashboard = lazy(() => import('../pages/Dashboard'));
 export const Contacts = lazy(() => import('../pages/Contacts'));
-export const ContactsWithRemote = lazy(() => import('../pages/ContactsWithRemote'));
-export const Pipeline = lazy(() => import('../pages/Pipeline'));
-export const PipelineWithRemote = lazy(() => import('../pages/PipelineWithRemote'));
 export const Analytics = lazy(() => import('../pages/Analytics'));
 export const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
 export const AITools = lazy(() => import('../pages/AITools'));
@@ -25,10 +22,6 @@ export const CommunicationsFeaturePage = lazy(
 export const FunctionAssistantFeaturePage = lazy(
   () => import('../src/FunctionAssistantFeaturePage_1755720356986')
 );
-
-// Lazy load remote components (with error boundaries)
-export const RemotePipeline = lazy(() => import('../pages/RemotePipeline'));
-export const RemoteContacts = lazy(() => import('../pages/ContactsWithRemote'));
 
 // Loading component
 import { Loader2 } from 'lucide-react';
@@ -56,7 +49,6 @@ export const withSuspense = (Component: React.ComponentType<any>, fallback?: Rea
 // Preload functions for critical routes
 export const preloadDashboard = () => import('../pages/Dashboard');
 export const preloadContacts = () => import('../pages/Contacts');
-export const preloadPipeline = () => import('../pages/Pipeline');
 export const preloadAnalytics = () => import('../pages/Analytics');
 
 // Preload on app initialization for better UX
@@ -65,6 +57,5 @@ if (typeof window !== 'undefined') {
   setTimeout(() => {
     preloadDashboard();
     preloadContacts();
-    preloadPipeline();
   }, 1000);
 }

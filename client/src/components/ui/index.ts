@@ -6,6 +6,7 @@ export { Card } from './card';
 export { Input } from './input';
 export { Label } from './label';
 export { Badge } from './badge';
+export { Callout } from './callout';
 export { Dialog } from './dialog';
 export { DropdownMenu } from './dropdown-menu';
 export { Popover } from './popover';

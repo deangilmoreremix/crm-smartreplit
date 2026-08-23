@@ -9,6 +9,7 @@ import analyticsRoutes from './analytics';
 import authRoutes from './auth';
 import companiesRoutes from './companies';
 import openaiRoutes from './openai';
+import openaiResponsesRoutes from './openaiResponses';
 import domainsRoutes from './domains';
 import themesRoutes from './themes';
 import provisioningRoutes from './provisioning';
@@ -29,6 +30,7 @@ import { registerAIContentRoutes } from './aiContent';
 import { registerAIProductivityRoutes } from './aiProductivity';
 import { registerAIAdvancedRoutes } from './aiAdvanced';
 import { registerAIAutomationRoutes } from './aiAutomation';
+import { registerPartnersRoutes } from './partners';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -88,6 +90,10 @@ export async function registerRoutes(app: Express): Promise<void> {
   console.log('Registering OpenAI routes at /api/openai');
   app.use('/api/openai', openaiRoutes);
 
+  // Register OpenAI Responses API routes
+  console.log('Registering OpenAI Responses API routes at /api/openai');
+  app.use('/api/openai', openaiResponsesRoutes);
+
   // Register domains routes
   console.log('Registering domains routes at /api/domains');
   app.use('/api/domains', domainsRoutes);
@@ -135,4 +141,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register Automation Tools routes
   console.log('Registering Automation Tools routes');
   registerAIAutomationRoutes(app);
+
+  // Register partners routes
+  console.log('Registering partners routes');
+  registerPartnersRoutes(app);
 }

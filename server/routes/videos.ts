@@ -46,18 +46,13 @@ const videoStats = {
 
 export function registerVideoRoutes(app: Express): void {
   // Protect all video routes: require auth + video_email entitlement
-  app.use('/api/videos', requireAuth, requireEntitlement(FeatureKey.VIDEO_EMAIL));
+  app.use('/api/videos', requireAuth(), requireEntitlement(FeatureKey.VIDEO_EMAIL));
 
   // Get all videos for the authenticated user
   app.get('/api/videos', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       // Filter videos by user
-      const userVideos = videoEmails.filter((video) => video.profileId === userId);
+      const userVideos = videoEmails.filter((video) => video.profileId === req.userId);
       res.json(userVideos);
     } catch (error) {
       console.error('Error fetching videos:', error);
@@ -68,13 +63,8 @@ export function registerVideoRoutes(app: Express): void {
   // Get video statistics
   app.get('/api/videos/stats', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       // Calculate stats from user's videos
-      const userVideos = videoEmails.filter((video) => video.profileId === userId);
+      const userVideos = videoEmails.filter((video) => video.profileId === req.userId);
       const stats = {
         totalVideos: userVideos.length,
         totalViews: userVideos.reduce((sum, video) => sum + video.analytics.views, 0),
@@ -107,11 +97,6 @@ export function registerVideoRoutes(app: Express): void {
   // Create a new video email
   app.post('/api/videos', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { title, script, recipientName, recipientEmail, company } = req.body;
 
       if (!title || !script) {
@@ -161,13 +146,8 @@ export function registerVideoRoutes(app: Express): void {
   // Get a specific video
   app.get('/api/videos/:id', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const videoId = req.params.id;
-      const video = videoEmails.find((v) => v.id === videoId && v.profileId === userId);
+      const video = videoEmails.find((v) => v.id === videoId && v.profileId === req.userId);
 
       if (!video) {
         return res.status(404).json({ error: 'Video not found' });
@@ -183,13 +163,8 @@ export function registerVideoRoutes(app: Express): void {
   // Update a video
   app.put('/api/videos/:id', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const videoId = req.params.id;
-      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === userId);
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req.userId);
 
       if (videoIndex === -1) {
         return res.status(404).json({ error: 'Video not found' });
@@ -222,13 +197,8 @@ export function registerVideoRoutes(app: Express): void {
   // Delete a video
   app.delete('/api/videos/:id', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const videoId = req.params.id;
-      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === userId);
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req.userId);
 
       if (videoIndex === -1) {
         return res.status(404).json({ error: 'Video not found' });
@@ -247,11 +217,6 @@ export function registerVideoRoutes(app: Express): void {
 export function registerVideoScriptRoute(app: Express): void {
   app.post('/api/videos/generate-script', async (req, res) => {
     try {
-      const userId = req.session?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { recipient, purpose, tone, length } = req.body;
 
       // Mock AI script generation

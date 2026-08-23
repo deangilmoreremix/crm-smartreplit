@@ -112,17 +112,6 @@ const ContactsApp: React.FC<ContactsAppProps> = ({
     }
   }, [onContactSelect, onContactCreate, onContactUpdate, onContactDelete]);
 
-  if (!authState.isAuthenticated) {
-    return (
-      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
-          <p className="text-gray-600">Please log in via the main CRM to access Contacts.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="max-w-6xl mx-auto">

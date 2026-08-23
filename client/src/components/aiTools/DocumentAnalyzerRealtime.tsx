@@ -21,24 +21,115 @@ interface DocumentAnalyzerRealtimeProps {
   analysisType?: 'document' | 'competitor' | 'contract';
 }
 
+interface AnalysisResult {
+  summary: string;
+  keyPoints: string[];
+  recommendations?: string[];
+  contractTerms?: string[];
+  competitorStrengths?: string[];
+  riskLevel?: 'low' | 'medium' | 'high';
+}
+
+const buildAnalysisPrompt = (
+  analysisType: 'document' | 'competitor' | 'contract'
+): string => {
+  const instructions: Record<'document' | 'competitor' | 'contract', string> = {
+    document:
+      'Analyze the uploaded document and extract a summary, key points, and actionable recommendations.',
+    competitor:
+      "Analyze the uploaded competitor material and extract a summary, key points, the competitor's strengths, and strategic recommendations.",
+    contract:
+      'Analyze the uploaded contract and extract a summary, key points, key contract terms, recommendations, and an overall risk level.',
+  };
+
+  const shapes: Record<'document' | 'competitor' | 'contract', string> = {
+    document: '{"summary": string, "keyPoints": string[], "recommendations": string[]}',
+    competitor:
+      '{"summary": string, "keyPoints": string[], "competitorStrengths": string[], "recommendations": string[]}',
+    contract:
+      '{"summary": string, "keyPoints": string[], "contractTerms": string[], "recommendations": string[], "riskLevel": "low" | "medium" | "high"}',
+  };
+
+  return `${instructions[analysisType]}\n\nReturn ONLY valid JSON (no markdown, no code fences) with exactly this shape:\n${shapes[analysisType]}`;
+};
+
+const parseAnalysisResult = (
+  raw: string,
+  analysisType: 'document' | 'competitor' | 'contract'
+): AnalysisResult => {
+  const toArray = (value: unknown): string[] => {
+    if (Array.isArray(value)) return value.map((item) => String(item));
+    if (typeof value === 'string' && value.trim()) return [value];
+    return [];
+  };
+
+  const fallback = (): AnalysisResult => ({
+    summary: raw.trim() || 'Document analysis complete.',
+    keyPoints: ['Analysis completed using AI'],
+    recommendations: ['Review the AI analysis results'],
+  });
+
+  let jsonText = raw.trim();
+  const fence = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) {
+    jsonText = fence[1].trim();
+  } else {
+    const start = jsonText.indexOf('{');
+    const end = jsonText.lastIndexOf('}');
+    if (start !== -1 && end > start) {
+      jsonText = jsonText.slice(start, end + 1);
+    }
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return fallback();
+  }
+
+  const keyPoints = toArray(parsed.keyPoints);
+  const result: AnalysisResult = {
+    summary:
+      typeof parsed.summary === 'string' && parsed.summary.trim()
+        ? parsed.summary.trim()
+        : 'Document analysis complete.',
+    keyPoints: keyPoints.length ? keyPoints : ['Analysis completed using AI'],
+  };
+
+  if (parsed.recommendations) {
+    result.recommendations = toArray(parsed.recommendations);
+  }
+
+  if (analysisType === 'contract') {
+    if (parsed.contractTerms) {
+      result.contractTerms = toArray(parsed.contractTerms);
+    }
+    const risk = typeof parsed.riskLevel === 'string' ? parsed.riskLevel.toLowerCase() : '';
+    if (risk === 'low' || risk === 'medium' || risk === 'high') {
+      result.riskLevel = risk;
+    }
+  }
+
+  if (analysisType === 'competitor' && parsed.competitorStrengths) {
+    result.competitorStrengths = toArray(parsed.competitorStrengths);
+  }
+
+  return result;
+};
+
 const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
   onAnalysisComplete,
   analysisType = 'document',
 }) => {
   const vision = useOpenAIVision();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentAnalysisStep, setCurrentAnalysisStep] = useState('');
-  const [analysisResult, setAnalysisResult] = useState<{
-    summary: string;
-    keyPoints: string[];
-    recommendations?: string[];
-    contractTerms?: string[];
-    competitorStrengths?: string[];
-    riskLevel?: 'low' | 'medium' | 'high';
-  } | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
 
@@ -79,64 +170,28 @@ const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
       if (file) {
         // Create URL for the uploaded file
         const objectUrl = URL.createObjectURL(file);
+        setFile(file);
         setImageUrl(objectUrl);
       }
     },
   });
 
   const runAnalysis = async () => {
-    if (!imageUrl) {
+    if (!file) {
       setError('Please upload an image or document first');
       return;
     }
 
     setIsAnalyzing(true);
-    setAnalysisProgress(0);
+    setAnalysisProgress(30);
     setCurrentAnalysisStep(analysisSteps[analysisType][0]);
     setError(null);
 
-    // Simulate progressive analysis with steps
-    const totalSteps = analysisSteps[analysisType].length;
-    for (let i = 0; i < totalSteps; i++) {
-      setCurrentAnalysisStep(analysisSteps[analysisType][i]);
-      setAnalysisProgress(Math.round((i / (totalSteps - 1)) * 100));
-      // Add a delay between steps to show progress
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(undefined), 500);
-      });
-    }
-
     try {
-      // Call real AI analysis API
-      const response = await fetch('/api/ai/realtime-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          analysisType: 'document',
-          content: `Document analysis for ${analysisType}: document`,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Use the AI-generated result directly
-      let result;
-      try {
-        result = JSON.parse(data.result || '{}');
-      } catch (parseError) {
-        // If AI response isn't JSON, create structured response
-        result = {
-          summary: data.result || 'Document analysis complete.',
-          keyPoints: ['Analysis completed using AI'],
-          recommendations: ['Review the AI analysis results'],
-        };
-      }
+      // Run real AI vision analysis on the uploaded document
+      const prompt = buildAnalysisPrompt(analysisType);
+      const rawAnalysis = await vision.analyzeImageFile(file, prompt);
+      const result = parseAnalysisResult(rawAnalysis, analysisType);
 
       setAnalysisResult(result);
       setAnalysisProgress(100);
@@ -177,11 +232,11 @@ const DocumentAnalyzerRealtime: React.FC<DocumentAnalyzerRealtimeProps> = ({
 
     navigator.clipboard.writeText(textToCopy);
     setIsCopying(true);
-    // TODO: Replace with real AI implementation;
   };
 
   const resetAnalysis = () => {
     setImageUrl(null);
+    setFile(null);
     setAnalysisResult(null);
     setShowResult(false);
     setError(null);

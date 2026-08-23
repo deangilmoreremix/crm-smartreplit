@@ -83,8 +83,10 @@ const DealIntelligenceDashboard: React.FC = () => {
       if (stageIndex !== -1) {
         metrics[stageIndex].count += 1;
         metrics[stageIndex].value += deal.value;
-        // Calculate average time in stage (simplified)
-        metrics[stageIndex].avgTime += Math.random() * 30 + 7; // Mock data
+        const createdAt = deal.createdAt instanceof Date ? deal.createdAt : new Date(deal.createdAt);
+        const updatedAt = deal.updatedAt instanceof Date ? deal.updatedAt : new Date(deal.updatedAt);
+        const daysDiff = Math.max(0, (updatedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        metrics[stageIndex].avgTime += daysDiff || deal.daysInStage || 7;
       }
     });
 
@@ -115,19 +117,12 @@ const DealIntelligenceDashboard: React.FC = () => {
 
         intelligence.push({
           dealId: deal.id,
-          winProbability: prediction ? prediction.value : Math.random() * 100,
-          predictedValue: deal.value * (0.8 + Math.random() * 0.4), // ±20% variation
-          timeToClose: Math.floor(Math.random() * 90) + 7, // 7-97 days
-          riskFactors: ['Competition mentioned', 'Budget concerns', 'Long decision cycle'].slice(
-            0,
-            Math.floor(Math.random() * 3) + 1
-          ),
-          recommendations: [
-            'Follow up within 3 days',
-            'Send technical demo',
-            'Offer discount for quick close',
-          ].slice(0, Math.floor(Math.random() * 3) + 1),
-          confidence: 0.7 + Math.random() * 0.3, // 70-100% confidence
+          winProbability: prediction ? prediction.value : deal.probability ?? 50,
+          predictedValue: prediction?.predictedValue ?? deal.value,
+          timeToClose: prediction?.timeToClose ?? deal.daysInStage ?? 30,
+          riskFactors: prediction?.riskFactors?.length ? prediction.riskFactors : (deal.notes ? ['Review deal notes for context'] : []),
+          recommendations: prediction?.recommendations?.length ? prediction.recommendations : ['Follow up with contact', 'Review proposal'],
+          confidence: prediction ? 0.9 : 0.6,
         });
       }
 

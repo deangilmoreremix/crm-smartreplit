@@ -469,8 +469,8 @@ export default function PhoneSystemDashboard() {
     <Button
       key="ai-analysis"
       variant="outline"
-      onClick={() => calls.length > 0 && analyzeCall(calls[0])}
-      disabled={isAnalyzing || calls.length === 0}
+      onClick={() => displayCalls.length > 0 && analyzeCall(displayCalls[0])}
+      disabled={isAnalyzing || displayCalls.length === 0}
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isAnalyzing ? 'Analyzing...' : 'AI Analysis'}
@@ -794,7 +794,7 @@ export default function PhoneSystemDashboard() {
                       {Math.round(displayStats.callQuality * 100)}%
                     </span>
                   </div>
-                  <Progress value={stats.callQuality * 100} className="h-2" />
+                   <Progress value={displayStats.callQuality * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">AI Analysis Accuracy</span>
@@ -802,15 +802,15 @@ export default function PhoneSystemDashboard() {
                       {Math.round(displayStats.aiAccuracy * 100)}%
                     </span>
                   </div>
-                  <Progress value={stats.aiAccuracy * 100} className="h-2" />
+                  <Progress value={displayStats.aiAccuracy * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Customer Satisfaction</span>
                     <span className="font-semibold">
-                      {Math.round(stats.customerSatisfaction * 100)}%
+                      {Math.round(displayStats.customerSatisfaction * 100)}%
                     </span>
                   </div>
-                  <Progress value={stats.customerSatisfaction * 100} className="h-2" />
+                  <Progress value={displayStats.customerSatisfaction * 100} className="h-2" />
                 </div>
               </div>
             </GlassCard>

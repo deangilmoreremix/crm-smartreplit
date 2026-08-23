@@ -73,16 +73,11 @@ const meetingStats: MeetingStats = {
 
 export function registerAppointmentRoutes(app: Express): void {
   // Protect all appointment routes: require auth + appointments entitlement
-  app.use('/api/appointments', requireAuth, requireEntitlement(FeatureKey.APPOINTMENTS));
+  app.use('/api/appointments', requireAuth(), requireEntitlement(FeatureKey.APPOINTMENTS));
 
   // Get all appointments for the authenticated user
   app.get('/api/appointments', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(appointments);
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -93,11 +88,6 @@ export function registerAppointmentRoutes(app: Express): void {
   // Get appointment statistics
   app.get('/api/appointments/stats', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(meetingStats);
     } catch (error) {
       console.error('Error fetching appointment stats:', error);
@@ -108,11 +98,6 @@ export function registerAppointmentRoutes(app: Express): void {
   // Create a new appointment
   app.post('/api/appointments', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { title, date, time, duration, attendees, type, priority, notes } = req.body;
 
       if (!title || !date || !time) {
@@ -148,11 +133,6 @@ export function registerAppointmentRoutes(app: Express): void {
   // Get a specific appointment
   app.get('/api/appointments/:id', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const appointmentId = req.params.id;
       const appointment = appointments.find((a) => a.id === appointmentId);
 
@@ -170,11 +150,6 @@ export function registerAppointmentRoutes(app: Express): void {
   // Update an appointment
   app.put('/api/appointments/:id', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const appointmentId = req.params.id;
       const appointmentIndex = appointments.findIndex((a) => a.id === appointmentId);
 
@@ -198,11 +173,6 @@ export function registerAppointmentRoutes(app: Express): void {
   // Delete an appointment
   app.delete('/api/appointments/:id', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const appointmentId = req.params.id;
       const appointmentIndex = appointments.findIndex((a) => a.id === appointmentId);
 
@@ -225,11 +195,6 @@ export function registerAppointmentRoutes(app: Express): void {
   // Generate AI insights for appointment
   app.post('/api/appointments/generate-insights', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { title, attendees, type, duration } = req.body;
 
       // Mock AI insights generation

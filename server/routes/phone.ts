@@ -68,16 +68,11 @@ const phoneStats: PhoneStats = {
 
 export function registerPhoneRoutes(app: Express): void {
   // Protect all phone routes: require auth + phone_system entitlement
-  app.use('/api/phone', requireAuth, requireEntitlement(FeatureKey.PHONE_SYSTEM));
+  app.use('/api/phone', requireAuth(), requireEntitlement(FeatureKey.PHONE_SYSTEM));
 
   // Get all calls for the authenticated user
   app.get('/api/phone/calls', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(calls);
     } catch (error) {
       console.error('Error fetching calls:', error);
@@ -88,11 +83,6 @@ export function registerPhoneRoutes(app: Express): void {
   // Get phone statistics
   app.get('/api/phone/stats', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       res.json(phoneStats);
     } catch (error) {
       console.error('Error fetching phone stats:', error);
@@ -103,11 +93,6 @@ export function registerPhoneRoutes(app: Express): void {
   // Create a new call record
   app.post('/api/phone/calls', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { caller, duration, status, transcript } = req.body;
 
       if (!caller || status === undefined) {
@@ -141,11 +126,6 @@ export function registerPhoneRoutes(app: Express): void {
   // Get a specific call
   app.get('/api/phone/calls/:id', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const callId = req.params.id;
       const call = calls.find((c) => c.id === callId);
 
@@ -163,11 +143,6 @@ export function registerPhoneRoutes(app: Express): void {
   // Update a call
   app.put('/api/phone/calls/:id', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const callId = req.params.id;
       const callIndex = calls.findIndex((c) => c.id === callId);
 
@@ -209,11 +184,6 @@ export function registerPhoneRoutes(app: Express): void {
   // Analyze call transcript
   app.post('/api/phone/calls/:id/analyze', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const callId = req.params.id;
       const callIndex = calls.findIndex((c) => c.id === callId);
 
@@ -254,11 +224,6 @@ export function registerPhoneRoutes(app: Express): void {
   // Start a call (WebRTC signaling would go here in production)
   app.post('/api/phone/calls/start', async (req, res) => {
     try {
-      const userId = (req.session as any)?.userId;
-      if (!userId) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
       const { number, type } = req.body;
 
       if (!number) {

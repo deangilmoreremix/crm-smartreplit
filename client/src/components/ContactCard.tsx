@@ -61,6 +61,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onContactClick }) =>
           {/* Wrapper for favorite and more buttons */}
           <button
             onClick={handleToggleFavorite}
+            aria-label={contact.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             className={`p-1 rounded-full transition-colors ${
               contact.isFavorite
                 ? 'text-yellow-500 hover:text-yellow-600'
@@ -70,6 +71,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onContactClick }) =>
             <Star size={16} fill={contact.isFavorite ? 'currentColor' : 'none'} />
           </button>
           <button
+            aria-label="Contact options"
             className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'} transition-colors opacity-0 group-hover:opacity-100 relative`}
             onClick={(e) => {
               e.stopPropagation();
@@ -162,6 +164,7 @@ const ContactCard: React.FC<ContactCardProps> = ({ contact, onContactClick }) =>
 
         <div className="flex items-center justify-between pt-2">
           <button
+            aria-label="Email contact"
             className={`p-2 ${isDark ? 'bg-white/10 hover:bg-green-400/20' : 'bg-gray-100 hover:bg-green-100'} rounded-lg transition-colors`}
           >
             <Mail

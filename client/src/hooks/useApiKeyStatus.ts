@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 
 export const useApiKeyStatus = () => {

@@ -88,7 +88,6 @@ const InstantAIResponseGenerator: React.FC = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedResponse);
     setIsCopied(true);
-    // TODO: Replace with real AI implementation;
   };
 
   // Generate response when inputs change (with debounce)

@@ -103,7 +103,9 @@ const SignInPage: React.FC = () => {
         >
           {error && (
             <div
+              aria-live="polite"
               className={`mb-4 p-3 rounded-lg ${isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200'} border flex items-center space-x-2`}
+              role="alert"
             >
               <AlertCircle className="h-4 w-4 text-red-500" />
               <span className={`text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{error}</span>
@@ -157,6 +159,7 @@ const SignInPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
                     isDark
                       ? 'text-gray-400 hover:text-gray-300'

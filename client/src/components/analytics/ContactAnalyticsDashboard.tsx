@@ -104,29 +104,46 @@ const ContactAnalyticsDashboard: React.FC = () => {
       .slice(0, 5)
       .map(([name, count]) => ({ name, count }));
 
-    // Calculate lead score distribution
+    // Calculate lead score distribution from actual contact scores
+    const scoredContacts = contactsArray.filter((c) => typeof c.score === 'number');
     const leadScoreDistribution = [
-      { range: '0-20', count: Math.floor(totalContacts * 0.15) },
-      { range: '21-40', count: Math.floor(totalContacts * 0.25) },
-      { range: '41-60', count: Math.floor(totalContacts * 0.3) },
-      { range: '61-80', count: Math.floor(totalContacts * 0.2) },
-      { range: '81-100', count: Math.floor(totalContacts * 0.1) },
+      { range: '0-20', count: scoredContacts.filter((c) => (c.score || 0) <= 0.2).length },
+      { range: '21-40', count: scoredContacts.filter((c) => (c.score || 0) > 0.2 && (c.score || 0) <= 0.4).length },
+      { range: '41-60', count: scoredContacts.filter((c) => (c.score || 0) > 0.4 && (c.score || 0) <= 0.6).length },
+      { range: '61-80', count: scoredContacts.filter((c) => (c.score || 0) > 0.6 && (c.score || 0) <= 0.8).length },
+      { range: '81-100', count: scoredContacts.filter((c) => (c.score || 0) > 0.8).length },
     ];
 
-    // Calculate conversion rates
+    // Calculate conversion rates from deals data
+    const dealsByStage = dealsArray.reduce((acc, deal) => {
+      acc[deal.stage] = (acc[deal.stage] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    const totalDeals = dealsArray.length || 1;
     const conversionRates = [
       { stage: 'Contact', rate: 100 },
-      { stage: 'Lead', rate: 75 },
-      { stage: 'Qualified', rate: 45 },
-      { stage: 'Proposal', rate: 25 },
-      { stage: 'Closed', rate: 12 },
+      { stage: 'Lead', rate: dealsByStage['lead'] ? Math.round((dealsByStage['lead'] / totalDeals) * 100) : 0 },
+      { stage: 'Qualified', rate: dealsByStage['qualified'] ? Math.round((dealsByStage['qualified'] / totalDeals) * 100) : 0 },
+      { stage: 'Proposal', rate: dealsByStage['proposal'] ? Math.round((dealsByStage['proposal'] / totalDeals) * 100) : 0 },
+      { stage: 'Closed', rate: dealsByStage['closed_won'] ? Math.round((dealsByStage['closed_won'] / totalDeals) * 100) : 0 },
     ];
+
+    // Calculate average engagement score from actual contact data
+    const engagementScores = contactsArray.map((c) => {
+      const score = c.score || c.aiScore || 0;
+      const lastActivity = c.lastContact ? new Date(c.lastContact).getTime() : (c.updatedAt ? new Date(c.updatedAt).getTime() : 0);
+      const recencyBonus = lastActivity > 0 ? Math.max(0, 10 - (Date.now() - lastActivity) / (1000 * 60 * 60 * 24 * 30)) : 0;
+      return Math.min(100, score * 100 + recencyBonus);
+    });
+    const avgEngagementScore = engagementScores.length > 0
+      ? Math.round(engagementScores.reduce((sum, s) => sum + s, 0) / engagementScores.length)
+      : 0;
 
     setAnalytics({
       totalContacts,
       activeContacts,
       newContactsThisMonth,
-      avgEngagementScore: 72, // Mock data
+      avgEngagementScore,
       topIndustries,
       leadScoreDistribution,
       conversionRates,
@@ -142,40 +159,41 @@ const ContactAnalyticsDashboard: React.FC = () => {
 
       for (const contact of contactsArray.slice(0, 8)) {
         // Analyze first 8 contacts for demo
-        // Generate mock AI intelligence (in real implementation, this would call AI services)
+        const enrichmentScore = contact.enrichmentData ? 85 : Math.round((contact.socialProfiles ? 60 : 40) + (contact.tags?.length || 0) * 5 + (contact.customFields ? 10 : 0));
+        const leadScore = contact.score ? Math.round((contact.score || 0) * 100) : (contact.aiScore || 50);
+        const lastActivityDate = contact.lastContact ? new Date(contact.lastContact) : new Date(contact.updatedAt);
+        const daysSinceActivity = (Date.now() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24);
+        const engagementLevel = daysSinceActivity < 7 ? 'high' : daysSinceActivity < 30 ? 'medium' : 'low';
+        const hasNotes = contact.notes && contact.notes.length > 0;
+        const hasEmail = !!contact.email;
+        const hasPhone = !!contact.phone;
+        const riskFactors = [
+          ...(!hasEmail ? ['Missing email'] : []),
+          ...(!hasPhone ? ['Missing phone'] : []),
+          ...(!hasNotes ? ['No interaction notes'] : []),
+          ...(daysSinceActivity > 30 ? ['Long inactivity period'] : []),
+        ].slice(0, 3);
+        const recommendations = [
+          ...(!hasEmail ? ['Collect email address'] : []),
+          ...(!hasPhone ? ['Collect phone number'] : []),
+          ...(daysSinceActivity > 14 ? ['Schedule follow-up'] : []),
+          ...(leadScore > 70 ? ['Prioritize for outreach'] : ['Nurture with content']),
+        ].slice(0, 3);
+
         intelligence.push({
           contactId: contact.id,
-          enrichmentScore: Math.floor(Math.random() * 40) + 60, // 60-100
-          leadScore: Math.floor(Math.random() * 100), // 0-100
-          engagementLevel: Math.random() > 0.7 ? 'high' : Math.random() > 0.4 ? 'medium' : 'low',
-          riskFactors: [
-            'Low engagement',
-            'Competitor mentioned',
-            'Budget constraints',
-            'Long sales cycle',
-          ].slice(0, Math.floor(Math.random() * 3) + 1),
-          recommendations: [
-            'Schedule follow-up call',
-            'Send personalized email',
-            'Share case study',
-            'Offer product demo',
-          ].slice(0, Math.floor(Math.random() * 3) + 1),
-          predictedValue: Math.floor(Math.random() * 50000) + 10000, // $10k-$60k
-          lastActivity: new Date(
-            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-          socialProfiles: [
-            {
-              platform: 'LinkedIn',
-              url: `https://linkedin.com/in/${contact.name.toLowerCase().replace(' ', '')}`,
-              verified: Math.random() > 0.3,
-            },
-            {
-              platform: 'Twitter',
-              url: `https://twitter.com/${contact.name.toLowerCase().replace(' ', '')}`,
-              verified: Math.random() > 0.5,
-            },
-          ].filter(() => Math.random() > 0.5),
+          enrichmentScore: Math.min(100, enrichmentScore),
+          leadScore: Math.min(100, Math.max(0, leadScore)),
+          engagementLevel,
+          riskFactors,
+          recommendations,
+          predictedValue: Math.round((contact.aiScore || 50) * 600 + 10000),
+          lastActivity: lastActivityDate.toISOString(),
+          socialProfiles: Object.entries(contact.socialProfiles || {}).map(([platform, url]) => ({
+            platform: platform.charAt(0).toUpperCase() + platform.slice(1),
+            url: url as string,
+            verified: !!url,
+          })),
         });
       }
 

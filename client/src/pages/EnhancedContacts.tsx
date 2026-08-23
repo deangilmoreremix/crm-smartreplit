@@ -401,7 +401,7 @@ const Contacts: React.FC = () => {
         header: 'Actions',
         cell: (info) => (
           <div className="flex justify-end">
-            <button className="text-gray-400 hover:text-gray-500 mr-2">
+            <button aria-label="Contact actions" className="text-gray-400 hover:text-gray-500 mr-2">
               <Link to={`/contacts/${info.getValue()}`}>
                 <MoreHorizontal size={18} />
               </Link>
@@ -630,6 +630,7 @@ const Contacts: React.FC = () => {
             </button>
             <button
               onClick={() => setSelectedContacts([])}
+              aria-label="Clear selection"
               className="inline-flex items-center px-2 py-1.5 text-gray-500 hover:text-gray-700"
             >
               <X size={16} />
@@ -648,6 +649,7 @@ const Contacts: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search contacts..."
+                aria-label="Search contacts"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border rounded-md focus:ring-blue-500 focus:border-blue-500 outline-none"
@@ -689,6 +691,7 @@ const Contacts: React.FC = () => {
               <div className="flex space-x-2">
                 <button
                   onClick={() => setViewMode('table')}
+                  aria-label="Table view"
                   className={`p-2 rounded border ${viewMode === 'table' ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-300'}`}
                 >
                   <svg
@@ -712,6 +715,7 @@ const Contacts: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setViewMode('card')}
+                  aria-label="Card view"
                   className={`p-2 rounded border ${viewMode === 'card' ? 'bg-blue-50 border-blue-300 text-blue-700' : 'border-gray-300'}`}
                 >
                   <svg
@@ -747,19 +751,20 @@ const Contacts: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-3 py-3 text-left">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedContacts.length === filteredContacts.length &&
-                            filteredContacts.length > 0
-                          }
-                          onChange={handleSelectAll}
-                          className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                        />
-                      </div>
-                    </th>
+                      <th scope="col" className="px-3 py-3 text-left">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            aria-label="Select all contacts"
+                            checked={
+                              selectedContacts.length === filteredContacts.length &&
+                              filteredContacts.length > 0
+                            }
+                            onChange={handleSelectAll}
+                            className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                          />
+                        </div>
+                      </th>
                     {table.getHeaderGroups().map((headerGroup) =>
                       headerGroup.headers.map((header) => (
                         <th
@@ -792,6 +797,7 @@ const Contacts: React.FC = () => {
                       <td className="px-3 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
+                          aria-label={`Select ${row.original.name}`}
                           checked={selectedContacts.includes(row.original.id)}
                           onChange={() => toggleContactSelection(row.original.id)}
                           className="h-4 w-4 text-blue-600 rounded border-gray-300"

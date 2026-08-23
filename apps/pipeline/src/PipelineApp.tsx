@@ -26,28 +26,17 @@ const PipelineApp: React.FC<PipelineAppProps> = ({ sharedData, deals = [] }) => 
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  useEffect(() => {
-    return eventBus.onRequest('pipeline', async (action, data) => {
-      switch (action) {
-        case 'getDeal': return dealsRef.current.find(d => d.id === data?.id) || null;
-        case 'listDeals': return dealsRef.current;
-        default: throw new Error(`Unknown action: ${action}`);
-      }
-    });
-  }, []);
+   useEffect(() => {
+     return eventBus.onRequest('pipeline', async (action, data) => {
+       switch (action) {
+         case 'getDeal': return dealsRef.current.find(d => d.id === data?.id) || null;
+         case 'listDeals': return dealsRef.current;
+         default: throw new Error(`Unknown action: ${action}`);
+       }
+     });
+   }, []);
 
-  if (!authState.isAuthenticated) {
-    return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-4">Authentication Required</h2>
-          <p className="text-gray-600">Please log in via the main CRM.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (deals.length === 0) {
+   if (deals.length === 0) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
         <div className="text-center">

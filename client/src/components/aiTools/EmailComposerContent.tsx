@@ -86,7 +86,6 @@ const EmailComposerContent: React.FC = () => {
     if (result) {
       navigator.clipboard.writeText(result);
       setCopied(true);
-      // TODO: Replace with real AI implementation;
     }
   };
 

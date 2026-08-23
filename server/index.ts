@@ -5,17 +5,16 @@ import { registerRoutes } from './routes';
 import { createServer } from 'http';
 import { setupVite, serveStatic, log } from './vite';
 import { memoryService } from './memory';
-// Temporarily bypass security middleware for testing
-// import { corsConfig, securityHeaders } from './middleware/security';
+import { corsConfig, securityHeaders } from './middleware/security';
 import { healthCheckMiddleware } from './health';
 
 export const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Security middleware bypassed for testing
-// app.use(securityHeaders);
-// app.use(corsConfig);
+// Security middleware
+app.use(securityHeaders);
+app.use(corsConfig);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -108,8 +107,11 @@ app.use('/api', async (req, res, next) => {
       });
     }
   } catch (err) {
-    // On error, allow request to proceed (fail open)
-    console.debug('Entitlement global check error:', err);
+    console.error('Entitlement global check error:', err);
+    return res.status(500).json({
+      error: 'Entitlement verification failed',
+      message: 'Unable to verify subscription status. Please try again later.',
+    });
   }
 
   next();

@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { federation } from "@module-federation/vite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -11,46 +10,15 @@ export default defineConfig({
   root: "client",                // tell Vite where index.html is
   plugins: [
     react(),
-    // Module Federation remotes (declared config).
-    // LOAD PATH DECISION: the active loader for federated routes (e.g. Contacts)
-    // is the runtime loader in client/src/utils/dynamicModuleFederation.ts
-    // (useRemoteComponent), gated by VITE_ENABLE_MFE. Do NOT add a static
-    // React.lazy(() => import('ContactsApp/...')) for the same route — that would
-    // double-load the remote through two mechanisms. Remotes emit ESM (init/get);
-    // keep shared `react` a singleton ^18.0.0 and never use format:'systemjs'.
-    federation({
-      name: 'crm-app',
-      remotes: {
-        ContactsApp: 'https://contacts.smartcrm.vip/assets/remoteEntry.js',
-        AnalyticsApp: 'https://ai-analytics.smartcrm.vip/assets/remoteEntry.js',
-        CalendarApp: 'https://calendar.smartcrm.vip/assets/remoteEntry.js',
-        PipelineApp: 'https://pipeline.smartcrm.vip/assets/remoteEntry.js',
-        AIGoalsApp: 'https://agency.smartcrm.vip/assets/remoteEntry.js',
-      },
-      shared: {
-        react: {
-          singleton: true,
-          requiredVersion: '^18.0.0',
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: '^18.0.0',
-        },
-        'react-router-dom': {
-          singleton: true,
-          requiredVersion: '^6.0.0',
-        },
-        '@emotion/react': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-        },
-        '@emotion/styled': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-        },
-      }
-    }),
-    ],
+    // NOTE: The @module-federation/vite `federation()` plugin was removed from the
+    // HOST. The host is a pure *consumer* — it loads remotes at runtime via
+    // client/src/utils/dynamicModuleFederation.ts (useRemoteComponent), which calls
+    // `import(remoteEntryUrl)` with @vite-ignore and passes shared deps
+    // (react/react-dom/react-router-dom) into container.init() manually. No static
+    // `import('ContactsApp/...')` exists anywhere in the client, so the plugin is
+    // unnecessary. Keeping it caused `vite build` to hang on remote URL analysis
+    // (moduleParseIdleTimeout). The remotes themselves still build with the plugin.
+  ],
   server: {
     host: '0.0.0.0',
     port: 5173, // Use Vite's default port instead of conflicting with main server

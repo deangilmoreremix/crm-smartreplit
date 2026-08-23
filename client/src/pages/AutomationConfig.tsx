@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
-import { ArrowLeft, Save, Play, Pause, Clock, Calendar, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Play, Pause, Clock, Calendar, Settings, RefreshCw, Check } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -19,6 +19,9 @@ const AutomationConfig = () => {
   const [isEnabled, setIsEnabled] = useState(false);
   const [schedule, setSchedule] = useState('daily');
   const [timeOfDay, setTimeOfDay] = useState('09:00');
+  const [customRules, setCustomRules] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const automationTitles: Record<string, { title: string; description: string }> = {
     'email-followup': { title: 'Email Follow-Up', description: 'Automatically send follow-up emails after meetings' },
@@ -44,14 +47,32 @@ const AutomationConfig = () => {
     description: 'Configure your automation settings' 
   };
 
-  const handleSave = () => {
-    // TODO: Save to backend
-    console.log('Saving automation config:', {
-      automationId,
-      isEnabled,
-      schedule,
-      timeOfDay,
-    });
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    setSaveError(null);
+
+    try {
+      const response = await fetch('/api/ai/automation/auto-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: { automationId, isEnabled, schedule, timeOfDay, customRules },
+          type: 'automation-config',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save automation configuration');
+      }
+
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred while saving';
+      setSaveError(message);
+      setSaveStatus('error');
+    }
   };
 
   return (
@@ -151,6 +172,8 @@ const AutomationConfig = () => {
                   className={isDark ? 'bg-gray-700 border-gray-600 text-white' : ''}
                   rows={4}
                   data-testid="textarea-rules"
+                  value={customRules}
+                  onChange={(e) => setCustomRules(e.target.value)}
                 />
               </div>
             </div>
@@ -160,11 +183,26 @@ const AutomationConfig = () => {
           <div className="mt-8 flex gap-3">
             <Button
               onClick={handleSave}
+              disabled={saveStatus === 'saving'}
               className="flex items-center gap-2"
               data-testid="button-save"
             >
-              <Save className="h-4 w-4" />
-              Save Configuration
+              {saveStatus === 'saving' ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : saveStatus === 'saved' ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save Configuration
+                </>
+              )}
             </Button>
             <Button
               variant="outline"
@@ -173,6 +211,11 @@ const AutomationConfig = () => {
             >
               Cancel
             </Button>
+            {saveError && (
+              <span className="text-sm text-red-600 self-center" data-testid="text-save-error">
+                {saveError}
+              </span>
+            )}
           </div>
         </Card>
 

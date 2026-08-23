@@ -80,6 +80,9 @@ const NotificationCenter: React.FC = () => {
         ref={buttonRef}
         onClick={toggle}
         data-testid="button-notifications"
+        aria-label="Notifications"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
         className={cn(
           'relative p-2 rounded-full transition-all duration-300',
           isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'
@@ -107,6 +110,7 @@ const NotificationCenter: React.FC = () => {
         createPortal(
           <div
             ref={dropdownRef}
+            aria-label="Notifications panel"
             className={cn(
               'fixed z-[9999] min-w-[360px] max-w-[420px] rounded-2xl shadow-2xl',
               'backdrop-blur-2xl border',
@@ -162,7 +166,7 @@ const NotificationCenter: React.FC = () => {
               </div>
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-96 overflow-y-auto" aria-live="polite" aria-atomic="false">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center">
                   <Bell

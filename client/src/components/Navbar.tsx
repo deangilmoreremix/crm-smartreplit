@@ -556,6 +556,8 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     <>
       <nav
         ref={navRef}
+        role="navigation"
+        aria-label="Main navigation"
         className="fixed top-0 left-0 right-0 z-50 pt-1 pb-1 px-4"
         style={{ marginTop: 0, top: 0 }}
       >
@@ -1056,6 +1058,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                     setIsMobileMenuOpen(!isMobileMenuOpen);
                   }}
                   data-testid="button-mobile-menu-toggle"
+                  aria-label="Toggle mobile menu"
                   className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
                 >
                   {isMobileMenuOpen ? (
@@ -1070,8 +1073,8 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
               <button
                 onClick={toggleTheme}
                 data-testid="button-mobile-theme-toggle"
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                 className={`p-2 rounded-lg transition-colors lg:hidden ${isDark ? 'hover:bg-white/10 text-white' : 'hover:bg-gray-100 text-gray-600'}`}
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {isDark ? (
                   <Sun size={20} className="block overflow-visible shrink-0" />
@@ -1086,6 +1089,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                 <button
                   onClick={toggleMinimized}
                   data-testid="button-navbar-toggle"
+                  aria-label={isMinimized ? 'Expand navbar' : 'Minimize navbar'}
                   className={`p-2 rounded-full transition-all duration-300 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                   title={isMinimized ? 'Expand Navbar' : 'Minimize Navbar'}
                 >
@@ -1136,6 +1140,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
                 <button
                   data-testid="button-search"
+                  aria-label="Search"
                   className={`p-2 rounded-full transition-all duration-300 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                 >
                   <Search
@@ -1147,6 +1152,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                 <button
                   onClick={toggleTheme}
                   data-testid="button-theme-toggle"
+                  aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
                   className={`p-2 rounded-full transition-all duration-300 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                   title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
@@ -1164,6 +1170,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                       toggleDropdown('user');
                     }}
                     data-testid="button-user-menu"
+                    aria-label="User menu"
                     className={`p-2 rounded-full transition-all duration-300 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                   >
                     <User

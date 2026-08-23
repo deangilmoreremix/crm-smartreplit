@@ -668,3 +668,38 @@ body {
   --wl-secondary-color: #6366f1;
 }
 
+/* ============================================
+   Accessibility (a11y) Styles
+   ============================================ */
+
+/* Skip navigation link - visually hidden until focused */
+.skip-nav {
+  position: absolute;
+  top: -9999px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  z-index: 100000;
+  font-size: 1rem;
+  text-decoration: none;
+  border-radius: 0 0 0.25rem 0;
+}
+.skip-nav:focus {
+  top: 0;
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support - disables all animations globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
