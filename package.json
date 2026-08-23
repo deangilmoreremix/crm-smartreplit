@@ -22,6 +22,8 @@
     "check": "tsc",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "prettier --write .",
     "db:push": "drizzle-kit push",
     "prepare": "husky",

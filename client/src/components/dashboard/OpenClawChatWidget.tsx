@@ -3,6 +3,8 @@ import { Send, Bot, MessageSquare, Loader2 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useContactStore } from '../../hooks/useContactStore';
+import { useDealStore } from '../../store/dealStore';
 
 // Simple OpenClaw service implementation
 class OpenClawService {
@@ -47,6 +49,8 @@ interface ChatMessage {
 }
 
 export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ className = '' }) => {
+  const { contacts } = useContactStore();
+  const { deals } = useDealStore();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -93,9 +97,25 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
 
     try {
       // Prepare context from current CRM data
+      const contactsArray = Object.values(contacts || {}).slice(0, 20).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        company: c.company,
+        status: c.status,
+      }));
+
+      const dealsArray = Object.values(deals || {}).slice(0, 20).map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        company: d.company,
+        stage: typeof d.stage === 'string' ? d.stage : d.stage?.name,
+        value: d.value,
+      }));
+
       const context = {
-        contacts: [], // TODO: Get current contacts from store
-        deals: [], // TODO: Get current deals from store
+        contacts: contactsArray,
+        deals: dealsArray,
         currentView: 'dashboard',
       };
 

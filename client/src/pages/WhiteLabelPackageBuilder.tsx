@@ -229,15 +229,23 @@ const WhiteLabelPackageBuilder: React.FC = () => {
     if (!packageName.trim()) return;
     setIsCreatingPackage(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      // TODO: Save to backend
-      console.log('Creating package:', {
+      // Temporary local persistence until a dedicated backend endpoint is added.
+      const packageRecord = {
+        id: crypto.randomUUID?.() || String(Date.now()),
         name: packageName,
         description: packageDescription,
         features: selectedFeatures,
         users: packageUsers,
         totalPrice: calculateTotalPrice(),
-      });
+        createdAt: new Date().toISOString(),
+      };
+
+      const existing = JSON.parse(localStorage.getItem('smartcrm-whitelabel-packages') || '[]');
+      existing.push(packageRecord);
+      localStorage.setItem('smartcrm-whitelabel-packages', JSON.stringify(existing));
+
+      console.log('Saved white-label package locally:', packageRecord);
+      setPackageCreated(true);
     } catch (error) {
       console.error('Error creating package:', error);
     } finally {

@@ -1347,10 +1347,9 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             description: 'Calendar App',
           },
           agency: {
-            url: 'https://videoagencyai.netlify.app',
+            url: 'https://agency.smartcrm.vip',
             module: './AgencyApp',
             description: 'AI Agency App',
-            // TODO: switch url back to https://agency.smartcrm.vip once custom domain is live
           },
           research: {
             url: 'https://research.smartcrm.vip',
