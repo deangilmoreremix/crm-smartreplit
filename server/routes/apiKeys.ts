@@ -19,7 +19,7 @@ interface GoogleAIResponse {
 }
 
 export function registerApiKeyRoutes(app: Express) {
-  const requireApiKeyAuth = requireAuth;
+  const requireApiKeyAuth = requireAuth();
 
   // Get all API keys for the authenticated user (masked)
   app.get('/api/user/api-keys', requireApiKeyAuth, async (req: Request, res: Response) => {

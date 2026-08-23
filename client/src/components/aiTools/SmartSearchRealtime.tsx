@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGemini } from '../../services/geminiService';
 import { useOpenAIEmbeddings } from '../../services/openaiEmbeddingsService';
+import { useContactStore } from '../../store/contactStore';
+import { useDealStore } from '../../store/dealStore';
 import {
   Search,
   FileText,
@@ -18,11 +20,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Contact, Deal } from '../../types';
-
-// Sample data for testing
-const sampleContacts: Contact[] = []; // TODO: Replace with real CRM data
-
-const sampleDeals: Deal[] = []; // TODO: Replace with real CRM data
 
 interface SearchResult {
   type: 'contact' | 'deal';
@@ -64,6 +61,40 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const { contacts: contactsRaw } = useContactStore();
+  const { deals: dealsRaw } = useDealStore();
+
+  const sampleContacts: Contact[] = React.useMemo(() => {
+    const raw = contactsRaw || {};
+    const list = Array.isArray(raw) ? raw : Object.values(raw);
+    return list.map((c: any): Contact => ({
+      id: String(c.id ?? ''),
+      name: `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.name || 'Unknown',
+      email: c.email ?? '',
+      company: c.company ?? '',
+      position: c.position ?? c.title ?? '',
+      notes: c.notes ?? '',
+      industry: c.industry ?? '',
+      location: c.location ?? '',
+      status: c.status ?? 'active',
+    }));
+  }, [contactsRaw]);
+
+  const sampleDeals: Deal[] = React.useMemo(() => {
+    const raw = dealsRaw || {};
+    const list = Array.isArray(raw) ? raw : Object.values(raw);
+    return list.map((d: any): Deal => ({
+      id: String(d.id ?? ''),
+      title: d.title ?? 'Untitled Deal',
+      company: d.company ?? d.account ?? '',
+      contact: d.contact ?? d.contactName ?? String(d.contactId ?? ''),
+      stage: typeof d.stage === 'string' ? d.stage : (d.stage?.name ?? d.stage?.id ?? 'unknown'),
+      priority: d.priority ?? 'medium',
+      value: Number(d.value ?? 0),
+      dueDate: d.dueDate ? new Date(d.dueDate) : undefined,
+    }));
+  }, [dealsRaw]);
+
   // Helper function to check if error is quota related
   const isQuotaError = (error: any): boolean => {
     const errorMessage = error?.message || '';
@@ -92,8 +123,15 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     );
   };
 
-  // Initialize embeddings on first load
+  const initializedRef = useRef(false);
+
+  // Initialize embeddings when data is available
   useEffect(() => {
+    if (initializedRef.current) return;
+    if (sampleContacts.length === 0 && sampleDeals.length === 0) return;
+
+    initializedRef.current = true;
+
     const initializeEmbeddings = async () => {
       try {
         // Generate embeddings for contacts and deals
@@ -132,7 +170,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [sampleContacts.length, sampleDeals.length]);
 
   // Generate search suggestions based on input
   useEffect(() => {

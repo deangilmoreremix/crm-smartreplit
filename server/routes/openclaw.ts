@@ -660,7 +660,7 @@ router.post('/chat', async (req, res) => {
     }
 
     // Authenticate
-    const userId = req.userId;
+    const userId = (req as any).userId;
 
     // Get per-user OpenClaw config (falls back to server env vars if no per-user key)
     const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } =
@@ -716,7 +716,7 @@ router.post('/chat/stream', async (req, res) => {
     }
 
     // Authenticate
-    const userId = req.userId;
+    const userId = (req as any).userId;
 
     // Get per-user OpenClaw config (falls back to server env vars if no per-user key)
     const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } =
@@ -796,10 +796,7 @@ router.post('/execute', async (req, res) => {
     }
 
     // Authenticate
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
+    const userId = (req as any).userId;
 
     // Find the tool definition
     const toolDef = crmTools.find((t) => t.name === tool);

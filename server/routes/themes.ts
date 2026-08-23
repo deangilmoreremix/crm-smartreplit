@@ -13,7 +13,7 @@ import { FeatureKey } from '../types/entitlements';
 const router = Router();
 
 // All theme routes require whitelabel access
-router.use(requireAuth);
+router.use(requireAuth());
 router.use(requireEntitlement(FeatureKey.WHITE_LABEL_CUSTOMIZATION));
 
 /**

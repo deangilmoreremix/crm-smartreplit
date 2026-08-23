@@ -1,5 +1,5 @@
 import type { Express } from 'express';
-import { requireAuth, requireAdmin } from './auth';
+import { requireAuth(), requireAdmin } from './auth';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { db } from '../db';
 import {
@@ -14,7 +14,7 @@ import { calculateCommission, createCommissionRecord, getPartnerCommissions } fr
 import { createPayout, processPayout, getPendingPayouts, getPayoutHistory, calculatePartnerPayout } from '../services/payoutService';
 
 export function registerPartnersRoutes(app: Express): void {
-  app.get('/api/partners', requireAuth, async (req: any, res) => {
+  app.get('/api/partners', requireAuth(), async (req: any, res) => {
     try {
       const { db: dbConnection } = await import('../db');
       const allPartners = await dbConnection.select().from(partners).orderBy(desc(partners.createdAt));
@@ -25,7 +25,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/partners/:id', requireAuth, async (req: any, res) => {
+  app.get('/api/partners/:id', requireAuth(), async (req: any, res) => {
     try {
       const { id } = req.params;
       const { db: dbConnection } = await import('../db');
@@ -71,7 +71,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.put('/api/partners/:id', requireAuth, async (req: any, res) => {
+  app.put('/api/partners/:id', requireAuth(), async (req: any, res) => {
     try {
       const { id } = req.params;
       const { name, email, company, phone, tierId, status, metadata } = req.body;
@@ -107,7 +107,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/partners/:id/stats', requireAuth, async (req: any, res) => {
+  app.get('/api/partners/:id/stats', requireAuth(), async (req: any, res) => {
     try {
       const { id } = req.params;
       const { db: dbConnection } = await import('../db');
@@ -151,7 +151,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/partners/:id/commissions', requireAuth, async (req: any, res) => {
+  app.get('/api/partners/:id/commissions', requireAuth(), async (req: any, res) => {
     try {
       const { id } = req.params;
       const status = req.query.status as string | undefined;
@@ -163,7 +163,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.post('/api/commissions/calculate', requireAuth, async (req: any, res) => {
+  app.post('/api/commissions/calculate', requireAuth(), async (req: any, res) => {
     try {
       const { partnerId, customerId, amount, metadata } = req.body;
       if (!partnerId || !customerId || !amount) {
@@ -205,7 +205,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/payouts', requireAuth, async (req: any, res) => {
+  app.get('/api/payouts', requireAuth(), async (req: any, res) => {
     try {
       const partnerId = req.query.partnerId as string | undefined;
       const status = req.query.status as string | undefined;
@@ -251,7 +251,7 @@ export function registerPartnersRoutes(app: Express): void {
     }
   });
 
-  app.get('/api/revenue/analytics', requireAuth, async (req: any, res) => {
+  app.get('/api/revenue/analytics', requireAuth(), async (req: any, res) => {
     try {
       const { db: dbConnection } = await import('../db');
 

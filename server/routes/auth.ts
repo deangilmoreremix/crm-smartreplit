@@ -28,14 +28,43 @@ async function requireAuthHandler(
   checkEntitlement: boolean
 ) {
   try {
-    const userId = (req.session as any)?.userId;
-    const userEmail = (req.session as any)?.userEmail;
+    let userId = (req.session as any)?.userId;
+    let userEmail = (req.session as any)?.userEmail;
+    let isAuthenticated = false;
+
+    if (userId) {
+      isAuthenticated = true;
+    } else {
+      const authHeader = req.headers.authorization;
+      const hostname = req.headers.host || '';
+      const isDevHost =
+        hostname.includes('localhost') ||
+        hostname.includes('replit.dev') ||
+        hostname.includes('127.0.0.1');
+
+      if (process.env.NODE_ENV !== 'production' && isDevHost && authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        if (token.startsWith('dev-bypass-token-')) {
+          userId = 'dev-user-12345';
+          userEmail = 'dev@smartcrm.local';
+          isAuthenticated = true;
+          (req as any).user = {
+            id: userId,
+            email: userEmail,
+            username: userEmail,
+            role: 'super_admin',
+            productTier: 'super_admin',
+          };
+        }
+      }
+    }
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
     }
 
     (req as any).userId = userId;
+    (req as any).isAuthenticated = isAuthenticated;
     if (userEmail) {
       (req as any).userEmail = userEmail;
     }
@@ -68,13 +97,13 @@ async function requireAuthHandler(
 
 /**
  * requireAuth Middleware
- * Checks if user is authenticated via session.
+ * Checks if user is authenticated via session OR dev-bypass Bearer token (dev only).
  * Optionally checks entitlement (no_access) if checkEntitlement is true (default).
  *
- * Can be used directly as middleware: requireAuth
+ * Can be used directly as middleware: requireAuth()
  * Or with options: requireAuth({ checkEntitlement: false })
  *
- * Sets { userId, userEmail } on the req object.
+ * Sets { userId, isAuthenticated, userEmail } on the req object.
  */
 export const requireAuth = (options?: RequireAuthOptions | Request) => {
   if (isRequireAuthOptions(options)) {

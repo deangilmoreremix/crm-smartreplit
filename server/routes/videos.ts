@@ -52,7 +52,7 @@ export function registerVideoRoutes(app: Express): void {
   app.get('/api/videos', async (req, res) => {
     try {
       // Filter videos by user
-      const userVideos = videoEmails.filter((video) => video.profileId === req.userId);
+      const userVideos = videoEmails.filter((video) => video.profileId === (req as any).userId);
       res.json(userVideos);
     } catch (error) {
       console.error('Error fetching videos:', error);
@@ -64,7 +64,7 @@ export function registerVideoRoutes(app: Express): void {
   app.get('/api/videos/stats', async (req, res) => {
     try {
       // Calculate stats from user's videos
-      const userVideos = videoEmails.filter((video) => video.profileId === req.userId);
+      const userVideos = videoEmails.filter((video) => video.profileId === (req as any).userId);
       const stats = {
         totalVideos: userVideos.length,
         totalViews: userVideos.reduce((sum, video) => sum + video.analytics.views, 0),
@@ -97,6 +97,7 @@ export function registerVideoRoutes(app: Express): void {
   // Create a new video email
   app.post('/api/videos', async (req, res) => {
     try {
+      const userId = (req as any).userId;
       const { title, script, recipientName, recipientEmail, company } = req.body;
 
       if (!title || !script) {
@@ -147,7 +148,7 @@ export function registerVideoRoutes(app: Express): void {
   app.get('/api/videos/:id', async (req, res) => {
     try {
       const videoId = req.params.id;
-      const video = videoEmails.find((v) => v.id === videoId && v.profileId === req.userId);
+      const video = videoEmails.find((v) => v.id === videoId && v.profileId === (req as any).userId);
 
       if (!video) {
         return res.status(404).json({ error: 'Video not found' });
@@ -164,7 +165,7 @@ export function registerVideoRoutes(app: Express): void {
   app.put('/api/videos/:id', async (req, res) => {
     try {
       const videoId = req.params.id;
-      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req.userId);
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === (req as any).userId);
 
       if (videoIndex === -1) {
         return res.status(404).json({ error: 'Video not found' });
@@ -198,7 +199,7 @@ export function registerVideoRoutes(app: Express): void {
   app.delete('/api/videos/:id', async (req, res) => {
     try {
       const videoId = req.params.id;
-      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req.userId);
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === (req as any).userId);
 
       if (videoIndex === -1) {
         return res.status(404).json({ error: 'Video not found' });

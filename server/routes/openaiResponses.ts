@@ -134,7 +134,7 @@ export async function getAvailableModels(): Promise<ResponsesModel[]> {
   return RESPONSES_API_MODELS;
 }
 
-router.post('/api/openai/responses', requireAuth, async (req: Request, res: Response) => {
+router.post('/api/openai/responses', requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const { input, model } = req.body;
@@ -154,7 +154,7 @@ router.post('/api/openai/responses', requireAuth, async (req: Request, res: Resp
   }
 });
 
-router.get('/api/openai/models', requireAuth, async (req: Request, res: Response) => {
+router.get('/api/openai/models', requireAuth(), async (req: Request, res: Response) => {
   try {
     const models = await getAvailableModels();
     res.json({ models });
@@ -164,7 +164,7 @@ router.get('/api/openai/models', requireAuth, async (req: Request, res: Response
   }
 });
 
-router.post('/api/openai/responses/stream', requireAuth, async (req: Request, res: Response) => {
+router.post('/api/openai/responses/stream', requireAuth(), async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const { input, model } = req.body;

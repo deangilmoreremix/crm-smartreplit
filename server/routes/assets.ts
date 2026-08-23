@@ -14,7 +14,7 @@ import { FeatureKey } from '../types/entitlements';
 const router = Router();
 
 // All asset routes require brand asset management access
-router.use(requireAuth);
+router.use(requireAuth());
 router.use(requireEntitlement(FeatureKey.BRAND_ASSET_MANAGEMENT));
 
 // Configure multer for file uploads (memory storage)

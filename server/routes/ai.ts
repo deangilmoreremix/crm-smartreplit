@@ -91,10 +91,10 @@ async function callUserGoogleAI(userId: string, prompt: string, model: string = 
 
 export function registerAIRoutes(app: Express) {
   // Middleware to protect AI endpoints - require auth + ai_tools entitlement
-  const requireAITools = [requireAuth, requireEntitlement(FeatureKey.AI_TOOLS)];
+  const requireAITools = [requireAuth(), requireEntitlement(FeatureKey.AI_TOOLS)];
 
   // AI API Status Check - uses user's own API keys
-  app.get('/api/openai/status', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/openai/status', requireAuth(), async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const results = {
       openai: {

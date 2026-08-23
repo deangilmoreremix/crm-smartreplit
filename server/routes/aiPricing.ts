@@ -125,9 +125,9 @@ export function registerAIPricingRoutes(app: Express): void {
   // ==========================================================================
 
   // Get reseller's pricing configuration
-  app.get('/api/reseller/ai-pricing', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/reseller/ai-pricing', requireAuth(), async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId || req.user?.id;
+      const userId = (req as any).userId;
       const userRole = req.user?.role || req.session?.userRole;
 
       // Only whitelabel/reseller users can access this
@@ -158,10 +158,10 @@ export function registerAIPricingRoutes(app: Express): void {
   // Update reseller's pricing for a feature
   app.put(
     '/api/reseller/ai-pricing/:featureKey',
-    requireAuth,
+    requireAuth(),
     async (req: Request, res: Response) => {
       try {
-        const userId = req.session?.userId || req.user?.id;
+        const userId = (req as any).userId;
         const userRole = req.user?.role || req.session?.userRole;
         const { featureKey } = req.params;
         const { retailCreditCost, wholesaleCreditCost } = req.body;
@@ -207,9 +207,9 @@ export function registerAIPricingRoutes(app: Express): void {
   );
 
   // Get reseller analytics
-  app.get('/api/reseller/ai-analytics', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/reseller/ai-analytics', requireAuth(), async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId || req.user?.id;
+      const userId = (req as any).userId;
       const userRole = req.user?.role || req.session?.userRole;
 
       if (userRole !== 'whitelabel' && userRole !== 'reseller' && userRole !== 'super_admin') {
@@ -236,9 +236,9 @@ export function registerAIPricingRoutes(app: Express): void {
   });
 
   // Purchase wholesale credits (for resellers)
-  app.post('/api/reseller/purchase-credits', requireAuth, async (req: Request, res: Response) => {
+  app.post('/api/reseller/purchase-credits', requireAuth(), async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId || req.user?.id;
+      const userId = (req as any).userId;
       const userRole = req.user?.role || req.session?.userRole;
       const { creditsAmount, paymentMethodId } = req.body;
 
@@ -277,11 +277,11 @@ export function registerAIPricingRoutes(app: Express): void {
   // ==========================================================================
 
   // Get AI features with pricing (for end users)
-  app.get('/api/ai-features', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/ai-features', requireAuth(), async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId || req.user?.id;
+      const userId = (req as any).userId;
       const userRole = req.user?.role || req.session?.userRole;
-      const resellerId = req.user?.resellerId || req.session?.resellerId;
+      const resellerId = req.user?.resellerId;
 
       const features = await AIPricingService.getAIFeaturesWithPricing(
         userId,
@@ -306,12 +306,12 @@ export function registerAIPricingRoutes(app: Express): void {
   });
 
   // Get feature cost (with user's specific pricing)
-  app.get('/api/ai-features/:featureKey/cost', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/ai-features/:featureKey/cost', requireAuth(), async (req: Request, res: Response) => {
     try {
       const { featureKey } = req.params;
-      const userId = req.session?.userId || req.user?.id;
+      const userId = (req as any).userId;
       const userRole = req.user?.role || req.session?.userRole;
-      const resellerId = req.user?.resellerId || req.session?.resellerId;
+      const resellerId = req.user?.resellerId;
 
       const features = await AIPricingService.getAIFeaturesWithPricing(
         userId,
@@ -341,13 +341,13 @@ export function registerAIPricingRoutes(app: Express): void {
   // Check if user can afford a feature
   app.get(
     '/api/ai-features/:featureKey/check',
-    requireAuth,
+    requireAuth(),
     async (req: Request, res: Response) => {
       try {
         const { featureKey } = req.params;
-        const userId = req.session?.userId || req.user?.id;
+        const userId = (req as any).userId;
         const userRole = req.user?.role || req.session?.userRole;
-        const resellerId = req.user?.resellerId || req.session?.resellerId;
+        const resellerId = req.user?.resellerId;
 
         const features = await AIPricingService.getAIFeaturesWithPricing(
           userId,
@@ -383,12 +383,12 @@ export function registerAIPricingRoutes(app: Express): void {
   // Charge for AI feature usage
   app.post(
     '/api/ai-features/:featureKey/charge',
-    requireAuth,
+    requireAuth(),
     async (req: Request, res: Response) => {
       try {
         const { featureKey } = req.params;
-        const userId = req.session?.userId || req.user?.id;
-        const resellerId = req.user?.resellerId || req.session?.resellerId;
+        const userId = (req as any).userId;
+        const resellerId = req.user?.resellerId;
         const { description, metadata, context } = req.body;
 
         const result = await AIPricingService.chargeForFeature(
@@ -423,9 +423,9 @@ export function registerAIPricingRoutes(app: Express): void {
   );
 
   // Get user's AI usage history
-  app.get('/api/ai-usage', requireAuth, async (req: Request, res: Response) => {
+  app.get('/api/ai-usage', requireAuth(), async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.userId || req.user?.id;
+      const userId = (req as any).userId;
       const { limit = 50, offset = 0 } = req.query;
 
       const usage = await db

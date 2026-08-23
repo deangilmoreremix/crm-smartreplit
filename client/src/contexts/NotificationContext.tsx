@@ -52,9 +52,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [notifications, setNotifications] = useState<Notification[]>(loadNotifications);
   const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
+  const broadcastChannel =
+    typeof window !== 'undefined' && typeof window.BroadcastChannel !== 'undefined'
+      ? new window.BroadcastChannel('smartcrm-notifications')
+      : null;
+
   const persist = useCallback((items: Notification[]) => {
     saveNotifications(items);
-  }, []);
+    try {
+      broadcastChannel?.postMessage({ type: 'sync', notifications: items });
+    } catch {
+      // ignore broadcast errors
+    }
+  }, [broadcastChannel]);
 
   const requestPermission = useCallback(async () => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -66,7 +76,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   useEffect(() => {
     requestPermission();
-  }, [requestPermission]);
+
+    if (!broadcastChannel) return;
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'sync') {
+        setNotifications(event.data.notifications || []);
+      }
+    };
+
+    broadcastChannel.addEventListener('message', handler);
+    return () => broadcastChannel.removeEventListener('message', handler);
+  }, [broadcastChannel, requestPermission]);
 
   const showDesktopNotification = useCallback((notification: Notification) => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {

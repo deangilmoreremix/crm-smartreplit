@@ -63,7 +63,7 @@ function listHistory(tenantId: string, limit = 50) {
     .limit(limit);
 }
 
-router.use(requireAuth);
+router.use(requireAuth());
 router.use(requireEntitlement(FeatureKey.WHITE_LABEL_MANAGEMENT));
 
 /**

@@ -14,7 +14,7 @@ import { memoryService } from '../memory';
 
 export function registerAISalesToolsRoutes(app: Express): void {
   const requireSalesIntelligence = [
-    requireAuth,
+    requireAuth(),
     requireEntitlement(FeatureKey.SALES_INTELLIGENCE),
   ];
 

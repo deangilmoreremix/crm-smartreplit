@@ -10,7 +10,7 @@ router.use(requireAuth({ checkEntitlement: false }));
 // Create a new company
 router.post('/', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { name, domain, description, industry } = req.body;
     
 
@@ -68,7 +68,7 @@ router.post('/', async (req, res) => {
 // Get user's companies
 router.get('/', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { data: companies, error } = await supabase
       .from('companies')
       .select(`
@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
 // Get company details
 router.get('/:companyId', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { companyId } = req.params;
 
     // Check if user is member of company
@@ -122,7 +122,7 @@ router.get('/:companyId', async (req, res) => {
 // Update company
 router.put('/:companyId', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { companyId } = req.params;
     const updates = req.body;
 
@@ -157,7 +157,7 @@ router.put('/:companyId', async (req, res) => {
 // Get company users
 router.get('/:companyId/users', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { companyId } = req.params;
 
     // Check if user is member of company
@@ -200,7 +200,7 @@ router.get('/:companyId/users', async (req, res) => {
 // Invite user to company
 router.post('/:companyId/invitations', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { companyId } = req.params;
     const { email, role } = req.body;
 
@@ -303,7 +303,7 @@ router.post('/:companyId/invitations', async (req, res) => {
 // Accept invitation
 router.post('/invitations/:token/accept', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { token } = req.params;
 
     // Find invitation
@@ -358,7 +358,7 @@ router.post('/invitations/:token/accept', async (req, res) => {
 // Get company whitelabel config
 router.get('/:companyId/whitelabel', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { companyId } = req.params;
 
     // Check if user is member of company
@@ -391,7 +391,7 @@ router.get('/:companyId/whitelabel', async (req, res) => {
 // Update company whitelabel config
 router.put('/:companyId/whitelabel', async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = (req as any).userId;
     const { companyId } = req.params;
     const updates = req.body;
 

@@ -13,7 +13,7 @@ import { FeatureKey } from '../types/entitlements';
 const router = Router();
 
 // All provisioning routes require partner onboarding access
-router.use(requireAuth);
+router.use(requireAuth());
 router.use(requireEntitlement(FeatureKey.PARTNER_ONBOARDING));
 
 /**

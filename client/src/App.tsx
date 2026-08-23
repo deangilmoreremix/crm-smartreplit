@@ -51,6 +51,8 @@ import AutomationConfig from './pages/AutomationConfig';
 const TasksNew = lazy(() => import('./pages/TasksNew'));
 const Communication = lazy(() => import('./pages/Communication'));
 const ContactsWorking = lazy(() => import('./pages/ContactsWorking'));
+const DuplicateContacts = lazy(() => import('./components/contacts/DuplicateContacts'));
+const ContactRelationships = lazy(() => import('./components/contacts/ContactRelationships'));
 const PipelinePage = lazy(() => import('./pages/PipelinePage'));
 const AITools = lazy(() => import('./pages/AITools'));
 const Analytics = lazy(() => import('./pages/AnalyticsDashboard'));
@@ -1045,6 +1047,24 @@ function AppContent() {
                 <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
                   <Navbar />
                   <ContactsWorking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contacts/duplicates"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
+                  <Navbar />
+                  <DuplicateContacts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contacts/relationships"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
+                  <Navbar />
+                  <ContactRelationships />
                 </ProtectedRoute>
               }
             />

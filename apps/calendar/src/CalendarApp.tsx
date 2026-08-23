@@ -28,14 +28,14 @@ const CalendarApp: React.FC<CalendarAppProps> = ({ sharedData }) => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-   useEffect(() => {
-     return eventBus.onRequest('calendar', async (action) => {
-       if (action === 'getEvents') return eventsRef.current;
-       throw new Error(`Unknown action: ${action}`);
-     });
-   }, []);
+  useEffect(() => {
+    return eventBus.onRequest('calendar', async (action) => {
+      if (action === 'getEvents') return eventsRef.current;
+      throw new Error(`Unknown action: ${action}`);
+    });
+  }, []);
 
-   return (
+  return (
     <div className="p-6 bg-white min-h-screen">
       <h1 className="text-2xl font-bold mb-6">AI Calendar</h1>
       <div className="space-y-3">

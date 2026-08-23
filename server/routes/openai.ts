@@ -35,7 +35,7 @@ async function getUserOpenAI(userId: string): Promise<{ client: any; model: stri
 }
 
 // Check API key status - uses user's key
-router.get('/api/openai/status', requireAuth, async (req: Request, res: Response) => {
+router.get('/api/openai/status', requireAuth(), async (req: Request, res: Response) => {
   const userId = (req as any).userId;
   const openaiData = await getUserOpenAI(userId);
 
@@ -70,7 +70,7 @@ router.get('/api/openai/status', requireAuth, async (req: Request, res: Response
 });
 
 // Smart Greeting Generation
-router.post('/api/openai/smart-greeting', requireAuth, async (req: Request, res: Response) => {
+router.post('/api/openai/smart-greeting', requireAuth(), async (req: Request, res: Response) => {
   const authReq = req as any;
   const userId = authReq.userId;
   const sessionId = req.body.sessionId || `session-${Date.now()}`;
@@ -136,7 +136,7 @@ router.post('/api/openai/smart-greeting', requireAuth, async (req: Request, res:
 });
 
 // KPI Analysis
-router.post('/api/openai/kpi-analysis', requireAuth, async (req: Request, res: Response) => {
+router.post('/api/openai/kpi-analysis', requireAuth(), async (req: Request, res: Response) => {
   const userId = (req as any).userId;
   const sessionId = req.body.sessionId || `session-${Date.now()}`;
 
@@ -204,7 +204,7 @@ router.post('/api/openai/kpi-analysis', requireAuth, async (req: Request, res: R
 });
 
 // Deal Intelligence
-router.post('/api/openai/deal-intelligence', requireAuth, async (req: Request, res: Response) => {
+router.post('/api/openai/deal-intelligence', requireAuth(), async (req: Request, res: Response) => {
   const userId = (req as any).userId;
   const sessionId = req.body.sessionId || `session-${Date.now()}`;
 
@@ -278,7 +278,7 @@ router.post('/api/openai/deal-intelligence', requireAuth, async (req: Request, r
 });
 
 // Business Intelligence Generation
-router.post('/api/openai/business-intelligence', requireAuth, async (req: Request, res: Response) => {
+router.post('/api/openai/business-intelligence', requireAuth(), async (req: Request, res: Response) => {
   const userId = (req as any).userId;
   const sessionId = req.body.sessionId || `session-${Date.now()}`;
 

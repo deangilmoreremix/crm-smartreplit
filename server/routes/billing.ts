@@ -18,7 +18,7 @@ const router = Router();
 
 // Apply authentication and entitlement check to all billing routes
 // Users must have 'buy_credits' feature (SmartMarketer+)
-router.use(requireAuth);
+router.use(requireAuth());
 router.use(requireEntitlement(FeatureKey.BUY_CREDITS));
 
 // Initialize Stripe lazily (top-level await is not supported in CJS transpilation)

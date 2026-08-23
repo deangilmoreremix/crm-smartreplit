@@ -30,7 +30,7 @@
     // Get all contacts for the authenticated user
     app.get('/api/contacts', requireAuth({ checkEntitlement: false }), async (req, res) => {
       try {
-        const userId = req.userId;
+        const userId = (req as any).userId;
 
         const { db } = await import('../db');
         const userContacts = await db
@@ -49,7 +49,7 @@
   // Get a single contact
   app.get('/api/contacts/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -72,7 +72,7 @@
   // Create a new contact
   app.post('/api/contacts', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertContactSchema.parse({
@@ -95,7 +95,7 @@
   // Update a contact
   app.put('/api/contacts/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -130,7 +130,7 @@
   // Delete a contact
   app.delete('/api/contacts/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -151,12 +151,151 @@
     }
   });
 
+  // Find potential duplicate contacts
+  app.get('/api/contacts/duplicates', requireAuth({ checkEntitlement: false }), async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+
+      const { db } = await import('../db');
+      const userContacts = await db
+        .select()
+        .from(contacts)
+        .where(eq(contacts.profileId, userId))
+        .orderBy(desc(contacts.createdAt));
+
+      const groups: any[] = [];
+      const seen = new Set<string>();
+
+      const normalize = (value: string | null | undefined) =>
+        (value || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '')
+          .slice(0, 120);
+
+      const makeKey = (ids: string[]) => [...ids].sort().join('::');
+
+      const addPair = (a: any, b: any, reason: string) => {
+        const key = makeKey([String(a.id), String(b.id)]);
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        groups.push({
+          contactA: a,
+          contactB: b,
+          reason,
+          matchScore: reason === 'email' ? 95 : reason === 'phone' ? 90 : 70,
+          merged: {
+            id: a.id,
+            firstName: a.firstName || b.firstName || '',
+            lastName: a.lastName || b.lastName || '',
+            email: a.email || b.email || '',
+            phone: a.phone || b.phone || '',
+            company: a.company || b.company || '',
+            position: a.position || b.position || '',
+            industry: a.industry || b.industry || '',
+            status: a.status || b.status || 'active',
+            notes: [a.notes, b.notes].filter(Boolean).join('\n---\n'),
+            tags: Array.from(new Set([...(a.tags || []), ...(b.tags || [])])),
+          },
+        });
+      };
+
+      // Compare all pairs
+      for (let i = 0; i < userContacts.length; i++) {
+        for (let j = i + 1; j < userContacts.length; j++) {
+          const a = userContacts[i];
+          const b = userContacts[j];
+
+          const sameEmail =
+            normalize(a.email).length > 3 &&
+            normalize(b.email).length > 3 &&
+            normalize(a.email) === normalize(b.email);
+          const samePhone =
+            normalize(a.phone).length > 3 &&
+            normalize(b.phone).length > 3 &&
+            normalize(a.phone) === normalize(b.phone);
+          const sameNameCompany =
+            normalize(a.firstName).length > 1 &&
+            normalize(a.lastName).length > 1 &&
+            normalize(b.firstName).length > 1 &&
+            normalize(b.lastName).length > 1 &&
+            normalize(a.firstName) === normalize(b.firstName) &&
+            normalize(a.lastName) === normalize(b.lastName) &&
+            normalize(a.company).length > 1 &&
+            normalize(a.company) === normalize(b.company);
+
+          if (sameEmail) {
+            addPair(a, b, 'email');
+          } else if (samePhone) {
+            addPair(a, b, 'phone');
+          } else if (sameNameCompany) {
+            addPair(a, b, 'name_company');
+          }
+        }
+      }
+
+      res.json({ duplicates: groups });
+    } catch (error) {
+      console.error('Error finding duplicates:', error);
+      res.status(500).json({ error: 'Failed to find duplicates' });
+    }
+  });
+
+  // Merge duplicate contacts
+  app.post('/api/contacts/merge', requireAuth({ checkEntitlement: false }), async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { primaryId, duplicateId, mergedFields } = req.body || {};
+
+      if (!primaryId || !duplicateId) {
+        return res.status(400).json({ error: 'primaryId and duplicateId are required' });
+      }
+
+      const { db } = await import('../db');
+
+      const [primary] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, primaryId), eq(contacts.profileId, userId)));
+
+      const [duplicate] = await db
+        .select()
+        .from(contacts)
+        .where(and(eq(contacts.id, duplicateId), eq(contacts.profileId, userId)));
+
+      if (!primary || !duplicate) {
+        return res.status(404).json({ error: 'Primary or duplicate contact not found' });
+      }
+
+      if (primaryId === duplicateId) {
+        return res.status(400).json({ error: 'Cannot merge a contact with itself' });
+      }
+
+      const updatePayload: any = { ...(mergedFields || {}), updatedAt: new Date() };
+
+      const [updated] = await db
+        .update(contacts)
+        .set(updatePayload)
+        .where(and(eq(contacts.id, primaryId), eq(contacts.profileId, userId)))
+        .returning();
+
+      await db
+        .delete(contacts)
+        .where(and(eq(contacts.id, duplicateId), eq(contacts.profileId, userId)));
+
+      res.json({ contact: updated, merged: true });
+    } catch (error: any) {
+      console.error('Error merging contacts:', error);
+      res.status(500).json({ error: 'Failed to merge contacts' });
+    }
+  });
+
   // ==================== DEALS API ====================
 
   // Get all deals for the authenticated user
   app.get('/api/deals', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const userDeals = await db
@@ -175,7 +314,7 @@
   // Get a single deal
   app.get('/api/deals/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const dealId = parseInt(req.params.id);
@@ -198,7 +337,7 @@
   // Create a new deal
   app.post('/api/deals', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertDealSchema.parse({
@@ -221,7 +360,7 @@
   // Update a deal
   app.put('/api/deals/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const dealId = parseInt(req.params.id);
@@ -256,7 +395,7 @@
   // Delete a deal
   app.delete('/api/deals/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const dealId = parseInt(req.params.id);
@@ -282,7 +421,7 @@
   // Get all tasks for the authenticated user
   app.get('/api/tasks', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const userTasks = await db
@@ -301,7 +440,7 @@
   // Get a single task
   app.get('/api/tasks/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const taskId = parseInt(req.params.id);
@@ -324,7 +463,7 @@
   // Create a new task
   app.post('/api/tasks', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertTaskSchema.parse({
@@ -347,7 +486,7 @@
   // Update a task
   app.put('/api/tasks/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const taskId = parseInt(req.params.id);
@@ -389,7 +528,7 @@
   // Delete a task
   app.delete('/api/tasks/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const taskId = parseInt(req.params.id);
@@ -415,7 +554,7 @@
   // Get all appointments for the authenticated user
   app.get('/api/appointments', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const userAppointments = await db
@@ -434,7 +573,7 @@
   // Get a single appointment
   app.get('/api/appointments/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const appointmentId = parseInt(req.params.id);
@@ -457,7 +596,7 @@
   // Create a new appointment
   app.post('/api/appointments', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertAppointmentSchema.parse({
@@ -480,7 +619,7 @@
   // Update an appointment
   app.put('/api/appointments/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const appointmentId = parseInt(req.params.id);
@@ -522,7 +661,7 @@
   // Delete an appointment
   app.delete('/api/appointments/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const appointmentId = parseInt(req.params.id);
@@ -548,7 +687,7 @@
   // Get all communications for the authenticated user
   app.get('/api/communications', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const userCommunications = await db
@@ -567,7 +706,7 @@
   // Create a new communication
   app.post('/api/communications', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertCommunicationSchema.parse({
@@ -592,7 +731,7 @@
   // Get all notes for the authenticated user
   app.get('/api/notes', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const userNotes = await db
@@ -611,7 +750,7 @@
   // Get notes by contact
   app.get('/api/notes/contact/:contactId', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.contactId);
@@ -631,7 +770,7 @@
   // Get notes by deal
   app.get('/api/notes/deal/:dealId', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const dealId = parseInt(req.params.dealId);
@@ -651,7 +790,7 @@
   // Create a new note
   app.post('/api/notes', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertNoteSchema.parse({
@@ -674,7 +813,7 @@
   // Update a note
   app.put('/api/notes/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const noteId = parseInt(req.params.id);
@@ -716,7 +855,7 @@
   // Delete a note
   app.delete('/api/notes/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const noteId = parseInt(req.params.id);
@@ -742,7 +881,7 @@
   // Get all documents for the authenticated user
   app.get('/api/documents', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const userDocuments = await db
@@ -761,7 +900,7 @@
   // Create a new document
   app.post('/api/documents', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const validatedData = insertDocumentSchema.parse({
@@ -784,7 +923,7 @@
   // Delete a document
   app.delete('/api/documents/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const documentId = parseInt(req.params.id);
@@ -806,7 +945,7 @@
   });
 
   // Tenant Management Endpoints
-  app.get('/api/tenants', requireAuth, async (req, res) => {
+  app.get('/api/tenants', requireAuth(), async (req, res) => {
     try {
       const { db } = await import('../db');
       const tenantList = await db.select().from(tenantConfigs);
@@ -817,7 +956,7 @@
     }
   });
 
-  app.post('/api/tenants', requireAuth, async (req, res) => {
+  app.post('/api/tenants', requireAuth(), async (req, res) => {
     try {
       const { name, domain, config } = req.body;
       const { db } = await import('../db');
@@ -834,7 +973,7 @@
     }
   });
 
-  app.put('/api/tenants/:id', requireAuth, async (req, res) => {
+  app.put('/api/tenants/:id', requireAuth(), async (req, res) => {
     try {
       const { id } = req.params;
       const updates = req.body;
@@ -856,7 +995,7 @@
     }
   });
 
-  app.delete('/api/tenants/:id', requireAuth, async (req, res) => {
+  app.delete('/api/tenants/:id', requireAuth(), async (req, res) => {
     try {
       const { id } = req.params;
       const { db } = await import('../db');
@@ -870,7 +1009,7 @@
   });
 
   // Domain Management Endpoints
-  app.post('/api/domains/verify', requireAuth, async (req, res) => {
+  app.post('/api/domains/verify', requireAuth(), async (req, res) => {
     try {
       const { domain } = req.body;
       const { db } = await import('../db');
@@ -900,7 +1039,7 @@
     }
   });
 
-  app.post('/api/domains/configure', requireAuth, async (req, res) => {
+  app.post('/api/domains/configure', requireAuth(), async (req, res) => {
     try {
       const { tenantId, domain } = req.body;
       const { db } = await import('../db');
@@ -937,7 +1076,7 @@
     }
   });
 
-  app.get('/api/domains/status/:domain', requireAuth, async (req, res) => {
+  app.get('/api/domains/status/:domain', requireAuth(), async (req, res) => {
     try {
       const { domain } = req.params;
       const { db } = await import('../db');
@@ -960,7 +1099,7 @@
   });
 
   // Security API Endpoints
-  app.get('/api/security/audit/:tenantId', requireAuth, async (req, res) => {
+  app.get('/api/security/audit/:tenantId', requireAuth(), async (req, res) => {
     try {
       const { tenantId } = req.params;
       const { db } = await import('../db');
@@ -1026,7 +1165,7 @@
     }
   });
 
-  app.post('/api/security/policies', requireAuth, async (req, res) => {
+  app.post('/api/security/policies', requireAuth(), async (req, res) => {
     try {
       const { tenantId, policyType, settings } = req.body;
 
@@ -1049,7 +1188,7 @@
     }
   });
 
-  app.get('/api/security/compliance/:tenantId', requireAuth, async (req, res) => {
+  app.get('/api/security/compliance/:tenantId', requireAuth(), async (req, res) => {
     try {
       const { tenantId } = req.params;
       const { db } = await import('../db');
@@ -1101,8 +1240,8 @@
 
     // Enrich contact with AI data
     app.post('/api/contacts/:id/enrich', requireAuth({ checkEntitlement: false }), async (req, res) => {
+      const userId = (req as any).userId;
       try {
-        const userId = req.userId;
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
@@ -1217,7 +1356,7 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
     // Get enrichment history
     app.get('/api/contacts/:id/enrichment-history', requireAuth({ checkEntitlement: false }), async (req, res) => {
      try {
-        const userId = req.userId;
+        const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -1246,8 +1385,8 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
     // Score contact with AI
     app.post('/api/contacts/:id/score', requireAuth({ checkEntitlement: false }), async (req, res) => {
+      const userId = (req as any).userId;
       try {
-        const userId = req.userId;
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
@@ -1369,7 +1508,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
   // Get scoring stats
   app.get('/api/contacts/scoring-stats', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
 
@@ -1399,7 +1538,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
   // Update custom fields (with merge support)
   app.put('/api/contacts/:id/custom-fields', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -1449,7 +1588,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
   // Delete specific custom field
   app.delete('/api/contacts/:id/custom-fields/:key', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -1483,7 +1622,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
   // Get contact activities
   app.get('/api/contacts/:id/activities', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);
@@ -1524,7 +1663,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
   // Create activity
   app.post('/api/contacts/:id/activities', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req.userId;
+      const userId = (req as any).userId;
 
       const { db } = await import('../db');
       const contactId = parseInt(req.params.id);

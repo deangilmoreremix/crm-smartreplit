@@ -13,7 +13,7 @@
  import { memoryService } from '../memory';
 
 export function registerAIContentRoutes(app: Express): void {
-  const requireContent = [requireAuth, requireEntitlement(FeatureKey.CONTENT_LIBRARY)];
+  const requireContent = [requireAuth(), requireEntitlement(FeatureKey.CONTENT_LIBRARY)];
 
   // Content Generator
    app.post(

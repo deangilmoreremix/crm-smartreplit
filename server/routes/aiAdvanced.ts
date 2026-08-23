@@ -12,7 +12,7 @@ import * as aiService from '../services/aiToolsService';
 import { memoryService } from '../memory';
 
 export function registerAIAdvancedRoutes(app: Express): void {
-  const requireAI = [requireAuth, requireEntitlement(FeatureKey.AI_TOOLS)];
+  const requireAI = [requireAuth(), requireEntitlement(FeatureKey.AI_TOOLS)];
 
    // Vision Analyzer
    app.post(

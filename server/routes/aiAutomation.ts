@@ -12,7 +12,7 @@ import { FeatureKey } from '../types/entitlements';
 import * as aiService from '../services/aiToolsService';
 
 export function registerAIAutomationRoutes(app: Express): void {
-  const requireAutomation = [requireAuth, requireEntitlement(FeatureKey.LEAD_AUTOMATION)];
+  const requireAutomation = [requireAuth(), requireEntitlement(FeatureKey.LEAD_AUTOMATION)];
 
   // Lead Automation Workflows
   app.post(

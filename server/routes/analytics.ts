@@ -14,7 +14,7 @@ import { FeatureKey } from '../types/entitlements';
 const router = Router();
 
 // All analytics routes require analytics feature access
-router.use(requireAuth);
+router.use(requireAuth());
 router.use(requireEntitlement(FeatureKey.ANALYTICS));
 
 /**
