@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDuplicateContacts, DuplicateGroup } from '../hooks/useDuplicateContacts';
+import { useDuplicateContacts, DuplicateGroup } from '@/hooks/useDuplicateContacts';
 import {
   RefreshCw,
   AlertTriangle,
@@ -13,9 +13,9 @@ import {
   FileText,
   Merge,
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { useTheme } from '../contexts/ThemeContext';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const reasonLabel: Record<string, string> = {
   email: 'Same email',

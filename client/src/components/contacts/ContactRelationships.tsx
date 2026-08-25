@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { useContactStore } from '../hooks/useContactStore';
+import { useContactStore } from '@/hooks/useContactStore';
 import { Building2, Users, User, Mail, Phone } from 'lucide-react';
-import { Badge } from '../components/ui/badge';
-import { useTheme } from '../contexts/ThemeContext';
+import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface CompanyGroup {
   company: string;
