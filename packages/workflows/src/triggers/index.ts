@@ -91,6 +91,58 @@ export const aiCompletedTrigger: TriggerDetector = async (context) => {
   };
 };
 
+export const contactCreatedTrigger: TriggerDetector = async (context) => {
+  if (!context.triggerType || context.triggerType !== 'CONTACT_CREATED') {
+    return { triggered: false };
+  }
+  return {
+    triggered: true,
+    context: {
+      ...context,
+      timestamp: context.timestamp || new Date(),
+    },
+  };
+};
+
+export const dealStageChangedTrigger: TriggerDetector = async (context) => {
+  if (!context.triggerType || context.triggerType !== 'DEAL_STAGE_CHANGED') {
+    return { triggered: false };
+  }
+  return {
+    triggered: true,
+    context: {
+      ...context,
+      timestamp: context.timestamp || new Date(),
+    },
+  };
+};
+
+export const emailSentTrigger: TriggerDetector = async (context) => {
+  if (!context.triggerType || context.triggerType !== 'EMAIL_SENT') {
+    return { triggered: false };
+  }
+  return {
+    triggered: true,
+    context: {
+      ...context,
+      timestamp: context.timestamp || new Date(),
+    },
+  };
+};
+
+export const formSubmittedTrigger: TriggerDetector = async (context) => {
+  if (!context.triggerType || context.triggerType !== 'FORM_SUBMITTED') {
+    return { triggered: false };
+  }
+  return {
+    triggered: true,
+    context: {
+      ...context,
+      timestamp: context.timestamp || new Date(),
+    },
+  };
+};
+
 export const registerAllTriggers = (engine: {
   registerTrigger: (type: string, detector: TriggerDetector) => void;
 }) => {
@@ -101,4 +153,8 @@ export const registerAllTriggers = (engine: {
   engine.registerTrigger('SCHEDULED', scheduledTrigger);
   engine.registerTrigger('WEBHOOK', webhookTrigger);
   engine.registerTrigger('AI_COMPLETED', aiCompletedTrigger);
+  engine.registerTrigger('CONTACT_CREATED', contactCreatedTrigger);
+  engine.registerTrigger('DEAL_STAGE_CHANGED', dealStageChangedTrigger);
+  engine.registerTrigger('EMAIL_SENT', emailSentTrigger);
+  engine.registerTrigger('FORM_SUBMITTED', formSubmittedTrigger);
 };

@@ -15,10 +15,16 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
+import { agentOrchestrator } from '@smartcrm/ai-agents';
 
 const PipelineDemo: React.FC = () => {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [animateDeals, setAnimateDeals] = useState(false);
+
+  // AI Agent states
+  const [analyzingDealId, setAnalyzingDealId] = useState<number | null>(null);
+  const [dealInsights, setDealInsights] = useState<Record<number, any>>({});
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimateDeals(true), 300);
@@ -136,6 +142,55 @@ const PipelineDemo: React.FC = () => {
     return 'text-red-600 bg-red-100';
   };
 
+  // AI Agent functions
+  const analyzeDealWithAI = async (dealId: number) => {
+    setAnalyzingDealId(dealId);
+    try {
+      const deal = demoDeals.find((d) => d.id === dealId);
+      if (!deal) return;
+
+      const analysis = await agentOrchestrator.analyzeDealHealth(dealId.toString());
+
+      setDealInsights((prev) => ({
+        ...prev,
+        [dealId]: {
+          ...analysis,
+          analyzedAt: new Date().toISOString(),
+        },
+      }));
+    } catch (error) {
+      console.error('AI deal analysis failed:', error);
+    } finally {
+      setAnalyzingDealId(null);
+    }
+  };
+
+  const getAISuggestionsForPipeline = async () => {
+    try {
+      // Get AI suggestions for deals that need attention
+      const stalledDeals = demoDeals.filter(
+        (deal) => deal.daysInStage > 10 || deal.probability < 30
+      );
+
+      const suggestions = [];
+      for (const deal of stalledDeals) {
+        const analysis = await agentOrchestrator.analyzeDealHealth(deal.id.toString());
+        suggestions.push({
+          dealId: deal.id,
+          dealName: deal.name,
+          suggestion: analysis.followUpMeeting
+            ? 'Schedule follow-up meeting'
+            : 'Review deal strategy',
+          priority: deal.probability < 30 ? 'high' : 'medium',
+        });
+      }
+
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      console.error('Failed to get AI suggestions:', error);
+    }
+  };
+
   const DealCard = ({ deal, index }: { deal: any; index: number }) => (
     <div
       className={`bg-white rounded-lg shadow-md p-4 mb-3 transition-all duration-500 hover:shadow-lg cursor-pointer border-l-4 border-blue-400 ${
@@ -193,7 +248,32 @@ const PipelineDemo: React.FC = () => {
           <Phone className="w-3 h-3 mr-1" />
           Call
         </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            analyzeDealWithAI(deal.id);
+          }}
+          disabled={analyzingDealId === deal.id}
+          className="flex-1 bg-purple-600 text-white py-2 px-3 rounded text-xs hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50"
+        >
+          {analyzingDealId === deal.id ? <>🤖 Analyzing...</> : <>🤖 Analyze</>}
+        </button>
       </div>
+
+      {/* AI Insights */}
+      {dealInsights[deal.id] && (
+        <div className="mt-3 p-2 bg-purple-50 rounded text-xs">
+          <div className="font-semibold text-purple-800 mb-1">AI Insights:</div>
+          <div className="text-purple-700">
+            {dealInsights[deal.id].analysis?.is_stalled && (
+              <div>⚠️ Deal may be stalled - consider follow-up</div>
+            )}
+            {dealInsights[deal.id].followUpMeeting && (
+              <div>📅 AI suggests scheduling follow-up meeting</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -357,6 +437,57 @@ const PipelineDemo: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* AI Insights Panel */}
+      <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
+            🤖 AI Pipeline Insights
+          </h3>
+          <button
+            onClick={getAISuggestionsForPipeline}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+          >
+            Get AI Suggestions
+          </button>
+        </div>
+
+        {aiSuggestions.length > 0 ? (
+          <div className="space-y-3">
+            {aiSuggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                className={`p-3 rounded-lg border-l-4 ${
+                  suggestion.priority === 'high'
+                    ? 'border-l-red-500 bg-red-50'
+                    : 'border-l-yellow-500 bg-yellow-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">{suggestion.dealName}</p>
+                    <p className="text-sm text-gray-600">{suggestion.suggestion}</p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      suggestion.priority === 'high'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
+                    {suggestion.priority} priority
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-400">
+            <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Click "Get AI Suggestions" to analyze your pipeline</p>
+          </div>
+        )}
       </div>
 
       {/* Demo CTA */}
