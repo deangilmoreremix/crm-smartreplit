@@ -67,6 +67,7 @@ const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const AuthConfirm = lazy(() => import('./pages/Auth/AuthConfirm'));
 const DevBypassPage = lazy(() => import('./pages/DevBypassPage'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
 
 // Comprehensive implementations
 const VoiceProfiles = lazy(() => import('./pages/VoiceProfiles'));
@@ -448,17 +449,18 @@ function AppContent() {
             {/* Dashboard embed - no navbar */}
             <Route path="/dashboard-embed" element={<DashboardEmbed />} />
 
-            {/* Auth pages */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/auth/recovery" element={<ForgotPassword />} />
-            <Route path="/auth/confirm" element={<AuthConfirm />} />
-            <Route path="/auth/callback" element={<AuthConfirm />} />
-            <Route path="/dev-bypass" element={<DevBypassPage />} />
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/voice-profiles" element={<VoiceProfiles />} />
+             {/* Auth pages */}
+             <Route path="/auth/login" element={<Login />} />
+             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+             <Route path="/auth/reset-password" element={<ResetPassword />} />
+             <Route path="/auth/recovery" element={<ForgotPassword />} />
+             <Route path="/auth/confirm" element={<AuthConfirm />} />
+             <Route path="/auth/callback" element={<AuthConfirm />} />
+             <Route path="/dev-bypass" element={<DevBypassPage />} />
+             <Route path="/signin" element={<SignInPage />} />
+             <Route path="/signup" element={<SignUpPage />} />
+             <Route path="/voice-profiles" element={<VoiceProfiles />} />
+             <Route path="/onboarding" element={<OnboardingPage />} />
 
             {/* Automation Configuration */}
             <Route
