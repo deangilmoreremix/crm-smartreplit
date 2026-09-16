@@ -557,6 +557,21 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+      {showWorkflowBuilder && (
+        <WorkflowBuilder
+          workflow={editingWorkflow}
+          onSave={handleSaveWorkflow}
+          onCancel={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+          isOpen={showWorkflowBuilder}
+          onClose={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+        />
+      )}
     </PageLayout>
   );
 };
