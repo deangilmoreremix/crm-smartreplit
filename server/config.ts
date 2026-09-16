@@ -47,7 +47,7 @@ export const config = {
   supabaseWebhookSecret: process.env.SUPABASE_WEBHOOK_SECRET,
 
   // Server
-  port: process.env.PORT || 5000,
+  port: process.env.PORT || 5174,
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // Security
