@@ -3,15 +3,15 @@
 ## Canonical candidate branch
 
 - **Branch:** `reconcile/single-source-of-truth`
-- **Final SHA:** `d1d87b5` (after latest reconcile commit)
-- **Base:** `2889196350aeae3777de619648828dd020cf9d94` (`origin/main` at project baseline)
+- **Final SHA:** `4a3d939`
+- **Base:** `2889196` (`main` at project baseline)
 
 ## Sources audited
 
 | Source | Type | SHA | Dirty? | Unique Work? | Status |
 |--------|------|-----|--------|--------------|--------|
 | `main` | baseline | `2889196` | No | No | Baseline |
-| `reconcile/single-source-of-truth` | canonical candidate | `19ba399` | No | Yes | Canonical candidate |
+| `reconcile/single-source-of-truth` | canonical candidate | `4a3d939` | No | Yes | Canonical candidate |
 | `session/agent_543a3a7c` | session branch | `d4a408c` | No | Yes | Partially reconciled |
 | `session/agent_6c4ede7c` | session branch | `ff53fbf` | No | Yes | Partially reconciled |
 | `session/agent_045375e4` | session branch | `d18b69c` | No | Yes | Reconciled |
@@ -21,7 +21,7 @@
 | `recovery/dirty-main-2026-09-15` | recovery branch | `03f2bb9` | No | Yes | Partially reconciled |
 | `recovery/canonical-reconciliation` | recovery branch | `182b95c` | No | Yes | Superseded by auth port |
 | `stash@{0}` | stash | On main | No | Partial | Intentionally excluded |
-| worktree `/Users/shasheemoore/Downloads/CRM REPLIT/crm-smartreplit` | worktree | `91df87d` | Clean | No | Absorbed into canonical candidate |
+| worktree `/Users/shasheemoore/Downloads/CRM REPLIT/crm-smartreplit` | worktree | `4a3d939` | Clean | No | Absorbed into canonical candidate |
 
 ## Reconciled features
 
@@ -34,6 +34,8 @@
 | AI EmailComposer, SmartAssistant, dashboard widgets | `session/agent_543a3a7c` | `reconcile/single-source-of-truth` | `19ba399` |
 | Audit log, calendar sync, DataTable optimization, email sync, filters, kanban, settings, views, API v1 routes, shared types, webhooks, docs, scripts | `session/agent_543a3a7c` | `reconcile/single-source-of-truth` | `e37f5d4` |
 | Onboarding flow, permissions system | initial staged recovery work | `reconcile/single-source-of-truth` | `91df87d` |
+| Workflow engine, condition evaluator, WorkflowBuilder, WorkflowMonitor, settings integration | `session/agent_543a3a7c` | `reconcile/single-source-of-truth` | `d1d87b5` |
+| Build fixes: entitlements dedupe, workflow schema isolation, package aliases, package.json fixes | reconcile branch cleanup | `reconcile/single-source-of-truth` | `4a3d939` |
 
 ## Superseded work
 
@@ -49,16 +51,14 @@
 | `recovery/supabase-migration-16d55d2` | Drizzle removal, `server/db.ts` rewrite, `server/storage.ts` migration to `MemStorage`, Netlify function deletions | Incomplete migration that would regress current architecture. Current `main` still uses Drizzle alongside Supabase. The safe infrastructure improvements (port fallback, Vite config) were ported selectively. |
 | `recovery/stash-migration-2026-07-13` | Same incomplete Supabase migration as above | Duplicate of `recovery/supabase-migration-16d55d2`; same exclusion rationale. |
 | `stash@{0}` | Same incomplete Supabase migration delta | Duplicate of recovery branch delta; porting would reintroduce the same architectural regression. |
-| `session/agent_543a3a7c` | Workflow engine/UI unit still in progress via background port | Not yet committed to canonical candidate at report time, but actively being ported; tracked as outstanding. |
 
 ## Outstanding work
 
 | Feature | Source | Status | Notes |
 |---------|--------|--------|-------|
-| Workflow engine, triggers, actions, WorkflowBuilder, WorkflowMonitor | `session/agent_543a3a7c` | Reconciled | Committed as `d1d87b5` |
 | Minor page-level deltas (`Analytics.tsx`, `Appointments.tsx`, `CommunicationHub.tsx`, `Contacts.tsx`) | `session/agent_543a3a7c` | Pending manual merge | Small UI refinements; lower priority than workflow core |
-| `client/src/components/ai/EmailComposer.tsx`, `SmartAssistant.tsx` | `session/agent_543a3a7c` | Copied, pending navigation wiring | Files present; integration into app navigation outstanding |
-| Session 6c4 component refinements (`App.tsx`, `Dashboard.tsx`, `Appointments.tsx`, `PipelineDemo.tsx`, `aiEnrichmentService.ts`) | `session/agent_6c4ede7c` | Pending manual merge | Small UI/service refinements to existing components |
+| Navigation/routes wiring for copied AI components | `session/agent_543a3a7c` | Pending integration | Files present; integration into app navigation outstanding |
+| Small component refinements from `session/agent_6c4ede7c` | `session/agent_6c4ede7c` | Pending manual merge | Small UI/service refinements to existing components |
 
 ## Historical mapping
 
@@ -78,8 +78,8 @@
 ## Uncommitted work status
 
 - No valuable uncommitted source work remains outside the reconciliation branch.
-- All preserved staged recovery work was committed as `91df87d`.
-- Workflow files are currently untracked/modified because they are being actively ported by a background subagent; they are not abandoned.
+- All preserved staged recovery work was committed.
+- Build fixes for entitlements, workflow imports, and package aliases were committed as `4a3d939`.
 
 ## Local-only commit status
 
@@ -102,20 +102,15 @@
 
 ## Test results
 
-- Typecheck: pre-existing `tsc --noEmit` errors exist in `tailwind.config.ts`, `vite.config.ts`, `vitest.config.ts`, and `test-memory-import.ts` unrelated to reconciled units.
-- Reconciled units were reviewed for import/symbol consistency after porting.
-- No automated test command was run because repository-level tooling has pre-existing failures outside the scope of reconciliation.
+- Build: ✅ `npm run build` passes successfully
+- Production build: ✅ Netlify build successful, host app index.html verified
+- Typecheck: pre-existing `tsc --noEmit` errors exist in `tailwind.config.ts`, `vite.config.ts`, `vitest.config.ts`, and `test-memory-import.ts` unrelated to reconciled units
+- Reconciled units were reviewed for import/symbol consistency after porting
 
 ## Final conclusion
 
 > Is there any known valuable development work remaining outside the proposed canonical source-of-truth branch?
 
-Yes, but it is limited to low-priority UI refinements and integration wiring:
-
-- Minor page refinements (`Analytics.tsx`, `Appointments.tsx`, `CommunicationHub.tsx`, `Contacts.tsx`) from `session/agent_543a3a7c`
-- Navigation/routes wiring for copied AI components
-- Small component refinements from `session/agent_6c4ede7c`
-
-All major product functionality from every audited source has been reconciled or explicitly classified.
+Minor UI refinements and integration wiring remain outside the canonical branch, but all major product functionality from every audited source has been reconciled or explicitly classified. The remaining items are low-priority refinements, not missing core functionality.
 
 **Final status:** `SINGLE SOURCE OF TRUTH CANDIDATE ESTABLISHED — READY FOR OWNER REVIEW`
