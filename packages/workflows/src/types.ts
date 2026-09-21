@@ -1,6 +1,15 @@
-import { WorkflowTriggerType, WorkflowRunStatus } from '../schema/workflow.schema';
+export type WorkflowTriggerType =
+  | 'RECORD_CREATED'
+  | 'RECORD_UPDATED'
+  | 'RECORD_DELETED'
+  | 'MANUAL'
+  | 'SCHEDULED'
+  | 'WEBHOOK'
+  | 'AI_COMPLETED';
 
-export { WorkflowTriggerType, WorkflowRunStatus };
+export type WorkflowRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export {};
 
 export enum WorkflowTrigger {
   CONTACT_CREATED = 'contact_created',

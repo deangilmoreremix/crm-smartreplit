@@ -1,4 +1,4 @@
-import { WorkflowRunStatus } from '../schema/workflow.schema';
+import { WorkflowRunStatus } from '../schema/workflow.schema.ts';
 import { ConditionEvaluator } from './conditionEvaluator';
 
 export interface WorkflowContext {

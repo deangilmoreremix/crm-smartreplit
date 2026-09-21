@@ -55,6 +55,10 @@ export default defineConfig({
       '@crm/shared': path.resolve(__dirname, 'packages/shared/src'),
       '@crm/ui': path.resolve(__dirname, 'packages/ui/src'),
       '@crm/workflows': path.resolve(__dirname, 'packages/workflows/src'),
+      '@smartcrm/ai-agents': path.resolve(__dirname, 'packages/ai-agents/src'),
+      '@smartcrm/dench': path.resolve(__dirname, 'packages/dench/src'),
+      '@smartcrm/gtm-skills': path.resolve(__dirname, 'packages/gtm-skills/src'),
+      '@smartcrm/sales-outreach': path.resolve(__dirname, 'packages/sales-outreach/src'),
     },
   },
   build: {

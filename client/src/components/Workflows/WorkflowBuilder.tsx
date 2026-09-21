@@ -14,7 +14,7 @@ import {
   WorkflowCondition,
   ConditionOperator,
   LogicalOperator,
-} from '../../../packages/workflows/src/types';
+} from '../../../../packages/workflows/src/types';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface WorkflowBuilderProps {
