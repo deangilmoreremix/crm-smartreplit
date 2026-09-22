@@ -525,7 +525,7 @@ importers:
   packages/ai-core:
     dependencies:
       '@smartcrm/shared':
-        specifier: workspace:*
+        specifier: file:../shared
         version: link:../shared
       zod:
         specifier: ^4.1.12
@@ -675,7 +675,7 @@ importers:
   packages/workflows:
     dependencies:
       '@smartcrm/shared':
-        specifier: workspace:*
+        specifier: file:../shared
         version: link:../shared
     devDependencies:
       typescript:

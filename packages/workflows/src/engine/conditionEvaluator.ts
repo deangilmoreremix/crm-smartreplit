@@ -1,11 +1,11 @@
 import type {
   WorkflowCondition,
   ConditionGroup,
-} from './types';
+} from '../types';
 import {
   ConditionOperator,
   LogicalOperator,
-} from './types';
+} from '../types';
 
 export class ConditionEvaluator {
   evaluate(condition: WorkflowCondition, context: Record<string, unknown>): boolean {
