@@ -251,6 +251,106 @@ export const createContactAction: ActionExecutor = async (context, config) => {
   };
 };
 
+export const notifyAction: ActionExecutor = async (context, config) => {
+  const { type, recipient, message, title } = config as {
+    type?: string;
+    recipient: string;
+    message: string;
+    title?: string;
+  };
+
+  console.log(`[Workflow ${context.workflowId}] Sending notification to ${recipient}`);
+  return {
+    success: true,
+    output: { notified: true, type: type || 'in_app', recipient, message, title },
+  };
+};
+
+export const scoreContactAction: ActionExecutor = async (context, config) => {
+  const { scoreType, increment, setValue, reason } = config as {
+    scoreType: 'lead' | 'engagement' | 'health';
+    increment?: number;
+    setValue?: number;
+    reason?: string;
+  };
+
+  const contactId = (context as unknown as Record<string, unknown>).contactId as string;
+  if (!contactId) {
+    return { success: false, error: 'No contactId in context' };
+  }
+
+  console.log(`[Workflow ${context.workflowId}] Scoring contact ${contactId}: ${scoreType}`);
+  return {
+    success: true,
+    output: { contactId, scoreType, increment, setValue, reason },
+  };
+};
+
+export const addTagAction: ActionExecutor = async (context, config) => {
+  const { tag, contactId } = config as {
+    tag: string;
+    contactId?: string;
+  };
+
+  if (!tag) {
+    return { success: false, error: 'Missing required field: tag' };
+  }
+
+  const cid = (contactId || (context as unknown as Record<string, unknown>).contactId) as string;
+  console.log(`[Workflow ${context.workflowId}] Adding tag ${tag} to contact ${cid}`);
+  return {
+    success: true,
+    output: { contactId: cid, tag },
+  };
+};
+
+export const removeTagAction: ActionExecutor = async (context, config) => {
+  const { tag, contactId } = config as {
+    tag: string;
+    contactId?: string;
+  };
+
+  if (!tag) {
+    return { success: false, error: 'Missing required field: tag' };
+  }
+
+  const cid = (contactId || (context as unknown as Record<string, unknown>).contactId) as string;
+  console.log(`[Workflow ${context.workflowId}] Removing tag ${tag} from contact ${cid}`);
+  return {
+    success: true,
+    output: { contactId: cid, tag },
+  };
+};
+
+export const updateDealStageAction: ActionExecutor = async (context, config) => {
+  const { stage, probability, dealId } = config as {
+    stage: string;
+    probability?: number;
+    dealId?: string;
+  };
+
+  if (!stage) {
+    return { success: false, error: 'Missing required field: stage' };
+  }
+
+  const did = (dealId || (context as unknown as Record<string, unknown>).dealId) as string;
+  console.log(`[Workflow ${context.workflowId}] Updating deal ${did} stage to ${stage}`);
+  return {
+    success: true,
+    output: { dealId: did, stage, probability },
+  };
+};
+
+export const enrichContactAction: ActionExecutor = async (context, config) => {
+  const contactId = (config.contactId || (context as unknown as Record<string, unknown>).contactId) as string;
+
+  console.log(`[Workflow ${context.workflowId}] Enriching contact ${contactId}`);
+  return {
+    success: true,
+    output: { enriched: true, contactId },
+  };
+};
+
 export const registerAllActions = (engine: {
   registerAction: (type: string, executor: ActionExecutor) => void;
 }) => {
@@ -266,4 +366,10 @@ export const registerAllActions = (engine: {
   engine.registerAction('SEND_SMS', sendSmsAction);
   engine.registerAction('CREATE_DEAL', createDealAction);
   engine.registerAction('CREATE_CONTACT', createContactAction);
+  engine.registerAction('NOTIFY', notifyAction);
+  engine.registerAction('SCORE_CONTACT', scoreContactAction);
+  engine.registerAction('ADD_TAG', addTagAction);
+  engine.registerAction('REMOVE_TAG', removeTagAction);
+  engine.registerAction('UPDATE_DEAL_STAGE', updateDealStageAction);
+  engine.registerAction('ENRICH_CONTACT', enrichContactAction);
 };

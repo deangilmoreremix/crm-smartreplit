@@ -31,6 +31,8 @@ import { registerAIProductivityRoutes } from './aiProductivity';
 import { registerAIAdvancedRoutes } from './aiAdvanced';
 import { registerAIAutomationRoutes } from './aiAutomation';
 import { registerPartnersRoutes } from './partners';
+import { registerBusinessAnalysisRoutes } from './businessAnalysis';
+import { registerVoiceProfilesRoutes } from './voiceProfiles';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -145,4 +147,12 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register partners routes
   console.log('Registering partners routes');
   registerPartnersRoutes(app);
+
+  // Register business analysis routes
+  console.log('Registering business analysis routes');
+  registerBusinessAnalysisRoutes(app);
+
+  // Register voice profiles routes
+  console.log('Registering voice profiles routes');
+  registerVoiceProfilesRoutes(app);
 }

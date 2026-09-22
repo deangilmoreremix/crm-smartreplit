@@ -4,6 +4,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Eye, EyeOff, Key, AlertCircle, Save, Trash2, CheckCircle, XCircle, Loader2, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useToast } from '../hooks/use-toast';
+import { WorkflowBuilder, WorkflowMonitor } from '../components/Workflows';
+import type { WorkflowDefinition } from '../../packages/workflows/src/types';
 
 interface ApiKeyRecord {
   id: string;
@@ -28,6 +30,9 @@ const Settings: React.FC = () => {
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<WorkflowDefinition | undefined>();
+  const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
 
   // Form state
   const [showAddForm, setShowAddForm] = useState(false);
@@ -197,6 +202,58 @@ const Settings: React.FC = () => {
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
+  };
+
+  const handleCreateWorkflow = () => {
+    setEditingWorkflow(undefined);
+    setShowWorkflowBuilder(true);
+  };
+
+  const handleEditWorkflow = (workflow: WorkflowDefinition) => {
+    setEditingWorkflow(workflow);
+    setShowWorkflowBuilder(true);
+  };
+
+  const handleSaveWorkflow = (workflow: WorkflowDefinition) => {
+    if (editingWorkflow) {
+      setWorkflows((prev) => prev.map((w) => (w.id === workflow.id ? workflow : w)));
+    } else {
+      setWorkflows((prev) => [
+        ...prev,
+        { ...workflow, id: `wf_${Date.now()}` } as WorkflowDefinition,
+      ]);
+    }
+    setShowWorkflowBuilder(false);
+    setEditingWorkflow(undefined);
+    toast({
+      title: 'Success',
+      description: editingWorkflow
+        ? 'Workflow updated successfully!'
+        : 'Workflow created successfully!',
+    });
+  };
+
+  const handleToggleWorkflow = (workflowId: string, isActive: boolean) => {
+    setWorkflows((prev) => prev.map((w) => (w.id === workflowId ? { ...w, isActive } : w)));
+    toast({
+      title: isActive ? 'Workflow Activated' : 'Workflow Deactivated',
+      description: `Workflow has been ${isActive ? 'activated' : 'deactivated'}.`,
+    });
+  };
+
+  const handleDeleteWorkflow = (workflowId: string) => {
+    setWorkflows((prev) => prev.filter((w) => w.id !== workflowId));
+    toast({
+      title: 'Workflow Deleted',
+      description: 'The workflow has been deleted successfully.',
+    });
+  };
+
+  const handleRefreshWorkflows = () => {
+    toast({
+      title: 'Refreshing',
+      description: 'Workflow data is being refreshed.',
+    });
   };
 
   const openaiKeys = keys.filter((k) => k.provider === 'openai');
@@ -457,6 +514,31 @@ const Settings: React.FC = () => {
           )}
         </div>
 
+        {/* Workflows section */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">Workflows</h2>
+              <p className="text-gray-600 text-sm mt-1">
+                Automate your CRM processes with custom workflows
+              </p>
+            </div>
+            <Button onClick={handleCreateWorkflow}>
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Workflow
+            </Button>
+          </div>
+          <WorkflowMonitor
+            workflows={workflows}
+            onToggleWorkflow={handleToggleWorkflow}
+            onEditWorkflow={handleEditWorkflow}
+            onDeleteWorkflow={handleDeleteWorkflow}
+            onRefresh={handleRefreshWorkflows}
+          />
+        </div>
+
         {/* Info section */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
@@ -475,6 +557,21 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+      {showWorkflowBuilder && (
+        <WorkflowBuilder
+          workflow={editingWorkflow}
+          onSave={handleSaveWorkflow}
+          onCancel={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+          isOpen={showWorkflowBuilder}
+          onClose={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+        />
+      )}
     </PageLayout>
   );
 };

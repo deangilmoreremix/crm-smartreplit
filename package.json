@@ -90,6 +90,7 @@
     "@types/react-csv": "^1.1.10",
     "@types/react-router-hash-link": "^2.4.9",
     "@types/stripe": "^8.0.416",
+    "axios": "^1.6.0",
     "canvas": "^3.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

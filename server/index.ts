@@ -7,6 +7,7 @@ import { setupVite, serveStatic, log } from './vite';
 import { memoryService } from './memory';
 import { corsConfig, securityHeaders } from './middleware/security';
 import { healthCheckMiddleware } from './health';
+import fs from 'fs';
 
 export const app = express();
 app.use(express.json());
@@ -144,21 +145,65 @@ app.use('/api', async (req, res, next) => {
       serveStatic(app);
     }
 
-    // Create HTTP server and listen
+    // Create HTTP server
     const httpServer = createServer(app);
-    const requestedPort = process.env.PORT || 3000;
-    httpServer.listen(
-      {
-        port: requestedPort,
-        host: '127.0.0.1',
-        reusePort: true,
-      },
-      () => {
-        const actualPort = (httpServer.address() as any)?.port || requestedPort;
+    const basePort = Number(process.env.PORT) || 5174;
+    const maxAttempts = 5;
+
+    /**
+     * Start server with automatic port fallback.
+     * Prevents EADDRINUSE crashes that were common on macOS / Replit workflows.
+     */
+    const startServer = (port: number, attempts: number = 0) => {
+      httpServer.once('error', (err: any) => {
+        if (err.code === 'EADDRINUSE' && attempts < maxAttempts) {
+          const nextPort = port + 1;
+          console.warn(`⚠️  Port ${port} in use. Trying ${nextPort}...`);
+          startServer(nextPort, attempts + 1);
+        } else {
+          console.error('💥 Server failed to start:', err);
+          process.exit(1);
+        }
+      });
+
+      httpServer.listen(port, () => {
+        const actualPort = (httpServer.address() as any)?.port || port;
+
+        // Write PID file for easy cleanup
+        try {
+          fs.writeFileSync('server.pid', process.pid.toString());
+        } catch (e) {
+          // non-fatal
+        }
+
         log(`🎉 Server running on port ${actualPort}`);
         log(`🌐 Access your app at: http://localhost:${actualPort}`);
-      }
-    );
+
+        if (actualPort !== basePort) {
+          log(`   (Original preferred port ${basePort} was busy — using fallback)`);
+        }
+      });
+    };
+
+    startServer(basePort);
+
+    // Graceful shutdown + PID cleanup
+    const cleanup = () => {
+      try {
+        if (fs.existsSync('server.pid')) fs.unlinkSync('server.pid');
+      } catch {}
+      log('🛑 Shutting down gracefully...');
+      httpServer.close(() => {
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught Exception:', err);
+      cleanup();
+    });
   } catch (error) {
     console.error('💥 Failed to start server:', error);
     process.exit(1);
@@ -173,7 +218,7 @@ app.get('/health', (req, res) => {
 
 // Record server startup in memory
 memoryService.recordSystemEvent('server_startup', 'SmartCRM server started', {
-  port: process.env.PORT || 5000,
+  port: process.env.PORT || 5174,
   environment: process.env.NODE_ENV || 'development',
   timestamp: new Date().toISOString(),
 }).catch(() => {}); // Fire and forget, don't block startup

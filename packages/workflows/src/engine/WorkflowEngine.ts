@@ -1,4 +1,5 @@
-import { WorkflowRunStatus } from '../schema/workflow.schema';
+import { WorkflowRunStatus } from '../schema/workflow.schema.ts';
+import { ConditionEvaluator } from './conditionEvaluator';
 
 export interface WorkflowContext {
   workflowId: string;
@@ -33,6 +34,11 @@ export type ActionExecutor = (
 export class WorkflowEngine {
   private triggers: Map<string, TriggerDetector> = new Map();
   private actions: Map<string, ActionExecutor> = new Map();
+  private conditionEvaluator: ConditionEvaluator;
+
+  constructor() {
+    this.conditionEvaluator = new ConditionEvaluator();
+  }
 
   registerTrigger(type: string, detector: TriggerDetector): void {
     this.triggers.set(type, detector);
@@ -112,40 +118,7 @@ export class WorkflowEngine {
   }
 
   private evaluateCondition(condition: Record<string, unknown>, context: WorkflowContext): boolean {
-    const { field, operator, value } = condition as {
-      field: string;
-      operator: string;
-      value: unknown;
-    };
-    const fieldValue = this.getNestedValue(context.variables, field);
-
-    switch (operator) {
-      case 'equals':
-        return fieldValue === value;
-      case 'not_equals':
-        return fieldValue !== value;
-      case 'contains':
-        return String(fieldValue).includes(String(value));
-      case 'greater_than':
-        return Number(fieldValue) > Number(value);
-      case 'less_than':
-        return Number(fieldValue) < Number(value);
-      case 'exists':
-        return fieldValue !== undefined && fieldValue !== null;
-      case 'not_exists':
-        return fieldValue === undefined || fieldValue === null;
-      default:
-        return true;
-    }
-  }
-
-  private getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-    return path.split('.').reduce((acc, key) => {
-      if (acc && typeof acc === 'object' && key in acc) {
-        return (acc as Record<string, unknown>)[key];
-      }
-      return undefined;
-    }, obj as unknown);
+    return this.conditionEvaluator.evaluate(condition as any, context.variables);
   }
 
   getRegisteredTriggers(): string[] {
