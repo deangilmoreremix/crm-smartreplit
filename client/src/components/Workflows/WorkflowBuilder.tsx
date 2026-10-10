@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { GlassCard } from '../ui/GlassCard';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
 import { Modal } from '../ui/Modal';
 import {
   WorkflowDefinition,
