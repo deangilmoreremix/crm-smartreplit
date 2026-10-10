@@ -1,14 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
-import { Eye, EyeOff, Key, AlertCircle, Save, Trash2, CheckCircle, XCircle, Loader2, Plus, Settings as SettingsIcon } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Key,
+  AlertCircle,
+  Save,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Plus,
+  Settings as SettingsIcon,
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useToast } from '../hooks/use-toast';
+import { WorkflowBuilder, WorkflowMonitor } from '../components/Workflows';
+import type { WorkflowDefinition } from '../../packages/workflows/src/types';
 
 interface ApiKeyRecord {
   id: string;
   userId: string;
-  provider: 'openai' | 'gemini';
+  provider: 'openai';
   apiKey: string;
   apiKeyName: string | null;
   model: string | null;
@@ -28,10 +42,13 @@ const Settings: React.FC = () => {
   const [keys, setKeys] = useState<ApiKeyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
+  const [editingWorkflow, setEditingWorkflow] = useState<WorkflowDefinition | undefined>();
+  const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
 
   // Form state
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newProvider, setNewProvider] = useState<'openai' | 'gemini'>('openai');
+  const [newProvider, setNewProvider] = useState<'openai'>('openai');
   const [newApiKey, setNewApiKey] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
   const [newModel, setNewModel] = useState('');
@@ -61,9 +78,37 @@ const Settings: React.FC = () => {
     }
   }, [toast]);
 
+  const fetchWorkflows = useCallback(async () => {
+    try {
+      const response = await fetch('/api/workflows', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch workflows');
+      const data = await response.json();
+      const serverWorkflows = (data.workflows || []).map((w: any) => ({
+        ...w,
+        actions: (w.actions || []).map((a: any) => ({
+          id: a.id || a.action_id,
+          type: a.action_type || a.type,
+          order: a.order_index || a.order || 0,
+          config: a.configuration || a.config || {},
+          delay: a.delay || 0,
+          condition: a.condition || undefined,
+        })),
+        trigger: {
+          type: w.trigger_type || w.trigger?.type || 'MANUAL',
+        },
+      }));
+      setWorkflows(serverWorkflows);
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchKeys();
-  }, [fetchKeys]);
+    fetchWorkflows();
+  }, [fetchKeys, fetchWorkflows]);
 
   // Add new API key
   const handleAddKey = async () => {
@@ -73,12 +118,11 @@ const Settings: React.FC = () => {
     }
 
     if (newProvider === 'openai' && !newApiKey.startsWith('sk-')) {
-      toast({ title: 'Error', description: 'OpenAI API key must start with "sk-"', variant: 'destructive' });
-      return;
-    }
-
-    if (newProvider === 'gemini' && !newApiKey.startsWith('AIza')) {
-      toast({ title: 'Error', description: 'Gemini API key must start with "AIza"', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'OpenAI API key must start with "sk-"',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -101,7 +145,7 @@ const Settings: React.FC = () => {
         throw new Error(error.error || 'Failed to add API key');
       }
 
-      toast({ title: 'Success', description: `${newProvider === 'openai' ? 'OpenAI' : 'Gemini'} API key added successfully` });
+      toast({ title: 'Success', description: 'OpenAI API key added successfully' });
       setNewApiKey('');
       setNewKeyName('');
       setNewModel('');
@@ -192,15 +236,139 @@ const Settings: React.FC = () => {
 
       if (!response.ok) throw new Error('Failed to update API key');
 
-      toast({ title: 'Success', description: `API key ${!currentActive ? 'activated' : 'deactivated'}` });
+      toast({
+        title: 'Success',
+        description: `API key ${!currentActive ? 'activated' : 'deactivated'}`,
+      });
       fetchKeys();
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   };
 
+  const handleCreateWorkflow = () => {
+    setEditingWorkflow(undefined);
+    setShowWorkflowBuilder(true);
+  };
+
+  const handleEditWorkflow = (workflow: WorkflowDefinition) => {
+    setEditingWorkflow(workflow);
+    setShowWorkflowBuilder(true);
+  };
+
+  const handleSaveWorkflow = async (workflow: WorkflowDefinition) => {
+    setSaving(true);
+    try {
+      const isEditing = !!editingWorkflow;
+      const payload = {
+        name: workflow.name,
+        triggerType: workflow.trigger?.type || 'MANUAL',
+        appSlug: 'crm',
+        enabled: workflow.isActive,
+        steps: (workflow.actions || []).map((a, index) => ({
+          actionType: a.type,
+          configuration: a.config || {},
+          order: a.order ?? index,
+          parentId: a.parentId || null,
+          condition: a.condition || null,
+        })),
+      };
+
+      const url = isEditing ? `/api/workflows/${workflow.id}` : '/api/workflows';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save workflow');
+      }
+
+      const data = await response.json();
+      const savedWorkflow = {
+        ...workflow,
+        id: data.workflow?.id || workflow.id,
+        isActive: payload.enabled,
+      };
+
+      if (isEditing) {
+        setWorkflows((prev) => prev.map((w) => (w.id === workflow.id ? savedWorkflow : w)));
+      } else {
+        setWorkflows((prev) => [...prev, savedWorkflow]);
+      }
+
+      setShowWorkflowBuilder(false);
+      setEditingWorkflow(undefined);
+      toast({
+        title: 'Success',
+        description: isEditing
+          ? 'Workflow updated successfully!'
+          : 'Workflow created successfully!',
+      });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleWorkflow = async (workflowId: string, isActive: boolean) => {
+    try {
+      const response = await fetch(`/api/workflows/${workflowId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ enabled: !isActive }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update workflow');
+
+      setWorkflows((prev) =>
+        prev.map((w) => (w.id === workflowId ? { ...w, isActive: !isActive } : w))
+      );
+      toast({
+        title: isActive ? 'Workflow Deactivated' : 'Workflow Activated',
+        description: `Workflow has been ${!isActive ? 'activated' : 'deactivated'}.`,
+      });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteWorkflow = async (workflowId: string) => {
+    if (!confirm('Are you sure you want to delete this workflow?')) return;
+
+    try {
+      const response = await fetch(`/api/workflows/${workflowId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete workflow');
+
+      setWorkflows((prev) => prev.filter((w) => w.id !== workflowId));
+      toast({
+        title: 'Success',
+        description: 'The workflow has been deleted successfully.',
+      });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleRefreshWorkflows = () => {
+    toast({
+      title: 'Refreshing',
+      description: 'Workflow data is being refreshed.',
+    });
+  };
+
   const openaiKeys = keys.filter((k) => k.provider === 'openai');
-  const geminiKeys = keys.filter((k) => k.provider === 'gemini');
   const hasAnyKey = keys.length > 0;
 
   const getTestStatusIcon = (status: string | null) => {
@@ -222,7 +390,7 @@ const Settings: React.FC = () => {
   return (
     <PageLayout
       title="API Keys"
-      description="Add your OpenAI or Gemini API keys to power all AI features in the CRM"
+      description="Add your OpenAI API keys to power AI features in the CRM"
       actions={
         <Button onClick={() => setShowAddForm(!showAddForm)} disabled={saving}>
           <Plus className="h-4 w-4 mr-2" />
@@ -239,9 +407,9 @@ const Settings: React.FC = () => {
               <div>
                 <h3 className="text-amber-800 font-medium mb-1">API Keys Required</h3>
                 <p className="text-amber-700 text-sm">
-                  You need to add at least one API key (OpenAI or Gemini) to use AI features.
-                  All AI functions — including contact enrichment, lead scoring, smart greetings,
-                  KPI analysis, deal intelligence, and business intelligence — use your personal API keys.
+                  You need to add an OpenAI API key to use AI features. All AI functions — including
+                  contact enrichment, lead scoring, smart greetings, KPI analysis, deal
+                  intelligence, and business intelligence — use your personal API key.
                 </p>
               </div>
             </div>
@@ -258,11 +426,10 @@ const Settings: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
                 <select
                   value={newProvider}
-                  onChange={(e) => setNewProvider(e.target.value as 'openai' | 'gemini')}
+                  onChange={(e) => setNewProvider(e.target.value as 'openai')}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  <option value="openai">OpenAI (GPT-4o, GPT-4o-mini, etc.)</option>
-                  <option value="gemini">Google Gemini (Gemini 1.5 Flash, etc.)</option>
+                  <option value="openai">OpenAI</option>
                 </select>
               </div>
 
@@ -273,7 +440,7 @@ const Settings: React.FC = () => {
                     type={showNewKey ? 'text' : 'password'}
                     value={newApiKey}
                     onChange={(e) => setNewApiKey(e.target.value)}
-                    placeholder={newProvider === 'openai' ? 'sk-...' : 'AIza...'}
+                    placeholder={newProvider === 'openai' ? 'sk-...' : 'sk-...'}
                     className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none pr-10"
                   />
                   <button
@@ -286,15 +453,27 @@ const Settings: React.FC = () => {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   {newProvider === 'openai' ? (
-                    <>Get your key from <a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">OpenAI dashboard</a></>
+                    <>
+                      Get your key from{' '}
+                      <a
+                        href="https://platform.openai.com/account/api-keys"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        OpenAI dashboard
+                      </a>
+                    </>
                   ) : (
-                    <>Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Google AI Studio</a></>
+                    <>Get your key from the provider's dashboard</>
                   )}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name (optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name (optional)
+                </label>
                 <input
                   type="text"
                   value={newKeyName}
@@ -305,12 +484,14 @@ const Settings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Model (optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Preferred Model (optional)
+                </label>
                 <input
                   type="text"
                   value={newModel}
                   onChange={(e) => setNewModel(e.target.value)}
-                  placeholder={newProvider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'}
+                  placeholder={newProvider === 'openai' ? 'gpt-5-mini' : 'gpt-5-mini'}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave empty to use the default model</p>
@@ -318,10 +499,22 @@ const Settings: React.FC = () => {
 
               <div className="flex gap-2">
                 <Button onClick={handleAddKey} disabled={saving || !newApiKey.trim()}>
-                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
                   Save API Key
                 </Button>
-                <Button variant="outline" onClick={() => { setShowAddForm(false); setNewApiKey(''); setNewKeyName(''); setNewModel(''); }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setNewApiKey('');
+                    setNewKeyName('');
+                    setNewModel('');
+                  }}
+                >
                   Cancel
                 </Button>
               </div>
@@ -334,7 +527,9 @@ const Settings: React.FC = () => {
           <div className="flex items-center mb-4">
             <Key size={18} className="mr-2 text-gray-500" />
             <h2 className="text-xl font-semibold">OpenAI API Keys</h2>
-            <span className="ml-2 text-sm text-red-600 font-medium">Required for most AI features</span>
+            <span className="ml-2 text-sm text-red-600 font-medium">
+              Required for most AI features
+            </span>
           </div>
 
           {openaiKeys.length === 0 ? (
@@ -342,13 +537,24 @@ const Settings: React.FC = () => {
           ) : (
             <div className="space-y-3">
               {openaiKeys.map((key) => (
-                <div key={key.id} className={`border rounded-lg p-4 ${key.isActive ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}>
+                <div
+                  key={key.id}
+                  className={`border rounded-lg p-4 ${key.isActive ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="font-medium">
                         {key.apiKeyName || 'OpenAI Key'}
-                        {key.isDefault && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Default</span>}
-                        {!key.isActive && <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Inactive</span>}
+                        {key.isDefault && (
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                            Default
+                          </span>
+                        )}
+                        {!key.isActive && (
+                          <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                            Inactive
+                          </span>
+                        )}
                       </div>
                       {getTestStatusIcon(key.testStatus)}
                     </div>
@@ -357,9 +563,7 @@ const Settings: React.FC = () => {
                     </div>
                   </div>
 
-                  {key.model && (
-                    <p className="text-xs text-gray-500 mt-1">Model: {key.model}</p>
-                  )}
+                  {key.model && <p className="text-xs text-gray-500 mt-1">Model: {key.model}</p>}
 
                   {key.testError && (
                     <p className="text-xs text-red-500 mt-1">Error: {key.testError}</p>
@@ -372,15 +576,27 @@ const Settings: React.FC = () => {
                       onClick={() => handleTestKey(key.id)}
                       disabled={testingId === key.id}
                     >
-                      {testingId === key.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+                      {testingId === key.id ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                      )}
                       Test
                     </Button>
                     {!key.isDefault && (
-                      <Button size="sm" variant="outline" onClick={() => handleSetDefault(key.id, 'openai')}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSetDefault(key.id, 'openai')}
+                      >
                         Set Default
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => handleToggleActive(key.id, key.isActive)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleToggleActive(key.id, key.isActive)}
+                    >
                       {key.isActive ? 'Deactivate' : 'Activate'}
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDeleteKey(key.id)}>
@@ -393,68 +609,34 @@ const Settings: React.FC = () => {
           )}
         </div>
 
-        {/* Gemini Keys */}
+        {/* Workflows section */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center mb-4">
-            <Key size={18} className="mr-2 text-gray-500" />
-            <h2 className="text-xl font-semibold">Google Gemini API Keys</h2>
-            <span className="ml-2 text-sm text-gray-500 font-medium">Alternative AI provider</span>
-          </div>
-
-          {geminiKeys.length === 0 ? (
-            <p className="text-gray-500 text-sm">No Gemini API keys added yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {geminiKeys.map((key) => (
-                <div key={key.id} className={`border rounded-lg p-4 ${key.isActive ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="font-medium">
-                        {key.apiKeyName || 'Gemini Key'}
-                        {key.isDefault && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Default</span>}
-                        {!key.isActive && <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Inactive</span>}
-                      </div>
-                      {getTestStatusIcon(key.testStatus)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 font-mono">{key.apiKey}</span>
-                    </div>
-                  </div>
-
-                  {key.model && (
-                    <p className="text-xs text-gray-500 mt-1">Model: {key.model}</p>
-                  )}
-
-                  {key.testError && (
-                    <p className="text-xs text-red-500 mt-1">Error: {key.testError}</p>
-                  )}
-
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleTestKey(key.id)}
-                      disabled={testingId === key.id}
-                    >
-                      {testingId === key.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CheckCircle className="h-3 w-3 mr-1" />}
-                      Test
-                    </Button>
-                    {!key.isDefault && (
-                      <Button size="sm" variant="outline" onClick={() => handleSetDefault(key.id, 'gemini')}>
-                        Set Default
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => handleToggleActive(key.id, key.isActive)}>
-                      {key.isActive ? 'Deactivate' : 'Activate'}
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteKey(key.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold">Workflows</h2>
+              <p className="text-gray-600 text-sm mt-1">
+                Automate your CRM processes with custom workflows
+              </p>
             </div>
-          )}
+            <Button onClick={handleCreateWorkflow}>
+              <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Create Workflow
+            </Button>
+          </div>
+          <WorkflowMonitor
+            workflows={workflows}
+            onToggleWorkflow={handleToggleWorkflow}
+            onEditWorkflow={handleEditWorkflow}
+            onDeleteWorkflow={handleDeleteWorkflow}
+            onRefresh={handleRefreshWorkflows}
+          />
         </div>
 
         {/* Info section */}
@@ -464,17 +646,37 @@ const Settings: React.FC = () => {
             <div>
               <h3 className="text-blue-800 font-medium mb-1">How It Works</h3>
               <ul className="text-blue-700 text-sm space-y-1">
-                <li>• All AI features use <strong>your own API keys</strong> — we never provide unlimited AI</li>
-                <li>• You can add either OpenAI or Gemini keys (or both)</li>
-                <li>• Only one key per provider can be the default — the default is used for all AI requests</li>
+                <li>
+                  • All AI features use <strong>your own API keys</strong> — we never provide
+                  unlimited AI
+                </li>
+                <li>
+                  • Only one key per provider can be the default — the default is used for all AI
+                  requests
+                </li>
                 <li>• Your keys are stored securely and never shared with other users</li>
-                <li>• You're billed directly by OpenAI/Google for your usage</li>
+                <li>• You're billed directly by OpenAI for your usage</li>
                 <li>• Use the "Test" button to verify your key works before using AI features</li>
               </ul>
             </div>
           </div>
         </div>
       </div>
+      {showWorkflowBuilder && (
+        <WorkflowBuilder
+          workflow={editingWorkflow}
+          onSave={handleSaveWorkflow}
+          onCancel={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+          isOpen={showWorkflowBuilder}
+          onClose={() => {
+            setShowWorkflowBuilder(false);
+            setEditingWorkflow(undefined);
+          }}
+        />
+      )}
     </PageLayout>
   );
 };

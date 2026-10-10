@@ -5,13 +5,48 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import { DEV_BYPASS_EMAILS } from '../config';
 
 const router = Router();
 
 // Initialize Supabase client with service role key
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const serviceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+function isDevelopmentEnvironment(hostname: string): boolean {
+  return (
+    hostname.includes('localhost') ||
+    hostname.includes('127.0.0.1') ||
+    hostname.includes('replit.dev') ||
+    hostname.includes('replit.app') ||
+    hostname.includes('github.dev') ||
+    hostname.includes('app.github.dev')
+  );
+}
+
+// Password validation utility
+const validatePasswordStrength = (password: string): { valid: boolean; error?: string } => {
+  if (!password || password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters long' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one number' };
+  }
+  // Check for common weak passwords
+  const weakPasswords = ['password', 'password123', 'Password123', '12345678', 'qwerty123'];
+  if (weakPasswords.includes(password)) {
+    return { valid: false, error: 'Password is too common. Please choose a stronger password' };
+  }
+  return { valid: true };
+};
 
 export interface RequireAuthOptions {
   checkEntitlement?: boolean;
@@ -317,6 +352,162 @@ router.patch('/users/:id', async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error('Unexpected error:', err);
     res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/auth/change-password
+ * Change password for authenticated user with current password verification
+ *
+ * Body: { currentPassword: string, newPassword: string }
+ * Requires: session with valid access token
+ */
+router.post('/change-password', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Missing authorization token',
+      });
+    }
+
+    const accessToken = authHeader.substring(7);
+    const hostname = req.get('host') || '';
+
+    // Dev bypass check - ONLY for development environments
+    if (
+      isDevelopment &&
+      isDevelopmentEnvironment(hostname) &&
+      accessToken.startsWith('dev-bypass-token-')
+    ) {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          message: 'Both currentPassword and newPassword are required',
+        });
+      }
+
+      const passwordValidation = validatePasswordStrength(newPassword);
+      if (!passwordValidation.valid) {
+        return res.status(400).json({
+          error: 'Weak password',
+          message: passwordValidation.error,
+        });
+      }
+
+      console.log('[change-password] Dev bypass used');
+      return res.json({
+        success: true,
+        message: 'Password updated (dev mode)',
+      });
+    }
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return res.status(500).json({
+        error: 'Server configuration error',
+        message: 'Authentication service not configured',
+      });
+    }
+
+    // Validate the user's access token using Supabase auth
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const { data: tokenData, error: tokenError } = await supabase.auth.getUser(accessToken);
+    if (tokenError || !tokenData?.user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid or expired access token',
+      });
+    }
+
+    const userId = tokenData.user.id;
+    const userEmail = tokenData.user.email || '';
+
+    // Input validation
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'Both currentPassword and newPassword are required',
+      });
+    }
+
+    // Password strength validation
+    const passwordValidation = validatePasswordStrength(newPassword);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        error: 'Weak password',
+        message: passwordValidation.error,
+      });
+    }
+
+    // For security: require the user to re-authenticate with current password
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: userEmail,
+      password: currentPassword,
+    });
+
+    if (reauthError) {
+      const isWrongPassword =
+        reauthError.message?.includes('Invalid login credentials') ||
+        reauthError.message?.includes('invalid');
+      return res.status(401).json({
+        error: 'Invalid credentials',
+        message: isWrongPassword
+          ? 'Current password is incorrect. Please try again.'
+          : 'Authentication failed. Please sign in again.',
+      });
+    }
+
+    // Update password using admin API
+    const { data, error } = await supabase.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+
+    if (error) {
+      await supabase
+        .from('password_change_audit_log')
+        .insert({
+          user_id: userId,
+          user_email: userEmail,
+          ip_address: req.ip || (req.headers['x-forwarded-for'] as string),
+          user_agent: req.get('user-agent') || '',
+          success: false,
+          error_message: error.message,
+        })
+        .catch(() => {});
+
+      console.error('Password update error:', error);
+      return res.status(400).json({
+        error: 'Password update failed',
+        message: error.message,
+      });
+    }
+
+    await supabase
+      .from('password_change_audit_log')
+      .insert({
+        user_id: userId,
+        user_email: userEmail,
+        ip_address: req.ip || (req.headers['x-forwarded-for'] as string),
+        user_agent: req.get('user-agent') || '',
+        success: true,
+      })
+      .catch(() => {});
+
+    console.log(`[audit] Password changed for user ${userId} at ${new Date().toISOString()}`);
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully. Please sign in again.',
+    });
+  } catch (err: any) {
+    console.error('Change password error:', err);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: err.message || 'An unexpected error occurred',
+    });
   }
 });
 

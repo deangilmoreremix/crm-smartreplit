@@ -1,15 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SmartAIControls from '../../ai/SmartAIControls';
+import { SmartAIControls } from '../../ai/SmartAIControls';
+import { useAIIntegrationStore } from '../../../store/aiIntegrationStore';
 
-vi.mock('../../store/aiIntegrationStore', () => ({
-  useAIIntegrationStore: () => ({
-    batchAnalyzeContacts: vi.fn(),
-    bulkEnrichContacts: vi.fn(),
-    enriching: false,
-    selectedContactIds: [],
-  }),
+const mockStore = {
+  batchAnalyzeContacts: vi.fn(),
+  bulkEnrichContacts: vi.fn(),
+  enriching: false,
+  selectedContactIds: [] as string[],
+};
+
+vi.mock('../../../store/aiIntegrationStore', () => ({
+  useAIIntegrationStore: vi.fn(() => mockStore),
 }));
 
 describe('Bulk Operations Demonstration', () => {
@@ -19,8 +22,8 @@ describe('Bulk Operations Demonstration', () => {
   let bulkEnrichContactsMock;
 
   beforeEach(() => {
-    batchAnalyzeContactsMock = useAIIntegrationStore.mock.results[0].value.batchAnalyzeContacts;
-    bulkEnrichContactsMock = useAIIntegrationStore.mock.results[0].value.bulkEnrichContacts;
+    batchAnalyzeContactsMock = mockStore.batchAnalyzeContacts;
+    bulkEnrichContactsMock = mockStore.bulkEnrichContacts;
     vi.clearAllMocks();
   });
 

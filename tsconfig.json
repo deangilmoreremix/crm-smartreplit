@@ -19,5 +19,15 @@
     "esm": false
   },
   "include": ["*.ts"],
-  "exclude": ["node_modules", "dist", "client", "server", "scripts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "client",
+    "server",
+    "scripts",
+    "tailwind.config.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "test-memory-import.ts"
+  ]
 }

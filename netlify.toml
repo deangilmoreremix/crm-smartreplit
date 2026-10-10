@@ -4,7 +4,11 @@ publish   = "server/public"
 functions = "netlify/functions"
 
 [build.environment]
-NODE_VERSION = "20"
+# Vite 7 (^7.3.5) requires Node.js >=20.19.0 or >=22.12.0. A plain "20" pin can
+# resolve to an older 20.x build image, which fails at config load with
+# "Vite requires Node.js version 20.19+ or 22.12+". Pin to 22 (LTS) so the
+# build image always satisfies the toolchain requirement.
+NODE_VERSION = "22"
 SECRETS_SCAN_ENABLED = "true"
 VITE_ENABLE_MFE = "true"
 

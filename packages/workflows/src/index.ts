@@ -41,4 +41,12 @@ export {
   sendSmsAction,
   createDealAction,
   createContactAction,
+  notifyAction,
+  scoreContactAction,
+  addTagAction,
+  removeTagAction,
+  updateDealStageAction,
+  enrichContactAction,
 } from './actions';
+export { ConditionEvaluator } from './engine/conditionEvaluator';
+export * from './types';

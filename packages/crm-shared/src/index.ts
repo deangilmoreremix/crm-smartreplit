@@ -9,3 +9,5 @@ export type {
   WhitelabelButton,
   BrandButtonVariant,
 } from './types';
+
+export * from './permissions';

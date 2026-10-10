@@ -8,7 +8,8 @@ const supabaseUrl =
 const rawAnonKey =
   (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY || '';
 const rawPublishableKey =
-  (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+  (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  '';
 const supabaseAnonKey = rawAnonKey || rawPublishableKey;
 
 // Debug logging for environment variables - MORE DETAILED
@@ -45,7 +46,13 @@ console.log('  - looksLikeRealUrl:', looksLikeRealUrl);
 
 // Check if Supabase is properly configured
 const supabaseIsConfigured =
-  hasUrl && hasKey && urlNotUndefined && keyNotUndefined && hasSupabaseDomain && noPlaceholder && looksLikeRealUrl;
+  hasUrl &&
+  hasKey &&
+  urlNotUndefined &&
+  keyNotUndefined &&
+  hasSupabaseDomain &&
+  noPlaceholder &&
+  looksLikeRealUrl;
 
 console.log('🔍 Final supabaseIsConfigured:', supabaseIsConfigured);
 
@@ -54,6 +61,18 @@ console.log('🔍 Final supabaseIsConfigured:', supabaseIsConfigured);
 let supabaseClient: any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let authClient: any;
+
+// Determine the cookie domain based on environment
+const getCookieDomain = (): string | undefined => {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
+    return undefined; // No domain restriction for local development
+  }
+  if (currentOrigin.includes('replit.dev') || currentOrigin.includes('replit.app')) {
+    return undefined; // No domain restriction for Replit environments
+  }
+  return '.smartcrm.vip'; // Production domain
+};
 
 if (supabaseIsConfigured) {
   // Create real Supabase client
@@ -65,7 +84,7 @@ if (supabaseIsConfigured) {
       flowType: 'pkce',
       storageKey: 'smartcrm-auth-token',
       cookieOptions: {
-        domain: '.smartcrm.vip',
+        domain: getCookieDomain(),
         path: '/',
         sameSite: 'lax',
       },
@@ -147,12 +166,28 @@ if (supabaseIsConfigured) {
     updatePassword: async (password: string) => {
       return await supabaseClient.auth.updateUser({ password });
     },
+    // changePassword requires current password and uses server endpoint
+    changePassword: async (currentPassword: string, newPassword: string) => {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return { error: { message: data.message || data.error || 'Failed to change password' } };
+      }
+      // Sign out after password change
+      await supabaseClient.auth.signOut().catch(() => {});
+      return { data: { success: true } };
+    },
     getSession: async () => {
       const { data, error } = await supabaseClient.auth.getSession();
       return { data, error };
     },
     getUser: async () => {
-      const { data, error } = await supabaseClient.auth.getUser();
+      const { data, error } = supabaseClient.auth.getUser();
       return { data, error };
     },
     onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
@@ -206,6 +241,15 @@ if (supabaseIsConfigured) {
         error: { message: 'Supabase not configured', name: 'ConfigurationError' },
       }),
       updateUser: async () => ({
+        data: null,
+        error: { message: 'Supabase not configured', name: 'ConfigurationError' },
+      }),
+      // changePassword requires server endpoint which isn't available in mock mode
+      changePassword: async () => ({
+        data: null,
+        error: { message: 'Supabase not configured', name: 'ConfigurationError' },
+      }),
+      updatePassword: async () => ({
         data: null,
         error: { message: 'Supabase not configured', name: 'ConfigurationError' },
       }),

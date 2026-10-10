@@ -31,6 +31,10 @@ import { registerAIProductivityRoutes } from './aiProductivity';
 import { registerAIAdvancedRoutes } from './aiAdvanced';
 import { registerAIAutomationRoutes } from './aiAutomation';
 import { registerPartnersRoutes } from './partners';
+import { registerBusinessAnalysisRoutes } from './businessAnalysis';
+import { registerVoiceProfilesRoutes } from './voiceProfiles';
+import contactsRouter from './api/v1/contacts';
+import dealsRouter from './api/v1/deals';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -145,4 +149,17 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register partners routes
   console.log('Registering partners routes');
   registerPartnersRoutes(app);
+
+  // Register business analysis routes
+  console.log('Registering business analysis routes');
+  registerBusinessAnalysisRoutes(app);
+
+  // Register voice profiles routes
+  console.log('Registering voice profiles routes');
+  registerVoiceProfilesRoutes(app);
+
+  // Register v1 CRM routers
+  console.log('Registering v1 contacts and deals routes');
+  app.use('/api/v1/contacts', contactsRouter);
+  app.use('/api/v1/deals', dealsRouter);
 }

@@ -21,7 +21,11 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    port: 5173, // Use Vite's default port instead of conflicting with main server
+    // Respect PORT env var for flexibility. Default 5173 (Vite standard).
+    // When running via `npm run dev`, the actual port is managed by server/index.ts
+    // which has automatic fallback (5174 → 5175 etc.) and PID management.
+    // Use `npm run dev:clean` or `npm run dev:debug` from the project root to manage conflicts.
+    port: Number(process.env.VITE_PORT) || 5173,
     hmr: false, // Disable HMR entirely in Codespaces to avoid WebSocket issues
     cors: {
       origin: [
@@ -51,6 +55,10 @@ export default defineConfig({
       '@crm/shared': path.resolve(__dirname, 'packages/shared/src'),
       '@crm/ui': path.resolve(__dirname, 'packages/ui/src'),
       '@crm/workflows': path.resolve(__dirname, 'packages/workflows/src'),
+      '@smartcrm/ai-agents': path.resolve(__dirname, 'packages/ai-agents/src'),
+      '@smartcrm/dench': path.resolve(__dirname, 'packages/dench/src'),
+      '@smartcrm/gtm-skills': path.resolve(__dirname, 'packages/gtm-skills/src'),
+      '@smartcrm/sales-outreach': path.resolve(__dirname, 'packages/sales-outreach/src'),
     },
   },
   build: {
@@ -62,7 +70,15 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['simple-peer']
+    exclude: ['simple-peer'],
+    // Include emotion packages explicitly to prevent "missing module" errors at runtime
+    // (especially with framer-motion, Radix, and MFE builds that rely on is-prop-valid for prop filtering).
+    include: [
+      '@emotion/is-prop-valid',
+      '@emotion/react',
+      '@emotion/styled',
+      '@emotion/memoize'
+    ]
   },
   define: {
     global: 'globalThis',
