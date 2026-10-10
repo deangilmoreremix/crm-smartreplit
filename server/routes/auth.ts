@@ -11,8 +11,7 @@ const router = Router();
 
 // Initialize Supabase client with service role key
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const serviceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -365,9 +364,65 @@ router.patch('/users/:id', async (req: Request, res: Response) => {
  */
 router.post('/change-password', async (req: Request, res: Response) => {
   try {
-    const userId = (req.session as any)?.userId;
-    const userEmail = (req.session as any)?.userEmail;
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Missing authorization token',
+      });
+    }
+
+    const accessToken = authHeader.substring(7);
     const hostname = req.get('host') || '';
+
+    // Dev bypass check - ONLY for development environments
+    if (
+      isDevelopment &&
+      isDevelopmentEnvironment(hostname) &&
+      accessToken.startsWith('dev-bypass-token-')
+    ) {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          error: 'Missing required fields',
+          message: 'Both currentPassword and newPassword are required',
+        });
+      }
+
+      const passwordValidation = validatePasswordStrength(newPassword);
+      if (!passwordValidation.valid) {
+        return res.status(400).json({
+          error: 'Weak password',
+          message: passwordValidation.error,
+        });
+      }
+
+      console.log('[change-password] Dev bypass used');
+      return res.json({
+        success: true,
+        message: 'Password updated (dev mode)',
+      });
+    }
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return res.status(500).json({
+        error: 'Server configuration error',
+        message: 'Authentication service not configured',
+      });
+    }
+
+    // Validate the user's access token using Supabase auth
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const { data: tokenData, error: tokenError } = await supabase.auth.getUser(accessToken);
+    if (tokenError || !tokenData?.user) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Invalid or expired access token',
+      });
+    }
+
+    const userId = tokenData.user.id;
+    const userEmail = tokenData.user.email || '';
 
     // Input validation
     const { currentPassword, newPassword } = req.body;
@@ -387,57 +442,16 @@ router.post('/change-password', async (req: Request, res: Response) => {
       });
     }
 
-    // Dev bypass check - ONLY for development environments
-    if (isDevelopment && isDevelopmentEnvironment(hostname) && userEmail && DEV_BYPASS_EMAILS.includes(userEmail.toLowerCase())) {
-      console.log('[change-password] Dev bypass used for:', userEmail);
-      return res.json({
-        success: true,
-        message: 'Password updated (dev mode)',
-      });
-    }
-
-    // Require authentication
-    if (!userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You must be authenticated to change your password',
-      });
-    }
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      return res.status(500).json({
-        error: 'Server configuration error',
-        message: 'Authentication service not configured',
-      });
-    }
-
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-    // Verify current password by attempting to get the user and re-authenticate
-    // Get user to verify they exist
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
-    if (userError || !userData?.user) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'User not found',
-      });
-    }
-
-    // Get the user's email to attempt re-authentication
-    const userEmailFromDB = userData.user.email;
-
     // For security: require the user to re-authenticate with current password
-    // This prevents session hijacking attacks where someone steals a session
-    // and changes the password without knowing the original
     const { error: reauthError } = await supabase.auth.signInWithPassword({
-      email: userEmailFromDB || '',
+      email: userEmail,
       password: currentPassword,
     });
 
     if (reauthError) {
-      // Don't reveal if it's wrong password vs other error
-      const isWrongPassword = reauthError.message?.includes('Invalid login credentials') ||
-                             reauthError.message?.includes('invalid');
+      const isWrongPassword =
+        reauthError.message?.includes('Invalid login credentials') ||
+        reauthError.message?.includes('invalid');
       return res.status(401).json({
         error: 'Invalid credentials',
         message: isWrongPassword
@@ -452,15 +466,17 @@ router.post('/change-password', async (req: Request, res: Response) => {
     });
 
     if (error) {
-      // Log failed attempt to audit table
-      await supabase.from('password_change_audit_log').insert({
-        user_id: userId,
-        user_email: userData.user.email,
-        ip_address: req.ip || req.headers['x-forwarded-for'] as string,
-        user_agent: req.get('user-agent') || '',
-        success: false,
-        error_message: error.message,
-      }).catch(() => {}); // Don't block on audit log failure
+      await supabase
+        .from('password_change_audit_log')
+        .insert({
+          user_id: userId,
+          user_email: userEmail,
+          ip_address: req.ip || (req.headers['x-forwarded-for'] as string),
+          user_agent: req.get('user-agent') || '',
+          success: false,
+          error_message: error.message,
+        })
+        .catch(() => {});
 
       console.error('Password update error:', error);
       return res.status(400).json({
@@ -469,24 +485,18 @@ router.post('/change-password', async (req: Request, res: Response) => {
       });
     }
 
-    // Log the password change to audit table in Supabase
-    await supabase.from('password_change_audit_log').insert({
-      user_id: userId,
-      user_email: userData.user.email,
-      ip_address: req.ip || req.headers['x-forwarded-for'] as string,
-      user_agent: req.get('user-agent') || '',
-      success: true,
-    }).catch(() => {}); // Don't block on audit log failure if it fails
+    await supabase
+      .from('password_change_audit_log')
+      .insert({
+        user_id: userId,
+        user_email: userEmail,
+        ip_address: req.ip || (req.headers['x-forwarded-for'] as string),
+        user_agent: req.get('user-agent') || '',
+        success: true,
+      })
+      .catch(() => {});
 
     console.log(`[audit] Password changed for user ${userId} at ${new Date().toISOString()}`);
-
-    // Clear the session to force re-authentication on other tabs/devices
-    // This is a security best practice
-    if (req.session) {
-      (req.session as any).destroy?.((err: Error) => {
-        if (err) console.error('Session destruction error:', err);
-      });
-    }
 
     res.json({
       success: true,

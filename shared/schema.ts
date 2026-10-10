@@ -1,25 +1,101 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  decimal,
+  jsonb,
+  json,
+  varchar,
+  uuid,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
+import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
 
 export const userRoles = ['super_admin', 'wl_user', 'regular_user'] as const;
 export type UserRole = (typeof userRoles)[number];
 
-export const productTiers = ['super_admin', 'whitelabel', 'smartcrm_bundle', 'smartcrm', 'sales_maximizer', 'ai_boost_unlimited', 'ai_communication'] as const;
+export const productTiers = [
+  'super_admin',
+  'whitelabel',
+  'smartcrm_bundle',
+  'smartcrm',
+  'sales_maximizer',
+  'ai_boost_unlimited',
+  'ai_communication',
+] as const;
 export type ProductTier = (typeof productTiers)[number];
 
-export const fieldTypes = ['ACTOR', 'ADDRESS', 'ARRAY', 'BOOLEAN', 'CURRENCY', 'DATE', 'DATE_TIME', 'EMAILS', 'FILES', 'FULL_NAME', 'LINKS', 'MORPH_RELATION', 'MULTI_SELECT', 'NUMBER', 'NUMERIC', 'PHONES', 'POSITION', 'RATING', 'RAW_JSON', 'RELATION', 'RICH_TEXT', 'SELECT', 'TEXT', 'TS_VECTOR', 'UUID'] as const;
+export const fieldTypes = [
+  'ACTOR',
+  'ADDRESS',
+  'ARRAY',
+  'BOOLEAN',
+  'CURRENCY',
+  'DATE',
+  'DATE_TIME',
+  'EMAILS',
+  'FILES',
+  'FULL_NAME',
+  'LINKS',
+  'MORPH_RELATION',
+  'MULTI_SELECT',
+  'NUMBER',
+  'NUMERIC',
+  'PHONES',
+  'POSITION',
+  'RATING',
+  'RAW_JSON',
+  'RELATION',
+  'RICH_TEXT',
+  'SELECT',
+  'TEXT',
+  'TS_VECTOR',
+  'UUID',
+] as const;
 export type FieldType = (typeof fieldTypes)[number];
 
 export const viewTypes = ['table', 'kanban', 'calendar'] as const;
 export type ViewType = (typeof viewTypes)[number];
 
-export const workflowTriggerTypes = ['RECORD_CREATED', 'RECORD_UPDATED', 'RECORD_DELETED', 'MANUAL', 'SCHEDULED', 'WEBHOOK', 'AI_COMPLETED'] as const;
+export const workflowTriggerTypes = [
+  'RECORD_CREATED',
+  'RECORD_UPDATED',
+  'RECORD_DELETED',
+  'MANUAL',
+  'SCHEDULED',
+  'WEBHOOK',
+  'AI_COMPLETED',
+] as const;
 export type WorkflowTriggerType = (typeof workflowTriggerTypes)[number];
 
-export const workflowRunStatus = ['pending', 'running', 'completed', 'failed', 'cancelled'] as const;
+export const workflowRunStatus = [
+  'pending',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+] as const;
 export type WorkflowRunStatus = (typeof workflowRunStatus)[number];
 
-export const actionTypes = ['SEND_EMAIL', 'UPDATE_FIELD', 'CREATE_RECORD', 'CREATE_TASK', 'CREATE_NOTE', 'WEBHOOK', 'CODE', 'WAIT', 'BRANCH', 'ITERATE', 'SEND_SMS', 'CREATE_DEAL', 'CREATE_CONTACT'] as const;
+export const actionTypes = [
+  'SEND_EMAIL',
+  'UPDATE_FIELD',
+  'CREATE_RECORD',
+  'CREATE_TASK',
+  'CREATE_NOTE',
+  'WEBHOOK',
+  'CODE',
+  'WAIT',
+  'BRANCH',
+  'ITERATE',
+  'SEND_SMS',
+  'CREATE_DEAL',
+  'CREATE_CONTACT',
+] as const;
 export type ActionType = (typeof actionTypes)[number];
 
 export const profiles = pgTable('profiles', {
@@ -78,7 +154,9 @@ export const contacts = pgTable('contacts', {
 });
 
 export const partners = pgTable('partners', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   email: text('email').notNull(),
   company: text('company'),
@@ -91,7 +169,9 @@ export const partners = pgTable('partners', {
 });
 
 export const partnerTiers = pgTable('partner_tiers', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   commissionRate: decimal('commission_rate', { precision: 5, scale: 2 }).default('0'),
   tierFeatures: jsonb('tier_features').default([]),
@@ -101,8 +181,12 @@ export const partnerTiers = pgTable('partner_tiers', {
 });
 
 export const partnerMetrics = pgTable('partner_metrics', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id')
+    .references(() => partners.id)
+    .notNull(),
   period: text('period').notNull(),
   totalSales: decimal('total_sales', { precision: 12, scale: 2 }).default('0'),
   totalCommission: decimal('total_commission', { precision: 12, scale: 2 }).default('0'),
@@ -115,8 +199,12 @@ export const partnerMetrics = pgTable('partner_metrics', {
 });
 
 export const partnerCustomers = pgTable('partner_customers', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id')
+    .references(() => partners.id)
+    .notNull(),
   customerEmail: text('customer_email').notNull(),
   customerName: text('customer_name'),
   subscriptionStatus: text('subscription_status').default('active'),
@@ -128,8 +216,12 @@ export const partnerCustomers = pgTable('partner_customers', {
 });
 
 export const commissions = pgTable('commissions', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id')
+    .references(() => partners.id)
+    .notNull(),
   customerId: uuid('customer_id').references(() => partnerCustomers.id),
   amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
   status: text('status').default('pending'),
@@ -140,8 +232,12 @@ export const commissions = pgTable('commissions', {
 });
 
 export const payouts = pgTable('payouts', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id')
+    .references(() => partners.id)
+    .notNull(),
   amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
   status: text('status').default('pending'),
   paidAt: timestamp('paid_at'),
@@ -151,7 +247,9 @@ export const payouts = pgTable('payouts', {
 });
 
 export const featurePackages = pgTable('feature_packages', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
   features: jsonb('features').notNull(),
@@ -161,7 +259,9 @@ export const featurePackages = pgTable('feature_packages', {
 });
 
 export const tenantConfigs = pgTable('tenant_configs', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   tenantId: text('tenant_id').notNull().unique(),
   config: jsonb('config').default({}),
   createdAt: timestamp('created_at').defaultNow(),
@@ -169,8 +269,12 @@ export const tenantConfigs = pgTable('tenant_configs', {
 });
 
 export const userWLSettings = pgTable('user_wl_settings', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   partnerId: uuid('partner_id').references(() => partners.id),
   wlConfigId: uuid('wl_config_id'),
   preferences: jsonb('preferences').default({}),
@@ -179,8 +283,12 @@ export const userWLSettings = pgTable('user_wl_settings', {
 });
 
 export const partnerWLConfigs = pgTable('partner_wl_configs', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id')
+    .references(() => partners.id)
+    .notNull(),
   packageId: uuid('package_id'),
   customDomain: text('custom_domain'),
   branding: jsonb('branding').default({}),
@@ -191,7 +299,9 @@ export const partnerWLConfigs = pgTable('partner_wl_configs', {
 });
 
 export const whiteLabelPackages = pgTable('white_label_packages', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
   price: decimal('price', { precision: 10, scale: 2 }).notNull(),
@@ -203,8 +313,12 @@ export const whiteLabelPackages = pgTable('white_label_packages', {
 });
 
 export const entitlements = pgTable('entitlements', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   productTier: text('product_tier').notNull(),
   status: text('status').default('active'),
   startedAt: timestamp('started_at').defaultNow(),
@@ -215,7 +329,9 @@ export const entitlements = pgTable('entitlements', {
 });
 
 export const roles = pgTable('roles', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull().unique(),
   description: text('description'),
   permissions: jsonb('permissions').default([]),
@@ -225,7 +341,9 @@ export const roles = pgTable('roles', {
 });
 
 export const permissions = pgTable('permissions', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull().unique(),
   resource: text('resource').notNull(),
   action: text('action').notNull(),
@@ -235,9 +353,15 @@ export const permissions = pgTable('permissions', {
 });
 
 export const userRolesTable = pgTable('user_roles', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
-  roleId: uuid('role_id').references(() => roles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
+  roleId: uuid('role_id')
+    .references(() => roles.id)
+    .notNull(),
   tenantId: text('tenant_id'),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow(),
@@ -245,7 +369,9 @@ export const userRolesTable = pgTable('user_roles', {
 });
 
 export const appointments = pgTable('appointments', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   title: text('title').notNull(),
   description: text('description'),
   startTime: timestamp('start_time').notNull(),
@@ -263,7 +389,9 @@ export const appointments = pgTable('appointments', {
 });
 
 export const notes = pgTable('notes', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   title: text('title'),
   content: text('content').notNull(),
   type: text('type').default('general'),
@@ -275,7 +403,9 @@ export const notes = pgTable('notes', {
 });
 
 export const communications = pgTable('communications', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   type: text('type').notNull(),
   direction: text('direction').default('outbound'),
   subject: text('subject'),
@@ -289,7 +419,9 @@ export const communications = pgTable('communications', {
 });
 
 export const documents = pgTable('documents', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   type: text('type').notNull(),
   url: text('url'),
@@ -303,7 +435,9 @@ export const documents = pgTable('documents', {
 });
 
 export const aiQueries = pgTable('ai_queries', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   query: text('query').notNull(),
   response: text('response'),
   model: text('model'),
@@ -315,7 +449,9 @@ export const aiQueries = pgTable('ai_queries', {
 });
 
 export const userAiTokens = pgTable('user_ai_tokens', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   totalTokens: integer('total_tokens').default(0),
   usedTokens: integer('used_tokens').default(0),
   purchasedTokens: integer('purchased_tokens').default(0),
@@ -323,22 +459,30 @@ export const userAiTokens = pgTable('user_ai_tokens', {
   resetAt: timestamp('reset_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  profileId: uuid('profile_id').references(() => profiles.id).notNull(),
+  profileId: uuid('profile_id')
+    .references(() => profiles.id)
+    .notNull(),
 });
 
 export const tokenTransactions = pgTable('token_transactions', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   type: text('type').notNull(),
   amount: integer('amount').notNull(),
   balance: integer('balance').notNull(),
   description: text('description'),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow(),
-  profileId: uuid('profile_id').references(() => profiles.id).notNull(),
+  profileId: uuid('profile_id')
+    .references(() => profiles.id)
+    .notNull(),
 });
 
 export const userGeneratedImages = pgTable('user_generated_images', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   prompt: text('prompt').notNull(),
   imageUrl: text('image_url'),
   model: text('model'),
@@ -346,7 +490,9 @@ export const userGeneratedImages = pgTable('user_generated_images', {
   style: text('style'),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow(),
-  profileId: uuid('profile_id').references(() => profiles.id).notNull(),
+  profileId: uuid('profile_id')
+    .references(() => profiles.id)
+    .notNull(),
 });
 
 export const features = pgTable('features', {
@@ -362,8 +508,12 @@ export const features = pgTable('features', {
 
 export const userFeatures = pgTable('user_features', {
   id: serial('id').primaryKey(),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
-  featureId: integer('feature_id').references(() => features.id).notNull(),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
+  featureId: integer('feature_id')
+    .references(() => features.id)
+    .notNull(),
   isEnabled: boolean('is_enabled').default(false),
   metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow(),
@@ -371,7 +521,9 @@ export const userFeatures = pgTable('user_features', {
 });
 
 export const aiFeatureDefinitions = pgTable('ai_feature_definitions', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   featureName: text('feature_name').notNull(),
   provider: text('provider').notNull(),
   model: text('model'),
@@ -386,9 +538,15 @@ export const aiFeatureDefinitions = pgTable('ai_feature_definitions', {
 });
 
 export const aiFeatureUsage = pgTable('ai_feature_usage', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
-  featureId: uuid('feature_id').references(() => aiFeatureDefinitions.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
+  featureId: uuid('feature_id')
+    .references(() => aiFeatureDefinitions.id)
+    .notNull(),
   inputTokens: integer('input_tokens').default(0),
   outputTokens: integer('output_tokens').default(0),
   cost: decimal('cost', { precision: 10, scale: 4 }).default('0'),
@@ -398,9 +556,15 @@ export const aiFeatureUsage = pgTable('ai_feature_usage', {
 });
 
 export const aiResellerPricing = pgTable('ai_reseller_pricing', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
-  featureId: uuid('feature_id').references(() => aiFeatureDefinitions.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  partnerId: uuid('partner_id')
+    .references(() => partners.id)
+    .notNull(),
+  featureId: uuid('feature_id')
+    .references(() => aiFeatureDefinitions.id)
+    .notNull(),
   resellerPrice: decimal('reseller_price', { precision: 10, scale: 4 }).notNull(),
   minimumPrice: decimal('minimum_price', { precision: 10, scale: 4 }),
   isActive: boolean('is_active').default(true),
@@ -410,7 +574,9 @@ export const aiResellerPricing = pgTable('ai_reseller_pricing', {
 });
 
 export const workflows = pgTable('workflows', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
   triggerType: text('trigger_type').$type<WorkflowTriggerType>().notNull(),
@@ -424,8 +590,12 @@ export const workflows = pgTable('workflows', {
 });
 
 export const workflowActions = pgTable('workflow_actions', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  workflowId: uuid('workflow_id').references(() => workflows.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  workflowId: uuid('workflow_id')
+    .references(() => workflows.id)
+    .notNull(),
   sequence: integer('sequence').notNull(),
   type: text('type').$type<ActionType>().notNull(),
   config: jsonb('config').default({}),
@@ -435,8 +605,12 @@ export const workflowActions = pgTable('workflow_actions', {
 });
 
 export const workflowRuns = pgTable('workflow_runs', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  workflowId: uuid('workflow_id').references(() => workflows.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  workflowId: uuid('workflow_id')
+    .references(() => workflows.id)
+    .notNull(),
   status: text('status').$type<WorkflowRunStatus>().default('pending'),
   triggerData: jsonb('trigger_data').default({}),
   startedAt: timestamp('started_at'),
@@ -448,8 +622,12 @@ export const workflowRuns = pgTable('workflow_runs', {
 });
 
 export const workflowRunLogs = pgTable('workflow_run_logs', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  runId: uuid('run_id').references(() => workflowRuns.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  runId: uuid('run_id')
+    .references(() => workflowRuns.id)
+    .notNull(),
   actionSequence: integer('action_sequence'),
   status: text('status').default('pending'),
   inputData: jsonb('input_data').default({}),
@@ -461,8 +639,12 @@ export const workflowRunLogs = pgTable('workflow_run_logs', {
 });
 
 export const workflowCredits = pgTable('workflow_credits', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  tenantId: uuid('tenant_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  tenantId: uuid('tenant_id')
+    .references(() => profiles.id)
+    .notNull(),
   totalCredits: integer('total_credits').default(0),
   usedCredits: integer('used_credits').default(0),
   resetAt: timestamp('reset_at'),
@@ -472,7 +654,9 @@ export const workflowCredits = pgTable('workflow_credits', {
 });
 
 export const workflowTemplates = pgTable('workflow_templates', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
   category: text('category'),
@@ -486,7 +670,9 @@ export const workflowTemplates = pgTable('workflow_templates', {
 });
 
 export const objectMetadata = pgTable('object_metadata', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   label: text('label').notNull(),
   labelPlural: text('label_plural'),
@@ -501,8 +687,12 @@ export const objectMetadata = pgTable('object_metadata', {
 });
 
 export const fieldMetadata = pgTable('field_metadata', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  objectMetadataId: uuid('object_metadata_id')
+    .references(() => objectMetadata.id, { onDelete: 'cascade' })
+    .notNull(),
   name: text('name').notNull(),
   label: text('label').notNull(),
   type: text('type').$type<FieldType>().notNull(),
@@ -522,11 +712,21 @@ export const fieldMetadata = pgTable('field_metadata', {
 });
 
 export const relationMetadata = pgTable('relation_metadata', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  sourceObjectMetadataId: uuid('source_object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }).notNull(),
-  targetObjectMetadataId: uuid('target_object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }).notNull(),
-  sourceFieldMetadataId: uuid('source_field_metadata_id').references(() => fieldMetadata.id, { onDelete: 'cascade' }).notNull(),
-  targetFieldMetadataId: uuid('target_field_metadata_id').references(() => fieldMetadata.id, { onDelete: 'cascade' }),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  sourceObjectMetadataId: uuid('source_object_metadata_id')
+    .references(() => objectMetadata.id, { onDelete: 'cascade' })
+    .notNull(),
+  targetObjectMetadataId: uuid('target_object_metadata_id')
+    .references(() => objectMetadata.id, { onDelete: 'cascade' })
+    .notNull(),
+  sourceFieldMetadataId: uuid('source_field_metadata_id')
+    .references(() => fieldMetadata.id, { onDelete: 'cascade' })
+    .notNull(),
+  targetFieldMetadataId: uuid('target_field_metadata_id').references(() => fieldMetadata.id, {
+    onDelete: 'cascade',
+  }),
   relationType: text('relation_type').notNull(),
   isCustom: boolean('is_custom').default(false),
   workspaceId: uuid('workspace_id').references(() => profiles.id),
@@ -535,8 +735,12 @@ export const relationMetadata = pgTable('relation_metadata', {
 });
 
 export const views = pgTable('views', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id, {
+    onDelete: 'cascade',
+  }),
   name: text('name').notNull(),
   type: text('type').$type<ViewType>().notNull(),
   kanbanFieldMetadataId: uuid('kanban_field_metadata_id').references(() => fieldMetadata.id),
@@ -577,6 +781,33 @@ export const deals = pgTable('deals', {
   profileId: uuid('profile_id').references(() => profiles.id),
 });
 
+/**
+ * Contact activity log. The table exists in the database
+ * (migration 20260417130527_add_contact_enrichment_fields.sql) but had no Drizzle
+ * definition, so `server/routes/api/v1/contacts.ts` imported an undefined table.
+ */
+export const contactActivities = pgTable('contact_activities', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(),
+  description: text('description'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+/**
+ * Insert/update validation schemas. These are imported by
+ * `server/routes/api/v1/contacts.ts`, `server/routes/api/v1/deals.ts`,
+ * `server/routes/crm.ts` and `server/routes/openclaw.ts` but were never defined,
+ * so every write endpoint failed at runtime with an undefined schema.
+ */
+export const insertContactSchema = createInsertSchema(contacts);
+export const updateContactSchema = createUpdateSchema(contacts);
+export const insertDealSchema = createInsertSchema(deals);
+export const updateDealSchema = createUpdateSchema(deals);
+
 export const tasks = pgTable('tasks', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
@@ -596,8 +827,12 @@ export const tasks = pgTable('tasks', {
 });
 
 export const billingCycles = pgTable('billing_cycles', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   tenantId: uuid('tenant_id'),
   billingPlanId: uuid('billing_plan_id'),
   startDate: timestamp('start_date').notNull(),
@@ -612,8 +847,12 @@ export const billingCycles = pgTable('billing_cycles', {
 });
 
 export const usageEvents = pgTable('usage_events', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   tenantId: uuid('tenant_id'),
   eventType: text('event_type').notNull(),
   featureName: text('feature_name').notNull(),
@@ -628,8 +867,12 @@ export const usageEvents = pgTable('usage_events', {
 });
 
 export const userUsageLimits = pgTable('user_usage_limits', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   tenantId: uuid('tenant_id'),
   featureName: text('feature_name').notNull(),
   limitValue: text('limit_value').notNull(),
@@ -642,8 +885,12 @@ export const userUsageLimits = pgTable('user_usage_limits', {
 });
 
 export const billingNotifications = pgTable('billing_notifications', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   notificationType: text('notification_type').notNull(),
   title: text('title').notNull(),
   message: text('message').notNull(),
@@ -654,7 +901,9 @@ export const billingNotifications = pgTable('billing_notifications', {
 });
 
 export const usagePlans = pgTable('usage_plans', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   planName: text('plan_name').notNull(),
   displayName: text('display_name').notNull(),
   description: text('description'),
@@ -671,8 +920,12 @@ export const usagePlans = pgTable('usage_plans', {
 });
 
 export const userApiKeys = pgTable('user_api_keys', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => profiles.id).notNull(),
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .references(() => profiles.id)
+    .notNull(),
   provider: text('provider').notNull(),
   apiKey: text('api_key').notNull(),
   model: text('model'),

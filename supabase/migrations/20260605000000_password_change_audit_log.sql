@@ -33,7 +33,7 @@ CREATE POLICY "Admins can view all password changes"
 CREATE POLICY "Service can insert audit logs"
   ON password_change_audit_log
   FOR INSERT
-  USING (true);
+  WITH CHECK (true);
 
 -- Index for efficient querying
 CREATE INDEX IF NOT EXISTS idx_password_change_audit_log_user_id ON password_change_audit_log(user_id);

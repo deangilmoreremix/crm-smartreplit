@@ -1,7 +1,20 @@
 import { TriggerDetector, WorkflowContext } from '../engine/WorkflowEngine';
 
+/**
+ * Trigger type comparison used by every detector below.
+ *
+ * The public `WorkflowTrigger` enum (packages/workflows/src/types.ts) exposes
+ * lowercase values such as 'contact_created', while the engine registry and
+ * persisted workflows may store uppercase values such as 'CONTACT_CREATED'.
+ * Comparing case-insensitively keeps both spellings working so a workflow
+ * built from the public enum is never silently left untriggered.
+ */
+function triggerMatches(triggerType: string | undefined, expected: string): boolean {
+  return !!triggerType && triggerType.toUpperCase() === expected.toUpperCase();
+}
+
 export const recordCreatedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'RECORD_CREATED') {
+  if (!triggerMatches(context.triggerType, 'RECORD_CREATED')) {
     return { triggered: false };
   }
   return {
@@ -14,7 +27,7 @@ export const recordCreatedTrigger: TriggerDetector = async (context) => {
 };
 
 export const recordUpdatedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'RECORD_UPDATED') {
+  if (!triggerMatches(context.triggerType, 'RECORD_UPDATED')) {
     return { triggered: false };
   }
   return {
@@ -27,7 +40,7 @@ export const recordUpdatedTrigger: TriggerDetector = async (context) => {
 };
 
 export const recordDeletedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'RECORD_DELETED') {
+  if (!triggerMatches(context.triggerType, 'RECORD_DELETED')) {
     return { triggered: false };
   }
   return {
@@ -40,7 +53,7 @@ export const recordDeletedTrigger: TriggerDetector = async (context) => {
 };
 
 export const manualTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'MANUAL') {
+  if (!triggerMatches(context.triggerType, 'MANUAL')) {
     return { triggered: false };
   }
   return {
@@ -53,7 +66,7 @@ export const manualTrigger: TriggerDetector = async (context) => {
 };
 
 export const scheduledTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'SCHEDULED') {
+  if (!triggerMatches(context.triggerType, 'SCHEDULED')) {
     return { triggered: false };
   }
   return {
@@ -66,7 +79,7 @@ export const scheduledTrigger: TriggerDetector = async (context) => {
 };
 
 export const webhookTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'WEBHOOK') {
+  if (!triggerMatches(context.triggerType, 'WEBHOOK')) {
     return { triggered: false };
   }
   return {
@@ -79,7 +92,7 @@ export const webhookTrigger: TriggerDetector = async (context) => {
 };
 
 export const aiCompletedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'AI_COMPLETED') {
+  if (!triggerMatches(context.triggerType, 'AI_COMPLETED')) {
     return { triggered: false };
   }
   return {
@@ -92,7 +105,7 @@ export const aiCompletedTrigger: TriggerDetector = async (context) => {
 };
 
 export const contactCreatedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'CONTACT_CREATED') {
+  if (!triggerMatches(context.triggerType, 'CONTACT_CREATED')) {
     return { triggered: false };
   }
   return {
@@ -105,7 +118,7 @@ export const contactCreatedTrigger: TriggerDetector = async (context) => {
 };
 
 export const dealStageChangedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'DEAL_STAGE_CHANGED') {
+  if (!triggerMatches(context.triggerType, 'DEAL_STAGE_CHANGED')) {
     return { triggered: false };
   }
   return {
@@ -118,7 +131,7 @@ export const dealStageChangedTrigger: TriggerDetector = async (context) => {
 };
 
 export const emailSentTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'EMAIL_SENT') {
+  if (!triggerMatches(context.triggerType, 'EMAIL_SENT')) {
     return { triggered: false };
   }
   return {
@@ -131,7 +144,7 @@ export const emailSentTrigger: TriggerDetector = async (context) => {
 };
 
 export const formSubmittedTrigger: TriggerDetector = async (context) => {
-  if (!context.triggerType || context.triggerType !== 'FORM_SUBMITTED') {
+  if (!triggerMatches(context.triggerType, 'FORM_SUBMITTED')) {
     return { triggered: false };
   }
   return {
@@ -146,15 +159,20 @@ export const formSubmittedTrigger: TriggerDetector = async (context) => {
 export const registerAllTriggers = (engine: {
   registerTrigger: (type: string, detector: TriggerDetector) => void;
 }) => {
-  engine.registerTrigger('RECORD_CREATED', recordCreatedTrigger);
-  engine.registerTrigger('RECORD_UPDATED', recordUpdatedTrigger);
-  engine.registerTrigger('RECORD_DELETED', recordDeletedTrigger);
-  engine.registerTrigger('MANUAL', manualTrigger);
-  engine.registerTrigger('SCHEDULED', scheduledTrigger);
-  engine.registerTrigger('WEBHOOK', webhookTrigger);
-  engine.registerTrigger('AI_COMPLETED', aiCompletedTrigger);
-  engine.registerTrigger('CONTACT_CREATED', contactCreatedTrigger);
-  engine.registerTrigger('DEAL_STAGE_CHANGED', dealStageChangedTrigger);
-  engine.registerTrigger('EMAIL_SENT', emailSentTrigger);
-  engine.registerTrigger('FORM_SUBMITTED', formSubmittedTrigger);
+  const register = (type: string, detector: TriggerDetector) => {
+    engine.registerTrigger(type, detector);
+    engine.registerTrigger(type.toLowerCase(), detector);
+  };
+
+  register('RECORD_CREATED', recordCreatedTrigger);
+  register('RECORD_UPDATED', recordUpdatedTrigger);
+  register('RECORD_DELETED', recordDeletedTrigger);
+  register('MANUAL', manualTrigger);
+  register('SCHEDULED', scheduledTrigger);
+  register('WEBHOOK', webhookTrigger);
+  register('AI_COMPLETED', aiCompletedTrigger);
+  register('CONTACT_CREATED', contactCreatedTrigger);
+  register('DEAL_STAGE_CHANGED', dealStageChangedTrigger);
+  register('EMAIL_SENT', emailSentTrigger);
+  register('FORM_SUBMITTED', formSubmittedTrigger);
 };

@@ -124,7 +124,7 @@ export class PermissionChecker {
 
     const sortedRoles = [...this.userRoles].sort((a, b) => {
       const roleOrder = { [Role.Admin]: 0, [Role.Manager]: 1, [Role.User]: 2, [Role.Viewer]: 3 };
-      return (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+      return (roleOrder[a.role] ?? 99) - (roleOrder[b.role] ?? 99);
     });
 
     return sortedRoles[0];

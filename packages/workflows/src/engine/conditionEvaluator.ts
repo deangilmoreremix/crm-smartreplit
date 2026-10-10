@@ -1,11 +1,5 @@
-import type {
-  WorkflowCondition,
-  ConditionGroup,
-} from '../types';
-import {
-  ConditionOperator,
-  LogicalOperator,
-} from '../types';
+import type { WorkflowCondition, ConditionGroup } from '../types';
+import { ConditionOperator, LogicalOperator } from '../types';
 
 export class ConditionEvaluator {
   evaluate(condition: WorkflowCondition, context: Record<string, unknown>): boolean {
@@ -54,6 +48,10 @@ export class ConditionEvaluator {
           .split(',')
           .map((v) => v.trim())
           .includes(String(value));
+      case ConditionOperator.EXISTS:
+        return fieldValue !== null && fieldValue !== undefined;
+      case ConditionOperator.NOT_EXISTS:
+        return fieldValue === null || fieldValue === undefined;
       default:
         return false;
     }

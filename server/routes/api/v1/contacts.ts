@@ -5,8 +5,8 @@ import {
   contactActivities,
   insertContactSchema,
   updateContactSchema,
-} from '../../../shared/schema.js';
-import { webhookService } from '../../../server/services/webhook.js';
+} from '../../../../shared/schema.js';
+import { webhookService } from '../../../services/webhook.js';
 
 const router = Router();
 
@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const { page = '1', limit = '50', search, status, source } = req.query;
 
     let query = db.select().from(contacts).where(eq(contacts.profileId, userId!));
@@ -118,7 +118,7 @@ router.get('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
     const [contact] = await db
       .select()
@@ -143,7 +143,7 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const validatedData = insertContactSchema.parse({
       ...req.body,
       profileId: userId,
@@ -174,7 +174,7 @@ router.put('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [existingContact] = await db
@@ -214,7 +214,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [deletedContact] = await db
@@ -240,7 +240,7 @@ router.get('/:id/activities', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [existingContact] = await db
@@ -272,7 +272,7 @@ router.post('/:id/activities', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [existingContact] = await db
@@ -310,7 +310,7 @@ router.post('/:id/enrich', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [existingContact] = await db
@@ -348,7 +348,7 @@ router.post('/:id/score', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [existingContact] = await db
@@ -377,7 +377,7 @@ router.put('/:id/custom-fields', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const contactId = parseInt(req.params.id);
 
     const [existingContact] = await db

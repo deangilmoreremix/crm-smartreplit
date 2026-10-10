@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dns from 'dns/promises';
 import https from 'https';
-import { withCache, CACHE_TTL } from '../services/cache';
+import { withCache, CACHE_TTL } from '../cache';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -686,36 +686,244 @@ class DomainManager {
    * Common reserved subdomain/domain words
    */
   private static readonly RESERVED_WORDS = new Set([
-    'www', 'mail', 'ftp', 'admin', 'api', 'app', 'blog', 'cdn', 'dev', 'docs',
-    'email', 'help', 'info', 'login', 'm', 'mobile', 'news', 'ns1', 'ns2', 'old',
-    'portal', 'secure', 'shop', 'smtp', 'stage', 'staging', 'static', 'test', 'testing',
-    'web', 'www1', 'www2', 'www3', 'mail1', 'mail2', 'ns', 'dns', 'cloud', 'auth',
-    'account', 'accounts', 'billing', 'support', 'status', 'dashboard', 'stg', 'prod',
-    'production', 'demo', 'sandbox', 'internal', 'external', 'public', 'private',
-    'localhost', 'local', 'server', 'host', 'gateway', 'proxy', 'vpn', 'ssh', 'sftp',
-    'db', 'database', 'sql', 'mysql', 'postgres', 'mongodb', 'redis', 'cache',
-    'queue', 'worker', 'job', 'task', 'cron', 'schedule', 'monitor', 'metrics',
-    'logs', 'log', 'alert', 'alerts', 'notifications', 'push', 'ws', 'socket',
-    'stream', 'media', 'video', 'audio', 'image', 'img', 'pic', 'photo', 'cdn1', 'cdn2',
-    'edge', 'origin', 'source', 'build', 'ci', 'cd', 'deploy', 'release', 'version',
-    'git', 'svn', 'repo', 'repository', 'code', 'src', 'source', 'assets', 'static',
-    'public', 'private', 'secret', 'key', 'token', 'oauth', 'sso', 'saml', 'ldap',
-    'ad', 'active', 'directory', 'ldap', 'kerberos', 'radius', 'tacacs',
+    'www',
+    'mail',
+    'ftp',
+    'admin',
+    'api',
+    'app',
+    'blog',
+    'cdn',
+    'dev',
+    'docs',
+    'email',
+    'help',
+    'info',
+    'login',
+    'm',
+    'mobile',
+    'news',
+    'ns1',
+    'ns2',
+    'old',
+    'portal',
+    'secure',
+    'shop',
+    'smtp',
+    'stage',
+    'staging',
+    'static',
+    'test',
+    'testing',
+    'web',
+    'www1',
+    'www2',
+    'www3',
+    'mail1',
+    'mail2',
+    'ns',
+    'dns',
+    'cloud',
+    'auth',
+    'account',
+    'accounts',
+    'billing',
+    'support',
+    'status',
+    'dashboard',
+    'stg',
+    'prod',
+    'production',
+    'demo',
+    'sandbox',
+    'internal',
+    'external',
+    'public',
+    'private',
+    'localhost',
+    'local',
+    'server',
+    'host',
+    'gateway',
+    'proxy',
+    'vpn',
+    'ssh',
+    'sftp',
+    'db',
+    'database',
+    'sql',
+    'mysql',
+    'postgres',
+    'mongodb',
+    'redis',
+    'cache',
+    'queue',
+    'worker',
+    'job',
+    'task',
+    'cron',
+    'schedule',
+    'monitor',
+    'metrics',
+    'logs',
+    'log',
+    'alert',
+    'alerts',
+    'notifications',
+    'push',
+    'ws',
+    'socket',
+    'stream',
+    'media',
+    'video',
+    'audio',
+    'image',
+    'img',
+    'pic',
+    'photo',
+    'cdn1',
+    'cdn2',
+    'edge',
+    'origin',
+    'source',
+    'build',
+    'ci',
+    'cd',
+    'deploy',
+    'release',
+    'version',
+    'git',
+    'svn',
+    'repo',
+    'repository',
+    'code',
+    'src',
+    'source',
+    'assets',
+    'static',
+    'public',
+    'private',
+    'secret',
+    'key',
+    'token',
+    'oauth',
+    'sso',
+    'saml',
+    'ldap',
+    'ad',
+    'active',
+    'directory',
+    'ldap',
+    'kerberos',
+    'radius',
+    'tacacs',
   ]);
 
   private static readonly COMMON_TLDS = new Set([
-    'com', 'net', 'org', 'io', 'co', 'ai', 'app', 'dev', 'me', 'tv', 'cc', 'ly',
-    'info', 'biz', 'name', 'pro', 'mobi', 'tel', 'xxx', 'xyz', 'club', 'online',
-    'site', 'store', 'tech', 'space', 'live', 'news', 'blog', 'cloud', 'digital',
-    'agency', 'solutions', 'services', 'consulting', 'academy', 'education', 'training',
-    'shop', 'store', 'sale', 'deals', 'coupons', 'marketing', 'seo', 'design', 'graphics',
-    'photography', 'video', 'media', 'music', 'audio', 'game', 'games', 'play', 'fun',
-    'life', 'world', 'global', 'international', 'usa', 'uk', 'eu', 'asia', 'africa',
-    'ca', 'uk', 'us', 'fr', 'de', 'es', 'it', 'nl', 'se', 'no', 'dk', 'fi', 'au', 'nz',
+    'com',
+    'net',
+    'org',
+    'io',
+    'co',
+    'ai',
+    'app',
+    'dev',
+    'me',
+    'tv',
+    'cc',
+    'ly',
+    'info',
+    'biz',
+    'name',
+    'pro',
+    'mobi',
+    'tel',
+    'xxx',
+    'xyz',
+    'club',
+    'online',
+    'site',
+    'store',
+    'tech',
+    'space',
+    'live',
+    'news',
+    'blog',
+    'cloud',
+    'digital',
+    'agency',
+    'solutions',
+    'services',
+    'consulting',
+    'academy',
+    'education',
+    'training',
+    'shop',
+    'store',
+    'sale',
+    'deals',
+    'coupons',
+    'marketing',
+    'seo',
+    'design',
+    'graphics',
+    'photography',
+    'video',
+    'media',
+    'music',
+    'audio',
+    'game',
+    'games',
+    'play',
+    'fun',
+    'life',
+    'world',
+    'global',
+    'international',
+    'usa',
+    'uk',
+    'eu',
+    'asia',
+    'africa',
+    'ca',
+    'uk',
+    'us',
+    'fr',
+    'de',
+    'es',
+    'it',
+    'nl',
+    'se',
+    'no',
+    'dk',
+    'fi',
+    'au',
+    'nz',
   ]);
 
-  private static readonly SUGGESTION_PREFIXES = ['my', 'the', 'get', 'try', 'use', 'go', 'hello', 'hi', 'hey'];
-  private static readonly SUGGESTION_SUFFIXES = ['app', 'hq', 'co', 'get', 'now', 'today', 'hub', 'lab', 'box', 'base'];
+  private static readonly SUGGESTION_PREFIXES = [
+    'my',
+    'the',
+    'get',
+    'try',
+    'use',
+    'go',
+    'hello',
+    'hi',
+    'hey',
+  ];
+  private static readonly SUGGESTION_SUFFIXES = [
+    'app',
+    'hq',
+    'co',
+    'get',
+    'now',
+    'today',
+    'hub',
+    'lab',
+    'box',
+    'base',
+  ];
 
   /**
    * Validate domain format with IDN and TLD support
@@ -789,7 +997,9 @@ class DomainManager {
 
       if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(label)) {
         result.isValid = false;
-        result.errors.push(`Label "${label}" contains invalid characters or starts/ends with hyphen`);
+        result.errors.push(
+          `Label "${label}" contains invalid characters or starts/ends with hyphen`
+        );
       }
 
       if (label.startsWith('-') || label.endsWith('-')) {
@@ -836,32 +1046,36 @@ class DomainManager {
   async checkDomainAvailability(domain: string): Promise<DomainAvailabilityResult> {
     const cacheKey = `domain:availability:${domain}`;
 
-    return withCache<DomainAvailabilityResult>(cacheKey, async () => {
-      const existing = await this.getDomainByName(domain);
-      if (existing) {
-        return {
-          domain,
-          available: false,
-          reason: 'Domain is already registered in the system',
-        };
-      }
+    return withCache<DomainAvailabilityResult>(
+      cacheKey,
+      async () => {
+        const existing = await this.getDomainByName(domain);
+        if (existing) {
+          return {
+            domain,
+            available: false,
+            reason: 'Domain is already registered in the system',
+          };
+        }
 
-      // Also check DNS to see if it resolves somewhere
-      try {
-        await dns.resolve4(domain);
-        return {
-          domain,
-          available: false,
-          reason: 'Domain already exists and resolves to an IP address',
-        };
-      } catch {
-        // Domain does not resolve - likely available
-        return {
-          domain,
-          available: true,
-        };
-      }
-    }, CACHE_TTL.SHORT);
+        // Also check DNS to see if it resolves somewhere
+        try {
+          await dns.resolve4(domain);
+          return {
+            domain,
+            available: false,
+            reason: 'Domain already exists and resolves to an IP address',
+          };
+        } catch {
+          // Domain does not resolve - likely available
+          return {
+            domain,
+            available: true,
+          };
+        }
+      },
+      CACHE_TTL.SHORT
+    );
   }
 
   /**
@@ -883,7 +1097,10 @@ class DomainManager {
    */
   async suggestDomains(domain: string, count: number = 5): Promise<string[]> {
     const suggestions: string[] = [];
-    const normalized = domain.toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    const normalized = domain
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/.*$/, '');
     const parts = normalized.split('.');
     const sld = parts[0];
     const tld = parts.length > 1 ? parts.slice(1).join('.') : 'com';
@@ -950,7 +1167,10 @@ class DomainManager {
   /**
    * Auto-provision subdomain for tenant
    */
-  async provisionSubdomainForTenant(tenantId: string, preferredSubdomain?: string): Promise<SubdomainProvisioningResult> {
+  async provisionSubdomainForTenant(
+    tenantId: string,
+    preferredSubdomain?: string
+  ): Promise<SubdomainProvisioningResult> {
     if (!supabase) {
       throw new Error('Supabase not configured');
     }
@@ -1058,7 +1278,10 @@ class DomainManager {
   ): DNSProviderInstructions {
     const records = this.getRequiredDNSRecords(domain, 'YOUR_VERIFICATION_TOKEN', 'txt');
 
-    const providerInstructions: Record<string, { steps: string[]; ttlRecommendation: number; estimatedPropagation: string }> = {
+    const providerInstructions: Record<
+      string,
+      { steps: string[]; ttlRecommendation: number; estimatedPropagation: string }
+    > = {
       cloudflare: {
         steps: [
           'Log in to Cloudflare Dashboard',
@@ -1168,7 +1391,9 @@ class DomainManager {
   /**
    * Check DNS propagation status
    */
-  async checkPropagationStatus(domain: string): Promise<{ propagated: boolean; nameservers?: string[] }> {
+  async checkPropagationStatus(
+    domain: string
+  ): Promise<{ propagated: boolean; nameservers?: string[] }> {
     try {
       const nameservers = await dns.resolveNs(domain);
 

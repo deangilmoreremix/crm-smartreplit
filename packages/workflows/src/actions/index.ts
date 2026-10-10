@@ -342,7 +342,8 @@ export const updateDealStageAction: ActionExecutor = async (context, config) => 
 };
 
 export const enrichContactAction: ActionExecutor = async (context, config) => {
-  const contactId = (config.contactId || (context as unknown as Record<string, unknown>).contactId) as string;
+  const contactId = (config.contactId ||
+    (context as unknown as Record<string, unknown>).contactId) as string;
 
   console.log(`[Workflow ${context.workflowId}] Enriching contact ${contactId}`);
   return {
@@ -354,22 +355,27 @@ export const enrichContactAction: ActionExecutor = async (context, config) => {
 export const registerAllActions = (engine: {
   registerAction: (type: string, executor: ActionExecutor) => void;
 }) => {
-  engine.registerAction('SEND_EMAIL', sendEmailAction);
-  engine.registerAction('UPDATE_FIELD', updateFieldAction);
-  engine.registerAction('CREATE_RECORD', createRecordAction);
-  engine.registerAction('CREATE_TASK', createTaskAction);
-  engine.registerAction('CREATE_NOTE', createNoteAction);
-  engine.registerAction('WEBHOOK', webhookAction);
-  engine.registerAction('CODE', codeAction);
-  engine.registerAction('WAIT', waitAction);
-  engine.registerAction('BRANCH', branchAction);
-  engine.registerAction('SEND_SMS', sendSmsAction);
-  engine.registerAction('CREATE_DEAL', createDealAction);
-  engine.registerAction('CREATE_CONTACT', createContactAction);
-  engine.registerAction('NOTIFY', notifyAction);
-  engine.registerAction('SCORE_CONTACT', scoreContactAction);
-  engine.registerAction('ADD_TAG', addTagAction);
-  engine.registerAction('REMOVE_TAG', removeTagAction);
-  engine.registerAction('UPDATE_DEAL_STAGE', updateDealStageAction);
-  engine.registerAction('ENRICH_CONTACT', enrichContactAction);
+  const register = (type: string, executor: ActionExecutor) => {
+    engine.registerAction(type, executor);
+    engine.registerAction(type.toLowerCase(), executor);
+  };
+
+  register('SEND_EMAIL', sendEmailAction);
+  register('UPDATE_FIELD', updateFieldAction);
+  register('CREATE_RECORD', createRecordAction);
+  register('CREATE_TASK', createTaskAction);
+  register('CREATE_NOTE', createNoteAction);
+  register('WEBHOOK', webhookAction);
+  register('CODE', codeAction);
+  register('WAIT', waitAction);
+  register('BRANCH', branchAction);
+  register('SEND_SMS', sendSmsAction);
+  register('CREATE_DEAL', createDealAction);
+  register('CREATE_CONTACT', createContactAction);
+  register('NOTIFY', notifyAction);
+  register('SCORE_CONTACT', scoreContactAction);
+  register('ADD_TAG', addTagAction);
+  register('REMOVE_TAG', removeTagAction);
+  register('UPDATE_DEAL_STAGE', updateDealStageAction);
+  register('ENRICH_CONTACT', enrichContactAction);
 };

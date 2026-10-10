@@ -5,7 +5,11 @@ export type WorkflowTriggerType =
   | 'MANUAL'
   | 'SCHEDULED'
   | 'WEBHOOK'
-  | 'AI_COMPLETED';
+  | 'AI_COMPLETED'
+  | 'CONTACT_CREATED'
+  | 'DEAL_STAGE_CHANGED'
+  | 'EMAIL_SENT'
+  | 'FORM_SUBMITTED';
 
 export type WorkflowRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -22,13 +26,22 @@ export enum WorkflowTrigger {
   MANUAL = 'manual',
   WEBHOOK = 'webhook',
   RECORD_DELETED = 'record_deleted',
+  AI_COMPLETED = 'ai_completed',
 }
 
 export enum WorkflowAction {
   SEND_EMAIL = 'send_email',
   UPDATE_FIELD = 'update_field',
+  CREATE_RECORD = 'create_record',
+  CREATE_CONTACT = 'create_contact',
   CREATE_TASK = 'create_task',
+  CREATE_NOTE = 'create_note',
+  CREATE_DEAL = 'create_deal',
   WEBHOOK = 'webhook',
+  CODE = 'code',
+  WAIT = 'wait',
+  BRANCH = 'branch',
+  SEND_SMS = 'send_sms',
   NOTIFY = 'notify',
   SCORE_CONTACT = 'score_contact',
   ADD_TAG = 'add_tag',
@@ -51,6 +64,8 @@ export enum ConditionOperator {
   IS_NOT_EMPTY = 'is_not_empty',
   INCLUDES = 'includes',
   NOT_INCLUDES = 'not_includes',
+  EXISTS = 'exists',
+  NOT_EXISTS = 'not_exists',
 }
 
 export enum LogicalOperator {

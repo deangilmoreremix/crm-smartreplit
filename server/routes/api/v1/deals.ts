@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { eq, and, desc, like } from 'drizzle-orm';
-import { deals, insertDealSchema, updateDealSchema } from '../../../shared/schema.js';
+import { deals, insertDealSchema, updateDealSchema } from '../../../../shared/schema.js';
 
 const router = Router();
 
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const { page = '1', limit = '50', stage, status, contactId } = req.query;
 
     let query = db.select().from(deals).where(eq(deals.profileId, userId!));
@@ -86,6 +86,45 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/pipeline/summary', async (req, res) => {
+  try {
+    const { userId, isAuthenticated } = checkAuth(req);
+    if (!isAuthenticated) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { db } = await import('../../../db.js');
+    const allDeals = await db.select().from(deals).where(eq(deals.profileId, userId!));
+
+    const stages = [
+      'prospecting',
+      'qualification',
+      'proposal',
+      'negotiation',
+      'closed-won',
+      'closed-lost',
+    ];
+    const summary = stages.map((stage) => {
+      const stageDeals = allDeals.filter((d) => d.stage === stage);
+      const totalValue = stageDeals.reduce((sum, d) => sum + parseFloat(d.value || '0'), 0);
+      return {
+        stage,
+        count: stageDeals.length,
+        totalValue,
+      };
+    });
+
+    res.json({
+      summary,
+      totalDeals: allDeals.length,
+      totalValue: allDeals.reduce((sum, d) => sum + parseFloat(d.value || '0'), 0),
+    });
+  } catch (error) {
+    console.error('Error fetching pipeline summary:', error);
+    res.status(500).json({ error: 'Failed to fetch pipeline summary' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const { userId, isAuthenticated } = checkAuth(req);
@@ -93,7 +132,7 @@ router.get('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const dealId = parseInt(req.params.id);
     const [deal] = await db
       .select()
@@ -118,7 +157,7 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const validatedData = insertDealSchema.parse({
       ...req.body,
       profileId: userId,
@@ -143,7 +182,7 @@ router.put('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const dealId = parseInt(req.params.id);
 
     const [existingDeal] = await db
@@ -183,7 +222,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const dealId = parseInt(req.params.id);
 
     const [deletedDeal] = await db
@@ -209,7 +248,7 @@ router.put('/:id/stage', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const dealId = parseInt(req.params.id);
     const { stage, probability } = req.body;
 
@@ -248,7 +287,7 @@ router.post('/:id/close', async (req, res) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { db } = await import('../../../server/db');
+    const { db } = await import('../../../db.js');
     const dealId = parseInt(req.params.id);
     const { won } = req.body;
 
@@ -265,6 +304,7 @@ router.post('/:id/close', async (req, res) => {
       .update(deals)
       .set({
         status: won ? 'won' : 'lost',
+        stage: won ? 'closed-won' : 'closed-lost',
         actualCloseDate: new Date(),
         lastActivityAt: new Date(),
         updatedAt: new Date(),
@@ -276,45 +316,6 @@ router.post('/:id/close', async (req, res) => {
   } catch (error) {
     console.error('Error closing deal:', error);
     res.status(500).json({ error: 'Failed to close deal' });
-  }
-});
-
-router.get('/pipeline/summary', async (req, res) => {
-  try {
-    const { userId, isAuthenticated } = checkAuth(req);
-    if (!isAuthenticated) {
-      return res.status(401).json({ error: 'Not authenticated' });
-    }
-
-    const { db } = await import('../../../server/db');
-    const allDeals = await db.select().from(deals).where(eq(deals.profileId, userId!));
-
-    const stages = [
-      'prospecting',
-      'qualification',
-      'proposal',
-      'negotiation',
-      'closed_won',
-      'closed_lost',
-    ];
-    const summary = stages.map((stage) => {
-      const stageDeals = allDeals.filter((d) => d.stage === stage);
-      const totalValue = stageDeals.reduce((sum, d) => sum + parseFloat(d.value || '0'), 0);
-      return {
-        stage,
-        count: stageDeals.length,
-        totalValue,
-      };
-    });
-
-    res.json({
-      summary,
-      totalDeals: allDeals.length,
-      totalValue: allDeals.reduce((sum, d) => sum + parseFloat(d.value || '0'), 0),
-    });
-  } catch (error) {
-    console.error('Error fetching pipeline summary:', error);
-    res.status(500).json({ error: 'Failed to fetch pipeline summary' });
   }
 });
 

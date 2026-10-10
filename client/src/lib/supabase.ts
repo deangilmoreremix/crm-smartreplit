@@ -8,7 +8,8 @@ const supabaseUrl =
 const rawAnonKey =
   (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY || '';
 const rawPublishableKey =
-  (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+  (import.meta as unknown as { env: Record<string, string> }).env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  '';
 const supabaseAnonKey = rawAnonKey || rawPublishableKey;
 
 // Debug logging for environment variables - MORE DETAILED
@@ -45,7 +46,13 @@ console.log('  - looksLikeRealUrl:', looksLikeRealUrl);
 
 // Check if Supabase is properly configured
 const supabaseIsConfigured =
-  hasUrl && hasKey && urlNotUndefined && keyNotUndefined && hasSupabaseDomain && noPlaceholder && looksLikeRealUrl;
+  hasUrl &&
+  hasKey &&
+  urlNotUndefined &&
+  keyNotUndefined &&
+  hasSupabaseDomain &&
+  noPlaceholder &&
+  looksLikeRealUrl;
 
 console.log('🔍 Final supabaseIsConfigured:', supabaseIsConfigured);
 
@@ -176,7 +183,7 @@ if (supabaseIsConfigured) {
       return { data: { success: true } };
     },
     getSession: async () => {
-      const { data, error } = supabaseClient.auth.getSession();
+      const { data, error } = await supabaseClient.auth.getSession();
       return { data, error };
     },
     getUser: async () => {

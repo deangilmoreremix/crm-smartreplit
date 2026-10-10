@@ -1,5 +1,5 @@
 import type { Express } from 'express';
-import { requireAuth(), requireAdmin } from './auth';
+import { requireAuth, requireAdmin } from './auth';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { db } from '../db';
 import {
@@ -10,14 +10,27 @@ import {
   partnerMetrics,
   partnerCustomers,
 } from '../../shared/schema';
-import { calculateCommission, createCommissionRecord, getPartnerCommissions } from '../services/commissionService';
-import { createPayout, processPayout, getPendingPayouts, getPayoutHistory, calculatePartnerPayout } from '../services/payoutService';
+import {
+  calculateCommission,
+  createCommissionRecord,
+  getPartnerCommissions,
+} from '../services/commissionService';
+import {
+  createPayout,
+  processPayout,
+  getPendingPayouts,
+  getPayoutHistory,
+  calculatePartnerPayout,
+} from '../services/payoutService';
 
 export function registerPartnersRoutes(app: Express): void {
   app.get('/api/partners', requireAuth(), async (req: any, res) => {
     try {
       const { db: dbConnection } = await import('../db');
-      const allPartners = await dbConnection.select().from(partners).orderBy(desc(partners.createdAt));
+      const allPartners = await dbConnection
+        .select()
+        .from(partners)
+        .orderBy(desc(partners.createdAt));
       res.json(allPartners);
     } catch (error) {
       console.error('Failed to fetch partners:', error);
@@ -29,7 +42,11 @@ export function registerPartnersRoutes(app: Express): void {
     try {
       const { id } = req.params;
       const { db: dbConnection } = await import('../db');
-      const [partner] = await dbConnection.select().from(partners).where(eq(partners.id, id)).limit(1);
+      const [partner] = await dbConnection
+        .select()
+        .from(partners)
+        .where(eq(partners.id, id))
+        .limit(1);
       if (!partner) {
         return res.status(404).json({ error: 'Partner not found' });
       }
@@ -77,7 +94,11 @@ export function registerPartnersRoutes(app: Express): void {
       const { name, email, company, phone, tierId, status, metadata } = req.body;
 
       const { db: dbConnection } = await import('../db');
-      const [existing] = await dbConnection.select().from(partners).where(eq(partners.id, id)).limit(1);
+      const [existing] = await dbConnection
+        .select()
+        .from(partners)
+        .where(eq(partners.id, id))
+        .limit(1);
       if (!existing) {
         return res.status(404).json({ error: 'Partner not found' });
       }
@@ -112,7 +133,11 @@ export function registerPartnersRoutes(app: Express): void {
       const { id } = req.params;
       const { db: dbConnection } = await import('../db');
 
-      const [partner] = await dbConnection.select().from(partners).where(eq(partners.id, id)).limit(1);
+      const [partner] = await dbConnection
+        .select()
+        .from(partners)
+        .where(eq(partners.id, id))
+        .limit(1);
       if (!partner) {
         return res.status(404).json({ error: 'Partner not found' });
       }
@@ -134,7 +159,8 @@ export function registerPartnersRoutes(app: Express): void {
         .limit(1);
 
       const previousRevenue = totalRevenue * 0.9;
-      const growthRate = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+      const growthRate =
+        previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
       res.json({
         partnerId: id,
@@ -171,7 +197,11 @@ export function registerPartnersRoutes(app: Express): void {
       }
 
       const { db: dbConnection } = await import('../db');
-      const [partner] = await dbConnection.select().from(partners).where(eq(partners.id, partnerId)).limit(1);
+      const [partner] = await dbConnection
+        .select()
+        .from(partners)
+        .where(eq(partners.id, partnerId))
+        .limit(1);
       if (!partner) {
         return res.status(404).json({ error: 'Partner not found' });
       }
@@ -189,7 +219,13 @@ export function registerPartnersRoutes(app: Express): void {
       }
 
       const commissionAmount = Math.round(amount * tierRate * 100) / 100;
-      const record = await createCommissionRecord(partnerId, customerId, amount, 'pending', metadata);
+      const record = await createCommissionRecord(
+        partnerId,
+        customerId,
+        amount,
+        'pending',
+        metadata
+      );
 
       res.status(201).json({
         commission: record,
@@ -285,7 +321,8 @@ export function registerPartnersRoutes(app: Express): void {
         totalPartners,
         activePartners,
         totalCustomers: customersCount,
-        averageCommissionRate: totalRevenue > 0 ? Math.round((totalCommissions / totalRevenue) * 10000) / 100 : 0,
+        averageCommissionRate:
+          totalRevenue > 0 ? Math.round((totalCommissions / totalRevenue) * 10000) / 100 : 0,
         monthlyGrowth: 0,
         metrics: {
           revenue: {
