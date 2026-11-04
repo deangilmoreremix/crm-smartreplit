@@ -17,6 +17,20 @@ export interface RequireAuthOptions {
   checkEntitlement?: boolean;
 }
 
+/**
+ * Verify a Supabase access token (sent by the client as a Bearer token).
+ * Returns the user, or null if the token is missing/invalid or Supabase is not configured.
+ */
+export async function verifySupabaseToken(
+  token: string
+): Promise<{ id: string; email?: string } | null> {
+  if (!token || !supabaseUrl || !serviceRoleKey) return null;
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) return null;
+  return { id: data.user.id, email: data.user.email };
+}
+
 function isRequireAuthOptions(arg: any): arg is RequireAuthOptions {
   return arg && typeof arg === 'object' && !('method' in arg) && !('headers' in arg);
 }
@@ -55,6 +69,15 @@ async function requireAuthHandler(
             role: 'super_admin',
             productTier: 'super_admin',
           };
+        }
+      }
+
+      if (!userId && authHeader?.startsWith('Bearer ')) {
+        const user = await verifySupabaseToken(authHeader.substring(7));
+        if (user) {
+          userId = user.id;
+          userEmail = user.email;
+          isAuthenticated = true;
         }
       }
     }
@@ -122,8 +145,15 @@ export const requireAuth = (options?: RequireAuthOptions | Request) => {
  */
 export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req.session as any)?.userId;
-    const userEmail = (req.session as any)?.userEmail;
+    let userId = (req as any).userId ?? (req.session as any)?.userId;
+    let userEmail = (req as any).userEmail ?? (req.session as any)?.userEmail;
+
+    const authHeader = req.headers.authorization;
+    if (!userId && authHeader?.startsWith('Bearer ')) {
+      const user = await verifySupabaseToken(authHeader.substring(7));
+      userId = user?.id;
+      userEmail = user?.email;
+    }
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized - Not authenticated' });

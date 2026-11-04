@@ -16,24 +16,15 @@ port = 8888
 [functions]
 node_bundler = "esbuild"
 
+# Express API (server/netlify-api.ts) — must come before the SPA fallback,
+# because Netlify applies the first matching rule
+[[redirects]]
+from = "/api/*"
+to = "/.netlify/functions/api/:splat"
+status = 200
+
 # SPA fallback for client-side routing
 [[redirects]]
 from = "/*"
 to = "/index.html"
-status = 200
-
-# API redirects to Netlify Functions
-[[redirects]]
-from = "/api/openai/smart-greeting"
-to = "/.netlify/functions/openai"
-status = 200
-
-[[redirects]]
-from = "/api/openai/kpi-analysis"
-to = "/.netlify/functions/openai"
-status = 200
-
-[[redirects]]
-from = "/api/openai/business-intelligence"
-to = "/.netlify/functions/openai"
 status = 200

@@ -1,5 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid, pgEnum } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
+import { createInsertSchema } from 'drizzle-zod';
 
 export const userRoles = ['super_admin', 'wl_user', 'regular_user'] as const;
 export type UserRole = (typeof userRoles)[number];
@@ -709,3 +710,155 @@ export type AIFeatureUsage = typeof aiFeatureUsage.$inferSelect;
 export type InsertAIFeatureUsage = typeof aiFeatureUsage.$inferInsert;
 export type InsertCommission = typeof commissions.$inferInsert;
 export type InsertPayout = typeof payouts.$inferInsert;
+
+// Restored definitions still imported by server routes/services
+// (accidentally dropped from this file in 00a8405)
+
+export const contactCustomFields = pgTable('contact_custom_fields', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
+  fieldKey: text('field_key').notNull(),
+  fieldValue: jsonb('field_value'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const contactActivities = pgTable('contact_activities', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  contactId: integer('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
+  activityType: text('activity_type').notNull(),
+  description: text('description'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const automationRules = pgTable('automation_rules', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  trigger: json('trigger'), // JSON object defining trigger conditions
+  actions: json('actions'), // JSON array of actions to perform
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+  profileId: uuid('profile_id').references(() => profiles.id),
+});
+
+export const userCredits = pgTable('user_credits', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => profiles.id),
+  tenantId: uuid('tenant_id'),
+  totalCredits: decimal('total_credits', { precision: 12, scale: 4 }).default('0'),
+  usedCredits: decimal('used_credits', { precision: 12, scale: 4 }).default('0'),
+  availableCredits: decimal('available_credits', { precision: 12, scale: 4 }).default('0'),
+  lastPurchaseAt: timestamp('last_purchase_at'),
+  version: integer('version').default(1), // Optimistic locking version
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const creditTransactions = pgTable('credit_transactions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => profiles.id),
+  tenantId: uuid('tenant_id'),
+  type: text('type').notNull(), // 'purchase', 'usage', 'refund', 'admin_grant'
+  amount: decimal('amount', { precision: 12, scale: 4 }).notNull(), // Positive for purchases/grants, negative for usage
+  description: text('description'),
+  balanceBefore: decimal('balance_before', { precision: 12, scale: 4 }),
+  balanceAfter: decimal('balance_after', { precision: 12, scale: 4 }),
+  stripeTransactionId: text('stripe_transaction_id'), // Link to Stripe if purchased
+  usageEventId: uuid('usage_event_id'), // Link to usage event if deducted for usage
+  idempotencyKey: varchar('idempotency_key', { length: 64 }), // For duplicate prevention
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const resellerCredits = pgTable('reseller_credits', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  resellerId: uuid('reseller_id')
+    .references(() => profiles.id)
+    .notNull()
+    .unique(),
+  wholesaleCreditsPurchased: integer('wholesale_credits_purchased').default(0),
+  wholesaleCreditsUsed: integer('wholesale_credits_used').default(0),
+  wholesaleCreditsAvailable: integer('wholesale_credits_available').default(0),
+  totalRevenueCents: integer('total_revenue_cents').default(0),
+  totalProfitCents: integer('total_profit_cents').default(0),
+  lastPurchaseAt: timestamp('last_purchase_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const resellerCreditTransactions = pgTable('reseller_credit_transactions', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  resellerId: uuid('reseller_id')
+    .references(() => profiles.id)
+    .notNull(),
+  type: text('type').notNull(), // 'wholesale_purchase', 'retail_sale', 'payout'
+  creditsAmount: integer('credits_amount').notNull(),
+  amountCents: integer('amount_cents'),
+  endUserId: uuid('end_user_id').references(() => profiles.id),
+  featureKey: text('feature_key'),
+  description: text('description'),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const insertContactSchema = createInsertSchema(contacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDealSchema = createInsertSchema(deals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+});
+
+export const insertAppointmentSchema = createInsertSchema(appointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCommunicationSchema = createInsertSchema(communications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateNoteSchema = insertNoteSchema.partial().omit({
+  profileId: true, // Never allow updating profileId
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true,
+});

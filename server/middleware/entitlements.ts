@@ -111,8 +111,9 @@ interface UserEntitlement {
 export function requireEntitlement(featureKey: FeatureKey) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req.session as any)?.userId;
-      const userEmail = (req.session as any)?.userEmail;
+      // requireAuth() sets these on req (session, dev bypass or Supabase token)
+      const userId = (req as any).userId ?? (req.session as any)?.userId;
+      const userEmail = (req as any).userEmail ?? (req.session as any)?.userEmail;
 
       if (!userId && !userEmail) {
         return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
@@ -190,8 +191,9 @@ export function requireEntitlement(featureKey: FeatureKey) {
 export function requireOneOfEntitlements(featureKeys: FeatureKey[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req.session as any)?.userId;
-      const userEmail = (req.session as any)?.userEmail;
+      // requireAuth() sets these on req (session, dev bypass or Supabase token)
+      const userId = (req as any).userId ?? (req.session as any)?.userId;
+      const userEmail = (req as any).userEmail ?? (req.session as any)?.userEmail;
 
       if (!userId && !userEmail) {
         return res.status(401).json({ error: 'Unauthorized - Not authenticated' });

@@ -87,12 +87,13 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.use('/api/companies', companiesRoutes);
 
   // Register OpenAI routes
+  // These routers declare full /api/openai/... paths, so mount them at the root
   console.log('Registering OpenAI routes at /api/openai');
-  app.use('/api/openai', openaiRoutes);
+  app.use(openaiRoutes);
 
   // Register OpenAI Responses API routes
   console.log('Registering OpenAI Responses API routes at /api/openai');
-  app.use('/api/openai', openaiResponsesRoutes);
+  app.use(openaiResponsesRoutes);
 
   // Register domains routes
   console.log('Registering domains routes at /api/domains');
