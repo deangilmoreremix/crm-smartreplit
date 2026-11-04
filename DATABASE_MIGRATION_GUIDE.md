@@ -123,7 +123,7 @@ In your Netlify dashboard, update the `DATABASE_URL` environment variable:
 **Old Value (Neon):**
 
 ```
-postgresql://neondb_owner:npg_m3wCI0Kcuzxh@ep-lucky-pond-adj1appn.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+postgresql://neondb_owner:YOUR_DB_PASSWORD@ep-lucky-pond-adj1appn.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
 **New Value (Supabase):**

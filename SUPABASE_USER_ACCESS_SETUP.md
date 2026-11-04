@@ -89,9 +89,9 @@ All edge functions use:
 In your Netlify site settings, add these environment variables:
 
 ```
-DATABASE_URL=postgresql://postgres:VideoRemix2026@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:YOUR_DB_PASSWORD@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres
 SUPABASE_URL=https://bzxohkrxcwodllketcpz.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6eG9oa3J4Y3dvZGxsa2V0Y3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg2NjM4NSwiZXhwIjoyMDg5NDQyMzg1fQ.S5HmTONnamT169WYF0riSphXij-Mwtk7D3pphfSrCFE
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 VITE_SUPABASE_URL=https://bzxohkrxcwodllketcpz.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_-CX9glOjtolD9mPJqjHlaQ_bFxkQZn6
 ```

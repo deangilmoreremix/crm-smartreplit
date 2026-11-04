@@ -8,9 +8,9 @@
 
 # =====================================================
 
-DATABASE*URL=postgresql://postgres:VideoRemix2026@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres
+DATABASE*URL=postgresql://postgres:YOUR_DB_PASSWORD@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres
 SUPABASE_URL=https://bzxohkrxcwodllketcpz.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6eG9oa3J4Y3dvZGxsa2V0Y3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg2NjM4NSwiZXhwIjoyMDg5NDQyMzg1fQ.S5HmTONnamT169WYF0riSphXij-Mwtk7D3pphfSrCFE
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 SUPABASE_ANON_KEY=sb_publishable*-CX9glOjtolD9mPJqjHlaQ_bFxkQZn6
 
 # Client-side Supabase (VITE\_ prefix - safe to expose)

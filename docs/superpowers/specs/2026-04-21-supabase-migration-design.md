@@ -29,9 +29,9 @@ Replace the current Neon-specific database setup with a standard PostgreSQL conn
 
 Update environment variables to use the new Supabase credentials:
 
-- Set `DATABASE_URL` to: `postgresql://postgres:VideoRemix2026@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres`
+- Set `DATABASE_URL` to: `postgresql://postgres:YOUR_DB_PASSWORD@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres`
 - Update client environment with the new publishable key (changing from VITE_SUPABASE_ANON_KEY to VITE_SUPABASE_PUBLISHABLE_KEY if needed)
-- Add server-side environment variables for SUPABASE_SERVICE_ROLE_KEY: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6eG9oa3J4Y3dvZGxsa2V0Y3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg2NjM4NSwiZXhwIjoyMDg5NDQyMzg1fQ.S5HmTONnamT169WYF0riSphXij-Mwtk7D3pphfSrCFE`
+- Add server-side environment variables for SUPABASE_SERVICE_ROLE_KEY: `YOUR_SERVICE_ROLE_KEY`
 
 ### Dependencies Management
 

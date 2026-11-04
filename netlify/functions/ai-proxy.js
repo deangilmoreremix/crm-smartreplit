@@ -1,3 +1,15 @@
+// Verify the caller's Supabase access token against Supabase Auth
+async function isAuthenticated(request) {
+  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!token || !supabaseUrl || !apiKey) return false;
+  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: apiKey }
+  });
+  return res.ok;
+}
+
 export default async (request, context) => {
   try {
     if (request.method !== "POST") {
@@ -23,6 +35,13 @@ export default async (request, context) => {
     let apiKey = userApiKey;
     
     if (!apiKey) {
+      // Server-held keys may only be spent by signed-in users
+      if (!(await isAuthenticated(request))) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
       // If no user-provided key, try environment variable
       const envVarName = `SMARTCRM_${provider.toUpperCase()}_API_KEY`;
       apiKey = process.env[envVarName];

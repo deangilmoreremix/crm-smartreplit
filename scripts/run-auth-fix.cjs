@@ -7,8 +7,7 @@ const { Pool } = require('pg');
 
 // Use the DATABASE_URL from environment
 const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres.gadedbrnqzpfqtsdfzcg:ParkerDean0805!@aws-0-us-east-1.pooler.supabase.com:5432/postgres';
+  process.env.DATABASE_URL;
 
 const pool = new Pool({
   connectionString: DATABASE_URL,

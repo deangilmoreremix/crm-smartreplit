@@ -49,7 +49,10 @@ Deno.serve(async (req) => {
     }
 
     if (!userId) {
-      userId = '63491d04-4227-43fc-a320-0270679ab286'
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const tenantId = '00000000-0000-0000-0000-000000000001'
