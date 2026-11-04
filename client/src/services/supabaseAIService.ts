@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAnonKey } from '../lib/supabase';
 
 export interface AIModelConfig {
   id: string;
@@ -180,7 +180,7 @@ class SupabaseAIService {
     try {
       // Check if environment variables are set to actual values (not placeholders)
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseKey = supabaseAnonKey;
 
       if (
         !supabaseUrl ||

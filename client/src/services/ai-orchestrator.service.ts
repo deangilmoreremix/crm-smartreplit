@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger.service';
+import { supabaseAnonKey } from '../lib/supabase';
 import { cacheService } from './cache.service';
 import { rateLimiter } from './rate-limiter.service';
 import { httpClient } from './http-client.service';
@@ -286,7 +287,7 @@ class AIOrchestrator {
 
   private async callProvider(provider: AIProvider, request: AIRequest): Promise<any> {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseKey = supabaseAnonKey;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase configuration missing');
@@ -383,7 +384,7 @@ class AIOrchestrator {
   private async callAssistantThread(provider: AIProvider, request: AIRequest): Promise<any> {
     // This method handles assistant thread-based requests
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseKey = supabaseAnonKey;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase configuration missing');

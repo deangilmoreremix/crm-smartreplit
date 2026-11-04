@@ -133,7 +133,7 @@ export default async (request, context) => {
       payload = {
         model,
         messages,
-        temperature: temperature || 0.7,
+        temperature: temperature ?? 0.7,
         max_tokens: maxTokens,
         stream: stream || false
       };

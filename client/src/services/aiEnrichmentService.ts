@@ -1,6 +1,7 @@
 // AI Contact Enrichment Service - OpenAI & Gemini Integration
 import { httpClient } from './http-client.service';
 import { logger } from './logger.service';
+import { supabaseAnonKey } from '../lib/supabase';
 
 export interface ContactEnrichmentData {
   firstName?: string;
@@ -46,7 +47,7 @@ class AIEnrichmentService {
   constructor() {
     // Get Supabase URL and anon key from environment
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    const supabaseKey = supabaseAnonKey || '';
 
     if (!supabaseUrl || !supabaseKey) {
       console.warn('Supabase environment variables not defined, using fallback mode');
@@ -116,7 +117,7 @@ class AIEnrichmentService {
           timeout: includeSocialResearch ? 60000 : 30000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
           },
         }
       );
@@ -157,7 +158,7 @@ class AIEnrichmentService {
           timeout: 30000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
           },
         }
       );
@@ -198,7 +199,7 @@ class AIEnrichmentService {
           timeout: 45000,
           retries: 1,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
           },
         }
       );
@@ -231,7 +232,7 @@ class AIEnrichmentService {
           timeout: 30000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
           },
         }
       );
@@ -305,7 +306,7 @@ class AIEnrichmentService {
           timeout: 90000,
           retries: 1,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
           },
         }
       );

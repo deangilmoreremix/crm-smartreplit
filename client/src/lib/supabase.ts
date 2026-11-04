@@ -240,3 +240,6 @@ export const checkSupabaseConnection = async (): Promise<{
 
 // Export named exports
 export { supabaseClient as supabase, authClient as auth };
+
+// Anon/publishable key (accepts VITE_SUPABASE_ANON_KEY or VITE_SUPABASE_PUBLISHABLE_KEY)
+export { supabaseAnonKey };

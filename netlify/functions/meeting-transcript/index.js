@@ -178,8 +178,8 @@ async function handler(event, context) {
     // Get AI provider configuration from user settings or environment
     const { data: userData, error: userError } = await getSupabaseClient()
       .from('user_api_keys')
-      .select('openai_api_key, anthropic_api_key, gemini_api_key')
-      .eq('id', user.id)
+      .select('openai_api_key, gemini_api_key')
+      .eq('user_id', user.id)
       .single();
     
     if (userError) {

@@ -5,6 +5,7 @@
 
 import { httpClient } from './http-client.service';
 import { logger } from './logger.service';
+import { supabaseAnonKey } from '../lib/supabase';
 import { Contact } from '../types';
 
 export interface SocialPlatformProfile {
@@ -204,7 +205,7 @@ class GPT5SocialResearchService {
           timeout: 60000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         }
       );

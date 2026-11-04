@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { logger } from '../services/logger.service';
+import { supabaseAnonKey } from '../lib/supabase';
 import { Contact } from '../types';
 
 interface EmailComposition {
@@ -95,7 +96,7 @@ export const useEmailAI = () => {
         // Get Supabase URL and key from environment
         // Use environment variables or fallback
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+        const supabaseKey = supabaseAnonKey || '';
 
         if (!supabaseUrl || !supabaseKey) {
           console.warn('Supabase environment variables not defined, using fallback mode');
@@ -179,7 +180,7 @@ export const useEmailAI = () => {
       try {
         // Get Supabase URL and key from environment
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+        const supabaseKey = supabaseAnonKey || '';
 
         if (!supabaseUrl || !supabaseKey) {
           console.warn('Supabase environment variables not defined, using fallback mode');
@@ -262,7 +263,7 @@ export const useEmailAI = () => {
       try {
         // Get Supabase URL and key from environment
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+        const supabaseKey = supabaseAnonKey || '';
 
         if (!supabaseUrl || !supabaseKey) {
           console.warn('Supabase environment variables not defined, using fallback mode');
@@ -340,7 +341,7 @@ export const useEmailAI = () => {
     try {
       // Get Supabase URL and key from environment
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseKey = supabaseAnonKey;
 
       if (!supabaseUrl || !supabaseKey) {
         console.warn('Supabase environment variables not defined, using fallback mode');
