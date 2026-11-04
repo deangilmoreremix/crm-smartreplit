@@ -33,16 +33,6 @@ interface AIProviderSettingsProps {
 // Define provider info locally for UI (actual providers are handled server-side)
 const PROVIDER_INFO = {
   openai: { name: 'OpenAI', type: 'direct' },
-  openrouter: { name: 'OpenRouter', type: 'aggregator' },
-  anthropic: { name: 'Anthropic', type: 'direct' },
-  google: { name: 'Google AI', type: 'direct' },
-  together: { name: 'Together AI', type: 'aggregator' },
-  groq: { name: 'Groq', type: 'aggregator' },
-  cohere: { name: 'Cohere', type: 'direct' },
-  mistral: { name: 'Mistral', type: 'direct' },
-  deepinfra: { name: 'DeepInfra', type: 'aggregator' },
-  fireworks: { name: 'Fireworks', type: 'aggregator' },
-  perplexity: { name: 'Perplexity', type: 'aggregator' },
 };
 
 // Simple local key manager for client-side storage
@@ -194,14 +184,8 @@ const AIProviderSettings: React.FC<AIProviderSettingsProps> = ({ className }) =>
         },
         body: JSON.stringify({
           provider: providerId,
-          model:
-            providerId === 'openai'
-              ? 'gpt-5.4'
-              : providerId === 'openrouter'
-                ? 'openai/gpt-5.4'
-                : providerId === 'anthropic'
-                  ? 'claude-3.5-sonnet-20241022'
-                  : 'gpt-3.5-turbo', // fallback
+          apiKey: LocalKeyManager.getKeys().find((k: any) => k.providerId === providerId)?.apiKey,
+          model: 'gpt-6-luna',
           messages: [{ role: 'user', content: 'Hello, test message' }],
           maxTokens: 50,
         }),

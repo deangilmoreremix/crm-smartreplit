@@ -2,17 +2,13 @@
 // Handles AI agent operations with streaming support
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { getUserOpenAI, NO_KEY_MESSAGE, DEFAULT_MODEL, ADVANCED_MODEL } from '../_shared/userOpenAI.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -47,6 +43,14 @@ Deno.serve(async (req) => {
     }
 
     const tenantId = user.user_metadata?.tenant_id || user.id
+
+    // OpenAI client from the caller's own key, created on first AI use
+    let openaiClient: any = null
+    const getOpenAI = async () => {
+      openaiClient ??= await getUserOpenAI(user.id)
+      if (!openaiClient) throw Object.assign(new Error(NO_KEY_MESSAGE), { needsApiKey: true })
+      return openaiClient
+    }
     const { method, url } = req
 
     const urlObj = new URL(url)
@@ -259,8 +263,8 @@ Deno.serve(async (req) => {
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              const completion = await openai.chat.completions.create({
-                model: 'gpt-4o',
+              const completion = await (await getOpenAI()).chat.completions.create({
+                model: ADVANCED_MODEL,
                 messages: [
                   { role: 'system', content: systemPrompt },
                   ...messages.map((m: any) => ({
@@ -317,8 +321,8 @@ Deno.serve(async (req) => {
     })
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message, needsApiKey: error.needsApiKey || undefined }), { 
+      status: error.needsApiKey ? 400 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     })
   }
@@ -341,9 +345,11 @@ async function executeAgentStream(
     
     systemPrompt += `\n\nAgent ID: ${agentId}\nExecution ID: ${executionId}`
 
-    // Use OpenAI for intelligent response
+    // Use OpenAI (the user's own key) for intelligent response
+    const openai = await getUserOpenAI(userId)
+    if (!openai) throw new Error(NO_KEY_MESSAGE)
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: ADVANCED_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: JSON.stringify(inputData) }

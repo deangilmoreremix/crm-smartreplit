@@ -26,10 +26,9 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   const { apiConfig, isLoading, saveApiKeys, testConnection } = useAIApiKeys();
   const [internalOpen, setInternalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [provider, setProvider] = useState<'openai' | 'gemini' | 'openclaw'>('openai');
+  const [provider, setProvider] = useState<'openai' | 'openclaw'>('openai');
   const [localApiConfig, setLocalApiConfig] = useState({
-    openai: { apiKey: '', model: 'gpt-4.1' },
-    gemini: { apiKey: '', model: 'gemini-1.5-flash' },
+    openai: { apiKey: '', model: 'gpt-6-luna' },
     openclaw: { apiKey: '', model: 'default', baseUrl: '' }
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -46,21 +45,15 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   };
 
   const steps = [
-    { title: 'Choose Your AI Provider', description: 'Select OpenAI, Google Gemini, or OpenClaw AI' },
+    { title: 'Choose Your AI Provider', description: 'Select OpenAI or OpenClaw AI' },
     { title: 'Select Your Model', description: 'Choose the model that best fits your needs' },
     { title: 'Enter Your API Key', description: 'Provide your secure API key' },
     { title: 'Verify & Complete', description: 'Test the connection and finish setup' }
   ];
 
   const currentModels = provider === 'openai' ? [
-    { value: 'gpt-4.1', label: 'GPT-4.1', description: 'Most capable GPT-4.1 model for complex reasoning, coding, and instruction-following', pricing: '$2.00 / $8.00 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', description: 'Balanced GPT-4.1 model optimized for speed and cost-efficiency', pricing: '$0.40 / $1.60 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano', description: 'Fastest, most affordable GPT-4.1 model for lightweight tasks and high throughput', pricing: '$0.10 / $0.40 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'o3', label: 'o3', description: 'Advanced reasoning model with extended thinking for math, science, and complex problem-solving', pricing: '$2.00 / $8.00 per 1M tokens', contextLength: '200K tokens' },
-    { value: 'o4-mini', label: 'o4-mini', description: 'Fast, cost-efficient reasoning model ideal for coding, math, and agentic tasks at scale', pricing: '$0.60 / $2.40 per 1M tokens', contextLength: '200K tokens' }
-  ] : provider === 'gemini' ? [
-    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Fast, efficient model optimized for speed', pricing: '$0.000075/$0.00015 per 1K tokens', contextLength: '1M tokens' },
-    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'Most capable model for complex reasoning', pricing: '$0.00125/$0.0025 per 1K tokens', contextLength: '1M tokens' }
+    { value: 'gpt-6-luna', label: 'GPT-6 Luna', description: 'Efficient model for high-volume, everyday CRM tasks', pricing: '$0.10 / $0.50 per 1M tokens', contextLength: '1M tokens' },
+    { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', description: 'Near-flagship model for complex analysis and reasoning', pricing: '$2.00 / $10.00 per 1M tokens', contextLength: '1.05M tokens' }
   ] : [
     { value: 'default', label: 'OpenClaw Default', description: 'Standard OpenClaw AI configuration', pricing: 'Custom pricing', contextLength: 'Varies by deployment' },
     { value: 'enhanced', label: 'OpenClaw Enhanced', description: 'Enhanced AI capabilities for advanced CRM tasks', pricing: 'Custom pricing', contextLength: 'Varies by deployment' }
@@ -73,8 +66,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
       // Pre-populate from saved config so user sees what they already have
       if (apiConfig) {
         setLocalApiConfig({
-          openai: { apiKey: apiConfig.openai?.apiKey || '', model: apiConfig.openai?.model || 'gpt-4.1' },
-          gemini: { apiKey: apiConfig.gemini?.apiKey || '', model: apiConfig.gemini?.model || 'gemini-1.5-flash' },
+          openai: { apiKey: apiConfig.openai?.apiKey || '', model: apiConfig.openai?.model || 'gpt-6-luna' },
           openclaw: { apiKey: apiConfig.openclaw?.apiKey || '', model: apiConfig.openclaw?.model || 'default', baseUrl: apiConfig.openclaw?.baseUrl || '' }
         });
         // Auto-select the provider that has a saved key (or default to openai / openclaw)
@@ -84,14 +76,14 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
           // If they already have a key, go to step 3 (review), otherwise step 2 (enter key)
           setCurrentStep(apiConfig.openclaw?.apiKey ? 2 : 2);
         } else {
-          const savedProvider = apiConfig.openclaw?.apiKey ? 'openclaw' : apiConfig.gemini?.apiKey ? 'gemini' : apiConfig.openai?.apiKey ? 'openai' : 'openai';
+          const savedProvider = apiConfig.openclaw?.apiKey ? 'openclaw' : 'openai';
           setProvider(savedProvider);
         }
       }
     }
   }, [isOpen, apiConfig, preferOpenClawOnOpen]);
 
-  const handleProviderSelect = (selectedProvider: 'openai' | 'gemini' | 'openclaw') => {
+  const handleProviderSelect = (selectedProvider: 'openai' | 'openclaw') => {
     setProvider(selectedProvider);
     setCurrentStep(1);
   };
@@ -187,7 +179,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800">Choose Your AI Provider</h3>
               <p className="text-gray-600">Select which AI provider you want to use for enhanced CRM features.</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                   onClick={() => handleProviderSelect('openai')}
                   className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-left group"
@@ -196,17 +188,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
                     <Brain size={24} className="text-white" />
                   </div>
                   <h4 className="font-semibold text-gray-800 mb-2">OpenAI</h4>
-                  <p className="text-sm text-gray-600">GPT-4, o1, and other cutting-edge models for advanced reasoning and creativity.</p>
-                </button>
-                <button
-                  onClick={() => handleProviderSelect('gemini')}
-                  className="p-6 border-2 border-gray-200 rounded-xl hover:border-teal-500 hover:bg-teal-50 transition-all text-left group"
-                >
-                  <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Globe size={24} className="text-white" />
-                  </div>
-                  <h4 className="font-semibold text-gray-800 mb-2">Google Gemini</h4>
-                  <p className="text-sm text-gray-600">Gemini 1.5 and 2.0 series with massive context windows.</p>
+                  <p className="text-sm text-gray-600">GPT-6 Luna and GPT-6.1 Sol for everyday tasks and advanced analysis.</p>
                 </button>
                 <button
                   onClick={() => handleProviderSelect('openclaw')}
@@ -277,11 +259,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {provider === 'openai'
-                      ? 'OpenAI API Key'
-                      : provider === 'gemini'
-                        ? 'Google AI API Key'
-                        : 'OpenClaw API Key'}
+                    {provider === 'openai' ? 'OpenAI API Key' : 'OpenClaw API Key'}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -296,13 +274,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
                           [provider]: { ...prev[provider], apiKey: e.target.value }
                         }))
                       }
-                      placeholder={
-                        provider === 'openai'
-                          ? 'sk-XXXXXXXXXXXXXXXXXXXX'
-                          : provider === 'gemini'
-                            ? 'AIzaSyXXXXXXXXXXXXXXXXX'
-                            : 'oc-skr-XXXXXXXXXXXXXXXXXXXX'
-                      }
+                      placeholder={provider === 'openai' ? 'sk-XXXXXXXXXXXXXXXXXXXX' : 'oc-skr-XXXXXXXXXXXXXXXXXXXX'}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -379,7 +351,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
                 <p className="text-gray-600 mt-2">
                   You've selected{' '}
                   <strong>
-                    {provider === 'openai' ? 'OpenAI' : provider === 'gemini' ? 'Google Gemini' : 'OpenClaw AI'}
+                    {provider === 'openai' ? 'OpenAI' : 'OpenClaw AI'}
                   </strong>
                   {provider !== 'openclaw' && (
                     <> with the <strong>{localApiConfig[provider].model}</strong> model.</>

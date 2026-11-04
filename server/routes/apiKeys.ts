@@ -1,6 +1,6 @@
 /**
  * User API Keys Routes
- * CRUD operations for user-provided OpenAI and Gemini API keys
+ * CRUD operations for user-provided OpenAI API keys
  */
 
 import type { Express, Request, Response } from 'express';
@@ -8,6 +8,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { userApiKeys } from '../../shared/schema';
 import { requireAuth } from './auth';
+import { DEFAULT_MODEL } from '../services/openaiModels';
 
 // Google AI interface for testing
 interface GoogleAIResponse {
@@ -66,8 +67,8 @@ export function registerApiKeyRoutes(app: Express) {
       const { provider, apiKey, apiKeyName, model, isDefault } = req.body;
 
       // Validate provider
-      if (!provider || !['openai', 'gemini'].includes(provider)) {
-        return res.status(400).json({ error: 'Provider must be "openai" or "gemini"' });
+      if (provider !== 'openai') {
+        return res.status(400).json({ error: 'Provider must be "openai"' });
       }
 
       // Validate API key format
@@ -82,16 +83,26 @@ export function registerApiKeyRoutes(app: Express) {
         });
       }
 
-      if (provider === 'gemini' && !apiKey.startsWith('AIza')) {
-        return res.status(400).json({
-          error: 'Invalid Gemini API key format. Key must start with "AIza"',
-        });
-      }
-
       // Check if user already has a key for this provider
       const existingKeys = await db.query.userApiKeys.findMany({
         where: and(eq(userApiKeys.userId, userId), eq(userApiKeys.provider, provider)),
       });
+
+      // One key per provider per user (UNIQUE (user_id, provider)): saving again replaces the key
+      if (existingKeys.length > 0) {
+        const [updatedKey] = await db
+          .update(userApiKeys)
+          .set({
+            apiKey: apiKey.trim(),
+            ...(model !== undefined && { model: model || null }),
+            isActive: true,
+            isDefault: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(userApiKeys.id, existingKeys[0].id))
+          .returning();
+        return res.json({ success: true, key: { ...updatedKey, apiKey: maskApiKey(updatedKey.apiKey) } });
+      }
 
       // If setting as default, unset any existing default for this provider
       if (isDefault && existingKeys.length > 0) {
@@ -158,8 +169,6 @@ export function registerApiKeyRoutes(app: Express) {
 
       if (apiKeyRecord.provider === 'openai') {
         testResult = await testOpenAIKey(apiKeyRecord.apiKey);
-      } else if (apiKeyRecord.provider === 'gemini') {
-        testResult = await testGeminiKey(apiKeyRecord.apiKey);
       } else {
         return res.status(400).json({ error: 'Unknown provider' });
       }
@@ -314,8 +323,8 @@ export function registerApiKeyRoutes(app: Express) {
         return res.status(503).json({ error: 'Database not available' });
       }
 
-      if (!['openai', 'gemini'].includes(provider)) {
-        return res.status(400).json({ error: 'Provider must be "openai" or "gemini"' });
+      if (provider !== 'openai') {
+        return res.status(400).json({ error: 'Provider must be "openai"' });
       }
 
       // Get the default active key for this provider
@@ -384,11 +393,8 @@ async function testOpenAIKey(apiKey: string): Promise<{ success: boolean; error?
   try {
     const OpenAI = (await import('openai')).default;
     const client = new OpenAI({ apiKey });
-    await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: 'test' }],
-      max_tokens: 1,
-    });
+    // Validates the key and access to the app's default model without spending tokens
+    await client.models.retrieve(DEFAULT_MODEL);
     return { success: true };
   } catch (error: any) {
     return {
@@ -398,34 +404,3 @@ async function testOpenAIKey(apiKey: string): Promise<{ success: boolean; error?
   }
 }
 
-// Helper: Test Gemini API key
-async function testGeminiKey(apiKey: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'test' }] }],
-          generationConfig: { maxOutputTokens: 1 },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData?.error?.message || `Gemini API error: ${response.status}`,
-      };
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error?.message || 'Gemini API key validation failed',
-    };
-  }
-}

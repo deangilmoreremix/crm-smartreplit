@@ -3,12 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import { registerRoutes } from './routes';
 import { log } from './log';
+import { requestContext } from './services/requestContext';
 import { corsConfig, securityHeaders } from './middleware/security';
 import { healthCheckMiddleware } from './health';
 
 export const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// Per-request context (lets AI helpers find the signed-in user's OpenAI key).
+// Registered after the body parsers, whose stream callbacks would lose the context.
+app.use((_req, _res, next) => requestContext.run({}, next));
 
 // Security middleware
 app.use(securityHeaders);

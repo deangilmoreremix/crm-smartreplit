@@ -2,17 +2,13 @@
 // Handles CRUD operations with AI-powered deal intelligence and predictions
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { getUserOpenAI, NO_KEY_MESSAGE, DEFAULT_MODEL, ADVANCED_MODEL } from '../_shared/userOpenAI.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -47,6 +43,14 @@ Deno.serve(async (req) => {
     }
 
     const tenantId = user.user_metadata?.tenant_id || user.id
+
+    // OpenAI client from the caller's own key, created on first AI use
+    let openaiClient: any = null
+    const getOpenAI = async () => {
+      openaiClient ??= await getUserOpenAI(user.id)
+      if (!openaiClient) throw Object.assign(new Error(NO_KEY_MESSAGE), { needsApiKey: true })
+      return openaiClient
+    }
     const { method, url } = req
 
     const urlObj = new URL(url)
@@ -99,8 +103,8 @@ Deno.serve(async (req) => {
           - competitive_advantages (array)
           - deal_health_score (0-100)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: ADVANCED_MODEL,
           messages: [{ role: 'user', content: predictionPrompt }],
           response_format: { type: 'json_object' },
           temperature: 0.3,
@@ -154,8 +158,8 @@ Deno.serve(async (req) => {
           - momentum_analysis (improving/declining/stable)
           - key_stakeholders (array of contact names)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: ADVANCED_MODEL,
           messages: [{ role: 'user', content: summaryPrompt }],
           response_format: { type: 'json_object' },
           temperature: 0.3,
@@ -203,8 +207,8 @@ Deno.serve(async (req) => {
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              const completion = await openai.chat.completions.create({
-                model: 'gpt-4o',
+              const completion = await (await getOpenAI()).chat.completions.create({
+                model: ADVANCED_MODEL,
                 messages: [
                   { role: 'system', content: systemPrompt },
                   ...messages.map((m: any) => ({
@@ -329,8 +333,8 @@ Deno.serve(async (req) => {
           - success_factors (array)`
 
         try {
-          const analysisCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+          const analysisCompletion = await (await getOpenAI()).chat.completions.create({
+            model: DEFAULT_MODEL,
             messages: [{ role: 'user', content: transitionPrompt }],
             response_format: { type: 'json_object' },
             temperature: 0.2,
@@ -411,8 +415,8 @@ Deno.serve(async (req) => {
           Return JSON with: recommended_actions (array), risk_factors (array), best_practices (array)`
 
         try {
-          const insightsCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+          const insightsCompletion = await (await getOpenAI()).chat.completions.create({
+            model: DEFAULT_MODEL,
             messages: [{ role: 'user', content: insightsPrompt }],
             response_format: { type: 'json_object' },
             temperature: 0.3,
@@ -469,8 +473,8 @@ Deno.serve(async (req) => {
         })
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message, needsApiKey: error.needsApiKey || undefined }), { 
+      status: error.needsApiKey ? 400 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     })
   }

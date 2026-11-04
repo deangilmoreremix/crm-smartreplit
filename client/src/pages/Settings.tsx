@@ -8,7 +8,7 @@ import { useToast } from '../hooks/use-toast';
 interface ApiKeyRecord {
   id: string;
   userId: string;
-  provider: 'openai' | 'gemini';
+  provider: 'openai';
   apiKey: string;
   apiKeyName: string | null;
   model: string | null;
@@ -31,7 +31,7 @@ const Settings: React.FC = () => {
 
   // Form state
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newProvider, setNewProvider] = useState<'openai' | 'gemini'>('openai');
+  const [newProvider, setNewProvider] = useState<'openai'>('openai');
   const [newApiKey, setNewApiKey] = useState('');
   const [newKeyName, setNewKeyName] = useState('');
   const [newModel, setNewModel] = useState('');
@@ -77,11 +77,6 @@ const Settings: React.FC = () => {
       return;
     }
 
-    if (newProvider === 'gemini' && !newApiKey.startsWith('AIza')) {
-      toast({ title: 'Error', description: 'Gemini API key must start with "AIza"', variant: 'destructive' });
-      return;
-    }
-
     setSaving(true);
     try {
       const response = await fetch('/api/user/api-keys', {
@@ -101,7 +96,7 @@ const Settings: React.FC = () => {
         throw new Error(error.error || 'Failed to add API key');
       }
 
-      toast({ title: 'Success', description: `${newProvider === 'openai' ? 'OpenAI' : 'Gemini'} API key added successfully` });
+      toast({ title: 'Success', description: 'OpenAI API key saved successfully' });
       setNewApiKey('');
       setNewKeyName('');
       setNewModel('');
@@ -200,7 +195,6 @@ const Settings: React.FC = () => {
   };
 
   const openaiKeys = keys.filter((k) => k.provider === 'openai');
-  const geminiKeys = keys.filter((k) => k.provider === 'gemini');
   const hasAnyKey = keys.length > 0;
 
   const getTestStatusIcon = (status: string | null) => {
@@ -222,7 +216,7 @@ const Settings: React.FC = () => {
   return (
     <PageLayout
       title="API Keys"
-      description="Add your OpenAI or Gemini API keys to power all AI features in the CRM"
+      description="Add your OpenAI API key to power all AI features in the CRM"
       actions={
         <Button onClick={() => setShowAddForm(!showAddForm)} disabled={saving}>
           <Plus className="h-4 w-4 mr-2" />
@@ -239,7 +233,7 @@ const Settings: React.FC = () => {
               <div>
                 <h3 className="text-amber-800 font-medium mb-1">API Keys Required</h3>
                 <p className="text-amber-700 text-sm">
-                  You need to add at least one API key (OpenAI or Gemini) to use AI features.
+                  You need to add your OpenAI API key to use AI features.
                   All AI functions — including contact enrichment, lead scoring, smart greetings,
                   KPI analysis, deal intelligence, and business intelligence — use your personal API keys.
                 </p>
@@ -258,11 +252,10 @@ const Settings: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
                 <select
                   value={newProvider}
-                  onChange={(e) => setNewProvider(e.target.value as 'openai' | 'gemini')}
+                  onChange={(e) => setNewProvider(e.target.value as 'openai')}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  <option value="openai">OpenAI (GPT-4o, GPT-4o-mini, etc.)</option>
-                  <option value="gemini">Google Gemini (Gemini 1.5 Flash, etc.)</option>
+                  <option value="openai">OpenAI (GPT-6 Luna, GPT-6.1 Sol)</option>
                 </select>
               </div>
 
@@ -310,7 +303,7 @@ const Settings: React.FC = () => {
                   type="text"
                   value={newModel}
                   onChange={(e) => setNewModel(e.target.value)}
-                  placeholder={newProvider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'}
+                  placeholder="gpt-6-luna"
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave empty to use the default model</p>
@@ -393,70 +386,6 @@ const Settings: React.FC = () => {
           )}
         </div>
 
-        {/* Gemini Keys */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center mb-4">
-            <Key size={18} className="mr-2 text-gray-500" />
-            <h2 className="text-xl font-semibold">Google Gemini API Keys</h2>
-            <span className="ml-2 text-sm text-gray-500 font-medium">Alternative AI provider</span>
-          </div>
-
-          {geminiKeys.length === 0 ? (
-            <p className="text-gray-500 text-sm">No Gemini API keys added yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {geminiKeys.map((key) => (
-                <div key={key.id} className={`border rounded-lg p-4 ${key.isActive ? 'border-gray-200' : 'border-gray-200 opacity-60'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="font-medium">
-                        {key.apiKeyName || 'Gemini Key'}
-                        {key.isDefault && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Default</span>}
-                        {!key.isActive && <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Inactive</span>}
-                      </div>
-                      {getTestStatusIcon(key.testStatus)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 font-mono">{key.apiKey}</span>
-                    </div>
-                  </div>
-
-                  {key.model && (
-                    <p className="text-xs text-gray-500 mt-1">Model: {key.model}</p>
-                  )}
-
-                  {key.testError && (
-                    <p className="text-xs text-red-500 mt-1">Error: {key.testError}</p>
-                  )}
-
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleTestKey(key.id)}
-                      disabled={testingId === key.id}
-                    >
-                      {testingId === key.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <CheckCircle className="h-3 w-3 mr-1" />}
-                      Test
-                    </Button>
-                    {!key.isDefault && (
-                      <Button size="sm" variant="outline" onClick={() => handleSetDefault(key.id, 'gemini')}>
-                        Set Default
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => handleToggleActive(key.id, key.isActive)}>
-                      {key.isActive ? 'Deactivate' : 'Activate'}
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteKey(key.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Info section */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
@@ -465,7 +394,6 @@ const Settings: React.FC = () => {
               <h3 className="text-blue-800 font-medium mb-1">How It Works</h3>
               <ul className="text-blue-700 text-sm space-y-1">
                 <li>• All AI features use <strong>your own API keys</strong> — we never provide unlimited AI</li>
-                <li>• You can add either OpenAI or Gemini keys (or both)</li>
                 <li>• Only one key per provider can be the default — the default is used for all AI requests</li>
                 <li>• Your keys are stored securely and never shared with other users</li>
                 <li>• You're billed directly by OpenAI/Google for your usage</li>

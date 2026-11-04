@@ -133,13 +133,23 @@ performance-optimization, multimodal-analysis, advanced-content, images/edit, im
   `20260419100000_update_twenty_field_types.sql` updates `field_metadata` — verify against the live DB.
 * `/api/workflows/*` lives in Express (reachable once this branch deploys).
 
-## Models
+## Models (OpenAI only)
 
-| Status | IDs (where) |
-|---|---|
-| Retired | `gemini-1.5-flash` (`ai.ts:69,170,209`, `server/openai/index.ts:148,586`), `gemini-1.5-pro`, `gemini-1.5-flash-8b`, `gemini-pro`, `gemini-2.0-flash-exp`, `claude-3-5-sonnet-20241022` (`meeting-transcript/index.js:293`) |
-| Invalid | `gemini-2.5-flash-8b` (`aiModels.ts:49`, `supabaseAIService.ts:57`), `gemini-flash` (`aiModels.ts:202`), `claude-3.5-sonnet-20241022` (`AIProviderSettings.tsx:203`), `gpt-4o-assistant*` (a label, not a model) |
-| OK | `gpt-4o`, `gpt-4o-mini`, `gpt-4.1*`, `o3`, `o4-mini`, `text-embedding-3-small`, `dall-e-3` |
+The app uses **only OpenAI**. OpenAI's deprecations page (checked 2026-11-04) changes the picture for the IDs in use:
+
+| Model | Status | Used for |
+|---|---|---|
+| `dall-e-2`, `dall-e-3` | **shut down 2026-05-12** — image generation was broken | image generator, OpenClaw `generate_image` |
+| `gpt-3.5-turbo`, `gpt-4`, `gpt-4-turbo`, `o4-mini`, `gpt-4.1-nano` | **shut down 2026-10-23** | contact enrich/score (`gpt-4`), model pickers |
+| `o3`, `gpt-5` | shut down 2026-12-11 | model pickers |
+| `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini` | shut down **2027-01-14** | ~170 call sites (default everywhere) |
+| `text-embedding-3-small` | current | semantic search |
+
+**Now standardised on** (one place: `server/services/openaiModels.ts`): `gpt-6-luna` (default, $0.10/$0.50 per 1M),
+`gpt-6.1-sol` (complex analysis, $2/$10), `gpt-image-2.5-flare` (images), `text-embedding-3-small`. Legacy IDs —
+including any Gemini/Gemma ID still sent by older client code — are mapped by `mapLegacyModel()`.
+**Not yet verified against the live API** (no key available here): whether these models accept Chat Completions
+`response_format`/`tools`. The client wrapper already sends `max_completion_tokens` and omits `temperature`.
 
 ## Security findings (non-AI)
 
@@ -184,20 +194,48 @@ Verified locally: the bundled function answers `/api/openai/status`, `/api/ai/em
 
 1. **Rotate** the Supabase service_role keys and database passwords for both projects, and the Neon password.
 2. **Netlify env vars** (site `smartcrmnewdean`): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`,
-   `OPENAI_API_KEY`, `GEMINI_API_KEY`/`GOOGLE_AI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
-   `STRIPE_SALES_MAXIMIZER_PRICE_ID`, `STRIPE_SMARTCRM_BUNDLE_PRICE_ID`, `VITE_SUPABASE_ANON_KEY`; optionally
-   `OPENCLAW_API_URL`/`OPENCLAW_API_KEY`, `SMARTCRM_<PROVIDER>_API_KEY`.
-3. **Supabase secrets:** `OPENAI_API_KEY`; then redeploy `contacts` (auth fix), `ai-agents`, `deals`.
-4. Raise the Netlify function timeout (site settings → Functions; sync functions default to 10 s) — longer AI calls
+   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_SALES_MAXIMIZER_PRICE_ID`,
+   `STRIPE_SMARTCRM_BUNDLE_PRICE_ID`, `VITE_SUPABASE_ANON_KEY` (or `VITE_SUPABASE_PUBLISHABLE_KEY`); optionally
+   `OPENCLAW_API_URL`/`OPENCLAW_API_KEY`. No server OpenAI/Gemini key is needed: **each user's own OpenAI key is used**.
+3. **Each user saves their OpenAI key** in Settings → API Keys. Today `user_api_keys` is empty, so every AI feature
+   answers "Add your OpenAI API key…" until a key is saved.
+4. Redeploy the Supabase edge functions `contacts`, `deals`, `ai-agents`, `calendar` (auth fix + per-user keys; the
+   `_shared/userOpenAI.ts` module ships with them).
+5. Raise the Netlify function timeout (site settings → Functions; sync functions default to 10 s) — longer AI calls
    will be cut off otherwise. Streaming endpoints (`/api/stream`, `/api/openclaw/chat/stream`) are buffered by
    serverless functions and won't stream.
-5. Deploy from git (merge to `main`) instead of the CLI so production matches the repo.
+6. Deploy from git (merge to `main`) instead of the CLI so production matches the repo.
+
+## Update — OpenAI-only consolidation (this branch)
+
+Findings from this pass:
+
+* **9 AI Tools crashed with `… is not a function`**: Customer Persona, Meeting Agenda, Instant Response, Email
+  Response, Objection Handler, Voice Tone Optimizer, Real-time Email Composer (2 methods), Auto Form Completer and the
+  Contact Detail personalization call methods that `useGemini()` never defined. **Fixed** — implemented on
+  `/api/ai/generate`.
+* **Users could not save a key from the main AI-key dialog**: `useAIApiKeys`/`useApiKeyStatus` read and wrote
+  `openai_api_key`/`gemini_api_key`/`openclaw_api_key` columns that don't exist in the live `user_api_keys` table (it is
+  one row per provider: `provider`, `api_key`, `is_active`, `is_default`, `UNIQUE (user_id, provider)`). **Fixed** — they
+  use `/api/user/api-keys`; saving again now replaces the key instead of hitting the unique constraint.
+* Server AI tools used a server `OPENAI_API_KEY` (aiToolsService, OpenClaw, contact enrich/score) while other routes used
+  per-user keys. **Fixed** — all use the signed-in user's key (`server/services/userOpenAI.ts`; the user is found via a
+  per-request context set in `requireAuth`). Edge functions read the caller's key per request (`_shared/userOpenAI.ts`).
+* All Gemini/Anthropic code paths removed or re-pointed: `geminiService`/`enhancedGeminiService` keep their APIs but call
+  `/api/ai/generate`; the browser `VITE_GOOGLE_AI_API_KEY` path is gone; `/api/googleai/test` and Gemini key handling were
+  removed; `ai-proxy` is an OpenAI-only relay with no server key; `meeting-transcript` uses only the user's OpenAI key.
+* The Gemini image modal returned a 1×1 PNG; it now generates through the OpenAI image route.
+* Still open: OpenClaw per-user settings read `openclaw_*` columns that were never migrated to the live table (and
+  `openclaw` isn't an allowed `provider` value) — OpenClaw keys can't be saved per user yet. The `ai_models` table in
+  the live DB has a different schema, so the client model catalog always uses its built-in list. Unused files left as-is:
+  `GeminiModelInfo.tsx`, `OpenAIModelInfo.tsx`, `task-router.service.ts`, `client/src/services/aiToolsService.ts`,
+  `server/services/openaiResponsesService.ts`, the Netlify `openai` function.
 
 ## Remaining work (proposed phases)
 
-* **Phase 2 — config & deployed functions:** one helper for the Supabase anon/publishable key; pass the token to
-  `getUser()` in `ai-agents`/`deals`; fix `meeting-transcript` column; replace retired/invalid model IDs; remove
-  duplicate function entries; make `billing.ts` env checks lazy so a missing Stripe var doesn't take down AI routes.
+* **Phase 2 — config & deployed functions:** done in this branch except: remove duplicate function entries
+  (`ai-proxy.js` + `ai-proxy/`, `gtm-prompt-library`); make `billing.ts` env checks lazy so a missing Stripe var doesn't
+  take down AI routes; verify the new models' parameter support with a real key.
 * **Phase 3 — replace fakes:** route vision/streaming/legacy browser calls through the API; remove the browser Gemini
   key path; implement or remove the no-route endpoints; replace `Math.random`/`setTimeout`/hardcoded "AI" results with
   real calls or an explicit "AI unavailable" state; make `unifiedApiClient` treat non-JSON as an error; fix 2.7, 2.9, 2.10.

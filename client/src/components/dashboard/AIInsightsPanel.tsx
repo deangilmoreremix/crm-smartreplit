@@ -131,7 +131,7 @@ const AIInsightsPanel = () => {
       return;
     }
 
-    if (!geminiService.isApiKeyConfigured()) {
+    if (!(await geminiService.isApiKeyConfigured())) {
       setApiKeysConfigured(false);
       return;
     }
@@ -198,10 +198,8 @@ const AIInsightsPanel = () => {
   };
 
   const generateRealInsights = async () => {
-    if (!geminiService.isApiKeyConfigured()) {
-      setError(
-        'Gemini API key is not configured. Please add VITE_GOOGLE_AI_API_KEY to your environment.'
-      );
+    if (!(await geminiService.isApiKeyConfigured())) {
+      setError('OpenAI API key is not configured. Add your key in Settings → API Keys.');
       setApiKeysConfigured(false);
       return;
     }

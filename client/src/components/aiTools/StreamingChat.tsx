@@ -22,10 +22,8 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
   initialMessage = "Hello! I'm your AI sales assistant. How can I help you today?",
   placeholder = 'Type your message here...',
   modelOptions = [
-    { value: 'gpt-4o', label: 'GPT-4o' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gemma-2-27b-it', label: 'Gemma 2 27B' },
-    { value: 'gemma-2-9b-it', label: 'Gemma 2 9B' },
+    { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
+    { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
   ],
 }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -39,7 +37,7 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
 
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-6-luna');
   const [showSettings, setShowSettings] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState<'normal' | 'faster' | 'instant'>('normal');
@@ -338,7 +336,7 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
             <span>Responses stream in real-time</span>
           </div>
           <span className="text-indigo-600">
-            {selectedModel.includes('gemini') ? 'Powered by Gemini AI' : 'Powered by OpenAI'}
+            Powered by OpenAI
           </span>
         </div>
       </div>

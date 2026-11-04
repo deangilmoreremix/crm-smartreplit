@@ -1,4 +1,5 @@
 import { supabaseAIService, type AIModelConfig } from './supabaseAIService';
+import { generateAI } from './aiGenerate';
 
 interface GenerateContentRequest {
   prompt: string;
@@ -23,27 +24,17 @@ interface GenerateContentResponse {
 }
 
 class EnhancedGeminiService {
-  private apiKey: string;
-  private baseUrl: string = 'https://generativelanguage.googleapis.com/v1beta';
   private availableModels: AIModelConfig[] = [];
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || import.meta.env.VITE_GOOGLE_AI_API_KEY || '';
+  constructor() {
     this.loadAvailableModels();
   }
 
   /**
-   * Check if API key is valid (not a placeholder)
+   * AI calls go through the server with the user's own OpenAI key; the server reports a missing key.
    */
   private isValidApiKey(): boolean {
-    return (
-      this.apiKey &&
-      this.apiKey.length > 10 &&
-      !this.apiKey.includes('your_google_ai_api_key') &&
-      !this.apiKey.includes('placeholder') &&
-      !this.apiKey.startsWith('your_') &&
-      this.apiKey !== 'your_google_ai_api_key'
-    );
+    return true;
   }
 
   /**
@@ -64,39 +55,23 @@ class EnhancedGeminiService {
   }
 
   /**
-   * Validate and clean customer ID for UUID compatibility
-   */
-  private validateCustomerId(customerId?: string): string | undefined {
-    if (
-      !customerId ||
-      customerId === 'demo-customer-id' ||
-      customerId.includes('demo') ||
-      customerId.includes('placeholder')
-    ) {
-      return undefined;
-    }
-    return customerId;
-  }
-
-  /**
    * Load available models from Supabase or fallback
    */
   private async loadAvailableModels(): Promise<void> {
     try {
-      // Get Google AI models (Gemini and Gemma)
-      const geminiModels = await supabaseAIService.getModelsByProvider('gemini');
-      this.availableModels = geminiModels;
+      // OpenAI models (the only provider used)
+      this.availableModels = await supabaseAIService.getModelsByProvider('openai');
     } catch (error) {
       console.warn('Error loading available models, using fallback configurations:', error);
-      // Get fallback models for Google AI
+      // Fallback OpenAI models
       this.availableModels = supabaseAIService
         .getAllFallbackModels()
-        .filter((model) => model.provider === 'gemini');
+        .filter((model) => model.provider === 'openai');
     }
   }
 
   /**
-   * Get available models for Google AI
+   * Get available OpenAI models
    */
   async getAvailableModels(): Promise<AIModelConfig[]> {
     if (this.availableModels.length === 0) {
@@ -110,173 +85,27 @@ class EnhancedGeminiService {
    */
   async generateContent(request: GenerateContentRequest): Promise<GenerateContentResponse> {
     const startTime = Date.now();
+    // Model hints from callers ("...pro...") map to the advanced tier; the server picks the OpenAI model
+    const tier = request.model && /pro|sol|advanced/i.test(request.model) ? 'advanced' : 'default';
 
-    if (!this.isValidApiKey()) {
-      throw new Error(
-        'Google AI API key is required and must be properly configured. Please check your environment variables.'
-      );
-    }
+    const result = await generateAI({
+      prompt: request.prompt,
+      system: request.systemInstruction,
+      maxTokens: request.maxTokens || 4096,
+      tier,
+    });
 
-    // Get model configuration from database or fallback
-    const modelId = request.model || 'gemini-2.5-flash';
-    let modelConfig: AIModelConfig | null = null;
-
-    try {
-      modelConfig = await supabaseAIService.getModelById(modelId);
-    } catch (error) {
-      console.warn(`Could not fetch model configuration for ${modelId} from database:`, error);
-    }
-
-    if (!modelConfig) {
-      // Use fallback configuration
-      modelConfig = supabaseAIService.getFallbackModel(modelId);
-      if (!modelConfig) {
-        // If still no model config, try with a default working model
-        console.warn(`Model ${modelId} not found, trying with default gemini-2.5-flash`);
-        modelConfig = supabaseAIService.getFallbackModel('gemini-2.5-flash');
-        if (!modelConfig) {
-          throw new Error(`Model ${modelId} not found in configuration and no fallback available`);
-        }
-      }
-      console.info(`Using fallback configuration for model ${modelId}`);
-    }
-
-    const url = `${this.baseUrl}/models/${modelConfig.model_name}:generateContent`;
-
-    const requestBody = {
-      contents: [
-        {
-          parts: [
-            {
-              text: request.prompt,
-            },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: request.temperature || 0.7,
-        maxOutputTokens: request.maxTokens || modelConfig.max_tokens || 4096,
-        topP: 0.8,
-        topK: 10,
+    return {
+      content: this.stripMarkdownCodeBlocks(result.content),
+      model: result.model,
+      usage: {
+        promptTokens: result.usage?.prompt_tokens || 0,
+        completionTokens: result.usage?.completion_tokens || 0,
+        totalTokens: result.usage?.total_tokens || 0,
       },
+      finishReason: 'completed',
+      responseTime: Date.now() - startTime,
     };
-
-    // Add system instruction if provided and supported
-    if (
-      request.systemInstruction &&
-      modelConfig.capabilities &&
-      modelConfig.capabilities.includes('system-instructions')
-    ) {
-      requestBody.systemInstruction = {
-        parts: [
-          {
-            text: request.systemInstruction,
-          },
-        ],
-      };
-    }
-
-    try {
-      const response = await fetch(`${url}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(
-          `Google AI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
-        );
-      }
-
-      const data = await response.json();
-
-      if (!data.candidates || data.candidates.length === 0) {
-        throw new Error('No content generated');
-      }
-
-      const candidate = data.candidates[0];
-      let content = candidate.content?.parts?.[0]?.text || '';
-      const responseTime = Date.now() - startTime;
-
-      // Always strip markdown code blocks from the content before returning
-      content = this.stripMarkdownCodeBlocks(content);
-
-      const result: GenerateContentResponse = {
-        content,
-        model: modelId,
-        usage: {
-          promptTokens: data.usageMetadata?.promptTokenCount || 0,
-          completionTokens: data.usageMetadata?.candidatesTokenCount || 0,
-          totalTokens: data.usageMetadata?.totalTokenCount || 0,
-        },
-        finishReason: candidate.finishReason || 'completed',
-        responseTime,
-      };
-
-      // Log usage to Supabase (gracefully handle failures)
-      const validCustomerId = this.validateCustomerId(request.customerId);
-      if (validCustomerId) {
-        const cost = this.calculateCost(modelConfig, result.usage.totalTokens);
-
-        try {
-          await supabaseAIService.logUsage({
-            customer_id: validCustomerId,
-            model_id: modelId,
-            feature_used: request.featureUsed || 'text-generation',
-            tokens_used: result.usage.totalTokens,
-            cost,
-            response_time_ms: responseTime,
-            success: true,
-          });
-        } catch (logError) {
-          console.warn('Failed to log AI usage (non-critical):', logError);
-        }
-      }
-
-      return result;
-    } catch (error) {
-      // Log failed usage (gracefully handle failures)
-      const validCustomerId = this.validateCustomerId(request.customerId);
-      if (validCustomerId) {
-        try {
-          await supabaseAIService.logUsage({
-            customer_id: validCustomerId,
-            model_id: modelId,
-            feature_used: request.featureUsed || 'text-generation',
-            tokens_used: 0,
-            cost: 0,
-            response_time_ms: Date.now() - startTime,
-            success: false,
-            error_message: error instanceof Error ? error.message : 'Unknown error',
-          });
-        } catch (logError) {
-          console.warn('Failed to log AI error usage (non-critical):', logError);
-        }
-      }
-
-      console.error('Gemini API error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Calculate cost based on model pricing
-   */
-  private calculateCost(model: AIModelConfig, totalTokens: number): number {
-    if (!model.pricing) return 0;
-
-    // Estimate input/output split (typically 70/30)
-    const inputTokens = Math.floor(totalTokens * 0.7);
-    const outputTokens = totalTokens - inputTokens;
-
-    const inputCost = (inputTokens / 1_000_000) * model.pricing.input_per_1m_tokens;
-    const outputCost = (outputTokens / 1_000_000) * model.pricing.output_per_1m_tokens;
-
-    return inputCost + outputCost;
   }
 
   /**
@@ -308,7 +137,7 @@ class EnhancedGeminiService {
       return {
         healthScore: 75,
         keyInsights: ['API key not configured - unable to generate AI insights'],
-        bottlenecks: ['Please configure Google AI API key'],
+        bottlenecks: ['Add your OpenAI API key in Settings'],
         opportunities: ['Set up API keys to enable AI analysis'],
         forecastAccuracy: 0,
       };
@@ -317,7 +146,7 @@ class EnhancedGeminiService {
     try {
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-2.5-flash',
+        model: model || 'gpt-6-luna',
         customerId,
         featureUsed: 'business_analysis',
         systemInstruction:
@@ -363,7 +192,7 @@ class EnhancedGeminiService {
     if (!this.isValidApiKey()) {
       return {
         subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Please configure Google AI API key to enable AI-generated content]\n\nBest regards`,
+        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Add your OpenAI API key in Settings to enable AI-generated content]\n\nBest regards`,
       };
     }
 
@@ -385,7 +214,7 @@ class EnhancedGeminiService {
     try {
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemma-2-9b-it',
+        model: model || 'gpt-6-luna',
         customerId,
         featureUsed: 'email-generation',
         systemInstruction:
@@ -464,7 +293,7 @@ Generate a professional proposal with sections for Executive Summary, Project Ov
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-pro',
+        model: model || 'gpt-6.1-sol',
         temperature: 0.6,
         maxTokens: 2000,
         customerId,
@@ -506,7 +335,7 @@ Create a structured script with opening, discovery questions, value proposition,
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-flash',
+        model: model || 'gpt-6-luna',
         temperature: 0.7,
         maxTokens: 1500,
         customerId,
@@ -548,7 +377,7 @@ Format the response as structured data.`;
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-pro',
+        model: model || 'gpt-6.1-sol',
         temperature: 0.5,
         maxTokens: 2000,
         customerId,
@@ -593,7 +422,7 @@ Provide analysis on:
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-pro',
+        model: model || 'gpt-6.1-sol',
         temperature: 0.6,
         maxTokens: 2000,
         customerId,
@@ -650,7 +479,7 @@ Provide a churn risk score (0-100) and specific recommendations to retain the cu
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-pro',
+        model: model || 'gpt-6.1-sol',
         temperature: 0.3,
         maxTokens: 1000,
         customerId,
@@ -691,7 +520,7 @@ Text: "${text}"`;
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-flash',
+        model: model || 'gpt-6-luna',
         temperature: 0.3,
         maxTokens: 500,
         customerId,
@@ -751,7 +580,7 @@ Generate an engaging post that drives engagement and aligns with the platform's 
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gemini-1.5-flash',
+        model: model || 'gpt-6-luna',
         temperature: 0.8,
         maxTokens: 300,
         customerId,

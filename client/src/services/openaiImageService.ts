@@ -2,8 +2,8 @@ import { supabaseAIService } from './supabaseAIService';
 
 interface ImageGenerationOptions {
   prompt: string;
-  model?: 'dall-e-2' | 'dall-e-3';
-  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792';
+  model?: 'gpt-image-2.5-flare' | 'dall-e-2' | 'dall-e-3'; // dall-e IDs are mapped server-side
+  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792' | '1536x1024' | '1024x1536';
   quality?: 'standard' | 'hd';
   style?: 'vivid' | 'natural';
   n?: number;
@@ -60,10 +60,8 @@ class OpenAIImageService {
         },
         body: JSON.stringify({
           prompt: options.prompt,
-          model: options.model || 'dall-e-3',
+          model: options.model || 'gpt-image-2.5-flare',
           size: options.size || '1024x1024',
-          quality: options.quality || 'standard',
-          style: options.style || 'vivid',
           n: options.n || 1,
         }),
       });
@@ -85,7 +83,7 @@ class OpenAIImageService {
       const result: ImageGenerationResult = {
         url: imageData.url,
         revised_prompt: imageData.revised_prompt,
-        model: options.model || 'dall-e-3',
+        model: options.model || 'gpt-image-2.5-flare',
         size: options.size || '1024x1024',
         quality: options.quality || 'standard',
         style: options.style,
@@ -287,7 +285,7 @@ export const useOpenAIImage = () => {
       size,
       quality,
       style,
-      model: 'dall-e-3',
+      model: 'gpt-image-2.5-flare',
     });
 
     return {

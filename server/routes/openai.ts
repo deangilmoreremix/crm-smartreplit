@@ -4,35 +4,14 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
+import { getUserOpenAIClient } from '../services/userOpenAI';
 import { memoryService } from '../memory';
 import { requireAuth } from './auth';
 
 const router = Router();
 
-// Helper: Get user's OpenAI client
-async function getUserOpenAI(userId: string): Promise<{ client: any; model: string } | null> {
-  if (!db) return null;
-
-  const keyRecord = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, 'openai'),
-      eq(userApiKeys.isActive, true)
-    ),
-    orderBy: (userApiKeys, { desc }) => [desc(userApiKeys.isDefault)],
-  });
-
-  if (!keyRecord) return null;
-
-  const OpenAI = (await import('openai')).default;
-  return {
-    client: new OpenAI({ apiKey: keyRecord.apiKey }),
-    model: keyRecord.model || 'gpt-4o-mini',
-  };
-}
+// Helper: Get user's OpenAI client (their own key)
+const getUserOpenAI = (userId: string) => getUserOpenAIClient(userId);
 
 // Check API key status - uses user's key
 router.get('/api/openai/status', requireAuth(), async (req: Request, res: Response) => {

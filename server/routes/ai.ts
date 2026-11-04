@@ -4,90 +4,14 @@
  */
 
 import type { Express, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { ADVANCED_MODEL, IMAGE_MODEL, EMBEDDING_MODEL } from '../services/openaiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 
-// Google AI interface
-interface GoogleAIResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
-}
-
-// Helper: Get user's active API key for a provider
-async function getUserApiKey(userId: string, provider: 'openai' | 'gemini'): Promise<{ apiKey: string; model: string | null } | null> {
-  if (!db) return null;
-
-  // Try default key first
-  const defaultKey = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, provider),
-      eq(userApiKeys.isActive, true),
-      eq(userApiKeys.isDefault, true)
-    ),
-  });
-
-  if (defaultKey) {
-    return { apiKey: defaultKey.apiKey, model: defaultKey.model };
-  }
-
-  // Fallback to any active key
-  const anyKey = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, provider),
-      eq(userApiKeys.isActive, true)
-    ),
-  });
-
-  if (anyKey) {
-    return { apiKey: anyKey.apiKey, model: anyKey.model };
-  }
-
-  return null;
-}
-
-// Helper: Create OpenAI client from user's key
-async function createUserOpenAIClient(userId: string): Promise<{ client: any; model: string } | null> {
-  const keyData = await getUserApiKey(userId, 'openai');
-  if (!keyData) return null;
-
-  const OpenAI = (await import('openai')).default;
-  const client = new OpenAI({ apiKey: keyData.apiKey });
-  const model = keyData.model || 'gpt-4o-mini';
-  return { client, model };
-}
-
-// Helper: Call Google AI with user's key
-async function callUserGoogleAI(userId: string, prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
-  const keyData = await getUserApiKey(userId, 'gemini');
-  if (!keyData) {
-    throw new Error('No Gemini API key configured. Please add your Gemini API key in Settings.');
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyData.apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status}`);
-  }
-
-  const data: GoogleAIResponse = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
+// Per-user OpenAI clients (user's own key; no server fallback)
+const createUserOpenAIClient = (userId: string) => getUserOpenAIClient(userId);
 
 export function registerAIRoutes(app: Express) {
   // Middleware to protect AI endpoints - require auth + ai_tools entitlement
@@ -103,7 +27,6 @@ export function registerAIRoutes(app: Express) {
         error: null as string | null,
         version: null as string | null,
       },
-      googleai: { available: false, model: 'none', error: null as string | null },
     };
 
     // Test OpenAI with user's key
@@ -118,7 +41,7 @@ export function registerAIRoutes(app: Express) {
         };
       } else {
         // Try user's preferred model first, then fallback
-        const modelsToTry = [openaiData.model, 'gpt-4o-mini', 'gpt-4o'];
+        const modelsToTry = [openaiData.model];
         let success = false;
         for (const model of modelsToTry) {
           try {
@@ -131,7 +54,7 @@ export function registerAIRoutes(app: Express) {
               available: true,
               model,
               error: null,
-              version: model.startsWith('gpt-5') ? '5.x' : '4o',
+              version: model,
             };
             success = true;
             break;
@@ -157,31 +80,11 @@ export function registerAIRoutes(app: Express) {
       };
     }
 
-    // Test Google AI with user's key
-    try {
-      const geminiKey = await getUserApiKey(userId, 'gemini');
-      if (!geminiKey) {
-        results.googleai = {
-          available: false,
-          model: 'none',
-          error: 'No Gemini API key configured. Add your key in Settings > API Keys.',
-        };
-      } else {
-        await callUserGoogleAI(userId, 'test', 'gemini-1.5-flash');
-        results.googleai = { available: true, model: 'gemini-1.5-flash', error: null };
-      }
-    } catch (error: any) {
-      results.googleai = { available: false, model: 'none', error: error.message };
-    }
-
-    const anyWorking = results.openai.available || results.googleai.available;
+    const anyWorking = results.openai.available;
 
     const capabilities: string[] = [];
     if (results.openai.available) {
       capabilities.push(`OpenAI (${results.openai.model})`);
-    }
-    if (results.googleai.available) {
-      capabilities.push(`Google Gemini (${results.googleai.model})`);
     }
     if (!anyWorking) {
       capabilities.push('Configure your API keys in Settings to enable AI features');
@@ -189,26 +92,45 @@ export function registerAIRoutes(app: Express) {
 
     res.json({
       configured: anyWorking,
-      model: results.openai.available ? results.openai.model : results.googleai.model,
+      model: results.openai.model,
       status: anyWorking ? 'ready' : 'needs_api_keys',
       openai: results.openai,
-      googleai: results.googleai,
       capabilities,
     });
   });
 
-  // Google AI Test
+  // Generic text/JSON generation used by the client AI tools (replaces the former Gemini services)
   app.post(
-    '/api/googleai/test',
+    '/api/ai/generate',
     ...requireAITools,
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const prompt = req.body.prompt || 'Generate a business insight';
-        const response = await callUserGoogleAI(userId, prompt);
-        res.json({ success: true, model: 'gemini-1.5-flash', output: response });
+        const { prompt, system, json = false, tier = 'default', maxTokens = 2000 } = req.body || {};
+        if (!prompt || typeof prompt !== 'string') {
+          return res.status(400).json({ error: 'prompt is required' });
+        }
+
+        const openaiData = await createUserOpenAIClient(userId);
+        if (!openaiData) {
+          return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+        }
+
+        const model = tier === 'advanced' ? ADVANCED_MODEL : openaiData.model;
+        const response = await openaiData.client.chat.completions.create({
+          model,
+          messages: [
+            ...(system ? [{ role: 'system' as const, content: String(system) }] : []),
+            // json_object mode requires the word "json" in the messages
+            { role: 'user' as const, content: json ? `${prompt}\n\nRespond with valid JSON only.` : prompt },
+          ],
+          max_tokens: maxTokens,
+          ...(json ? { response_format: { type: 'json_object' as const } } : {}),
+        });
+
+        res.json({ success: true, content: response.choices[0]?.message?.content || '', model, usage: response.usage });
       } catch (error: any) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error?.message || 'AI request failed' });
       }
     }
   );
@@ -250,7 +172,7 @@ export function registerAIRoutes(app: Express) {
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const { text, model = 'text-embedding-3-small' } = req.body;
+        const { text, model = EMBEDDING_MODEL } = req.body;
         if (!text) return res.status(400).json({ error: 'Text required' });
 
         const openaiData = await createUserOpenAIClient(userId);
@@ -280,7 +202,7 @@ export function registerAIRoutes(app: Express) {
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const { prompt, model = 'dall-e-3', size = '1024x1024' } = req.body;
+        const { prompt, model = IMAGE_MODEL, size = '1024x1024' } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt required' });
 
         const openaiData = await createUserOpenAIClient(userId);

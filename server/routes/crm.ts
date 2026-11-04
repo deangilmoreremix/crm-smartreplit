@@ -1,4 +1,6 @@
  import type { Express } from 'express';
+  import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+  import { ADVANCED_MODEL } from '../services/openaiModels';
   import { eq, and, desc, sql } from 'drizzle-orm';
   import {
     contacts,
@@ -1245,7 +1247,6 @@
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
-        const { OpenAI } = await import('openai');
 
         // Verify contact exists and belongs to user
         const [contact] = await db
@@ -1266,7 +1267,11 @@
 
         let enrichedData;
         try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+          const openaiData = await getUserOpenAIClient(userId);
+          if (!openaiData) {
+            return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+          }
+          const openai = openaiData.client;
           const prompt = `Enrich this contact's information with additional professional details:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ''}
@@ -1277,7 +1282,7 @@ Email: ${contact.email || ''}
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
           const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
+            model: ADVANCED_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
           });
@@ -1390,7 +1395,6 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
-        const { OpenAI } = await import('openai');
 
         const [contact] = await db
           .select()
@@ -1410,7 +1414,11 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
         let scoreData;
         try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+          const openaiData = await getUserOpenAIClient(userId);
+          if (!openaiData) {
+            return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+          }
+          const openai = openaiData.client;
           const prompt = `Score this contact's sales potential on a scale of 0-100:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ''}
@@ -1422,7 +1430,7 @@ Notes: ${contact.notes || ''}
 Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
 
           const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
+            model: ADVANCED_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
           });

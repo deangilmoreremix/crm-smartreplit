@@ -5,6 +5,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import { requestContext } from '../services/requestContext';
 
 const router = Router();
 
@@ -88,6 +89,8 @@ async function requireAuthHandler(
 
     (req as any).userId = userId;
     (req as any).isAuthenticated = isAuthenticated;
+    const ctx = requestContext.getStore();
+    if (ctx) ctx.userId = userId;
     if (userEmail) {
       (req as any).userEmail = userEmail;
     }

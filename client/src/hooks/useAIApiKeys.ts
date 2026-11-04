@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/authStore';
 
+/**
+ * The user's own OpenAI key, stored server-side via /api/user/api-keys
+ * (user_api_keys: one row per provider). Loaded keys come back masked.
+ */
 export interface ApiConfig {
   openai: {
-    apiKey: string;
-    model: string;
-  };
-  gemini: {
     apiKey: string;
     model: string;
   };
@@ -25,24 +24,25 @@ export interface UseAIApiKeysReturn {
   error: string | null;
   saveApiKeys: (config: ApiConfig) => Promise<boolean>;
   testConnection: (
-    provider: 'openai' | 'gemini' | 'openclaw', 
-    apiKey: string, 
+    provider: 'openai' | 'openclaw',
+    apiKey: string,
     baseUrl?: string
   ) => Promise<{ success: boolean; message: string }>;
 }
 
+const DEFAULT_OPENAI_MODEL = 'gpt-6-luna';
+const isMasked = (key: string) => key.includes('****');
+
 export const useAIApiKeys = (): UseAIApiKeysReturn => {
   const { user } = useAuthStore();
   const [apiConfig, setApiConfig] = useState<ApiConfig>({
-    openai: { apiKey: '', model: 'gpt-4.1' },
-    gemini: { apiKey: '', model: 'gemini-1.5-flash' },
-    openclaw: { apiKey: '', model: 'default', baseUrl: '' }
+    openai: { apiKey: '', model: DEFAULT_OPENAI_MODEL },
+    openclaw: { apiKey: '', model: 'default', baseUrl: '' },
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load API keys on mount
   useEffect(() => {
     if (user?.id) {
       loadApiKeys();
@@ -50,47 +50,20 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
   }, [user?.id]);
 
   const loadApiKeys = async () => {
-    if (!user?.id) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
-      const { data, error: fetchError } = await supabase
-        .from('user_api_keys')
-        .select(`
-          openai_api_key, 
-          gemini_api_key, 
-          openai_model, 
-          gemini_model,
-          openclaw_api_key,
-          openclaw_model,
-          openclaw_base_url
-        `)
-        .eq('user_id', user.id)
-        .single();
-
-      if (fetchError && fetchError.code !== 'PGRST113') {
-        throw fetchError;
-      }
-
-      if (data) {
-        setApiConfig({
-          openai: {
-            apiKey: data.openai_api_key || '',
-            model: data.openai_model || 'gpt-4.1'
-          },
-          gemini: {
-            apiKey: data.gemini_api_key || '',
-            model: data.gemini_model || 'gemini-1.5-flash'
-          },
-          openclaw: {
-            apiKey: data.openclaw_api_key || '',
-            model: data.openclaw_model || 'default',
-            baseUrl: data.openclaw_base_url || ''
-          }
-        });
-      }
+      const response = await fetch('/api/user/api-keys');
+      if (!response.ok) throw new Error(`Failed to load API keys (${response.status})`);
+      const { keys = [] } = await response.json();
+      const openai = keys.find((k: any) => k.provider === 'openai');
+      setApiConfig((prev) => ({
+        ...prev,
+        openai: {
+          apiKey: openai?.apiKey || '',
+          model: openai?.model || DEFAULT_OPENAI_MODEL,
+        },
+      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load API keys');
     } finally {
@@ -103,29 +76,39 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
       setError('User not authenticated');
       return false;
     }
+    if (config.openclaw.apiKey && config.openclaw.apiKey !== apiConfig.openclaw.apiKey) {
+      setError('OpenClaw keys cannot be saved yet.');
+      return false;
+    }
 
     setIsSaving(true);
     setError(null);
-
     try {
-      const { error: saveError } = await supabase
-        .from('user_api_keys')
-        .upsert({
-          user_id: user.id,
-          openai_api_key: config.openai.apiKey,
-          gemini_api_key: config.gemini.apiKey,
-          openai_model: config.openai.model,
-          gemini_model: config.gemini.model,
-          openclaw_api_key: config.openclaw.apiKey,
-          openclaw_model: config.openclaw.model,
-          openclaw_base_url: config.openclaw.baseUrl || null,
-          updated_at: new Date().toISOString()
+      const key = config.openai.apiKey.trim();
+      // A masked key is the one already stored: only the model may have changed
+      if (key && !isMasked(key)) {
+        const response = await fetch('/api/user/api-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: 'openai', apiKey: key, model: config.openai.model }),
         });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Failed to save API key');
+      } else if (key && config.openai.model !== apiConfig.openai.model) {
+        const listResponse = await fetch('/api/user/api-keys');
+        const { keys = [] } = await listResponse.json();
+        const existing = keys.find((k: any) => k.provider === 'openai');
+        if (existing) {
+          const response = await fetch(`/api/user/api-keys/${existing.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: config.openai.model }),
+          });
+          if (!response.ok) throw new Error('Failed to update model');
+        }
+      }
 
-      if (saveError) throw saveError;
-
-      // Refresh local state
-      setApiConfig(config);
+      await loadApiKeys();
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save API keys');
@@ -136,49 +119,33 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
   };
 
   const testConnection = async (
-    provider: 'openai' | 'gemini' | 'openclaw',
+    provider: 'openai' | 'openclaw',
     apiKey: string,
-    baseUrl?: string
+    _baseUrl?: string
   ): Promise<{ success: boolean; message: string }> => {
     if (!apiKey) {
       return { success: false, message: 'API key is required' };
     }
 
     try {
-      let endpoint: string;
-      let body: any = {};
-
-      if (provider === 'openai') {
-        endpoint = '/api/openai/status';
-      } else if (provider === 'gemini') {
-        endpoint = '/api/googleai/test';
-        body = { prompt: 'Test connection' };
-      } else {
-        // OpenClaw
-        endpoint = '/api/openclaw/health';
-        // OpenClaw health endpoint accepts the key via Authorization header
+      if (provider === 'openclaw') {
+        const response = await fetch('/api/openclaw/health');
+        const data = await response.json().catch(() => ({}));
+        return response.ok
+          ? { success: true, message: 'Connection successful!' }
+          : { success: false, message: data.error || 'Connection failed' };
       }
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      };
-
-      // If custom baseUrl is provided for OpenClaw, we could proxy it, but for now we use our backend
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return { success: true, message: 'Connection successful!' };
-      } else {
-        return { success: false, message: data.error || 'Connection failed' };
+      // The stored key is tested server-side; a new key must be saved first
+      if (!isMasked(apiKey)) {
+        return { success: true, message: 'Key format looks valid. It will be verified when you save.' };
       }
-    } catch (err) {
+      const response = await fetch('/api/openai/status');
+      const data = await response.json().catch(() => ({}));
+      return data?.openai?.available
+        ? { success: true, message: `Connection successful (${data.openai.model})` }
+        : { success: false, message: data?.openai?.error || 'Connection failed' };
+    } catch {
       return { success: false, message: 'Network error occurred' };
     }
   };
@@ -189,7 +156,7 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
     isSaving,
     error,
     saveApiKeys,
-    testConnection
+    testConnection,
   };
 };
 

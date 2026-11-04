@@ -3,10 +3,9 @@ import { ContactEnrichmentData } from './aiEnrichmentService';
 import { logger } from './logger.service';
 import { aiOrchestratorService } from './aiOrchestratorService';
 import { enhancedGeminiService } from './enhancedGeminiService';
+import { generateAI } from './aiGenerate';
 
 class GeminiAIService {
-  private apiUrl = '/api/googleai';
-  private model = 'gemini-1.5-flash';
 
   async isApiKeyConfigured(): Promise<boolean> {
     try {
@@ -14,7 +13,7 @@ class GeminiAIService {
       const data = await response.json();
       return data.configured === true;
     } catch (error) {
-      console.warn('Failed to check Google AI availability:', error);
+      console.warn('Failed to check AI availability:', error);
       return false;
     }
   }
@@ -34,13 +33,10 @@ class GeminiAIService {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: `Research information about a professional named ${firstName} ${lastName}${company ? ` who works at ${company}` : ''}.
+      const { content } = await generateAI({
+        json: true,
+        maxTokens: 1024,
+        prompt: `Research information about a professional named ${firstName} ${lastName}${company ? ` who works at ${company}` : ''}.
 
           Return a JSON object with the following structure:
           {
@@ -65,19 +61,10 @@ class GeminiAIService {
             "bio": "brief professional bio",
             "confidence": "number between 40 and 85 indicating confidence level"
           }`,
-        }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
       if (!content) {
-        throw new Error('Invalid response from Gemini');
+        throw new Error('Invalid response from AI');
       }
 
       try {
@@ -122,17 +109,10 @@ class GeminiAIService {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Research a professional from this LinkedIn URL: ${linkedinUrl}.
+      const { content } = await generateAI({
+        json: true,
+        maxTokens: 1024,
+        prompt: `Research a professional from this LinkedIn URL: ${linkedinUrl}.
               
               Return a JSON object with the following structure:
               {
@@ -156,25 +136,7 @@ class GeminiAIService {
                 "bio": "professional summary",
                 "confidence": "number between 50 and 90 indicating confidence level"
               }`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            topK: 32,
-            topP: 0.8,
-            maxOutputTokens: 1024,
-          },
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
       // Extract JSON from the response text
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -221,39 +183,14 @@ class GeminiAIService {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Generate a personalized ${messageType} message for a contact with the following information:
+      const { content } = await generateAI({
+        maxTokens: 1024,
+        prompt: `Generate a personalized ${messageType} message for a contact with the following information:
               ${JSON.stringify(contact, null, 2)}
               
               The message should be professional, concise, and tailored to their industry and role.`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.candidates[0].content.parts[0].text;
+      return content;
     } catch (error) {
       logger.error('Message generation failed', error as Error);
 
@@ -295,7 +232,7 @@ export const useGemini = () => {
         } else {
           // Return a compatible object for the old interface
           const content = await geminiService.generatePersonalizedMessage(request, 'email');
-          return { content, model: 'gemini-1.5-flash', provider: 'Google' };
+          return { content, model: 'gpt-6-luna', provider: 'OpenAI' };
         }
       } catch (error) {
         console.error('Error in useGemini.generateContent:', error);
@@ -323,8 +260,8 @@ export const useGemini = () => {
             winProbability: 65,
             potentialBlockers: [],
           },
-          model: 'gemini-1.5-flash',
-          provider: 'Google',
+          model: 'gpt-6-luna',
+          provider: 'OpenAI',
           responseTime: 1000,
           success: true,
         };
@@ -354,8 +291,8 @@ export const useGemini = () => {
             opportunities: [],
             forecastAccuracy: 80,
           },
-          model: 'gemini-1.5-flash',
-          provider: 'Google',
+          model: 'gpt-6-luna',
+          provider: 'OpenAI',
           responseTime: 1000,
           success: true,
         };
@@ -389,9 +326,9 @@ export const useGemini = () => {
     getAvailableModels: async () => {
       return [
         {
-          id: 'gemini-1.5-flash',
-          name: 'Gemini 1.5 Flash',
-          provider: 'gemini',
+          id: 'gpt-6-luna',
+          name: 'GPT-6 Luna',
+          provider: 'openai',
           capabilities: ['text-generation'],
         },
       ];
@@ -399,11 +336,105 @@ export const useGemini = () => {
 
     getRecommendedModel: async (useCase: string) => {
       return {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
-        provider: 'gemini',
+        id: 'gpt-6-luna',
+        name: 'GPT-6 Luna',
+        provider: 'openai',
       };
     },
+
+    // The methods below are used by the AI Tools components; they previously did not exist,
+    // so those tools threw "is not a function". All run on the user's OpenAI key via the server.
+
+    // Gemini-SDK-shaped shim used by AutoFormCompleter and RealTimeEmailComposer
+    getGenerativeModel: (_options?: { model?: string }) => ({
+      generateContent: async (prompt: string) => {
+        const { content } = await generateAI({ prompt, maxTokens: 2000 });
+        return { response: { text: () => content } };
+      },
+    }),
+
+    generateCustomerPersona: async (industry: string, companySize: string, painPoints: string[]) =>
+      (
+        await generateAI({
+          prompt: `Create a detailed B2B customer persona for a company in the ${industry} industry with ${companySize} employees.
+Key pain points: ${painPoints.join('; ')}.
+Include: role and responsibilities, goals, challenges, buying motivations, objections, preferred channels, and messaging tips.`,
+        })
+      ).content,
+
+    generateMeetingAgenda: async (meetingPurpose: string, attendees: string[], previousNotes?: string) =>
+      (
+        await generateAI({
+          prompt: `Create a structured meeting agenda.
+Purpose: ${meetingPurpose}
+Attendees: ${attendees.join(', ')}
+${previousNotes ? `Notes from the previous meeting: ${previousNotes}` : ''}
+Include timed agenda items, owners, desired outcomes, and follow-up actions.`,
+        })
+      ).content,
+
+    generateQuickContent: async (contentType: string, prompt: string, length: 'short' | 'medium' | 'long' = 'medium') =>
+      (
+        await generateAI({
+          prompt: `Write a ${length} ${contentType} for the following request. Return only the ${contentType} text.\n\n${prompt}`,
+          maxTokens: length === 'short' ? 400 : length === 'medium' ? 800 : 1600,
+        })
+      ).content,
+
+    generateEmailResponse: async (originalEmail: string, contactInfo: any, dealContext?: string) =>
+      (
+        await generateAI({
+          prompt: `Write a professional reply to this email.
+Original email:
+${originalEmail}
+
+Contact: ${JSON.stringify(contactInfo)}
+${dealContext ? `Deal context: ${dealContext}` : ''}
+Return only the reply, including a subject line.`,
+        })
+      ).content,
+
+    generateObjectionHandler: async (objection: string, productInfo: string) =>
+      (
+        await generateAI({
+          prompt: `A prospect raised this sales objection: "${objection}".
+Product information: ${productInfo}
+Give an empathetic acknowledgement, 2-3 response strategies with example wording, supporting proof points, and a question to move the conversation forward.`,
+        })
+      ).content,
+
+    optimizeVoiceTone: async (content: string, targetAudience: string, communicationGoal: string) =>
+      (
+        await generateAI({
+          prompt: `Rewrite the following content for this audience: ${targetAudience}. Goal: ${communicationGoal}.
+Keep the meaning, adjust tone, word choice and structure, then briefly list the key changes.
+
+${content}`,
+        })
+      ).content,
+
+    analyzeSentimentRealTime: async (text: string): Promise<{ sentiment: number; emotions: string[] }> => {
+      const { content } = await generateAI({
+        json: true,
+        maxTokens: 200,
+        prompt: `Analyze the sentiment of this text. Return JSON {"sentiment": number from -1 (very negative) to 1 (very positive), "emotions": array of up to 3 emotion words}.\n\n${text}`,
+      });
+      const parsed = JSON.parse(content);
+      return {
+        sentiment: Math.max(-1, Math.min(1, Number(parsed.sentiment) || 0)),
+        emotions: Array.isArray(parsed.emotions) ? parsed.emotions.map(String) : [],
+      };
+    },
+
+    suggestPersonalization: async (contact: any, previousInteractions: any[]) =>
+      (
+        await generateAI({
+          prompt: `Suggest how to personalize outreach to this contact.
+Contact: ${JSON.stringify(contact)}
+Previous interactions: ${JSON.stringify(previousInteractions)}
+Give talking points, topics to reference, the best channel and timing, and a sample opening line.`,
+        })
+      ).content,
 
     validateFormField: async (fieldLabel: string, fieldValue: string, context: string) => {
       try {

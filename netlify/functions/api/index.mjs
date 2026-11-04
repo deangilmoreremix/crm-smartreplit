@@ -893,7 +893,7 @@ var creditService_exports = {};
 __export(creditService_exports, {
   CreditService: () => CreditService
 });
-import { eq as eq6, and as and5, desc as desc3 } from "drizzle-orm";
+import { eq as eq5, and as and4, desc as desc4 } from "drizzle-orm";
 var CreditService;
 var init_creditService = __esm({
   "server/services/creditService.ts"() {
@@ -907,7 +907,7 @@ var init_creditService = __esm({
       static async getCreditBalance(userId, tx) {
         const dbClient = tx || db;
         try {
-          const credits = await dbClient.select().from(userCredits).where(eq6(userCredits.userId, userId)).limit(1);
+          const credits = await dbClient.select().from(userCredits).where(eq5(userCredits.userId, userId)).limit(1);
           if (credits.length === 0) {
             const newCredits = {
               userId,
@@ -940,7 +940,7 @@ var init_creditService = __esm({
        */
       static async purchaseCredits(data) {
         return await db.transaction(async (tx) => {
-          const plan = await tx.select().from(usagePlans).where(eq6(usagePlans.id, data.planId)).limit(1);
+          const plan = await tx.select().from(usagePlans).where(eq5(usagePlans.id, data.planId)).limit(1);
           if (plan.length === 0) {
             throw new Error(`Plan ${data.planId} not found`);
           }
@@ -1003,7 +1003,7 @@ var init_creditService = __esm({
             usedCredits: newUsedCredits.toString(),
             availableCredits: newAvailableCredits.toString(),
             updatedAt: /* @__PURE__ */ new Date()
-          }).where(eq6(userCredits.userId, data.userId));
+          }).where(eq5(userCredits.userId, data.userId));
           const transaction = {
             userId: data.userId,
             type: "usage",
@@ -1040,7 +1040,7 @@ var init_creditService = __esm({
        */
       static async getCreditTransactionHistory(userId, limit = 50) {
         try {
-          const transactions = await db.select().from(creditTransactions).where(eq6(creditTransactions.userId, userId)).orderBy(desc3(creditTransactions.createdAt)).limit(limit);
+          const transactions = await db.select().from(creditTransactions).where(eq5(creditTransactions.userId, userId)).orderBy(desc4(creditTransactions.createdAt)).limit(limit);
           return transactions.map((transaction) => ({
             id: transaction.id,
             type: transaction.type,
@@ -1061,7 +1061,7 @@ var init_creditService = __esm({
        */
       static async getCreditPackages() {
         try {
-          const packages = await db.select().from(usagePlans).where(and5(eq6(usagePlans.billingType, "pay_per_use"), eq6(usagePlans.isActive, true)));
+          const packages = await db.select().from(usagePlans).where(and4(eq5(usagePlans.billingType, "pay_per_use"), eq5(usagePlans.isActive, true)));
           return packages.map((pkg) => {
             const limits = pkg.limits;
             return {
@@ -1129,7 +1129,7 @@ var init_creditService = __esm({
             usedCredits: newUsedCredits.toString(),
             availableCredits: newAvailableCredits.toString(),
             updatedAt: /* @__PURE__ */ new Date()
-          }).where(eq6(userCredits.userId, userId));
+          }).where(eq5(userCredits.userId, userId));
           const transaction = {
             userId,
             type: "refund",
@@ -1160,9 +1160,122 @@ import "dotenv/config";
 import { createClient as createClient12 } from "@supabase/supabase-js";
 import express from "express";
 
+// server/services/userOpenAI.ts
+init_db();
+init_schema();
+import OpenAI from "openai";
+import { eq, and, desc } from "drizzle-orm";
+
+// server/services/openaiModels.ts
+var DEFAULT_MODEL = "gpt-6-luna";
+var ADVANCED_MODEL = "gpt-6.1-sol";
+var IMAGE_MODEL = "gpt-image-2.5-flare";
+var EMBEDDING_MODEL = "text-embedding-3-small";
+var LEGACY_DEFAULT = /* @__PURE__ */ new Set([
+  "gpt-4o-mini",
+  "gpt-3.5-turbo",
+  "gpt-4.1-mini",
+  "gpt-4.1-nano",
+  "o4-mini",
+  "o1-mini"
+]);
+var LEGACY_ADVANCED = /* @__PURE__ */ new Set([
+  "gpt-4o",
+  "gpt-4",
+  "gpt-4-turbo",
+  "gpt-4.1",
+  "o1",
+  "o1-preview",
+  "o3",
+  "gpt-5"
+]);
+function mapLegacyModel(model) {
+  if (!model) return DEFAULT_MODEL;
+  const base = model.replace(/-\d{4}-\d{2}-\d{2}$/, "").replace(/-\d{4}$/, "");
+  if (LEGACY_DEFAULT.has(base)) return DEFAULT_MODEL;
+  if (LEGACY_ADVANCED.has(base)) return ADVANCED_MODEL;
+  if (base.startsWith("dall-e") || base.includes("-image")) return IMAGE_MODEL;
+  if (base.startsWith("gemini") || base.startsWith("gemma")) {
+    return base.includes("pro") ? ADVANCED_MODEL : DEFAULT_MODEL;
+  }
+  return model;
+}
+
+// server/services/requestContext.ts
+import { AsyncLocalStorage } from "async_hooks";
+var requestContext = new AsyncLocalStorage();
+function currentUserId() {
+  return requestContext.getStore()?.userId;
+}
+
+// server/services/userOpenAI.ts
+var NO_KEY_MESSAGE = "Add your OpenAI API key in Settings \u2192 API Keys to use AI features.";
+async function getUserApiKey(userId, provider = "openai") {
+  if (!db || !userId) return null;
+  const key = await db.query.userApiKeys.findFirst({
+    where: and(
+      eq(userApiKeys.userId, userId),
+      eq(userApiKeys.provider, provider),
+      eq(userApiKeys.isActive, true)
+    ),
+    orderBy: [desc(userApiKeys.isDefault)]
+  });
+  return key ? { apiKey: key.apiKey, model: key.model } : null;
+}
+var GPT_IMAGE_SIZES = {
+  "1792x1024": "1536x1024",
+  "1024x1792": "1024x1536",
+  "256x256": "1024x1024",
+  "512x512": "1024x1024"
+};
+function normalizeChatParams(params) {
+  const { temperature: _temperature, max_tokens, ...rest } = params;
+  return {
+    ...rest,
+    model: mapLegacyModel(rest.model),
+    ...max_tokens != null && rest.max_completion_tokens == null ? { max_completion_tokens: max_tokens } : {}
+  };
+}
+function normalizeImageParams(params) {
+  const { style: _style, quality, response_format: _format, size, ...rest } = params;
+  return {
+    ...rest,
+    model: rest.model ? mapLegacyModel(rest.model) : IMAGE_MODEL,
+    ...size ? { size: GPT_IMAGE_SIZES[size] || size } : {},
+    ...quality && !["hd", "standard"].includes(quality) ? { quality } : {}
+  };
+}
+function wrapClient(client) {
+  const chatCreate = client.chat.completions.create.bind(client.chat.completions);
+  client.chat.completions.create = (params, options) => chatCreate(normalizeChatParams(params), options);
+  const responsesCreate = client.responses.create.bind(client.responses);
+  client.responses.create = (params, options) => {
+    const { temperature: _temperature, ...rest } = params;
+    return responsesCreate({ ...rest, model: mapLegacyModel(rest.model) }, options);
+  };
+  const imagesGenerate = client.images.generate.bind(client.images);
+  client.images.generate = async (params, options) => {
+    const result = await imagesGenerate(normalizeImageParams(params), options);
+    for (const img of result?.data || []) {
+      if (!img.url && img.b64_json) img.url = `data:image/png;base64,${img.b64_json}`;
+    }
+    return result;
+  };
+  return client;
+}
+async function getUserOpenAIClient(userId = currentUserId()) {
+  if (!userId) return null;
+  const keyData = await getUserApiKey(userId);
+  if (!keyData) return null;
+  return {
+    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey })),
+    model: mapLegacyModel(keyData.model)
+  };
+}
+
 // server/routes/crm.ts
 init_schema();
-import { eq, and, desc, sql as sql2 } from "drizzle-orm";
+import { eq as eq2, and as and2, desc as desc2, sql as sql2 } from "drizzle-orm";
 
 // server/routes/auth.ts
 import { Router } from "express";
@@ -1220,6 +1333,8 @@ async function requireAuthHandler(req2, res, next, checkEntitlement) {
     }
     req2.userId = userId;
     req2.isAuthenticated = isAuthenticated;
+    const ctx = requestContext.getStore();
+    if (ctx) ctx.userId = userId;
     if (userEmail) {
       req2.userEmail = userEmail;
     }
@@ -1421,7 +1536,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userContacts = await db2.select().from(contacts).where(eq(contacts.profileId, userId)).orderBy(desc(contacts.createdAt));
+      const userContacts = await db2.select().from(contacts).where(eq2(contacts.profileId, userId)).orderBy(desc2(contacts.createdAt));
       res.json(userContacts);
     } catch (error) {
       console.error("Error fetching contacts:", error);
@@ -1433,7 +1548,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -1466,7 +1581,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
-      const [existingContact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [existingContact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!existingContact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -1474,7 +1589,7 @@ function registerCRMRoutes(app2) {
         ...req2.body,
         profileId: userId,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId))).returning();
+      }).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId))).returning();
       res.json(updatedContact);
     } catch (error) {
       console.error("Error updating contact:", error);
@@ -1486,7 +1601,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
-      const [deletedContact] = await db2.delete(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId))).returning();
+      const [deletedContact] = await db2.delete(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId))).returning();
       if (!deletedContact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -1500,7 +1615,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userContacts = await db2.select().from(contacts).where(eq(contacts.profileId, userId)).orderBy(desc(contacts.createdAt));
+      const userContacts = await db2.select().from(contacts).where(eq2(contacts.profileId, userId)).orderBy(desc2(contacts.createdAt));
       const groups = [];
       const seen = /* @__PURE__ */ new Set();
       const normalize = (value) => (value || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 120);
@@ -1559,8 +1674,8 @@ function registerCRMRoutes(app2) {
         return res.status(400).json({ error: "primaryId and duplicateId are required" });
       }
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [primary] = await db2.select().from(contacts).where(and(eq(contacts.id, primaryId), eq(contacts.profileId, userId)));
-      const [duplicate] = await db2.select().from(contacts).where(and(eq(contacts.id, duplicateId), eq(contacts.profileId, userId)));
+      const [primary] = await db2.select().from(contacts).where(and2(eq2(contacts.id, primaryId), eq2(contacts.profileId, userId)));
+      const [duplicate] = await db2.select().from(contacts).where(and2(eq2(contacts.id, duplicateId), eq2(contacts.profileId, userId)));
       if (!primary || !duplicate) {
         return res.status(404).json({ error: "Primary or duplicate contact not found" });
       }
@@ -1568,8 +1683,8 @@ function registerCRMRoutes(app2) {
         return res.status(400).json({ error: "Cannot merge a contact with itself" });
       }
       const updatePayload = { ...mergedFields || {}, updatedAt: /* @__PURE__ */ new Date() };
-      const [updated] = await db2.update(contacts).set(updatePayload).where(and(eq(contacts.id, primaryId), eq(contacts.profileId, userId))).returning();
-      await db2.delete(contacts).where(and(eq(contacts.id, duplicateId), eq(contacts.profileId, userId)));
+      const [updated] = await db2.update(contacts).set(updatePayload).where(and2(eq2(contacts.id, primaryId), eq2(contacts.profileId, userId))).returning();
+      await db2.delete(contacts).where(and2(eq2(contacts.id, duplicateId), eq2(contacts.profileId, userId)));
       res.json({ contact: updated, merged: true });
     } catch (error) {
       console.error("Error merging contacts:", error);
@@ -1580,7 +1695,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userDeals = await db2.select().from(deals).where(eq(deals.profileId, userId)).orderBy(desc(deals.createdAt));
+      const userDeals = await db2.select().from(deals).where(eq2(deals.profileId, userId)).orderBy(desc2(deals.createdAt));
       res.json(userDeals);
     } catch (error) {
       console.error("Error fetching deals:", error);
@@ -1592,7 +1707,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const dealId = parseInt(req2.params.id);
-      const [deal] = await db2.select().from(deals).where(and(eq(deals.id, dealId), eq(deals.profileId, userId)));
+      const [deal] = await db2.select().from(deals).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId)));
       if (!deal) {
         return res.status(404).json({ error: "Deal not found" });
       }
@@ -1625,7 +1740,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const dealId = parseInt(req2.params.id);
-      const [existingDeal] = await db2.select().from(deals).where(and(eq(deals.id, dealId), eq(deals.profileId, userId)));
+      const [existingDeal] = await db2.select().from(deals).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId)));
       if (!existingDeal) {
         return res.status(404).json({ error: "Deal not found" });
       }
@@ -1633,7 +1748,7 @@ function registerCRMRoutes(app2) {
         ...req2.body,
         profileId: userId,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(and(eq(deals.id, dealId), eq(deals.profileId, userId))).returning();
+      }).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId))).returning();
       res.json(updatedDeal);
     } catch (error) {
       console.error("Error updating deal:", error);
@@ -1645,7 +1760,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const dealId = parseInt(req2.params.id);
-      const [deletedDeal] = await db2.delete(deals).where(and(eq(deals.id, dealId), eq(deals.profileId, userId))).returning();
+      const [deletedDeal] = await db2.delete(deals).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId))).returning();
       if (!deletedDeal) {
         return res.status(404).json({ error: "Deal not found" });
       }
@@ -1659,7 +1774,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userTasks = await db2.select().from(tasks).where(eq(tasks.profileId, userId)).orderBy(desc(tasks.createdAt));
+      const userTasks = await db2.select().from(tasks).where(eq2(tasks.profileId, userId)).orderBy(desc2(tasks.createdAt));
       res.json(userTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -1671,7 +1786,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const taskId = parseInt(req2.params.id);
-      const [task] = await db2.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId)));
+      const [task] = await db2.select().from(tasks).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId)));
       if (!task) {
         return res.status(404).json({ error: "Task not found" });
       }
@@ -1704,7 +1819,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const taskId = parseInt(req2.params.id);
-      const [existingTask] = await db2.select().from(tasks).where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId)));
+      const [existingTask] = await db2.select().from(tasks).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId)));
       if (!existingTask) {
         return res.status(404).json({ error: "Task not found" });
       }
@@ -1714,7 +1829,7 @@ function registerCRMRoutes(app2) {
         profileId: userId,
         // Explicitly set to prevent privilege escalation
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId))).returning();
+      }).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId))).returning();
       res.json(updatedTask);
     } catch (error) {
       console.error("Error updating task:", error);
@@ -1729,7 +1844,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const taskId = parseInt(req2.params.id);
-      const [deletedTask] = await db2.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId))).returning();
+      const [deletedTask] = await db2.delete(tasks).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId))).returning();
       if (!deletedTask) {
         return res.status(404).json({ error: "Task not found" });
       }
@@ -1743,7 +1858,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userAppointments = await db2.select().from(appointments).where(eq(appointments.profileId, userId)).orderBy(desc(appointments.startTime));
+      const userAppointments = await db2.select().from(appointments).where(eq2(appointments.profileId, userId)).orderBy(desc2(appointments.startTime));
       res.json(userAppointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -1755,7 +1870,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const appointmentId = parseInt(req2.params.id);
-      const [appointment] = await db2.select().from(appointments).where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId)));
+      const [appointment] = await db2.select().from(appointments).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId)));
       if (!appointment) {
         return res.status(404).json({ error: "Appointment not found" });
       }
@@ -1788,7 +1903,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const appointmentId = parseInt(req2.params.id);
-      const [existingAppointment] = await db2.select().from(appointments).where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId)));
+      const [existingAppointment] = await db2.select().from(appointments).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId)));
       if (!existingAppointment) {
         return res.status(404).json({ error: "Appointment not found" });
       }
@@ -1798,7 +1913,7 @@ function registerCRMRoutes(app2) {
         profileId: userId,
         // Explicitly set to prevent privilege escalation
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId))).returning();
+      }).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId))).returning();
       res.json(updatedAppointment);
     } catch (error) {
       console.error("Error updating appointment:", error);
@@ -1813,7 +1928,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const appointmentId = parseInt(req2.params.id);
-      const [deletedAppointment] = await db2.delete(appointments).where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId))).returning();
+      const [deletedAppointment] = await db2.delete(appointments).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId))).returning();
       if (!deletedAppointment) {
         return res.status(404).json({ error: "Appointment not found" });
       }
@@ -1827,7 +1942,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userCommunications = await db2.select().from(communications).where(eq(communications.profileId, userId)).orderBy(desc(communications.createdAt));
+      const userCommunications = await db2.select().from(communications).where(eq2(communications.profileId, userId)).orderBy(desc2(communications.createdAt));
       res.json(userCommunications);
     } catch (error) {
       console.error("Error fetching communications:", error);
@@ -1856,7 +1971,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userNotes = await db2.select().from(notes).where(eq(notes.profileId, userId)).orderBy(desc(notes.createdAt));
+      const userNotes = await db2.select().from(notes).where(eq2(notes.profileId, userId)).orderBy(desc2(notes.createdAt));
       res.json(userNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -1868,7 +1983,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.contactId);
-      const contactNotes = await db2.select().from(notes).where(and(eq(notes.contactId, contactId2), eq(notes.profileId, userId))).orderBy(desc(notes.createdAt));
+      const contactNotes = await db2.select().from(notes).where(and2(eq2(notes.contactId, contactId2), eq2(notes.profileId, userId))).orderBy(desc2(notes.createdAt));
       res.json(contactNotes);
     } catch (error) {
       console.error("Error fetching contact notes:", error);
@@ -1880,7 +1995,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const dealId = parseInt(req2.params.dealId);
-      const dealNotes = await db2.select().from(notes).where(and(eq(notes.dealId, dealId), eq(notes.profileId, userId))).orderBy(desc(notes.createdAt));
+      const dealNotes = await db2.select().from(notes).where(and2(eq2(notes.dealId, dealId), eq2(notes.profileId, userId))).orderBy(desc2(notes.createdAt));
       res.json(dealNotes);
     } catch (error) {
       console.error("Error fetching deal notes:", error);
@@ -1910,7 +2025,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const noteId = parseInt(req2.params.id);
-      const [existingNote] = await db2.select().from(notes).where(and(eq(notes.id, noteId), eq(notes.profileId, userId)));
+      const [existingNote] = await db2.select().from(notes).where(and2(eq2(notes.id, noteId), eq2(notes.profileId, userId)));
       if (!existingNote) {
         return res.status(404).json({ error: "Note not found" });
       }
@@ -1920,7 +2035,7 @@ function registerCRMRoutes(app2) {
         profileId: userId,
         // Explicitly set to prevent privilege escalation
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(and(eq(notes.id, noteId), eq(notes.profileId, userId))).returning();
+      }).where(and2(eq2(notes.id, noteId), eq2(notes.profileId, userId))).returning();
       res.json(updatedNote);
     } catch (error) {
       console.error("Error updating note:", error);
@@ -1935,7 +2050,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const noteId = parseInt(req2.params.id);
-      const [deletedNote] = await db2.delete(notes).where(and(eq(notes.id, noteId), eq(notes.profileId, userId))).returning();
+      const [deletedNote] = await db2.delete(notes).where(and2(eq2(notes.id, noteId), eq2(notes.profileId, userId))).returning();
       if (!deletedNote) {
         return res.status(404).json({ error: "Note not found" });
       }
@@ -1949,7 +2064,7 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userDocuments = await db2.select().from(documents).where(eq(documents.profileId, userId)).orderBy(desc(documents.createdAt));
+      const userDocuments = await db2.select().from(documents).where(eq2(documents.profileId, userId)).orderBy(desc2(documents.createdAt));
       res.json(userDocuments);
     } catch (error) {
       console.error("Error fetching documents:", error);
@@ -1979,7 +2094,7 @@ function registerCRMRoutes(app2) {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const documentId = parseInt(req2.params.id);
-      const [deletedDocument] = await db2.delete(documents).where(and(eq(documents.id, documentId), eq(documents.profileId, userId))).returning();
+      const [deletedDocument] = await db2.delete(documents).where(and2(eq2(documents.id, documentId), eq2(documents.profileId, userId))).returning();
       if (!deletedDocument) {
         return res.status(404).json({ error: "Document not found" });
       }
@@ -2018,7 +2133,7 @@ function registerCRMRoutes(app2) {
       const { id } = req2.params;
       const updates = req2.body;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [updatedTenant] = await db2.update(tenantConfigs).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq(tenantConfigs.id, id)).returning();
+      const [updatedTenant] = await db2.update(tenantConfigs).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(tenantConfigs.id, id)).returning();
       if (!updatedTenant) {
         return res.status(404).json({ error: "Tenant not found" });
       }
@@ -2032,7 +2147,7 @@ function registerCRMRoutes(app2) {
     try {
       const { id } = req2.params;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      await db2.delete(tenantConfigs).where(eq(tenantConfigs.id, id));
+      await db2.delete(tenantConfigs).where(eq2(tenantConfigs.id, id));
       res.json({ message: "Tenant deleted successfully" });
     } catch (error) {
       console.error("Error deleting tenant:", error);
@@ -2052,7 +2167,7 @@ function registerCRMRoutes(app2) {
           message: "Invalid domain format. Use format: subdomain.domain.tld"
         });
       }
-      const existing = await db2.select().from(tenantConfigs).where(eq(tenantConfigs.tenantId, domain));
+      const existing = await db2.select().from(tenantConfigs).where(eq2(tenantConfigs.tenantId, domain));
       const isAvailable = existing.length === 0;
       res.json({
         domain,
@@ -2071,9 +2186,9 @@ function registerCRMRoutes(app2) {
       if (!tenantId || !domain) {
         return res.status(400).json({ error: "tenantId and domain are required" });
       }
-      const [existing] = await db2.select().from(tenantConfigs).where(eq(tenantConfigs.id, tenantId));
+      const [existing] = await db2.select().from(tenantConfigs).where(eq2(tenantConfigs.id, tenantId));
       const currentConfig = existing?.config || {};
-      const [updated] = await db2.update(tenantConfigs).set({ config: { ...currentConfig, domain } }).where(eq(tenantConfigs.id, tenantId)).returning();
+      const [updated] = await db2.update(tenantConfigs).set({ config: { ...currentConfig, domain } }).where(eq2(tenantConfigs.id, tenantId)).returning();
       res.json({
         tenantId,
         domain,
@@ -2097,7 +2212,7 @@ function registerCRMRoutes(app2) {
     try {
       const { domain } = req2.params;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [tenant] = await db2.select().from(tenantConfigs).where(eq(tenantConfigs.tenantId, domain));
+      const [tenant] = await db2.select().from(tenantConfigs).where(eq2(tenantConfigs.tenantId, domain));
       const isConfigured = !!tenant;
       res.json({
         domain,
@@ -2119,7 +2234,7 @@ function registerCRMRoutes(app2) {
       const [userCount] = await db2.select({ count: sql2`count(*)` }).from(profiles);
       const [contactCount] = await db2.select({ count: sql2`count(*)` }).from(contacts);
       const activityCount = await db2.select({ count: sql2`count(*)` }).from(contactActivities);
-      const tenant = await db2.select().from(tenantConfigs).where(eq(tenantConfigs.id, tenantId)).then((r) => r[0]);
+      const tenant = await db2.select().from(tenantConfigs).where(eq2(tenantConfigs.id, tenantId)).then((r) => r[0]);
       const findings = [
         {
           id: "data-inventory",
@@ -2197,7 +2312,7 @@ function registerCRMRoutes(app2) {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [contactCount] = await db2.select({ count: sql2`count(*)` }).from(contacts);
       const [activityCount] = await db2.select({ count: sql2`count(*)` }).from(contactActivities);
-      const [tenant] = await db2.select().from(tenantConfigs).where(eq(tenantConfigs.id, tenantId));
+      const [tenant] = await db2.select().from(tenantConfigs).where(eq2(tenantConfigs.id, tenantId));
       const hasTenantConfig = !!tenant;
       const now = /* @__PURE__ */ new Date();
       const lastAudit = now.toISOString();
@@ -2239,8 +2354,7 @@ function registerCRMRoutes(app2) {
     try {
       const contactId2 = parseInt(req2.params.id);
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const { OpenAI: OpenAI3 } = await import("openai");
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         memoryService.recordObservation(
           userId,
@@ -2253,7 +2367,11 @@ function registerCRMRoutes(app2) {
       }
       let enrichedData;
       try {
-        const openai = new OpenAI3({ apiKey: process.env.OPENAI_API_KEY });
+        const openaiData = await getUserOpenAIClient(userId);
+        if (!openaiData) {
+          return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+        }
+        const openai = openaiData.client;
         const prompt = `Enrich this contact's information with additional professional details:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ""}
@@ -2263,7 +2381,7 @@ Email: ${contact.email || ""}
 
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         const completion = await openai.chat.completions.create({
-          model: "gpt-4",
+          model: ADVANCED_MODEL,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.3
         });
@@ -2293,7 +2411,7 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         enrichmentData: enrichedData,
         lastEnrichedAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq(contacts.id, contactId2)).returning();
+      }).where(eq2(contacts.id, contactId2)).returning();
       await db2.insert(contactActivities).values({
         contactId: contactId2,
         activityType: "enrichment",
@@ -2333,11 +2451,11 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
-      const [contact] = await db2.select().from(contacts).where(eq(contacts.id, contactId2));
+      const [contact] = await db2.select().from(contacts).where(eq2(contacts.id, contactId2));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
-      const history = await db2.select().from(contactActivities).where(and(eq(contactActivities.contactId, contactId2), eq(contactActivities.activityType, "enrichment"))).orderBy(desc(contactActivities.createdAt));
+      const history = await db2.select().from(contactActivities).where(and2(eq2(contactActivities.contactId, contactId2), eq2(contactActivities.activityType, "enrichment"))).orderBy(desc2(contactActivities.createdAt));
       res.json(history.map((h) => ({
         timestamp: h.createdAt,
         source: "OpenAI",
@@ -2353,8 +2471,7 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
     try {
       const contactId2 = parseInt(req2.params.id);
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const { OpenAI: OpenAI3 } = await import("openai");
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         memoryService.recordObservation(
           userId,
@@ -2367,7 +2484,11 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
       }
       let scoreData;
       try {
-        const openai = new OpenAI3({ apiKey: process.env.OPENAI_API_KEY });
+        const openaiData = await getUserOpenAIClient(userId);
+        if (!openaiData) {
+          return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+        }
+        const openai = openaiData.client;
         const prompt = `Score this contact's sales potential on a scale of 0-100:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ""}
@@ -2378,7 +2499,7 @@ Notes: ${contact.notes || ""}
 
 Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         const completion = await openai.chat.completions.create({
-          model: "gpt-4",
+          model: ADVANCED_MODEL,
           messages: [{ role: "user", content: prompt }],
           temperature: 0.3
         });
@@ -2408,7 +2529,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         score: String(scoreData.score / 100),
         aiScoreRationale: scoreData.rationale,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq(contacts.id, contactId2)).returning();
+      }).where(eq2(contacts.id, contactId2)).returning();
       await db2.insert(contactActivities).values({
         contactId: contactId2,
         activityType: "scoring",
@@ -2454,7 +2575,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
     try {
       const userId = req2.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const userContacts = await db2.select().from(contacts).where(eq(contacts.profileId, userId));
+      const userContacts = await db2.select().from(contacts).where(eq2(contacts.profileId, userId));
       const scores = userContacts.map((c) => parseFloat(c.score || "0")).filter((s) => !isNaN(s));
       const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
       const highPriority = userContacts.filter((c) => parseFloat(c.score || "0") > 0.7).length;
@@ -2474,7 +2595,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
       const { customFields } = req2.body;
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -2486,7 +2607,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         }
       }
       const mergedFields = { ...contact.customFields || {}, ...customFields || {} };
-      await db2.delete(contactCustomFields).where(eq(contactCustomFields.contactId, contactId2));
+      await db2.delete(contactCustomFields).where(eq2(contactCustomFields.contactId, contactId2));
       if (mergedFields && Object.keys(mergedFields).length > 0) {
         await db2.insert(contactCustomFields).values(
           Object.entries(mergedFields).map(([key, value]) => ({
@@ -2496,7 +2617,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
           }))
         );
       }
-      await db2.update(contacts).set({ customFields: mergedFields }).where(eq(contacts.id, contactId2));
+      await db2.update(contacts).set({ customFields: mergedFields }).where(eq2(contacts.id, contactId2));
       res.json({ updated: true, customFields: mergedFields });
     } catch (error) {
       console.error("Error updating custom fields:", error);
@@ -2509,14 +2630,14 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
       const fieldKey = req2.params.key;
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
-      await db2.delete(contactCustomFields).where(and(eq(contactCustomFields.contactId, contactId2), eq(contactCustomFields.fieldKey, fieldKey)));
+      await db2.delete(contactCustomFields).where(and2(eq2(contactCustomFields.contactId, contactId2), eq2(contactCustomFields.fieldKey, fieldKey)));
       const updatedFields = { ...contact.customFields || {} };
       delete updatedFields[fieldKey];
-      await db2.update(contacts).set({ customFields: updatedFields }).where(eq(contacts.id, contactId2));
+      await db2.update(contacts).set({ customFields: updatedFields }).where(eq2(contacts.id, contactId2));
       res.json({ deleted: true });
     } catch (error) {
       console.error("Error deleting custom field:", error);
@@ -2531,16 +2652,16 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       const type = req2.query.type;
       const page = parseInt(req2.query.page) || 1;
       const limit = parseInt(req2.query.limit) || 20;
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
-      const conditions = [eq(contactActivities.contactId, contactId2)];
+      const conditions = [eq2(contactActivities.contactId, contactId2)];
       if (type) {
-        conditions.push(eq(contactActivities.activityType, type));
+        conditions.push(eq2(contactActivities.activityType, type));
       }
       const offset = (page - 1) * limit;
-      const activities = await db2.select().from(contactActivities).where(and(...conditions)).orderBy(desc(contactActivities.createdAt)).limit(limit).offset(offset);
+      const activities = await db2.select().from(contactActivities).where(and2(...conditions)).orderBy(desc2(contactActivities.createdAt)).limit(limit).offset(offset);
       res.json(activities);
     } catch (error) {
       console.error("Error fetching activities:", error);
@@ -2553,7 +2674,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const contactId2 = parseInt(req2.params.id);
       const { activityType, description, metadata } = req2.body;
-      const [contact] = await db2.select().from(contacts).where(and(eq(contacts.id, contactId2), eq(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -3280,7 +3401,7 @@ var sanitizeInput = (req2, res, next) => {
 
 // server/routes/admin.ts
 init_schema();
-import { eq as eq2, count, sql as sql3 } from "drizzle-orm";
+import { eq as eq3, count, sql as sql3 } from "drizzle-orm";
 function registerAdminRoutes(app2) {
   app2.get("/api/admin/stats", adminLimiter, requireAdmin, async (req2, res) => {
     try {
@@ -3347,7 +3468,7 @@ function registerAdminRoutes(app2) {
           return res.status(400).json({ error: "Email and role are required" });
         }
         const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-        const existingUser = await db2.select().from(profiles).where(eq2(profiles.username, email.toLowerCase())).limit(1);
+        const existingUser = await db2.select().from(profiles).where(eq3(profiles.username, email.toLowerCase())).limit(1);
         if (existingUser.length > 0) {
           return res.status(400).json({ error: "User already exists" });
         }
@@ -3393,7 +3514,7 @@ function registerAdminRoutes(app2) {
         const updatedUser = await db2.update(profiles).set({
           role,
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(profiles.id, id)).returning();
+        }).where(eq3(profiles.id, id)).returning();
         if (!updatedUser.length) {
           return res.status(404).json({ error: "User not found" });
         }
@@ -3416,7 +3537,7 @@ function registerAdminRoutes(app2) {
         return res.status(400).json({ error: "Status is required" });
       }
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const user = await db2.select().from(profiles).where(eq2(profiles.id, id)).limit(1);
+      const user = await db2.select().from(profiles).where(eq3(profiles.id, id)).limit(1);
       if (!user.length) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -3448,7 +3569,7 @@ function registerAdminRoutes(app2) {
         const updatedUser = await db2.update(profiles).set({
           productTier,
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq2(profiles.id, id)).returning();
+        }).where(eq3(profiles.id, id)).returning();
         if (!updatedUser.length) {
           return res.status(404).json({ error: "User not found" });
         }
@@ -3475,7 +3596,7 @@ function registerAdminRoutes(app2) {
           return res.status(400).json({ error: "Cannot delete your own account" });
         }
         const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-        const deletedUser = await db2.delete(profiles).where(eq2(profiles.id, id)).returning();
+        const deletedUser = await db2.delete(profiles).where(eq3(profiles.id, id)).returning();
         if (!deletedUser.length) {
           return res.status(404).json({ error: "User not found" });
         }
@@ -3881,7 +4002,7 @@ function registerAdminRoutes(app2) {
               failed++;
               continue;
             }
-            const existingUser = await db2.select().from(profiles).where(eq2(profiles.username, email.toLowerCase())).limit(1);
+            const existingUser = await db2.select().from(profiles).where(eq3(profiles.username, email.toLowerCase())).limit(1);
             if (existingUser.length > 0) {
               errors.push(`User already exists: ${email}`);
               failed++;
@@ -4856,11 +4977,10 @@ router3.get("/plans", async (req2, res) => {
 });
 
 // server/routes/openclaw.ts
+import { Router as Router4 } from "express";
 init_db();
 init_schema();
-import { Router as Router4 } from "express";
-import { eq as eq3, and as and2, or, like, desc as desc2 } from "drizzle-orm";
-import OpenAI from "openai";
+import { eq as eq4, and as and3, or, like, desc as desc3 } from "drizzle-orm";
 var router4 = Router4();
 router4.use(requireAuth());
 router4.use((req2, res, next) => {
@@ -4889,14 +5009,8 @@ async function getOpenClawConfigForUser(userId) {
   }
   return { apiKey, baseUrl };
 }
-var openaiClient = null;
-function getOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  if (!openaiClient) {
-    openaiClient = new OpenAI({ apiKey });
-  }
-  return openaiClient;
+async function getOpenAIClient() {
+  return (await getUserOpenAIClient())?.client ?? null;
 }
 var aiRateLimit = /* @__PURE__ */ new Map();
 var AI_RATE_LIMIT_WINDOW_MS = 6e4;
@@ -5588,21 +5702,21 @@ async function executeCRMFunction(toolName, params, userId) {
         const query = params.query || "";
         const limit = params.limit || 10;
         const results = await db.select().from(contacts).where(
-          query ? and2(
-            eq3(contacts.profileId, userId),
+          query ? and3(
+            eq4(contacts.profileId, userId),
             or(
               like(contacts.firstName, `%${query}%`),
               like(contacts.lastName, `%${query}%`),
               like(contacts.email, `%${query}%`),
               like(contacts.company, `%${query}%`)
             )
-          ) : eq3(contacts.profileId, userId)
+          ) : eq4(contacts.profileId, userId)
         ).limit(limit);
         return { contacts: results, count: results.length };
       }
       case "get_contact_details": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         return contact || { error: "Contact not found" };
       }
       case "create_contact": {
@@ -5612,20 +5726,20 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "update_contact": {
         const contactId2 = parseInt(params.contactId);
-        const [updated] = await db.update(contacts).set({ ...params.data, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ ...params.data, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
         return updated || { error: "Contact not found" };
       }
       case "delete_contact": {
         const contactId2 = parseInt(params.contactId);
-        await db.delete(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        await db.delete(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         return { success: true, message: "Contact deleted" };
       }
       case "list_deals": {
         const limit = params.limit || 20;
         const stage = params.stage;
         const status = params.status;
-        let whereClause = eq3(deals.profileId, userId);
-        let results = await db.select().from(deals).where(eq3(deals.profileId, userId)).limit(limit);
+        let whereClause = eq4(deals.profileId, userId);
+        let results = await db.select().from(deals).where(eq4(deals.profileId, userId)).limit(limit);
         if (stage) results = results.filter((d) => d.stage === stage);
         if (status) results = results.filter((d) => d.status === status);
         return { deals: results, count: results.length };
@@ -5637,20 +5751,20 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "update_deal_stage": {
         const dealId = parseInt(params.dealId);
-        const [updated] = await db.update(deals).set({ stage: params.stage, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(deals.id, dealId), eq3(deals.profileId, userId))).returning();
+        const [updated] = await db.update(deals).set({ stage: params.stage, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(deals.id, dealId), eq4(deals.profileId, userId))).returning();
         return updated || { error: "Deal not found" };
       }
       case "close_deal": {
         const dealId = parseInt(params.dealId);
         const status = params.status === "closed-won" ? "won" : "lost";
-        const [updated] = await db.update(deals).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(deals.id, dealId), eq3(deals.profileId, userId))).returning();
+        const [updated] = await db.update(deals).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(deals.id, dealId), eq4(deals.profileId, userId))).returning();
         return updated || { error: "Deal not found" };
       }
       case "list_tasks": {
         const limit = params.limit || 20;
         const status = params.status;
         const dueDate = params.dueDate;
-        let results = await db.select().from(tasks).where(eq3(tasks.profileId, userId)).limit(limit);
+        let results = await db.select().from(tasks).where(eq4(tasks.profileId, userId)).limit(limit);
         if (status) results = results.filter((t) => t.status === status);
         if (dueDate)
           results = results.filter(
@@ -5665,12 +5779,12 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "complete_task": {
         const taskId = parseInt(params.taskId);
-        const [updated] = await db.update(tasks).set({ status: "completed", updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(tasks.id, taskId), eq3(tasks.profileId, userId))).returning();
+        const [updated] = await db.update(tasks).set({ status: "completed", updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(tasks.id, taskId), eq4(tasks.profileId, userId))).returning();
         return updated || { error: "Task not found" };
       }
       case "delete_task": {
         const taskId = parseInt(params.taskId);
-        await db.delete(tasks).where(and2(eq3(tasks.id, taskId), eq3(tasks.profileId, userId)));
+        await db.delete(tasks).where(and3(eq4(tasks.id, taskId), eq4(tasks.profileId, userId)));
         return { success: true, message: "Task deleted" };
       }
       case "search_companies": {
@@ -5698,7 +5812,7 @@ async function executeCRMFunction(toolName, params, userId) {
       case "list_appointments": {
         const limit = params.limit || 20;
         const date = params.date;
-        let results = await db.select().from(appointments).where(eq3(appointments.profileId, userId)).limit(limit);
+        let results = await db.select().from(appointments).where(eq4(appointments.profileId, userId)).limit(limit);
         if (date) {
           results = results.filter(
             (a) => a.dateTime && a.dateTime.toISOString().split("T")[0] === date
@@ -5717,7 +5831,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "cancel_appointment": {
         const appointmentId = parseInt(params.appointmentId);
-        await db.delete(appointments).where(and2(eq3(appointments.id, appointmentId), eq3(appointments.profileId, userId)));
+        await db.delete(appointments).where(and3(eq4(appointments.id, appointmentId), eq4(appointments.profileId, userId)));
         return { success: true, message: "Appointment cancelled" };
       }
       case "send_email": {
@@ -5726,7 +5840,7 @@ async function executeCRMFunction(toolName, params, userId) {
         }
         let emailContactId = params.contactId ? parseInt(params.contactId) : null;
         if (!emailContactId) {
-          const [existing] = await db.select({ id: contacts.id }).from(contacts).where(and2(eq3(contacts.email, params.to), eq3(contacts.profileId, userId))).limit(1);
+          const [existing] = await db.select({ id: contacts.id }).from(contacts).where(and3(eq4(contacts.email, params.to), eq4(contacts.profileId, userId))).limit(1);
           if (existing) emailContactId = existing.id;
         }
         const [newComm] = await db.insert(communications).values({
@@ -5747,7 +5861,7 @@ async function executeCRMFunction(toolName, params, userId) {
         }
         let smsContactId = params.contactId ? parseInt(params.contactId) : null;
         if (!smsContactId) {
-          const [existing] = await db.select({ id: contacts.id }).from(contacts).where(and2(eq3(contacts.phone, params.to), eq3(contacts.profileId, userId))).limit(1);
+          const [existing] = await db.select({ id: contacts.id }).from(contacts).where(and3(eq4(contacts.phone, params.to), eq4(contacts.profileId, userId))).limit(1);
           if (existing) smsContactId = existing.id;
         }
         const [newComm] = await db.insert(communications).values({
@@ -5767,7 +5881,7 @@ async function executeCRMFunction(toolName, params, userId) {
           return { error: "workflowId is required" };
         }
         const ruleId = parseInt(params.workflowId);
-        const [rule] = await db.select().from(automationRules).where(and2(eq3(automationRules.id, ruleId), eq3(automationRules.profileId, userId)));
+        const [rule] = await db.select().from(automationRules).where(and3(eq4(automationRules.id, ruleId), eq4(automationRules.profileId, userId)));
         if (!rule) return { error: "Automation rule not found" };
         if (!rule.isActive) return { error: "Automation rule is inactive" };
         const actions = rule.actions || [];
@@ -5800,22 +5914,20 @@ async function executeCRMFunction(toolName, params, userId) {
         }
         let entity = null;
         if (params.entityType === "deal") {
-          const [deal] = await db.select().from(deals).where(and2(eq3(deals.id, parseInt(params.entityId)), eq3(deals.profileId, userId)));
+          const [deal] = await db.select().from(deals).where(and3(eq4(deals.id, parseInt(params.entityId)), eq4(deals.profileId, userId)));
           entity = deal;
         } else if (params.entityType === "contact") {
-          const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, parseInt(params.entityId)), eq3(contacts.profileId, userId)));
+          const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, parseInt(params.entityId)), eq4(contacts.profileId, userId)));
           entity = contact;
         } else if (params.entityType === "company") {
           const { data } = await supabase.from("companies").select("*").eq("id", params.entityId).eq("owner_user_id", userId).single();
           entity = data;
         }
         if (!entity) return { error: `${params.entityType} not found` };
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: "OpenAI API key not configured" };
-        const OpenAI3 = (await import("openai")).default;
-        const openaiClient3 = new OpenAI3({ apiKey });
-        const response = await openaiClient3.chat.completions.create({
-          model: "gpt-4o-mini",
+        const openaiClient = await getOpenAIClient();
+        if (!openaiClient) return { error: NO_KEY_MESSAGE };
+        const response = await openaiClient.chat.completions.create({
+          model: DEFAULT_MODEL,
           messages: [
             {
               role: "system",
@@ -5834,7 +5946,7 @@ async function executeCRMFunction(toolName, params, userId) {
         return { entityType: params.entityType, entityId: params.entityId, ...insights };
       }
       case "get_pipeline_summary": {
-        const allDeals = await db.select().from(deals).where(eq3(deals.profileId, userId));
+        const allDeals = await db.select().from(deals).where(eq4(deals.profileId, userId));
         const totalValue = allDeals.reduce((sum, d) => sum + (d.value || 0), 0);
         const wonDeals = allDeals.filter((d) => d.status === "won");
         const wonValue = wonDeals.reduce((sum, d) => sum + (d.value || 0), 0);
@@ -5853,7 +5965,7 @@ async function executeCRMFunction(toolName, params, userId) {
         };
       }
       case "get_sales_forecast": {
-        const allDeals = await db.select().from(deals).where(eq3(deals.profileId, userId));
+        const allDeals = await db.select().from(deals).where(eq4(deals.profileId, userId));
         const openDeals = allDeals.filter((d) => d.status === "open");
         const totalPipeline = openDeals.reduce((sum, d) => sum + (d.value || 0), 0);
         const avgDealSize = openDeals.length > 0 ? totalPipeline / openDeals.length : 0;
@@ -6009,7 +6121,7 @@ async function executeCRMFunction(toolName, params, userId) {
         const contactId2 = parseInt(params.contactId);
         const limit = params.limit || 50;
         const type = params.type;
-        let results = await db.select().from(communications).where(and2(eq3(communications.contactId, contactId2), eq3(communications.profileId, userId))).limit(limit);
+        let results = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))).limit(limit);
         if (type) results = results.filter((c) => c.type === type);
         return { communications: results, count: results.length };
       }
@@ -6028,10 +6140,10 @@ async function executeCRMFunction(toolName, params, userId) {
         const limit = params.limit || 50;
         const contactId2 = params.contactId ? parseInt(params.contactId) : null;
         const dealId = params.dealId ? parseInt(params.dealId) : null;
-        const conditions = [eq3(notes.profileId, userId)];
-        if (contactId2) conditions.push(eq3(notes.contactId, contactId2));
-        if (dealId) conditions.push(eq3(notes.dealId, dealId));
-        const results = await db.select().from(notes).where(and2(...conditions)).limit(limit).orderBy(desc2(notes.createdAt));
+        const conditions = [eq4(notes.profileId, userId)];
+        if (contactId2) conditions.push(eq4(notes.contactId, contactId2));
+        if (dealId) conditions.push(eq4(notes.dealId, dealId));
+        const results = await db.select().from(notes).where(and3(...conditions)).limit(limit).orderBy(desc3(notes.createdAt));
         return { notes: results, count: results.length };
       }
       case "create_note": {
@@ -6046,33 +6158,33 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "delete_note": {
         const noteId = parseInt(params.noteId);
-        await db.delete(notes).where(and2(eq3(notes.id, noteId), eq3(notes.profileId, userId)));
+        await db.delete(notes).where(and3(eq4(notes.id, noteId), eq4(notes.profileId, userId)));
         return { success: true, message: "Note deleted" };
       }
       // Tags
       case "add_contact_tag": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentTags = contact.tags || [];
         const newTags = [.../* @__PURE__ */ new Set([...currentTags, params.tag])];
-        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, tags: newTags };
       }
       case "remove_contact_tag": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentTags = contact.tags || [];
         const newTags = currentTags.filter((t) => t !== params.tag);
-        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, tags: newTags };
       }
       // Engagement & Interaction History
       case "get_contact_engagement": {
         const contactId2 = parseInt(params.contactId);
         const comms = await db.select().from(communications).where(
-          and2(eq3(communications.contactId, contactId2), eq3(communications.profileId, userId))
+          and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))
         );
         const emails = comms.filter((c) => c.type === "email");
         const calls2 = comms.filter((c) => c.type === "call");
@@ -6102,8 +6214,8 @@ async function executeCRMFunction(toolName, params, userId) {
       case "get_interaction_history": {
         const contactId2 = parseInt(params.contactId);
         const limit = params.limit || 50;
-        const comms = await db.select().from(communications).where(and2(eq3(communications.contactId, contactId2), eq3(communications.profileId, userId))).limit(limit).orderBy(desc2(communications.sentAt), desc2(communications.createdAt));
-        const contactNotes = await db.select().from(notes).where(and2(eq3(notes.contactId, contactId2), eq3(notes.profileId, userId))).limit(limit).orderBy(desc2(notes.createdAt));
+        const comms = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))).limit(limit).orderBy(desc3(communications.sentAt), desc3(communications.createdAt));
+        const contactNotes = await db.select().from(notes).where(and3(eq4(notes.contactId, contactId2), eq4(notes.profileId, userId))).limit(limit).orderBy(desc3(notes.createdAt));
         const interactions = [
           ...comms.map((c) => ({
             type: "communication",
@@ -6125,7 +6237,7 @@ async function executeCRMFunction(toolName, params, userId) {
       // AI Features
       case "analyze_lead_score": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
@@ -6136,7 +6248,7 @@ async function executeCRMFunction(toolName, params, userId) {
           });
           return { error: "Contact not found" };
         }
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(
             userId,
@@ -6145,11 +6257,11 @@ async function executeCRMFunction(toolName, params, userId) {
             { tool: "analyze_lead_score", contactId: contactId2 }
           ).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: "system",
@@ -6196,7 +6308,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "generate_personalization": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
@@ -6207,8 +6319,8 @@ async function executeCRMFunction(toolName, params, userId) {
           });
           return { error: "Contact not found" };
         }
-        const comms = await db.select().from(communications).where(and2(eq3(communications.contactId, contactId2), eq3(communications.profileId, userId))).limit(10);
-        const client = getOpenAIClient();
+        const comms = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))).limit(10);
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(
             userId,
@@ -6217,14 +6329,14 @@ async function executeCRMFunction(toolName, params, userId) {
             { tool: "generate_personalization", contactId: contactId2 }
           ).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         const previousInteractions = comms.map(
           (c) => `${c.type}: ${c.subject || ""} - ${c.content || ""}`
         );
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: "system",
@@ -6269,7 +6381,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "enrich_contact": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(userId, "error", `enrich_contact: Contact ${contactId2} not found`, {
             tool: "enrich_contact",
@@ -6278,18 +6390,18 @@ async function executeCRMFunction(toolName, params, userId) {
           });
           return { error: "Contact not found" };
         }
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(userId, "system_event", "enrich_contact: OpenAI not configured", {
             tool: "enrich_contact",
             contactId: contactId2
           }).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: "system",
@@ -6336,7 +6448,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "social_media_research": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
@@ -6347,7 +6459,7 @@ async function executeCRMFunction(toolName, params, userId) {
           });
           return { error: "Contact not found" };
         }
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(
             userId,
@@ -6356,12 +6468,12 @@ async function executeCRMFunction(toolName, params, userId) {
             { tool: "social_media_research", contactId: contactId2 }
           ).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         const platforms = params.platforms ? params.platforms.split(",").map((p) => p.trim()) : ["LinkedIn", "Twitter", "Instagram", "YouTube", "GitHub"];
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: "system",
@@ -6415,17 +6527,17 @@ async function executeCRMFunction(toolName, params, userId) {
           });
           return { error: "Text is required for sentiment analysis" };
         }
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(userId, "system_event", "analyze_sentiment: OpenAI not configured", {
             tool: "analyze_sentiment"
           }).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: DEFAULT_MODEL,
             messages: [
               {
                 role: "system",
@@ -6472,7 +6584,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "generate_email_draft": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
@@ -6485,7 +6597,7 @@ async function executeCRMFunction(toolName, params, userId) {
         }
         const purpose = params.purpose || "follow-up";
         const context = params.context || "";
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(
             userId,
@@ -6494,11 +6606,11 @@ async function executeCRMFunction(toolName, params, userId) {
             { tool: "generate_email_draft", contactId: contactId2, purpose }
           ).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: "system",
@@ -6562,7 +6674,7 @@ async function executeCRMFunction(toolName, params, userId) {
           });
           return { error: "Maximum 50 contacts per bulk analysis" };
         }
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(
             userId,
@@ -6571,18 +6683,18 @@ async function executeCRMFunction(toolName, params, userId) {
             { tool: "bulk_analyze_contacts", contactIdsCount: contactIds.length }
           ).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         const results = [];
         let successCount = 0;
         let errorCount = 0;
         for (const contactId2 of contactIds) {
           try {
-            const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+            const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
             if (contact) {
               try {
                 const response = await client.chat.completions.create({
-                  model: "gpt-4o-mini",
+                  model: DEFAULT_MODEL,
                   messages: [
                     {
                       role: "system",
@@ -6636,15 +6748,15 @@ async function executeCRMFunction(toolName, params, userId) {
         let contactList;
         if (params.contactIds) {
           const ids = params.contactIds.split(",").map((id) => parseInt(id.trim())).filter((id) => !isNaN(id));
-          contactList = await db.select().from(contacts).where(and2(eq3(contacts.profileId, userId), ...ids.map((id) => eq3(contacts.id, id))));
+          contactList = await db.select().from(contacts).where(and3(eq4(contacts.profileId, userId), ...ids.map((id) => eq4(contacts.id, id))));
         } else if (params.filters) {
-          const conditions = [eq3(contacts.profileId, userId)];
-          if (params.filters.status) conditions.push(eq3(contacts.status, params.filters.status));
+          const conditions = [eq4(contacts.profileId, userId)];
+          if (params.filters.status) conditions.push(eq4(contacts.status, params.filters.status));
           if (params.filters.industry)
-            conditions.push(eq3(contacts.industry, params.filters.industry));
-          contactList = await db.select().from(contacts).where(and2(...conditions)).limit(1e3);
+            conditions.push(eq4(contacts.industry, params.filters.industry));
+          contactList = await db.select().from(contacts).where(and3(...conditions)).limit(1e3);
         } else {
-          contactList = await db.select().from(contacts).where(eq3(contacts.profileId, userId)).limit(1e3);
+          contactList = await db.select().from(contacts).where(eq4(contacts.profileId, userId)).limit(1e3);
         }
         const csvHeader = "Name,Email,Phone,Company,Position,Status,Industry,Score,Location,Last Contact\n";
         const csvRows = contactList.map(
@@ -6657,10 +6769,10 @@ async function executeCRMFunction(toolName, params, userId) {
         };
       }
       case "search_contacts_advanced": {
-        const conditions = [eq3(contacts.profileId, userId)];
-        if (params.status) conditions.push(eq3(contacts.status, params.status));
-        if (params.industry) conditions.push(eq3(contacts.industry, params.industry));
-        if (params.source) conditions.push(eq3(contacts.source, params.source));
+        const conditions = [eq4(contacts.profileId, userId)];
+        if (params.status) conditions.push(eq4(contacts.status, params.status));
+        if (params.industry) conditions.push(eq4(contacts.industry, params.industry));
+        if (params.source) conditions.push(eq4(contacts.source, params.source));
         if (params.location) conditions.push(like(contacts.location, `%${params.location}%`));
         if (params.query) {
           conditions.push(
@@ -6672,7 +6784,7 @@ async function executeCRMFunction(toolName, params, userId) {
           );
         }
         const limit = params.limit || 50;
-        let results = await db.select().from(contacts).where(and2(...conditions)).limit(limit);
+        let results = await db.select().from(contacts).where(and3(...conditions)).limit(limit);
         if (params.interestLevel) {
           results = results.filter((c) => c.interestLevel === params.interestLevel);
         }
@@ -6696,7 +6808,7 @@ async function executeCRMFunction(toolName, params, userId) {
       // Deal AI
       case "analyze_deal": {
         const dealId = parseInt(params.dealId);
-        const [deal] = await db.select().from(deals).where(and2(eq3(deals.id, dealId), eq3(deals.profileId, userId)));
+        const [deal] = await db.select().from(deals).where(and3(eq4(deals.id, dealId), eq4(deals.profileId, userId)));
         if (!deal) {
           memoryService.recordObservation(userId, "error", `analyze_deal: Deal ${dealId} not found`, {
             tool: "analyze_deal",
@@ -6707,10 +6819,10 @@ async function executeCRMFunction(toolName, params, userId) {
         }
         let contact = null;
         if (deal.contactId) {
-          const [found] = await db.select().from(contacts).where(eq3(contacts.id, deal.contactId));
+          const [found] = await db.select().from(contacts).where(eq4(contacts.id, deal.contactId));
           contact = found;
         }
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(userId, "system_event", "analyze_deal: OpenAI not configured", {
             tool: "analyze_deal",
@@ -6718,11 +6830,11 @@ async function executeCRMFunction(toolName, params, userId) {
             dealName: deal.name
           }).catch(() => {
           });
-          return { error: "OpenAI API key not configured" };
+          return { error: NO_KEY_MESSAGE };
         }
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: "system",
@@ -6771,7 +6883,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       // Deal Analytics
       case "get_deal_analytics": {
-        const allDeals = await db.select().from(deals).where(eq3(deals.profileId, userId));
+        const allDeals = await db.select().from(deals).where(eq4(deals.profileId, userId));
         const wonDeals = allDeals.filter((d) => d.status === "won");
         const lostDeals = allDeals.filter((d) => d.status === "lost");
         const openDeals = allDeals.filter((d) => d.status === "open");
@@ -6806,7 +6918,7 @@ async function executeCRMFunction(toolName, params, userId) {
         };
       }
       case "get_deal_risks": {
-        const allDeals = await db.select().from(deals).where(eq3(deals.profileId, userId));
+        const allDeals = await db.select().from(deals).where(eq4(deals.profileId, userId));
         const now = /* @__PURE__ */ new Date();
         const highRisk = allDeals.filter((d) => {
           if (d.status !== "open") return false;
@@ -6841,36 +6953,36 @@ async function executeCRMFunction(toolName, params, userId) {
       // Contact Customization
       case "toggle_favorite": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentFav = contact.isFavorite || false;
-        const [updated] = await db.update(contacts).set({ isFavorite: !currentFav, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ isFavorite: !currentFav, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, isFavorite: !currentFav };
       }
       case "add_custom_field": {
         const contactId2 = parseInt(params.contactId);
         if (!params.key || !params.value) return { error: "Key and value are required" };
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentFields = contact.customFields || {};
         const updatedFields = { ...currentFields, [params.key]: params.value };
-        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, customFields: updatedFields };
       }
       case "remove_custom_field": {
         const contactId2 = parseInt(params.contactId);
         if (!params.key) return { error: "Key is required" };
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentFields = contact.customFields || {};
         const { [params.key]: _, ...updatedFields } = currentFields;
-        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, customFields: updatedFields };
       }
       // Social Monitoring
       case "setup_social_monitoring": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const platforms = params.platforms ? params.platforms.split(",").map((p) => p.trim()) : ["LinkedIn", "Twitter"];
         const alertTypes = params.alertTypes ? params.alertTypes.split(",").map((a) => a.trim()) : ["job_change", "new_content", "engagement"];
@@ -6885,7 +6997,7 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       case "get_social_alerts": {
         const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, contactId2), eq3(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         return {
           contactId: contactId2,
@@ -6964,13 +7076,13 @@ async function executeCRMFunction(toolName, params, userId) {
       case "generate_image": {
         const prompt = params.prompt;
         if (!prompt) return { error: "Prompt is required for image generation" };
-        const client = getOpenAIClient();
-        if (!client) return { error: "OpenAI API key not configured" };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
         const size = params.size || "1024x1024";
-        const validSizes = ["256x256", "512x512", "1024x1024", "1792x1024", "1024x1792"];
+        const validSizes = ["1024x1024", "1536x1024", "1024x1536"];
         const imageSize = validSizes.includes(size) ? size : "1024x1024";
         const response = await client.images.generate({
-          model: "dall-e-3",
+          model: IMAGE_MODEL,
           prompt,
           size: imageSize,
           n: 1
@@ -6980,7 +7092,7 @@ async function executeCRMFunction(toolName, params, userId) {
             url: img.url,
             revisedPrompt: img.revised_prompt
           })),
-          model: "dall-e-3",
+          model: IMAGE_MODEL,
           size: imageSize
         };
       }
@@ -6988,10 +7100,10 @@ async function executeCRMFunction(toolName, params, userId) {
       case "generate_demo_script": {
         const productName = params.productName;
         if (!productName) return { error: "Product name is required" };
-        const client = getOpenAIClient();
-        if (!client) return { error: "OpenAI API key not configured" };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
         const response = await client.chat.completions.create({
-          model: "gpt-4o",
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: "system",
@@ -7054,7 +7166,7 @@ async function executeCRMFunction(toolName, params, userId) {
         const dealId = parseInt(params.dealId);
         const stage = params.stage;
         if (!stage) return { error: "Stage is required" };
-        const [updated] = await db.update(deals).set({ stage, updatedAt: /* @__PURE__ */ new Date() }).where(and2(eq3(deals.id, dealId), eq3(deals.profileId, userId))).returning();
+        const [updated] = await db.update(deals).set({ stage, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(deals.id, dealId), eq4(deals.profileId, userId))).returning();
         return updated ? { deal: updated, message: `Deal moved to ${stage}` } : { error: "Deal not found" };
       }
       // Shared State Sync
@@ -7104,15 +7216,15 @@ async function executeCRMFunction(toolName, params, userId) {
           started_at: (/* @__PURE__ */ new Date()).toISOString()
         }).select().single();
         if (execError) return { error: "Failed to create execution", details: execError.message };
-        const client = getOpenAIClient();
-        if (!client) return { error: "OpenAI API key not configured" };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
         const systemPrompt = agent.system_prompt || `You are a helpful AI agent.`;
         const userPrompt = `Task: ${task}
 
 Input data: ${JSON.stringify(input)}`;
         try {
           const response = await client.chat.completions.create({
-            model: "gpt-4o",
+            model: ADVANCED_MODEL,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt }
@@ -7123,7 +7235,7 @@ Input data: ${JSON.stringify(input)}`;
           const output = response.choices[0].message.content;
           await supabase.from("agent_executions").update({
             status: "completed",
-            output_data: { result: output, model: "gpt-4o" },
+            output_data: { result: output, model: ADVANCED_MODEL },
             completed_at: (/* @__PURE__ */ new Date()).toISOString()
           }).eq("id", execution.id);
           return {
@@ -7176,17 +7288,17 @@ Input data: ${JSON.stringify(input)}`;
           recommended_durations: [],
           optimal_days: []
         };
-        const client = getOpenAIClient();
-        if (!client) return { error: "OpenAI API key not configured" };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
         let contactInfo = "";
         if (contactId2) {
-          const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, parseInt(contactId2)), eq3(contacts.profileId, userId)));
+          const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, parseInt(contactId2)), eq4(contacts.profileId, userId)));
           if (contact) {
             contactInfo = `Contact: ${contact.firstName} ${contact.lastName} (${contact.email})`;
           }
         }
         const response = await client.chat.completions.create({
-          model: "gpt-4o",
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: "system",
@@ -7214,11 +7326,11 @@ Provide meeting scheduling suggestions.`
         const duration = params.duration || 30;
         const meetingContext = params.context || "";
         if (!title) return { error: "Meeting title is required" };
-        const client = getOpenAIClient();
-        if (!client) return { error: "OpenAI API key not configured" };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
         const contactInfo = [];
         for (const cid of contactIds.slice(0, 5)) {
-          const [contact] = await db.select().from(contacts).where(and2(eq3(contacts.id, parseInt(cid)), eq3(contacts.profileId, userId)));
+          const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, parseInt(cid)), eq4(contacts.profileId, userId)));
           if (contact) {
             contactInfo.push({
               name: `${contact.firstName} ${contact.lastName}`,
@@ -7228,7 +7340,7 @@ Provide meeting scheduling suggestions.`
           }
         }
         const response = await client.chat.completions.create({
-          model: "gpt-4o",
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: "system",
@@ -7268,16 +7380,16 @@ Preparation: ${scheduling.preparation_notes || ""}`
         const appointmentId = params.appointmentId;
         if (!appointmentId) return { error: "Appointment ID is required" };
         const [appointment] = await db.select().from(appointments).where(
-          and2(eq3(appointments.id, parseInt(appointmentId)), eq3(appointments.profileId, userId))
+          and3(eq4(appointments.id, parseInt(appointmentId)), eq4(appointments.profileId, userId))
         );
         if (!appointment) return { error: "Appointment not found" };
-        const client = getOpenAIClient();
-        if (!client) return { error: "OpenAI API key not configured" };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
         const notes2 = await db.select().from(notes2).where(
-          and2(eq3(notes2.appointmentId, parseInt(appointmentId)), eq3(notes2.profileId, userId))
+          and3(eq4(notes2.appointmentId, parseInt(appointmentId)), eq4(notes2.profileId, userId))
         );
         const response = await client.chat.completions.create({
-          model: "gpt-4o",
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: "system",
@@ -8335,28 +8447,9 @@ router6.put("/:companyId/whitelabel", async (req2, res) => {
 var companies_default = router6;
 
 // server/routes/openai.ts
-init_db();
-init_schema();
 import { Router as Router7 } from "express";
-import { eq as eq4, and as and3 } from "drizzle-orm";
 var router7 = Router7();
-async function getUserOpenAI(userId) {
-  if (!db) return null;
-  const keyRecord = await db.query.userApiKeys.findFirst({
-    where: and3(
-      eq4(userApiKeys.userId, userId),
-      eq4(userApiKeys.provider, "openai"),
-      eq4(userApiKeys.isActive, true)
-    ),
-    orderBy: (userApiKeys2, { desc: desc9 }) => [desc9(userApiKeys2.isDefault)]
-  });
-  if (!keyRecord) return null;
-  const OpenAI3 = (await import("openai")).default;
-  return {
-    client: new OpenAI3({ apiKey: keyRecord.apiKey }),
-    model: keyRecord.model || "gpt-4o-mini"
-  };
-}
+var getUserOpenAI = (userId) => getUserOpenAIClient(userId);
 router7.get("/api/openai/status", requireAuth(), async (req2, res) => {
   const userId = req2.userId;
   const openaiData = await getUserOpenAI(userId);
@@ -8622,64 +8715,24 @@ router7.post("/api/openai/business-intelligence", requireAuth(), async (req2, re
 var openai_default = router7;
 
 // server/routes/openaiResponses.ts
-init_db();
-init_schema();
 import { Router as Router8 } from "express";
-import { eq as eq5, and as and4 } from "drizzle-orm";
 var router8 = Router8();
 var RESPONSES_API_MODELS = [
   {
-    id: "gpt-4.1",
-    name: "GPT-4.1",
-    description: "Most capable GPT-4.1 model for complex reasoning, coding, and instruction-following",
-    pricing: "$2.00 / $8.00 per 1M tokens",
+    id: DEFAULT_MODEL,
+    name: "GPT-6 Luna",
+    description: "Efficient model for high-volume, everyday tasks",
+    pricing: "$0.10 / $0.50 per 1M tokens",
     contextLength: "1M tokens"
   },
   {
-    id: "gpt-4.1-mini",
-    name: "GPT-4.1 Mini",
-    description: "Balanced GPT-4.1 model optimized for speed and cost-efficiency",
-    pricing: "$0.40 / $1.60 per 1M tokens",
-    contextLength: "1M tokens"
-  },
-  {
-    id: "gpt-4.1-nano",
-    name: "GPT-4.1 Nano",
-    description: "Fastest, most affordable GPT-4.1 model for lightweight tasks and high throughput",
-    pricing: "$0.10 / $0.40 per 1M tokens",
-    contextLength: "1M tokens"
-  },
-  {
-    id: "o3",
-    name: "o3",
-    description: "Advanced reasoning model with extended thinking for math, science, and complex problem-solving",
-    pricing: "$2.00 / $8.00 per 1M tokens",
-    contextLength: "200K tokens"
-  },
-  {
-    id: "o4-mini",
-    name: "o4-mini",
-    description: "Fast, cost-efficient reasoning model ideal for coding, math, and agentic tasks at scale",
-    pricing: "$0.60 / $2.40 per 1M tokens",
-    contextLength: "200K tokens"
+    id: ADVANCED_MODEL,
+    name: "GPT-6.1 Sol",
+    description: "Near-flagship model for complex analysis and reasoning",
+    pricing: "$2.00 / $10.00 per 1M tokens",
+    contextLength: "1.05M tokens"
   }
 ];
-async function getUserOpenAIResponses(userId) {
-  if (!db) return null;
-  const keyRecord = await db.query.userApiKeys.findFirst({
-    where: and4(
-      eq5(userApiKeys.userId, userId),
-      eq5(userApiKeys.provider, "openai"),
-      eq5(userApiKeys.isActive, true)
-    ),
-    orderBy: (userApiKeys2, { desc: desc9 }) => [desc9(userApiKeys2.isDefault)]
-  });
-  if (!keyRecord || !keyRecord.apiKey) return null;
-  return {
-    apiKey: keyRecord.apiKey,
-    model: keyRecord.model || "gpt-4.1"
-  };
-}
 function extractResponseText(response) {
   try {
     if (!response?.output || !Array.isArray(response.output)) {
@@ -8705,13 +8758,12 @@ function extractResponseText(response) {
   }
 }
 async function createResponse(userId, input, model) {
-  const userKeyData = await getUserOpenAIResponses(userId);
+  const userKeyData = await getUserOpenAIClient(userId);
   if (!userKeyData) {
-    throw new Error("No active OpenAI API key configured. Add your key in Settings > API Keys.");
+    throw new Error(NO_KEY_MESSAGE);
   }
-  const selectedModel = model || userKeyData.model || "gpt-4.1";
-  const OpenAI3 = (await import("openai")).default;
-  const openai = new OpenAI3({ apiKey: userKeyData.apiKey });
+  const selectedModel = model || userKeyData.model;
+  const openai = userKeyData.client;
   try {
     const response = await openai.responses.create({
       model: selectedModel,
@@ -8766,15 +8818,12 @@ router8.post("/api/openai/responses/stream", requireAuth(), async (req2, res) =>
     if (!input || typeof input !== "string" || input.trim().length === 0) {
       return res.status(400).json({ error: "Input string is required" });
     }
-    const userKeyData = await getUserOpenAIResponses(userId);
+    const userKeyData = await getUserOpenAIClient(userId);
     if (!userKeyData) {
-      return res.status(400).json({
-        error: "No active OpenAI API key configured. Add your key in Settings > API Keys."
-      });
+      return res.status(400).json({ error: NO_KEY_MESSAGE, needsApiKey: true });
     }
-    const selectedModel = model || userKeyData.model || "gpt-4.1";
-    const OpenAI3 = (await import("openai")).default;
-    const openai = new OpenAI3({ apiKey: userKeyData.apiKey });
+    const selectedModel = model || userKeyData.model;
+    const openai = userKeyData.client;
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -13968,7 +14017,7 @@ function registerAppointmentRoutes(app2) {
 init_db();
 init_schema();
 init_creditService();
-import { eq as eq7, and as and6, sql as sql5 } from "drizzle-orm";
+import { eq as eq6, and as and5, sql as sql5 } from "drizzle-orm";
 var AIPricingService = class {
   /**
    * Get all AI features with pricing for a specific user context
@@ -13977,17 +14026,17 @@ var AIPricingService = class {
    * For End User: shows reseller's retail price or base price
    */
   static async getAIFeaturesWithPricing(userId, userRole, resellerId) {
-    const features2 = await db.select().from(aiFeatureDefinitions).where(eq7(aiFeatureDefinitions.isActive, true));
+    const features2 = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.isActive, true));
     const result = [];
     for (const feature of features2) {
       let retailPrice = feature.baseCreditCost;
       let wholesalePrice = Math.floor(feature.baseCreditCost * 0.5);
       if (userRole === "whitelabel" || userRole === "reseller") {
         const resellerPricing = await db.select().from(aiResellerPricing).where(
-          and6(
-            eq7(aiResellerPricing.resellerId, userId),
-            eq7(aiResellerPricing.featureKey, feature.featureKey),
-            eq7(aiResellerPricing.isActive, true)
+          and5(
+            eq6(aiResellerPricing.resellerId, userId),
+            eq6(aiResellerPricing.featureKey, feature.featureKey),
+            eq6(aiResellerPricing.isActive, true)
           )
         ).limit(1);
         if (resellerPricing.length > 0) {
@@ -13996,10 +14045,10 @@ var AIPricingService = class {
         }
       } else if (resellerId) {
         const resellerPricing = await db.select().from(aiResellerPricing).where(
-          and6(
-            eq7(aiResellerPricing.resellerId, resellerId),
-            eq7(aiResellerPricing.featureKey, feature.featureKey),
-            eq7(aiResellerPricing.isActive, true)
+          and5(
+            eq6(aiResellerPricing.resellerId, resellerId),
+            eq6(aiResellerPricing.featureKey, feature.featureKey),
+            eq6(aiResellerPricing.isActive, true)
           )
         ).limit(1);
         if (resellerPricing.length > 0) {
@@ -14027,13 +14076,13 @@ var AIPricingService = class {
     await db.update(aiFeatureDefinitions).set({
       ...updates,
       updatedAt: /* @__PURE__ */ new Date()
-    }).where(eq7(aiFeatureDefinitions.featureKey, featureKey));
+    }).where(eq6(aiFeatureDefinitions.featureKey, featureKey));
   }
   /**
    * Set reseller pricing for their customers
    */
   static async setResellerPricing(resellerId, featureKey, retailCreditCost, wholesaleCreditCost) {
-    const feature = await db.select().from(aiFeatureDefinitions).where(eq7(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+    const feature = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
     if (feature.length === 0) {
       throw new Error(`Feature ${featureKey} not found`);
     }
@@ -14063,17 +14112,17 @@ var AIPricingService = class {
       let wholesalePrice;
       if (options.resellerId) {
         const resellerPricing = await db.select().from(aiResellerPricing).where(
-          and6(
-            eq7(aiResellerPricing.resellerId, options.resellerId),
-            eq7(aiResellerPricing.featureKey, featureKey),
-            eq7(aiResellerPricing.isActive, true)
+          and5(
+            eq6(aiResellerPricing.resellerId, options.resellerId),
+            eq6(aiResellerPricing.featureKey, featureKey),
+            eq6(aiResellerPricing.isActive, true)
           )
         ).limit(1);
         if (resellerPricing.length > 0) {
           retailPrice = resellerPricing[0].retailCreditCost;
           wholesalePrice = resellerPricing[0].wholesaleCreditCost;
         } else {
-          const feature = await db.select().from(aiFeatureDefinitions).where(eq7(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+          const feature = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
           retailPrice = feature[0]?.baseCreditCost || 10;
           wholesalePrice = Math.floor(retailPrice * 0.5);
         }
@@ -14088,7 +14137,7 @@ var AIPricingService = class {
           };
         }
       } else {
-        const feature = await db.select().from(aiFeatureDefinitions).where(eq7(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+        const feature = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
         retailPrice = feature[0]?.baseCreditCost || 10;
         wholesalePrice = retailPrice;
       }
@@ -14146,7 +14195,7 @@ var AIPricingService = class {
    * Get reseller credit balance
    */
   static async getResellerCreditBalance(resellerId) {
-    const balance = await db.select().from(resellerCredits).where(eq7(resellerCredits.resellerId, resellerId)).limit(1);
+    const balance = await db.select().from(resellerCredits).where(eq6(resellerCredits.resellerId, resellerId)).limit(1);
     if (balance.length === 0) {
       await db.insert(resellerCredits).values({
         resellerId,
@@ -14205,7 +14254,7 @@ var AIPricingService = class {
       wholesaleCreditsUsed: sql5`${resellerCredits.wholesaleCreditsUsed} + ${amount}`,
       wholesaleCreditsAvailable: sql5`${resellerCredits.wholesaleCreditsAvailable} - ${amount}`,
       updatedAt: /* @__PURE__ */ new Date()
-    }).where(eq7(resellerCredits.resellerId, resellerId));
+    }).where(eq6(resellerCredits.resellerId, resellerId));
     const transaction = {
       resellerId,
       type: "retail_sale",
@@ -14227,8 +14276,8 @@ var AIPricingService = class {
       totalWholesale: sql5`sum(${aiFeatureUsage.creditsPaidToPlatform})`,
       totalProfit: sql5`sum(${aiFeatureUsage.resellerProfitCredits})`
     }).from(aiFeatureUsage).where(
-      and6(
-        eq7(aiFeatureUsage.resellerId, resellerId),
+      and5(
+        eq6(aiFeatureUsage.resellerId, resellerId),
         sql5`${aiFeatureUsage.createdAt} >= ${startDate}`,
         sql5`${aiFeatureUsage.createdAt} <= ${endDate}`
       )
@@ -14265,7 +14314,7 @@ var AIPricingService = class {
 // server/routes/aiPricing.ts
 init_db();
 init_schema();
-import { eq as eq8, desc as desc5, sql as sql6 } from "drizzle-orm";
+import { eq as eq7, desc as desc6, sql as sql6 } from "drizzle-orm";
 function registerAIPricingRoutes(app2) {
   app2.get("/api/admin/ai-features", requireAdmin, async (req2, res) => {
     try {
@@ -14322,12 +14371,12 @@ function registerAIPricingRoutes(app2) {
         featureKey: aiFeatureUsage.featureKey,
         usageCount: sql6`count(*)`,
         totalCredits: sql6`sum(${aiFeatureUsage.creditsCharged})`
-      }).from(aiFeatureUsage).groupBy(aiFeatureUsage.featureKey).orderBy(desc5(sql6`count(*)`));
+      }).from(aiFeatureUsage).groupBy(aiFeatureUsage.featureKey).orderBy(desc6(sql6`count(*)`));
       const topResellers = await db.select({
         resellerId: aiFeatureUsage.resellerId,
         usageCount: sql6`count(*)`,
         totalRevenue: sql6`sum(${aiFeatureUsage.creditsCharged})`
-      }).from(aiFeatureUsage).where(sql6`${aiFeatureUsage.resellerId} IS NOT NULL`).groupBy(aiFeatureUsage.resellerId).orderBy(desc5(sql6`count(*)`)).limit(10);
+      }).from(aiFeatureUsage).where(sql6`${aiFeatureUsage.resellerId} IS NOT NULL`).groupBy(aiFeatureUsage.resellerId).orderBy(desc6(sql6`count(*)`)).limit(10);
       res.json({
         success: true,
         analytics: {
@@ -14382,7 +14431,7 @@ function registerAIPricingRoutes(app2) {
         if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
           return res.status(403).json({ success: false, error: "Access denied" });
         }
-        const feature = await db.select().from(aiFeatureDefinitions).where(eq8(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+        const feature = await db.select().from(aiFeatureDefinitions).where(eq7(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
         if (feature.length === 0) {
           return res.status(404).json({ success: false, error: "Feature not found" });
         }
@@ -14587,7 +14636,7 @@ function registerAIPricingRoutes(app2) {
         creditsCharged: aiFeatureUsage.creditsCharged,
         context: aiFeatureUsage.context,
         createdAt: aiFeatureUsage.createdAt
-      }).from(aiFeatureUsage).where(eq8(aiFeatureUsage.userId, userId)).orderBy(desc5(aiFeatureUsage.createdAt)).limit(Number(limit)).offset(Number(offset));
+      }).from(aiFeatureUsage).where(eq7(aiFeatureUsage.userId, userId)).orderBy(desc6(aiFeatureUsage.createdAt)).limit(Number(limit)).offset(Number(offset));
       res.json({
         success: true,
         usage
@@ -14600,61 +14649,7 @@ function registerAIPricingRoutes(app2) {
 }
 
 // server/routes/ai.ts
-init_db();
-init_schema();
-import { eq as eq9, and as and8 } from "drizzle-orm";
-async function getUserApiKey(userId, provider) {
-  if (!db) return null;
-  const defaultKey = await db.query.userApiKeys.findFirst({
-    where: and8(
-      eq9(userApiKeys.userId, userId),
-      eq9(userApiKeys.provider, provider),
-      eq9(userApiKeys.isActive, true),
-      eq9(userApiKeys.isDefault, true)
-    )
-  });
-  if (defaultKey) {
-    return { apiKey: defaultKey.apiKey, model: defaultKey.model };
-  }
-  const anyKey = await db.query.userApiKeys.findFirst({
-    where: and8(
-      eq9(userApiKeys.userId, userId),
-      eq9(userApiKeys.provider, provider),
-      eq9(userApiKeys.isActive, true)
-    )
-  });
-  if (anyKey) {
-    return { apiKey: anyKey.apiKey, model: anyKey.model };
-  }
-  return null;
-}
-async function createUserOpenAIClient(userId) {
-  const keyData = await getUserApiKey(userId, "openai");
-  if (!keyData) return null;
-  const OpenAI3 = (await import("openai")).default;
-  const client = new OpenAI3({ apiKey: keyData.apiKey });
-  const model = keyData.model || "gpt-4o-mini";
-  return { client, model };
-}
-async function callUserGoogleAI(userId, prompt, model = "gemini-1.5-flash") {
-  const keyData = await getUserApiKey(userId, "gemini");
-  if (!keyData) {
-    throw new Error("No Gemini API key configured. Please add your Gemini API key in Settings.");
-  }
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyData.apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    }
-  );
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status}`);
-  }
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-}
+var createUserOpenAIClient = (userId) => getUserOpenAIClient(userId);
 function registerAIRoutes(app2) {
   const requireAITools = [requireAuth(), requireEntitlement(FeatureKey.AI_TOOLS)];
   app2.get("/api/openai/status", requireAuth(), async (req2, res) => {
@@ -14665,8 +14660,7 @@ function registerAIRoutes(app2) {
         model: "none",
         error: null,
         version: null
-      },
-      googleai: { available: false, model: "none", error: null }
+      }
     };
     try {
       const openaiData = await createUserOpenAIClient(userId);
@@ -14678,7 +14672,7 @@ function registerAIRoutes(app2) {
           version: null
         };
       } else {
-        const modelsToTry = [openaiData.model, "gpt-4o-mini", "gpt-4o"];
+        const modelsToTry = [openaiData.model];
         let success = false;
         for (const model of modelsToTry) {
           try {
@@ -14691,7 +14685,7 @@ function registerAIRoutes(app2) {
               available: true,
               model,
               error: null,
-              version: model.startsWith("gpt-5") ? "5.x" : "4o"
+              version: model
             };
             success = true;
             break;
@@ -14716,52 +14710,52 @@ function registerAIRoutes(app2) {
         version: null
       };
     }
-    try {
-      const geminiKey = await getUserApiKey(userId, "gemini");
-      if (!geminiKey) {
-        results.googleai = {
-          available: false,
-          model: "none",
-          error: "No Gemini API key configured. Add your key in Settings > API Keys."
-        };
-      } else {
-        await callUserGoogleAI(userId, "test", "gemini-1.5-flash");
-        results.googleai = { available: true, model: "gemini-1.5-flash", error: null };
-      }
-    } catch (error) {
-      results.googleai = { available: false, model: "none", error: error.message };
-    }
-    const anyWorking = results.openai.available || results.googleai.available;
+    const anyWorking = results.openai.available;
     const capabilities = [];
     if (results.openai.available) {
       capabilities.push(`OpenAI (${results.openai.model})`);
-    }
-    if (results.googleai.available) {
-      capabilities.push(`Google Gemini (${results.googleai.model})`);
     }
     if (!anyWorking) {
       capabilities.push("Configure your API keys in Settings to enable AI features");
     }
     res.json({
       configured: anyWorking,
-      model: results.openai.available ? results.openai.model : results.googleai.model,
+      model: results.openai.model,
       status: anyWorking ? "ready" : "needs_api_keys",
       openai: results.openai,
-      googleai: results.googleai,
       capabilities
     });
   });
   app2.post(
-    "/api/googleai/test",
+    "/api/ai/generate",
     ...requireAITools,
     async (req2, res) => {
       const userId = req2.userId;
       try {
-        const prompt = req2.body.prompt || "Generate a business insight";
-        const response = await callUserGoogleAI(userId, prompt);
-        res.json({ success: true, model: "gemini-1.5-flash", output: response });
+        const { prompt, system, json: json2 = false, tier = "default", maxTokens = 2e3 } = req2.body || {};
+        if (!prompt || typeof prompt !== "string") {
+          return res.status(400).json({ error: "prompt is required" });
+        }
+        const openaiData = await createUserOpenAIClient(userId);
+        if (!openaiData) {
+          return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+        }
+        const model = tier === "advanced" ? ADVANCED_MODEL : openaiData.model;
+        const response = await openaiData.client.chat.completions.create({
+          model,
+          messages: [
+            ...system ? [{ role: "system", content: String(system) }] : [],
+            // json_object mode requires the word "json" in the messages
+            { role: "user", content: json2 ? `${prompt}
+
+Respond with valid JSON only.` : prompt }
+          ],
+          max_tokens: maxTokens,
+          ...json2 ? { response_format: { type: "json_object" } } : {}
+        });
+        res.json({ success: true, content: response.choices[0]?.message?.content || "", model, usage: response.usage });
       } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error?.message || "AI request failed" });
       }
     }
   );
@@ -14799,7 +14793,7 @@ function registerAIRoutes(app2) {
     async (req2, res) => {
       const userId = req2.userId;
       try {
-        const { text: text2, model = "text-embedding-3-small" } = req2.body;
+        const { text: text2, model = EMBEDDING_MODEL } = req2.body;
         if (!text2) return res.status(400).json({ error: "Text required" });
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -14825,7 +14819,7 @@ function registerAIRoutes(app2) {
     async (req2, res) => {
       const userId = req2.userId;
       try {
-        const { prompt, model = "dall-e-3", size = "1024x1024" } = req2.body;
+        const { prompt, model = IMAGE_MODEL, size = "1024x1024" } = req2.body;
         if (!prompt) return res.status(400).json({ error: "Prompt required" });
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -15214,7 +15208,7 @@ Image URL: ${imageUrl}` : prompt
 // server/routes/apiKeys.ts
 init_db();
 init_schema();
-import { eq as eq10, and as and9 } from "drizzle-orm";
+import { eq as eq8, and as and7 } from "drizzle-orm";
 function registerApiKeyRoutes(app2) {
   const requireApiKeyAuth = requireAuth();
   app2.get("/api/user/api-keys", requireApiKeyAuth, async (req2, res) => {
@@ -15227,8 +15221,8 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const keys = await db.query.userApiKeys.findMany({
-        where: eq10(userApiKeys.userId, userId),
-        orderBy: (userApiKeys2, { desc: desc9 }) => [desc9(userApiKeys2.createdAt)]
+        where: eq8(userApiKeys.userId, userId),
+        orderBy: (userApiKeys2, { desc: desc10 }) => [desc10(userApiKeys2.createdAt)]
       });
       const maskedKeys = keys.map((key) => ({
         ...key,
@@ -15250,8 +15244,8 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const { provider, apiKey, apiKeyName, model, isDefault } = req2.body;
-      if (!provider || !["openai", "gemini"].includes(provider)) {
-        return res.status(400).json({ error: 'Provider must be "openai" or "gemini"' });
+      if (provider !== "openai") {
+        return res.status(400).json({ error: 'Provider must be "openai"' });
       }
       if (!apiKey || typeof apiKey !== "string" || apiKey.trim().length < 10) {
         return res.status(400).json({ error: "API key must be at least 10 characters" });
@@ -15261,16 +15255,21 @@ function registerApiKeyRoutes(app2) {
           error: 'Invalid OpenAI API key format. Key must start with "sk-"'
         });
       }
-      if (provider === "gemini" && !apiKey.startsWith("AIza")) {
-        return res.status(400).json({
-          error: 'Invalid Gemini API key format. Key must start with "AIza"'
-        });
-      }
       const existingKeys = await db.query.userApiKeys.findMany({
-        where: and9(eq10(userApiKeys.userId, userId), eq10(userApiKeys.provider, provider))
+        where: and7(eq8(userApiKeys.userId, userId), eq8(userApiKeys.provider, provider))
       });
+      if (existingKeys.length > 0) {
+        const [updatedKey] = await db.update(userApiKeys).set({
+          apiKey: apiKey.trim(),
+          ...model !== void 0 && { model: model || null },
+          isActive: true,
+          isDefault: true,
+          updatedAt: /* @__PURE__ */ new Date()
+        }).where(eq8(userApiKeys.id, existingKeys[0].id)).returning();
+        return res.json({ success: true, key: { ...updatedKey, apiKey: maskApiKey(updatedKey.apiKey) } });
+      }
       if (isDefault && existingKeys.length > 0) {
-        await db.update(userApiKeys).set({ isDefault: false, updatedAt: /* @__PURE__ */ new Date() }).where(and9(eq10(userApiKeys.userId, userId), eq10(userApiKeys.provider, provider)));
+        await db.update(userApiKeys).set({ isDefault: false, updatedAt: /* @__PURE__ */ new Date() }).where(and7(eq8(userApiKeys.userId, userId), eq8(userApiKeys.provider, provider)));
       }
       const shouldBeDefault = isDefault || existingKeys.length === 0;
       const [newKey] = await db.insert(userApiKeys).values({
@@ -15306,7 +15305,7 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const apiKeyRecord = await db.query.userApiKeys.findFirst({
-        where: and9(eq10(userApiKeys.id, keyId), eq10(userApiKeys.userId, userId))
+        where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
       });
       if (!apiKeyRecord) {
         return res.status(404).json({ error: "API key not found" });
@@ -15314,8 +15313,6 @@ function registerApiKeyRoutes(app2) {
       let testResult;
       if (apiKeyRecord.provider === "openai") {
         testResult = await testOpenAIKey(apiKeyRecord.apiKey);
-      } else if (apiKeyRecord.provider === "gemini") {
-        testResult = await testGeminiKey(apiKeyRecord.apiKey);
       } else {
         return res.status(400).json({ error: "Unknown provider" });
       }
@@ -15324,7 +15321,7 @@ function registerApiKeyRoutes(app2) {
         testStatus: testResult.success ? "success" : "failed",
         testError: testResult.error || null,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq10(userApiKeys.id, keyId));
+      }).where(eq8(userApiKeys.id, keyId));
       res.json({
         success: testResult.success,
         provider: apiKeyRecord.provider,
@@ -15347,17 +15344,17 @@ function registerApiKeyRoutes(app2) {
       }
       const { apiKeyName, model, isDefault, isActive } = req2.body;
       const existingKey = await db.query.userApiKeys.findFirst({
-        where: and9(eq10(userApiKeys.id, keyId), eq10(userApiKeys.userId, userId))
+        where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
       });
       if (!existingKey) {
         return res.status(404).json({ error: "API key not found" });
       }
       if (isDefault) {
         await db.update(userApiKeys).set({ isDefault: false, updatedAt: /* @__PURE__ */ new Date() }).where(
-          and9(
-            eq10(userApiKeys.userId, userId),
-            eq10(userApiKeys.provider, existingKey.provider),
-            eq10(userApiKeys.isDefault, true)
+          and7(
+            eq8(userApiKeys.userId, userId),
+            eq8(userApiKeys.provider, existingKey.provider),
+            eq8(userApiKeys.isDefault, true)
           )
         );
       }
@@ -15367,7 +15364,7 @@ function registerApiKeyRoutes(app2) {
         ...isDefault !== void 0 && { isDefault },
         ...isActive !== void 0 && { isActive },
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq10(userApiKeys.id, keyId)).returning();
+      }).where(eq8(userApiKeys.id, keyId)).returning();
       res.json({
         success: true,
         key: {
@@ -15391,22 +15388,22 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const existingKey = await db.query.userApiKeys.findFirst({
-        where: and9(eq10(userApiKeys.id, keyId), eq10(userApiKeys.userId, userId))
+        where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
       });
       if (!existingKey) {
         return res.status(404).json({ error: "API key not found" });
       }
-      await db.delete(userApiKeys).where(eq10(userApiKeys.id, keyId));
+      await db.delete(userApiKeys).where(eq8(userApiKeys.id, keyId));
       if (existingKey.isDefault) {
         const nextKey = await db.query.userApiKeys.findFirst({
-          where: and9(
-            eq10(userApiKeys.userId, userId),
-            eq10(userApiKeys.provider, existingKey.provider),
-            eq10(userApiKeys.isActive, true)
+          where: and7(
+            eq8(userApiKeys.userId, userId),
+            eq8(userApiKeys.provider, existingKey.provider),
+            eq8(userApiKeys.isActive, true)
           )
         });
         if (nextKey) {
-          await db.update(userApiKeys).set({ isDefault: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq10(userApiKeys.id, nextKey.id));
+          await db.update(userApiKeys).set({ isDefault: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq8(userApiKeys.id, nextKey.id));
         }
       }
       res.json({ success: true });
@@ -15425,23 +15422,23 @@ function registerApiKeyRoutes(app2) {
       if (!db) {
         return res.status(503).json({ error: "Database not available" });
       }
-      if (!["openai", "gemini"].includes(provider)) {
-        return res.status(400).json({ error: 'Provider must be "openai" or "gemini"' });
+      if (provider !== "openai") {
+        return res.status(400).json({ error: 'Provider must be "openai"' });
       }
       const activeKey = await db.query.userApiKeys.findFirst({
-        where: and9(
-          eq10(userApiKeys.userId, userId),
-          eq10(userApiKeys.provider, provider),
-          eq10(userApiKeys.isActive, true),
-          eq10(userApiKeys.isDefault, true)
+        where: and7(
+          eq8(userApiKeys.userId, userId),
+          eq8(userApiKeys.provider, provider),
+          eq8(userApiKeys.isActive, true),
+          eq8(userApiKeys.isDefault, true)
         )
       });
       if (!activeKey) {
         const anyKey = await db.query.userApiKeys.findFirst({
-          where: and9(
-            eq10(userApiKeys.userId, userId),
-            eq10(userApiKeys.provider, provider),
-            eq10(userApiKeys.isActive, true)
+          where: and7(
+            eq8(userApiKeys.userId, userId),
+            eq8(userApiKeys.provider, provider),
+            eq8(userApiKeys.isActive, true)
           )
         });
         if (!anyKey) {
@@ -15481,13 +15478,9 @@ function maskApiKey(key) {
 }
 async function testOpenAIKey(apiKey) {
   try {
-    const OpenAI3 = (await import("openai")).default;
-    const client = new OpenAI3({ apiKey });
-    await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: "test" }],
-      max_tokens: 1
-    });
+    const OpenAI2 = (await import("openai")).default;
+    const client = new OpenAI2({ apiKey });
+    await client.models.retrieve(DEFAULT_MODEL);
     return { success: true };
   } catch (error) {
     return {
@@ -15496,45 +15489,10 @@ async function testOpenAIKey(apiKey) {
     };
   }
 }
-async function testGeminiKey(apiKey) {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: "test" }] }],
-          generationConfig: { maxOutputTokens: 1 }
-        })
-      }
-    );
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData?.error?.message || `Gemini API error: ${response.status}`
-      };
-    }
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error?.message || "Gemini API key validation failed"
-    };
-  }
-}
 
 // server/services/aiToolsService.ts
-import OpenAI2 from "openai";
-var openaiClient2 = null;
-function getOpenAIClient2() {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  if (!openaiClient2) {
-    openaiClient2 = new OpenAI2({ apiKey });
-  }
-  return openaiClient2;
+async function getOpenAIClient2() {
+  return (await getUserOpenAIClient())?.client ?? null;
 }
 var aiRateLimit2 = /* @__PURE__ */ new Map();
 var AI_RATE_LIMIT_WINDOW_MS2 = 6e4;
@@ -15556,10 +15514,10 @@ function checkAIRateLimit2(userId) {
   entry.count++;
   return true;
 }
-async function callAIJson(systemPrompt, userPrompt, model = "gpt-4o-mini", maxTokens = 1e3, userId, toolName, metadata) {
-  const client = getOpenAIClient2();
+async function callAIJson(systemPrompt, userPrompt, model = DEFAULT_MODEL, maxTokens = 1e3, userId, toolName, metadata) {
+  const client = await getOpenAIClient2();
   if (!client) {
-    return { success: false, error: "OpenAI not configured", source: "fallback" };
+    return { success: false, error: NO_KEY_MESSAGE, source: "fallback" };
   }
   try {
     const response = await client.chat.completions.create({
@@ -15618,7 +15576,7 @@ async function analyzeLeadScore(contactData) {
   return callAIJson(
     `You are an expert sales analyst. Analyze the contact data and provide a lead score (0-100) with detailed rationale. Consider: engagement level, company fit, deal history, response patterns, and buying signals. Return JSON with: score (number), rationale (string), buyingSignals (array), riskFactors (array), recommendedActions (array), priority (hot/warm/cold).`,
     `Analyze this contact for lead scoring: ${JSON.stringify(contactData)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15626,7 +15584,7 @@ async function generateDealIntelligence(dealData, contactHistory, marketContext)
   return callAIJson(
     `You are an expert sales strategist. Provide comprehensive deal intelligence. Return JSON with: probability_score (number), risk_level (low/medium/high), key_factors (array), recommendations (array), confidence_level (number), estimated_close_days (number), value_optimization (string), competitive_threats (array), next_best_action (string).`,
     `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext || {})}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15634,7 +15592,7 @@ async function analyzePipelineHealth(deals2) {
   return callAIJson(
     `You are a sales operations expert. Analyze the pipeline health and return JSON with: overall_health_score (number), healthy_deals (number), at_risk_deals (number), critical_deals (number), bottlenecks (array), recommendations (array), velocity_trend (improving/stable/declining), forecast_accuracy (number).`,
     `Analyze pipeline health for these deals: ${JSON.stringify(deals2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     700
   );
 }
@@ -15642,7 +15600,7 @@ async function monitorDealRisk(deals2) {
   return callAIJson(
     `You are a deal risk analyst. Identify at-risk deals and return JSON with: high_risk (array of {dealId, title, riskScore, riskFactors, recommendedAction}), medium_risk (array), low_risk (array), total_at_risk_value (number), summary (string).`,
     `Analyze deal risks for: ${JSON.stringify(deals2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     700
   );
 }
@@ -15650,7 +15608,7 @@ async function optimizeConversion(deals2, contacts2) {
   return callAIJson(
     `You are a conversion optimization expert. Analyze the sales funnel and return JSON with: conversion_rate (number), stage_conversion (object with stage names as keys), drop_off_points (array), optimization_opportunities (array), a_b_test_suggestions (array), projected_improvement (number).`,
     `Analyze conversion optimization. Deals: ${JSON.stringify(deals2)}. Contacts: ${JSON.stringify(contacts2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     700
   );
 }
@@ -15658,7 +15616,7 @@ async function analyzeWinRate(deals2) {
   return callAIJson(
     `You are a sales performance analyst. Analyze win rate patterns and return JSON with: overall_win_rate (number), win_rate_by_stage (object), win_rate_by_deal_size (object), key_win_factors (array), key_loss_factors (array), recommendations (array), benchmark_comparison (string).`,
     `Analyze win rate intelligence for: ${JSON.stringify(deals2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     700
   );
 }
@@ -15666,7 +15624,7 @@ async function generateSalesForecast(deals2, period = "quarter") {
   return callAIJson(
     `You are a sales forecasting expert. Generate AI-powered forecast and return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
     `Generate ${period} sales forecast for: ${JSON.stringify(deals2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15674,7 +15632,7 @@ async function analyzeLiveDeals(deals2) {
   return callAIJson(
     `You are a real-time deal analyst. Provide live analysis and return JSON with: hot_deals (array), warm_deals (array), cold_deals (array), immediate_actions (array), engagement_insights (object with metrics), temperature_analysis (object), activity_feed (array of {dealId, title, activity, timestamp, priority}).`,
     `Provide live deal analysis for: ${JSON.stringify(deals2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15682,7 +15640,7 @@ async function composeEmail(context) {
   return callAIJson(
     `You are an expert sales email writer. Compose a professional, personalized email. Return JSON with: subject (string), body (string), tone (string), key_elements (array), follow_up_suggestion (string).`,
     `Compose email. Recipient: ${context.recipientName} at ${context.recipientCompany}. Purpose: ${context.purpose}. Tone: ${context.tone}. Key points: ${JSON.stringify(context.keyPoints || [])}. CTA: ${context.callToAction || "none"}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     500
   );
 }
@@ -15690,7 +15648,7 @@ async function generateEmailReply(originalEmail, context, tone = "professional")
   return callAIJson(
     `You are a sales communication expert. Generate a thoughtful reply. Return JSON with: subject (string), body (string), tone (string), key_points_addressed (array).`,
     `Generate reply to: "${originalEmail}". Context: ${context}. Tone: ${tone}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     400
   );
 }
@@ -15698,7 +15656,7 @@ async function generateFollowUp(contactData, lastInteraction, purpose) {
   return callAIJson(
     `You are a sales follow-up expert. Generate a strategic follow-up plan. Return JSON with: subject (string), message (string), timing (string), channel (email/call/sms), urgency (high/medium/low), personalization_tips (array).`,
     `Generate follow-up for contact: ${JSON.stringify(contactData)}. Last interaction: ${lastInteraction}. Purpose: ${purpose}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     400
   );
 }
@@ -15706,7 +15664,7 @@ async function handleObjection(objection, productInfo, contactData) {
   return callAIJson(
     `You are a master sales objection handler. Provide expert strategies. Return JSON with: understanding_statement (string), reframing_strategy (string), response_options (array of strings), evidence_to_use (string), next_step (string), confidence_score (number).`,
     `Handle objection: "${objection}". Product: ${productInfo}. Contact: ${JSON.stringify(contactData || {})}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     500
   );
 }
@@ -15714,7 +15672,7 @@ async function generateProposal(context) {
   return callAIJson(
     `You are a proposal writing expert. Generate a professional proposal. Return JSON with: title (string), executive_summary (string), scope_of_work (string), timeline (string), pricing_structure (string), terms (string), next_steps (string).`,
     `Generate proposal for: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15722,7 +15680,7 @@ async function generateAppointmentMessage(appointmentData, messageType = "confir
   return callAIJson(
     `You are a scheduling assistant. Generate a professional appointment message. Return JSON with: subject (string), body (string), calendar_note (string), reminder_text (string).`,
     `Generate ${messageType} for appointment: ${JSON.stringify(appointmentData)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     300
   );
 }
@@ -15730,7 +15688,7 @@ async function generateVideoEmailScript(context) {
   return callAIJson(
     `You are a video email script writer. Create an engaging script. Return JSON with: hook (string), intro (string), main_content (string), call_to_action (string), closing (string), estimated_duration (string), tips (array).`,
     `Generate video email script: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     500
   );
 }
@@ -15738,7 +15696,7 @@ async function generateSMSMessage(purpose, contactName, context) {
   return callAIJson(
     `You are a concise SMS message writer. Create a brief, effective SMS (max 160 chars). Return JSON with: message (string), character_count (number), follow_up_suggestion (string).`,
     `Generate SMS. Purpose: ${purpose}. Contact: ${contactName}. Context: ${context}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     200
   );
 }
@@ -15746,7 +15704,7 @@ async function generateVoiceScript(context) {
   return callAIJson(
     `You are a voice message script writer. Create a natural-sounding script. Return JSON with: script (string), talking_points (array), estimated_duration (string), tone_guidance (string).`,
     `Generate voice script: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     400
   );
 }
@@ -15754,7 +15712,7 @@ async function generateContent(context) {
   return callAIJson(
     `You are a content marketing expert. Generate high-quality marketing content. Return JSON with: title (string), content (string), meta_description (string), keywords (array), call_to_action (string), content_type (string).`,
     `Generate ${context.type} content. Topic: ${context.topic}. Audience: ${context.audience}. Tone: ${context.tone}. Keywords: ${JSON.stringify(context.keywords || [])}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15762,7 +15720,7 @@ async function generateSalesPage(context) {
   return callAIJson(
     `You are a conversion copywriter. Generate a high-converting sales page. Return JSON with: headline (string), subheadline (string), hero_section (string), benefits (array), social_proof (string), cta (string), faq (array), guarantee (string).`,
     `Generate sales page: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     1e3
   );
 }
@@ -15770,7 +15728,7 @@ async function generateOffer(context) {
   return callAIJson(
     `You are a offers expert. Create an irresistible offer. Return JSON with: offer_headline (string), offer_summary (string), value_stack (array), bonus_items (array), urgency_element (string), guarantee (string), cta (string), price_anchor (string).`,
     `Generate offer: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     700
   );
 }
@@ -15778,7 +15736,7 @@ async function generateSocialPost(context) {
   return callAIJson(
     `You are a social media expert. Create an engaging ${context.platform} post. Return JSON with: post_text (string), hashtags (array), engagement_tip (string), best_posting_time (string), character_count (number).`,
     `Generate ${context.platform} post. Topic: ${context.topic}. Tone: ${context.tone}. Hashtags: ${context.includeHashtags}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     300
   );
 }
@@ -15786,7 +15744,7 @@ async function generateWebinarInvite(context) {
   return callAIJson(
     `You are a webinar marketing expert. Create a compelling invitation. Return JSON with: subject_line (string), headline (string), description (string), key_benefits (array), speaker_bio (string), registration_cta (string), reminder_text (string).`,
     `Generate webinar invite: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     500
   );
 }
@@ -15794,7 +15752,7 @@ async function generateCaseStudy(context) {
   return callAIJson(
     `You are a case study writer. Create a compelling case study. Return JSON with: title (string), executive_summary (string), challenge_section (string), solution_section (string), results_section (string), testimonial (string), key_metrics (array).`,
     `Generate case study: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15802,7 +15760,7 @@ async function transformTestimonial(rawTestimonial, format = "polished") {
   return callAIJson(
     `You are a testimonial expert. Transform this testimonial into a powerful social proof piece. Return JSON with: polished_testimonial (string), short_quote (string), social_media_version (string), headline_suggestion (string), key_themes (array).`,
     `Transform testimonial (${format}): "${rawTestimonial}"`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     300
   );
 }
@@ -15810,7 +15768,7 @@ async function analyzeBusiness(businessData) {
   return callAIJson(
     `You are a senior business consultant. Provide comprehensive business analysis. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
     `Analyze this business: ${JSON.stringify(businessData)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     1e3
   );
 }
@@ -15818,7 +15776,7 @@ async function summarizeMeeting(transcript) {
   return callAIJson(
     `You are a meeting summarizer. Create a concise, actionable summary. Return JSON with: summary (string), key_decisions (array), action_items (array of {task, owner, due_date}), follow_up_tasks (array), notable_quotes (array), next_meeting_suggestion (string).`,
     `Summarize this meeting transcript: "${transcript}"`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     700
   );
 }
@@ -15826,7 +15784,7 @@ async function speechToTextNote(audioContext) {
   return callAIJson(
     `You are a note-taking assistant. Convert the spoken content into structured notes. Return JSON with: formatted_notes (string), key_points (array), action_items (array), summary (string).`,
     `Convert to structured notes: "${audioContext}"`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     500
   );
 }
@@ -15834,7 +15792,7 @@ async function createTaskFromDescription(description, context) {
   return callAIJson(
     `You are a task management assistant. Create a well-structured task. Return JSON with: title (string), description (string), priority (high/medium/low), estimated_duration (string), subtasks (array), due_date_suggestion (string), category (string).`,
     `Create task from: "${description}". Context: ${JSON.stringify(context || {})}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     300
   );
 }
@@ -15842,7 +15800,7 @@ async function generateMeetingNotes(meetingData) {
   return callAIJson(
     `You are a meeting notes expert. Generate comprehensive meeting notes. Return JSON with: agenda_summary (string), discussion_points (array), decisions_made (array), action_items (array of {task, owner, deadline}), parking_lot (array), next_steps (string).`,
     `Generate meeting notes for: ${JSON.stringify(meetingData)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15850,16 +15808,16 @@ async function suggestFollowUpTasks(completedTask, context) {
   return callAIJson(
     `You are a productivity expert. Suggest logical follow-up tasks. Return JSON with: suggested_tasks (array of {title, description, priority, estimated_time}), reasoning (string), automation_suggestions (array).`,
     `Suggest follow-up tasks for completed: "${completedTask}". Context: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     400
   );
 }
 async function analyzeImage(imageUrl, prompt) {
-  const client = getOpenAIClient2();
-  if (!client) return { success: false, error: "OpenAI not configured", source: "fallback" };
+  const client = await getOpenAIClient2();
+  if (!client) return { success: false, error: NO_KEY_MESSAGE, source: "fallback" };
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: ADVANCED_MODEL,
       messages: [
         {
           role: "user",
@@ -15884,7 +15842,7 @@ async function semanticSearch(query, items) {
   return callAIJson(
     `You are a semantic search engine. Rank the items by relevance to the query. Return JSON with: results (array of {id, relevance_score, match_reason}), query_understanding (string), suggested_refinements (array).`,
     `Search query: "${query}". Items: ${JSON.stringify(items)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15892,7 +15850,7 @@ async function generateRecommendations(context) {
   return callAIJson(
     `You are a recommendation engine. Provide smart, personalized recommendations. Return JSON with: recommendations (array of {item, score, reasoning}), insights (array), confidence (number).`,
     `Generate ${context.type} recommendations. Data: ${JSON.stringify(context.data)}. Preferences: ${JSON.stringify(context.preferences || {})}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15900,7 +15858,7 @@ async function researchTopic(topic, depth = "comprehensive") {
   return callAIJson(
     `You are an AI research assistant. Conduct thorough research. Return JSON with: summary (string), key_findings (array), sources_suggested (array), related_topics (array), market_implications (array), action_items (string).`,
     `Research topic: "${topic}". Depth: ${depth}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     800
   );
 }
@@ -15908,7 +15866,7 @@ async function generateReasoning(task, data) {
   return callAIJson(
     `You are an AI reasoning engine. Provide step-by-step reasoning. Return JSON with: reasoning_steps (array of strings), conclusion (string), confidence (number), assumptions (array), alternative_approaches (array).`,
     `Reason through: "${task}". Data: ${JSON.stringify(data)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15916,7 +15874,7 @@ async function generateWorkflow(workflowData) {
   return callAIJson(
     `You are a workflow automation expert. Design an optimal workflow. Return JSON with: workflow_name (string), trigger (string), steps (array of {action, condition, delay}), expected_outcome (string), optimization_tips (array).`,
     `Generate workflow: ${JSON.stringify(workflowData)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15924,7 +15882,7 @@ async function segmentContacts(contacts2, criteria) {
   return callAIJson(
     `You are a contact segmentation expert. Segment contacts intelligently. Return JSON with: segments (array of {name, description, contact_count, contact_ids, characteristics}), unsegmented_count (number), recommendations (array).`,
     `Segment contacts by: ${criteria}. Contacts: ${JSON.stringify(contacts2)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     600
   );
 }
@@ -15932,7 +15890,7 @@ async function generateAutomationRules(context) {
   return callAIJson(
     `You are an automation rules expert. Generate smart automation rules. Return JSON with: rules (array of {name, trigger, condition, action, priority}), optimization_suggestions (array), estimated_time_saved (string).`,
     `Generate automation rules: ${JSON.stringify(context)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     500
   );
 }
@@ -15940,7 +15898,7 @@ async function autoSaveSuggestions(data, type) {
   return callAIJson(
     `You are an AI assistant that auto-saves smart suggestions. Return JSON with: suggestions (array of {type, content, confidence, action}), auto_save_recommendations (array).`,
     `Generate auto-save suggestions for ${type}: ${JSON.stringify(data)}`,
-    "gpt-4o-mini",
+    DEFAULT_MODEL,
     400
   );
 }
@@ -17358,27 +17316,27 @@ function registerAIAutomationRoutes(app2) {
 
 // server/routes/partners.ts
 init_schema();
-import { eq as eq13, desc as desc8, sql as sql9, and as and12 } from "drizzle-orm";
+import { eq as eq11, desc as desc9, sql as sql9, and as and10 } from "drizzle-orm";
 
 // server/services/commissionService.ts
 init_db();
 init_schema();
-import { eq as eq11, desc as desc6, and as and10 } from "drizzle-orm";
+import { eq as eq9, desc as desc7, and as and8 } from "drizzle-orm";
 async function calculateCommission(input) {
   const { partnerId, customerId, amount } = input;
-  const partner = await db.select().from(partners).where(eq11(partners.id, partnerId)).limit(1);
+  const partner = await db.select().from(partners).where(eq9(partners.id, partnerId)).limit(1);
   if (!partner.length) {
     throw new Error(`Partner ${partnerId} not found`);
   }
   let tier;
   if (partner[0].tierId) {
-    const tierResult = await db.select().from(partnerTiers).where(eq11(partnerTiers.id, partner[0].tierId)).limit(1);
+    const tierResult = await db.select().from(partnerTiers).where(eq9(partnerTiers.id, partner[0].tierId)).limit(1);
     if (tierResult.length) {
       tier = tierResult[0];
     }
   }
   if (!tier) {
-    const activeTier = await db.select().from(partnerTiers).where(eq11(partnerTiers.isActive, true)).orderBy(partnerTiers.createdAt).limit(1);
+    const activeTier = await db.select().from(partnerTiers).where(eq9(partnerTiers.isActive, true)).orderBy(partnerTiers.createdAt).limit(1);
     if (activeTier.length) {
       tier = activeTier[0];
     }
@@ -17410,25 +17368,25 @@ async function createCommissionRecord(partnerId, customerId, amount, status = "p
   return record;
 }
 async function getPartnerCommissions(partnerId, status) {
-  const conditions = [eq11(commissions.partnerId, partnerId)];
+  const conditions = [eq9(commissions.partnerId, partnerId)];
   if (status) {
-    conditions.push(eq11(commissions.status, status));
+    conditions.push(eq9(commissions.status, status));
   }
-  return await db.select().from(commissions).where(and10(...conditions)).orderBy(desc6(commissions.createdAt));
+  return await db.select().from(commissions).where(and8(...conditions)).orderBy(desc7(commissions.createdAt));
 }
 
 // server/services/payoutService.ts
 init_db();
 init_schema();
-import { eq as eq12, desc as desc7, sql as sql8, and as and11 } from "drizzle-orm";
+import { eq as eq10, desc as desc8, sql as sql8, and as and9 } from "drizzle-orm";
 async function processPayout(payoutId) {
-  const [payout] = await db.select().from(payouts).where(eq12(payouts.id, payoutId)).limit(1);
+  const [payout] = await db.select().from(payouts).where(eq10(payouts.id, payoutId)).limit(1);
   if (!payout) {
     return void 0;
   }
-  const [updated] = await db.update(payouts).set({ status: "paid", paidAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq12(payouts.id, payoutId)).returning();
+  const [updated] = await db.update(payouts).set({ status: "paid", paidAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq10(payouts.id, payoutId)).returning();
   if (updated) {
-    await db.update(commissions).set({ status: "paid", payoutId: updated.id, updatedAt: /* @__PURE__ */ new Date() }).where(eq12(commissions.partnerId, updated.partnerId)).where(eq12(commissions.status, "pending"));
+    await db.update(commissions).set({ status: "paid", payoutId: updated.id, updatedAt: /* @__PURE__ */ new Date() }).where(eq10(commissions.partnerId, updated.partnerId)).where(eq10(commissions.status, "pending"));
   }
   return updated || void 0;
 }
@@ -17438,7 +17396,7 @@ function registerPartnersRoutes(app2) {
   app2.get("/api/partners", requireAuth(), async (req2, res) => {
     try {
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const allPartners = await dbConnection.select().from(partners).orderBy(desc8(partners.createdAt));
+      const allPartners = await dbConnection.select().from(partners).orderBy(desc9(partners.createdAt));
       res.json(allPartners);
     } catch (error) {
       console.error("Failed to fetch partners:", error);
@@ -17449,7 +17407,7 @@ function registerPartnersRoutes(app2) {
     try {
       const { id } = req2.params;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [partner] = await dbConnection.select().from(partners).where(eq13(partners.id, id)).limit(1);
+      const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
       if (!partner) {
         return res.status(404).json({ error: "Partner not found" });
       }
@@ -17489,7 +17447,7 @@ function registerPartnersRoutes(app2) {
       const { id } = req2.params;
       const { name, email, company, phone, tierId, status, metadata } = req2.body;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [existing] = await dbConnection.select().from(partners).where(eq13(partners.id, id)).limit(1);
+      const [existing] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
       if (!existing) {
         return res.status(404).json({ error: "Partner not found" });
       }
@@ -17502,7 +17460,7 @@ function registerPartnersRoutes(app2) {
         status: status ?? existing.status,
         metadata: metadata ?? existing.metadata,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq13(partners.id, id)).returning();
+      }).where(eq11(partners.id, id)).returning();
       if (!partner) {
         return res.status(500).json({ error: "Failed to update partner" });
       }
@@ -17516,15 +17474,15 @@ function registerPartnersRoutes(app2) {
     try {
       const { id } = req2.params;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [partner] = await dbConnection.select().from(partners).where(eq13(partners.id, id)).limit(1);
+      const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
       if (!partner) {
         return res.status(404).json({ error: "Partner not found" });
       }
-      const customers = await dbConnection.select().from(partnerCustomers).where(eq13(partnerCustomers.partnerId, id));
+      const customers = await dbConnection.select().from(partnerCustomers).where(eq11(partnerCustomers.partnerId, id));
       const totalCustomers = customers.length;
       const activeCustomers = customers.filter((c) => c.subscriptionStatus === "active").length;
       const totalRevenue = customers.reduce((sum, c) => sum + parseFloat(c.mrr || "0"), 0);
-      const [latestMetric] = await dbConnection.select().from(partnerMetrics).where(eq13(partnerMetrics.partnerId, id)).orderBy(desc8(partnerMetrics.createdAt)).limit(1);
+      const [latestMetric] = await dbConnection.select().from(partnerMetrics).where(eq11(partnerMetrics.partnerId, id)).orderBy(desc9(partnerMetrics.createdAt)).limit(1);
       const previousRevenue = totalRevenue * 0.9;
       const growthRate = previousRevenue > 0 ? (totalRevenue - previousRevenue) / previousRevenue * 100 : 0;
       res.json({
@@ -17559,13 +17517,13 @@ function registerPartnersRoutes(app2) {
         return res.status(400).json({ error: "partnerId, customerId, and amount are required" });
       }
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [partner] = await dbConnection.select().from(partners).where(eq13(partners.id, partnerId)).limit(1);
+      const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, partnerId)).limit(1);
       if (!partner) {
         return res.status(404).json({ error: "Partner not found" });
       }
       let tierRate = 0;
       if (partner.tierId) {
-        const [tier] = await dbConnection.select().from(partnerTiers).where(eq13(partnerTiers.id, partner.tierId)).limit(1);
+        const [tier] = await dbConnection.select().from(partnerTiers).where(eq11(partnerTiers.id, partner.tierId)).limit(1);
         if (tier) {
           tierRate = parseFloat(tier.commissionRate) / 100;
         }
@@ -17592,14 +17550,14 @@ function registerPartnersRoutes(app2) {
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const conditions = [];
       if (partnerId) {
-        conditions.push(eq13(payouts.partnerId, partnerId));
+        conditions.push(eq11(payouts.partnerId, partnerId));
       }
       if (status) {
-        conditions.push(eq13(payouts.status, status));
+        conditions.push(eq11(payouts.status, status));
       }
-      let query = dbConnection.select().from(payouts).orderBy(desc8(payouts.createdAt));
+      let query = dbConnection.select().from(payouts).orderBy(desc9(payouts.createdAt));
       if (conditions.length > 0) {
-        query = query.where(and12(...conditions));
+        query = query.where(and10(...conditions));
       }
       const allPayouts = await query;
       res.json(allPayouts);
@@ -17928,6 +17886,7 @@ async function healthCheckMiddleware(req2, res) {
 var app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use((_req, _res, next) => requestContext.run({}, next));
 app.use(securityHeaders);
 app.use(corsConfig);
 app.use((req2, res, next) => {

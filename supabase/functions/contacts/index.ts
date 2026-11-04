@@ -2,17 +2,13 @@
 // Handles CRUD operations with AI-powered contact intelligence
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { getUserOpenAI, NO_KEY_MESSAGE, DEFAULT_MODEL, ADVANCED_MODEL } from '../_shared/userOpenAI.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -57,6 +53,14 @@ Deno.serve(async (req) => {
 
     const tenantId = '00000000-0000-0000-0000-000000000001'
 
+    // OpenAI client from the caller's own key, created on first AI use
+    let openaiClient: any = null
+    const getOpenAI = async () => {
+      openaiClient ??= await getUserOpenAI(userId!)
+      if (!openaiClient) throw Object.assign(new Error(NO_KEY_MESSAGE), { needsApiKey: true })
+      return openaiClient
+    }
+
     const { method, url } = req
     const urlObj = new URL(url)
     const pathParts = urlObj.pathname.split('/').filter(Boolean)
@@ -78,7 +82,7 @@ Deno.serve(async (req) => {
         const limit = parseInt(urlObj.searchParams.get('limit') || '20')
         
         // Use OpenAI embeddings for semantic search
-        const embeddingResponse = await openai.embeddings.create({
+        const embeddingResponse = await (await getOpenAI()).embeddings.create({
           model: 'text-embedding-3-small',
           input: query,
         })
@@ -104,8 +108,8 @@ Deno.serve(async (req) => {
               Return JSON with: relevance_score (0-1), summary (why match)`
 
             try {
-              const scoreResponse = await openai.chat.completions.create({
-                model: 'gpt-4o-mini',
+              const scoreResponse = await (await getOpenAI()).chat.completions.create({
+                model: DEFAULT_MODEL,
                 messages: [{ role: 'user', content: scorePrompt }],
                 response_format: { type: 'json_object' },
                 temperature: 0.1,
@@ -170,8 +174,8 @@ Deno.serve(async (req) => {
           
           Return JSON with: answer, confidence (0-1), suggested_actions (array)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: ADVANCED_MODEL,
           messages: [{ role: 'user', content: insightPrompt }],
           response_format: { type: 'json_object' },
           temperature: 0.3,
@@ -247,8 +251,8 @@ Deno.serve(async (req) => {
 
               Return JSON with: linkedin_url, background, company_size, revenue_range, industry_insights, interests`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
+            const completion = await (await getOpenAI()).chat.completions.create({
+              model: ADVANCED_MODEL,
               messages: [{ role: 'user', content: prompt }],
               response_format: { type: 'json_object' },
               temperature: 0.3,
@@ -296,8 +300,8 @@ Deno.serve(async (req) => {
 
               Return JSON with: score (0-100), rationale, lead_score, engagement_score`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
+            const completion = await (await getOpenAI()).chat.completions.create({
+              model: ADVANCED_MODEL,
               messages: [{ role: 'user', content: prompt }],
               response_format: { type: 'json_object' },
               temperature: 0.3,
@@ -365,8 +369,8 @@ Deno.serve(async (req) => {
               Return JSON with: subject, body, tone (professional/friendly/formal),
               estimated_response_rate (0-1), key_points_to_mention (array)`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
+            const completion = await (await getOpenAI()).chat.completions.create({
+              model: ADVANCED_MODEL,
               messages: [{ role: 'user', content: composePrompt }],
               response_format: { type: 'json_object' },
               temperature: 0.5,
@@ -491,8 +495,8 @@ Deno.serve(async (req) => {
         })
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message, needsApiKey: error.needsApiKey || undefined }), {
+      status: error.needsApiKey ? 400 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

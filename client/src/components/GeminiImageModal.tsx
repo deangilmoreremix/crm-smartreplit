@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-// import { GoogleGenAI } from "@google/genai"; // Temporarily commented out until package is installed
 import {
   buildPrompt,
   FEATURE_BENEFITS,
@@ -17,8 +16,9 @@ import {
   type HistoryEntry,
 } from '../lib/history';
 import { imageStorage } from '../services/imageStorageService';
+import { openaiImageService } from '../services/openaiImageService';
 
-const MODEL = 'gemini-2.5-flash-image-preview';
+const MODEL = 'gpt-image-2.5-flare';
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -66,25 +66,29 @@ export default function GeminiImageModal({ open, onClose }: Props) {
   const [savedImages, setSavedImages] = useState<string[]>([]);
   const [storageAvailable, setStorageAvailable] = useState(false);
   const dropRef = useRef<HTMLDivElement | null>(null);
+  // Image generation via the server (user's own OpenAI key, gpt-image model).
+  // Returns the same candidates/parts shape the rest of this component reads. Seed images are not sent.
   const ai = useMemo(
     () => ({
       models: {
-        generateContent: async (options: any) => ({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    inlineData: {
-                      data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 transparent PNG
-                      mimeType: 'image/png',
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        }),
+        generateContent: async (options: any) => {
+          const prompt = (options.contents || [])
+            .map((part: any) => part?.text)
+            .filter(Boolean)
+            .join('\n');
+          const result = await openaiImageService.generateImage({ prompt });
+          let dataUrl = result.url;
+          if (!dataUrl.startsWith('data:')) {
+            const blob = await (await fetch(dataUrl)).blob();
+            dataUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result));
+              reader.readAsDataURL(blob);
+            });
+          }
+          const [, mimeType = 'image/png', data = ''] = dataUrl.match(/^data:([^;]+);base64,(.*)$/) || [];
+          return { candidates: [{ content: { parts: [{ inlineData: { data, mimeType } }] } }] };
+        },
       },
     }),
     []

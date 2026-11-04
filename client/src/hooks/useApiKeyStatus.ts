@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
 
 export const useApiKeyStatus = () => {
   const { user } = useAuthStore();
@@ -21,20 +20,13 @@ export const useApiKeyStatus = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('user_api_keys')
-        .select('openai_api_key, gemini_api_key')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST113') {
-        console.error('Error checking API keys:', error);
+      // Keys are stored server-side (user_api_keys, one row per provider)
+      const response = await fetch('/api/user/api-keys');
+      if (!response.ok) {
         setHasApiKeys(false);
-      } else if (data) {
-        const hasKeys = !!(data.openai_api_key || data.gemini_api_key);
-        setHasApiKeys(hasKeys);
       } else {
-        setHasApiKeys(false);
+        const { keys = [] } = await response.json();
+        setHasApiKeys(keys.some((k: any) => k.provider === 'openai' && k.isActive !== false));
       }
     } catch (error) {
       console.error('Error checking API keys:', error);

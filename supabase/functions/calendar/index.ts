@@ -2,17 +2,13 @@
 // Handles calendar operations with intelligent scheduling assistance
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { getUserOpenAI, NO_KEY_MESSAGE, DEFAULT_MODEL, ADVANCED_MODEL } from '../_shared/userOpenAI.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -37,7 +33,7 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     })
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
     
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), { 
@@ -47,6 +43,14 @@ Deno.serve(async (req) => {
     }
 
     const tenantId = user.user_metadata?.tenant_id || user.id
+
+    // OpenAI client from the caller's own key, created on first AI use
+    let openaiClient: any = null
+    const getOpenAI = async () => {
+      openaiClient ??= await getUserOpenAI(user.id)
+      if (!openaiClient) throw Object.assign(new Error(NO_KEY_MESSAGE), { needsApiKey: true })
+      return openaiClient
+    }
     const { method, url } = req
 
     const urlObj = new URL(url)
@@ -74,8 +78,8 @@ Deno.serve(async (req) => {
           
           Return JSON with optimal_time_slots (array of {start, end, score}) and reasoning.`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: ADVANCED_MODEL,
           messages: [{ role: 'user', content: prompt }],
           response_format: { type: 'json_object' },
           temperature: 0.3,
@@ -122,8 +126,8 @@ Deno.serve(async (req) => {
           
           Return JSON with: title, description, agenda_items (array), preparation_notes`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: ADVANCED_MODEL,
           messages: [{ role: 'user', content: prompt }],
           response_format: { type: 'json_object' },
           temperature: 0.5,
@@ -173,8 +177,8 @@ Deno.serve(async (req) => {
           Return JSON with: is_available (boolean), conflict_severity (low/medium/high), 
           alternative_suggestions (array of {start, end}), reason`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: DEFAULT_MODEL,
           messages: [{ role: 'user', content: prompt }],
           response_format: { type: 'json_object' },
           temperature: 0.2,
@@ -372,8 +376,8 @@ Deno.serve(async (req) => {
             Return JSON with: reminder_text, reminder_time (30 min before), notification_channel`
 
           try {
-            const reminderCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
+            const reminderCompletion = await (await getOpenAI()).chat.completions.create({
+              model: DEFAULT_MODEL,
               messages: [{ role: 'user', content: reminderPrompt }],
               response_format: { type: 'json_object' },
               temperature: 0.3,
@@ -441,8 +445,8 @@ Deno.serve(async (req) => {
     })
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message, needsApiKey: error.needsApiKey || undefined }), { 
+      status: error.needsApiKey ? 400 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     })
   }
