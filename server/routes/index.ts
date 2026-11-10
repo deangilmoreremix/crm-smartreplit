@@ -6,6 +6,7 @@ import { registerWorkflowRoutes } from './workflows';
 import { registerAutomationRoutes } from './automation';
 import { registerPublicApiRoutes } from './publicApi';
 import { registerDataModelRoutes } from './dataModel';
+import { registerCompaniesCrmRoutes } from './companies-crm';
 import { billingRoutes } from './billing';
 import openclawRoutes from './openclaw';
 import analyticsRoutes from './analytics';
@@ -45,6 +46,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   registerWorkflowRoutes(app);
   registerAutomationRoutes(app);
   registerDataModelRoutes(app);
+  registerCompaniesCrmRoutes(app);
 
   // Register admin routes
   registerAdminRoutes(app);

@@ -34,6 +34,9 @@ import RemoteAppRefreshManager from './components/RemoteAppRefreshManager';
 import { universalDataSync } from './services/universalDataSync';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
+import { recordRoutes } from './routes/recordRoutes';
+import { dataModelRoutes } from './routes/dataModelRoutes';
+import { automationRoutes } from './routes/automationRoutes';
 import { useAIApiKeys } from './hooks/useAIApiKeys';
 import AIApiKeySettings from './components/aiIntegration/AIApiKeySettings';
 import { useCommandMenu, CommandMenu } from './components/CommandMenu';
@@ -1141,6 +1144,9 @@ function AppContent() {
             />
 
             {/* Fallback */}
+            {recordRoutes}
+            {dataModelRoutes}
+            {automationRoutes}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
               </main>

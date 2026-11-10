@@ -1,5 +1,8 @@
 import React, { lazy } from 'react';
 import { Route } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import ProtectedRoute from '../components/ProtectedRoute';
+import { FeatureKey } from '../types/entitlements';
 
 const ContactDetail = lazy(() => import('../pages/ContactDetail'));
 const CompaniesPage = lazy(() => import('../pages/record/CompaniesPage'));
@@ -13,9 +16,41 @@ const DealRecord = lazy(() => import('../pages/record/DealRecord'));
  */
 export const recordRoutes = (
   <>
-    <Route path="/contacts/:id" element={<ContactDetail />} />
-    <Route path="/companies" element={<CompaniesPage />} />
-    <Route path="/companies/:id" element={<CompanyRecord />} />
-    <Route path="/deals/:id" element={<DealRecord />} />
+    <Route
+      path="/contacts/:id"
+      element={
+        <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
+          <Navbar />
+          <ContactDetail />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/companies"
+      element={
+        <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
+          <Navbar />
+          <CompaniesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/companies/:id"
+      element={
+        <ProtectedRoute featureKey={FeatureKey.CONTACTS}>
+          <Navbar />
+          <CompanyRecord />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/deals/:id"
+      element={
+        <ProtectedRoute featureKey={FeatureKey.PIPELINE}>
+          <Navbar />
+          <DealRecord />
+        </ProtectedRoute>
+      }
+    />
   </>
 );

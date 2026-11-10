@@ -16,7 +16,6 @@ client/src/components/AppointmentWidget.tsx: TS2339 6
 client/src/components/AppointmentWidget.tsx: TS2367 3
 client/src/components/BillingDashboard.tsx: TS2307 1
 client/src/components/CallRecording.tsx: TS18046 1
-client/src/components/CommandMenu/index.ts: TS2614 2
 client/src/components/DealAnalytics.tsx: TS2367 18
 client/src/components/DealDetail.tsx: TS7006 4
 client/src/components/DealDetail.tsx: TS7015 1
