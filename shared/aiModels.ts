@@ -75,3 +75,31 @@ export function normalizeEffort(
   if (effort === 'none' && !modelSupportsNoReasoning(model)) return 'low';
   return effort;
 }
+
+// ---------------------------------------------------------------------------
+// Images (GPT Image 2.6) — Image API: images.generate / images.edit.
+// Responses are base64 (`data[i].b64_json`); there is no hosted `url` like DALL·E.
+// ---------------------------------------------------------------------------
+export type ImageTier = 'fast' | 'quality';
+export type ImageQuality = 'low' | 'medium' | 'high' | 'xhigh' | 'max' | 'auto';
+export type ImageComplexity = 'low' | 'medium' | 'high';
+
+export const IMAGE_MODELS: Record<ImageTier, string> = {
+  fast: 'gpt-image-2.6-flare', // fast iteration
+  quality: 'gpt-image-2.6-sunburst', // detailed work / edit consistency
+};
+
+export const DEFAULT_IMAGE_MODEL = IMAGE_MODELS.fast;
+
+export const SELECTABLE_IMAGE_MODELS: Array<{ id: string; label: string; tier: ImageTier; description: string }> = [
+  { id: 'gpt-image-2.6-flare', label: 'GPT Image 2.6 Flare', tier: 'fast', description: 'Fast, high-quality everyday generation' },
+  { id: 'gpt-image-2.6-sunburst', label: 'GPT Image 2.6 Sunburst', tier: 'quality', description: 'Detailed work and precise, consistent edits' },
+];
+
+/** Image model for a tier or concrete id; env override OPENAI_IMAGE_MODEL_FAST / _QUALITY. */
+export function imageModel(tierOrModel?: string | null, env: Env = defaultEnv()): string {
+  if (!tierOrModel) return env.OPENAI_IMAGE_MODEL_FAST?.trim() || IMAGE_MODELS.fast;
+  if (tierOrModel === 'fast') return env.OPENAI_IMAGE_MODEL_FAST?.trim() || IMAGE_MODELS.fast;
+  if (tierOrModel === 'quality') return env.OPENAI_IMAGE_MODEL_QUALITY?.trim() || IMAGE_MODELS.quality;
+  return tierOrModel;
+}
