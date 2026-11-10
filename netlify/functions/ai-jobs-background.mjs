@@ -60,6 +60,9 @@ function getOpenAIClient() {
   if (!cachedClient) cachedClient = new OpenAI({ apiKey });
   return cachedClient;
 }
+function createUserClient(apiKey) {
+  return new OpenAI({ apiKey });
+}
 function requireClient(opts) {
   const client = opts.client ?? getOpenAIClient();
   if (!client) throw new Error("OpenAI not configured");
@@ -151,7 +154,13 @@ async function respondJson(opts) {
 // server/services/openaiImages.ts
 import { createHash } from "crypto";
 var MAX_N = 10;
-var MIME = { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" };
+var MIME = {
+  png: "image/png",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+  gif: "image/gif"
+};
 function hashSafetyIdentifier(userId) {
   return createHash("sha256").update(userId).digest("hex");
 }
@@ -165,6 +174,7 @@ function common(opts) {
   if (opts.quality) body.quality = opts.quality;
   if (opts.complexity) body.complexity = opts.complexity;
   if (opts.outputFormat) body.output_format = opts.outputFormat;
+  if (opts.outputFormat === "svg") body.n = 1;
   if (opts.userId) body.safety_identifier = hashSafetyIdentifier(opts.userId);
   return body;
 }
@@ -222,7 +232,7 @@ function validateJobInput(kind, input) {
   }
   if (typeof input.prompt !== "string" || !input.prompt.trim()) throw new Error("prompt is required");
   const out = { prompt: input.prompt };
-  for (const k of ["size", "quality", "complexity", "background", "outputFormat", "tier"]) {
+  for (const k of ["size", "quality", "complexity", "background", "outputFormat", "tier", "model"]) {
     if (typeof input[k] === "string") out[k] = input[k];
   }
   out.n = Math.min(4, Math.max(1, Math.floor(Number(input.n) || 1)));
@@ -247,7 +257,11 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 var LEAD_SCORE_SYSTEM = "You are an expert sales analyst. Analyze the contact data and provide a lead score (0-100) with detailed rationale. Consider: engagement level, company fit, deal history, response patterns, and buying signals. Return JSON with: score (number), rationale (string), buyingSignals (array), riskFactors (array), recommendedActions (array), priority (hot/warm/cold).";
-async function runBulkLeadScore(job, deps) {
+async function userClientFor(supabase, userId) {
+  const { data } = await supabase.from("user_api_keys_openai").select("api_key").eq("user_id", userId).maybeSingle();
+  return data?.api_key ? createUserClient(data.api_key) : void 0;
+}
+async function runBulkLeadScore(job, deps, client) {
   const contacts = job.input.contacts;
   const results = await mapLimit(contacts, JOB_CONCURRENCY, async (contact, index) => {
     try {
@@ -255,7 +269,8 @@ async function runBulkLeadScore(job, deps) {
         tier: "fast",
         instructions: LEAD_SCORE_SYSTEM,
         input: `Analyze this contact for lead scoring: ${JSON.stringify(contact)}`,
-        maxOutputTokens: 600
+        maxOutputTokens: 600,
+        client
       });
       return { index, contactId: contact?.id ?? null, ok: true, data };
     } catch (e) {
@@ -266,7 +281,7 @@ async function runBulkLeadScore(job, deps) {
   if (failed === results.length) throw new Error(`All ${failed} lead scores failed: ${results[0].error}`);
   return { results, summary: { total: results.length, failed } };
 }
-async function runBatchRespond(job, deps) {
+async function runBatchRespond(job, deps, client) {
   const { prompts, system, maxOutputTokens } = job.input;
   const results = await mapLimit(prompts, JOB_CONCURRENCY, async (prompt, index) => {
     try {
@@ -274,7 +289,8 @@ async function runBatchRespond(job, deps) {
         tier: "default",
         instructions: system,
         input: prompt,
-        maxOutputTokens
+        maxOutputTokens,
+        client
       });
       return { index, ok: true, text };
     } catch (e) {
@@ -285,19 +301,27 @@ async function runBatchRespond(job, deps) {
   if (failed === results.length) throw new Error(`All ${failed} prompts failed: ${results[0].error}`);
   return { results, summary: { total: results.length, failed } };
 }
-var EXT = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
-async function runImageGenerate(job, deps, supabase) {
+var EXT = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+  "image/gif": "gif"
+};
+async function runImageGenerate(job, deps, supabase, client) {
   const input = job.input;
   const images = await deps.generateImages({
     prompt: input.prompt,
     tier: input.tier ?? "quality",
+    model: typeof input.model === "string" && input.model.startsWith("gpt-image-") ? input.model : void 0,
     size: input.size,
     quality: input.quality,
     complexity: input.complexity,
     background: input.background,
     outputFormat: input.outputFormat,
     n: input.n,
-    userId: job.user_id
+    userId: job.user_id,
+    client
   });
   const urls = [];
   for (let i = 0; i < images.length; i++) {
@@ -321,9 +345,10 @@ async function processAiJob(jobId, supabase = getAdminClient(), deps = defaultDe
   await update(supabase, jobId, { status: "running" });
   try {
     let result;
-    if (row.kind === "bulk_lead_score") result = await runBulkLeadScore(row, deps);
-    else if (row.kind === "batch_respond") result = await runBatchRespond(row, deps);
-    else if (row.kind === "image_generate_hq") result = await runImageGenerate(row, deps, supabase);
+    const client = await userClientFor(supabase, row.user_id);
+    if (row.kind === "bulk_lead_score") result = await runBulkLeadScore(row, deps, client);
+    else if (row.kind === "batch_respond") result = await runBatchRespond(row, deps, client);
+    else if (row.kind === "image_generate_hq") result = await runImageGenerate(row, deps, supabase, client);
     else throw new Error(`Unknown job kind "${row.kind}"`);
     await update(supabase, jobId, { status: "done", result, error: null });
     return "done";

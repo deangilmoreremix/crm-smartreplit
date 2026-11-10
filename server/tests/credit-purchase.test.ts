@@ -20,8 +20,8 @@ describe('Credit Purchase Flow Tests', () => {
     testDb = getDb();
     if (!testDb) {
       console.warn('Skipping database tests - database not available');
+      return;
     }
-  });
     // Create test user and plan
     testUserId = randomUUID();
 

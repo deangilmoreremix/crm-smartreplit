@@ -15,6 +15,16 @@ export default defineConfig({
       'packages/**/src/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}'
     ],
     exclude: [
+      // Live-database / live-server integration suites (need Postgres, Stripe, a running app).
+      // Opt in with RUN_INTEGRATION_TESTS=1.
+      ...(process.env.RUN_INTEGRATION_TESTS
+        ? []
+        : [
+            'server/tests/billing-system.test.js',
+            'server/tests/contact-enrichment.test.ts',
+            'server/tests/credit-purchase-api.test.ts',
+            'server/tests/credit-purchase.test.ts',
+          ]),
       '**/node_modules/**',
       '**/dist/**',
       '**/build/**',
