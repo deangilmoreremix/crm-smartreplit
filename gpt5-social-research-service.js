@@ -83,6 +83,7 @@ Provide detailed analysis including:
 6. Optimal outreach strategies
 
 Return as JSON with complete profile data.`,
+          tools: [{ type: 'web_search' }],
           text: { format: { type: 'json_object' } },
           reasoning: { effort: 'none' },
           temperature: 0.3,
