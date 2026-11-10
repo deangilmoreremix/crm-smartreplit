@@ -16,7 +16,8 @@ import {
   insertNoteSchema,
 } from '../../shared/schema';
 import { supabase } from '../supabase';
-import OpenAI from 'openai';
+import { respondJson, respondText, getOpenAIClient } from '../services/openaiClient';
+import { tierModel } from '../../shared/aiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
@@ -70,17 +71,6 @@ async function getOpenClawConfigForUser(
   }
 
   return { apiKey, baseUrl };
-}
-
-// Cached OpenAI client
-let openaiClient: OpenAI | null = null;
-function getOpenAIClient(): OpenAI | null {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  if (!openaiClient) {
-    openaiClient = new OpenAI({ apiKey });
-  }
-  return openaiClient;
 }
 
 // Rate limiting for AI tools (simple in-memory)
@@ -1172,28 +1162,16 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const apiKey = process.env.OPENAI_API_KEY;
         if (!apiKey) return { error: 'OpenAI API key not configured' };
 
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
-
-        const response = await openaiClient.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a CRM analyst. Provide actionable insights for the given entity. Return JSON with: summary (string), recommendations (string array), riskLevel (low/medium/high), nextBestAction (string), confidence (number 0-1).',
-            },
-            {
-              role: 'user',
-              content: `Analyze this ${params.entityType} and provide insights: ${JSON.stringify(entity)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const { data: insights } = await respondJson({
+          tier: 'fast',
+          instructions:
+            'You are a CRM analyst. Provide actionable insights for the given entity. Return JSON with: summary (string), recommendations (string array), riskLevel (low/medium/high), nextBestAction (string), confidence (number 0-1).',
+          input: `Analyze this ${params.entityType} and provide insights: ${JSON.stringify(entity)}`,
+          effort: 'none',
           temperature: 0.3,
-          max_tokens: 500,
+          maxOutputTokens: 500,
         });
 
-        const insights = JSON.parse(response.choices[0].message.content || '{}');
         return { entityType: params.entityType, entityId: params.entityId, ...insights };
       }
 
@@ -1601,25 +1579,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a sales AI expert. Analyze the lead and provide a lead score from 1-100 with detailed reasoning. Return JSON with fields: score, reasoning, strengths, weaknesses, recommendations.',
-              },
-              {
-                role: 'user',
-                content: `Analyze this lead: ${JSON.stringify(contact)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'deep',
+            instructions:
+              'You are a sales AI expert. Analyze the lead and provide a lead score from 1-100 with detailed reasoning. Return JSON with fields: score, reasoning, strengths, weaknesses, recommendations.',
+            input: `Analyze this lead: ${JSON.stringify(contact)}`,
+            json: true,
+            effort: 'none',
             temperature: 0.3,
-            max_tokens: 1000,
+            maxOutputTokens: 1000,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           // Record successful analysis
           memoryService
@@ -1699,25 +1670,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         );
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a personalization expert. Generate personalized outreach strategies based on contact data and interaction history. Return JSON with fields: recommendations (array of objects with title, description, priority), talkingPoints (array), bestApproach, suggestedTiming.',
-              },
-              {
-                role: 'user',
-                content: `Contact: ${JSON.stringify(contact)}. Previous interactions: ${JSON.stringify(previousInteractions)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'deep',
+            instructions:
+              'You are a personalization expert. Generate personalized outreach strategies based on contact data and interaction history. Return JSON with fields: recommendations (array of objects with title, description, priority), talkingPoints (array), bestApproach, suggestedTiming.',
+            input: `Contact: ${JSON.stringify(contact)}. Previous interactions: ${JSON.stringify(previousInteractions)}`,
+            json: true,
+            effort: 'none',
             temperature: 0.7,
-            max_tokens: 1500,
+            maxOutputTokens: 1500,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           memoryService
             .recordObservation(
@@ -1780,25 +1744,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
-              },
-              {
-                role: 'user',
-                content: `Research and enrich this contact: ${JSON.stringify(contact)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'deep',
+            instructions:
+              'You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
+            input: `Research and enrich this contact: ${JSON.stringify(contact)}`,
+            json: true,
+            effort: 'none',
             temperature: 0.5,
-            max_tokens: 1500,
+            maxOutputTokens: 1500,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           memoryService
             .recordObservation(
@@ -1871,24 +1828,17 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           : ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'];
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(', ')}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
-              },
-              {
-                role: 'user',
-                content: `Research social media for: ${JSON.stringify(contact)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'deep',
+            instructions: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(', ')}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
+            input: `Research social media for: ${JSON.stringify(contact)}`,
+            json: true,
+            effort: 'none',
             temperature: 0.5,
-            max_tokens: 1500,
+            maxOutputTokens: 1500,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           memoryService
             .recordObservation(
@@ -1946,25 +1896,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a sentiment analysis expert. Analyze the sentiment and return JSON with: sentiment (positive/negative/neutral/mixed), score (1-100), confidence, keyPhrases (array), emotionalTone.',
-              },
-              {
-                role: 'user',
-                content: `Analyze the sentiment of: "${text}"`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'fast',
+            instructions:
+              'You are a sentiment analysis expert. Analyze the sentiment and return JSON with: sentiment (positive/negative/neutral/mixed), score (1-100), confidence, keyPhrases (array), emotionalTone.',
+            input: `Analyze the sentiment of: "${text}"`,
+            json: true,
+            effort: 'none',
             temperature: 0.3,
-            max_tokens: 500,
+            maxOutputTokens: 500,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           memoryService
             .recordObservation(
@@ -2036,25 +1979,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a sales email expert. Draft professional, personalized emails. Return JSON with: subject, body, suggestedSendTime.',
-              },
-              {
-                role: 'user',
-                content: `Draft a ${purpose} email to ${contact.name} (${contact.position} at ${contact.company}). Additional context: ${context}. Contact info: ${JSON.stringify(contact)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'deep',
+            instructions:
+              'You are a sales email expert. Draft professional, personalized emails. Return JSON with: subject, body, suggestedSendTime.',
+            input: `Draft a ${purpose} email to ${contact.name} (${contact.position} at ${contact.company}). Additional context: ${context}. Contact info: ${JSON.stringify(contact)}`,
+            json: true,
+            effort: 'none',
             temperature: 0.7,
-            max_tokens: 1000,
+            maxOutputTokens: 1000,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           memoryService
             .recordObservation(
@@ -2142,22 +2078,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
             if (contact) {
               try {
-                const response = await client.chat.completions.create({
-                  model: 'gpt-4o-mini',
-                  messages: [
-                    {
-                      role: 'system',
-                      content:
-                        'Analyze this lead. Return JSON with: score (1-100), reasoning, recommendations.',
-                    },
-                    { role: 'user', content: `Contact: ${JSON.stringify(contact)}` },
-                  ],
-                  response_format: { type: 'json_object' },
+                const response = await respondText({
+                  tier: 'fast',
+                  instructions:
+                    'Analyze this lead. Return JSON with: score (1-100), reasoning, recommendations.',
+                  input: `Contact: ${JSON.stringify(contact)}`,
+                  json: true,
+                  effort: 'none',
                   temperature: 0.3,
-                  max_tokens: 300,
+                  maxOutputTokens: 300,
                 });
 
-                const result = safeJsonParse(response.choices[0].message.content || '{}');
+                const result = safeJsonParse(response.text || '{}');
                 results.push({ contactId, contactName: contact.name, ...result });
                 successCount++;
               } catch (e: unknown) {
@@ -2332,25 +2264,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a sales strategy expert. Analyze this deal and return JSON with: winProbability, strengths (array), risks (array), recommendedActions (array), timeline, competitivePosition, pricingRecommendation.',
-              },
-              {
-                role: 'user',
-                content: `Deal: ${JSON.stringify(deal)}. Contact: ${JSON.stringify(contact)}. Analyze this deal strategically.`,
-              },
-            ],
-            response_format: { type: 'json_object' },
+          const response = await respondText({
+            tier: 'deep',
+            instructions:
+              'You are a sales strategy expert. Analyze this deal and return JSON with: winProbability, strengths (array), risks (array), recommendedActions (array), timeline, competitivePosition, pricingRecommendation.',
+            input: `Deal: ${JSON.stringify(deal)}. Contact: ${JSON.stringify(contact)}. Analyze this deal strategically.`,
+            json: true,
+            effort: 'none',
             temperature: 0.4,
-            max_tokens: 1500,
+            maxOutputTokens: 1500,
           });
 
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          const result = safeJsonParse(response.text || '{}');
 
           memoryService
             .recordObservation(
@@ -2691,25 +2616,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const client = getOpenAIClient();
         if (!client) return { error: 'OpenAI API key not configured' };
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a product demo expert. Create compelling demo scripts. Return JSON with: introduction, keyFeatures (array with name, demo, benefit), callToAction, estimatedDuration, talkingPoints (array).',
-            },
-            {
-              role: 'user',
-              content: `Create a demo script for: ${productName}. Description: ${params.productDescription || 'N/A'}. Target audience: ${params.targetAudience || 'business professionals'}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondText({
+          tier: 'deep',
+          instructions:
+            'You are a product demo expert. Create compelling demo scripts. Return JSON with: introduction, keyFeatures (array with name, demo, benefit), callToAction, estimatedDuration, talkingPoints (array).',
+          input: `Create a demo script for: ${productName}. Description: ${params.productDescription || 'N/A'}. Target audience: ${params.targetAudience || 'business professionals'}`,
+          json: true,
+          effort: 'none',
           temperature: 0.7,
-          max_tokens: 2000,
+          maxOutputTokens: 2000,
         });
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
+        return safeJsonParse(response.text || '{}');
       }
 
       // Video Management
@@ -2871,24 +2789,23 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const userPrompt = `Task: ${task}\n\nInput data: ${JSON.stringify(input)}`;
 
         try {
-          const response = await client.chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
+          const response = await respondText({
+            tier: 'deep',
+            instructions: systemPrompt,
+            input: userPrompt,
+            effort: 'none',
             temperature: 0.7,
-            max_tokens: 2000,
+            maxOutputTokens: 2000,
           });
 
-          const output = response.choices[0].message.content;
+          const output = response.text;
 
           // Update execution as completed
           await supabase
             .from('agent_executions')
             .update({
               status: 'completed',
-              output_data: { result: output, model: 'gpt-4o' },
+              output_data: { result: output, model: tierModel('deep') },
               completed_at: new Date().toISOString(),
             })
             .eq('id', execution.id);
@@ -2986,25 +2903,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           }
         }
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a meeting scheduling expert. Based on the context provided, suggest optimal meeting times and durations. Return JSON with: recommended_times (array of time slots with day, hour, reason), recommended_durations (array with duration, use_case), optimal_days (array of best days of week for meetings with reasons).',
-            },
-            {
-              role: 'user',
-              content: `Context: ${context}\n\n${contactInfo}\n\nProvide meeting scheduling suggestions.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondText({
+          tier: 'deep',
+          instructions:
+            'You are a meeting scheduling expert. Based on the context provided, suggest optimal meeting times and durations. Return JSON with: recommended_times (array of time slots with day, hour, reason), recommended_durations (array with duration, use_case), optimal_days (array of best days of week for meetings with reasons).',
+          input: `Context: ${context}\n\n${contactInfo}\n\nProvide meeting scheduling suggestions.`,
+          json: true,
+          effort: 'none',
           temperature: 0.5,
-          max_tokens: 1000,
+          maxOutputTokens: 1000,
         });
 
-        suggestions = safeJsonParse(response.choices[0].message.content || '{}');
+        suggestions = safeJsonParse(response.text || '{}');
         return suggestions;
       }
 
@@ -3036,25 +2946,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         // Find optimal meeting time
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a meeting scheduling expert. Find the optimal meeting time considering business hours (9am-5pm weekdays). Return JSON with: suggested_date (ISO string), suggested_time, duration_minutes, meeting_type (internal/external), agenda_points (array), preparation_notes.',
-            },
-            {
-              role: 'user',
-              content: `Meeting: ${title}\nDuration: ${duration} minutes\nContext: ${meetingContext}\nAttendees: ${JSON.stringify(contactInfo)}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondText({
+          tier: 'deep',
+          instructions:
+            'You are a meeting scheduling expert. Find the optimal meeting time considering business hours (9am-5pm weekdays). Return JSON with: suggested_date (ISO string), suggested_time, duration_minutes, meeting_type (internal/external), agenda_points (array), preparation_notes.',
+          input: `Meeting: ${title}\nDuration: ${duration} minutes\nContext: ${meetingContext}\nAttendees: ${JSON.stringify(contactInfo)}`,
+          json: true,
+          effort: 'none',
           temperature: 0.3,
-          max_tokens: 800,
+          maxOutputTokens: 800,
         });
 
-        const scheduling = safeJsonParse(response.choices[0].message.content || '{}');
+        const scheduling = safeJsonParse(response.text || '{}');
 
         // Create the appointment
         const suggestedDate = scheduling.suggested_date || new Date().toISOString();
@@ -3102,25 +3005,18 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             and(eq(notes.appointmentId, parseInt(appointmentId)), eq(notes.profileId, userId))
           );
 
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a meeting summarization expert. Create a comprehensive summary with: attendees, meeting_title, date_time, duration_actual, key_discussion_points (array), decisions_made (array), action_items (array with task, assignee, due_date), follow_up_required (boolean), next_steps.',
-            },
-            {
-              role: 'user',
-              content: `Meeting Details:\nTitle: ${appointment.title}\nDate: ${appointment.dateTime}\nDuration: ${appointment.duration} minutes\nNotes: ${appointment.notes || 'N/A'}\n\nRelated Notes: ${notes.map((n) => n.content).join('\n') || 'None'}`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondText({
+          tier: 'deep',
+          instructions:
+            'You are a meeting summarization expert. Create a comprehensive summary with: attendees, meeting_title, date_time, duration_actual, key_discussion_points (array), decisions_made (array), action_items (array with task, assignee, due_date), follow_up_required (boolean), next_steps.',
+          input: `Meeting Details:\nTitle: ${appointment.title}\nDate: ${appointment.dateTime}\nDuration: ${appointment.duration} minutes\nNotes: ${appointment.notes || 'N/A'}\n\nRelated Notes: ${notes.map((n) => n.content).join('\n') || 'None'}`,
+          json: true,
+          effort: 'none',
           temperature: 0.3,
-          max_tokens: 1500,
+          maxOutputTokens: 1500,
         });
 
-        return safeJsonParse(response.choices[0].message.content || '{}');
+        return safeJsonParse(response.text || '{}');
       }
 
       default:
