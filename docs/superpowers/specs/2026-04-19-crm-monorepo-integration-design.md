@@ -104,7 +104,7 @@ crm-smartreplit/
 - **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
 - **Backend**: Node.js (main), Python (AI services), PostgreSQL
 - **Database**: Supabase (extended schema for multi-tenancy)
-- **AI**: OpenAI, OpenRouter, LangChain, LangGraph
+- **AI**: OpenAI, LangChain, LangGraph
 - **Deployment**: Netlify/Vercel for frontend, Railway/Render for Python services
 - **Orchestration**: Docker Compose for local development
 
@@ -119,7 +119,7 @@ crm-smartreplit/
 ### AI Integration
 
 - **Centralized AI Services**: Package for common AI operations (embeddings, chat, etc.)
-- **Model Management**: Support multiple providers (OpenAI, Anthropic, Google)
+- **Model Management**: OpenAI model tiers
 - **Agent Orchestration**: LangChain/LangGraph for complex workflows
 - **Local AI**: Integration with OpenClaw for local AI processing
 

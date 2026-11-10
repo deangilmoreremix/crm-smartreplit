@@ -6,7 +6,7 @@
 
 **Architecture:** Establish proper Turborepo monorepo structure, enhance white-label system with twentyCRM features, implement cross-repo integration with superpowers skills, complete OpenClaw CRM integration, and create centralized AI provider management.
 
-**Tech Stack:** Turborepo, Next.js, React, TypeScript, Supabase, OpenAI/Gemini APIs, Tailwind CSS
+**Tech Stack:** Turborepo, Next.js, React, TypeScript, Supabase, OpenAI API, Tailwind CSS
 
 ---
 
@@ -74,7 +74,7 @@
 **Steps:**
 - [ ] Set up `packages/ui` with shadcn/ui
 - [ ] Create `packages/database` with Drizzle schemas
-- [ ] Implement `packages/ai-services` for OpenAI/Gemini
+- [ ] Implement `packages/ai-services` for OpenAI
 - [ ] Build `packages/crm-shared` with common utilities
 - [ ] Configure shared TypeScript and ESLint configs
 
@@ -151,7 +151,6 @@
 
 **Steps:**
 - [ ] Create modular popup component with provider selection
-- [ ] Implement OpenAI vs Gemini toggle
 - [ ] Add API key validation and testing
 - [ ] Build secure key storage (Supabase encrypted)
 - [ ] Create key rotation and management UI
@@ -162,12 +161,10 @@
 - Create: `packages/ai-services/src/providers/AiProviderOrchestrator.ts`
 - Modify: `packages/ai-services/src/index.ts`
 - Create: `packages/ai-services/src/providers/OpenAiProvider.ts`
-- Create: `packages/ai-services/src/providers/GeminiProvider.ts`
 
 **Steps:**
 - [ ] Build provider abstraction layer
 - [ ] Implement OpenAI provider with fallback handling
-- [ ] Create Gemini provider integration
 - [ ] Add provider switching logic based on user preference
 - [ ] Build unified API interface for all AI features
 

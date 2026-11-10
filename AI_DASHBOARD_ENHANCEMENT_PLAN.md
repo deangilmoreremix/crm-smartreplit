@@ -149,7 +149,7 @@ const generatePerformanceInsights = async (metrics, goals) => {
 
 **Implementation Steps:**
 
-1. Create `AIGreetingService` with GPT-4 integration
+1. Create `AIGreetingService` with OpenAI integration
 2. Implement voice command recognition system
 3. Add real-time alert processing with AI summarization
 4. Build contextual action suggestion engine
@@ -266,13 +266,13 @@ const generateBenchmarkInsights = async (kpis, industryData) => {
 - **Smart chart recommendations** based on data patterns
 - **Interactive insights** when hovering over data points
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Chart data analysis and insights
 const analyzeChartData = async (chartData, chartType) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -309,13 +309,13 @@ const generatePredictiveOverlay = async (historicalData, forecastPeriod) => {
 - **Competitive intelligence** insights
 - **Market trend analysis** with impact assessment
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Comprehensive business intelligence
 const generateBusinessIntelligence = async (crmData, marketData, goals) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -354,13 +354,13 @@ const analyzeCompetitivePosition = async (salesData, marketTrends) => {
 - **Risk factor analysis** with mitigation strategies
 - **Competitive threat detection** and response suggestions
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Deal intelligence analysis
 const analyzeDealIntelligence = async (dealData, contactHistory, marketContext) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -397,13 +397,13 @@ const analyzeCompetitiveThreats = async (dealData, competitorInfo) => {
 - **Conversion optimization** recommendations
 - **Revenue forecasting** with scenario modeling
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Pipeline health analysis
 const analyzePipelineHealth = async (pipelineData, historicalPerformance) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -440,13 +440,13 @@ const generateRevenueForecast = async (pipelineData, marketFactors) => {
 - **Improvement recommendations** based on successful patterns
 - **Competitive win rate benchmarking**
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Win rate factor analysis
 const analyzeWinRateFactors = async (dealHistory, winLossData) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -485,13 +485,13 @@ const predictDealWinRate = async (dealCharacteristics, historicalData) => {
 - **Automated activity summaries** with insights
 - **Proactive suggestions** based on activity patterns
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Activity intelligence analysis
 const analyzeActivityPatterns = async (activityData, userBehavior) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -527,13 +527,13 @@ const generateActivitySummary = async (activities, timeframe) => {
 - **Success probability** indicators for each action
 - **Automated action execution** with AI approval
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Smart action recommendation
 const generateSmartActions = async (currentContext, userGoals, historicalSuccess) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -569,13 +569,13 @@ const predictActionSuccess = async (proposedAction, currentContext) => {
 - **Funnel optimization** recommendations
 - **Task completion prediction** with timeline estimates
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Task intelligence analysis
 const analyzeTaskIntelligence = async (tasks, deals, performance) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -614,13 +614,13 @@ const suggestAutomatedTasks = async (dealStage, dealCharacteristics) => {
 - **Acceleration strategies** based on successful patterns
 - **Bottleneck identification** with specific solutions
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Sales cycle prediction
 const predictSalesCycle = async (dealData, historicalCycles, marketFactors) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -657,13 +657,13 @@ const analyzeCycleOptimization = async (cycleData, performanceMetrics) => {
 - **Risk assessment** for revenue targets
 - **Optimization recommendations** for revenue growth
 
-**GPT-4 Integration Points:**
+**OpenAI Integration Points:**
 
 ```typescript
 // Advanced revenue forecasting
 const generateAdvancedRevenueForecast = async (salesData, marketTrends, economicFactors) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -736,7 +736,7 @@ Each dashboard component will have a dedicated AI service:
 // services/aiUtils.ts
 export class AIUtils {
   static async generateStructuredResponse(prompt: string, schema: any) {
-    // Standardized GPT-4 API calls with response formatting
+    // Standardized OpenAI Responses API calls with response formatting
   }
 
   static async processLargeDataset(data: any[], chunkSize: number) {
@@ -754,7 +754,7 @@ export class AIUtils {
 #### **Real-Time Data Pipeline**
 
 ```
-User Interaction → Component → AI Service → GPT-4 API → Processing → UI Update
+User Interaction → Component → AI Service → OpenAI Responses API → Processing → UI Update
                      ↓
            Context Manager → Cache → Database
 ```
@@ -847,7 +847,7 @@ class ContextManager {
 // Voice and text commands for dashboard interaction
 const processNaturalLanguageQuery = async (query: string) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',
@@ -875,7 +875,7 @@ const generatePredictiveAlerts = async (userData, patterns) => {
 // AI-generated reports with insights
 const generateAutomatedReport = async (timeframe, metrics, goals) => {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'default' // tier name (shared/aiModels.ts),
     messages: [
       {
         role: 'system',

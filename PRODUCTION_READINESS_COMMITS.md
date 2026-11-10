@@ -101,7 +101,7 @@ This document details the complete transformation of SmartCRM from 75% to 100% p
 - Dashboard components work seamlessly with live API data
 - Demo data preserved for immediate user experience
 - Dynamic calculations adapt to real vs demo data
-- GPT-4o-mini optimization (not GPT-5.2 as previously labeled)
+- Model tiers defined in shared/aiModels.ts
 
 ---
 

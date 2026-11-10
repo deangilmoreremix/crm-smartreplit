@@ -29,7 +29,7 @@ The SmartCRM application has been audited for production readiness. The applicat
 
 - **Server-side keys:** Protected (no `VITE_` prefix)
 - **Client-side keys:** Safe to expose (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
-- **API Keys:** Server-side only (OpenAI, Gemini, ElevenLabs)
+- **API Keys:** Server-side only (OpenAI, ElevenLabs)
 
 #### Data Protection
 

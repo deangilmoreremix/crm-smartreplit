@@ -23,7 +23,6 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Optional: AI API Keys (only if needed in browser)
 VITE_OPENAI_API_KEY=your_openai_api_key
-VITE_GEMINI_API_KEY=your_gemini_api_key
 VITE_ELEVENLABS_API_KEY=your_elevenlabs_api_key
 
 # Application Configuration
@@ -44,7 +43,6 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # API Keys (Server-side only)
 OPENAI_API_KEY=your_openai_api_key
-GEMINI_API_KEY=your_gemini_api_key
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
 
 # Server Configuration

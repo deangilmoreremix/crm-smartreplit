@@ -135,7 +135,7 @@ All notable changes to the Smart CRM Dashboard project will be documented in thi
 
 - **Official GPT-5 Implementation**: Complete integration with OpenAI's GPT-5 model (released August 7, 2025)
 - **Advanced API Parameters**: Full support for verbosity ("low", "medium", "high") and reasoning_effort ("minimal", "low", "medium", "high")
-- **Intelligent Fallback System**: Graceful degradation from gpt-5 → gpt-5-mini → gpt-4o
+- **Intelligent Fallback System**: Graceful degradation between OpenAI model tiers
 - **Smart Greeting Generation**: Personalized business insights with strategic recommendations
 - **Advanced KPI Analysis**: Expert-level mathematical analysis with 94.6% AIME accuracy
 - **Deal Intelligence System**: Comprehensive deal analysis with win probability scoring

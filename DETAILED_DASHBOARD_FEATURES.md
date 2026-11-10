@@ -428,7 +428,7 @@ Smart CRM Dashboard is a revolutionary customer relationship management platform
 
 ### **Smart API Management**
 
-- **Intelligent Model Selection**: Automatic selection between GPT-5, GPT-5-mini, and GPT-4o
+- **Intelligent Model Selection**: Automatic selection between the fast/default/deep/max tiers (shared/aiModels.ts)
 - **Dynamic Parameter Optimization**: Verbosity and reasoning effort auto-adjustment
 - **Cost Optimization**: Smart token usage and caching strategies
 - **Performance Monitoring**: Real-time API performance and availability tracking

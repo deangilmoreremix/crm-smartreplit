@@ -609,7 +609,7 @@ SmartCRM is built upon the open-source [twentyCRM](https://github.com/twentyhq/t
 - **Frontend:** React TypeScript with modern hooks and context
 - **Backend:** Node.js Express with TypeScript
 - **Database:** Supabase PostgreSQL with real-time capabilities
-- **AI Integration:** OpenAI GPT-5, GPT-4 fallback, Google Gemini
+- **AI Integration:** OpenAI Responses API (gpt-6 family)
 - **Caching:** Multi-level caching (component, service, database)
 - **Security:** Enterprise-grade encryption and access controls
 

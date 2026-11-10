@@ -165,7 +165,7 @@ Installed via skills ecosystem and wired as selectable agents in the Kilo agents
 ### New Features Implemented
 
 - **Step-by-step wizard**: 4-step flow for API key configuration
-- **Provider selection**: Choose between OpenAI and Google Gemini
+- **Provider**: OpenAI (plus per-user OpenClaw settings)
 - **Model selection**: Detailed model information with newest models
 - **Learning Center**: GTM-focused model documentation pages
 - **Secure storage**: API keys stored encrypted in Supabase database
@@ -175,22 +175,14 @@ Installed via skills ecosystem and wired as selectable agents in the Kilo agents
 ### Models Available (Newest)
 
 **OpenAI:**
-- GPT-5.5 Preview (Newest) - $7.50/$75 per 1M tokens
-- GPT-4o - $5/$15 per 1M tokens
-- GPT-4o Mini - $0.10/$0.20 per 1M tokens
-- o1 Preview - $15/$60 per 1M tokens
+- Current tiers: gpt-6-luna (fast), gpt-6.1-terra (default), gpt-6.1-sol (deep), gpt-6-astra (max); see docs/AI_STACK.md
 
-**Gemini:**
-- Gemini 2.0 Flash Preview (Newest) - $0.000075/$0.00015 per 1K tokens
-- Gemini 1.5 Pro - $0.00125/$0.0025 per 1K tokens
-- Gemini 1.5 Flash - $0.000075/$0.00015 per 1K tokens
 
 ### Components Created
 
 - `AIApiKeySettings.tsx` - Main dialog component using existing UI primitives
 - `AIApiKeySetupGuard.tsx` - Auto-popup guard for first-time users
 - `OpenAIModelInfo.tsx` - OpenAI models GTM documentation
-- `GeminiModelInfo.tsx` - Gemini models GTM documentation
 - `useAIApiKeys.ts` - Hook for AI API key management
 - `useApiKeyStatus.ts` - Hook for checking API key status
 

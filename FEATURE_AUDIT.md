@@ -226,7 +226,7 @@ SmartCRM is an enterprise-grade CRM system with **60+ distinct features** spanni
 - Video conferencing (built-in)
 - Stripe payments
 - Supabase backend
-- OpenAI/Gemini APIs
+- OpenAI API
 
 ### API & Webhooks
 

@@ -98,7 +98,7 @@ Your current deployed functions that should remain working:
 
 - ✅ ai-analysis, ai-insights, ai-workflow-builder
 - ✅ content-analyze, content-optimize, content-performance
-- ✅ gemini-generate, openai-generate
+- ✅ openai-generate
 - ✅ admin-create-user, admin-update-user
 - ✅ enrich-contact, analyze-sentiment
 - ✅ All 40+ other AI and utility functions

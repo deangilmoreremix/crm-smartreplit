@@ -38,7 +38,6 @@ graph TB
 
     subgraph "AI Layer"
         I[Smart CRM AI Engine] --> J[GPT-5 Integration]
-        I --> K[Gemini Integration]
         L[OpenClaw AI Chat] --> M[40+ AI Tools]
         N[Agency Agents Pool] --> O[147 Specialized Agents]
     end
@@ -90,7 +89,7 @@ graph LR
 - Frontend: React 18 + TypeScript + Tailwind CSS
 - Backend: Node.js + Express
 - Database: Supabase (PostgreSQL) with RLS
-- AI: OpenAI GPT-4/5, Google Gemini
+- AI: OpenAI (gpt-6 family, Responses API)
 - Integration: Module Federation, WebSocket, BroadcastChannel
 
 **Key Features:**
@@ -121,7 +120,7 @@ graph LR
 - Database: PostgreSQL 16 + Drizzle ORM
 - Auth: Better Auth
 - UI: shadcn/ui + Tailwind CSS v4
-- AI: OpenRouter (Claude, GPT-4o, Llama, Gemini)
+- AI: OpenAI (via OpenClaw)
 
 **Key Features:**
 | Feature | Description |

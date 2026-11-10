@@ -673,8 +673,7 @@
 
 ### **AI & Machine Learning**
 
-- [ ] OpenAI GPT-4o for advanced language processing
-- [ ] Google Gemini 2.5 Pro for multimodal AI capabilities
+- [ ] OpenAI gpt-6 family (Responses API) for advanced language processing
 - [ ] Custom AI agents for specialized business tasks
 - [ ] Real-time streaming for interactive AI responses
 - [ ] Prompt engineering for optimized AI performance

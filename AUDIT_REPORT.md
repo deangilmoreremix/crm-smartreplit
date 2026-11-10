@@ -93,3 +93,11 @@ fd4c3f5 feat(mfe): add iframe fallback for contacts module federation
 
 ---
 *Generated: 2026-06-03*
+---
+
+## AI Stack Status (2026-11)
+
+- AI is OpenAI-only (Responses API, gpt-6 family); Gemini, Anthropic, OpenRouter and Groq paths were removed. See `docs/AI_STACK.md`.
+- Long-running AI work runs in the Netlify background function `ai-jobs-background` backed by the `ai_jobs` table.
+- `user_api_keys` has one canonical OpenAI lookup (view `user_api_keys_openai`).
+- Historical sections above describe past commits and are left as-is.

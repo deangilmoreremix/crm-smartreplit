@@ -222,8 +222,7 @@ Smart CRM is an advanced customer relationship management platform powered by cu
 ### **Model Integration**
 
 - **OpenAI GPT-5** - Primary AI engine for advanced reasoning
-- **OpenAI GPT-4** - Fallback for complex tasks
-- **Google Gemini** - Alternative AI provider
+- **OpenAI gpt-6.1 Sol/Astra** - Deep reasoning for complex tasks
 - **Vision Models** - Image and document analysis
 - **Embedding Models** - Semantic search and similarity
 

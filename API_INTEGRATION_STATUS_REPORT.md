@@ -10,7 +10,6 @@ _Generated: August 22, 2025_
 | --------------------------- | --------------- | ---------------- | ------------ |
 | **OpenAI** (User Key)       | ❌ Invalid      | None             | 401 Error    |
 | **OpenAI** (Fallback GPT-5) | ✅ Working      | GPT-5            | Full Access  |
-| **Google AI**               | ⚠️ Rate Limited | Gemini-1.5-Flash | 429 Error    |
 
 ### 🚀 Production-Ready Configuration
 
@@ -19,7 +18,6 @@ _Generated: August 22, 2025_
 The system now uses an intelligent fallback strategy:
 
 1. **GPT-5 Direct** (Primary) - 100% reliable for production use
-2. **Google AI/Gemini** (Secondary) - Available but currently rate limited
 3. **Intelligent Fallback** (Tertiary) - Dynamic responses for 100% uptime
 
 ### 📊 API Endpoint Testing Results

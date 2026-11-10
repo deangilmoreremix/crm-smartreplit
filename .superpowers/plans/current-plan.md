@@ -1,7 +1,7 @@
 # Twenty CRM Feature Enhancement Plan
 
 **Created**: 2026-05-14
-**Status**: In Progress
+**Status**: Core phases complete; AI stack is OpenAI-only (see docs/AI_STACK.md)
 
 ## Summary
 Enhance all CRM applications with the Twenty CRM features. Currently, feature pages exist as UI shells with mock data. This plan adds real AI-powered backend services, API endpoints, and connects frontend components to live data and AI processing.
@@ -77,3 +77,13 @@ Enhance all CRM applications with the Twenty CRM features. Currently, feature pa
 
 - [x] 10.1: Run build and verify no errors
 - [x] 10.2: Run lint and fix any issues
+
+## Phase 11: AI leftovers (2026-11)
+
+- [x] 11.1: Rewire ai-integration.service to real routes (lead-score, /api/contacts/:id/enrich)
+- [x] 11.2: Unify user_api_keys (view user_api_keys_openai)
+- [x] 11.3: Netlify background jobs (ai-jobs-background, /api/ai/jobs)
+- [x] 11.4: Stream fallback for buffered responses
+- [x] 11.5: Images 2.6 UI (n, transparent, markup edit, svg/gif formats)
+- [x] 11.6: Pricing from the OpenAI pricing page (text models only)
+- [x] 11.7: Docs cleanup of non-OpenAI providers

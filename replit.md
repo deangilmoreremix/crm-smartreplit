@@ -75,7 +75,6 @@ Design Implementation: Always use the exact design, styling, and structure from 
 
 ### AI Services
 
-- **Google AI**: Gemini models
 - **OpenAI**: GPT models
 
 ### Communication

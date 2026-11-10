@@ -48,6 +48,7 @@ import AutomationConfig from './pages/AutomationConfig';
 
 // Lazy pages
 const TasksNew = lazy(() => import('./pages/TasksNew'));
+const Workflows = lazy(() => import('./pages/Workflows'));
 const Communication = lazy(() => import('./pages/Communication'));
 const ContactsWorking = lazy(() => import('./pages/ContactsWorking'));
 const DuplicateContacts = lazy(() => import('./components/contacts/DuplicateContacts'));
@@ -679,6 +680,17 @@ function AppContent() {
                 <ProtectedRoute featureKey={FeatureKey.TASK_MANAGEMENT}>
                   <Navbar />
                   <TasksNew />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Workflows */}
+            <Route
+              path="/workflows"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Workflows />
                 </ProtectedRoute>
               }
             />

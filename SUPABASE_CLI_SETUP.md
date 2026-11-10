@@ -21,10 +21,8 @@ Updated `supabase/config.toml`:
 
 The following secrets are set in Supabase Edge Functions:
 
-- `ANTHROPIC_API_KEY`
 - `CLIPDROP_API_KEY`
 - `ELEVENLABS_API_KEY`
-- `GEMINI_API_KEY`
 - `OPENAI_API_KEY`
 - `RECRAFT_API_KEY`
 - `STABILITY_API_KEY`

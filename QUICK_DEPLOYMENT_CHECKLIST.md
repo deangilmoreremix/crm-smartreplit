@@ -67,7 +67,7 @@ Headers: Authorization: Bearer YOUR_SUPABASE_ANON_KEY
 
 - api-proxy, ai-features, api-test
 - audience-insights, content-analyze, content-optimize
-- enhanced-calendar, gemini-generate, openai-generate
+- enhanced-calendar, openai-generate
 - admin-create-user, admin-update-user
 - enrich-contact, analyze-sentiment
 - **All 40+ other functions you already have deployed**

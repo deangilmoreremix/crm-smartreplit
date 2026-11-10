@@ -144,7 +144,7 @@ Comprehensive inventory of 200+ features from Twenty CRM repository, organized b
 
 #### AI Configuration
 
-- **Model selection** - Choose between OpenAI, Anthropic, Gemini
+- **Model selection** - Choose between OpenAI model tiers
 - **AI permissions** - Control AI access by role
 - **Usage monitoring** - Track AI costs and performance
 - **Prompt management** - Custom AI prompt templates

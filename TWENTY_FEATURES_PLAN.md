@@ -208,3 +208,6 @@ const useNotifications = () => {
 
 ---
 *Generated: 2026-06-03*
+## Status (2026-11)
+- Implemented: server AI tool routes (`server/routes/ai*.ts`) on the OpenAI Responses API, the client `aiToolsApiService`, bulk work via `ai_jobs` background jobs, GPT Image 2.6 generator (n, transparent background, markup edit).
+- Stack is Netlify + Supabase + OpenAI only; see `docs/AI_STACK.md`.

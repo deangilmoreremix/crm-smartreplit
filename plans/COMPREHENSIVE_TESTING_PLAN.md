@@ -120,7 +120,7 @@ Based on analysis of [`client/src/components/Navbar.tsx`](client/src/components/
 | ------------------ | ----------------------- | ------------------------ | ----------- |
 | AI Assistant       | `ai-assistant-chat`     | StreamingChat            | ⬜ Untested |
 | Vision Analyzer    | `vision-analyzer`       | VisionAnalyzer           | ⬜ Untested |
-| Image Generator    | `image-generator`       | GeminiImageModal         | ⬜ Untested |
+| Image Generator    | `image-generator`       | ImageGeneratorContent    | ⬜ Untested |
 | Semantic Search    | `smart-search-realtime` | SmartSearchRealtime      | ⬜ Untested |
 | Function Assistant | `function-assistant`    | FunctionAssistantContent | ⬜ Untested |
 
@@ -252,7 +252,6 @@ Based on analysis of [`client/src/components/Navbar.tsx`](client/src/components/
 
 2. **AI Service Integration**
    - [ ] OpenAI API connectivity
-   - [ ] Gemini API connectivity
    - [ ] Rate limiting functionality
    - [ ] Fallback mechanisms
 

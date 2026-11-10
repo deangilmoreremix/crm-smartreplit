@@ -187,7 +187,7 @@ export async function estimateAndReserve(
   userId: string,
   prompt: string,
   featureKey: string,
-  model: string = 'gpt-4o-mini'
+  model: string = 'fast' // tier name; resolved by shared/aiModels.ts
 ): Promise<TokenReservation | null> {
   const estimatedTokens = Math.ceil(prompt.length / 3.5); // rough estimate
   const estimatedCostCents = Math.ceil((estimatedTokens / 1000) * TOKEN_TO_CREDIT_RATE * 100);

@@ -7,7 +7,7 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 - **Frontend**: React 18 + TypeScript + Vite, Tailwind CSS, Zustand stores, React Query
 - **Backend**: Express server + Supabase Edge Functions (Deno runtime, built to netlify/functions)
 - **Database**: PostgreSQL with Drizzle ORM, Row Level Security (RLS)
-- **AI**: OpenAI GPT-4o, Google Gemini 2.5 Pro integrations
+- **AI**: OpenAI Responses API (gpt-6 family) via server/services/openaiClient.ts
 - **Deployment**: Netlify (functions + static hosting)
 - **Multi-tenancy**: Product tiers, white-label customization, partner management
 
@@ -43,7 +43,7 @@ SmartCRM is a full-stack AI-powered sales and marketing platform built with:
 
 ### AI Integration
 
-- **Services**: Dedicated services in `services/` (OpenAI, Gemini, custom agents)
+- **Services**: Dedicated services in `services/` (OpenAI, custom agents)
 - **Streaming**: Real-time responses with WebSockets/Edge Functions
 - **Caching**: AI responses cached in Supabase storage
 - **Rate limiting**: Built-in quota management per user tier

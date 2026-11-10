@@ -19,7 +19,6 @@ SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 OPENAI_API_KEY=your-openai-key
 GOOGLE_AI_API_KEY=your-google-ai-key
-GEMINI_API_KEY=your-gemini-key
 ELEVENLABS_API_KEY=your-elevenlabs-key
 
 # Client-side (in client/.env)

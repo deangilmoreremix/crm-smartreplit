@@ -46,7 +46,6 @@ BASE_URL=http://localhost:5000
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 OPENAI_API_KEY=sk-your-openai-key
-GOOGLE_AI_API_KEY=your-gemini-key
 ```
 
 ---
@@ -60,7 +59,6 @@ GOOGLE_AI_API_KEY=your-gemini-key
 - ❌ Health Endpoint - Server not running or unreachable
 - ❌ Supabase Connection - Cannot connect to database
 - ❌ OpenAI Status - Cannot reach OpenAI API
-- ❌ Google AI Status - Cannot reach Gemini API
 - ❌ Database Endpoints - 3/3 endpoints failed
 - ❌ Messaging API - Endpoint error
 - ❌ Authentication System - Auth test error
@@ -166,7 +164,6 @@ All remote apps properly configured:
 - ✅ OpenAI Service uses server-side API
 - ✅ Rate limiting implemented
 - ✅ Error handling in place
-- ✅ Gemini service has fallbacks
 
 ### 3. Component Architecture
 
@@ -232,7 +229,6 @@ All remote apps properly configured:
 1. Configure Supabase credentials
 2. Deploy/update edge functions
 3. Add OpenAI API key
-4. Add Google AI (Gemini) API key
 5. Re-run API health tests
 
 ### Phase 3: Fix Mock Data (Priority: HIGH)
