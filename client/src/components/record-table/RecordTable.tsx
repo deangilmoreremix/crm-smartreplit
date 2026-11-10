@@ -2,10 +2,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ColumnDef,
   Updater,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
+  columnOrderingFeature,
+  columnResizingFeature,
+  columnSizingFeature,
+  columnVisibilityFeature,
+  createSortedRowModel,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import InlineEditCell from '../InlineEditCell';
@@ -22,6 +26,16 @@ import { cellText, computeAggregate, groupRows } from './tableUtils';
 import type { BulkAdapter, RecordColumn, RowMenuItem, TableViewState } from './types';
 import { defaultViewState, deserializeView, serializeView } from './viewState';
 import { useSafeNavigate } from './useSafeNavigate';
+
+// TanStack Table v9: features are registered explicitly and must be stable (module scope).
+const features = tableFeatures({
+  rowSortingFeature,
+  columnVisibilityFeature,
+  columnOrderingFeature,
+  columnSizingFeature,
+  columnResizingFeature,
+  sortedRowModel: createSortedRowModel(),
+});
 
 const ROW_H = 36;
 const CHECK_W = 40;
@@ -130,7 +144,7 @@ function RecordTable<T>({
     return applyFilters(searched, view.filters, getValue);
   }, [data, columns, view.search, view.filters, getValue]);
 
-  const defs = useMemo<ColumnDef<T>[]>(
+  const defs = useMemo<ColumnDef<typeof features, T>[]>(
     () =>
       columns.map((c) => ({
         id: c.id,
@@ -138,14 +152,15 @@ function RecordTable<T>({
         accessorFn: (row: T) => c.accessor(row),
         size: c.width ?? 160,
         minSize: c.minWidth ?? 60,
-        sortingFn: (a, b, id) => compareValues(a.getValue(id), b.getValue(id)),
+        sortFn: (a, b, id) => compareValues(a.getValue(id), b.getValue(id)),
         sortUndefined: 'last',
       })),
     [columns]
   );
 
   const fn = <V,>(u: Updater<V>, prev: V): V => (typeof u === 'function' ? (u as (p: V) => V)(prev) : u);
-  const table = useReactTable<T>({
+  const table = useTable({
+    features,
     data: filtered,
     columns: defs,
     getRowId,
@@ -162,8 +177,6 @@ function RecordTable<T>({
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     enableMultiSort: true,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   const sortedRows = table.getRowModel().rows;
