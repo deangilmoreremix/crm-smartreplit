@@ -178,7 +178,6 @@ client/src/pages/BusinessAnalyzer.tsx: TS2307 4
 client/src/pages/CircleProspectingDashboard.tsx: TS18048 6
 client/src/pages/CircleProspectingDashboard.tsx: TS2552 1
 client/src/pages/CompanyAdminDashboard.tsx: TS2322 1
-client/src/pages/ContactDetail.tsx: TS2739 1
 client/src/pages/ContactDetail.tsx: TS7053 1
 client/src/pages/DocumentCenter.tsx: TS2307 1
 client/src/pages/EnhancedContacts.tsx: TS2304 1

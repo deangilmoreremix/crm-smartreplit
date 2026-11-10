@@ -24,7 +24,6 @@ interface Filters extends Record<string, unknown> {
 }
 
 const EMPTY_FILTERS: Filters = { search: '', status: '', industry: '' };
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STATUS_OPTIONS = ['lead', 'prospect', 'active', 'customer', 'inactive'].map((s) => ({
   value: s,
   label: s,
@@ -53,7 +52,7 @@ const ContactPanel: React.FC<{ contact: ApiContact; onClose: () => void }> = ({
     let cancelled = false;
     supabase.auth
       .getUser()
-      .then(({ data }) => !cancelled && setSignedIn(!!data.user))
+      .then((res: { data: { user: unknown } }) => !cancelled && setSignedIn(!!res.data.user))
       .catch(() => !cancelled && setSignedIn(false));
     return () => {
       cancelled = true;
@@ -64,12 +63,6 @@ const ContactPanel: React.FC<{ contact: ApiContact; onClose: () => void }> = ({
   if (signedIn === null) body = <p className="text-sm text-gray-500">Loading...</p>;
   else if (!signedIn)
     body = <p className="text-sm text-gray-600">Sign in to view activity and attachments.</p>;
-  else if (!UUID_RE.test(id))
-    body = (
-      <p className="text-sm text-gray-600">
-        Activity and attachments are not available for this contact because it has no UUID.
-      </p>
-    );
   else
     body = (
       <>

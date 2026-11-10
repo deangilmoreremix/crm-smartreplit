@@ -36,7 +36,6 @@ __export(schema_exports, {
   entitlements: () => entitlements,
   featurePackages: () => featurePackages,
   features: () => features,
-  fieldMetadata: () => fieldMetadata,
   fieldTypes: () => fieldTypes,
   insertAppointmentSchema: () => insertAppointmentSchema,
   insertCommunicationSchema: () => insertCommunicationSchema,
@@ -46,20 +45,16 @@ __export(schema_exports, {
   insertNoteSchema: () => insertNoteSchema,
   insertTaskSchema: () => insertTaskSchema,
   notes: () => notes,
-  objectMetadata: () => objectMetadata,
   partnerCustomers: () => partnerCustomers,
   partnerMetrics: () => partnerMetrics,
   partnerTiers: () => partnerTiers,
   partnerWLConfigs: () => partnerWLConfigs,
   partners: () => partners,
   payouts: () => payouts,
-  permissions: () => permissions,
   productTiers: () => productTiers,
   profiles: () => profiles,
-  relationMetadata: () => relationMetadata,
   resellerCreditTransactions: () => resellerCreditTransactions,
   resellerCredits: () => resellerCredits,
-  roles: () => roles,
   tasks: () => tasks,
   tenantConfigs: () => tenantConfigs,
   tokenTransactions: () => tokenTransactions,
@@ -74,25 +69,17 @@ __export(schema_exports, {
   userFeatures: () => userFeatures,
   userGeneratedImages: () => userGeneratedImages,
   userRoles: () => userRoles,
-  userRolesTable: () => userRolesTable,
   userUsageLimits: () => userUsageLimits,
   userWLSettings: () => userWLSettings,
   viewTypes: () => viewTypes,
-  views: () => views,
   whiteLabelPackages: () => whiteLabelPackages,
-  workflowActions: () => workflowActions,
-  workflowCredits: () => workflowCredits,
-  workflowRunLogs: () => workflowRunLogs,
   workflowRunStatus: () => workflowRunStatus,
-  workflowRuns: () => workflowRuns,
-  workflowTemplates: () => workflowTemplates,
-  workflowTriggerTypes: () => workflowTriggerTypes,
-  workflows: () => workflows
+  workflowTriggerTypes: () => workflowTriggerTypes
 });
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, updateTaskSchema, insertAppointmentSchema, updateAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
+var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, updateTaskSchema, insertAppointmentSchema, updateAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -281,33 +268,6 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    roles = pgTable("roles", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      name: text("name").notNull().unique(),
-      description: text("description"),
-      permissions: jsonb("permissions").default([]),
-      isActive: boolean("is_active").default(true),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    permissions = pgTable("permissions", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      name: text("name").notNull().unique(),
-      resource: text("resource").notNull(),
-      action: text("action").notNull(),
-      description: text("description"),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    userRolesTable = pgTable("user_roles", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      userId: uuid("user_id").references(() => profiles.id).notNull(),
-      roleId: uuid("role_id").references(() => roles.id).notNull(),
-      tenantId: text("tenant_id"),
-      isActive: boolean("is_active").default(true),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
     appointments = pgTable("appointments", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       title: text("title").notNull(),
@@ -457,140 +417,6 @@ var init_schema = __esm({
       minimumPrice: decimal("minimum_price", { precision: 10, scale: 4 }),
       isActive: boolean("is_active").default(true),
       metadata: jsonb("metadata").default({}),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    workflows = pgTable("workflows", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      name: text("name").notNull(),
-      description: text("description"),
-      triggerType: text("trigger_type").$type().notNull(),
-      triggerConfig: jsonb("trigger_config").default({}),
-      actions: jsonb("actions").default([]),
-      status: text("status").default("active"),
-      version: integer("version").default(1),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow(),
-      profileId: uuid("profile_id").references(() => profiles.id)
-    });
-    workflowActions = pgTable("workflow_actions", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      workflowId: uuid("workflow_id").references(() => workflows.id).notNull(),
-      sequence: integer("sequence").notNull(),
-      type: text("type").$type().notNull(),
-      config: jsonb("config").default({}),
-      condition: jsonb("condition"),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    workflowRuns = pgTable("workflow_runs", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      workflowId: uuid("workflow_id").references(() => workflows.id).notNull(),
-      status: text("status").$type().default("pending"),
-      triggerData: jsonb("trigger_data").default({}),
-      startedAt: timestamp("started_at"),
-      completedAt: timestamp("completed_at"),
-      error: text("error"),
-      metadata: jsonb("metadata").default({}),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    workflowRunLogs = pgTable("workflow_run_logs", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      runId: uuid("run_id").references(() => workflowRuns.id).notNull(),
-      actionSequence: integer("action_sequence"),
-      status: text("status").default("pending"),
-      inputData: jsonb("input_data").default({}),
-      outputData: jsonb("output_data").default({}),
-      error: text("error"),
-      startedAt: timestamp("started_at"),
-      completedAt: timestamp("completed_at"),
-      createdAt: timestamp("created_at").defaultNow()
-    });
-    workflowCredits = pgTable("workflow_credits", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      tenantId: uuid("tenant_id").references(() => profiles.id).notNull(),
-      totalCredits: integer("total_credits").default(0),
-      usedCredits: integer("used_credits").default(0),
-      resetAt: timestamp("reset_at"),
-      metadata: jsonb("metadata").default({}),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    workflowTemplates = pgTable("workflow_templates", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      name: text("name").notNull(),
-      description: text("description"),
-      category: text("category"),
-      triggerType: text("trigger_type").$type().notNull(),
-      actions: jsonb("actions").default([]),
-      isPublic: boolean("is_public").default(false),
-      metadata: jsonb("metadata").default({}),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow(),
-      profileId: uuid("profile_id").references(() => profiles.id)
-    });
-    objectMetadata = pgTable("object_metadata", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      name: text("name").notNull(),
-      label: text("label").notNull(),
-      labelPlural: text("label_plural"),
-      description: text("description"),
-      icon: text("icon"),
-      isCustom: boolean("is_custom").default(false),
-      isActive: boolean("is_active").default(true),
-      isSystem: boolean("is_system").default(false),
-      workspaceId: uuid("workspace_id").references(() => profiles.id),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    fieldMetadata = pgTable("field_metadata", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
-      name: text("name").notNull(),
-      label: text("label").notNull(),
-      type: text("type").$type().notNull(),
-      description: text("description"),
-      icon: text("icon"),
-      options: jsonb("options"),
-      defaultValue: jsonb("default_value"),
-      settings: jsonb("settings"),
-      isCustom: boolean("is_custom").default(false),
-      isActive: boolean("is_active").default(true),
-      isSystem: boolean("is_system").default(false),
-      isNullable: boolean("is_nullable").default(true),
-      isUnique: boolean("is_unique").default(false),
-      workspaceId: uuid("workspace_id").references(() => profiles.id),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    relationMetadata = pgTable("relation_metadata", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      sourceObjectMetadataId: uuid("source_object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
-      targetObjectMetadataId: uuid("target_object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
-      sourceFieldMetadataId: uuid("source_field_metadata_id").references(() => fieldMetadata.id, { onDelete: "cascade" }).notNull(),
-      targetFieldMetadataId: uuid("target_field_metadata_id").references(() => fieldMetadata.id, { onDelete: "cascade" }),
-      relationType: text("relation_type").notNull(),
-      isCustom: boolean("is_custom").default(false),
-      workspaceId: uuid("workspace_id").references(() => profiles.id),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
-    views = pgTable("views", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }),
-      name: text("name").notNull(),
-      type: text("type").$type().notNull(),
-      kanbanFieldMetadataId: uuid("kanban_field_metadata_id").references(() => fieldMetadata.id),
-      filters: jsonb("filters").default([]),
-      sorts: jsonb("sorts").default([]),
-      visibleFields: jsonb("visible_fields").default([]),
-      hiddenFields: jsonb("hidden_fields").default([]),
-      aggregations: jsonb("aggregations").default([]),
-      visibility: text("visibility").default("personal"),
-      isDefault: boolean("is_default").default(false),
-      userId: uuid("user_id").references(() => profiles.id),
-      workspaceId: uuid("workspace_id").references(() => profiles.id),
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });

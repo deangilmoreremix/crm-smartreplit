@@ -80,6 +80,9 @@ const ContactDetail: React.FC = () => {
           notes: row.notes ?? '',
           industry: row.industry ?? '',
           location: [row.city, row.state].filter(Boolean).join(', '),
+          tags: row.tags ?? [],
+          createdAt: row.createdAt ? new Date(row.createdAt) : new Date(),
+          updatedAt: row.updatedAt ? new Date(row.updatedAt) : new Date(),
         };
         setContact(loaded);
         setEditFormData(loaded);
