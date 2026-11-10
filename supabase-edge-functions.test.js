@@ -106,7 +106,7 @@ async function testAnalyzeSentiment() {
     const response = await callEdgeFunction('analyze-sentiment', {
       text: "I love this product! It's amazing and works perfectly.",
       customerId: 'test-customer-123',
-      model: 'gpt-4o-mini',
+      model: process.env.OPENAI_MODEL_FAST || 'gpt-6-luna',
     });
 
     if (response.status === 200 && response.data.sentiment) {

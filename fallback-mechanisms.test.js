@@ -113,7 +113,7 @@ async function testAISmartGreetingFallback() {
     if (response.status === 200) {
       if (response.data.source === 'intelligent_fallback') {
         return { passed: true, message: 'Intelligent fallback working correctly' };
-      } else if (response.data.source === 'gpt-4o-mini') {
+      } else if (response.data.source === (process.env.OPENAI_MODEL_FAST || 'gpt-6-luna')) {
         return { passed: true, message: 'AI service working with configured keys' };
       } else {
         return { passed: false, message: 'Unexpected response source' };

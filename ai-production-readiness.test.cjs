@@ -1081,7 +1081,7 @@ class AITestSuite {
     const protectedEndpoints = [
       '/api/openai/embeddings',
       '/api/openai/images/generate',
-      '/api/openai/assistants/threads',
+      '/api/assistants/threads',
     ];
 
     for (const endpoint of protectedEndpoints) {

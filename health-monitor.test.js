@@ -309,7 +309,7 @@ async function checkFallbackMechanisms() {
 
     const isHealthy =
       response.status === 200 &&
-      (response.data.source === 'intelligent_fallback' || response.data.source === 'gpt-4o-mini');
+      (response.data.source === 'intelligent_fallback' || response.data.source === (process.env.OPENAI_MODEL_FAST || 'gpt-6-luna'));
 
     healthStatus.services.fallbacks = {
       status: isHealthy ? 'healthy' : 'error',
