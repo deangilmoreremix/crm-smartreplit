@@ -138,4 +138,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register partners routes
   console.log('Registering partners routes');
   registerPartnersRoutes(app);
+
+  // Public REST API (/api/v1, API-key auth). Keep LAST: it ends with a JSON 404 catch-all on /api/v1.
+  registerPublicApiRoutes(app);
 }
