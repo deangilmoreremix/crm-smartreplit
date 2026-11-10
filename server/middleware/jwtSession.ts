@@ -23,7 +23,8 @@ export function createJwtSession(getUser: GetUser | null) {
       const header = req.headers.authorization;
       if (!getUser || !header?.startsWith('Bearer ')) return next();
       const token = header.slice(7).trim();
-      if (!token || token.startsWith('dev-bypass-token-')) return next();
+      // dev-bypass tokens are handled by requireAuth; sk_live_ tokens are public-API keys, not JWTs
+      if (!token || token.startsWith('dev-bypass-token-') || token.startsWith('sk_live_')) return next();
       if ((req as any).session?.userId) return next();
 
       const now = Date.now();

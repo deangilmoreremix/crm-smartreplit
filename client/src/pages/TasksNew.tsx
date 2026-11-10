@@ -8,6 +8,7 @@ import {
   Search,
   FileText,
   X,
+  Table2,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -16,6 +17,7 @@ import { Badge } from '../components/ui/badge';
 import { useTaskStore } from '../store/taskStore';
 import { TaskKanbanBoard } from '../components/TaskKanbanBoard';
 import { TaskCalendar } from '../components/TaskCalendar';
+import TasksTable from '../components/record-table/TasksTable';
 import { ActivityFeed } from '../components/ActivityFeed';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { useTheme } from '../contexts/ThemeContext';
@@ -38,7 +40,7 @@ export const Tasks: React.FC = () => {
     const action = params.get('action');
 
     // Handle tab switching from dropdown
-    if (tab && ['board', 'calendar', 'analytics', 'activity'].includes(tab)) {
+    if (tab && ['board', 'table', 'calendar', 'analytics', 'activity'].includes(tab)) {
       setActiveTab(tab);
     }
 
@@ -212,6 +214,13 @@ export const Tasks: React.FC = () => {
               Kanban Board
             </TabsTrigger>
             <TabsTrigger
+              value="table"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-6 py-3"
+            >
+              <Table2 className="h-4 w-4 mr-2" />
+              Table
+            </TabsTrigger>
+            <TabsTrigger
               value="calendar"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent px-6 py-3"
             >
@@ -241,6 +250,10 @@ export const Tasks: React.FC = () => {
         <Tabs value={activeTab} className="h-full">
           <TabsContent value="board" className="h-full m-0">
             <TaskKanbanBoard />
+          </TabsContent>
+
+          <TabsContent value="table" className="h-full m-0">
+            <TasksTable />
           </TabsContent>
 
           <TabsContent value="calendar" className="h-full m-0">

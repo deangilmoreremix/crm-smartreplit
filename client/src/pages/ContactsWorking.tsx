@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import ModuleFederationContacts from '../components/ModuleFederationContacts';
 import GTMIntegration from '../components/GTMIntegration';
@@ -6,7 +7,7 @@ import ContactsManager from '../components/ContactsManager';
 
 const ContactsWorking: React.FC = () => {
   const { isDark } = useTheme();
-  const [activeTab, setActiveTab] = useState('contacts');
+  const [activeTab, setActiveTab] = useState('manage');
 
   const tabs = [
     { id: 'contacts', label: 'Contacts', icon: '👥' },
@@ -38,6 +39,15 @@ const ContactsWorking: React.FC = () => {
               <span>{tab.label}</span>
             </button>
           ))}
+          <Link
+            to="/contacts/duplicates"
+            className={`ml-auto flex items-center space-x-2 py-2 px-1 text-sm font-medium ${
+              isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span>🧬</span>
+            <span>Duplicates</span>
+          </Link>
         </nav>
       </div>
 

@@ -157,7 +157,7 @@ export function applyFilters<T>(
   return rows.filter((r) => matchesNode(r, node, getValue));
 }
 
-const quote = (v: string) => (/[,()":*\s]/.test(v) ? `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : v);
+const quote = (v: string) => (/[,():"\s]/.test(v) ? `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : v);
 
 function conditionToPostgrest(c: FilterCondition, col: string): string {
   const v = String(c.value ?? '');

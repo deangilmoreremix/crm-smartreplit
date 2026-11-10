@@ -7,13 +7,14 @@ import { useContactStore } from '../hooks/useContactStore';
 import ModuleFederationPipeline from '../components/ModuleFederationPipeline';
 import GTMIntegration from '../components/GTMIntegration';
 import DealKanbanBoard from '../components/DealKanbanBoard';
+import DealsTable from '../components/record-table/DealsTable';
 
 const PipelinePage: React.FC = () => {
   const { isDark } = useTheme();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
   const [activeTab, setActiveTab] = useState('pipeline');
-  const [dealView, setDealView] = useState<'kanban' | 'list'>('kanban');
+  const [dealView, setDealView] = useState<'kanban' | 'table' | 'list'>('kanban');
 
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: '📊' },
@@ -54,7 +55,7 @@ const PipelinePage: React.FC = () => {
         {activeTab === 'pipeline' && (
           <div className="h-full w-full flex flex-col">
             <div className="flex justify-end px-6 py-2" role="tablist" aria-label="Deal view">
-              {(['kanban', 'list'] as const).map((view) => (
+              {(['kanban', 'table', 'list'] as const).map((view) => (
                 <button
                   key={view}
                   role="tab"
@@ -66,13 +67,15 @@ const PipelinePage: React.FC = () => {
                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  {view === 'kanban' ? 'Kanban' : 'List'}
+                  {view === 'kanban' ? 'Kanban' : view === 'table' ? 'Table' : 'List'}
                 </button>
               ))}
             </div>
             <div className="flex-1 overflow-auto">
               {dealView === 'kanban' ? (
                 <DealKanbanBoard />
+              ) : dealView === 'table' ? (
+                <DealsTable />
               ) : (
                 <ModuleFederationPipeline showHeader={false} />
               )}

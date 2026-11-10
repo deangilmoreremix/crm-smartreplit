@@ -8,7 +8,8 @@ import {
   autoMapColumns,
   importInBatches,
   mapRows,
-  parseCSV,
+  ImportSheet,
+  readImportFile,
 } from './ImportContactsModal.utils';
 
 interface ImportContactsModalProps {
@@ -20,13 +21,18 @@ interface ImportContactsModalProps {
   onComplete?: (summary: ImportSummary) => void;
 }
 
+type Step = 'upload' | 'sheet' | 'map' | 'preview' | 'done';
+
 const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
   isOpen,
   onClose,
   onCreate,
   onComplete,
 }) => {
-  const [rows, setRows] = useState<string[][]>([]);
+  const [sheets, setSheets] = useState<ImportSheet[]>([]);
+  const [sheetIdx, setSheetIdx] = useState(0);
+  const [step, setStep] = useState<Step>('upload');
+  const rows = useMemo(() => sheets[sheetIdx]?.rows ?? [], [sheets, sheetIdx]);
   const [mapping, setMapping] = useState<ColumnMapping>({});
   const [fileError, setFileError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -40,7 +46,9 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
   if (!isOpen) return null;
 
   const reset = () => {
-    setRows([]);
+    setSheets([]);
+    setSheetIdx(0);
+    setStep('upload');
     setMapping({});
     setFileError(null);
     setProgress(null);
@@ -53,6 +61,12 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
     onClose();
   };
 
+  const selectSheet = (all: ImportSheet[], idx: number) => {
+    setSheetIdx(idx);
+    const r = all[idx]?.rows ?? [];
+    setMapping(r.length ? autoMapColumns(r[0]) : {});
+  };
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -60,14 +74,15 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
     setSummary(null);
     setProgress(null);
     try {
-      const parsed = parseCSV(await file.text());
-      if (parsed.length < 2) {
+      const parsed = (await readImportFile(file)).filter((sh) => sh.rows.length >= 2);
+      if (parsed.length === 0) {
         setFileError('The file needs a header row and at least one data row.');
-        setRows([]);
+        setSheets([]);
         return;
       }
-      setRows(parsed);
-      setMapping(autoMapColumns(parsed[0]));
+      setSheets(parsed);
+      selectSheet(parsed, 0);
+      setStep(parsed.length > 1 ? 'sheet' : 'map');
     } catch {
       setFileError('Could not read the file.');
     }
@@ -81,6 +96,7 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
     // Validation failures are reported alongside creation failures.
     const all = { created: result.created, errors: [...mapped.errors, ...result.errors].sort((a, b) => a.row - b.row) };
     setSummary(all);
+    setStep('done');
     onComplete?.(all);
   };
 
@@ -88,18 +104,56 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-label="Import contacts">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Import contacts from CSV</h2>
+          <h2 className="text-lg font-semibold">Import contacts</h2>
           <button type="button" onClick={handleClose} aria-label="Close" className="text-gray-500 hover:text-gray-700">
             ×
           </button>
         </div>
 
-        {!summary && (
-          <input type="file" accept=".csv,text/csv" onChange={handleFile} disabled={importing} aria-label="CSV file" />
+        <ol className="flex gap-3 text-xs text-gray-500" aria-label="Import steps">
+          {(['upload', 'sheet', 'map', 'preview', 'done'] as Step[])
+            .filter((st) => st !== 'sheet' || sheets.length > 1)
+            .map((st, i) => (
+              <li key={st} aria-current={st === step ? 'step' : undefined} className={st === step ? 'font-semibold text-blue-600' : ''}>
+                {i + 1}. {{ upload: 'Upload', sheet: 'Sheet', map: 'Map columns', preview: 'Review', done: 'Done' }[st]}
+              </li>
+            ))}
+        </ol>
+
+        {step === 'upload' && (
+          <input
+            type="file"
+            accept=".csv,text/csv,.xlsx,.xls,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            onChange={handleFile}
+            disabled={importing}
+            aria-label="CSV or Excel file"
+          />
         )}
         {fileError && <div className="text-sm text-red-600">{fileError}</div>}
 
-        {rows.length > 0 && !summary && (
+        {step === 'sheet' && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium">Choose a sheet</h3>
+            <select
+              aria-label="Sheet"
+              value={sheetIdx}
+              onChange={(e) => selectSheet(sheets, Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              {sheets.map((sh, i) => (
+                <option key={sh.name} value={i}>
+                  {sh.name} ({sh.rows.length - 1} rows)
+                </option>
+              ))}
+            </select>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setStep('upload')} className="px-3 py-1.5 text-sm border rounded-md">Back</button>
+              <button type="button" onClick={() => setStep('map')} className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md">Next</button>
+            </div>
+          </div>
+        )}
+
+        {step === 'map' && rows.length > 0 && (
           <>
             <div>
               <h3 className="text-sm font-medium mb-2">Map columns</h3>
@@ -135,7 +189,23 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
                 ))}
               </div>
             </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setStep(sheets.length > 1 ? 'sheet' : 'upload')} className="px-3 py-1.5 text-sm border rounded-md">Back</button>
+              <button
+                type="button"
+                onClick={() => setStep('preview')}
+                disabled={mapping.email === undefined}
+                title={mapping.email === undefined ? 'Map the Email column first' : undefined}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
 
+        {step === 'preview' && rows.length > 0 && (
+          <>
             <div>
               <h3 className="text-sm font-medium mb-2">
                 Preview ({mapped.contacts.length} valid, {mapped.errors.length} with problems)
@@ -184,6 +254,9 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
             )}
 
             <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setStep('map')} disabled={importing} className="px-3 py-1.5 text-sm border rounded-md">
+                Back
+              </button>
               <button type="button" onClick={handleClose} disabled={importing} className="px-3 py-1.5 text-sm border rounded-md">
                 Cancel
               </button>
@@ -199,7 +272,7 @@ const ImportContactsModal: React.FC<ImportContactsModalProps> = ({
           </>
         )}
 
-        {summary && (
+        {step === 'done' && summary && (
           <div className="space-y-2">
             <div className="text-sm">
               Imported {summary.created} contact{summary.created === 1 ? '' : 's'}

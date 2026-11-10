@@ -18,6 +18,8 @@ import {
 import { useDealStore } from '../store/dealStore';
 import { Deal, DealStage } from '../types/deal';
 import { useContactStore } from '../store/contactStore';
+import RowContextMenu from './record-table/RowContextMenu';
+import { useSafeNavigate } from './record-table/useSafeNavigate';
 
 interface DealCardProps {
   deal: Deal;
@@ -30,6 +32,7 @@ interface DealCardProps {
 const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDelete }) => {
   const { contacts } = useContactStore();
   const contact = contacts[deal.contactId];
+  const navigate = useSafeNavigate();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -61,6 +64,20 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
   return (
     <Draggable draggableId={deal.id} index={index}>
       {(provided, snapshot) => (
+        <RowContextMenu
+          items={[
+            { label: 'Open', onSelect: () => onView(deal) },
+            { label: 'Edit', onSelect: () => onEdit(deal) },
+            { label: 'Add task', onSelect: () => navigate('/tasks?action=new') },
+            { label: 'Add note', onSelect: () => navigate(`/deals/${deal.id}?tab=notes`) },
+            {
+              label: 'Delete',
+              destructive: true,
+              separatorBefore: true,
+              onSelect: () => window.confirm(`Delete deal "${deal.title}"?`) && onDelete(deal.id),
+            },
+          ]}
+        >
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
@@ -171,6 +188,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
             <div className="text-xs text-gray-400">#{deal.id.slice(-4)}</div>
           </div>
         </div>
+        </RowContextMenu>
       )}
     </Draggable>
   );

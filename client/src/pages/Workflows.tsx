@@ -4,6 +4,7 @@ import type {
   Workflow as BuilderWorkflow,
 } from '../../../packages/ui/src/components/workflows/WorkflowBuilder';
 import { WorkflowMonitor } from '../../../packages/ui/src/components/workflows/WorkflowMonitor';
+import WorkflowTriggersPanel from './automation/WorkflowTriggersPanel';
 
 interface WorkflowSummary {
   id: string;
@@ -163,6 +164,7 @@ const Workflows: React.FC = () => {
           />
           {selectedId && (
             <>
+              <WorkflowTriggersPanel workflowId={selectedId} />
               <WorkflowMonitor workflowId={selectedId} onRunWorkflow={runNow} />
               <button
                 type="button"

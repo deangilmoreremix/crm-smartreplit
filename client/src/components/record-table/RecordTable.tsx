@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ColumnDef,
+  RowData,
   Updater,
   columnOrderingFeature,
   columnResizingFeature,
@@ -41,7 +42,7 @@ const ROW_H = 36;
 const CHECK_W = 40;
 const VIRTUALIZE_ABOVE = 150;
 
-export interface RecordDrawerConfig<T> {
+export interface RecordDrawerConfig<T extends RowData> {
   title: (row: T) => string;
   subtitle?: (row: T) => string | undefined;
   openHref?: (row: T) => string;
@@ -49,7 +50,7 @@ export interface RecordDrawerConfig<T> {
   render?: (row: T, close: () => void) => React.ReactNode;
 }
 
-export interface RecordTableProps<T> {
+export interface RecordTableProps<T extends RowData> {
   data: T[];
   /** Keep this array referentially stable (module constant or useMemo). */
   columns: RecordColumn<T>[];
@@ -86,11 +87,11 @@ const useOutside = (open: boolean, close: () => void) => {
   return ref;
 };
 
-type Item<T> =
+type Item<T extends RowData> =
   | { kind: 'group'; key: string; label: string; count: number; collapsed: boolean }
   | { kind: 'row'; row: T; id: string; index: number };
 
-function RecordTable<T>({
+function RecordTable<T extends RowData>({
   data,
   columns,
   getRowId,

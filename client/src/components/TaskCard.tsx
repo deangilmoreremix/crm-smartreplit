@@ -14,6 +14,7 @@ import Avatar from './ui/Avatar';
 import { useTaskStore } from '../store/taskStore';
 import { getInitials, getAvatarByIndex } from '../utils/avatars';
 import { useTheme } from '../contexts/ThemeContext';
+import RowContextMenu from './record-table/RowContextMenu';
 
 interface TaskCardProps {
   task: {
@@ -37,7 +38,7 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const { isDark } = useTheme();
-  const { updateTask } = useTaskStore();
+  const { updateTask, deleteTask } = useTaskStore();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   const getCardClass = (highlighted: boolean) => {
@@ -133,6 +134,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const assigneeAvatar = task.assignee?.avatar || getAvatarByIndex(index, 'executives');
 
   return (
+    <RowContextMenu
+      items={[
+        { label: 'Open', onSelect: () => (window.location.href = `/tasks/${task.id}`) },
+        {
+          label: task.completed ? 'Mark incomplete' : 'Mark complete',
+          onSelect: () => updateTask(task.id, { completed: !task.completed }),
+        },
+        {
+          label: 'Delete',
+          destructive: true,
+          separatorBefore: true,
+          onSelect: () => window.confirm(`Delete task "${task.title}"?`) && deleteTask(task.id),
+        },
+      ]}
+    >
     <div
       className={`${isDark ? 'bg-gray-800/50' : 'bg-white'} backdrop-blur-xl border rounded-2xl p-6 hover:${isDark ? 'bg-gray-800/70' : 'bg-gray-50'} transition-all duration-300 group ${getCardClass(task.isHighlighted)} ${task.completed ? 'opacity-70' : ''} relative`}
       onClick={() => (window.location.href = `/tasks/${task.id}`)}
@@ -277,6 +293,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
         </div>
       </div>
     </div>
+    </RowContextMenu>
   );
 };
 

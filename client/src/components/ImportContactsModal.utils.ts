@@ -225,3 +225,40 @@ export async function importInBatches(
   }
   return { created, errors };
 }
+
+export interface ImportSheet {
+  name: string;
+  /** Header row first; every cell is a string. */
+  rows: string[][];
+}
+
+const cleanRows = (rows: unknown[][]): string[][] =>
+  rows
+    .map((r) => r.map((c) => (c === null || c === undefined ? '' : String(c))))
+    .filter((r) => r.some((c) => c.trim() !== ''));
+
+/** CSV via papaparse (delimiter auto-detected, BOM stripped); one pseudo-sheet. */
+export async function sheetsFromCsv(text: string, name = 'CSV'): Promise<ImportSheet[]> {
+  const Papa = (await import('papaparse')).default;
+  const parsed = Papa.parse<string[]>(text.replace(/^﻿/, ''), { skipEmptyLines: 'greedy' });
+  return [{ name, rows: cleanRows(parsed.data) }];
+}
+
+/** XLSX/XLS via SheetJS: every worksheet, dates and numbers formatted as displayed. */
+export async function sheetsFromWorkbook(data: ArrayBuffer | Uint8Array): Promise<ImportSheet[]> {
+  const XLSX = await import('xlsx');
+  const wb = XLSX.read(data, { type: 'array', cellDates: true });
+  return wb.SheetNames.map((name) => ({
+    name,
+    rows: cleanRows(XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name], { header: 1, raw: false, defval: '' })),
+  }));
+}
+
+export const isWorkbookFile = (file: { name: string }) => /\.(xlsx|xlsm|xls)$/i.test(file.name);
+
+/** Reads a CSV or Excel file into sheets. */
+export async function readImportFile(file: File): Promise<ImportSheet[]> {
+  return isWorkbookFile(file)
+    ? sheetsFromWorkbook(await file.arrayBuffer())
+    : sheetsFromCsv(await file.text(), file.name);
+}
