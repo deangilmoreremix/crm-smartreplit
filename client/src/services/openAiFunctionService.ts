@@ -247,6 +247,108 @@ const availableFunctions = {
   },
 };
 
+// Function schemas advertised to the model
+const functionSchemas = [
+  {
+    name: 'searchContacts',
+    description: 'Search CRM contacts by name, company or email',
+    parameters: { query: 'string', limit: 'number (optional)' },
+  },
+  {
+    name: 'searchDeals',
+    description: 'Search CRM deals by text, status/stage or minimum value',
+    parameters: {
+      query: 'string (optional)',
+      status: 'string (optional)',
+      minValue: 'number (optional)',
+      limit: 'number (optional)',
+    },
+  },
+  {
+    name: 'getContactInfo',
+    description: 'Get a contact with its deals and tasks',
+    parameters: { contactId: 'string' },
+  },
+  {
+    name: 'getDealInfo',
+    description: 'Get a deal with its contact and tasks',
+    parameters: { dealId: 'string' },
+  },
+  {
+    name: 'createTask',
+    description: 'Create a task',
+    parameters: {
+      title: 'string',
+      contact: 'string (optional contact name)',
+      priority: 'low | medium | high (optional)',
+      dueDate: 'YYYY-MM-DD (optional)',
+    },
+  },
+  {
+    name: 'scheduleFollowUp',
+    description: 'Schedule a follow-up task with a contact',
+    parameters: { contactName: 'string', date: 'YYYY-MM-DD', notes: 'string (optional)' },
+  },
+];
+
+async function respondText(prompt: string, json = false): Promise<string> {
+  const data = await getJson('/api/respond', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, ...(json ? { schema: { type: 'object' } } : {}) }),
+  });
+  return String(data.output_text || '');
+}
+
+/**
+ * Ask the server model (POST /api/respond) to answer, optionally by calling one of the CRM
+ * functions. A chosen function is executed against the real CRM APIs and its result is fed back
+ * to the model to produce the final answer. Throws on any failure.
+ */
+async function salesAssistantWithFunctions(
+  request: string,
+  context: string,
+  previousMessages: Array<{ role: string; content: string }> = [],
+  enabledFunctions: string[] = Object.keys(availableFunctions)
+): Promise<{ content: string; function_call?: { name: string; arguments: any } }> {
+  const schemas = functionSchemas.filter((f) => enabledFunctions.includes(f.name));
+  const history = previousMessages.map((m) => `${m.role}: ${m.content}`).join('\n');
+
+  const planText = await respondText(
+    `You are a sales assistant for a CRM.\n${context}\n\nAvailable functions: ${JSON.stringify(schemas)}\n\n` +
+      `Conversation so far:\n${history}\n\nUser request: ${request}\n\n` +
+      `Respond with JSON only: {"content": string, "function_call": {"name": string, "arguments": object} | null}. ` +
+      `Use function_call only when the request needs CRM data or an action the context does not cover.`,
+    true
+  );
+
+  let plan: { content?: string; function_call?: { name: string; arguments: any } | null };
+  try {
+    plan = JSON.parse(planText.slice(planText.indexOf('{'), planText.lastIndexOf('}') + 1));
+  } catch {
+    throw new Error('The assistant returned an invalid response');
+  }
+
+  const call = plan.function_call;
+  if (!call || !call.name) {
+    return { content: plan.content || '' };
+  }
+  if (!schemas.some((f) => f.name === call.name)) {
+    throw new Error(`Function "${call.name}" is not enabled`);
+  }
+
+  const func = availableFunctions[call.name as keyof typeof availableFunctions] as (
+    a: any
+  ) => Promise<any>;
+  const result = await func(call.arguments || {});
+
+  const content = await respondText(
+    `User request: ${request}\nYou called ${call.name}(${JSON.stringify(call.arguments || {})}) and it returned:\n` +
+      `${JSON.stringify(result)}\nWrite the final answer for the user in plain text.`
+  );
+  return { content, function_call: { name: call.name, arguments: call.arguments || {} } };
+}
+
 export function useOpenAIFunctions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -370,6 +472,8 @@ Try asking something like:
   return {
     processMessage,
     executeFunctionCall,
+    salesAssistantWithFunctions,
+    functionSchemas,
     isLoading,
     error,
     availableFunctions: Object.keys(availableFunctions),
