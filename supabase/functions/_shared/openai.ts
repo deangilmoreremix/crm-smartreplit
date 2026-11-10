@@ -161,7 +161,10 @@ export async function embed(input: string, model = 'text-embedding-3-small', api
 }
 
 /**
- * Per-user key from user_api_keys (columns openai_api_key / openai_model), falling back to env.
+ * Per-user key from user_api_keys, falling back to the OPENAI_API_KEY env var.
+ * The repo has two shapes for this table: one row per user with columns
+ * openai_api_key / openai_model (supabase/migrations), and one row per provider with
+ * provider / api_key / model / is_default (Drizzle schema). Both are handled.
  * `supabase` is a supabase-js client.
  */
 export async function getUserOpenAIKey(
@@ -169,12 +172,14 @@ export async function getUserOpenAIKey(
   userId?: string | null
 ): Promise<{ apiKey?: string; model?: string }> {
   if (userId) {
-    const { data } = await supabase
-      .from('user_api_keys')
-      .select('openai_api_key, openai_model')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (data?.openai_api_key) return { apiKey: data.openai_api_key, model: data.openai_model || undefined };
+    const { data } = await supabase.from('user_api_keys').select('*').eq('user_id', userId);
+    const rows: any[] = Array.isArray(data) ? data : data ? [data] : [];
+    const wide = rows.find((r) => r.openai_api_key);
+    if (wide) return { apiKey: wide.openai_api_key, model: wide.openai_model || undefined };
+    const perProvider = rows
+      .filter((r) => r.provider === 'openai' && r.api_key && r.is_active !== false)
+      .sort((x, y) => Number(!!y.is_default) - Number(!!x.is_default))[0];
+    if (perProvider) return { apiKey: perProvider.api_key, model: perProvider.model || undefined };
   }
   return { apiKey: Deno.env.get('OPENAI_API_KEY') || undefined };
 }
