@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import AIToolContent from '../shared/AIToolContent';
 import { Shield, User, Building, RefreshCw, Copy, FileText, List, Check } from 'lucide-react';
 
@@ -16,7 +16,7 @@ const ObjectionHandlerContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -43,7 +43,7 @@ const ObjectionHandlerContent: React.FC = () => {
         Deal Stage: ${formData.dealStage}
       `;
 
-      const objectionHandler = await gemini.generateObjectionHandler(
+      const objectionHandler = await ai.generateObjectionHandler(
         formData.objection,
         enhancedProductInfo
       );

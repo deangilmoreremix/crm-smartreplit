@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import { MessageSquare, Copy, RefreshCw, Sparkles, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -46,7 +46,7 @@ const RESPONSE_TEMPLATES: ResponseTemplate[] = [
 ];
 
 const InstantAIResponseGenerator: React.FC = () => {
-  const gemini = useGemini();
+  const ai = useAIAssistant();
   const [selectedTemplate, setSelectedTemplate] = useState<ResponseTemplate | null>(null);
   const [contactName, setContactName] = useState('');
   const [topic, setTopic] = useState('');
@@ -54,7 +54,7 @@ const InstantAIResponseGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Generate response using Gemini 2.5 Flash for instant results
+  // Generate response via OpenAI for instant results
   const generateResponse = async () => {
     if (!selectedTemplate || !contactName || !topic) return;
 
@@ -76,7 +76,7 @@ const InstantAIResponseGenerator: React.FC = () => {
       - Sound natural and conversational
       - Limit to 3-4 sentences maximum`;
 
-      const result = await gemini.generateQuickContent('email', fullPrompt, 'short');
+      const result = await ai.generateQuickContent('email', fullPrompt, 'short');
       setGeneratedResponse(result);
     } catch (error) {
       console.error('Error generating response:', error);
@@ -109,7 +109,7 @@ const InstantAIResponseGenerator: React.FC = () => {
           Instant Response Generator
         </h3>
         <p className="text-sm text-gray-600 mt-1">
-          Generate professional responses in seconds using Gemini 2.5 Flash
+          Generate professional responses in seconds using OpenAI
         </p>
       </div>
 

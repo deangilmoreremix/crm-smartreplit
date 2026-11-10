@@ -5,7 +5,7 @@ import { useApiStore } from '../store/apiStore';
 import { Eye, EyeOff, Key, User, Upload, Trash2, Edit, Save, X, RefreshCw } from 'lucide-react';
 
 const Settings: React.FC = () => {
-  const { apiKeys, setOpenAiKey, setGeminiKey } = useApiStore();
+  const { apiKeys, setOpenAiKey } = useApiStore();
   const { user } = useAuthStore();
   const {
     profile,
@@ -18,9 +18,7 @@ const Settings: React.FC = () => {
   } = useProfileStore();
 
   const [showOpenAiKey, setShowOpenAiKey] = useState(false);
-  const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [openAiInput, setOpenAiInput] = useState(apiKeys.openai || '');
-  const [geminiInput, setGeminiInput] = useState(apiKeys.gemini || '');
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -39,16 +37,10 @@ const Settings: React.FC = () => {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const toggleOpenAiVisibility = () => setShowOpenAiKey(!showOpenAiKey);
-  const toggleGeminiVisibility = () => setShowGeminiKey(!showGeminiKey);
 
   const handleOpenAiSave = () => {
     setOpenAiKey(openAiInput);
     alert('OpenAI API key saved successfully!');
-  };
-
-  const handleGeminiSave = () => {
-    setGeminiKey(geminiInput);
-    alert('Gemini API key saved successfully!');
   };
 
   // Load profile data
@@ -553,50 +545,6 @@ const Settings: React.FC = () => {
             </div>
             <button
               onClick={handleOpenAiSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-r-md transition-colors"
-            >
-              Save
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center mb-2">
-            <Key size={18} className="mr-2 text-gray-500" />
-            <h3 className="text-lg font-medium">Gemini API Key</h3>
-          </div>
-          <p className="text-gray-600 mb-4">
-            Used for follow-up suggestions and task prioritization. Get your API key from the{' '}
-            <a
-              href="https://makersuite.google.com/app/apikey"
-              target="_blank"
-              rel="noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Google AI Studio
-            </a>
-            .
-          </p>
-
-          <div className="flex">
-            <div className="relative flex-1">
-              <input
-                type={showGeminiKey ? 'text' : 'password'}
-                value={geminiInput}
-                onChange={(e) => setGeminiInput(e.target.value)}
-                placeholder="AI..."
-                className="w-full p-2 border rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              />
-              <button
-                type="button"
-                onClick={toggleGeminiVisibility}
-                className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600"
-              >
-                {showGeminiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <button
-              onClick={handleGeminiSave}
               className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-r-md transition-colors"
             >
               Save

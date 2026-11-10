@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../store/contactStore';
-import { useGemini } from '../services/geminiService';
+import { useAIAssistant } from '../services/aiAssistantService';
 import { useTaskStore } from '../store/taskStore';
 import { useAppointmentStore } from '../store/appointmentStore';
 import { useAITools } from '../components/AIToolsProvider';
@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
   const { openTool } = useAITools();
   const { showTours } = useEnhancedHelp();
 
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   const [pipelineInsight, setPipelineInsight] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

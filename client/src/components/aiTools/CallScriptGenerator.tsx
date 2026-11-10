@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useEnhancedGemini } from '../../services/enhancedGeminiService';
+import { useEnhancedAI } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import { Phone, Loader2, Copy, Download, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -31,7 +31,7 @@ const purposeOptions = [
 
 export default function CallScriptGenerator() {
   const { isDark } = useTheme();
-  const { generateCallScript } = useEnhancedGemini();
+  const { generateCallScript } = useEnhancedAI();
 
   const [scriptData, setScriptData] = useState<CallScriptData>({
     purpose: 'cold_call',

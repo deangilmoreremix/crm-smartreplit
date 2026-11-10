@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import AIToolContent from '../shared/AIToolContent';
 import {
   Calendar,
@@ -26,7 +26,7 @@ const MeetingAgendaContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -79,7 +79,7 @@ const MeetingAgendaContent: React.FC = () => {
     setError(null);
 
     try {
-      const agenda = await gemini.generateMeetingAgenda(
+      const agenda = await ai.generateMeetingAgenda(
         formData.meetingPurpose,
         validAttendees,
         formData.previousMeetingNotes || undefined

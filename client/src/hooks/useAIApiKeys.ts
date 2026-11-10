@@ -8,10 +8,6 @@ export interface ApiConfig {
     apiKey: string;
     model: string;
   };
-  gemini: {
-    apiKey: string;
-    model: string;
-  };
   openclaw: {
     apiKey: string;
     model: string;
@@ -26,7 +22,7 @@ export interface UseAIApiKeysReturn {
   error: string | null;
   saveApiKeys: (config: ApiConfig) => Promise<boolean>;
   testConnection: (
-    provider: 'openai' | 'gemini' | 'openclaw', 
+    provider: 'openai' | 'openclaw',
     apiKey: string, 
     baseUrl?: string
   ) => Promise<{ success: boolean; message: string }>;
@@ -36,7 +32,6 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
   const { user } = useAuthStore();
   const [apiConfig, setApiConfig] = useState<ApiConfig>({
     openai: { apiKey: '', model: DEFAULT_MODEL },
-    gemini: { apiKey: '', model: 'gemini-1.5-flash' },
     openclaw: { apiKey: '', model: 'default', baseUrl: '' }
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -61,9 +56,7 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
         .from('user_api_keys')
         .select(`
           openai_api_key, 
-          gemini_api_key, 
           openai_model, 
-          gemini_model,
           openclaw_api_key,
           openclaw_model,
           openclaw_base_url
@@ -80,10 +73,6 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
           openai: {
             apiKey: data.openai_api_key || '',
             model: data.openai_model || DEFAULT_MODEL
-          },
-          gemini: {
-            apiKey: data.gemini_api_key || '',
-            model: data.gemini_model || 'gemini-1.5-flash'
           },
           openclaw: {
             apiKey: data.openclaw_api_key || '',
@@ -114,9 +103,7 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
         .upsert({
           user_id: user.id,
           openai_api_key: config.openai.apiKey,
-          gemini_api_key: config.gemini.apiKey,
           openai_model: config.openai.model,
-          gemini_model: config.gemini.model,
           openclaw_api_key: config.openclaw.apiKey,
           openclaw_model: config.openclaw.model,
           openclaw_base_url: config.openclaw.baseUrl || null,
@@ -137,7 +124,7 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
   };
 
   const testConnection = async (
-    provider: 'openai' | 'gemini' | 'openclaw',
+    provider: 'openai' | 'openclaw',
     apiKey: string,
     baseUrl?: string
   ): Promise<{ success: boolean; message: string }> => {
@@ -151,9 +138,6 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
 
       if (provider === 'openai') {
         endpoint = '/api/openai/status';
-      } else if (provider === 'gemini') {
-        endpoint = '/api/googleai/test';
-        body = { prompt: 'Test connection' };
       } else {
         // OpenClaw
         endpoint = '/api/openclaw/health';

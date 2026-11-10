@@ -32,7 +32,7 @@ export interface ContactEnrichmentData {
 }
 
 export interface AIProvider {
-  name: 'openai' | 'gemini';
+  name: 'openai';
   enabled: boolean;
   apiKey?: string;
 }
@@ -55,7 +55,6 @@ const ENRICHMENT_RULES =
 class AIEnrichmentService {
   private providers: AIProvider[] = [
     { name: 'openai', enabled: true }, // Server-side check will determine availability
-    { name: 'gemini', enabled: true }, // Server-side check will determine availability
   ];
 
   private hasConfiguredProviders(): boolean {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import AIToolContent from '../shared/AIToolContent';
 import { Mail, Reply, User, Briefcase, RefreshCw, Copy, Check } from 'lucide-react';
 
@@ -17,7 +17,7 @@ const EmailResponseContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -41,7 +41,7 @@ const EmailResponseContent: React.FC = () => {
         company: formData.contactCompany,
       };
 
-      const emailResponse = await gemini.generateEmailResponse(
+      const emailResponse = await ai.generateEmailResponse(
         formData.originalEmail,
         contactInfo,
         formData.dealContext

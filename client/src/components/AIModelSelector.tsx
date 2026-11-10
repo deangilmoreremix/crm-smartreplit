@@ -51,7 +51,7 @@ const AIModelSelector: React.FC<AIModelSelectorProps> = ({
     if (model.recommended) {
       return { text: 'Popular', color: 'bg-blue-500/20 text-blue-400' };
     }
-    if (model.family === 'gemma') {
+    if (model.tier === 'fast') {
       return { text: 'Lightweight', color: 'bg-orange-500/20 text-orange-400' };
     }
     return null;
@@ -71,7 +71,7 @@ const AIModelSelector: React.FC<AIModelSelectorProps> = ({
         <div className="flex items-center space-x-3">
           <div
             className={`p-2 rounded-lg ${
-              currentModel?.family === 'gemini'
+              currentModel?.tier !== 'fast'
                 ? isDark
                   ? 'bg-blue-500/20 text-blue-400'
                   : 'bg-blue-100 text-blue-600'
@@ -91,7 +91,7 @@ const AIModelSelector: React.FC<AIModelSelectorProps> = ({
         </div>
 
         <div className="flex items-center space-x-2">
-          {showPricing && currentModel && (
+          {showPricing && currentModel?.pricing && (
             <div className="text-right">
               <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {formatPrice(currentModel.pricing.input)}/1M tokens
@@ -205,21 +205,28 @@ const AIModelSelector: React.FC<AIModelSelectorProps> = ({
                       )}
 
                       <div className="flex items-center space-x-4 text-xs">
-                        <div className="flex items-center space-x-1">
-                          <DollarSign
-                            size={12}
-                            className={isDark ? 'text-gray-400' : 'text-gray-500'}
-                          />
-                          <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-                            {formatPrice(model.pricing.input)}/1M
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Clock size={12} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
-                          <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-                            {model.contextWindow.toLocaleString()} tokens
-                          </span>
-                        </div>
+                        {model.pricing && (
+                          <div className="flex items-center space-x-1">
+                            <DollarSign
+                              size={12}
+                              className={isDark ? 'text-gray-400' : 'text-gray-500'}
+                            />
+                            <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                              {formatPrice(model.pricing.input)}/1M
+                            </span>
+                          </div>
+                        )}
+                        {model.contextWindow && (
+                          <div className="flex items-center space-x-1">
+                            <Clock
+                              size={12}
+                              className={isDark ? 'text-gray-400' : 'text-gray-500'}
+                            />
+                            <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>
+                              {model.contextWindow.toLocaleString()} tokens
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

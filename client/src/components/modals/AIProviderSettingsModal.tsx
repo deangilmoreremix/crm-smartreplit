@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Key, Eye, EyeOff, Bot, Settings, AlertCircle, X, CheckCircle, Zap } from 'lucide-react';
+import { Key, Eye, EyeOff, Bot, Settings, AlertCircle, X, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AIProviderSettingsModalProps {
@@ -10,17 +10,12 @@ interface AIProviderSettingsModalProps {
 
 const PROVIDERS = [
   {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    type: 'aggregator',
+    id: 'openai',
+    name: 'OpenAI',
+    type: 'direct',
     recommended: true,
-    description: 'Access 100+ models with one key',
+    description: 'GPT-6 family (Luna, Terra, Sol, Astra)',
   },
-  { id: 'openai', name: 'OpenAI', type: 'direct', description: 'GPT-5.4, GPT-4.1, etc.' },
-  { id: 'anthropic', name: 'Anthropic', type: 'direct', description: 'Claude 3.5, Claude 3 Opus' },
-  { id: 'google', name: 'Google AI', type: 'direct', description: 'Gemini Pro, Gemma' },
-  { id: 'groq', name: 'Groq', type: 'aggregator', description: 'Fast inference, Llama models' },
-  { id: 'together', name: 'Together AI', type: 'aggregator', description: 'Open source models' },
 ];
 
 const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
@@ -29,7 +24,7 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
   onKeyConfigured,
 }) => {
   const navigate = useNavigate();
-  const [selectedProvider, setSelectedProvider] = useState('openrouter');
+  const [selectedProvider, setSelectedProvider] = useState('openai');
   const [apiKey, setApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -272,42 +267,6 @@ const AIProviderSettingsModal: React.FC<AIProviderSettingsModalProps> = ({
               Your API key is encrypted and stored locally. We never see your key.
             </p>
           </div>
-
-          {/* OpenRouter Info */}
-          {selectedProvider === 'openrouter' && (
-            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
-              <div className="flex items-center mb-3">
-                <Zap className="w-5 h-5 text-purple-600 mr-2" />
-                <h4 className="font-semibold text-purple-900 dark:text-purple-100">
-                  Why OpenRouter?
-                </h4>
-              </div>
-              <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-2">
-                <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-purple-600 rounded-full mr-2"></span>
-                  Access 100+ AI models with one API key
-                </li>
-                <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-purple-600 rounded-full mr-2"></span>
-                  Switch between GPT-5.4, Claude, Gemini instantly
-                </li>
-                <li className="flex items-center">
-                  <span className="w-1.5 h-1.5 bg-purple-600 rounded-full mr-2"></span>
-                  Competitive pricing and pay-as-you-go
-                </li>
-                <li className="mt-2">
-                  <a
-                    href="https://openrouter.ai/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 underline text-sm"
-                  >
-                    Get your API key here →
-                  </a>
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

@@ -3,7 +3,7 @@ import { MODEL_TIERS } from '@shared/aiModels';
 
 export interface AIModelConfig {
   id: string;
-  provider: 'anthropic' | 'gemini' | 'mistral' | 'openai' | 'other';
+  provider: 'openai';
   model_name: string;
   display_name: string;
   endpoint_url?: string;
@@ -37,96 +37,6 @@ export interface AIUsageLog {
 
 // Fallback model configurations when database is not available
 const FALLBACK_MODELS: Record<string, AIModelConfig> = {
-  'gemini-2.5-flash': {
-    id: 'gemini-2.5-flash',
-    provider: 'gemini',
-    model_name: 'gemini-2.5-flash',
-    display_name: 'Gemini 2.5 Flash',
-    pricing: {
-      input_per_1m_tokens: 0.075,
-      output_per_1m_tokens: 0.3,
-    },
-    capabilities: ['text-generation', 'reasoning', 'code-generation'],
-    context_window: 1000000,
-    max_tokens: 8192,
-    is_active: true,
-    is_recommended: true,
-    description: 'Fast and efficient model for most tasks',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  'gemini-2.5-flash-8b': {
-    id: 'gemini-2.5-flash-8b',
-    provider: 'gemini',
-    model_name: 'gemini-2.5-flash-8b',
-    display_name: 'Gemini 2.5 Flash 8B',
-    pricing: {
-      input_per_1m_tokens: 0.0375,
-      output_per_1m_tokens: 0.15,
-    },
-    capabilities: ['text-generation', 'reasoning'],
-    context_window: 1000000,
-    max_tokens: 8192,
-    is_active: true,
-    is_recommended: false,
-    description: 'Smaller, faster model for simple tasks',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  'gemma-2-2b-it': {
-    id: 'gemma-2-2b-it',
-    provider: 'gemini',
-    model_name: 'gemma-2-2b-it',
-    display_name: 'Gemma 2 2B Instruct',
-    pricing: {
-      input_per_1m_tokens: 0.035,
-      output_per_1m_tokens: 0.105,
-    },
-    capabilities: ['text-generation', 'instruction-following'],
-    context_window: 8192,
-    max_tokens: 4096,
-    is_active: true,
-    is_recommended: false,
-    description: 'Lightweight model for basic tasks',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  'gemma-2-9b-it': {
-    id: 'gemma-2-9b-it',
-    provider: 'gemini',
-    model_name: 'gemma-2-9b-it',
-    display_name: 'Gemma 2 9B Instruct',
-    pricing: {
-      input_per_1m_tokens: 0.05,
-      output_per_1m_tokens: 0.15,
-    },
-    capabilities: ['text-generation', 'instruction-following', 'reasoning'],
-    context_window: 8192,
-    max_tokens: 4096,
-    is_active: true,
-    is_recommended: true,
-    description: 'Mid-size model with good performance',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  'gemma-2-27b-it': {
-    id: 'gemma-2-27b-it',
-    provider: 'gemini',
-    model_name: 'gemma-2-27b-it',
-    display_name: 'Gemma 2 27B Instruct',
-    pricing: {
-      input_per_1m_tokens: 0.125,
-      output_per_1m_tokens: 0.375,
-    },
-    capabilities: ['text-generation', 'instruction-following', 'reasoning', 'complex-tasks'],
-    context_window: 8192,
-    max_tokens: 4096,
-    is_active: true,
-    is_recommended: false,
-    description: 'Large model for complex tasks',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
   // TODO: fill pricing from OpenAI pricing page (left unset rather than invented)
   [MODEL_TIERS.fast]: {
     id: MODEL_TIERS.fast,

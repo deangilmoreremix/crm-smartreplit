@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import {
   Send,
   RefreshCw,
@@ -19,7 +19,7 @@ interface EmailSuggestion {
 }
 
 const RealTimeEmailComposer: React.FC = () => {
-  const gemini = useGemini();
+  const ai = useAIAssistant();
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
@@ -67,10 +67,8 @@ const RealTimeEmailComposer: React.FC = () => {
       `;
 
       // Generate suggestions
-      const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
-      const result = await model.generateContent(analysisPrompt);
-      const response = await result.response;
-      const responseText = response.text();
+      const aiResult = await ai.generateContent({ prompt: analysisPrompt, temperature: 0.2 });
+      const responseText = aiResult.content;
 
       // Try to parse the response as JSON
       try {
@@ -90,7 +88,7 @@ const RealTimeEmailComposer: React.FC = () => {
       // Analyze sentiment (separate call for better results)
       if (emailContent.length > 20) {
         try {
-          const sentimentResult = await gemini.analyzeSentimentRealTime(emailContent);
+          const sentimentResult = await ai.analyzeSentimentRealTime(emailContent);
           setSentiment({
             score: sentimentResult.sentiment,
             emotions: sentimentResult.emotions.slice(0, 2), // Limit to top 2 emotions

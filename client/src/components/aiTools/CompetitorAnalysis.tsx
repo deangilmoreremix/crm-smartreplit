@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useEnhancedGemini } from '../../services/enhancedGeminiService';
+import { useEnhancedAI } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import {
   Shield,
@@ -56,7 +56,7 @@ const analysisTypeOptions = [
 
 export default function CompetitorAnalysis() {
   const { isDark } = useTheme();
-  const { analyzeCompetitor } = useEnhancedGemini();
+  const { analyzeCompetitor } = useEnhancedAI();
 
   const [competitorData, setCompetitorData] = useState<CompetitorData>({
     competitorName: '',

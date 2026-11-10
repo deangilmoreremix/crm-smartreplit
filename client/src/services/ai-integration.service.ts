@@ -1,6 +1,6 @@
 /**
  * AI Integration Service
- * Enhanced with proper Gemma and Gemini 2.5 Flash model support
+ * OpenAI-only (server-side key)
  */
 
 import { httpClient } from './http-client.service';
@@ -18,7 +18,7 @@ export interface AIAnalysisRequest {
   analysisTypes: ('scoring' | 'enrichment' | 'categorization' | 'tagging' | 'relationships')[];
   options?: {
     forceRefresh?: boolean;
-    provider?: 'openai' | 'gemini' | 'anthropic';
+    provider?: 'openai';
     model?: string;
     includeConfidence?: boolean;
   };
@@ -265,17 +265,9 @@ class AIIntegrationService {
               status: openaiAvailable ? 'available' : 'error',
               remaining: 45,
             },
-            {
-              name: 'gemini',
-              status: openaiAvailable ? 'available' : 'error', // Assume Gemini follows OpenAI status
-              remaining: 50,
-            },
           ];
         } catch (error) {
-          return [
-            { name: 'openai', status: 'error', remaining: 0 },
-            { name: 'gemini', status: 'error', remaining: 0 },
-          ];
+          return [{ name: 'openai', status: 'error', remaining: 0 }];
         }
       }
 

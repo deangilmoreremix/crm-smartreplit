@@ -3,7 +3,7 @@ export { unifiedEventSystem } from './unifiedEventSystem';
 export { unifiedApiClient, api } from './unifiedApiClient';
 export { useOpenAIEmbeddings } from './openaiEmbeddingsService';
 export { openAIService } from './openAIService';
-export { geminiService } from './geminiService';
+export { aiAssistantService } from './aiAssistantService';
 export { webSocketManager, useWebSocket } from './webSocketManager';
 
 export * from './themeService';

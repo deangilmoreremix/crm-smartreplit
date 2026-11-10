@@ -17,8 +17,6 @@ export default function AIIntegration() {
       description: 'Connect external AI services and models',
       integrations: [
         { name: 'OpenAI GPT-4', status: 'connected', type: 'text-generation' },
-        { name: 'Anthropic Claude', status: 'available', type: 'text-generation' },
-        { name: 'Google Bard', status: 'available', type: 'text-generation' },
         { name: 'Stability AI', status: 'available', type: 'image-generation' },
         { name: 'Whisper API', status: 'available', type: 'speech-to-text' },
       ],
@@ -259,8 +257,6 @@ export default function AIIntegration() {
                 className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
               >
                 <option>GPT-4 (OpenAI)</option>
-                <option>Claude-3 (Anthropic)</option>
-                <option>Gemini Pro (Google)</option>
               </select>
             </div>
             <div>
@@ -273,8 +269,6 @@ export default function AIIntegration() {
                 className={`w-full p-2 border rounded-lg ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
               >
                 <option>GPT-3.5 Turbo</option>
-                <option>Claude-2</option>
-                <option>PaLM 2</option>
               </select>
             </div>
           </div>
@@ -355,8 +349,6 @@ export default function AIIntegration() {
           <div className="space-y-4">
             {[
               { service: 'OpenAI API', status: 'configured', lastUsed: '2 minutes ago' },
-              { service: 'Anthropic API', status: 'not_configured', lastUsed: 'Never' },
-              { service: 'Google AI API', status: 'not_configured', lastUsed: 'Never' },
               { service: 'Clearbit API', status: 'configured', lastUsed: '1 hour ago' },
               { service: 'Twilio API', status: 'configured', lastUsed: '5 minutes ago' },
             ].map((api) => (

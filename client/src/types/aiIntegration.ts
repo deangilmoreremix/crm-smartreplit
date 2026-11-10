@@ -201,7 +201,7 @@ export interface WorkflowPermission {
 export interface AIModel {
   id: string;
   name: string;
-  provider: 'openai' | 'anthropic' | 'google' | 'custom';
+  provider: 'openai';
   type: 'text' | 'image' | 'audio' | 'multimodal';
   version: string;
   description: string;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import { CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface FormField {
@@ -23,7 +23,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
   onValidationComplete,
   formContext = 'sales inquiry',
 }) => {
-  const gemini = useGemini();
+  const ai = useAIAssistant();
   const [fields, setFields] = useState<FormField[]>([
     { name: 'name', label: 'Full Name', type: 'text', value: '', required: true },
     { name: 'email', label: 'Email Address', type: 'email', value: '', required: true },
@@ -76,7 +76,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
       if (field.value.length > 0) {
         setValidating(true);
         try {
-          const result = await gemini.validateFormField(field.label, field.value, formContext);
+          const result = await ai.validateFormField(field.label, field.value, formContext);
 
           // If valid but can be improved, add an AI suggestion
           if (
@@ -103,7 +103,7 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
             },
           };
         } catch (e) {
-          console.error('Error validating with Gemini', e);
+          console.error('Error validating field', e);
           return field;
         } finally {
           setValidating(false);

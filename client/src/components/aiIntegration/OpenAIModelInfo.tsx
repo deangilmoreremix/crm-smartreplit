@@ -4,7 +4,7 @@ import { BookOpen, TrendingUp, Code, MessageSquare, BarChart3, Users, Lightbulb,
 
 interface ModelInfoPageProps {
   model: string;
-  provider: 'openai' | 'gemini';
+  provider: 'openai';
 }
 
 const TIER_INFO: Record<ModelTier, {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDealStore } from '../store/dealStore';
-import { useGemini } from '../services/geminiService';
+import { useAIAssistant } from '../services/aiAssistantService';
 import {
   X,
   Edit,
@@ -45,7 +45,7 @@ interface DealDetailProps {
 
 const DealDetail: React.FC<DealDetailProps> = ({ dealId, onClose }) => {
   const { deals, updateDeal, deleteDeal } = useDealStore();
-  const gemini = useGemini();
+  const ai = useAIAssistant();
   const { contacts } = useContactStore();
   const deal = deals[dealId] || null;
 
@@ -171,39 +171,23 @@ const DealDetail: React.FC<DealDetailProps> = ({ dealId, onClose }) => {
     setIsAnalyzing(true);
 
     try {
-      // In a real implementation, we would use the Gemini API
-      // For demo purposes we'll generate a simulated response
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await ai.generateContent({
+        prompt: `Write a strategic deal analysis in markdown for this deal. Include projected win probability, key strengths, risk factors, recommended actions, and timeline analysis. Base it only on the data given.
 
-      const analysis = `# Strategic Deal Analysis
-
-## Projected Win Probability: ${deal.probability || 'N/A'}%
-
-### Key Strengths:
-- Strong executive sponsor relationship
-- Clear alignment with customer's business objectives
-- Technical requirements well matched to our solution capabilities
-
-### Risk Factors:
-- Competitive pressure from ${Math.random() > 0.5 ? 'established vendors' : 'new market entrants'}
-- Budget approval process may delay decision
-- Decision committee has expanded recently
-
-### Recommended Actions:
-1. Schedule technical deep dive with IT stakeholders
-2. Develop detailed ROI analysis showing 12-month payback
-3. Identify and engage procurement team early
-4. Prepare competitive differentiation documentation
-
-### Timeline Analysis:
-- Deal has been in ${getStageName(deal.stage)} for ${deal.daysInStage || 0} days
-- Average time in this stage: 14 days
-- Recommended close date acceleration strategies available
-      `;
+Deal data:
+${JSON.stringify({ ...deal, stageName: getStageName(deal.stage) }, null, 2)}`,
+        temperature: 0.5,
+        maxTokens: 1200,
+        featureUsed: 'deal-analysis',
+      });
+      const analysis = result.content;
 
       setDealAnalysis(analysis);
     } catch (error) {
       console.error('Error generating deal analysis:', error);
+      setDealAnalysis(
+        `Deal analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     } finally {
       setIsAnalyzing(false);
     }

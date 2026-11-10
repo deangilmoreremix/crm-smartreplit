@@ -5,9 +5,6 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string;
   readonly VITE_DEV_BYPASS_PASSWORD?: string;
   readonly VITE_OPENAI_API_KEY?: string;
-  readonly VITE_GROQ_API_KEY?: string;
-  readonly VITE_ANTHROPIC_API_KEY?: string;
-  readonly VITE_GOOGLE_API_KEY?: string;
   readonly VITE_ENABLE_SIGNALING?: string;
   readonly VITE_SIGNALING_URL?: string;
   readonly VITE_ENABLE_MFE?: string;

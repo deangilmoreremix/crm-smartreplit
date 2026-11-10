@@ -1,6 +1,5 @@
 import { openAIService } from './openAIService';
 import { DEFAULT_MODEL } from '@shared/aiModels';
-import { geminiService } from './geminiService';
 
 export interface AIToolRequest {
   toolType: string;
@@ -10,7 +9,7 @@ export interface AIToolRequest {
     model?: string;
     temperature?: number;
     maxTokens?: number;
-    provider?: 'openai' | 'gemini';
+    provider?: 'openai';
   };
 }
 
@@ -29,20 +28,12 @@ class AIToolsService {
     try {
       const enhancedPrompt = this.buildEnhancedPrompt(toolType, prompt, context);
 
-      let response;
-      if (options.provider === 'gemini') {
-        response = await geminiService.generateContent(enhancedPrompt, {
-          temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 1000,
-        });
-      } else {
-        response = await openAIService.generateContent({
-          messages: [{ role: 'user', content: enhancedPrompt }],
-          model: options.model || DEFAULT_MODEL,
-          temperature: options.temperature || 0.7,
-          maxTokens: options.maxTokens || 1000,
-        });
-      }
+      const response = await openAIService.generateContent({
+        messages: [{ role: 'user', content: enhancedPrompt }],
+        model: options.model || DEFAULT_MODEL,
+        temperature: options.temperature || 0.7,
+        maxTokens: options.maxTokens || 1000,
+      });
 
       return this.parseAIResponse(response.content, toolType);
     } catch (error) {

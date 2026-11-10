@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import {
   CheckCircle,
   AlertCircle,
@@ -32,7 +32,7 @@ interface AutoFormCompleterProps {
 }
 
 const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({ onSubmit, formType = 'lead' }) => {
-  const gemini = useGemini();
+  const ai = useAIAssistant();
   const [fields, setFields] = useState<FormField[]>([]);
   const [partialData, setPartialData] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -272,7 +272,6 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({ onSubmit, formTyp
     setError(null);
 
     try {
-      const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       // Format field names for the AI to recognize
       const fieldNames = fields.map((field) => field.name).join(', ');
@@ -292,9 +291,8 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({ onSubmit, formTyp
         }
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const responseText = response.text();
+      const aiResult = await ai.generateContent({ prompt: prompt, temperature: 0.2 });
+      const responseText = aiResult.content;
 
       // Try to parse the JSON response
       try {
@@ -349,7 +347,6 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({ onSubmit, formTyp
     if (filledFields.length < 2) return;
 
     try {
-      const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       // Collect the filled fields to use as context
       const filledFieldsContext = filledFields.map(([field, val]) => `${field}: ${val}`).join('\n');
@@ -373,9 +370,8 @@ const AutoFormCompleter: React.FC<AutoFormCompleterProps> = ({ onSubmit, formTyp
         Only include fields that can be confidently inferred.
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const responseText = response.text();
+      const aiResult = await ai.generateContent({ prompt: prompt, temperature: 0.2 });
+      const responseText = aiResult.content;
 
       // Parse and set suggestions
       try {

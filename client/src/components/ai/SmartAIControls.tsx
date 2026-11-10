@@ -138,7 +138,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
       icon: Layers,
       color: 'bg-green-500',
       estimatedTime: '1-3s',
-      bestModel: 'Gemma preferred',
+      bestModel: 'Fast tier',
     },
     {
       id: 'qualify',

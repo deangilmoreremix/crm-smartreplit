@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useEnhancedGemini } from '../../services/enhancedGeminiService';
+import { useEnhancedAI } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import { FileText, Loader2, Download, Copy, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -17,7 +17,7 @@ interface ProposalData {
 
 export default function ProposalGenerator() {
   const { isDark } = useTheme();
-  const { generateProposal } = useEnhancedGemini();
+  const { generateProposal } = useEnhancedAI();
 
   const [proposalData, setProposalData] = useState<ProposalData>({
     clientName: '',

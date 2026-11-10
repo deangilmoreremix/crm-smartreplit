@@ -4,9 +4,8 @@ import { persist } from 'zustand/middleware';
 interface ApiStore {
   apiKeys: {
     openai: string;
-    google: string;
   };
-  setApiKey: (service: 'openai' | 'google', key: string) => void;
+  setApiKey: (service: 'openai', key: string) => void;
 }
 
 export const useApiStore = create<ApiStore>()(
@@ -14,7 +13,6 @@ export const useApiStore = create<ApiStore>()(
     (set) => ({
       apiKeys: {
         openai: '',
-        google: '',
       },
       setApiKey: (service, key) =>
         set((state) => ({

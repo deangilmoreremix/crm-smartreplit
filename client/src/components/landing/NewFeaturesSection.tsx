@@ -110,7 +110,7 @@ const NewFeaturesSection = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">AI Settings Wizard</h3>
               <p className="text-gray-600 mb-4 flex-1">
-                Step-by-step configuration for OpenAI and Gemini API keys with model selection,
+                Step-by-step configuration for OpenAI API keys with model selection,
                 testing, and secure encrypted storage.
               </p>
               <div className="mt-auto pt-4 border-t border-gray-100">

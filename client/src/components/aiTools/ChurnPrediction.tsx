@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
-import { enhancedGeminiService } from '../../services/enhancedGeminiService';
+import { enhancedAIService } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import {
   AlertTriangle,
@@ -70,7 +70,7 @@ export default function ChurnPrediction() {
     const startTime = Date.now();
 
     try {
-      const result = await enhancedGeminiService.predictChurnRisk({
+      const result = await enhancedAIService.predictChurnRisk({
         customerId: 'customer-analysis-session',
         engagementData: {
           lastContact: new Date(Date.now() - parseInt(formData.timeframe) * 24 * 60 * 60 * 1000),

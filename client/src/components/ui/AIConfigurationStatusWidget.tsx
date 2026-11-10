@@ -43,16 +43,6 @@ const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = 
   const getProviderDisplayName = (providerId: string): string => {
     const names: Record<string, string> = {
       openai: 'OpenAI',
-      openrouter: 'OpenRouter',
-      anthropic: 'Anthropic',
-      google: 'Google AI',
-      groq: 'Groq',
-      together: 'Together AI',
-      cohere: 'Cohere',
-      mistral: 'Mistral',
-      deepinfra: 'DeepInfra',
-      fireworks: 'Fireworks',
-      perplexity: 'Perplexity',
     };
     return names[providerId] || providerId;
   };
@@ -60,10 +50,6 @@ const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = 
   const getProviderColor = (providerId: string): string => {
     const colors: Record<string, string> = {
       openai: 'text-green-600',
-      openrouter: 'text-purple-600',
-      anthropic: 'text-orange-600',
-      google: 'text-blue-600',
-      groq: 'text-red-600',
     };
     return colors[providerId] || 'text-gray-600';
   };

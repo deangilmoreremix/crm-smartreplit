@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import { useOpenAIEmbeddings } from '../../services/openaiEmbeddingsService';
 import { useContactStore } from '../../store/contactStore';
 import { useDealStore } from '../../store/dealStore';
@@ -32,7 +32,7 @@ interface SmartSearchRealtimeProps {
 }
 
 const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResult }) => {
-  const gemini = useGemini();
+  const ai = useAIAssistant();
   const embeddings = useOpenAIEmbeddings();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -196,7 +196,7 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
   // Generate search suggestions
   const generateSearchSuggestions = async (query: string) => {
     try {
-      // In a real implementation, call Gemini API
+      // Simple local suggestions
       // For analysis, generate simple suggestions
       const baseSuggestions = [
         `${query} in technology companies`,

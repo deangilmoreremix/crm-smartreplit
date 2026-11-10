@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { enhancedGeminiService } from '../services/enhancedGeminiService';
+import { enhancedAIService } from '../services/enhancedAIService';
 import { supabaseAIService } from '../services/supabaseAIService';
 import { aiOrchestratorService } from '../services/aiOrchestratorService';
 import { openAIService } from '../services/openAIService';
@@ -111,10 +111,10 @@ const enhancedAI = {
   categorizeAndTag: async (contactId: string, contact: any) => {
     console.log('Categorizing contact', contactId);
 
-    // Use Gemma for categorization (typically faster)
-    const result = await enhancedGeminiService.generateContent({
+    // Fast tier for categorization
+    const result = await enhancedAIService.generateContent({
       prompt: `Categorize this contact and suggest tags. Respond with JSON only: {"categories": string[], "tags": string[]}. Contact: ${JSON.stringify(contact)}`,
-      model: 'gemma-2-2b-it',
+      model: MODEL_TIERS.fast,
       featureUsed: 'categorization',
     });
 
@@ -199,9 +199,9 @@ const enhancedAI = {
     console.log('Smart analyzing contact', request);
 
     // Custom analysis
-    const result = await enhancedGeminiService.generateContent({
+    const result = await enhancedAIService.generateContent({
       prompt: `Analyze this contact: ${JSON.stringify(request)}`,
-      model: 'gemini-2.5-flash',
+      model: MODEL_TIERS.default,
       featureUsed: 'custom-analysis',
     });
 
@@ -240,36 +240,7 @@ const enhancedAI = {
         (aiOrchestratorService.getUsageStatistics().totalSuccesses || 0) /
         (aiOrchestratorService.getUsageStatistics().totalCalls || 1),
       avgResponseTime: aiOrchestratorService.getUsageStatistics().avgResponseTime || 0,
-      modelPerformance: [
-        {
-          model: 'gemini-2.5-flash',
-          successRate: 0.97,
-          avgTime: 1240,
-          avgCost: 0.0045,
-          taskTypes: ['complex_reasoning', 'content_generation', 'contact_enrichment'],
-        },
-        {
-          model: 'gemma-2-9b-it',
-          successRate: 0.94,
-          avgTime: 750,
-          avgCost: 0.0022,
-          taskTypes: ['contact_scoring', 'categorization'],
-        },
-        {
-          model: 'gemma-2-2b-it',
-          successRate: 0.89,
-          avgTime: 450,
-          avgCost: 0.0012,
-          taskTypes: ['categorization', 'basic_classification'],
-        },
-        {
-          model: MODEL_TIERS.default,
-          successRate: 0.96,
-          avgTime: 820,
-          avgCost: 0.009,
-          taskTypes: ['lead_qualification', 'complex_analysis'],
-        },
-      ],
+      modelPerformance: [],
     };
   },
 };
@@ -287,36 +258,28 @@ class TaskOptimizationHelper {
   getRecommendations(taskType: TaskType): TaskRecommendation | null {
     const recommendations: Record<TaskType, TaskRecommendation> = {
       contact_scoring: {
-        recommendedModel: 'gemma-2-9b-it',
-        recommendedProvider: 'Google Gemma',
-        reasoning:
-          'Great balance of accuracy and cost for contact scoring tasks. 94% accuracy at 60% the cost of larger models.',
-        alternativeModels: ['gemini-2.5-flash', 'gemma-2-27b-it'],
-        estimatedCost: 0.025,
+        recommendedModel: MODEL_TIERS.default,
+        recommendedProvider: 'OpenAI',
+        reasoning: 'Default tier balances accuracy and cost for contact scoring.',
+        alternativeModels: [MODEL_TIERS.fast],
       },
       categorization: {
-        recommendedModel: 'gemma-2-2b-it',
-        recommendedProvider: 'Google Gemma',
-        reasoning:
-          'Efficiently categorizes contacts with minimal processing time. Perfect for high-volume tasks with 87% accuracy.',
-        alternativeModels: ['gemini-2.5-flash-8b'],
-        estimatedCost: 0.015,
+        recommendedModel: MODEL_TIERS.fast,
+        recommendedProvider: 'OpenAI',
+        reasoning: 'Fast tier is efficient for high-volume categorization.',
+        alternativeModels: [MODEL_TIERS.default],
       },
       contact_enrichment: {
-        recommendedModel: 'gemini-2.5-flash',
-        recommendedProvider: 'Google Gemini',
-        reasoning:
-          'Higher accuracy when analyzing and enriching contact data with external information. 96% accuracy with best response quality.',
-        alternativeModels: ['gemma-2-27b-it'],
-        estimatedCost: 0.045,
+        recommendedModel: MODEL_TIERS.deep,
+        recommendedProvider: 'OpenAI',
+        reasoning: 'Deep tier gives higher-quality analysis when enriching contact data.',
+        alternativeModels: [MODEL_TIERS.default],
       },
       lead_qualification: {
         recommendedModel: MODEL_TIERS.default,
         recommendedProvider: 'OpenAI',
-        reasoning:
-          'Superior reasoning capabilities for complex lead qualification judgments. Strong accuracy on nuanced decision-making tasks.',
-        alternativeModels: ['gemini-2.5-flash'],
-        estimatedCost: 0.048,
+        reasoning: 'Default tier handles nuanced lead qualification judgments well.',
+        alternativeModels: [MODEL_TIERS.deep],
       },
     };
 
@@ -337,36 +300,7 @@ class TaskOptimizationHelper {
         (aiOrchestratorService.getUsageStatistics().totalSuccesses || 0) /
         (aiOrchestratorService.getUsageStatistics().totalCalls || 1),
       avgResponseTime: aiOrchestratorService.getUsageStatistics().avgResponseTime || 0,
-      modelPerformance: [
-        {
-          model: 'gemini-2.5-flash',
-          successRate: 0.97,
-          avgTime: 1240,
-          avgCost: 0.0045,
-          taskTypes: ['complex_reasoning', 'content_generation', 'contact_enrichment'],
-        },
-        {
-          model: 'gemma-2-9b-it',
-          successRate: 0.94,
-          avgTime: 750,
-          avgCost: 0.0022,
-          taskTypes: ['contact_scoring', 'categorization'],
-        },
-        {
-          model: 'gemma-2-2b-it',
-          successRate: 0.89,
-          avgTime: 450,
-          avgCost: 0.0012,
-          taskTypes: ['categorization', 'basic_classification'],
-        },
-        {
-          model: 'gpt-4o-mini',
-          successRate: 0.96,
-          avgTime: 820,
-          avgCost: 0.009,
-          taskTypes: ['lead_qualification', 'complex_analysis'],
-        },
-      ],
+      modelPerformance: [],
     };
   }
 }

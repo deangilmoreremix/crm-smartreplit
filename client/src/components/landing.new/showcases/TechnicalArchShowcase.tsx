@@ -41,7 +41,6 @@ const TechnicalArchShowcase: React.FC = () => {
     { name: 'PostgreSQL', icon: <HardDrive size={20} />, color: 'bg-indigo-500', category: 'backend' },
     { name: 'Edge Functions', icon: <Server size={20} />, color: 'bg-violet-500', category: 'backend' },
     { name: 'OpenAI GPT-4o', icon: <Sparkles size={20} />, color: 'bg-amber-500', category: 'ai' },
-    { name: 'Gemini 2.5 Pro', icon: <Cpu size={20} />, color: 'bg-blue-600', category: 'ai' },
     { name: 'Custom AI Agents', icon: <Network size={20} />, color: 'bg-purple-500', category: 'ai' },
   ];
 
@@ -147,7 +146,7 @@ const TechnicalArchShowcase: React.FC = () => {
                       <div className="bg-white/5 rounded-lg p-3 text-center">
                         <Sparkles size={20} className="text-amber-400 mx-auto mb-2" />
                         <div className="text-gray-300 text-xs font-medium">AI Engine</div>
-                        <div className="text-gray-500 text-[10px]">GPT-4o / Gemini</div>
+                        <div className="text-gray-500 text-[10px]">OpenAI GPT</div>
                       </div>
                     </div>
 

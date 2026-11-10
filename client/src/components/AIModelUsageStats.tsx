@@ -2,6 +2,7 @@ import React from 'react';
 import { BarChart3, DollarSign, Zap, Clock } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { AI_MODELS } from '../services/aiModels';
+import { MODEL_TIERS } from '@shared/aiModels';
 
 interface ModelUsage {
   modelId: string;
@@ -27,21 +28,21 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
   // Demo data if no usage provided
   const demoUsage: ModelUsage[] = [
     {
-      modelId: 'gemini-2.5-flash',
+      modelId: MODEL_TIERS.default,
       requests: 145,
       tokensUsed: 87500,
       cost: 8.75,
       avgResponseTime: 1.2,
     },
     {
-      modelId: 'gemma-2-9b-it',
+      modelId: MODEL_TIERS.deep,
       requests: 89,
       tokensUsed: 42300,
       cost: 3.45,
       avgResponseTime: 0.8,
     },
     {
-      modelId: 'gemini-2.5-flash-8b',
+      modelId: MODEL_TIERS.fast,
       requests: 67,
       tokensUsed: 33200,
       cost: 2.1,
@@ -200,7 +201,7 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
                   <div className="flex items-center space-x-3">
                     <div
                       className={`p-2 rounded-lg ${
-                        model.family === 'gemini'
+                        model.tier !== 'fast'
                           ? isDark
                             ? 'bg-blue-500/20 text-blue-400'
                             : 'bg-blue-100 text-blue-600'

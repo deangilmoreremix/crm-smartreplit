@@ -1,4 +1,3 @@
-import { enhancedGeminiService } from './enhancedGeminiService';
 import { openAIService } from './openAIService';
 import { MODEL_TIERS, tierModel } from '@shared/aiModels';
 
@@ -52,11 +51,6 @@ class AIOrchestratorService {
 
   private initializeStats() {
     const models = [
-      'gemma-2-2b-it',
-      'gemma-2-9b-it',
-      'gemma-2-27b-it',
-      'gemini-2.5-flash',
-      'gemini-2.5-flash-8b',
       ...Object.values(MODEL_TIERS),
     ];
 
@@ -152,7 +146,6 @@ class AIOrchestratorService {
       const response = await fetch('/api/openai/status');
       const openaiAvailable = response.ok && (await response.json()).configured === true;
 
-      // For now, assume Gemini is available if OpenAI is (they use the same status endpoint)
       return openaiAvailable;
     } catch (error) {
       console.warn('Failed to check provider availability:', error);
@@ -208,12 +201,8 @@ class AIOrchestratorService {
       console.warn('Failed to check server availability for model selection:', error);
     }
 
-    // Default to Gemini models if OpenAI is not available or on error
-    if (context.priority === 'speed') {
-      return 'gemma-2-2b-it';
-    } else {
-      return 'gemini-2.5-flash';
-    }
+    // OpenAI unavailable or status check failed: still pick an OpenAI tier (the call itself will surface the error)
+    return context.priority === 'speed' ? tierModel('fast') : tierModel('default');
   }
 
   /**
@@ -240,17 +229,10 @@ class AIOrchestratorService {
   }
 
   /**
-   * Check if a model is from Google (Gemini/Gemma)
-   */
-  private isGoogleModel(modelId: string): boolean {
-    return modelId.startsWith('gemini') || modelId.startsWith('gemma');
-  }
-
-  /**
    * Get the appropriate service for a model
    */
   private getServiceForModel(modelId: string): any {
-    return this.isGoogleModel(modelId) ? enhancedGeminiService : openAIService;
+    return openAIService;
   }
 
   /**
@@ -306,7 +288,7 @@ class AIOrchestratorService {
       return {
         content: email,
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime,
         cost,
         tokensUsed,
@@ -319,7 +301,7 @@ class AIOrchestratorService {
           body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI generation currently unavailable - please try again later]\n\nBest regards`,
         },
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -357,13 +339,7 @@ class AIOrchestratorService {
 
     try {
       let result;
-      if (this.isGoogleModel(modelId)) {
-        result = await enhancedGeminiService.generateInsights(
-          pipelineData,
-          this.validateCustomerId(taskContext.customerId),
-          modelId
-        );
-      } else {
+      {
         result = await openAIService.analyzePipelineHealth(
           pipelineData,
           this.validateCustomerId(taskContext.customerId),
@@ -383,7 +359,7 @@ class AIOrchestratorService {
       return {
         content: result,
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime,
         cost,
         tokensUsed,
@@ -399,7 +375,7 @@ class AIOrchestratorService {
           forecastAccuracy: 0,
         },
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -462,44 +438,7 @@ class AIOrchestratorService {
     try {
       // Generate meeting agenda using the appropriate service
       let result;
-      if (this.isGoogleModel(modelId)) {
-        // Format for Gemini
-        const prompt = `
-          Create a meeting agenda for:
-          
-          Meeting Title: ${context.meetingTitle}
-          Attendees: ${context.attendees.join(', ')}
-          Purpose: ${context.purpose}
-          Duration: ${context.duration} minutes
-          Previous Notes: ${context.previousNotes || 'None'}
-          
-          Format your response as a JSON object with the following structure, WITHOUT ANY MARKDOWN CODE BLOCKS:
-          {
-            "title": "string",
-            "objective": "string",
-            "agendaItems": [
-              {
-                "topic": "string",
-                "duration": number,
-                "owner": "string",
-                "description": "string"
-              }
-            ],
-            "notes": "string"
-          }
-        `;
-
-        const geminiResponse = await enhancedGeminiService.generateContent({
-          prompt,
-          model: modelId,
-          customerId: this.validateCustomerId(taskContext.customerId),
-          featureUsed: 'meeting-agenda',
-          systemInstruction:
-            'You are an expert meeting facilitator. Create focused, efficient meeting agendas. Return only valid JSON without markdown formatting.',
-        });
-
-        result = this.parseJsonSafely(geminiResponse.content);
-      } else {
+      {
         result = await openAIService.generateMeetingAgenda(
           context,
           this.validateCustomerId(taskContext.customerId),
@@ -522,7 +461,7 @@ class AIOrchestratorService {
       return {
         content: result,
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime,
         cost,
         tokensUsed,
@@ -559,7 +498,7 @@ class AIOrchestratorService {
           notes: 'Generated agenda is a fallback due to service error.',
         },
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -593,7 +532,7 @@ class AIOrchestratorService {
     const useGPT4 =
       (dealData.deals && dealData.deals.some((deal: any) => deal.value > 100000)) ||
       taskContext.complexity === 'high';
-    const defaultModelId = useGPT4 ? tierModel('deep') : 'gemini-2.5-flash';
+    const defaultModelId = useGPT4 ? tierModel('deep') : tierModel('default');
 
     const modelId = await this.getOptimalModel('deal_insights', {
       ...taskContext,
@@ -604,34 +543,7 @@ class AIOrchestratorService {
 
     try {
       let result;
-      if (this.isGoogleModel(modelId)) {
-        // Format for Gemini
-        const prompt = `
-          Analyze this deal data and provide actionable insights:
-          
-          ${JSON.stringify(dealData, null, 2)}
-          
-          Format your response as a JSON object with the following structure, WITHOUT ANY MARKDOWN CODE BLOCKS:
-          {
-            "riskLevel": "low|medium|high",
-            "keyInsights": ["string"],
-            "recommendedActions": ["string"],
-            "winProbability": number,
-            "potentialBlockers": ["string"]
-          }
-        `;
-
-        const geminiResponse = await enhancedGeminiService.generateContent({
-          prompt,
-          model: modelId,
-          customerId: this.validateCustomerId(taskContext.customerId),
-          featureUsed: 'deal-insights',
-          systemInstruction:
-            'You are a sales analytics expert specializing in deal risk assessment. Return only plain JSON without markdown code blocks.',
-        });
-
-        result = this.parseJsonSafely(geminiResponse.content);
-      } else {
+      {
         result = await openAIService.generateDealInsights(
           dealData,
           this.validateCustomerId(taskContext.customerId),
@@ -650,7 +562,7 @@ class AIOrchestratorService {
       return {
         content: result,
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime,
         cost,
         tokensUsed,
@@ -668,7 +580,7 @@ class AIOrchestratorService {
           potentialBlockers: ['AI analysis service unavailable'],
         },
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -703,7 +615,7 @@ class AIOrchestratorService {
     // For contact analysis, prefer models with good pattern recognition
     const modelId = await this.getOptimalModel('contact_scoring', {
       ...taskContext,
-      modelId: taskContext.modelId || 'gemini-2.5-flash',
+      modelId: taskContext.modelId || tierModel('default'),
     });
 
     const startTime = Date.now();
@@ -729,18 +641,7 @@ class AIOrchestratorService {
 
     try {
       let result;
-      if (this.isGoogleModel(modelId)) {
-        const geminiResponse = await enhancedGeminiService.generateContent({
-          prompt,
-          model: modelId,
-          customerId: this.validateCustomerId(taskContext.customerId),
-          featureUsed: 'contact-insights',
-          systemInstruction:
-            'You are a CRM analytics expert specialized in contact scoring and analysis. Return only plain JSON without markdown code blocks.',
-        });
-
-        result = this.parseJsonSafely(geminiResponse.content);
-      } else {
+      {
         const openAIResponse = await openAIService.generateContent({
           messages: [
             {
@@ -769,7 +670,7 @@ class AIOrchestratorService {
       return {
         content: result,
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime,
         cost,
         tokensUsed,
@@ -786,7 +687,7 @@ class AIOrchestratorService {
           scoringRecommendations: ['Manual review recommended'],
         },
         model: modelId,
-        provider: this.isGoogleModel(modelId) ? 'Google' : 'OpenAI',
+        provider: 'OpenAI',
         responseTime: Date.now() - startTime,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -801,11 +702,6 @@ class AIOrchestratorService {
     // Per-token unit cost by model id; null = unknown (cost reported as 0).
     // TODO: fill from OpenAI pricing page
     const PRICING: Record<string, number | null> = {
-      'gemma-2-2b-it': 0.00000035,
-      'gemma-2-9b-it': 0.0000005,
-      'gemma-2-27b-it': 0.00000125,
-      'gemini-2.5-flash': 0.00000075,
-      'gemini-2.5-flash-8b': 0.00000035,
       [MODEL_TIERS.fast]: null,
       [MODEL_TIERS.default]: null,
       [MODEL_TIERS.deep]: null,

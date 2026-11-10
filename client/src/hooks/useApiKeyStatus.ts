@@ -23,7 +23,7 @@ export const useApiKeyStatus = () => {
     try {
       const { data, error } = await supabase
         .from('user_api_keys')
-        .select('openai_api_key, gemini_api_key')
+        .select('openai_api_key')
         .eq('user_id', user.id)
         .single();
 
@@ -31,7 +31,7 @@ export const useApiKeyStatus = () => {
         console.error('Error checking API keys:', error);
         setHasApiKeys(false);
       } else if (data) {
-        const hasKeys = !!(data.openai_api_key || data.gemini_api_key);
+        const hasKeys = !!data.openai_api_key;
         setHasApiKeys(hasKeys);
       } else {
         setHasApiKeys(false);

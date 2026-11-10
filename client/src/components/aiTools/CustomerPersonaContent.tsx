@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGemini } from '../../services/geminiService';
+import { useAIAssistant } from '../../services/aiAssistantService';
 import AIToolContent from '../shared/AIToolContent';
 import {
   User,
@@ -25,7 +25,7 @@ const CustomerPersonaContent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -77,7 +77,7 @@ const CustomerPersonaContent: React.FC = () => {
     setError(null);
 
     try {
-      const persona = await gemini.generateCustomerPersona(
+      const persona = await ai.generateCustomerPersona(
         formData.industry,
         formData.companySize,
         validPainPoints

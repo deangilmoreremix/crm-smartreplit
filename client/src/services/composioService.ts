@@ -1,6 +1,5 @@
 import { Goal, ExecutionStep, GoalExecutionResult } from '../types/goals';
 // import { openAIService } from './openAIService';
-// import { enhancedGeminiService } from './enhancedGeminiService';
 // import { useApiStore } from '../store/apiStore';
 
 interface AgentConfig {
@@ -8,7 +7,7 @@ interface AgentConfig {
   name: string;
   role: string;
   capabilities: string[];
-  model: 'openai' | 'gemini';
+  model: 'openai';
   temperature: number;
 }
 
@@ -43,7 +42,7 @@ class ComposioService {
         name: 'Content Creator',
         role: 'Generates personalized content and messaging',
         capabilities: ['email writing', 'personalization', 'content optimization'],
-        model: 'gemini',
+        model: 'openai',
         temperature: 0.7,
       },
       {
@@ -59,7 +58,7 @@ class ComposioService {
         name: 'Automation Engineer',
         role: 'Designs and implements automated workflows',
         capabilities: ['workflow design', 'trigger setup', 'optimization'],
-        model: 'gemini',
+        model: 'openai',
         temperature: 0.4,
       },
       {
@@ -75,7 +74,7 @@ class ComposioService {
         name: 'Campaign Manager',
         role: 'Orchestrates marketing campaigns and outreach',
         capabilities: ['campaign planning', 'audience targeting', 'optimization'],
-        model: 'gemini',
+        model: 'openai',
         temperature: 0.5,
       },
       {
@@ -218,11 +217,7 @@ class ComposioService {
       let thinking: string;
 
       // Execute based on agent model preference
-      if (agent.model === 'openai') {
-        result = await this.executeWithOpenAI(step, goal, context, agent);
-      } else {
-        result = await this.executeWithGemini(step, goal, context, agent);
-      }
+      result = await this.executeWithOpenAI(step, goal, context, agent);
 
       thinking = this.generateAgentThinking(step, goal, agent);
 
@@ -265,23 +260,6 @@ class ComposioService {
     };
   }
 
-  private async executeWithGemini(
-    step: ExecutionStep,
-    goal: Goal,
-    context: ExecutionContext,
-    agent: AgentConfig
-  ): Promise<any> {
-    // In a real implementation, this would call Gemini API
-    await this.delay(context.realMode ? 1500 : 400);
-
-    return {
-      analysis: `${agent.name} processed ${goal.title} requirements`,
-      creativeSolutions: this.generateCreativeSolutions(goal, agent),
-      confidence: 0.8 + Math.random() * 0.15,
-      nextSteps: [`Implement ${goal.category} automation`, 'Monitor performance metrics'],
-    };
-  }
-
   private generateAgentThinking(step: ExecutionStep, goal: Goal, agent: AgentConfig): string {
     const thoughts = [
       `Analyzing ${goal.title} requirements...`,
@@ -300,14 +278,6 @@ class ComposioService {
       `${goal.priority} priority goal with ${goal.complexity} complexity`,
       `Estimated ${goal.estimatedSetupTime} setup time required`,
       `${agent.name} recommends ${goal.toolsNeeded[0]} integration`,
-    ];
-  }
-
-  private generateCreativeSolutions(goal: Goal, agent: AgentConfig): string[] {
-    return [
-      `Innovative approach to ${goal.category} optimization`,
-      `Creative automation for ${goal.businessImpact}`,
-      `Novel integration pattern with ${goal.toolsNeeded.join(' and ')}`,
     ];
   }
 

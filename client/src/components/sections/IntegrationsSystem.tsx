@@ -1,3 +1,4 @@
+import { DEFAULT_MODEL } from '@shared/aiModels';
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Grid3X3, Settings, Cpu } from 'lucide-react';
@@ -6,7 +7,6 @@ import AIModelSelector from '../AIModelSelector';
 
 const IntegrationsSystem: React.FC = () => {
   const { isDark } = useTheme();
-  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [isOpenAIConnected, setIsOpenAIConnected] = useState(false);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
 
@@ -23,11 +23,8 @@ const IntegrationsSystem: React.FC = () => {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         setIsSupabaseConnected(!!supabaseUrl && supabaseUrl.includes('supabase.co'));
 
-        // For Google AI, assume it's available if OpenAI is (they use the same status endpoint)
-        setIsGoogleConnected(openaiStatus.configured === true);
       } catch (error) {
         console.warn('Failed to check API connections:', error);
-        setIsGoogleConnected(false);
         setIsOpenAIConnected(false);
         setIsSupabaseConnected(false);
       }
@@ -82,7 +79,7 @@ const IntegrationsSystem: React.FC = () => {
               Select the default model for general AI operations
             </p>
             <AIModelSelector
-              selectedModel="gemini-2.5-flash"
+              selectedModel={DEFAULT_MODEL}
               onModelChange={() => {}}
               className="w-full"
             />
@@ -98,30 +95,6 @@ const IntegrationsSystem: React.FC = () => {
             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
               Configure external API connections
             </p>
-
-            <div
-              className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between mb-3`}
-            >
-              <div className="flex items-center space-x-2">
-                <Cpu size={16} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
-                <span className={`text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Google AI API
-                </span>
-              </div>
-              <div
-                className={`px-2 py-1 rounded text-xs ${
-                  isGoogleConnected
-                    ? isDark
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-green-100 text-green-700'
-                    : isDark
-                      ? 'bg-red-500/20 text-red-400'
-                      : 'bg-red-100 text-red-700'
-                }`}
-              >
-                {isGoogleConnected ? 'Connected' : 'Not Connected'}
-              </div>
-            </div>
 
             <div
               className={`p-3 ${isDark ? 'bg-white/5' : 'bg-gray-100'} rounded-lg flex items-center justify-between mb-3`}

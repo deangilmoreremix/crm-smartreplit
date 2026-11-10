@@ -35,7 +35,7 @@ export interface AIRequest {
   };
   options?: {
     useCache?: boolean;
-    provider?: 'openai' | 'gemini' | 'auto';
+    provider?: 'openai' | 'auto';
     model?: string;
     timeout?: number;
     usePersistentThread?: boolean;
@@ -59,7 +59,7 @@ export interface AIResponse {
 }
 
 export interface AIProvider {
-  name: 'openai' | 'gemini';
+  name: 'openai';
   available: boolean;
   rateLimit: {
     remaining: number;
@@ -100,13 +100,6 @@ class AIOrchestrator {
       available: true, // Server-side check will determine actual availability
       rateLimit: { remaining: 50, resetTime: Date.now() + 60000 },
       performance: { avgResponseTime: 2000, successRate: 0.95, costPer1kTokens: 0.002 },
-    });
-
-    this.providers.set('gemini', {
-      name: 'gemini',
-      available: true, // Server-side check will determine actual availability
-      rateLimit: { remaining: 60, resetTime: Date.now() + 60000 },
-      performance: { avgResponseTime: 1500, successRate: 0.92, costPer1kTokens: 0.0005 },
     });
   }
 
@@ -267,10 +260,6 @@ class AIOrchestrator {
         case 'predictive_analytics':
           // Prefer higher accuracy models
           if (provider.name === 'openai') score += 5;
-          break;
-        case 'automation_suggestions':
-          // Gemini is good for simple automation logic
-          if (provider.name === 'gemini') score += 5;
           break;
       }
 

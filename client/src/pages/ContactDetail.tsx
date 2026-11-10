@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useOpenAI } from '../services/openaiLegacyService';
-import { useGemini } from '../services/geminiService';
+import { useAIAssistant } from '../services/aiAssistantService';
 import { Contact } from '../types';
 import {
   Mail,
@@ -39,7 +39,7 @@ const ContactDetail: React.FC = () => {
   const [editFormData, setEditFormData] = useState<Partial<Contact>>({});
 
   const openai = useOpenAI();
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   const [leadScoreResult, setLeadScoreResult] = useState<string | null>(null);
   const [leadScoreLoading, setLeadScoreLoading] = useState(false);
@@ -143,7 +143,7 @@ const ContactDetail: React.FC = () => {
     setPersonalizationError(null);
 
     try {
-      const result = await gemini.suggestPersonalization(contact, previousInteractions);
+      const result = await ai.suggestPersonalization(contact, previousInteractions);
       setPersonalizationResult(result);
     } catch (err) {
       setPersonalizationError(err instanceof Error ? err.message : 'An unknown error occurred');

@@ -382,7 +382,7 @@ const AITools: React.FC = () => {
               New Real-time AI Features
             </h2>
             <p className="text-gray-700 text-lg">
-              Experience our latest real-time AI capabilities powered by Gemini 2.5 Flash and Pro
+              Experience our latest real-time AI capabilities powered by OpenAI
               models. Get instant responses, live analysis, and streaming results that feel more
               natural and responsive than ever before.
               <span className="font-medium text-indigo-600 ml-1">
@@ -496,7 +496,7 @@ const AITools: React.FC = () => {
             <div className="p-4 border-t border-gray-200 bg-gray-50">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">
-                  Powered by Gemini 2.5 and OpenAI's latest models
+                  Powered by OpenAI's latest models
                 </span>
                 <button
                   onClick={() => {

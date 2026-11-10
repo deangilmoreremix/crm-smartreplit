@@ -4,7 +4,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAITools } from '../../components/AIToolsProvider';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
-import { geminiService } from '../../services/geminiService';
+import { aiAssistantService } from '../../services/aiAssistantService';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
 
@@ -131,7 +131,7 @@ const AIInsightsPanel = () => {
       return;
     }
 
-    if (!geminiService.isApiKeyConfigured()) {
+    if (!(await aiAssistantService.isApiKeyConfigured())) {
       setApiKeysConfigured(false);
       return;
     }
@@ -198,9 +198,9 @@ const AIInsightsPanel = () => {
   };
 
   const generateRealInsights = async () => {
-    if (!geminiService.isApiKeyConfigured()) {
+    if (!(await aiAssistantService.isApiKeyConfigured())) {
       setError(
-        'Gemini API key is not configured. Please add VITE_GOOGLE_AI_API_KEY to your environment.'
+        'OpenAI is not configured on the server. Add an OpenAI API key in Settings.'
       );
       setApiKeysConfigured(false);
       return;
@@ -246,8 +246,8 @@ const AIInsightsPanel = () => {
     };
 
     try {
-      // Use geminiService to analyze pipeline health
-      const response = await geminiService.generatePersonalizedMessage(pipelineData, 'email');
+      // Use aiAssistantService to analyze pipeline health
+      const response = await aiAssistantService.generatePersonalizedMessage(pipelineData, 'email');
 
       // Reset API keys configured flag if we got a successful result
       setApiKeysConfigured(true);

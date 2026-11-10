@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
-import { enhancedGeminiService } from '../../services/enhancedGeminiService';
+import { enhancedAIService } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import {
   TrendingUp,
@@ -109,7 +109,7 @@ export default function MarketTrendsAnalysis() {
           timeframe = '1year';
       }
 
-      const result = await enhancedGeminiService.analyzeMarketTrends({
+      const result = await enhancedAIService.analyzeMarketTrends({
         industry: formData.industry,
         timeframe: timeframe,
         focusAreas: formData.focusAreas.length > 0 ? formData.focusAreas : undefined,

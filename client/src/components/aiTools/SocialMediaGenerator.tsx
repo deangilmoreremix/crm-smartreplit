@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
-import { enhancedGeminiService } from '../../services/enhancedGeminiService';
+import { enhancedAIService } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import { Share2, Download, Copy, Check, RefreshCw, Hash, Target, TrendingUp } from 'lucide-react';
 
@@ -59,7 +59,7 @@ export default function SocialMediaGenerator() {
       // Generate multiple variations
       const variations = [];
       for (let i = 0; i < 3; i++) {
-        const variation = await enhancedGeminiService.generateSocialMediaPost({
+        const variation = await enhancedAIService.generateSocialMediaPost({
           platform: formData.platform,
           topic: formData.topic,
           tone: formData.tone,

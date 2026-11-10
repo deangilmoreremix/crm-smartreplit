@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
-import { useGemini } from '../services/geminiService';
+import { useAIAssistant } from '../services/aiAssistantService';
 import { useTaskStore } from '../store/taskStore';
 import { useAppointmentStore } from '../store/appointmentStore';
 import { useAITools } from './AIToolsProvider';
@@ -72,7 +72,7 @@ const Dashboard: React.FC = React.memo(() => {
   const { config } = useWhitelabel();
   const { sectionOrder } = useDashboardLayout();
 
-  const gemini = useGemini();
+  const ai = useAIAssistant();
 
   // Prevent repeated data fetching by using a ref to track initialization
   const initializedRef = useRef(false);

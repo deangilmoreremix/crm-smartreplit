@@ -1,6 +1,6 @@
 import { useState, createElement } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useEnhancedGemini } from '../../services/enhancedGeminiService';
+import { useEnhancedAI } from '../../services/enhancedAIService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
 import {
   Brain,
@@ -31,7 +31,7 @@ const sampleTexts = [
 
 export default function SentimentAnalysis() {
   const { isDark } = useTheme();
-  const { analyzeSentiment } = useEnhancedGemini();
+  const { analyzeSentiment } = useEnhancedAI();
 
   const [inputText, setInputText] = useState<string>('');
   const [sentimentResult, setSentimentResult] = useState<SentimentResult | null>(null);

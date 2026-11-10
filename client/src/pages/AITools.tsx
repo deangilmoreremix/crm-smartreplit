@@ -626,7 +626,7 @@ const AITools: React.FC = () => {
               <div className="p-4 border-t border-gray-200 bg-gray-50">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">
-                    Powered by Gemini 2.5 and OpenAI's latest models
+                    Powered by OpenAI's latest models
                   </span>
                   <button
                     onClick={() => {
