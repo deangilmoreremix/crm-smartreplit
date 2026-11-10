@@ -42,6 +42,24 @@ export {
   aiAction,
   createDealAction,
   createContactAction,
+  httpRequestAction,
+  delayAction,
+  waitForEventAction,
+  formAction,
+  aiAgentAction,
 } from './actions';
-export { runWorkflow } from './engine/runner';
+export {
+  runWorkflow,
+  resumeWait,
+  resumeDueWaits,
+  resumeWaitersForEvent,
+  resumeWaitersForKeys,
+  loadSteps,
+} from './engine/runner';
+export { interpolate, interpolateString, getPath } from './engine/interpolate';
+export { parseCron, isValidCron, nextCronRun } from './engine/cron';
+export { assertPublicHttps, assertPublicResolved, isPrivateAddress } from './security/ssrf';
+export { validateFormSubmission } from './actions';
+export { evaluateCondition, MAX_ITERATIONS } from './engine/WorkflowEngine';
+export type { WaitRequest, WorkflowStep, ExecuteResult } from './engine/WorkflowEngine';
 export type { RunWorkflowOptions } from './engine/runner';

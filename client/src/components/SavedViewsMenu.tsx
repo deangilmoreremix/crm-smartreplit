@@ -6,26 +6,43 @@ interface SavedViewsMenuProps<F extends Record<string, unknown>> {
   /** The filters currently applied; stored when the user saves a view. */
   currentFilters: F;
   onApply: (filters: F) => void;
+  /** Table views: stored alongside the filters. */
+  currentSort?: unknown;
+  currentColumns?: unknown;
+  viewType?: SavedView['view_type'];
+  /** When given, applying a view passes the whole stored row (filters, sort, columns) instead of `onApply`. */
+  onApplyView?: (view: SavedView<F>) => void;
 }
 
 function SavedViewsMenu<F extends Record<string, unknown>>({
   objectType,
   currentFilters,
   onApply,
+  currentSort,
+  currentColumns,
+  viewType,
+  onApplyView,
 }: SavedViewsMenuProps<F>) {
-  const { views, loading, error, saveView, deleteView } = useSavedViews<F>(objectType);
+  const { views, loading, error, saveView, updateView, deleteView } = useSavedViews<F>(objectType, viewType);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
 
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    const saved = await saveView({ name: trimmed, filters: currentFilters });
+    const saved = await saveView({
+      name: trimmed,
+      filters: currentFilters,
+      view_type: viewType,
+      sort: currentSort,
+      columns: currentColumns,
+    });
     if (saved) setName('');
   };
 
   const apply = (view: SavedView<F>) => {
-    onApply(view.filters);
+    if (onApplyView) onApplyView(view);
+    else onApply(view.filters);
     setOpen(false);
   };
 
@@ -53,6 +70,19 @@ function SavedViewsMenu<F extends Record<string, unknown>>({
                   <button type="button" onClick={() => apply(view)} className="text-left hover:underline truncate">
                     {view.name}
                   </button>
+                  {onApplyView && (
+                    <button
+                      type="button"
+                      aria-label={`Update view ${view.name} with current state`}
+                      title="Overwrite with current state"
+                      onClick={() =>
+                        updateView(view.id, { filters: currentFilters, sort: currentSort, columns: currentColumns })
+                      }
+                      className="text-gray-400 hover:text-blue-600 ml-2 text-xs"
+                    >
+                      Update
+                    </button>
+                  )}
                   <button
                     type="button"
                     aria-label={`Delete view ${view.name}`}

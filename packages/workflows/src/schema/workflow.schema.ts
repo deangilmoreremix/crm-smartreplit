@@ -23,6 +23,7 @@ export const workflowRunStatus = [
   'completed',
   'failed',
   'cancelled',
+  'waiting',
 ] as const;
 export type WorkflowRunStatus = (typeof workflowRunStatus)[number];
 
@@ -41,6 +42,14 @@ export const actionTypes = [
   'CREATE_DEAL',
   'CREATE_CONTACT',
   'AI',
+  'HTTP_REQUEST',
+  'IF_ELSE',
+  'FILTER',
+  'ITERATOR',
+  'DELAY',
+  'WAIT_FOR_EVENT',
+  'FORM',
+  'AI_AGENT',
 ] as const;
 export type ActionType = (typeof actionTypes)[number];
 

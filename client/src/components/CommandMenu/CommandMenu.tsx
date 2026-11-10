@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useGlobalSearch, recordPath } from '../../hooks/useGlobalSearch';
+import { useFavorites } from '../../hooks/useFavorites';
 
-interface CommandItem {
+export interface CommandItem {
   id: string;
   label: string;
   description?: string;
@@ -11,14 +13,17 @@ interface CommandItem {
   action: () => void;
 }
 
-interface CommandMenuProps {
+export interface CommandMenuProps {
   items: CommandItem[];
   placeholder?: string;
+  /** Search CRM records (contacts, deals, tasks, ...) via global_search. Default true. */
+  searchRecords?: boolean;
 }
 
 const CommandMenu: React.FC<CommandMenuProps> = ({
   items,
-  placeholder = 'Search commands...'
+  placeholder = 'Search commands...',
+  searchRecords = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -26,10 +31,28 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const filteredItems = items.filter(item =>
+  const { groups: recordGroups, loading: searching } = useGlobalSearch(searchRecords && isOpen ? search : '');
+
+  const recordItems: CommandItem[] = recordGroups.flatMap(group =>
+    group.results.map(r => ({
+      id: `record-${r.object_type}-${r.record_id}`,
+      label: r.title,
+      description: r.subtitle ?? undefined,
+      category: group.label,
+      action: () => navigate(recordPath(r.object_type, r.record_id))
+    }))
+  );
+
+  const matchedCommands = items.filter(item =>
     item.label.toLowerCase().includes(search.toLowerCase()) ||
     item.description?.toLowerCase().includes(search.toLowerCase())
   );
+  // Contextual actions first, then record hits, then the remaining commands.
+  const filteredItems = [
+    ...matchedCommands.filter(i => i.category === 'Current record'),
+    ...recordItems,
+    ...matchedCommands.filter(i => i.category !== 'Current record')
+  ];
 
   const groupedItems = filteredItems.reduce((acc, item) => {
     if (!acc[item.category]) {
@@ -52,17 +75,18 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % flatItems.length);
+        if (flatItems.length) setSelectedIndex(prev => (prev + 1) % flatItems.length);
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => (prev - 1 + flatItems.length) % flatItems.length);
+        if (flatItems.length) setSelectedIndex(prev => (prev - 1 + flatItems.length) % flatItems.length);
         break;
       case 'Enter':
         e.preventDefault();
         if (flatItems[selectedIndex]) {
           flatItems[selectedIndex].action();
           setIsOpen(false);
+          setSearch('');
         }
         break;
       case 'Escape':
@@ -110,9 +134,9 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="min-h-screen px-4 pt-20 pb-6 flex justify-center">
-        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsOpen(false)} />
-        <div className="relative w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden">
-          <div className="flex items-center px-4 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/50" onClick={() => setIsOpen(false)} />
+        <div className="relative w-full max-w-xl bg-white dark:bg-gray-900 dark:border dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+          <div className="flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
             <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -122,22 +146,22 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={placeholder}
-              className="w-full py-4 text-lg outline-none placeholder-gray-400"
+              className="w-full py-4 text-lg outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400"
             />
-            <kbd className="hidden sm:inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded">
+            <kbd className="hidden sm:inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded">
               ESC
             </kbd>
           </div>
 
           <div className="max-h-96 overflow-y-auto py-2">
             {flatItems.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">
-                No commands found
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                {searching ? 'Searching...' : 'No commands found'}
               </div>
             ) : (
               Object.entries(groupedItems).map(([category, categoryItems]) => (
                 <div key={category} className="mb-2">
-                  <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">
+                  <div className="px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                     {category}
                   </div>
                   {categoryItems.map((item) => {
@@ -149,7 +173,7 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
                         onClick={() => handleItemClick(item)}
                         onMouseEnter={() => setSelectedIndex(globalIndex)}
                         className={`w-full px-4 py-3 flex items-center justify-between ${
-                          isSelected ? 'bg-indigo-50' : 'hover:bg-gray-50'
+                          isSelected ? 'bg-indigo-50 dark:bg-indigo-900/40' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                       >
                         <div className="flex items-center">
@@ -157,14 +181,14 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
                             <span className="mr-3 text-gray-400">{item.icon}</span>
                           )}
                           <div className="text-left">
-                            <div className="font-medium text-gray-900">{item.label}</div>
+                            <div className="font-medium text-gray-900 dark:text-gray-100">{item.label}</div>
                             {item.description && (
-                              <div className="text-sm text-gray-500">{item.description}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{item.description}</div>
                             )}
                           </div>
                         </div>
                         {item.shortcut && (
-                          <kbd className="px-2 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded">
+                          <kbd className="px-2 py-1 text-xs font-medium text-gray-400 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded">
                             {item.shortcut}
                           </kbd>
                         )}
@@ -176,19 +200,19 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
             )}
           </div>
 
-          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between text-xs text-gray-500">
+          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center space-x-4">
               <span className="flex items-center">
-                <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded mr-1">↑↓</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded mr-1">↑↓</kbd>
                 Navigate
               </span>
               <span className="flex items-center">
-                <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded mr-1">↵</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded mr-1">↵</kbd>
                 Select
               </span>
             </div>
             <span>
-              <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded">⌘K</kbd>
+              <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded">⌘K</kbd>
               to toggle
             </span>
           </div>
@@ -198,113 +222,144 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
   );
 };
 
+/** Matches /contacts/:id, /deals/:id, ... so the menu can offer actions for the open record. */
+export function parseRecordRoute(pathname: string): { objectType: string; recordId: string } | null {
+  const m = pathname.match(/^\/(contacts|deals|companies)\/([^/]+)\/?$/);
+  if (!m) return null;
+  const type = { contacts: 'contact', deals: 'deal', companies: 'company' }[m[1] as 'contacts' | 'deals' | 'companies'];
+  return { objectType: type, recordId: decodeURIComponent(m[2]) };
+}
+
+export function buildDefaultItems(navigate: (to: string) => void): CommandItem[] {
+const items: CommandItem[] = [
+  {
+    id: 'contacts',
+    label: 'Go to Contacts',
+    description: 'Navigate to contacts list',
+    category: 'Navigation',
+    shortcut: 'G C',
+    action: () => navigate('/contacts')
+  },
+  {
+    id: 'deals',
+    label: 'Go to Deals',
+    description: 'Navigate to deals pipeline',
+    category: 'Navigation',
+    shortcut: 'G D',
+    action: () => navigate('/deals')
+  },
+  {
+    id: 'tasks',
+    label: 'Go to Tasks',
+    description: 'Navigate to tasks list',
+    category: 'Navigation',
+    shortcut: 'G T',
+    action: () => navigate('/tasks')
+  },
+  {
+    id: 'gtm-hub',
+    label: 'Go to GTM Prompt Hub',
+    description: 'Open GTM analytics dashboard',
+    category: 'Navigation',
+    action: () => navigate('/gtm-prompt-hub')
+  },
+  {
+    id: 'open-claw',
+    label: 'Open Claw Assistant',
+    description: 'Open AI assistant panel',
+    category: 'Navigation',
+    action: () => navigate('/openclaw')
+  },
+  {
+    id: 'create-contact',
+    label: 'Create Contact',
+    description: 'Add a new contact',
+    category: 'Actions',
+    shortcut: 'N C',
+    action: () => navigate('/contacts?new=true')
+  },
+  {
+    id: 'create-deal',
+    label: 'Create Deal',
+    description: 'Add a new deal',
+    category: 'Actions',
+    shortcut: 'N D',
+    action: () => navigate('/deals?new=true')
+  },
+  {
+    id: 'create-task',
+    label: 'Create Task',
+    description: 'Add a new task',
+    category: 'Actions',
+    shortcut: 'N T',
+    action: () => navigate('/tasks?new=true')
+  },
+  {
+    id: 'search-contacts',
+    label: 'Search Contacts',
+    description: 'Find contacts by name or email',
+    category: 'Search',
+    shortcut: '/ C',
+    action: () => navigate('/contacts?search=true')
+  },
+  {
+    id: 'search-deals',
+    label: 'Search Deals',
+    description: 'Find deals by name or value',
+    category: 'Search',
+    shortcut: '/ D',
+    action: () => navigate('/deals?search=true')
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    description: 'Application settings',
+    category: 'Navigation',
+    action: () => navigate('/settings')
+  },
+  {
+    id: 'help',
+    label: 'Help & Support',
+    description: 'Get help with the application',
+    category: 'Navigation',
+    action: () => navigate('/help')
+  }
+];
+  return items;
+}
+
+// Rendered inside the Router; adds contextual actions on top of the static commands.
+const DefaultCommandMenu: React.FC = () => {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const current = parseRecordRoute(pathname);
+
+  const items = React.useMemo(() => {
+    const base = buildDefaultItems(navigate);
+    if (!current) return base;
+    const fav = isFavorite(current.objectType, current.recordId);
+    return [
+      {
+        id: 'toggle-favorite',
+        label: fav ? 'Remove from favorites' : 'Add to favorites',
+        description: `Current ${current.objectType}`,
+        category: 'Current record',
+        action: () => { void toggleFavorite(current.objectType, current.recordId); }
+      },
+      ...base
+    ];
+  }, [navigate, current?.objectType, current?.recordId, isFavorite, toggleFavorite]);
+
+  return <CommandMenu items={items} placeholder="Search commands, contacts, deals..." />;
+};
+
 export const useCommandMenu = () => {
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
-
-  const defaultItems: CommandItem[] = [
-    {
-      id: 'contacts',
-      label: 'Go to Contacts',
-      description: 'Navigate to contacts list',
-      category: 'Navigation',
-      shortcut: 'G C',
-      action: () => window.location.href = '/contacts'
-    },
-    {
-      id: 'deals',
-      label: 'Go to Deals',
-      description: 'Navigate to deals pipeline',
-      category: 'Navigation',
-      shortcut: 'G D',
-      action: () => window.location.href = '/deals'
-    },
-    {
-      id: 'tasks',
-      label: 'Go to Tasks',
-      description: 'Navigate to tasks list',
-      category: 'Navigation',
-      shortcut: 'G T',
-      action: () => window.location.href = '/tasks'
-    },
-    {
-      id: 'gtm-hub',
-      label: 'Go to GTM Prompt Hub',
-      description: 'Open GTM analytics dashboard',
-      category: 'Navigation',
-      action: () => window.location.href = '/gtm-prompt-hub'
-    },
-    {
-      id: 'open-claw',
-      label: 'Open Claw Assistant',
-      description: 'Open AI assistant panel',
-      category: 'Navigation',
-      action: () => window.location.href = '/openclaw'
-    },
-    {
-      id: 'create-contact',
-      label: 'Create Contact',
-      description: 'Add a new contact',
-      category: 'Actions',
-      shortcut: 'N C',
-      action: () => window.location.href = '/contacts?new=true'
-    },
-    {
-      id: 'create-deal',
-      label: 'Create Deal',
-      description: 'Add a new deal',
-      category: 'Actions',
-      shortcut: 'N D',
-      action: () => window.location.href = '/deals?new=true'
-    },
-    {
-      id: 'create-task',
-      label: 'Create Task',
-      description: 'Add a new task',
-      category: 'Actions',
-      shortcut: 'N T',
-      action: () => window.location.href = '/tasks?new=true'
-    },
-    {
-      id: 'search-contacts',
-      label: 'Search Contacts',
-      description: 'Find contacts by name or email',
-      category: 'Search',
-      shortcut: '/ C',
-      action: () => window.location.href = '/contacts?search=true'
-    },
-    {
-      id: 'search-deals',
-      label: 'Search Deals',
-      description: 'Find deals by name or value',
-      category: 'Search',
-      shortcut: '/ D',
-      action: () => window.location.href = '/deals?search=true'
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      description: 'Application settings',
-      category: 'Navigation',
-      action: () => window.location.href = '/settings'
-    },
-    {
-      id: 'help',
-      label: 'Help & Support',
-      description: 'Get help with the application',
-      category: 'Navigation',
-      action: () => window.location.href = '/help'
-    }
-  ];
-
   return {
     isCommandMenuOpen,
     setIsCommandMenuOpen,
-    CommandMenuComponent: () => (
-      <CommandMenu
-        items={defaultItems}
-        placeholder="Search commands, contacts, deals..."
-      />
-    )
+    CommandMenuComponent: DefaultCommandMenu
   };
 };
 

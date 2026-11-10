@@ -11,25 +11,50 @@ import {
   Check,
   X,
   Palette,
+  GripVertical,
+  Save,
+  Star,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 
 const DashboardLayoutControls: React.FC = () => {
-  const { sectionOrder, setSectionOrder, resetToDefault, getSectionConfig } = useDashboardLayout();
+  const {
+    sectionOrder,
+    setSectionOrder,
+    resetToDefault,
+    getSectionConfig,
+    isSectionVisible,
+    toggleSection,
+    sectionSizes,
+    setSectionSize,
+    savedLayouts,
+    defaultLayoutId,
+    saveLayoutAs,
+    applyLayout,
+    renameLayout,
+    deleteLayout,
+    setDefaultLayout,
+  } = useDashboardLayout();
+  const [newLayoutName, setNewLayoutName] = useState('');
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const moveSection = (fromId: string, toId: string) => {
+    const from = sectionOrder.indexOf(fromId);
+    const to = sectionOrder.indexOf(toId);
+    if (from === -1 || to === -1 || from === to) return;
+    const next = [...sectionOrder];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setSectionOrder(next);
+  };
 
   const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
   const handleSectionToggle = (sectionId: string, enabled: boolean) => {
-    if (enabled) {
-      // Add section back to the order if not present
-      if (!sectionOrder.includes(sectionId)) {
-        setSectionOrder([...sectionOrder, sectionId]);
-      }
-    } else {
-      // Remove section from order
-      setSectionOrder(sectionOrder.filter((id) => id !== sectionId));
-    }
+    if (enabled !== isSectionVisible(sectionId)) toggleSection(sectionId);
   };
 
   const allSections = [
@@ -50,7 +75,15 @@ const DashboardLayoutControls: React.FC = () => {
     'tasks-section',
     'apps-section',
     'analytics-section',
+    'unified-activity',
   ];
+  // Visible sections follow their dashboard order; the rest keep list order after them.
+  const orderedSections = [...allSections].sort((x, y) => {
+    const ix = sectionOrder.indexOf(x);
+    const iy = sectionOrder.indexOf(y);
+    return (ix === -1 ? 1e6 : ix) - (iy === -1 ? 1e6 : iy);
+  });
+  const nextSize = { compact: 'normal', normal: 'wide', wide: 'compact' } as const;
 
   return (
     <div className="fixed top-24 right-2 sm:right-4 z-50">
@@ -147,20 +180,31 @@ const DashboardLayoutControls: React.FC = () => {
               </h4>
 
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {allSections.map((sectionId) => {
+                {orderedSections.map((sectionId) => {
                   const config = getSectionConfig(sectionId);
-                  const isEnabled = sectionOrder.includes(sectionId);
+                  const isEnabled = isSectionVisible(sectionId);
+                  const size = sectionSizes[sectionId] ?? 'normal';
 
                   if (!config) return null;
 
                   return (
                     <div
                       key={sectionId}
+                      draggable={sectionOrder.includes(sectionId)}
+                      onDragStart={() => setDragId(sectionId)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => dragId && moveSection(dragId, sectionId)}
+                      onDragEnd={() => setDragId(null)}
                       className={`flex items-center justify-between p-2 rounded-lg ${
                         isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
                       } transition-colors`}
                     >
                       <div className="flex items-center space-x-3">
+                        <GripVertical
+                          size={14}
+                          className="text-gray-400 cursor-grab shrink-0"
+                          aria-label="Drag to reorder"
+                        />
                         <div
                           className={`w-3 h-3 rounded-full bg-gradient-to-r ${config.color}`}
                         ></div>
@@ -177,6 +221,22 @@ const DashboardLayoutControls: React.FC = () => {
                       </div>
 
                       <button
+                        onClick={() => setSectionSize(sectionId, nextSize[size])}
+                        className={`px-1.5 py-0.5 mr-1 rounded text-[10px] uppercase ${
+                          isDark ? 'bg-white/10 text-gray-300' : 'bg-gray-100 text-gray-600'
+                        }`}
+                        title="Section size (click to change)"
+                      >
+                        {size}
+                      </button>
+                      <input
+                        type="checkbox"
+                        checked={isEnabled}
+                        onChange={(e) => handleSectionToggle(sectionId, e.target.checked)}
+                        className="sr-only"
+                        aria-label={`Show ${config.title}`}
+                      />
+                      <button
                         onClick={() => handleSectionToggle(sectionId, !isEnabled)}
                         className={`p-1 rounded-md transition-colors ${
                           isEnabled
@@ -190,6 +250,85 @@ const DashboardLayoutControls: React.FC = () => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Saved Layouts */}
+            <div className="border-t border-gray-200 dark:border-white/10 pt-4 mt-4">
+              <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-3`}>
+                Layouts
+              </h4>
+              <form
+                className="flex gap-2 mb-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (newLayoutName.trim()) {
+                    saveLayoutAs(newLayoutName);
+                    setNewLayoutName('');
+                  }
+                }}
+              >
+                <input
+                  value={newLayoutName}
+                  onChange={(e) => setNewLayoutName(e.target.value)}
+                  placeholder="Save layout as..."
+                  className={`flex-1 min-w-0 text-sm rounded-lg border px-2 py-1 ${
+                    isDark ? 'bg-gray-700 border-white/10 text-white' : 'bg-white border-gray-200'
+                  }`}
+                />
+                <button
+                  type="submit"
+                  title="Save layout"
+                  className={`p-2 rounded-lg ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-50 text-blue-700'}`}
+                >
+                  <Save size={14} />
+                </button>
+              </form>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {savedLayouts.length === 0 && (
+                  <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    No saved layouts yet.
+                  </p>
+                )}
+                {savedLayouts.map((layout) => (
+                  <div key={layout.id} className="flex items-center gap-1">
+                    <button
+                      onClick={() => applyLayout(layout.id)}
+                      className={`flex-1 min-w-0 truncate text-left text-sm px-2 py-1 rounded ${
+                        isDark ? 'hover:bg-white/5 text-gray-200' : 'hover:bg-gray-50 text-gray-800'
+                      }`}
+                      title="Apply layout"
+                    >
+                      {layout.name}
+                    </button>
+                    <button
+                      onClick={() =>
+                        setDefaultLayout(defaultLayoutId === layout.id ? null : layout.id)
+                      }
+                      title={defaultLayoutId === layout.id ? 'Default layout' : 'Set as default'}
+                      className={defaultLayoutId === layout.id ? 'text-yellow-500' : 'text-gray-400'}
+                    >
+                      <Star size={14} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const name = window.prompt('Rename layout', layout.name);
+                        if (name) renameLayout(layout.id, name);
+                      }}
+                      title="Rename"
+                      className="text-gray-400"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteLayout(layout.id)}
+                      title="Delete"
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
 

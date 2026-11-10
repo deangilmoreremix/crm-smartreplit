@@ -1,4 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { useAuth } from './AuthContext';
+import {
+  useDashboardLayoutStore,
+  getVisibleSections,
+  isSectionVisible as isVisibleIn,
+  type SavedLayout,
+  type SectionSize,
+} from '../hooks/useDashboardLayoutStore';
+
+export type { SavedLayout, SectionSize };
 
 interface SectionConfig {
   id: string;
@@ -19,6 +29,23 @@ interface DashboardLayoutContextType {
   getSectionConfig: (id: string) => SectionConfig | undefined;
   reorderSections: (startIndex: number, endIndex: number) => void;
   resetToDefault: () => void;
+  // Additive layout API
+  hiddenSections: string[];
+  visibleSections: string[];
+  isSectionVisible: (id: string) => boolean;
+  toggleSection: (id: string) => void;
+  sectionSizes: Record<string, SectionSize>;
+  setSectionSize: (id: string, size: SectionSize) => void;
+  widgetSettings: Record<string, Record<string, unknown>>;
+  setWidgetSettings: (id: string, patch: Record<string, unknown>) => void;
+  savedLayouts: SavedLayout[];
+  defaultLayoutId: string | null;
+  saveLayoutAs: (name: string) => void;
+  applyLayout: (layoutId: string) => void;
+  renameLayout: (layoutId: string, name: string) => void;
+  deleteLayout: (layoutId: string) => void;
+  setDefaultLayout: (layoutId: string | null) => void;
+  layoutLoading: boolean;
 }
 
 const DashboardLayoutContext = createContext<DashboardLayoutContextType | undefined>(undefined);
@@ -33,7 +60,7 @@ export const useDashboardLayout = () => {
 
 // Updated defaultSectionOrder with GPT-5 enhanced sections
 // Note: kpi-cards, quick-actions, and metrics-cards are now part of executive-overview-section
-const defaultSectionOrder = [
+export const defaultSectionOrder = [
   'gpt5-enhanced-dashboard',
   'gpt5-smart-kpi-section',
   'executive-overview-section',
@@ -54,7 +81,7 @@ const defaultSectionOrder = [
 ];
 
 // Updated sectionConfigs with GPT-5 enhanced sections
-const sectionConfigs: Record<string, SectionConfig> = {
+export const sectionConfigs: Record<string, SectionConfig> = {
   // GPT-5 Enhanced Sections
   'gpt5-enhanced-dashboard': {
     id: 'gpt5-enhanced-dashboard',
@@ -87,6 +114,16 @@ const sectionConfigs: Record<string, SectionConfig> = {
     icon: 'Target',
     component: null,
     color: 'from-green-600 to-teal-600',
+  },
+
+  // Unified tasks + appointments + activity (hidden by default, see DEFAULT_HIDDEN_SECTIONS)
+  'unified-activity': {
+    id: 'unified-activity',
+    title: 'Unified Activity',
+    description: 'Tasks, appointments and recent activity in one timeline',
+    icon: 'CheckSquare',
+    component: null,
+    color: 'from-sky-500 to-blue-600',
   },
 
   // New main sections
@@ -294,107 +331,79 @@ const sectionConfigs: Record<string, SectionConfig> = {
   },
 };
 
+const useOptionalUserId = (): string | null => {
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useAuth().user?.id ?? null;
+  } catch {
+    // Provider rendered outside AuthProvider (e.g. tests): localStorage only.
+    return null;
+  }
+};
+
 export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [sectionOrder, setSectionOrder] = useState<string[]>(() => {
-    // Ensure we always have sections loaded
-    try {
-      const saved = localStorage.getItem('dashboard-section-order');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Migration: Add automations-section and quick-actions-section if missing
-          let migrated = [...parsed];
-          let needsMigration = false;
-
-          // Add automations-section if missing (insert before quick-actions or after executive-overview)
-          if (!migrated.includes('automations-section')) {
-            const quickActionsIndex = migrated.indexOf('quick-actions-section');
-            const executiveIndex = migrated.indexOf('executive-overview-section');
-
-            if (quickActionsIndex !== -1) {
-              // Insert before quick-actions
-              migrated.splice(quickActionsIndex, 0, 'automations-section');
-            } else if (executiveIndex !== -1) {
-              // Insert after executive-overview
-              migrated.splice(executiveIndex + 1, 0, 'automations-section');
-            } else {
-              // Add at the beginning if neither exists
-              migrated.unshift('automations-section');
-            }
-            needsMigration = true;
-          }
-
-          // Add quick-actions-section if missing (insert after automations)
-          if (!migrated.includes('quick-actions-section')) {
-            const automationsIndex = migrated.indexOf('automations-section');
-            if (automationsIndex !== -1) {
-              // Insert after automations
-              migrated.splice(automationsIndex + 1, 0, 'quick-actions-section');
-            } else {
-              // Add after automations was just added
-              const newAutomationsIndex = migrated.indexOf('automations-section');
-              if (newAutomationsIndex !== -1) {
-                migrated.splice(newAutomationsIndex + 1, 0, 'quick-actions-section');
-              }
-            }
-            needsMigration = true;
-          }
-
-          // Save migrated layout back to localStorage
-          if (needsMigration) {
-            localStorage.setItem('dashboard-section-order', JSON.stringify(migrated));
-          }
-
-          return migrated;
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to load dashboard sections from localStorage:', error);
-      localStorage.removeItem('dashboard-section-order');
-    }
-
-    return [...defaultSectionOrder];
-  });
+  const userId = useOptionalUserId();
+  const { state, dispatch, loading } = useDashboardLayoutStore(userId, defaultSectionOrder);
 
   const [isDragging, setIsDragging] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
-
-  // Save to localStorage whenever order changes
-  useEffect(() => {
-    localStorage.setItem('dashboard-section-order', JSON.stringify(sectionOrder));
-  }, [sectionOrder]);
 
   const getSectionConfig = (id: string): SectionConfig | undefined => {
     return sectionConfigs[id];
   };
 
+  const setSectionOrder = useCallback(
+    (order: string[]) => dispatch({ type: 'setOrder', order }),
+    [dispatch]
+  );
+
   const reorderSections = (startIndex: number, endIndex: number) => {
-    const newOrder = Array.from(sectionOrder);
+    const newOrder = Array.from(state.sectionOrder);
     const [removed] = newOrder.splice(startIndex, 1);
     newOrder.splice(endIndex, 0, removed);
     setSectionOrder(newOrder);
   };
 
   const resetToDefault = () => {
-    setSectionOrder([...defaultSectionOrder]);
-    localStorage.removeItem('dashboard-section-order');
+    dispatch({ type: 'reset', defaultOrder: defaultSectionOrder });
   };
 
-  return (
-    <DashboardLayoutContext.Provider
-      value={{
-        sectionOrder,
-        setSectionOrder,
-        isDragging,
-        setIsDragging,
-        draggedItem,
-        setDraggedItem,
-        getSectionConfig,
-        reorderSections,
-        resetToDefault,
-      }}
-    >
-      {children}
-    </DashboardLayoutContext.Provider>
+  const newId = () =>
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `layout-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const value = useMemo<DashboardLayoutContextType>(
+    () => ({
+      sectionOrder: state.sectionOrder,
+      setSectionOrder,
+      isDragging,
+      setIsDragging,
+      draggedItem,
+      setDraggedItem,
+      getSectionConfig,
+      reorderSections,
+      resetToDefault,
+      hiddenSections: state.hiddenSections,
+      visibleSections: getVisibleSections(state),
+      isSectionVisible: (id) => isVisibleIn(state, id),
+      toggleSection: (id) => dispatch({ type: 'toggle', id }),
+      sectionSizes: state.sectionSizes,
+      setSectionSize: (id, size) => dispatch({ type: 'setSize', id, size }),
+      widgetSettings: state.widgetSettings,
+      setWidgetSettings: (id, patch) => dispatch({ type: 'widgetSettings', id, patch }),
+      savedLayouts: state.savedLayouts,
+      defaultLayoutId: state.defaultLayoutId,
+      saveLayoutAs: (name) => dispatch({ type: 'saveAs', name, layoutId: newId() }),
+      applyLayout: (layoutId) => dispatch({ type: 'apply', layoutId }),
+      renameLayout: (layoutId, name) => dispatch({ type: 'rename', layoutId, name }),
+      deleteLayout: (layoutId) => dispatch({ type: 'delete', layoutId }),
+      setDefaultLayout: (layoutId) => dispatch({ type: 'setDefault', layoutId }),
+      layoutLoading: loading,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, isDragging, draggedItem, loading]
   );
+
+  return <DashboardLayoutContext.Provider value={value}>{children}</DashboardLayoutContext.Provider>;
 };

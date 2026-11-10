@@ -10,6 +10,8 @@ import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { useDashboardLayout } from '../contexts/DashboardLayoutContext';
 import DraggableSection from './DraggableSection';
 import DashboardLayoutControls from './DashboardLayoutControls';
+import UnifiedActivityWidget from './dashboard/UnifiedActivityWidget';
+import LayoutWidgetSettings from './dashboard/LayoutWidgetSettings';
 import { LoadingSpinner } from './ui/LoadingSpinner';
 import ModuleFederationPipeline from './ModuleFederationPipeline';
 import RemoteWhiteLabelLoader from './RemoteWhiteLabelLoader';
@@ -59,6 +61,9 @@ import PersistentVideoCallButton from './PersistentVideoCallButton';
 import VideoCallPreviewWidget from './VideoCallPreviewWidget';
 import VideoCallOverlay from './VideoCallOverlay';
 
+// Per-section width (only compact/wide differ from the default full-width stack)
+const SIZE_CLASS = { compact: 'max-w-3xl', normal: '', wide: 'lg:-mx-2 xl:-mx-4' } as const;
+
 // Memo Dashboard component to prevent unnecessary re-renders
 const Dashboard: React.FC = React.memo(() => {
   const { deals, fetchDeals, isLoading } = useDealStore();
@@ -70,7 +75,7 @@ const Dashboard: React.FC = React.memo(() => {
   const { openTool } = useAITools();
   const { isDark } = useTheme();
   const { config } = useWhitelabel();
-  const { sectionOrder } = useDashboardLayout();
+  const { visibleSections: sectionOrder, sectionSizes } = useDashboardLayout();
 
   const ai = useAIAssistant();
 
@@ -281,11 +286,24 @@ const Dashboard: React.FC = React.memo(() => {
           </div>
         );
 
-      case 'charts-section':
-        return <ChartsSection />;
+      case 'unified-activity':
+        return <UnifiedActivityWidget />;
 
+      case 'charts-section':
       case 'analytics-section':
-        return <ChartsSection />;
+        return (
+          <>
+            <LayoutWidgetSettings
+              sectionId={sectionId}
+              metrics={[
+                { value: 'performance', label: 'Performance' },
+                { value: 'pipeline', label: 'Pipeline' },
+                { value: 'breakdown', label: 'Breakdown' },
+              ]}
+            />
+            <ChartsSection />
+          </>
+        );
 
       case 'apps-section':
         return <ConnectedApps />;
@@ -435,7 +453,9 @@ const Dashboard: React.FC = React.memo(() => {
             try {
               return (
                 <DraggableSection key={sectionId} sectionId={sectionId} index={index}>
-                  <div id={sectionId}>{renderSectionContent(sectionId)}</div>
+                  <div id={sectionId} className={SIZE_CLASS[sectionSizes[sectionId] ?? 'normal']}>
+                    {renderSectionContent(sectionId)}
+                  </div>
                 </DraggableSection>
               );
             } catch (error) {

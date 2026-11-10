@@ -18,6 +18,7 @@ const DraggableSection: React.FC<DraggableSectionProps> = ({ sectionId, children
     sectionOrder,
     setSectionOrder,
     getSectionConfig,
+    toggleSection,
   } = useDashboardLayout();
 
   const { isDark } = useTheme();
@@ -89,8 +90,7 @@ const DraggableSection: React.FC<DraggableSectionProps> = ({ sectionId, children
   };
 
   const handleRemoveSection = () => {
-    const newOrder = sectionOrder.filter((id) => id !== sectionId);
-    setSectionOrder(newOrder);
+    toggleSection(sectionId);
   };
 
   const isBeingDragged = draggedItem === sectionId;

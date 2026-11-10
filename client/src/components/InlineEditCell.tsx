@@ -10,6 +10,8 @@ interface InlineEditCellProps {
   children?: React.ReactNode;
   placeholder?: string;
   className?: string;
+  /** Called after Tab saved the edit; lets a table move to the next cell (Shift+Tab passes true). */
+  onTab?: (shift: boolean) => void;
 }
 
 const InlineEditCell: React.FC<InlineEditCellProps> = ({
@@ -20,6 +22,7 @@ const InlineEditCell: React.FC<InlineEditCellProps> = ({
   children,
   placeholder = 'N/A',
   className = '',
+  onTab,
 }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -42,21 +45,26 @@ const InlineEditCell: React.FC<InlineEditCellProps> = ({
     setError(null);
   };
 
-  const commit = async () => {
-    if (savingRef.current) return;
+  const commit = async (): Promise<boolean> => {
+    if (savingRef.current) return false;
     const current = value === null || value === undefined ? '' : String(value);
-    if (draft === current) return cancel();
+    if (draft === current) {
+      cancel();
+      return true;
+    }
     const next: string | number = type === 'number' ? Number(draft) : draft;
     if (type === 'number' && (draft.trim() === '' || Number.isNaN(next))) {
       setError('Enter a number');
-      return;
+      return false;
     }
     savingRef.current = true;
     try {
       await onSave(next);
       setEditing(false);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
+      return false;
     } finally {
       savingRef.current = false;
     }
@@ -69,6 +77,10 @@ const InlineEditCell: React.FC<InlineEditCellProps> = ({
     } else if (e.key === 'Escape') {
       e.preventDefault();
       cancel();
+    } else if (e.key === 'Tab' && onTab) {
+      e.preventDefault();
+      const shift = e.shiftKey;
+      void commit().then((ok) => ok && onTab(shift));
     }
   };
 

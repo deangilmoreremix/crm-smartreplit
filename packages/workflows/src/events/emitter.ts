@@ -147,10 +147,19 @@ export function setupWorkflowTriggerHandlers(
 }
 
 export async function triggerWorkflowsForEvent(event: WorkflowEvent): Promise<void> {
-  const [{ supabase }, { runWorkflow }] = await Promise.all([
+  const [{ supabase }, { runWorkflow, resumeWaitersForEvent }] = await Promise.all([
     import('../supabase'),
     import('../engine/runner'),
   ]);
+
+  // Runs paused on wait_for_event for this event continue before new runs start.
+  if (event.type !== 'MANUAL' && event.type !== 'SCHEDULED' && event.type !== 'WEBHOOK') {
+    await resumeWaitersForEvent(event.userId, event.type, event.objectType, {
+      ...(event.data || {}),
+      objectType: event.objectType,
+      recordId: event.recordId,
+    }).catch((e) => console.error('Error resuming event waiters:', e));
+  }
 
   const { data: workflows, error } = await supabase
     .from('workflows')

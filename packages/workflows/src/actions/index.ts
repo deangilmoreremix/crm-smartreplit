@@ -1,5 +1,6 @@
 import { ActionExecutor, WorkflowContext } from '../engine/WorkflowEngine';
 import { supabase } from '../supabase';
+import { assertPublicHttps } from '../security/ssrf';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -237,31 +238,22 @@ export const createContactAction: ActionExecutor = async (context, config) => {
 
 const WEBHOOK_TIMEOUT_MS = 10_000;
 
-function assertPublicHttps(raw: string): URL {
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    throw new Error(`Invalid webhook url: ${raw}`);
+const FORBIDDEN_HEADERS = new Set(['host', 'content-length', 'connection', 'transfer-encoding']);
+
+function safeHeaders(headers: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!headers || typeof headers !== 'object') return out;
+  for (const [k, v] of Object.entries(headers as Record<string, unknown>)) {
+    if (FORBIDDEN_HEADERS.has(k.toLowerCase())) continue;
+    if (typeof v !== 'string' && typeof v !== 'number') continue;
+    const val = String(v);
+    if (/[\r\n]/.test(k) || /[\r\n]/.test(val)) throw new Error(`Invalid header "${k}"`);
+    out[k] = val;
   }
-  if (url.protocol !== 'https:') throw new Error('Webhook url must use https');
-  const host = url.hostname.toLowerCase();
-  if (
-    host === 'localhost' ||
-    host.endsWith('.localhost') ||
-    host.endsWith('.internal') ||
-    /^\[?(::1|fe80:|fc|fd)/.test(host) ||
-    /^(127|10|0)\./.test(host) ||
-    /^192\.168\./.test(host) ||
-    /^169\.254\./.test(host) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(host)
-  ) {
-    throw new Error('Webhook url must not target a private or local address');
-  }
-  return url;
+  return out;
 }
 
-export const webhookAction: ActionExecutor = async (_context, config) => {
+const httpRequest: ActionExecutor = async (_context, config) => {
   const { url, method, headers, body } = config as {
     url: string;
     method?: string;
@@ -279,7 +271,10 @@ export const webhookAction: ActionExecutor = async (_context, config) => {
   try {
     const res = await fetch(target.toString(), {
       method: verb,
-      headers: { ...(hasBody ? { 'Content-Type': 'application/json' } : {}), ...(headers || {}) },
+      headers: {
+        ...(hasBody && typeof body !== 'string' ? { 'Content-Type': 'application/json' } : {}),
+        ...safeHeaders(headers),
+      },
       body: hasBody ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
       signal: controller.signal,
       redirect: 'error',
@@ -296,6 +291,9 @@ export const webhookAction: ActionExecutor = async (_context, config) => {
     clearTimeout(timer);
   }
 };
+
+export const webhookAction: ActionExecutor = httpRequest;
+export const httpRequestAction: ActionExecutor = httpRequest;
 
 // ---------------------------------------------------------------------------
 // Wait (bounded: runs happen inside a request/function, so long delays are rejected)
@@ -414,6 +412,111 @@ export const aiAction: ActionExecutor = async (_context, config) => {
   }
 };
 
+
+// ---------------------------------------------------------------------------
+// Delay / wait_for_event / form: pausing actions (the runner persists workflow_run_waits)
+// ---------------------------------------------------------------------------
+
+const MAX_DELAY_MS = 30 * 24 * 3600 * 1000;
+const unitMs = (unit?: string) =>
+  unit === 'days' ? 86_400_000 : unit === 'hours' ? 3_600_000 : unit === 'minutes' ? 60_000 : unit === 'seconds' ? 1000 : 1;
+
+/** <= 20s sleeps inline; longer delays pause the run and the scheduler resumes it. */
+export const delayAction: ActionExecutor = async (_context, config) => {
+  const { duration, unit } = config as { duration: number; unit?: string };
+  if (duration === undefined || duration === null) {
+    return { success: false, error: 'Missing required field: duration' };
+  }
+  const ms = Number(duration) * unitMs(unit);
+  if (!Number.isFinite(ms) || ms < 0) throw new Error('Invalid delay duration');
+  if (ms > MAX_DELAY_MS) throw new Error('Delay exceeds the 30 day maximum');
+  if (ms <= MAX_WAIT_MS) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    return { success: true, output: { delayedMs: ms, paused: false } };
+  }
+  return {
+    success: true,
+    output: { delayedMs: ms, paused: true },
+    wait: { kind: 'delay', resumeAt: new Date(Date.now() + ms).toISOString() },
+  };
+};
+
+/** config: { event: 'RECORD_CREATED'|..., objectType?: 'contacts', name?: 'custom event', match?: {field: value}, timeoutMinutes? } */
+export const waitForEventAction: ActionExecutor = async (_context, config) => {
+  const { event, objectType, name, match, timeoutMinutes } = config as {
+    event?: string;
+    objectType?: string;
+    name?: string;
+    match?: Record<string, unknown>;
+    timeoutMinutes?: number;
+  };
+  let eventKey: string;
+  if (name) eventKey = `custom:${String(name)}`;
+  else if (event) eventKey = `${String(event).toUpperCase()}:${objectType ? String(objectType) : '*'}`;
+  else return { success: false, error: 'Missing required field: event (or name)' };
+
+  const timeout = Number(timeoutMinutes);
+  const resumeAt =
+    Number.isFinite(timeout) && timeout > 0
+      ? new Date(Date.now() + Math.min(timeout * 60_000, MAX_DELAY_MS)).toISOString()
+      : undefined;
+  return {
+    success: true,
+    output: { waitingFor: eventKey },
+    wait: { kind: 'event', eventKey, match: match && typeof match === 'object' ? match : undefined, resumeAt },
+  };
+};
+
+/** config: { title?, fields: [{name,label?,type?,required?}] } - run pauses until POST /api/workflows/runs/:id/resume */
+export const formAction: ActionExecutor = async (_context, config) => {
+  const { title, fields } = config as { title?: string; fields?: unknown };
+  if (!Array.isArray(fields) || fields.length === 0 || fields.length > 50) {
+    return { success: false, error: 'form requires 1-50 fields' };
+  }
+  const clean = fields.map((f: any) => {
+    if (!f || typeof f.name !== 'string' || !/^[A-Za-z_][\w]{0,63}$/.test(f.name)) {
+      throw new Error('Every form field needs a simple name');
+    }
+    return { name: f.name, label: f.label ? String(f.label) : undefined, type: f.type ? String(f.type) : 'text', required: !!f.required };
+  });
+  return { success: true, output: { awaitingForm: true }, wait: { kind: 'form', form: { title, fields: clean } } };
+};
+
+/** Validates submitted form values against the declared fields (used by the resume route). */
+export function validateFormSubmission(
+  form: { fields: Array<{ name: string; required?: boolean; type?: string }> },
+  data: unknown
+): { ok: true; values: Record<string, unknown> } | { ok: false; error: string } {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, error: 'data must be an object' };
+  const input = data as Record<string, unknown>;
+  const values: Record<string, unknown> = {};
+  for (const f of form.fields) {
+    const v = input[f.name];
+    if (f.required && (v === undefined || v === null || v === '')) return { ok: false, error: `Field "${f.name}" is required` };
+    if (v === undefined) continue;
+    if (typeof v === 'object' && v !== null) return { ok: false, error: `Field "${f.name}" must be a scalar` };
+    if (typeof v === 'string' && v.length > 10_000) return { ok: false, error: `Field "${f.name}" is too long` };
+    values[f.name] = v;
+  }
+  return { ok: true, values };
+}
+
+/** AI agent (no tools): single OpenAI Responses call; optional JSON parsing of the reply. */
+export const aiAgentAction: ActionExecutor = async (context, config) => {
+  const { tools, jsonOutput, ...rest } = config as Record<string, unknown> & { tools?: unknown; jsonOutput?: boolean };
+  if (tools !== undefined && tools !== null && tools !== 'none' && !(Array.isArray(tools) && tools.length === 0)) {
+    throw new Error('AI_AGENT tools are not supported yet (use tools: "none")');
+  }
+  const result = await aiAction(context, rest);
+  if (!result.success || !jsonOutput) return result;
+  const text = String((result.output as any)?.text ?? '');
+  try {
+    return { ...result, output: { ...(result.output as object), json: JSON.parse(text) } };
+  } catch {
+    throw new Error('AI_AGENT reply was not valid JSON');
+  }
+};
+
 // ---------------------------------------------------------------------------
 // Unsupported (no provider in the stack / unsafe) - fail loudly rather than fake success
 // ---------------------------------------------------------------------------
@@ -446,4 +549,9 @@ export const registerAllActions = (engine: {
   engine.registerAction('CREATE_DEAL', createDealAction);
   engine.registerAction('CREATE_CONTACT', createContactAction);
   engine.registerAction('AI', aiAction);
+  engine.registerAction('HTTP_REQUEST', httpRequestAction);
+  engine.registerAction('DELAY', delayAction);
+  engine.registerAction('WAIT_FOR_EVENT', waitForEventAction);
+  engine.registerAction('FORM', formAction);
+  engine.registerAction('AI_AGENT', aiAgentAction);
 };

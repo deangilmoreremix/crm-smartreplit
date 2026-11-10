@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShortcuts } from '../contexts/ShortcutContext';
 import ShortcutHelpDialog from './ShortcutHelpDialog';
+import { LIST_NAV_BINDINGS } from '../hooks/useListKeyboardNav';
 
 // Host-level shortcuts. Navigation targets were verified against the route
 // table in App.tsx (/dashboard, /contacts, /pipeline, /analytics, /calendar, /tasks).
@@ -46,6 +47,11 @@ export const GlobalShortcuts: React.FC<{ children?: React.ReactNode }> = ({ chil
               handler: () => navigate(s.route as string),
             }
       );
+
+    // Documentation-only entries: list navigation is handled by useListKeyboardNav on each list.
+    LIST_NAV_BINDINGS.forEach((b) =>
+      registered.push({ id: `host-${b.id}`, combo: b.combo, description: b.description, category: 'Lists', handler: () => {} })
+    );
 
     registered.forEach(register);
     return () => registered.forEach((s) => unregister(s.id));

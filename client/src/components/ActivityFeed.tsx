@@ -29,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from './ui/dropdown-menu';
+import UnifiedActivityWidget from './dashboard/UnifiedActivityWidget';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 const activityIcons: Record<Activity['type'], React.ElementType> = {
@@ -176,7 +177,7 @@ interface ActivityFilters {
   dateRange?: 'today' | 'week' | 'month' | 'all';
 }
 
-export const ActivityFeed: React.FC = () => {
+const TaskActivityFeed: React.FC = () => {
   const { activities } = useTaskStore();
 
   const [filters, setFilters] = useState<ActivityFilters>({
@@ -441,3 +442,11 @@ export const ActivityFeed: React.FC = () => {
     </div>
   );
 };
+
+interface ActivityFeedProps {
+  /** 'tasks' (default) = task store activities; 'unified' = tasks + appointments + timeline. */
+  source?: 'tasks' | 'unified';
+}
+
+export const ActivityFeed: React.FC<ActivityFeedProps> = ({ source = 'tasks' }) =>
+  source === 'unified' ? <UnifiedActivityWidget limit={100} /> : <TaskActivityFeed />;
