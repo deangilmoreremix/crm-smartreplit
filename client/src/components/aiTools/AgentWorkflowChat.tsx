@@ -262,43 +262,64 @@ const AgentWorkflowChat: React.FC = () => {
     return steps;
   };
 
+  const updateStep = (workflowId: string, stepId: string, patch: Partial<WorkflowStep>) => {
+    setWorkflows((prev) =>
+      prev.map((w) =>
+        w.id === workflowId
+          ? { ...w, steps: w.steps.map((s) => (s.id === stepId ? { ...s, ...patch } : s)) }
+          : w
+      )
+    );
+  };
+
+  // Runs each step through the real assistant (/api/assistants/chat). The assistant has no
+  // side-effecting tools here, so each step's result is its actual response (a plan/draft),
+  // and any failure marks the step and workflow as failed instead of reporting success.
   const executeWorkflow = async (workflow: AgentWorkflow) => {
+    if (!threadId || !assistantId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: 'system',
+          content: 'Error: the workflow agent is not available, so the workflow cannot run.',
+          createdAt: new Date(),
+        },
+      ]);
+      return;
+    }
+
     setWorkflows((prev) =>
       prev.map((w) => (w.id === workflow.id ? { ...w, status: 'active', lastRun: new Date() } : w))
     );
 
-    // Simulate workflow execution
     for (const step of workflow.steps) {
-      setWorkflows((prev) =>
-        prev.map((w) =>
-          w.id === workflow.id
-            ? {
-                ...w,
-                steps: w.steps.map((s) => (s.id === step.id ? { ...s, status: 'running' } : s)),
-              }
-            : w
-        )
-      );
+      updateStep(workflow.id, step.id, { status: 'running', error: undefined, result: undefined });
 
-      // Execute step with processing delay
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(undefined), 1500);
-      });
-
-      setWorkflows((prev) =>
-        prev.map((w) =>
-          w.id === workflow.id
-            ? {
-                ...w,
-                steps: w.steps.map((s) =>
-                  s.id === step.id
-                    ? { ...s, status: 'completed', result: `${step.name} completed successfully` }
-                    : s
-                ),
-              }
-            : w
-        )
-      );
+      try {
+        const result = await assistants.chatWithAssistant(
+          `Execute step "${step.name}" of the workflow "${workflow.name}".\nAction: ${step.action}\nParameters: ${JSON.stringify(step.parameters)}\nDescribe exactly what you did or produced for this step. If you cannot perform the action with the tools you have, say so plainly.`,
+          assistantId,
+          threadId
+        );
+        updateStep(workflow.id, step.id, { status: 'completed', result: result.response });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Step failed';
+        updateStep(workflow.id, step.id, { status: 'failed', error: message });
+        setWorkflows((prev) =>
+          prev.map((w) => (w.id === workflow.id ? { ...w, status: 'failed' } : w))
+        );
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error-${Date.now()}`,
+            role: 'system',
+            content: `Workflow "${workflow.name}" failed at step "${step.name}": ${message}`,
+            createdAt: new Date(),
+          },
+        ]);
+        return;
+      }
     }
 
     setWorkflows((prev) =>
@@ -307,13 +328,12 @@ const AgentWorkflowChat: React.FC = () => {
       )
     );
 
-    // Add completion message
     setMessages((prev) => [
       ...prev,
       {
         id: `completion_${Date.now()}`,
         role: 'system',
-        content: `✅ Workflow "${workflow.name}" completed successfully! All ${workflow.steps.length} steps executed.`,
+        content: `Workflow "${workflow.name}" finished: the assistant responded to all ${workflow.steps.length} steps. See each step's result for details.`,
         createdAt: new Date(),
       },
     ]);
@@ -495,15 +515,23 @@ const AgentWorkflowChat: React.FC = () => {
 
                   <div className="space-y-1 mb-3">
                     {workflow.steps.map((step) => (
-                      <div key={step.id} className="flex items-center text-xs">
-                        {getStatusIcon(step.status)}
-                        <span className="ml-2">{step.name}</span>
+                      <div key={step.id} className="text-xs">
+                        <div className="flex items-center">
+                          {getStatusIcon(step.status)}
+                          <span className="ml-2">{step.name}</span>
+                        </div>
+                        {step.result && (
+                          <p className="ml-6 mt-1 text-gray-600 whitespace-pre-wrap">
+                            {String(step.result)}
+                          </p>
+                        )}
+                        {step.error && <p className="ml-6 mt-1 text-red-600">{step.error}</p>}
                       </div>
                     ))}
                   </div>
 
                   <div className="flex space-x-2">
-                    {workflow.status === 'draft' && (
+                    {(workflow.status === 'draft' || workflow.status === 'failed') && (
                       <button
                         onClick={() => executeWorkflow(workflow)}
                         className="flex-1 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"

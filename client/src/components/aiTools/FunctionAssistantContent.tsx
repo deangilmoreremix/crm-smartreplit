@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOpenAIFunctions } from '../../services/openAiFunctionService';
 import AIToolContent from '../shared/AIToolContent';
+import { useContactStore } from '../../store/contactStore';
+import { useDealStore } from '../../store/dealStore';
 import {
   Bot,
   User,
@@ -50,6 +52,9 @@ const FunctionAssistantContent: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
 
   const functionService = useOpenAIFunctions();
+  // Real CRM data from the same stores the CRM pages use
+  const { contacts: contactsRaw } = useContactStore();
+  const { deals: dealsRaw } = useDealStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change
@@ -72,6 +77,30 @@ const FunctionAssistantContent: React.FC = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const buildCrmContext = (): string => {
+    const toList = (raw: any): any[] => (Array.isArray(raw) ? raw : Object.values(raw || {}));
+    const contacts = toList(contactsRaw)
+      .slice(0, 50)
+      .map((c: any) => ({
+        id: c.id,
+        name: `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.name,
+        email: c.email,
+        company: c.company,
+        status: c.status,
+      }));
+    const deals = toList(dealsRaw)
+      .slice(0, 50)
+      .map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        value: d.value,
+        stage: typeof d.stage === 'string' ? d.stage : d.stage?.name,
+        contactId: d.contactId,
+        priority: d.priority,
+      }));
+    return `You have access to this user's CRM data through functions. Current CRM data:\nContacts: ${JSON.stringify(contacts)}\nDeals: ${JSON.stringify(deals)}`;
   };
 
   const handleSendMessage = async () => {
@@ -109,19 +138,15 @@ const FunctionAssistantContent: React.FC = () => {
       // Call the assistant with function capabilities
       const response = await functionService.salesAssistantWithFunctions(
         input.trim(),
-        "You have access to this user's CRM data through functions.",
+        buildCrmContext(),
         previousMessages
       );
-
-      // Process function calls that might have happened
-      // Note: In a real implementation, we'd track the actual function calls and results
-      // that were exchanged with OpenAI. For analysis purposes, we'll simulate this.
 
       // Add assistant response
       const assistantMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: response.content || 'I processed your request.',
+        content: response.content,
         timestamp: new Date(),
         functionCall: response.function_call
           ? {

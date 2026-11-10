@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { MODEL_TIERS } from '@shared/aiModels';
 
 export interface AIModelConfig {
   id: string;
@@ -126,39 +127,32 @@ const FALLBACK_MODELS: Record<string, AIModelConfig> = {
     created_at: new Date(),
     updated_at: new Date(),
   },
-  'gpt-4o-mini': {
-    id: 'gpt-4o-mini',
+  // TODO: fill pricing from OpenAI pricing page (left unset rather than invented)
+  [MODEL_TIERS.fast]: {
+    id: MODEL_TIERS.fast,
     provider: 'openai',
-    model_name: 'gpt-4o-mini',
-    display_name: 'GPT-4o Mini',
-    pricing: {
-      input_per_1m_tokens: 0.15,
-      output_per_1m_tokens: 0.6,
-    },
+    model_name: MODEL_TIERS.fast,
+    display_name: 'GPT-6 Luna',
+    capabilities: ['text-generation', 'reasoning', 'function-calling', 'code-generation'],
+    context_window: 128000,
+    max_tokens: 16384,
+    is_active: true,
+    is_recommended: false,
+    description: 'Fastest and most cost-effective',
+    created_at: new Date(),
+    updated_at: new Date(),
+  },
+  [MODEL_TIERS.default]: {
+    id: MODEL_TIERS.default,
+    provider: 'openai',
+    model_name: MODEL_TIERS.default,
+    display_name: 'GPT-6.1 Terra',
     capabilities: ['text-generation', 'reasoning', 'function-calling', 'code-generation'],
     context_window: 128000,
     max_tokens: 16384,
     is_active: true,
     is_recommended: true,
-    description: 'Cost-effective GPT-4 level model',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  'gpt-3.5-turbo': {
-    id: 'gpt-3.5-turbo',
-    provider: 'openai',
-    model_name: 'gpt-3.5-turbo',
-    display_name: 'GPT-3.5 Turbo',
-    pricing: {
-      input_per_1m_tokens: 0.5,
-      output_per_1m_tokens: 1.5,
-    },
-    capabilities: ['text-generation', 'function-calling'],
-    context_window: 16385,
-    max_tokens: 4096,
-    is_active: true,
-    is_recommended: false,
-    description: 'Fast and affordable model',
+    description: 'Fast and efficient (default)',
     created_at: new Date(),
     updated_at: new Date(),
   },

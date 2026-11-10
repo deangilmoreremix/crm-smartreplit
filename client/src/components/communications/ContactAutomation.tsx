@@ -164,21 +164,8 @@ const ContactAutomation: React.FC = () => {
   };
 
   const runManuallyNow = async (rule: AutomationRule) => {
-    try {
-      // Simulate manual execution
-
-      // Update success count
-      setAutomationRules((prev) =>
-        prev.map((r) =>
-          r.id === rule.id ? { ...r, successCount: r.successCount + 1, lastRun: new Date() } : r
-        )
-      );
-
-      alert(`Automation rule "${rule.name}" executed successfully!`);
-    } catch (error) {
-      console.error('Failed to execute rule:', error);
-      alert('Failed to execute automation rule');
-    }
+    // Rule execution is not wired to a backend, so report that instead of faking a successful run.
+    alert(`Manual execution of "${rule.name}" is not available yet: automation rules are not connected to a backend.`);
   };
 
   const getTriggerIcon = (triggerType: string) => {

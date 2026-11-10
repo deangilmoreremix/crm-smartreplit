@@ -56,10 +56,23 @@ export async function analyzeSentiment(text: string): Promise<{
       body: { text },
     });
     if (error) throw error;
-    return data || { sentiment: 'neutral', confidence: 0.5, summary: 'Analysis complete.' };
+    if (!data) throw new Error('Sentiment analysis returned no data');
+    return data;
   } catch (error) {
-    console.warn('Edge function unavailable, using fallback:', error);
-    return { sentiment: 'neutral', confidence: 0.5, summary: 'Unable to complete sentiment analysis.' };
+    console.warn('Edge function unavailable, using server fallback:', error);
+    const prompt = `Analyze the sentiment of the following text. Respond with ONLY a JSON object of the form {"sentiment":"positive|negative|neutral","confidence":<number 0-1>,"summary":"<one sentence>"}.\n\nText:\n${text}`;
+    const raw = await useServerAPI(prompt, 'sentiment-analyzer');
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Sentiment analysis failed: unparseable AI response');
+    const parsed = JSON.parse(match[0]);
+    if (!['positive', 'negative', 'neutral'].includes(parsed?.sentiment)) {
+      throw new Error('Sentiment analysis failed: invalid AI response');
+    }
+    return {
+      sentiment: parsed.sentiment,
+      confidence: Number(parsed.confidence),
+      summary: String(parsed.summary ?? ''),
+    };
   }
 }
 
@@ -178,4 +191,13 @@ export async function generateContent(prompt: string, type: string): Promise<str
 
 export async function analyzeText(text: string, analysisType: string): Promise<string> {
   return useServerAPI(`Analyze this text (${analysisType}):\n\n${text}`, `text-analyzer-${analysisType}`);
+}
+
+export async function generateSubjectLines(params: {
+  purpose: string;
+  audience: string;
+  keyMessage: string;
+}): Promise<string> {
+  const prompt = `Write 5 email subject lines.\n\nEmail purpose: ${params.purpose}\nTarget audience: ${params.audience}\nKey message: ${params.keyMessage}\n\nFormat as a Markdown numbered list. For each subject line add one short sub-bullet explaining why it should work. Keep subject lines under 60 characters. Do not invent open-rate statistics or send-time claims.`;
+  return useServerAPI(prompt, 'subject-line-generator');
 }

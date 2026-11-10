@@ -59,6 +59,7 @@ const Contacts: React.FC = () => {
   // Local state for UI
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -292,32 +293,55 @@ const Contacts: React.FC = () => {
       });
   };
 
+  // Score contacts with the server-side AI scoring endpoint. Contacts whose scoring fails keep
+  // their existing score; the failure count is surfaced via analysisError.
+  const scoreContactsWithAI = async (targets: Contact[]) => {
+    setAnalysisError(null);
+    const scores = new Map<string, number>();
+    let failed = 0;
+    let lastError = '';
+
+    for (const contact of targets) {
+      try {
+        const response = await fetch(`/api/contacts/${contact.id}/score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.error || `Scoring failed (${response.status})`);
+        }
+        const result = await response.json();
+        const score = Math.round(Number(result.score));
+        if (!Number.isFinite(score)) throw new Error('Scoring returned no score');
+        scores.set(String(contact.id), Math.max(0, Math.min(100, score)));
+      } catch (err) {
+        failed++;
+        lastError = err instanceof Error ? err.message : 'Scoring failed';
+      }
+    }
+
+    if (scores.size > 0) {
+      scores.forEach((score, id) => updateContact(id, { score }));
+      setContacts((prev) =>
+        prev.map((c) => (scores.has(String(c.id)) ? { ...c, score: scores.get(String(c.id)) } : c))
+      );
+    }
+    if (failed > 0) {
+      setAnalysisError(`AI scoring failed for ${failed} of ${targets.length} contacts: ${lastError}`);
+    }
+  };
+
   // Handle AI analysis of all contacts
   const handleAnalyzeAllContacts = async () => {
     setIsAnalyzing(true);
 
     try {
-      // In a real app, we would process all leads in batches
-      // For demo purposes, just wait a moment and update scores
-      await new Promise((r) => setTimeout(r, 1500));
-
-      const updatedContacts = contacts.map((contact) => {
-        // Simple mock logic to simulate AI scoring
-        const randomAdjustment = Math.floor(Math.random() * 10) - 5;
-        const newScore = Math.max(0, Math.min(100, (contact.score || 50) + randomAdjustment));
-
-        // Update contact in supabase
-        updateContact(contact.id, { ...contact, score: newScore });
-
-        return {
-          ...contact,
-          score: newScore,
-        };
-      });
-
-      setContacts(updatedContacts);
+      await scoreContactsWithAI(contacts);
     } catch (err) {
       console.error('Error analyzing contacts:', err);
+      setAnalysisError(err instanceof Error ? err.message : 'AI scoring failed');
     } finally {
       setIsAnalyzing(false);
     }
@@ -465,24 +489,7 @@ const Contacts: React.FC = () => {
     setIsAnalyzing(true);
 
     try {
-      // Simple mock logic to simulate AI scoring
-      const updatedContacts = contacts.map((contact) => {
-        if (selectedContacts.includes(contact.id)) {
-          const randomAdjustment = Math.floor(Math.random() * 10) - 5;
-          const newScore = Math.max(0, Math.min(100, (contact.score || 50) + randomAdjustment));
-
-          // Update contact in store
-          updateContact(contact.id, { score: newScore });
-
-          return {
-            ...contact,
-            score: newScore,
-          };
-        }
-        return contact;
-      });
-
-      setContacts(updatedContacts);
+      await scoreContactsWithAI(contacts.filter((c) => selectedContacts.includes(c.id)));
 
       // Clear selected contacts after bulk operation
       setSelectedContacts([]);
@@ -547,6 +554,7 @@ const Contacts: React.FC = () => {
           </button>
         </div>
       </header>
+      {analysisError && <p className="mb-4 text-sm text-red-600">{analysisError}</p>}
 
       {/* Bulk Actions Bar */}
       {showBulkActions && (

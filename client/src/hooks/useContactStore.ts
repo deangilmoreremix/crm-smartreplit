@@ -503,80 +503,70 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     set({ selectedContacts: [] });
   },
 
-  // AI features - call real API endpoints
+  // AI features - call real API endpoints. On failure the existing contact data is left
+  // untouched and `error` is set on the store.
   analyzeContact: async (id: string) => {
     try {
-      const contact = get().contacts[id];
-      
-      // Simulate AI analysis with real API call
       const response = await fetch(`/api/contacts/${id}/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
 
-      let randomScore = Math.floor(Math.random() * 30) + 70; // fallback score
-      
-      if (response.ok) {
-        const result = await response.json();
-        randomScore = Math.round((result.score || 75) * 100);
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || `Scoring failed (${response.status})`);
       }
 
+      const result = await response.json();
+      // Server returns score on a 0-100 scale
+      const score = Math.max(0, Math.min(100, Math.round(Number(result.score))));
+      if (!Number.isFinite(score)) throw new Error('Scoring returned no score');
+
       set((state) => ({
+        error: null,
         contacts: {
           ...state.contacts,
           [id]: {
             ...state.contacts[id],
-            aiScore: randomScore,
-            score: randomScore,
+            aiScore: score,
+            score,
             updatedAt: new Date(),
           },
         },
       }));
 
-      logger.info('Contact analyzed successfully', { contactId: id, score: randomScore });
+      logger.info('Contact analyzed successfully', { contactId: id, score });
     } catch (error) {
       logger.error('Failed to analyze contact', error as Error);
+      set({ error: error instanceof Error ? error.message : 'Failed to analyze contact' });
       throw error;
     }
   },
 
   enrichContact: async (id: string) => {
     try {
-      const contact = get().contacts[id];
-      
-      // Call real enrichment API
       const response = await fetch(`/api/contacts/${id}/enrich`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
 
-      let enrichmentData = {
-        industry: contact.industry || 'Technology',
-        socialProfiles: {
-          linkedin: `https://linkedin.com/in/${contact.firstName}${contact.lastName}`,
-          website: `https://${contact.company?.toLowerCase().replace(/\s+/g, '')}.com`,
-        },
-        customFields: {
-          'Company Size': '500-1000',
-          Revenue: '$10M-50M',
-        },
-      };
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.data) {
-          enrichmentData = result.data;
-        }
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || `Enrichment failed (${response.status})`);
       }
 
+      const result = await response.json();
+      if (!result.data) throw new Error('Enrichment returned no data');
+
       set((state) => ({
+        error: null,
         contacts: {
           ...state.contacts,
           [id]: {
             ...state.contacts[id],
-            ...enrichmentData,
+            ...result.data,
             updatedAt: new Date(),
           },
         },
@@ -585,33 +575,36 @@ export const useContactStore = create<ContactStore>((set, get) => ({
       logger.info('Contact enriched successfully', { contactId: id });
     } catch (error) {
       logger.error('Failed to enrich contact', error as Error);
+      set({ error: error instanceof Error ? error.message : 'Failed to enrich contact' });
       throw error;
     }
   },
 
   scoreContact: async (id: string) => {
     try {
-      // Call real scoring API
       const response = await fetch(`/api/contacts/${id}/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
 
-      let score = Math.floor(Math.random() * 40) + 60; // fallback score
-      
-      if (response.ok) {
-        const result = await response.json();
-        score = Math.round((result.score || 75) * 100);
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || `Scoring failed (${response.status})`);
       }
 
+      const result = await response.json();
+      const score = Math.max(0, Math.min(100, Math.round(Number(result.score))));
+      if (!Number.isFinite(score)) throw new Error('Scoring returned no score');
+
       set((state) => ({
+        error: null,
         contacts: {
           ...state.contacts,
           [id]: {
             ...state.contacts[id],
             aiScore: score,
-            score: score,
+            score,
             updatedAt: new Date(),
           },
         },
@@ -620,6 +613,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
       return score;
     } catch (error) {
       logger.error('Failed to score contact', error as Error);
+      set({ error: error instanceof Error ? error.message : 'Failed to score contact' });
       throw error;
     }
   },

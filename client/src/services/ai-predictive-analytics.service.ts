@@ -149,7 +149,7 @@ class AIPredictiveAnalyticsService {
       return cached;
     }
 
-    // Generate historical data points (mock for now)
+    // Real interaction history is required; generateHistoricalData throws until a source exists
     const historicalData = this.generateHistoricalData(contact, timeframe, metrics);
 
     // Analyze trends
@@ -570,30 +570,8 @@ class AIPredictiveAnalyticsService {
     timeframe: string,
     metrics: string[]
   ): Record<string, any[]> {
-    // Generate mock historical data for trend analysis
-    const data: Record<string, any[]> = {};
-
-    metrics.forEach((metric) => {
-      data[metric] = this.generateMetricHistory(contact, metric, timeframe);
-    });
-
-    return data;
-  }
-
-  private generateMetricHistory(contact: Contact, metric: string, timeframe: string): any[] {
-    // Generate mock time series data
-    const points = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 180;
-    const data = [];
-
-    for (let i = 0; i < points; i++) {
-      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-      data.push({
-        date: date.toISOString().split('T')[0],
-        value: Math.random() * 100 + Math.sin(i / 10) * 20,
-      });
-    }
-
-    return data.reverse();
+    // No interaction time-series source exists yet; never fabricate one.
+    throw new Error(`Trend analysis is unavailable: no interaction history for contact ${contact.id}`);
   }
 
   private analyzeSingleTrend(metric: string, data: any[]): TrendAnalysis['trends'][0] {
@@ -620,9 +598,9 @@ class AIPredictiveAnalyticsService {
   private detectSeasonality(data: Record<string, any[]>): TrendAnalysis['seasonality'] {
     // Simple seasonality detection
     return {
-      detected: Math.random() > 0.7,
-      pattern: 'Weekly pattern detected',
-      confidence: 75,
+      detected: false,
+      pattern: '',
+      confidence: 0,
     };
   }
 
@@ -743,8 +721,8 @@ class AIPredictiveAnalyticsService {
   private analyzeFactors(contact: Contact, model: PredictiveModel): Prediction['factors'] {
     return model.features.map((feature) => ({
       factor: feature,
-      impact: Math.random() * 2 - 1, // -1 to 1
-      weight: Math.random(), // 0 to 1
+      impact: 0, // direction/magnitude unknown without a trained model
+      weight: 1 / model.features.length, // uniform prior
     }));
   }
 
@@ -785,12 +763,8 @@ class AIPredictiveAnalyticsService {
 
   // Response time prediction helpers
   private getHistoricalResponseData(contact: Contact, type: string): any[] {
-    // Mock historical response data
-    return [
-      { date: '2024-01-20', responseTime: 4.5 },
-      { date: '2024-01-18', responseTime: 2.1 },
-      { date: '2024-01-15', responseTime: 6.8 },
-    ];
+    // No response-history source exists yet; never fabricate one.
+    throw new Error(`Response time prediction is unavailable: no ${type} history for contact ${contact.id}`);
   }
 
   private calculateAverageResponseTime(data: any[]): number {

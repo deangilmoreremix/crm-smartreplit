@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { rateLimiter } from './rate-limiter.service';
 import { supabaseAIService } from './supabaseAIService';
+import { tierModel } from '@shared/aiModels';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'function';
@@ -38,7 +39,7 @@ interface GenerateResponse {
 
 class OpenAIService {
   private apiKey: string;
-  private defaultModel: string = 'gpt-4o-mini';
+  private defaultModel: string = tierModel('default');
 
   constructor(apiKey?: string) {
     // API key is now handled server-side only
@@ -120,11 +121,10 @@ class OpenAIService {
         },
         body: JSON.stringify({
           prompt: request.messages.map((m) => m.content).join('\n'),
-          model,
+          // The server picks the model (user's saved model or tier default) and ignores any
+          // client-supplied one; `model` above is only used for usage logging.
           temperature: request.temperature ?? 0.7,
-          maxTokens: request.maxTokens ?? 1000,
-          ...(request.functions ? { functions: request.functions } : {}),
-          ...(request.functionCall ? { function_call: request.functionCall } : {}),
+          max_output_tokens: request.maxTokens ?? 1000,
         }),
       });
 
@@ -216,17 +216,8 @@ class OpenAIService {
       return inputCost + outputCost;
     }
 
-    // Default pricing if model not in database
-    const pricing: Record<string, number> = {
-      'gpt-4o': 5.0,
-      'gpt-4o-mini': 0.15,
-      'gpt-3.5-turbo': 0.0015,
-      'gpt-4': 10.0,
-      'gpt-4-turbo': 10.0,
-    };
-
-    const costPer1kTokens = pricing[model] || 0.0015;
-    return (tokens / 1000) * costPer1kTokens;
+    // TODO: fill from OpenAI pricing page. No default prices are invented; cost is 0 until set.
+    return 0;
   }
 
   /**
@@ -244,11 +235,7 @@ class OpenAIService {
   ): Promise<{ subject: string; body: string }> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
-      console.warn('AI service not available, returning fallback email');
-      return {
-        subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI service temporarily unavailable - please try again later]\n\nBest regards`,
-      };
+      throw new Error('AI service is not available. Check that an OpenAI API key is configured.');
     }
 
     const tone = context.tone || 'professional';
@@ -275,7 +262,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-4o-mini',
+        model: model || tierModel('fast'),
         customerId,
         featureUsed: 'email-generation',
         temperature: 0.7,
@@ -294,10 +281,7 @@ class OpenAIService {
       }
     } catch (error) {
       console.error('Error generating email with OpenAI:', error);
-      return {
-        subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Generated content unavailable - please try again]\n\nBest regards`,
-      };
+      throw error;
     }
   }
 
@@ -307,14 +291,7 @@ class OpenAIService {
   async generateDealInsights(dealData: any, customerId?: string, model?: string): Promise<any> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
-      console.warn('AI service not available, returning fallback insights');
-      return {
-        riskLevel: 'unknown',
-        keyInsights: ['AI service temporarily unavailable'],
-        recommendedActions: ['Please try again later'],
-        winProbability: 0,
-        potentialBlockers: ['AI analysis unavailable'],
-      };
+      throw new Error('AI service is not available. Check that an OpenAI API key is configured.');
     }
 
     const systemPrompt = `You are an AI specialized in sales analytics. Analyze the provided deal data and return insightful observations in JSON format only. Do not wrap the JSON in markdown code blocks.`;
@@ -333,7 +310,10 @@ class OpenAIService {
         "keyInsights": ["string"],
         "recommendedActions": ["string"],
         "winProbability": number,
-        "potentialBlockers": ["string"]
+        "potentialBlockers": ["string"],
+        "opportunities": ["string"],
+        "timelineEstimate": "string",
+        "competitivePosition": "string"
       }`,
       },
     ];
@@ -341,7 +321,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-4o-mini',
+        model: model || tierModel('fast'),
         customerId,
         featureUsed: 'deal-insights',
         temperature: 0.3,
@@ -360,13 +340,7 @@ class OpenAIService {
       }
     } catch (error) {
       console.error('Error generating deal insights with OpenAI:', error);
-      return {
-        riskLevel: 'unknown',
-        keyInsights: ['Unable to generate insights. Please try again later.'],
-        recommendedActions: ['Review deal data manually'],
-        winProbability: 0,
-        potentialBlockers: ['AI analysis unavailable'],
-      };
+      throw error;
     }
   }
 
@@ -380,14 +354,7 @@ class OpenAIService {
   ): Promise<any> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
-      console.warn('AI service not available, returning fallback analysis');
-      return {
-        healthScore: 0,
-        keyInsights: ['AI service temporarily unavailable'],
-        bottlenecks: ['Please try again later'],
-        opportunities: ['AI analysis unavailable'],
-        forecastAccuracy: 0,
-      };
+      throw new Error('AI service is not available. Check that an OpenAI API key is configured.');
     }
 
     const systemPrompt = `You are an AI specialized in sales pipeline analysis. Examine the provided pipeline data and identify patterns, bottlenecks, and opportunities. Return only valid JSON without markdown formatting.`;
@@ -414,7 +381,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-4o-mini',
+        model: model || tierModel('fast'),
         customerId,
         featureUsed: 'pipeline-health',
         temperature: 0.3,
@@ -433,13 +400,7 @@ class OpenAIService {
       }
     } catch (error) {
       console.error('Error analyzing pipeline health with OpenAI:', error);
-      return {
-        healthScore: 0,
-        keyInsights: ['Unable to analyze pipeline health. Please try again later.'],
-        bottlenecks: ['Analysis unavailable'],
-        opportunities: ['Analysis unavailable'],
-        forecastAccuracy: 0,
-      };
+      throw error;
     }
   }
 
@@ -459,20 +420,7 @@ class OpenAIService {
   ): Promise<any> {
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
-      console.warn('AI service not available, returning fallback agenda');
-      return {
-        title: context.meetingTitle,
-        objective: context.purpose,
-        agendaItems: [
-          {
-            topic: 'Introduction',
-            duration: 5,
-            owner: 'All',
-            description: 'Welcome and meeting objectives',
-          },
-        ],
-        notes: 'AI service temporarily unavailable - please try again later.',
-      };
+      throw new Error('AI service is not available. Check that an OpenAI API key is configured.');
     }
 
     const systemPrompt = `You are an AI specialized in meeting planning and facilitation. Create clear, focused meeting agendas that make excellent use of time. Return only valid JSON without markdown formatting.`;
@@ -509,7 +457,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-4o-mini',
+        model: model || tierModel('fast'),
         customerId,
         featureUsed: 'meeting-agenda',
         temperature: 0.7,
@@ -528,19 +476,7 @@ class OpenAIService {
       }
     } catch (error) {
       console.error('Error generating meeting agenda with OpenAI:', error);
-      return {
-        title: context.meetingTitle,
-        objective: context.purpose,
-        agendaItems: [
-          {
-            topic: 'Introduction',
-            duration: 5,
-            owner: 'All',
-            description: 'Welcome and meeting objectives',
-          },
-        ],
-        notes: 'Failed to generate complete agenda. Please try again.',
-      };
+      throw error;
     }
   }
 }

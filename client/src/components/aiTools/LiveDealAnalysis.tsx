@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import openAIService from '../../services/openAIService';
 import { Deal } from '../../types';
 import {
@@ -42,8 +42,7 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
 }) => {
   // Using server-side OpenAI service for production-ready AI analysis
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [progressText, setProgressText] = useState('');
-  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const [analysisResults, setAnalysisResults] = useState<{
     winProbability: number;
     riskLevel: 'low' | 'medium' | 'high';
@@ -54,41 +53,10 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
     competitivePosition: string;
   } | null>(null);
 
-  const progressSteps = [
-    'Analyzing deal attributes...',
-    'Assessing win probability...',
-    'Identifying risk factors...',
-    'Evaluating competitive position...',
-    'Generating timeline estimates...',
-    'Determining next steps...',
-    'Finalizing analysis...',
-  ];
-
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const runProgressSimulation = () => {
-    let step = 0;
-    setProgressText(progressSteps[0]);
-    setProgress(0);
-
-    progressIntervalRef.current = setInterval(() => {
-      if (step < progressSteps.length - 1) {
-        step++;
-        setProgressText(progressSteps[step]);
-        setProgress(Math.min((step / (progressSteps.length - 1)) * 100, 100));
-      } else {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
-        setProgress(100);
-      }
-    }, 1000);
-  };
-
   const runAnalysis = async () => {
     setIsAnalyzing(true);
     setAnalysisResults(null);
-    runProgressSimulation();
+    setError(null);
 
     try {
       // Use real AI analysis for production
@@ -107,64 +75,38 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
 
       const aiAnalysis = await openAIService.generateDealInsights(dealData);
 
-      // Transform AI response to component format
+      const asList = (v: unknown): string[] =>
+        Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+      const riskLevel = ['low', 'medium', 'high'].includes(aiAnalysis?.riskLevel)
+        ? (aiAnalysis.riskLevel as 'low' | 'medium' | 'high')
+        : null;
+      if (!aiAnalysis || typeof aiAnalysis.winProbability !== 'number' || !riskLevel) {
+        throw new Error('The AI returned an incomplete analysis. Please try again.');
+      }
+
       const results = {
-        winProbability: aiAnalysis.winProbability || 50,
-        riskLevel: aiAnalysis.riskLevel || 'medium',
-        riskFactors: aiAnalysis.potentialBlockers || ['Analysis service temporarily unavailable'],
-        opportunities: aiAnalysis.recommendedActions?.filter(
-          (action) =>
-            action.toLowerCase().includes('opportunity') ||
-            action.toLowerCase().includes('focus') ||
-            action.toLowerCase().includes('emphasize')
-        ) || ['Focus on building relationship with key stakeholders'],
-        nextSteps: aiAnalysis.recommendedActions || [
-          'Schedule follow-up meeting',
-          'Prepare detailed proposal',
-          'Address any outstanding questions',
-        ],
-        timelineEstimate: '30-60 days',
-        competitivePosition: 'Strong position with differentiated value proposition',
+        winProbability: aiAnalysis.winProbability,
+        riskLevel,
+        riskFactors: asList(aiAnalysis.potentialBlockers),
+        opportunities: asList(aiAnalysis.opportunities),
+        nextSteps: asList(aiAnalysis.recommendedActions),
+        timelineEstimate:
+          typeof aiAnalysis.timelineEstimate === 'string' ? aiAnalysis.timelineEstimate : '',
+        competitivePosition:
+          typeof aiAnalysis.competitivePosition === 'string' ? aiAnalysis.competitivePosition : '',
       };
 
       setAnalysisResults(results);
       if (onAnalysisComplete) {
         onAnalysisComplete(results);
       }
-    } catch (error) {
-      console.error('Error analyzing deal:', error);
-      // Provide fallback analysis if AI fails
-      const fallbackResults = {
-        winProbability: deal.probability || 25,
-        riskLevel: 'medium',
-        riskFactors: ['AI analysis temporarily unavailable'],
-        opportunities: ['Manual review recommended'],
-        nextSteps: ['Contact decision maker', 'Follow up on outstanding items'],
-        timelineEstimate: '45-90 days',
-        competitivePosition: 'Position analysis unavailable',
-      };
-      setAnalysisResults(fallbackResults);
-      if (onAnalysisComplete) {
-        onAnalysisComplete(fallbackResults);
-      }
+    } catch (err) {
+      console.error('Error analyzing deal:', err);
+      setError(err instanceof Error ? err.message : 'Deal analysis failed');
     } finally {
-      // Clear the interval if it's still running
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
       setIsAnalyzing(false);
-      setProgress(100);
     }
   };
-
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -250,22 +192,9 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
       <div className="p-4">
         {isAnalyzing && (
           <div className="space-y-4">
-            <div className="text-center">
+            <div className="text-center" role="status">
               <RefreshCw size={24} className="mx-auto text-indigo-600 mb-2 animate-spin" />
-              <p className="text-sm font-medium text-gray-700">{progressText}</p>
-            </div>
-
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <motion.div
-                className="bg-indigo-600 h-2.5 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5 }}
-              ></motion.div>
-            </div>
-
-            <div className="text-center text-xs text-gray-500">
-              Using Gemini 2.5 Pro for in-depth analysis
+              <p className="text-sm font-medium text-gray-700">Analyzing deal...</p>
             </div>
           </div>
         )}
@@ -432,6 +361,13 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {error && !isAnalyzing && (
+          <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-sm text-red-700 flex items-start">
+            <AlertCircle size={16} className="mr-2 mt-0.5 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         {!isAnalyzing && !analysisResults && (
           <div className="text-center py-12">

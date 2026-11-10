@@ -67,7 +67,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [aiMode, setAiMode] = useState<'ai' | 'template'>('ai');
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,6 +132,7 @@ Best regards,
     if (!recipient) return;
 
     setIsGeneratingAI(true);
+    setAiError(null);
     try {
       const emailDraft = await openAIService.generateEmail({
         recipient: recipient.email || recipient.name,
@@ -144,13 +145,9 @@ Best regards,
         subject: emailDraft.subject,
         body: emailDraft.body,
       }));
-      setAiMode('ai');
     } catch (err) {
-      console.error('AI email generation failed, using template fallback:', err);
-      setAiMode('template');
-      const aiSubject = `Personalized outreach for ${recipient.company || 'your business'}`;
-      const aiBody = `Hi ${recipient.firstName || recipient.name.split(' ')[0]},\n\nI hope this message finds you well. I've been following ${recipient.company || 'your work'} and I'm impressed by your position as ${recipient.position || 'a leader'} in the ${recipient.industry || 'industry'}.\n\nBased on your background and ${recipient.company || 'your company'}'s focus, I believe there might be some interesting opportunities for collaboration.\n\nWould you be open to a brief conversation to explore potential synergies?\n\nBest regards,\n[Your Name]`;
-      setEmailData((prev) => ({ ...prev, subject: aiSubject, body: aiBody }));
+      console.error('AI email generation failed:', err);
+      setAiError(err instanceof Error ? err.message : 'AI email generation failed');
     } finally {
       setIsGeneratingAI(false);
     }
@@ -356,10 +353,8 @@ Best regards,
               >
                 <Brain size={16} className="mr-1" />
                 {isGeneratingAI ? 'Generating...' : 'AI Generate'}
-                {!isGeneratingAI && aiMode === 'template' && (
-                  <span className="ml-1.5 text-xs text-purple-500/80">(template)</span>
-                )}
               </button>
+              {aiError && <span className="text-xs text-red-600">{aiError}</span>}
 
               <button
                 onClick={() => setShowTemplates(!showTemplates)}

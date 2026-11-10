@@ -5,6 +5,7 @@
 
 import { logger } from './logger.service';
 import { rateLimiter } from './rate-limiter.service';
+import { aiSalesTools, aiCommunication, aiAdvanced } from './aiToolsApiService';
 
 export interface QueuedTask {
   id: string;
@@ -272,11 +273,18 @@ class AITaskQueueService {
       updateProgress(i, 25);
 
       try {
-        // Simulate AI scoring API call
-        await this.sleep(1000 + Math.random() * 1000);
+        const res = await aiSalesTools.leadScore(task.data.contact);
+        const scoring = this.unwrapAI(res, 'scoring');
         updateProgress(i, 75);
 
-        const score = this.generateMockScore(task.data.contact);
+        const score = {
+          overall: Math.max(0, Math.min(100, Math.round(Number(scoring.score)))),
+          reasoning: scoring.rationale ? [scoring.rationale] : [],
+          buyingSignals: scoring.buyingSignals || [],
+          riskFactors: scoring.riskFactors || [],
+          recommendations: scoring.recommendedActions || [],
+          priority: scoring.priority,
+        };
         updateProgress(i, 100);
 
         results.push({ success: true, data: score });
@@ -302,11 +310,20 @@ class AITaskQueueService {
       updateProgress(i, 30);
 
       try {
-        // Simulate AI enrichment API call
-        await this.sleep(1500 + Math.random() * 1000);
+        const contactId = task.context.contactId || task.data.contact?.id;
+        if (!contactId) throw new Error('Contact ID is required for enrichment');
+        const response = await fetch(`/api/contacts/${encodeURIComponent(contactId)}/enrich`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.error || `Enrichment failed (${response.status})`);
+        }
+        const enrichment = (await response.json()).data;
+        if (!enrichment) throw new Error('Enrichment returned no data');
         updateProgress(i, 80);
-
-        const enrichment = this.generateMockEnrichment(task.data.contact);
         updateProgress(i, 100);
 
         results.push({ success: true, data: enrichment });
@@ -332,11 +349,16 @@ class AITaskQueueService {
       updateProgress(i, 20);
 
       try {
-        // Simulate AI insights generation
-        await this.sleep(2000 + Math.random() * 1500);
+        const res = await aiAdvanced.getRecommendations('contact_insights', task.data.contact);
+        const rec = this.unwrapAI(res, 'recommendations');
         updateProgress(i, 90);
 
-        const insights = this.generateMockInsights(task.data.contact);
+        const insights = (rec.recommendations || []).map((r: any) => ({
+          type: 'recommendation',
+          title: r.item,
+          description: r.reasoning,
+          confidence: r.score,
+        }));
         updateProgress(i, 100);
 
         results.push({ success: true, data: insights });
@@ -362,11 +384,15 @@ class AITaskQueueService {
       updateProgress(i, 15);
 
       try {
-        // Simulate email generation
-        await this.sleep(1800 + Math.random() * 1200);
+        const contact = task.data.contact || {};
+        const res = await aiCommunication.composeEmail({
+          recipientName:
+            contact.name || `${contact.firstName || ''} ${contact.lastName || ''}`.trim(),
+          recipientCompany: contact.company || '',
+          purpose: task.data.purpose,
+        });
+        const email = this.unwrapAI(res, 'email');
         updateProgress(i, 85);
-
-        const email = this.generateMockEmail(task.data.contact, task.data.purpose);
         updateProgress(i, 100);
 
         results.push({ success: true, data: email });
@@ -392,11 +418,19 @@ class AITaskQueueService {
       updateProgress(i, 35);
 
       try {
-        // Simulate analysis
-        await this.sleep(1200 + Math.random() * 800);
+        const res = await aiAdvanced.generateReasoning(
+          'Analyze the following and give insights and suggestions for improvement',
+          task.data
+        );
+        const reasoning = this.unwrapAI(res, 'reasoning');
         updateProgress(i, 95);
 
-        const analysis = this.generateMockAnalysis(task.data);
+        const analysis = {
+          insights: reasoning.reasoning_steps || [],
+          conclusion: reasoning.conclusion,
+          confidence: reasoning.confidence,
+          suggestions: reasoning.alternative_approaches || [],
+        };
         updateProgress(i, 100);
 
         results.push({ success: true, data: analysis });
@@ -507,73 +541,12 @@ class AITaskQueueService {
     });
   }
 
-  // Mock data generators for development
-  private generateMockScore(contact: any): any {
-    return {
-      overall: Math.floor(Math.random() * 40) + 60,
-      breakdown: {
-        fitScore: Math.floor(Math.random() * 30) + 70,
-        engagementScore: Math.floor(Math.random() * 40) + 60,
-        conversionProbability: Math.floor(Math.random() * 50) + 50,
-        urgencyScore: Math.floor(Math.random() * 30) + 40,
-      },
-      reasoning: [`Strong profile at ${contact.company}`, 'Good engagement indicators'],
-      recommendations: ['Schedule follow-up call', 'Share case studies'],
-      nextBestActions: ['Email outreach', 'LinkedIn connection'],
-    };
-  }
-
-  private generateMockEnrichment(contact: any): any {
-    return {
-      socialProfiles: {
-        linkedin: `https://linkedin.com/in/${contact.firstName?.toLowerCase()}${contact.lastName?.toLowerCase()}`,
-        twitter: `https://twitter.com/${contact.firstName?.toLowerCase()}`,
-      },
-      additionalInfo: {
-        jobLevel: 'Senior',
-        departmentSize: '50-100',
-        decisionMakingPower: 'High',
-      },
-      confidence: 85,
-    };
-  }
-
-  private generateMockInsights(contact: any): any {
-    return [
-      {
-        type: 'opportunity',
-        title: 'High Conversion Potential',
-        description: `${contact.name} shows strong indicators for conversion`,
-        confidence: 85,
-        impact: 'high',
-      },
-      {
-        type: 'recommendation',
-        title: 'Optimal Outreach Timing',
-        description: 'Best contacted on Tuesday-Thursday, 2-4 PM',
-        confidence: 75,
-        impact: 'medium',
-      },
-    ];
-  }
-
-  private generateMockEmail(contact: any, purpose: string): any {
-    return {
-      subject: `${purpose} - ${contact.company}`,
-      body: `Hi ${contact.firstName},\n\nI hope this email finds you well...`,
-      personalization: {
-        elements: ['company_name', 'industry', 'recent_news'],
-        confidence: 80,
-      },
-    };
-  }
-
-  private generateMockAnalysis(data: any): any {
-    return {
-      score: Math.floor(Math.random() * 30) + 70,
-      insights: ['Good structure', 'Clear call to action'],
-      suggestions: ['Consider shorter subject line', 'Add more personalization'],
-    };
+  // Server AI routes answer 200 with success:false (and placeholder data) when AI is unavailable
+  private unwrapAI(res: any, key: string): any {
+    if (!res || res.success === false || !res[key]) {
+      throw new Error(res?.error || 'AI request failed. Check that an OpenAI API key is configured.');
+    }
+    return res[key];
   }
 
   // Public API

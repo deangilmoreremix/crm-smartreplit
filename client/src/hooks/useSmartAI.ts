@@ -8,6 +8,7 @@ import { enhancedGeminiService } from '../services/enhancedGeminiService';
 import { supabaseAIService } from '../services/supabaseAIService';
 import { aiOrchestratorService } from '../services/aiOrchestratorService';
 import { openAIService } from '../services/openAIService';
+import { aiSalesTools } from '../services/aiToolsApiService';
 import { Contact } from '../types/contact';
 import { MODEL_TIERS } from '@shared/aiModels';
 
@@ -61,20 +62,27 @@ interface SmartBulkRequest {
   timeLimit?: number;
 }
 
-// Enhanced AI integration service mock (to be replaced with actual implementation)
+// Enhanced AI integration: orchestrator for analysis text, server lead-score endpoint for numeric scores
 const enhancedAI = {
   scoreContact: async (contactId: string, contact: any, urgency: string = 'medium') => {
     console.log('Scoring contact with enhancedAI', { contactId, urgency });
 
     // Use aiOrchestratorService to select the right model
-    const result = await aiOrchestratorService.analyzeDeal(
-      { contact, priority: urgency },
-      { priority: urgency as any }
-    );
+    const [result, leadScore] = await Promise.all([
+      aiOrchestratorService.analyzeDeal(
+        { contact, priority: urgency },
+        { priority: urgency as any }
+      ),
+      aiSalesTools.leadScore(contact),
+    ]);
+
+    if (!leadScore?.success || typeof leadScore.scoring?.score !== 'number') {
+      throw new Error(leadScore?.error || 'Lead scoring failed. Check that an OpenAI API key is configured.');
+    }
 
     return {
       contactId,
-      score: Math.floor(Math.random() * 100),
+      score: Math.max(0, Math.min(100, Math.round(leadScore.scoring.score))),
       modelUsed: result.model,
       urgency,
       results: result.content,
@@ -88,7 +96,6 @@ const enhancedAI = {
   ) => {
     console.log('Enriching contact with enhancedAI', { contactId, priority });
 
-    // Simulate enrichment with aiOrchestratorService
     const result = await aiOrchestratorService.generateContactInsights([contact], {
       priority: priority === 'premium' ? 'quality' : 'balanced',
     });
@@ -106,17 +113,27 @@ const enhancedAI = {
 
     // Use Gemma for categorization (typically faster)
     const result = await enhancedGeminiService.generateContent({
-      prompt: `Categorize this contact and suggest tags: ${JSON.stringify(contact)}`,
+      prompt: `Categorize this contact and suggest tags. Respond with JSON only: {"categories": string[], "tags": string[]}. Contact: ${JSON.stringify(contact)}`,
       model: 'gemma-2-2b-it',
       featureUsed: 'categorization',
     });
+
+    const text = String(result.content ?? '');
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    let parsed: { categories?: string[]; tags?: string[] };
+    try {
+      parsed = JSON.parse(text.slice(start, end + 1));
+    } catch {
+      throw new Error('Categorization returned invalid data');
+    }
 
     return {
       contactId,
       modelUsed: result.model,
       results: {
-        categories: ['lead', 'tech', 'enterprise'],
-        tags: ['follow-up', 'high-value'],
+        categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+        tags: Array.isArray(parsed.tags) ? parsed.tags : [],
       },
     };
   },
@@ -140,7 +157,7 @@ const enhancedAI = {
   smartBulkAnalysis: async (request: SmartBulkRequest) => {
     console.log('Running bulk analysis', request);
 
-    // Simulate batch processing
+    const startedAt = Date.now();
     const results = await Promise.all(
       request.contacts.slice(0, 10).map(async ({ contactId, contact }) => {
         try {
@@ -172,8 +189,7 @@ const enhancedAI = {
         processed: results.length,
         successful: results.filter((r) => r.success).length,
         failed: results.filter((r) => !r.success).length,
-        averageCost: 0.03 * results.length,
-        totalTime: 200 * results.length,
+        totalTime: Date.now() - startedAt,
       },
       results,
     };

@@ -1,5 +1,5 @@
 // GPT-5 Enhanced Service for Dashboard Components
-// Using OpenAI's o1-preview model (GPT-5) with unified reasoning system
+// Uses the server-side OpenAI Responses API with the tier models from shared/aiModels
 export class GPT5Service {
 private isConfigured = false;
    private statusCheckPromise: Promise<void> | null = null;

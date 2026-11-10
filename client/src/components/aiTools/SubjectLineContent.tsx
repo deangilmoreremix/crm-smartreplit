@@ -56,58 +56,12 @@ const SubjectLineContent: React.FC = () => {
     setError(null);
 
     try {
-      // Pass the API key if provided by user, otherwise the server will use its own
-      const options = apiKey ? { apiKey } : undefined;
-
-      // Using the market trends function to simulate subject line generation
-      const result = await edgeFunctionService.analyzeMarketTrends(
-        formData.keyMessage,
-        formData.audience,
-        formData.purpose,
-        options
-      );
-
-      // Format the result as subject line suggestions
-      const formattedResult = `# Email Subject Line Suggestions
-
-Based on your inputs:
-- Purpose: ${formData.purpose}
-- Target Audience: ${formData.audience}
-- Key Message: ${formData.keyMessage}
-
-## Top Subject Line Options:
-
-1. "${formData.purpose === 'introduction' ? 'Introducing' : 'New:'} ${formData.keyMessage} for ${formData.audience}"
-   - Estimated Open Rate: 32.5%
-   - Best Send Time: Tuesday morning
-   - Why It Works: Direct and clearly communicates value proposition
-
-2. "How ${formData.audience} are ${formData.purpose === 'follow-up' ? 'improving' : 'revolutionizing'} ${formData.keyMessage}"
-   - Estimated Open Rate: 28.7%
-   - Best Send Time: Wednesday afternoon
-   - Why It Works: Creates curiosity and speaks to industry trends
-
-3. "${formData.audience}: ${formData.keyMessage} ${formData.purpose === 'invitation' ? 'Invitation' : 'Opportunity'}"
-   - Estimated Open Rate: 27.3%
-   - Best Send Time: Thursday morning
-   - Why It Works: Personalized to audience and creates urgency
-
-4. "Quick question about ${formData.keyMessage} for your ${formData.audience} team"
-   - Estimated Open Rate: 35.1%
-   - Best Send Time: Monday afternoon
-   - Why It Works: Conversational and creates curiosity
-
-5. "${formData.purpose === 'request' ? 'Request:' : ''} ${formData.keyMessage} - ${formData.purpose === 'promotion' ? 'Special offer' : 'Key insights'} for ${formData.audience}"
-   - Estimated Open Rate: 29.8%
-   - Best Send Time: Friday morning
-   - Why It Works: Clear value proposition with specificity
-
-## Email Body Optimization Tips:
-- Ensure the email content delivers on the subject line's promise
-- Personalize the opening paragraph
-- Keep paragraphs short and scannable
-- Include a clear call-to-action
-- Optimize for mobile viewing`;
+      const formattedResult = await edgeFunctionService.generateSubjectLines({
+        purpose: formData.purpose,
+        audience: formData.audience,
+        keyMessage: formData.keyMessage,
+      });
+      if (!formattedResult.trim()) throw new Error('The AI returned no subject lines');
 
       setResult(formattedResult);
       setShowApiKeyInput(false);

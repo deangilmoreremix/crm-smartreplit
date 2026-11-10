@@ -129,36 +129,6 @@ class AIIntegrationService {
         processingTime: Date.now() - startTime,
       });
 
-      // Development fallback
-      if (import.meta.env.DEV || import.meta.env.VITE_ENV === 'development') {
-        logger.warn('Using fallback AI analysis in development mode');
-
-        // Create a fallback analysis response
-        const fallbackAnalysis: AIAnalysisResponse = {
-          contactId: request.contactId,
-          score: Math.floor(Math.random() * 40) + 60, // Random score between 60-100
-          confidence: 70,
-          insights: [
-            'Based on profile and engagement data, shows strong interest in your solutions',
-            'Professional background suggests decision-making authority',
-            'Company size and industry align well with your target market',
-          ],
-          recommendations: [
-            'Schedule a follow-up call within 48 hours',
-            'Share case studies relevant to their industry',
-            'Connect on LinkedIn to strengthen the relationship',
-          ],
-          categories: ['Qualified Lead', 'Decision Maker'],
-          tags: ['follow-up', 'high-potential'],
-          provider: request.options?.provider || 'fallback',
-          model: request.options?.model || 'development-fallback',
-          timestamp: new Date().toISOString(),
-          processingTime: Date.now() - startTime,
-        };
-
-        return fallbackAnalysis;
-      }
-
       throw error;
     }
   }
@@ -205,62 +175,6 @@ class AIIntegrationService {
         contactCount: request.contactIds.length,
         processingTime: Date.now() - startTime,
       });
-
-      // Development fallback
-      if (import.meta.env.DEV || import.meta.env.VITE_ENV === 'development') {
-        logger.warn('Using fallback bulk AI analysis in development mode');
-
-        // Generate mock results for each contact
-        const results: AIAnalysisResponse[] = [];
-        const failed: Array<{ contactId: string; error: string }> = [];
-
-        for (const contactId of request.contactIds) {
-          // Randomly fail some analyses to simulate real-world behavior
-          if (Math.random() < 0.1) {
-            failed.push({ contactId, error: 'Analysis failed due to insufficient data' });
-            continue;
-          }
-
-          const score = Math.floor(Math.random() * 40) + 60; // Random score between 60-100
-
-          results.push({
-            contactId,
-            score,
-            confidence: Math.floor(Math.random() * 20) + 70,
-            insights: [
-              'Shows engagement with marketing materials',
-              'Professional background indicates decision-making capacity',
-              'Industry alignment suggests good fit for our solutions',
-            ],
-            recommendations: [
-              'Schedule follow-up',
-              'Send targeted content',
-              'Connect on social platforms',
-            ],
-            categories: ['Potential Client', 'Decision Maker'],
-            tags: ['follow-up', 'qualified'],
-            provider: 'fallback',
-            model: 'development-fallback',
-            timestamp: new Date().toISOString(),
-            processingTime: Math.floor(Math.random() * 2000) + 500,
-          });
-        }
-
-        const totalProcessingTime = Date.now() - startTime;
-
-        return {
-          results,
-          failed,
-          summary: {
-            total: request.contactIds.length,
-            successful: results.length,
-            failed: failed.length,
-            averageScore:
-              results.reduce((sum, r) => sum + (r.score || 0), 0) / (results.length || 1),
-            processingTime: totalProcessingTime,
-          },
-        };
-      }
 
       throw error;
     }
@@ -315,48 +229,6 @@ class AIIntegrationService {
         contactId,
         enrichmentRequest,
       });
-
-      // Development fallback
-      if (import.meta.env.DEV || import.meta.env.VITE_ENV === 'development') {
-        logger.warn('Using fallback contact enrichment in development mode');
-
-        // Create fallback enrichment data
-        let fallbackData: ContactEnrichmentData = {
-          confidence: 60,
-          notes: 'API enrichment unavailable, showing estimated data',
-        };
-
-        if (enrichmentRequest.email) {
-          // Extract data from email
-          const [username, domain] = enrichmentRequest.email.split('@');
-          const [firstName, lastName] = username.split('.');
-
-          fallbackData = {
-            ...fallbackData,
-            firstName: firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : '',
-            lastName: lastName ? lastName.charAt(0).toUpperCase() + lastName.slice(1) : '',
-            email: enrichmentRequest.email,
-            company: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
-            socialProfiles: {
-              linkedin: `https://linkedin.com/in/${username}`,
-              website: `https://${domain}`,
-            },
-          };
-        } else if (enrichmentRequest.firstName) {
-          // Use provided name data
-          fallbackData = {
-            ...fallbackData,
-            firstName: enrichmentRequest.firstName,
-            lastName: enrichmentRequest.lastName || '',
-            company: enrichmentRequest.company || 'Unknown Company',
-            socialProfiles: {
-              linkedin: `https://linkedin.com/in/${enrichmentRequest.firstName.toLowerCase()}${enrichmentRequest.lastName ? `-${enrichmentRequest.lastName.toLowerCase()}` : ''}`,
-            },
-          };
-        }
-
-        return fallbackData;
-      }
 
       throw error;
     }
