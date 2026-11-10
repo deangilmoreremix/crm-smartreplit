@@ -6,8 +6,16 @@ vi.mock('../lib/supabase', () => ({
   supabase: { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) } },
 }));
 vi.mock('./SavedViewsMenu', () => ({
-  default: ({ onApply }: { onApply: (f: Record<string, unknown>) => void }) => (
-    <button onClick={() => onApply({ search: '', status: 'customer', industry: '' })}>
+  default: ({ onApplyView }: { onApplyView?: (v: unknown) => void }) => (
+    <button
+      onClick={() =>
+        onApplyView?.({
+          filters: { type: 'group', op: 'and', children: [{ type: 'condition', field: 'status', operator: 'eq', value: 'customer' }] },
+          sort: [],
+          columns: [],
+        })
+      }
+    >
       Apply view
     </button>
   ),
@@ -50,6 +58,29 @@ describe('ContactsManager', () => {
     fireEvent.click(screen.getByText('Apply view'));
     await waitFor(() => expect(screen.queryByText('Jane Doe')).toBeNull());
     expect(screen.getByText('Bob Ray')).toBeTruthy();
+  });
+
+  it('filters with the search box, sorts by header and shows the record count', async () => {
+    render(<ContactsManager />);
+    await screen.findByText('Jane Doe');
+    expect(screen.getByText('2 records')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Search contacts'), { target: { value: 'globex' } });
+    await waitFor(() => expect(screen.queryByText('Jane Doe')).toBeNull());
+    expect(screen.getByText('1 record')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Search contacts'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: /^Name/ }));
+    const names = screen.getAllByRole('row').map((r) => r.textContent ?? '');
+    expect(names.findIndex((t) => t.includes('Bob Ray'))).toBeLessThan(names.findIndex((t) => t.includes('Jane Doe')));
+  });
+
+  it('selects rows and shows the bulk action bar', async () => {
+    render(<ContactsManager />);
+    await screen.findByText('Jane Doe');
+    const boxes = screen.getAllByLabelText('Select row');
+    fireEvent.click(boxes[0]);
+    fireEvent.click(boxes[1]);
+    expect(screen.getByText('2 selected')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Merge' })).toBeTruthy();
   });
 
   it('shows an error state', async () => {
