@@ -35,7 +35,6 @@ export const config = {
   // AI Services
   openaiApiKey: process.env.OPENAI_API_KEY,
   openaiApiKeyFallback: process.env.OPENAI_API_KEY_FALLBACK,
-  googleAiApiKey: process.env.GOOGLE_AI_API_KEY,
   elevenlabsApiKey: process.env.ELEVENLABS_API_KEY,
 
   // Messaging
@@ -73,9 +72,9 @@ export function validateEnvironmentVariables(): { valid: boolean; errors: string
       }
     });
     
-    // At least one AI provider should be configured
-    if (!config.openaiApiKey && !config.googleAiApiKey) {
-      errors.push('At least one AI provider must be configured (OPENAI_API_KEY or GOOGLE_AI_API_KEY)');
+    // OpenAI is the only supported AI provider
+    if (!config.openaiApiKey) {
+      errors.push('OPENAI_API_KEY must be configured');
     }
   }
   

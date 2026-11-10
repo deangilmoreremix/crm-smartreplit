@@ -42,7 +42,7 @@ const ImageGeneratorFeaturePage: React.FC = () => {
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                 Create stunning, professional-quality images for sales presentations, proposals, and
-                marketing materials in seconds with our DALL-E powered Image Generator.
+                marketing materials in seconds with our GPT Image 2.6 powered Image Generator.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link

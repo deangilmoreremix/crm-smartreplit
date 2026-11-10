@@ -17,19 +17,12 @@ import {
   respondText,
   respondWithTools,
 } from '../services/openaiClient';
-import { tierModel, SELECTABLE_MODELS } from '../../shared/aiModels';
-
-// Google AI interface
-interface GoogleAIResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
-}
+import { tierModel, SELECTABLE_MODELS, imageModel, ImageQuality, ImageComplexity } from '../../shared/aiModels';
+import { generateImages, editImage, toDataUrl, type GeneratedImage } from '../services/openaiImages';
+import multer from 'multer';
 
 // Helper: Get user's active API key for a provider
-async function getUserApiKey(userId: string, provider: 'openai' | 'gemini'): Promise<{ apiKey: string; model: string | null } | null> {
+async function getUserApiKey(userId: string, provider: 'openai'): Promise<{ apiKey: string; model: string | null } | null> {
   if (!db) return null;
 
   // Try default key first
@@ -70,30 +63,6 @@ export async function createUserOpenAIClient(userId: string): Promise<{ client: 
   return { client: createUserClient(keyData.apiKey), model: keyData.model || null };
 }
 
-// Helper: Call Google AI with user's key
-async function callUserGoogleAI(userId: string, prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
-  const keyData = await getUserApiKey(userId, 'gemini');
-  if (!keyData) {
-    throw new Error('No Gemini API key configured. Please add your Gemini API key in Settings.');
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyData.apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status}`);
-  }
-
-  const data: GoogleAIResponse = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
-
 export function registerAIRoutes(app: Express) {
   // Middleware to protect AI endpoints - require auth + ai_tools entitlement
   const requireAITools = [requireAuth(), requireEntitlement(FeatureKey.AI_TOOLS)];
@@ -108,7 +77,6 @@ export function registerAIRoutes(app: Express) {
         error: null as string | null,
         version: null as string | null,
       },
-      googleai: { available: false, model: 'none', error: null as string | null },
     };
 
     // Test OpenAI with user's key
@@ -166,31 +134,11 @@ export function registerAIRoutes(app: Express) {
       };
     }
 
-    // Test Google AI with user's key
-    try {
-      const geminiKey = await getUserApiKey(userId, 'gemini');
-      if (!geminiKey) {
-        results.googleai = {
-          available: false,
-          model: 'none',
-          error: 'No Gemini API key configured. Add your key in Settings > API Keys.',
-        };
-      } else {
-        await callUserGoogleAI(userId, 'test', 'gemini-1.5-flash');
-        results.googleai = { available: true, model: 'gemini-1.5-flash', error: null };
-      }
-    } catch (error: any) {
-      results.googleai = { available: false, model: 'none', error: error.message };
-    }
-
-    const anyWorking = results.openai.available || results.googleai.available;
+    const anyWorking = results.openai.available;
 
     const capabilities: string[] = [];
     if (results.openai.available) {
       capabilities.push(`OpenAI (${results.openai.model})`);
-    }
-    if (results.googleai.available) {
-      capabilities.push(`Google Gemini (${results.googleai.model})`);
     }
     if (!anyWorking) {
       capabilities.push('Configure your API keys in Settings to enable AI features');
@@ -198,29 +146,12 @@ export function registerAIRoutes(app: Express) {
 
     res.json({
       configured: anyWorking,
-      model: results.openai.available ? results.openai.model : results.googleai.model,
+      model: results.openai.model,
       status: anyWorking ? 'ready' : 'needs_api_keys',
       openai: results.openai,
-      googleai: results.googleai,
       capabilities,
     });
   });
-
-  // Google AI Test
-  app.post(
-    '/api/googleai/test',
-    ...requireAITools,
-    async (req: Request, res: Response) => {
-      const userId = (req as any).userId;
-      try {
-        const prompt = req.body.prompt || 'Generate a business insight';
-        const response = await callUserGoogleAI(userId, prompt);
-        res.json({ success: true, model: 'gemini-1.5-flash', output: response });
-      } catch (error: any) {
-        res.status(500).json({ success: false, error: error.message });
-      }
-    }
-  );
 
   // OpenAI Test
   app.post(
@@ -285,14 +216,28 @@ export function registerAIRoutes(app: Express) {
     }
   );
 
-  // Image Generation
+  // Image Generation (GPT Image 2.6, Image API). Returns base64 data URLs; there is no hosted url.
+  const imageUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
+  const imageResponse = (images: GeneratedImage[], model: string) => {
+    const list = images.map((img) => ({ url: toDataUrl(img), b64_json: img.b64 }));
+    return { success: true, images: list, url: list[0].url, data: list, model };
+  };
+  const imageParams = (body: any) => ({
+    model: typeof body.model === 'string' && body.model.startsWith('gpt-image-') ? body.model : undefined,
+    size: typeof body.size === 'string' ? body.size : undefined,
+    quality: typeof body.quality === 'string' ? (body.quality as ImageQuality) : undefined,
+    complexity: typeof body.complexity === 'string' ? (body.complexity as ImageComplexity) : undefined,
+    background: body.background as any,
+    n: body.n !== undefined ? Number(body.n) : undefined,
+  });
+
   app.post(
     '/api/openai/images/generate',
     ...requireAITools,
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const { prompt, model = 'dall-e-3', size = '1024x1024' } = req.body;
+        const { prompt } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt required' });
 
         const openaiData = await createUserOpenAIClient(userId);
@@ -303,13 +248,65 @@ export function registerAIRoutes(app: Express) {
           });
         }
 
-        const response = await openaiData.client.images.generate({ model, prompt, size, n: 1 });
-        res.json({ success: true, data: response.data, model });
+        const params = imageParams(req.body);
+        const images = await generateImages({ prompt, ...params, userId, client: openaiData.client });
+        res.json(imageResponse(images, imageModel(params.model)));
       } catch (error: any) {
         res.status(500).json({ error: error.message });
       }
     }
   );
+
+  // Image edit / variation (multipart: image[, mask | markup], prompt)
+  for (const route of ['edit', 'variation'] as const) {
+    app.post(
+      `/api/openai/images/${route}`,
+      ...requireAITools,
+      imageUpload.fields([
+        { name: 'image', maxCount: 4 },
+        { name: 'mask', maxCount: 1 },
+        { name: 'markup', maxCount: 1 },
+      ]),
+      async (req: Request, res: Response) => {
+        const userId = (req as any).userId;
+        try {
+          const files = (req.files || {}) as Record<string, Express.Multer.File[]>;
+          if (!files.image?.length) return res.status(400).json({ error: 'Image required' });
+          const prompt =
+            req.body.prompt ||
+            (route === 'variation' ? 'Create a variation of this image, keeping the same subject and style.' : '');
+          if (!prompt) return res.status(400).json({ error: 'Prompt required' });
+
+          const openaiData = await createUserOpenAIClient(userId);
+          if (!openaiData) {
+            return res.status(400).json({
+              error: 'No OpenAI API key configured',
+              message: 'Please add your OpenAI API key in Settings > API Keys',
+            });
+          }
+
+          const toBuf = (f: Express.Multer.File) => ({
+            buffer: f.buffer,
+            mimeType: f.mimetype,
+            filename: f.originalname,
+          });
+          const params = imageParams(req.body);
+          const images = await editImage({
+            prompt,
+            ...params,
+            images: files.image.map(toBuf),
+            mask: files.mask?.[0] ? toBuf(files.mask[0]) : undefined,
+            markup: files.markup?.[0] ? toBuf(files.markup[0]) : undefined,
+            userId,
+            client: openaiData.client,
+          });
+          res.json(imageResponse(images, imageModel(params.model)));
+        } catch (error: any) {
+          res.status(500).json({ error: error.message });
+        }
+      }
+    );
+  }
 
   // Smart Greeting
   app.post(

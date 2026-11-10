@@ -12,7 +12,8 @@
     "resolveJsonModule": true,
     "moduleResolution": "node16",
     "paths": {
-      "@shared/*": ["./shared/*"]
+      "@shared/*": ["./shared/*"],
+      "@smartcrm/workflows": ["./packages/workflows/src/index.ts"]
     }
   },
   "ts-node": {

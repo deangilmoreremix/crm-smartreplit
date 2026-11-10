@@ -17,7 +17,8 @@ import {
 } from '../../shared/schema';
 import { supabase } from '../supabase';
 import { respondJson, respondText, getOpenAIClient } from '../services/openaiClient';
-import { tierModel } from '../../shared/aiModels';
+import { generateImages, toDataUrl } from '../services/openaiImages';
+import { tierModel, imageModel } from '../../shared/aiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
@@ -546,8 +547,8 @@ const crmTools = [
   // Image Generation
   {
     name: 'generate_image',
-    description: 'Generate an image using AI (DALL-E or Gemini)',
-    parameters: { prompt: 'string', size: 'string?', style: 'string?' },
+    description: 'Generate an image using AI (GPT Image 2.6)',
+    parameters: { prompt: 'string', size: 'string?', quality: 'string?', complexity: 'string?', tier: 'fast | quality ?' },
     category: 'ai',
   },
   // Video/Demo
@@ -2587,25 +2588,22 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const client = getOpenAIClient();
         if (!client) return { error: 'OpenAI API key not configured' };
 
-        const size = params.size || '1024x1024';
-        const validSizes = ['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'];
-        const imageSize = validSizes.includes(size) ? size : '1024x1024';
+        const size = typeof params.size === 'string' && /^(auto|\d{3,4}x\d{3,4})$/.test(params.size)
+          ? params.size
+          : '1024x1024';
+        const tier = params.tier === 'quality' ? 'quality' : 'fast';
 
-        const response = await client.images.generate({
-          model: 'dall-e-3',
+        const images = await generateImages({
           prompt,
-          size: imageSize as any,
-          n: 1,
+          tier,
+          size,
+          quality: params.quality,
+          complexity: params.complexity,
+          userId: (req as any).userId,
         });
+        const list = images.map((img) => ({ url: toDataUrl(img), b64_json: img.b64 }));
 
-        return {
-          images: response.data.map((img) => ({
-            url: img.url,
-            revisedPrompt: img.revised_prompt,
-          })),
-          model: 'dall-e-3',
-          size: imageSize,
-        };
+        return { images: list, url: list[0].url, model: imageModel(tier), size };
       }
 
       // Demo Agent

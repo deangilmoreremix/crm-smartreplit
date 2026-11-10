@@ -6,7 +6,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dns from 'dns/promises';
 import https from 'https';
-import { withCache, CACHE_TTL } from '../services/cache';
+import { withCache, CACHE_TTL } from '../cache';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

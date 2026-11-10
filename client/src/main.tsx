@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+import { installApiAuthFetch } from './lib/apiAuthFetch';
+
+installApiAuthFetch();
 
 // Basic browser polyfills
 if (typeof global === 'undefined') {

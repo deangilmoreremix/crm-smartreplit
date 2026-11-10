@@ -141,46 +141,6 @@ class AIUsageTracker {
 // Global usage tracker instance
 const aiUsageTracker = new AIUsageTracker();
 
-// Google AI integration
-interface GoogleAIResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
-}
-
-async function callGoogleAI(prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
-  const googleAIKey = process.env.GOOGLE_AI_API_KEY;
-  if (!googleAIKey) {
-    throw new Error('Google AI API key not configured');
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
-  }
-
-  const data: GoogleAIResponse = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
-
 export const handler = async (
   event: {
     httpMethod: string;
@@ -603,58 +563,6 @@ export const handler = async (
            body: JSON.stringify({
              error: 'Analysis failed',
              summary: 'Business intelligence temporarily unavailable.',
-           }),
-         };
-       }
-     }
-
-     // POST /api/googleai/test - Google AI test
-     if (
-       pathParts.length >= 2 &&
-       pathParts[0] === 'googleai' &&
-       pathParts[1] === 'test' &&
-       httpMethod === 'POST'
-     ) {
-       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
-       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
-       
-       const { prompt } = JSON.parse(body);
-       
-       try {
-         const response = await callGoogleAI(prompt || 'Generate a business insight in one sentence.');
-
-         memoryService.recordChatInteraction(
-           userId,
-           sessionId,
-           `Google AI test request - prompt: ${prompt?.slice(0, 100)}`,
-           `Response: ${response?.slice(0, 100)}`,
-           { endpoint: 'googleai/test', provider: 'gemini' }
-         ).catch(() => {});
-
-         return {
-           statusCode: 200,
-           headers,
-           body: JSON.stringify({
-             success: true,
-             model: 'gemini-1.5-flash',
-             output: response,
-             message: 'Google AI working perfectly!',
-           }),
-         };
-       } catch (error: unknown) {
-         memoryService.recordObservation(
-           userId,
-           'error',
-           `Google AI test failed: ${error instanceof Error ? error.message : String(error)}`,
-           { endpoint: 'googleai/test', sessionId }
-         ).catch(() => {});
-
-         return {
-           statusCode: 503,
-           headers,
-           body: JSON.stringify({
-             error: 'Google AI test failed',
-             message: error instanceof Error ? error.message : 'Service unavailable',
            }),
          };
        }

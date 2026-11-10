@@ -178,7 +178,7 @@ async function handler(event, context) {
     // Get AI provider configuration from user settings or environment
     const { data: userData, error: userError } = await getSupabaseClient()
       .from('user_api_keys')
-      .select('openai_api_key, anthropic_api_key, gemini_api_key')
+      .select('openai_api_key')
       .eq('id', user.id)
       .single();
     
@@ -277,94 +277,13 @@ If information is not available, use empty arrays or null values.
         aiResponse = JSON.parse(openaiText);
         usedProvider = 'openai';
       } catch (openaiError) {
-        console.warn('OpenAI failed, trying Anthropic:', openaiError.message);
+        console.warn('OpenAI failed:', openaiError.message);
       }
     }
     
-    // Try Anthropic if OpenAI failed
+    // If OpenAI failed, use a basic fallback
     if (!aiResponse) {
-      let anthropicKey = userData?.anthropic_api_key || process.env.ANTHROPIC_API_KEY;
-      if (anthropicKey) {
-        try {
-          const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": anthropicKey,
-              "anthropic-version": "2023-06-01"
-            },
-            body: JSON.stringify({
-              model: "claude-3-5-sonnet-20241022",
-              max_tokens: 2000,
-              temperature: 0.3,
-              messages: [
-                {
-                  role: "user",
-                  content: analysisPrompt
-                }
-              ]
-            })
-          });
-          
-          if (!anthropicResponse.ok) {
-            throw new Error(`Anthropic API error: ${anthropicResponse.status}`);
-          }
-          
-          const anthropicData = await anthropicResponse.json();
-          // Extract text from Anthropic response
-          const textContent = anthropicData.content[0].text;
-          aiResponse = JSON.parse(textContent);
-          usedProvider = 'anthropic';
-        } catch (anthropicError) {
-          console.warn('Anthropic failed:', anthropicError.message);
-        }
-      }
-    }
-    
-    // Try Gemini if both failed
-    if (!aiResponse) {
-      let geminiKey = userData?.gemini_api_key || process.env.GEMINI_API_KEY;
-      if (geminiKey) {
-        try {
-          const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{ text: analysisPrompt }]
-              }],
-              generationConfig: {
-                temperature: 0.3,
-                maxOutputTokens: 2000
-              }
-            })
-          });
-          
-          if (!geminiResponse.ok) {
-            throw new Error(`Gemini API error: ${geminiResponse.status}`);
-          }
-          
-          const geminiData = await geminiResponse.json();
-          const textContent = geminiData.candidates[0].content.parts[0].text;
-          // Extract JSON from the response (handle potential markdown formatting)
-          const jsonMatch = textContent.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            aiResponse = JSON.parse(jsonMatch[0]);
-            usedProvider = 'gemini';
-          } else {
-            throw new Error('Could not extract JSON from Gemini response');
-          }
-        } catch (geminiError) {
-          console.warn('Gemini failed:', geminiError.message);
-        }
-      }
-    }
-    
-    // If all AI providers failed, use a basic fallback
-    if (!aiResponse) {
-      console.warn('All AI providers failed, using basic fallback');
+      console.warn('OpenAI analysis failed, using basic fallback');
       aiResponse = {
         summary: `Meeting transcript for "${meetingTitle}" on ${meetingDate} with ${participants.length} participants.`,
         action_items: [],

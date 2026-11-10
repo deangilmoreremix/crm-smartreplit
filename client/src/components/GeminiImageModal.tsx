@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-// import { GoogleGenAI } from "@google/genai"; // Temporarily commented out until package is installed
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { DEFAULT_IMAGE_MODEL, SELECTABLE_IMAGE_MODELS, type ImageQuality } from '@shared/aiModels';
 import {
   buildPrompt,
   FEATURE_BENEFITS,
@@ -18,7 +18,14 @@ import {
 } from '../lib/history';
 import { imageStorage } from '../services/imageStorageService';
 
-const MODEL = 'gemini-2.5-flash-image-preview';
+// GPT Image 2.6 sizes by aspect ratio (via the server Image API route)
+const ASPECT_SIZES: Record<string, string> = {
+  '1:1': '1024x1024',
+  '4:5': '1024x1536',
+  '3:4': '1024x1536',
+  '16:9': '1536x1024',
+  '9:16': '1024x1536',
+};
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -28,12 +35,9 @@ async function fileToDataUrl(file: File): Promise<string> {
   const base64 = btoa(String.fromCharCode(...Array.from(new Uint8Array(buf))));
   return `data:${file.type || 'image/png'};base64,${base64}`;
 }
-async function dataUrlToInlineData(dataUrl: string) {
+async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
   const res = await fetch(dataUrl);
-  const blob = await res.blob();
-  const ab = await blob.arrayBuffer();
-  const base64 = btoa(String.fromCharCode(...Array.from(new Uint8Array(ab))));
-  return { inlineData: { mimeType: blob.type || 'image/png', data: base64 } };
+  return res.blob();
 }
 function downloadDataUrl(dataUrl: string, filename: string) {
   const a = document.createElement('a');
@@ -56,6 +60,8 @@ export default function GeminiImageModal({ open, onClose }: Props) {
 
   const [seeds, setSeeds] = useState<string[]>([]);
   const [variants, setVariants] = useState(2);
+  const [model, setModel] = useState<string>(DEFAULT_IMAGE_MODEL);
+  const [quality, setQuality] = useState<ImageQuality>('auto');
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,30 +72,6 @@ export default function GeminiImageModal({ open, onClose }: Props) {
   const [savedImages, setSavedImages] = useState<string[]>([]);
   const [storageAvailable, setStorageAvailable] = useState(false);
   const dropRef = useRef<HTMLDivElement | null>(null);
-  const ai = useMemo(
-    () => ({
-      models: {
-        generateContent: async (options: any) => ({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    inlineData: {
-                      data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', // 1x1 transparent PNG
-                      mimeType: 'image/png',
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        }),
-      },
-    }),
-    []
-  );
-
   // init / reset
   useEffect(() => {
     if (open) {
@@ -194,23 +176,30 @@ export default function GeminiImageModal({ open, onClose }: Props) {
     }
 
     try {
-      const contents: any[] = [{ text: promptText }];
+      const n = Math.max(1, Math.min(6, variants));
+      const size = ASPECT_SIZES[aspect] || '1024x1024';
+      let res: Response;
       if (seeds.length) {
-        const inlines = await Promise.all(seeds.map(dataUrlToInlineData));
-        contents.push(...inlines);
+        // Seeds are reference images: use the edit endpoint.
+        const form = new FormData();
+        form.append('prompt', promptText);
+        form.append('model', model);
+        form.append('quality', quality);
+        form.append('size', size);
+        form.append('n', String(n));
+        const blobs = await Promise.all(seeds.slice(0, 4).map(dataUrlToBlob));
+        blobs.forEach((b, i) => form.append('image', b, `seed-${i}.png`));
+        res = await fetch('/api/openai/images/edit', { method: 'POST', body: form });
+      } else {
+        res = await fetch('/api/openai/images/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptText, model, quality, size, n }),
+        });
       }
-
-      const outs: string[] = [];
-      for (let i = 0; i < Math.max(1, Math.min(6, variants)); i++) {
-        const res = await ai.models.generateContent({ model: MODEL, contents });
-        const parts = res?.candidates?.[0]?.content?.parts || [];
-        for (const p of parts) {
-          if (p?.inlineData?.data) {
-            const mime = p.inlineData.mimeType || 'image/png';
-            outs.push(`data:${mime};base64,${p.inlineData.data}`);
-          }
-        }
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || data.message || `Generation failed (${res.status})`);
+      const outs: string[] = (data.images || []).map((img: { url: string }) => img.url);
       if (!outs.length) throw new Error('No image returned. Try adjusting the prompt or seeds.');
       setImages(outs);
       setHistory(updateHistory(entry.id, { thumbs: outs.slice(0, 3) })); // store first 3 as thumbs
@@ -248,7 +237,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
     try {
       setSavingToCloud(true);
       const userId = 'demo-user'; // In real app, get from auth context
-      const filename = `gemini-image-${Date.now()}-${index + 1}.png`;
+      const filename = `ai-image-${Date.now()}-${index + 1}.png`;
 
       const result = await imageStorage.uploadImage(imageData, filename, userId, {
         promptText,
@@ -274,7 +263,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
     try {
       setSavingToCloud(true);
       const userId = 'demo-user'; // In real app, get from auth context
-      const baseFilename = `gemini-batch-${Date.now()}`;
+      const baseFilename = `ai-batch-${Date.now()}`;
 
       const results = await imageStorage.uploadImages(images, baseFilename, userId, {
         promptText,
@@ -372,7 +361,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
         {/* Main Panel */}
         <main className="rounded-2xl bg-white p-4 shadow-xl">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-bold">Gemini (Nano Banana) Image Workspace</h2>
+            <h2 className="text-lg font-bold">AI Image Workspace (GPT Image 2.6)</h2>
             <button onClick={onClose} className="rounded-md bg-gray-100 px-3 py-1 text-sm">
               Close
             </button>
@@ -422,6 +411,36 @@ export default function GeminiImageModal({ open, onClose }: Props) {
                 <option>3:4</option>
                 <option>16:9</option>
                 <option>9:16</option>
+              </select>
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-xs font-medium">Model</span>
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="rounded-lg border p-2"
+              >
+                {SELECTABLE_IMAGE_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-xs font-medium">Quality</span>
+              <select
+                value={quality}
+                onChange={(e) => setQuality(e.target.value as ImageQuality)}
+                className="rounded-lg border p-2"
+              >
+                {(['auto', 'low', 'medium', 'high', 'xhigh', 'max'] as ImageQuality[]).map((q) => (
+                  <option key={q} value={q}>
+                    {q}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -555,7 +574,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
               <>
                 <button
                   onClick={() =>
-                    images.forEach((src, i) => downloadDataUrl(src, `gemini-image-${i + 1}.png`))
+                    images.forEach((src, i) => downloadDataUrl(src, `ai-image-${i + 1}.png`))
                   }
                   className="rounded-lg bg-gray-900 px-4 py-2 text-white"
                 >
@@ -594,7 +613,7 @@ export default function GeminiImageModal({ open, onClose }: Props) {
                     </div>
                     <div className="flex gap-1">
                       <button
-                        onClick={() => downloadDataUrl(src, `gemini-image-${i + 1}.png`)}
+                        onClick={() => downloadDataUrl(src, `ai-image-${i + 1}.png`)}
                         className="flex-1 rounded bg-gray-900 px-2 py-1 text-xs text-white"
                       >
                         Download

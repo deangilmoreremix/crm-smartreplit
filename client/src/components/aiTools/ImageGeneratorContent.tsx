@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useOpenAIImage } from '../../services/openaiImageService';
+import { DEFAULT_IMAGE_MODEL, SELECTABLE_IMAGE_MODELS, type ImageComplexity, type ImageQuality } from '@shared/aiModels';
 import AIToolContent from '../shared/AIToolContent';
 import {
   Image,
   Camera,
   RefreshCw,
   Download,
-  Copy,
-  Check,
   Lightbulb,
   Grid3X3,
   Layout,
@@ -18,13 +17,12 @@ const ImageGeneratorContent: React.FC = () => {
 
   const [prompt, setPrompt] = useState('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [revisedPrompt, setRevisedPrompt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageSize, setImageSize] = useState<'1024x1024' | '1792x1024' | '1024x1792'>('1024x1024');
-  const [imageStyle, setImageStyle] = useState<'natural' | 'vivid'>('natural');
-  const [imageQuality, setImageQuality] = useState<'standard' | 'hd'>('standard');
-  const [promptCopied, setPromptCopied] = useState(false);
+  const [imageSize, setImageSize] = useState<'1024x1024' | '1536x1024' | '1024x1536'>('1024x1024');
+  const [imageModel, setImageModel] = useState<string>(DEFAULT_IMAGE_MODEL);
+  const [imageQuality, setImageQuality] = useState<ImageQuality>('auto');
+  const [imageComplexity, setImageComplexity] = useState<ImageComplexity>('medium');
 
   // Sample prompts for quick selection
   const samplePrompts = [
@@ -45,10 +43,14 @@ const ImageGeneratorContent: React.FC = () => {
     setError(null);
 
     try {
-      const result = await imageService.generateImage(prompt, imageSize, imageQuality, imageStyle);
+      const result = await imageService.generateImage(prompt, {
+        size: imageSize,
+        quality: imageQuality,
+        complexity: imageComplexity,
+        model: imageModel,
+      });
 
       setGeneratedImageUrl(result.url);
-      setRevisedPrompt(result.revisedPrompt);
     } catch (err) {
       console.error('Error generating image:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -68,14 +70,6 @@ const ImageGeneratorContent: React.FC = () => {
     }
   };
 
-  const handleCopyPrompt = () => {
-    if (revisedPrompt) {
-      navigator.clipboard.writeText(revisedPrompt);
-      setPromptCopied(true);
-      setTimeout(() => setPromptCopied(false), 2000);
-    }
-  };
-
   const handleUseSamplePrompt = (sample: string) => {
     setPrompt(sample);
   };
@@ -86,7 +80,7 @@ const ImageGeneratorContent: React.FC = () => {
         <div className="flex items-start">
           <Image className="text-emerald-600 mt-1 mr-3 h-5 w-5" />
           <div>
-            <h3 className="font-medium text-emerald-800">DALL·E Image Generator</h3>
+            <h3 className="font-medium text-emerald-800">GPT Image 2.6 Generator</h3>
             <p className="text-sm text-emerald-700 mt-1">
               Create professional images for presentations, proposals, and marketing materials.
             </p>
@@ -134,7 +128,7 @@ const ImageGeneratorContent: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                 <Grid3X3 size={16} className="mr-1 text-gray-500" />
@@ -146,24 +140,30 @@ const ImageGeneratorContent: React.FC = () => {
                 className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               >
                 <option value="1024x1024">Square (1:1)</option>
-                <option value="1792x1024">Landscape (16:9)</option>
-                <option value="1024x1792">Portrait (9:16)</option>
+                <option value="1536x1024">Landscape (3:2)</option>
+                <option value="1024x1536">Portrait (2:3)</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                 <Layout size={16} className="mr-1 text-gray-500" />
-                Style
+                Model
               </label>
               <select
-                value={imageStyle}
-                onChange={(e) => setImageStyle(e.target.value as any)}
+                value={imageModel}
+                onChange={(e) => setImageModel(e.target.value)}
                 className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <option value="natural">Natural</option>
-                <option value="vivid">Vivid</option>
+                {SELECTABLE_IMAGE_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
               </select>
+              <p className="text-xs text-gray-500 mt-1">
+                {SELECTABLE_IMAGE_MODELS.find((m) => m.id === imageModel)?.description}
+              </p>
             </div>
 
             <div>
@@ -173,15 +173,32 @@ const ImageGeneratorContent: React.FC = () => {
               </label>
               <select
                 value={imageQuality}
-                onChange={(e) => setImageQuality(e.target.value as any)}
+                onChange={(e) => setImageQuality(e.target.value as ImageQuality)}
                 className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <option value="standard">Standard</option>
-                <option value="hd">HD</option>
+                <option value="auto">Auto</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="xhigh">Extra high</option>
+                <option value="max">Max</option>
               </select>
-              {imageQuality === 'hd' && (
-                <p className="text-xs text-gray-500 mt-1">HD quality uses more API credits</p>
+              {(imageQuality === 'xhigh' || imageQuality === 'max') && (
+                <p className="text-xs text-gray-500 mt-1">Higher quality uses more API credits</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Complexity</label>
+              <select
+                value={imageComplexity}
+                onChange={(e) => setImageComplexity(e.target.value as ImageComplexity)}
+                className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
             </div>
           </div>
 
@@ -222,24 +239,6 @@ const ImageGeneratorContent: React.FC = () => {
                 className="w-full h-auto object-contain"
               />
             </div>
-
-            {revisedPrompt && (
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-1">Revised Prompt:</h4>
-                <div className="relative">
-                  <div className="bg-white p-3 rounded-md border border-gray-200 text-sm text-gray-800">
-                    {revisedPrompt}
-                  </div>
-                  <button
-                    onClick={handleCopyPrompt}
-                    className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-                    title="Copy revised prompt"
-                  >
-                    {promptCopied ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div className="flex justify-end">
               <button

@@ -1,23 +1,30 @@
 import { supabaseAIService } from './supabaseAIService';
+import { DEFAULT_IMAGE_MODEL, type ImageComplexity, type ImageQuality } from '@shared/aiModels';
 
 interface ImageGenerationOptions {
   prompt: string;
-  model?: 'dall-e-2' | 'dall-e-3';
-  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792';
-  quality?: 'standard' | 'hd';
-  style?: 'vivid' | 'natural';
+  /** GPT Image 2.6 model id (Flare / Sunburst). */
+  model?: string;
+  /** 1024x1024 | 1536x1024 | 1024x1536 | WIDTHxHEIGHT | auto */
+  size?: string;
+  quality?: ImageQuality;
+  complexity?: ImageComplexity;
+  background?: 'transparent' | 'opaque' | 'auto';
   n?: number;
   customerId?: string;
 }
 
 interface ImageGenerationResult {
+  /** Data URL (or storage URL) of the first image. */
   url: string;
-  revised_prompt?: string;
+  images: Array<{ url: string; b64_json?: string }>;
   model: string;
   size: string;
   quality: string;
-  style?: string;
 }
+
+const DEFAULT_SIZE = '1024x1024';
+const DEFAULT_QUALITY: ImageQuality = 'auto';
 
 class OpenAIImageService {
 
@@ -41,7 +48,7 @@ class OpenAIImageService {
   }
 
   /**
-   * Generate an image using DALL-E via server endpoint
+   * Generate an image with GPT Image 2.6 via server endpoint
    */
   async generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
     const serverAvailable = await this.isServerAvailable();
@@ -59,10 +66,11 @@ class OpenAIImageService {
         },
         body: JSON.stringify({
           prompt: options.prompt,
-          model: options.model || 'dall-e-3',
-          size: options.size || '1024x1024',
-          quality: options.quality || 'standard',
-          style: options.style || 'vivid',
+          model: options.model || DEFAULT_IMAGE_MODEL,
+          size: options.size || DEFAULT_SIZE,
+          quality: options.quality || DEFAULT_QUALITY,
+          complexity: options.complexity,
+          background: options.background,
           n: options.n || 1,
         }),
       });
@@ -79,15 +87,12 @@ class OpenAIImageService {
         throw new Error(data.error || 'Image generation failed');
       }
 
-      const imageData = data.data[0];
-
       const result: ImageGenerationResult = {
-        url: imageData.url,
-        revised_prompt: imageData.revised_prompt,
-        model: options.model || 'dall-e-3',
-        size: options.size || '1024x1024',
-        quality: options.quality || 'standard',
-        style: options.style,
+        url: data.url ?? data.images?.[0]?.url,
+        images: data.images ?? [],
+        model: data.model || options.model || DEFAULT_IMAGE_MODEL,
+        size: options.size || DEFAULT_SIZE,
+        quality: options.quality || DEFAULT_QUALITY,
       };
 
       // Log usage if customer ID is provided
@@ -115,28 +120,14 @@ class OpenAIImageService {
   }
 
   /**
-   * Calculate approximate cost for image generation
+   * Calculate approximate cost for image generation (rough per-image estimate)
    */
-  private calculateImageCost(model: string, size: string): number {
-    // Approximate costs based on OpenAI pricing (as of 2024)
-    const costs: Record<string, Record<string, number>> = {
-      'dall-e-2': {
-        '256x256': 0.016,
-        '512x512': 0.018,
-        '1024x1024': 0.02,
-      },
-      'dall-e-3': {
-        '1024x1024': 0.04, // Standard quality
-        '1792x1024': 0.08,
-        '1024x1792': 0.08,
-      },
-    };
-
-    return costs[model]?.[size] || 0.04; // Default to DALL-E 3 standard cost
+  private calculateImageCost(model: string, _size: string): number {
+    return model.endsWith('sunburst') ? 0.08 : 0.04;
   }
 
   /**
-   * Create image variation using DALL-E 2 via server endpoint
+   * Create image variation (GPT Image 2.6 edit) via server endpoint
    */
   async createVariation(
     imageFile: File,
@@ -153,7 +144,10 @@ class OpenAIImageService {
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('n', String(options?.n || 1));
-      formData.append('size', options?.size || '1024x1024');
+      formData.append('size', options?.size || DEFAULT_SIZE);
+      formData.append('model', options?.model || DEFAULT_IMAGE_MODEL);
+      if (options?.quality) formData.append('quality', options.quality);
+      if (options?.complexity) formData.append('complexity', options.complexity);
 
       const response = await fetch('/api/openai/images/variation', {
         method: 'POST',
@@ -172,13 +166,12 @@ class OpenAIImageService {
         throw new Error(data.error || 'Image variation failed');
       }
 
-      const imageData = data.data[0];
-
       return {
-        url: imageData.url,
-        model: 'dall-e-2',
-        size: options?.size || '1024x1024',
-        quality: 'standard',
+        url: data.url ?? data.images?.[0]?.url,
+        images: data.images ?? [],
+        model: data.model || options?.model || DEFAULT_IMAGE_MODEL,
+        size: options?.size || DEFAULT_SIZE,
+        quality: options?.quality || DEFAULT_QUALITY,
       };
     } catch (error) {
       console.error('Image variation failed:', error);
@@ -187,7 +180,7 @@ class OpenAIImageService {
   }
 
   /**
-   * Edit an image using DALL-E 2 via server endpoint
+   * Edit an image with GPT Image 2.6 via server endpoint
    */
   async editImage(
     imageFile: File,
@@ -208,7 +201,10 @@ class OpenAIImageService {
       }
       formData.append('prompt', prompt);
       formData.append('n', String(options?.n || 1));
-      formData.append('size', options?.size || '1024x1024');
+      formData.append('size', options?.size || DEFAULT_SIZE);
+      formData.append('model', options?.model || DEFAULT_IMAGE_MODEL);
+      if (options?.quality) formData.append('quality', options.quality);
+      if (options?.complexity) formData.append('complexity', options.complexity);
 
       const response = await fetch('/api/openai/images/edit', {
         method: 'POST',
@@ -227,13 +223,12 @@ class OpenAIImageService {
         throw new Error(data.error || 'Image edit failed');
       }
 
-      const imageData = data.data[0];
-
       return {
-        url: imageData.url,
-        model: 'dall-e-2',
-        size: options?.size || '1024x1024',
-        quality: 'standard',
+        url: data.url ?? data.images?.[0]?.url,
+        images: data.images ?? [],
+        model: data.model || options?.model || DEFAULT_IMAGE_MODEL,
+        size: options?.size || DEFAULT_SIZE,
+        quality: options?.quality || DEFAULT_QUALITY,
       };
     } catch (error) {
       console.error('Image edit failed:', error);
@@ -277,22 +272,15 @@ export type { ImageGenerationOptions, ImageGenerationResult };
 export const useOpenAIImage = () => {
   const generateImage = async (
     prompt: string,
-    size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024',
-    quality: 'standard' | 'hd' = 'standard',
-    style: 'vivid' | 'natural' = 'natural'
+    opts: {
+      size?: string;
+      quality?: ImageQuality;
+      complexity?: ImageComplexity;
+      model?: string;
+    } = {}
   ) => {
-    const result = await openaiImageService.generateImage({
-      prompt,
-      size,
-      quality,
-      style,
-      model: 'dall-e-3',
-    });
-
-    return {
-      url: result.url,
-      revisedPrompt: result.revised_prompt,
-    };
+    const result = await openaiImageService.generateImage({ prompt, ...opts });
+    return { url: result.url, images: result.images };
   };
 
   return {

@@ -6,10 +6,13 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 
+// Missing config must not take down every API route at import time (serverless cold start):
+// warn here and let the individual billing calls fail when they actually need the value.
 const requireEnv = (name: string): string => {
   const value = process.env[name];
   if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
+    console.warn(`Missing environment variable: ${name} (billing features that need it will fail)`);
+    return '';
   }
   return value;
 };
@@ -54,7 +57,7 @@ async function getStripe() {
 // Initialize Supabase
 const supabaseUrl = requireEnv('SUPABASE_URL');
 const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl || 'http://localhost:54321', supabaseServiceKey || 'missing-key');
 
 // Pricing for OpenClaw upgrade tiers
 const upgradePricing = {

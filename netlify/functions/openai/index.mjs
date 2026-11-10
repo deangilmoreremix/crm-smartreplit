@@ -33,6 +33,13 @@ function normalizeEffort(model, effort) {
   if (effort === "none" && !modelSupportsNoReasoning(model)) return "low";
   return effort;
 }
+var IMAGE_MODELS = {
+  fast: "gpt-image-2.6-flare",
+  // fast iteration
+  quality: "gpt-image-2.6-sunburst"
+  // detailed work / edit consistency
+};
+var DEFAULT_IMAGE_MODEL = IMAGE_MODELS.fast;
 
 // server/services/openaiClient.ts
 var REASONING_HEADROOM = 1024;
@@ -547,33 +554,6 @@ var AIUsageTracker = class {
   }
 };
 var aiUsageTracker = new AIUsageTracker();
-async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
-  const googleAIKey = process.env.GOOGLE_AI_API_KEY;
-  if (!googleAIKey) {
-    throw new Error("Google AI API key not configured");
-  }
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }]
-          }
-        ]
-      })
-    }
-  );
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
-  }
-  const data = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-}
 var handler = async (event, _context) => {
   const { httpMethod, path, body } = event;
   const pathParts = path.split("/").filter(Boolean);
@@ -908,48 +888,6 @@ var handler = async (event, _context) => {
             body: JSON.stringify({
               error: "Analysis failed",
               summary: "Business intelligence temporarily unavailable."
-            })
-          };
-        }
-      }
-      if (pathParts.length >= 2 && pathParts[0] === "googleai" && pathParts[1] === "test" && httpMethod === "POST") {
-        const userId = event.headers["x-user-id"] || event.headers["x-forwarded-for"] || "anonymous";
-        const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
-        const { prompt } = JSON.parse(body);
-        try {
-          const response = await callGoogleAI(prompt || "Generate a business insight in one sentence.");
-          memoryService.recordChatInteraction(
-            userId,
-            sessionId,
-            `Google AI test request - prompt: ${prompt?.slice(0, 100)}`,
-            `Response: ${response?.slice(0, 100)}`,
-            { endpoint: "googleai/test", provider: "gemini" }
-          ).catch(() => {
-          });
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-              success: true,
-              model: "gemini-1.5-flash",
-              output: response,
-              message: "Google AI working perfectly!"
-            })
-          };
-        } catch (error) {
-          memoryService.recordObservation(
-            userId,
-            "error",
-            `Google AI test failed: ${error instanceof Error ? error.message : String(error)}`,
-            { endpoint: "googleai/test", sessionId }
-          ).catch(() => {
-          });
-          return {
-            statusCode: 503,
-            headers,
-            body: JSON.stringify({
-              error: "Google AI test failed",
-              message: error instanceof Error ? error.message : "Service unavailable"
             })
           };
         }

@@ -1,6 +1,6 @@
 /**
  * User API Keys Routes
- * CRUD operations for user-provided OpenAI and Gemini API keys
+ * CRUD operations for user-provided OpenAI API keys
  */
 
 import type { Express, Request, Response } from 'express';
@@ -9,15 +9,6 @@ import { db } from '../db';
 import { userApiKeys } from '../../shared/schema';
 import { requireAuth } from './auth';
 import { createUserClient, respondText } from '../services/openaiClient';
-
-// Google AI interface for testing
-interface GoogleAIResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
-}
 
 export function registerApiKeyRoutes(app: Express) {
   const requireApiKeyAuth = requireAuth();
@@ -67,8 +58,8 @@ export function registerApiKeyRoutes(app: Express) {
       const { provider, apiKey, apiKeyName, model, isDefault } = req.body;
 
       // Validate provider
-      if (!provider || !['openai', 'gemini'].includes(provider)) {
-        return res.status(400).json({ error: 'Provider must be "openai" or "gemini"' });
+      if (provider !== 'openai') {
+        return res.status(400).json({ error: 'Provider must be "openai"' });
       }
 
       // Validate API key format
@@ -80,12 +71,6 @@ export function registerApiKeyRoutes(app: Express) {
       if (provider === 'openai' && !apiKey.startsWith('sk-')) {
         return res.status(400).json({
           error: 'Invalid OpenAI API key format. Key must start with "sk-"',
-        });
-      }
-
-      if (provider === 'gemini' && !apiKey.startsWith('AIza')) {
-        return res.status(400).json({
-          error: 'Invalid Gemini API key format. Key must start with "AIza"',
         });
       }
 
@@ -159,8 +144,6 @@ export function registerApiKeyRoutes(app: Express) {
 
       if (apiKeyRecord.provider === 'openai') {
         testResult = await testOpenAIKey(apiKeyRecord.apiKey);
-      } else if (apiKeyRecord.provider === 'gemini') {
-        testResult = await testGeminiKey(apiKeyRecord.apiKey);
       } else {
         return res.status(400).json({ error: 'Unknown provider' });
       }
@@ -315,8 +298,8 @@ export function registerApiKeyRoutes(app: Express) {
         return res.status(503).json({ error: 'Database not available' });
       }
 
-      if (!['openai', 'gemini'].includes(provider)) {
-        return res.status(400).json({ error: 'Provider must be "openai" or "gemini"' });
+      if (provider !== 'openai') {
+        return res.status(400).json({ error: 'Provider must be "openai"' });
       }
 
       // Get the default active key for this provider
@@ -395,38 +378,6 @@ async function testOpenAIKey(apiKey: string): Promise<{ success: boolean; error?
     return {
       success: false,
       error: error?.message || 'OpenAI API key validation failed',
-    };
-  }
-}
-
-// Helper: Test Gemini API key
-async function testGeminiKey(apiKey: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'test' }] }],
-          generationConfig: { maxOutputTokens: 1 },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData?.error?.message || `Gemini API error: ${response.status}`,
-      };
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error?.message || 'Gemini API key validation failed',
     };
   }
 }

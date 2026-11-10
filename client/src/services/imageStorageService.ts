@@ -14,6 +14,16 @@ export interface StoredImage {
   metadata?: any;
 }
 
+function dataUrlToBlob(dataUrl: string): Promise<Blob> | Blob {
+  const match = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(dataUrl);
+  if (!match) return fetch(dataUrl).then((r) => r.blob()); // storage/http URL
+  const mime = match[1] || 'image/png';
+  const bin = match[2] ? atob(match[3]) : decodeURIComponent(match[3]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 export class ImageStorageService {
   private bucket = 'generated-images';
 
@@ -32,9 +42,8 @@ export class ImageStorageService {
     }
   ): Promise<StoredImage> {
     try {
-      // Convert base64 data URL to blob
-      const response = await fetch(imageData);
-      const blob = await response.blob();
+      // Decode base64 data URL to bytes (GPT Image returns b64_json, not hosted URLs)
+      const blob = await dataUrlToBlob(imageData);
 
       // Create unique filename with timestamp
       const timestamp = Date.now();
@@ -49,6 +58,7 @@ export class ImageStorageService {
         .from(this.bucket)
         .upload(filePath, blob, {
           cacheControl: '3600',
+          contentType: blob.type || undefined,
           upsert: false,
         });
 
@@ -85,6 +95,19 @@ export class ImageStorageService {
       console.error('Image upload failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Upload raw base64 (e.g. `b64_json` from the OpenAI Image API) by decoding it to bytes.
+   */
+  async uploadBase64Image(
+    b64: string,
+    mimeType: string,
+    filename: string,
+    userId: string,
+    metadata?: Parameters<ImageStorageService['uploadImage']>[3]
+  ): Promise<StoredImage> {
+    return this.uploadImage(`data:${mimeType};base64,${b64}`, filename, userId, metadata);
   }
 
   /**

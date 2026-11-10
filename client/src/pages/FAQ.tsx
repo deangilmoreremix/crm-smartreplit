@@ -93,14 +93,14 @@ const FAQ: React.FC = () => {
       id: 'ai-features-overview',
       question: 'What AI features are included?',
       answer:
-        'Smart CRM includes a comprehensive suite of AI tools including email analysis, meeting summarization, proposal generation, call script creation, subject line optimization, competitor analysis, market trend analysis, sales forecasting, customer persona generation, voice tone optimization, visual content creation, and much more. We also offer advanced AI capabilities like persistent AI assistants, vision analysis, DALL-E image generation, speech-to-text transcription, semantic search, and function calling.',
+        'Smart CRM includes a comprehensive suite of AI tools including email analysis, meeting summarization, proposal generation, call script creation, subject line optimization, competitor analysis, market trend analysis, sales forecasting, customer persona generation, voice tone optimization, visual content creation, and much more. We also offer advanced AI capabilities like persistent AI assistants, vision analysis, GPT Image 2.6 image generation, speech-to-text transcription, semantic search, and function calling.',
       category: 'ai-features',
     },
     {
       id: 'ai-api-keys',
       question: 'Do I need my own API keys for the AI features?',
       answer:
-        "For the demo version, you'll need to provide your own OpenAI and/or Google Gemini API keys in the settings. For production accounts, we handle all API keys and costs as part of your subscription, eliminating the need to manage separate accounts with AI providers.",
+        "For the demo version, you'll need to provide your own OpenAI API key in the settings. For production accounts, we handle all API keys and costs as part of your subscription, eliminating the need to manage separate accounts with AI providers.",
       category: 'ai-features',
     },
     {
