@@ -7,6 +7,7 @@ import {
   respondJson,
   respondStream,
   respondWithTools,
+  REASONING_HEADROOM,
 } from './openaiClient';
 import { normalizeEffort, resolveModel, tierModel } from '../../shared/aiModels';
 
@@ -53,6 +54,11 @@ describe('buildRequest', () => {
     expect(body).not.toHaveProperty('top_p');
     expect(body).not.toHaveProperty('max_tokens');
     expect(body).not.toHaveProperty('response_format');
+  });
+
+  it('adds reasoning headroom to max_output_tokens only when reasoning is on', () => {
+    expect(buildRequest({ tier: 'deep', input: 'x', effort: 'low', maxOutputTokens: 500 }).max_output_tokens).toBe(500 + REASONING_HEADROOM);
+    expect(buildRequest({ tier: 'fast', input: 'x', effort: 'none', maxOutputTokens: 500 }).max_output_tokens).toBe(500);
   });
 
   it('sends temperature only when effort is none', () => {

@@ -18,6 +18,9 @@ import {
 
 export type { ModelTier, ReasoningEffort };
 
+/** Extra output tokens granted when reasoning is enabled. */
+export const REASONING_HEADROOM = 1024;
+
 type JsonSchemaFormat = { name: string; schema: Record<string, unknown>; strict?: boolean };
 
 export interface RespondOptions {
@@ -105,8 +108,12 @@ export function buildRequest(opts: RespondOptions): Record<string, unknown> {
 
   const body: Record<string, unknown> = { model, input: opts.input };
   if (opts.instructions) body.instructions = opts.instructions;
-  if (opts.maxOutputTokens) body.max_output_tokens = opts.maxOutputTokens;
   if (effort) body.reasoning = { effort };
+  if (opts.maxOutputTokens) {
+    // max_output_tokens also counts reasoning tokens, so leave headroom when reasoning is on.
+    body.max_output_tokens =
+      effort && effort !== 'none' ? opts.maxOutputTokens + REASONING_HEADROOM : opts.maxOutputTokens;
+  }
 
   // Sampling params are only valid when reasoning is explicitly off.
   if (effort === 'none') {
