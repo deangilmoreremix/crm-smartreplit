@@ -51,31 +51,44 @@ const ContactDetail: React.FC = () => {
   const [personalizationLoading, setPersonalizationLoading] = useState(false);
   const [personalizationError, setPersonalizationError] = useState<string | null>(null);
 
-  // Mock data for the contact - in a real app this would come from an API
+  // Load the real contact from the contacts API by route id
   useEffect(() => {
+    let cancelled = false;
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      const mockContact: Contact = {
-        id: id || '1',
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '(555) 123-4567',
-        company: 'Acme Inc',
-        position: 'CTO',
-        status: 'customer',
-        score: 85,
-        lastContact: new Date('2023-06-15'),
-        notes: 'Interested in enterprise plan',
-        industry: 'Technology',
-        location: 'San Francisco, CA',
-      };
-
-      setContact(mockContact);
-      setEditFormData(mockContact);
-      setIsLoading(false);
-    }, 500);
+    fetch('/api/contacts', { credentials: 'include' })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        return res.json();
+      })
+      .then((rows: any[]) => {
+        if (cancelled) return;
+        const row = rows.find((r) => String(r.id) === id);
+        if (!row) {
+          setContact(null);
+          return;
+        }
+        const loaded: Contact = {
+          id: String(row.id),
+          name: `${row.firstName ?? ''} ${row.lastName ?? ''}`.trim(),
+          email: row.email ?? '',
+          phone: row.phone ?? '',
+          company: row.company ?? '',
+          position: row.position ?? '',
+          status: row.status ?? 'lead',
+          score: Number(row.score ?? 0),
+          lastContact: row.updatedAt ? new Date(row.updatedAt) : new Date(),
+          notes: row.notes ?? '',
+          industry: row.industry ?? '',
+          location: [row.city, row.state].filter(Boolean).join(', '),
+        };
+        setContact(loaded);
+        setEditFormData(loaded);
+      })
+      .catch(() => !cancelled && setContact(null))
+      .finally(() => !cancelled && setIsLoading(false));
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // Handle editing the contact

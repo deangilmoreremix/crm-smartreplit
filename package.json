@@ -131,7 +131,6 @@
     "puppeteer-screen-recorder-improved": "^4.0.0",
     "react": "^18.3.1",
     "react-avatar": "^5.0.4",
-    "react-beautiful-dnd": "^13.1.1",
     "react-big-calendar": "^1.19.4",
     "react-calendar": "^6.0.0",
     "react-csv": "^2.2.2",
