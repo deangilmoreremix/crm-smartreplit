@@ -1,16 +1,20 @@
 /**
  * AI Integration Service
- * OpenAI-only (server-side key)
+ * OpenAI-only (server-side key). Wired to real routes:
+ *  - scoring    -> POST /api/ai/lead-score        (aiSalesTools.leadScore)
+ *  - enrichment -> POST /api/contacts/:id/enrich
+ *  - bulk       -> the two above, 3 contacts at a time
+ * Other analysis types have no server route and throw.
  */
 
-import { httpClient } from './http-client.service';
 import { validationService } from './validation.service';
 import { cacheService } from './cache.service';
 import { logger } from './logger.service';
 import { rateLimiter } from './rate-limiter.service';
 import { Contact } from '../types';
 import { ContactEnrichmentData } from './aiEnrichmentService';
-import apiConfig, { getDefaultModel, getBestModelForTask } from '../config/api.config';
+import { aiSalesTools } from './aiToolsApiService';
+import { contactAPIService } from './contact-api.service';
 
 export interface AIAnalysisRequest {
   contactId: string;
@@ -27,7 +31,8 @@ export interface AIAnalysisRequest {
 export interface AIAnalysisResponse {
   contactId: string;
   score?: number;
-  confidence: number;
+  /** Only set when the server returns one; never synthesised. */
+  confidence?: number;
   insights: string[];
   recommendations: string[];
   categories: string[];
@@ -67,22 +72,33 @@ export interface BulkAnalysisResponse {
   };
 }
 
-class AIIntegrationService {
-  private apiUrl = apiConfig.dataProcessing.enrichment.baseURL;
+const BULK_CONCURRENCY = 3;
+const SUPPORTED_TYPES: ReadonlyArray<AIAnalysisRequest['analysisTypes'][number]> = ['scoring', 'enrichment'];
 
+async function postEnrich(contactId: string): Promise<{ enriched: boolean; data: ContactEnrichmentData }> {
+  const response = await fetch(`/api/contacts/${encodeURIComponent(contactId)}/enrich`, { method: 'POST' });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || err.message || `Enrichment failed (${response.status})`);
+  }
+  return response.json();
+}
+
+class AIIntegrationService {
   async analyzeContact(request: AIAnalysisRequest): Promise<AIAnalysisResponse> {
     const startTime = Date.now();
 
-    // Validate request
     if (!request.contactId || !request.contact) {
       throw new Error('Contact ID and contact data are required');
     }
-
     if (!request.analysisTypes || request.analysisTypes.length === 0) {
       throw new Error('At least one analysis type is required');
     }
+    const unsupported = request.analysisTypes.filter((t) => !SUPPORTED_TYPES.includes(t));
+    if (unsupported.length) {
+      throw new Error(`Analysis type(s) not supported by the server: ${unsupported.join(', ')}`);
+    }
 
-    // Check cache first (unless force refresh)
     const cacheKey = `${request.contactId}_${request.analysisTypes.join('_')}_${request.options?.model || 'default'}`;
     if (!request.options?.forceRefresh) {
       const cached = cacheService.getAIAnalysis(cacheKey);
@@ -95,32 +111,46 @@ class AIIntegrationService {
     try {
       logger.info(`Starting AI analysis for contact ${request.contactId}`, {
         analysisTypes: request.analysisTypes,
-        provider: request.options?.provider,
-        model: request.options?.model,
       });
 
-      const response = await httpClient.post<AIAnalysisResponse>(
-        `${this.apiUrl}/analyze`,
-        request,
-        {
-          timeout: 60000, // 1 minute for analysis
-          retries: 2,
+      const result: AIAnalysisResponse = {
+        contactId: request.contactId,
+        insights: [],
+        recommendations: [],
+        categories: [],
+        tags: [],
+        provider: 'openai',
+        model: 'server-managed',
+        timestamp: new Date().toISOString(),
+        processingTime: 0,
+      };
+
+      if (request.analysisTypes.includes('scoring')) {
+        const res = await aiSalesTools.leadScore(request.contact);
+        if (!res?.success || !res.scoring) throw new Error(res?.error || 'Lead scoring failed');
+        const scoring = res.scoring;
+        if (typeof scoring.score === 'number') result.score = scoring.score;
+        if (scoring.rationale) result.insights.push(String(scoring.rationale));
+        if (Array.isArray(scoring.buyingSignals)) result.insights.push(...scoring.buyingSignals.map(String));
+        if (Array.isArray(scoring.recommendedActions)) {
+          result.recommendations.push(...scoring.recommendedActions.map(String));
         }
-      );
+        if (scoring.priority) result.tags.push(String(scoring.priority));
+      }
 
-      const result = response.data;
+      if (request.analysisTypes.includes('enrichment')) {
+        const enriched = await postEnrich(request.contactId);
+        result.enrichmentData = enriched.data;
+      }
 
-      // Cache the result
+      result.processingTime = Date.now() - startTime;
       cacheService.setAIAnalysis(cacheKey, result, 3600000); // Cache for 1 hour
 
       logger.info('AI analysis completed successfully', {
         contactId: request.contactId,
-        provider: result.provider,
-        model: result.model,
-        processingTime: Date.now() - startTime,
+        processingTime: result.processingTime,
         score: result.score,
       });
-
       return result;
     } catch (error) {
       logger.error('AI analysis failed', error as Error, {
@@ -128,7 +158,6 @@ class AIIntegrationService {
         analysisTypes: request.analysisTypes,
         processingTime: Date.now() - startTime,
       });
-
       throw error;
     }
   }
@@ -139,7 +168,6 @@ class AIIntegrationService {
     if (!request.contactIds || request.contactIds.length === 0) {
       throw new Error('Contact IDs are required');
     }
-
     if (request.contactIds.length > 50) {
       throw new Error('Bulk analysis is limited to 50 contacts at a time');
     }
@@ -149,35 +177,43 @@ class AIIntegrationService {
       analysisTypes: request.analysisTypes,
     });
 
-    try {
-      const response = await httpClient.post<BulkAnalysisResponse>(
-        `${this.apiUrl}/analyze/bulk`,
-        request,
-        {
-          timeout: 300000, // 5 minutes for bulk operations
-          retries: 1,
+    const results: AIAnalysisResponse[] = [];
+    const failed: BulkAnalysisResponse['failed'] = [];
+    let next = 0;
+    const worker = async () => {
+      while (next < request.contactIds.length) {
+        const contactId = request.contactIds[next++];
+        try {
+          const contact = await contactAPIService.getContact(contactId);
+          results.push(
+            await this.analyzeContact({
+              contactId,
+              contact,
+              analysisTypes: request.analysisTypes,
+              options: request.options,
+            })
+          );
+        } catch (error) {
+          failed.push({ contactId, error: error instanceof Error ? error.message : String(error) });
         }
-      );
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(BULK_CONCURRENCY, request.contactIds.length) }, worker));
 
-      const result = response.data;
-
-      logger.info('Bulk AI analysis completed successfully', {
-        total: result.summary.total,
-        successful: result.summary.successful,
-        failed: result.summary.failed,
-        averageScore: result.summary.averageScore,
-        processingTime: Date.now() - startTime,
-      });
-
-      return result;
-    } catch (error) {
-      logger.error('Bulk AI analysis failed', error as Error, {
-        contactCount: request.contactIds.length,
-        processingTime: Date.now() - startTime,
-      });
-
-      throw error;
+    if (results.length === 0) {
+      throw new Error(`Bulk analysis failed for all contacts: ${failed[0]?.error ?? 'unknown error'}`);
     }
+
+    const scores = results.map((r) => r.score).filter((n): n is number => typeof n === 'number');
+    const summary = {
+      total: request.contactIds.length,
+      successful: results.length,
+      failed: failed.length,
+      averageScore: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0,
+      processingTime: Date.now() - startTime,
+    };
+    logger.info('Bulk AI analysis completed', summary);
+    return { results, failed, summary };
   }
 
   async enrichContact(
@@ -191,88 +227,30 @@ class AIIntegrationService {
       );
     }
 
-    // Check cache first
-    const cacheKey = `enrichment_${JSON.stringify(enrichmentRequest)}`;
+    const cacheKey = `enrichment_${contactId}_${JSON.stringify(enrichmentRequest)}`;
     const cached = cacheService.get<ContactEnrichmentData>('enrichment', cacheKey);
-    if (cached) {
-      return cached;
-    }
+    if (cached) return cached;
 
     try {
       logger.info(`Starting contact enrichment for ${contactId}`);
-
-      const response = await httpClient.post<ContactEnrichmentData>(
-        `${this.apiUrl}/enrich`,
-        {
-          contactId,
-          enrichmentRequest,
-        },
-        {
-          timeout: 45000,
-          retries: 2,
-        }
-      );
-
-      const result = response.data;
-
-      // Cache the result
-      cacheService.set('enrichment', cacheKey, result, 86400000); // Cache for 24 hours
-
-      logger.info('Contact enrichment completed successfully', {
-        contactId,
-        confidence: result.confidence,
-      });
-
-      return result;
+      // The server enriches from the stored contact; enrichmentRequest is only validated here.
+      const { data } = await postEnrich(contactId);
+      cacheService.set('enrichment', cacheKey, data, 86400000); // Cache for 24 hours
+      return data;
     } catch (error) {
-      logger.error('Contact enrichment failed', error as Error, {
-        contactId,
-        enrichmentRequest,
-      });
-
+      logger.error('Contact enrichment failed', error as Error, { contactId, enrichmentRequest });
       throw error;
     }
   }
 
-  // Utility methods
+  /** Real server status (GET /api/openai/status). No usage quota is reported, so none is invented. */
   async getProviderStatus(): Promise<
     Array<{ name: string; status: 'available' | 'rate_limited' | 'error'; remaining?: number }>
   > {
-    try {
-      const response = await httpClient.get<any>(`${this.apiUrl}/providers/status`, undefined, {
-        timeout: 10000,
-        retries: 1,
-        cache: {
-          key: 'ai_provider_status',
-          ttl: 60000, // Cache for 1 minute
-          tags: ['ai', 'status'],
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      logger.error('Failed to get AI provider status', error as Error);
-
-      // Development fallback
-      if (import.meta.env.DEV || import.meta.env.VITE_ENV === 'development') {
-        // Check server-side availability in development
-        try {
-          const response = await fetch('/api/openai/status');
-          const openaiAvailable = response.ok && (await response.json()).configured === true;
-          return [
-            {
-              name: 'openai',
-              status: openaiAvailable ? 'available' : 'error',
-              remaining: 45,
-            },
-          ];
-        } catch (error) {
-          return [{ name: 'openai', status: 'error', remaining: 0 }];
-        }
-      }
-
-      throw error;
-    }
+    const response = await fetch('/api/openai/status');
+    if (!response.ok) throw new Error(`Provider status failed (${response.status})`);
+    const body = await response.json();
+    return [{ name: 'openai', status: body.configured === true ? 'available' : 'error' }];
   }
 
   async clearCache(contactId?: string): Promise<void> {

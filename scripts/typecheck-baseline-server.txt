@@ -1,0 +1,5 @@
+tailwind.config.ts: TS1541 1
+vite.config.ts: TS1470 1
+vite.config.ts: TS1479 1
+vitest.config.ts: TS1479 1
+vitest.config.ts: TS2769 1

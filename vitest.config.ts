@@ -43,7 +43,8 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './client/src'),
       '@server': resolve(__dirname, './server'),
-      '@shared': resolve(__dirname, './shared')
+      '@shared': resolve(__dirname, './shared'),
+      '@smartcrm/workflows': resolve(__dirname, './packages/workflows/src/index.ts')
     }
   }
 });

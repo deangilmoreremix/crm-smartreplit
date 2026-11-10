@@ -24,41 +24,73 @@ const streamPrompt = async (prompt: string, onToken: (token: string) => void, mo
     throw new Error(error.message || error.error || `API error: ${response.statusText}`);
   }
 
+  // NOTE (Netlify): Netlify Functions buffer the response, so /api/stream usually arrives as ONE
+  // complete body instead of incremental chunks. The parsing below is chunk-size agnostic: the same
+  // SSE lines are processed whether they arrive token-by-token or all at once (onToken is then
+  // called in a burst), and a non-SSE body or a missing trailing newline still yields the full text.
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType && !contentType.includes('text/event-stream')) {
+    const text = await response.text();
+    let full = text;
+    try {
+      const json = JSON.parse(text);
+      if (json.error) throw new Error(json.error);
+      full = json.output_text ?? json.content ?? text;
+    } catch (e) {
+      if (e instanceof SyntaxError) full = text;
+      else throw e;
+    }
+    if (full) onToken(full);
+    return full;
+  }
+
+  const fullContent: string[] = [];
+  let finished = false;
+
+  // Returns true when the stream signalled completion.
+  const handleLine = (line: string): boolean => {
+    if (!line.startsWith('data: ')) return false;
+    const data = line.slice(6).trim();
+    if (data === '[DONE]') return true;
+    let parsed: any;
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      return false; // ignore malformed chunks
+    }
+    if (parsed.error) throw new Error(parsed.error);
+    if (parsed.content) {
+      fullContent.push(parsed.content);
+      onToken(parsed.content);
+    }
+    return false;
+  };
+
   const reader = response.body?.getReader();
   if (!reader) {
     throw new Error('Failed to get response reader');
   }
 
   const decoder = new TextDecoder();
-  const fullContent: string[] = [];
   let buffer = '';
 
-  while (true) {
+  while (!finished) {
     const { done, value } = await reader.read();
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n');
     buffer = lines.pop() || '';
-
     for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (data === '[DONE]') return fullContent.join('');
-
-      let parsed: any;
-      try {
-        parsed = JSON.parse(data);
-      } catch {
-        continue; // ignore malformed chunks
-      }
-      if (parsed.error) throw new Error(parsed.error);
-      if (parsed.content) {
-        fullContent.push(parsed.content);
-        onToken(parsed.content);
+      if (handleLine(line)) {
+        finished = true;
+        break;
       }
     }
   }
+
+  // A buffered response may end without a trailing newline.
+  if (!finished && buffer.trim()) handleLine(buffer.trim());
 
   return fullContent.join('');
 };

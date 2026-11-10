@@ -10,19 +10,30 @@ import {
   Lightbulb,
   Grid3X3,
   Layout,
+  PenLine,
 } from 'lucide-react';
 
 const ImageGeneratorContent: React.FC = () => {
   const imageService = useOpenAIImage();
 
   const [prompt, setPrompt] = useState('');
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
+  const generatedImageUrl = generatedImageUrls[0] ?? null;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<'1024x1024' | '1536x1024' | '1024x1536'>('1024x1024');
   const [imageModel, setImageModel] = useState<string>(DEFAULT_IMAGE_MODEL);
   const [imageQuality, setImageQuality] = useState<ImageQuality>('auto');
   const [imageComplexity, setImageComplexity] = useState<ImageComplexity>('medium');
+  const [transparent, setTransparent] = useState(false);
+  const [outputCount, setOutputCount] = useState(1);
+  const [outputFormat, setOutputFormat] = useState<'png' | 'webp' | 'svg' | 'gif'>('png');
+  const [baseFile, setBaseFile] = useState<File | null>(null);
+  const [markupFile, setMarkupFile] = useState<File | null>(null);
+
+  // Transparent backgrounds need png/webp; SVG is generate-only with n=1.
+  const supportsTransparent = outputFormat === 'png' || outputFormat === 'webp';
+  const markupMode = !!(baseFile && markupFile);
 
   // Sample prompts for quick selection
   const samplePrompts = [
@@ -39,18 +50,31 @@ const ImageGeneratorContent: React.FC = () => {
       return;
     }
 
+    if (markupMode && outputFormat === 'svg') {
+      setError('SVG output is not supported for markup edits');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await imageService.generateImage(prompt, {
+      const common = {
         size: imageSize,
         quality: imageQuality,
         complexity: imageComplexity,
         model: imageModel,
-      });
+        n: outputFormat === 'svg' ? 1 : outputCount,
+        outputFormat,
+      };
+      const result = markupMode
+        ? await imageService.editWithMarkup(baseFile!, markupFile!, prompt, common)
+        : await imageService.generateImage(prompt, {
+            ...common,
+            background: transparent && supportsTransparent ? 'transparent' : undefined,
+          });
 
-      setGeneratedImageUrl(result.url);
+      setGeneratedImageUrls(result.images.length ? result.images.map((i) => i.url) : [result.url]);
     } catch (err) {
       console.error('Error generating image:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -63,7 +87,7 @@ const ImageGeneratorContent: React.FC = () => {
     if (generatedImageUrl) {
       const link = document.createElement('a');
       link.href = generatedImageUrl;
-      link.download = `generated-image-${Date.now()}.png`;
+      link.download = `generated-image-${Date.now()}.${outputFormat}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -202,6 +226,80 @@ const ImageGeneratorContent: React.FC = () => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Output format</label>
+              <select
+                value={outputFormat}
+                onChange={(e) => setOutputFormat(e.target.value as any)}
+                className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+                <option value="svg">SVG (single image)</option>
+                <option value="gif">Animated GIF</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="output-count" className="block text-sm font-medium text-gray-700 mb-1">
+                Number of images
+              </label>
+              <select
+                id="output-count"
+                value={outputFormat === 'svg' ? 1 : outputCount}
+                disabled={outputFormat === 'svg'}
+                onChange={(e) => setOutputCount(Number(e.target.value))}
+                className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mt-6">
+              <input
+                type="checkbox"
+                checked={transparent && supportsTransparent}
+                disabled={!supportsTransparent || markupMode}
+                onChange={(e) => setTransparent(e.target.checked)}
+              />
+              Transparent background
+            </label>
+          </div>
+
+          <div className="p-3 border rounded-md bg-gray-50 space-y-2">
+            <div className="text-sm font-medium text-gray-700 flex items-center">
+              <PenLine size={16} className="mr-1 text-gray-500" />
+              Markup edit (optional)
+            </div>
+            <p className="text-xs text-gray-500">
+              Upload a base image and a transparent PNG annotation layer of the same size, then describe the change
+              above. Both files together switch Generate into an edit.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label className="text-xs text-gray-600">
+                Base image
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => setBaseFile(e.target.files?.[0] ?? null)}
+                  className="block w-full mt-1"
+                />
+              </label>
+              <label className="text-xs text-gray-600">
+                Annotation layer (PNG)
+                <input
+                  type="file"
+                  accept="image/png"
+                  onChange={(e) => setMarkupFile(e.target.files?.[0] ?? null)}
+                  className="block w-full mt-1"
+                />
+              </label>
+            </div>
+          </div>
+
           <div className="flex justify-end">
             <button
               onClick={handleGenerateImage}
@@ -232,12 +330,12 @@ const ImageGeneratorContent: React.FC = () => {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-3">Generated Image</h3>
 
-            <div className="mb-4 rounded-lg overflow-hidden shadow-sm border border-gray-200">
-              <img
-                src={generatedImageUrl}
-                alt="Generated image"
-                className="w-full h-auto object-contain"
-              />
+            <div className={`mb-4 grid gap-3 ${generatedImageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {generatedImageUrls.map((url, i) => (
+                <div key={i} className="rounded-lg overflow-hidden shadow-sm border border-gray-200">
+                  <img src={url} alt={`Generated image ${i + 1}`} className="w-full h-auto object-contain" />
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-end">

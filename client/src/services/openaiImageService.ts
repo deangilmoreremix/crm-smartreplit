@@ -1,4 +1,5 @@
 import { supabaseAIService } from './supabaseAIService';
+import { runAiJob } from './openai-batch-api.service';
 import { DEFAULT_IMAGE_MODEL, type ImageComplexity, type ImageQuality } from '@shared/aiModels';
 
 interface ImageGenerationOptions {
@@ -11,6 +12,10 @@ interface ImageGenerationOptions {
   complexity?: ImageComplexity;
   background?: 'transparent' | 'opaque' | 'auto';
   n?: number;
+  /** svg: generate only, n=1. gif: generate or edit. */
+  outputFormat?: 'png' | 'jpeg' | 'webp' | 'svg' | 'gif';
+  /** Transparent PNG annotation layer for markup edits (same size as the base image). */
+  markup?: File;
   customerId?: string;
 }
 
@@ -51,6 +56,27 @@ class OpenAIImageService {
    * Generate an image with GPT Image 2.6 via server endpoint
    */
   async generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
+    // xhigh/max renders can exceed Netlify's sync function timeout: run them as a background job.
+    if (options.quality === 'xhigh' || options.quality === 'max') {
+      const job = await runAiJob<{ images: Array<{ url: string }> }>('image_generate_hq', {
+        prompt: options.prompt,
+        model: options.model || DEFAULT_IMAGE_MODEL,
+        size: options.size || DEFAULT_SIZE,
+        quality: options.quality,
+        complexity: options.complexity,
+        background: options.background,
+        outputFormat: options.outputFormat,
+        n: options.n || 1,
+      });
+      return {
+        url: job.images[0].url,
+        images: job.images,
+        model: options.model || DEFAULT_IMAGE_MODEL,
+        size: options.size || DEFAULT_SIZE,
+        quality: options.quality,
+      };
+    }
+
     const serverAvailable = await this.isServerAvailable();
     if (!serverAvailable) {
       throw new Error(
@@ -71,6 +97,7 @@ class OpenAIImageService {
           quality: options.quality || DEFAULT_QUALITY,
           complexity: options.complexity,
           background: options.background,
+          output_format: options.outputFormat,
           n: options.n || 1,
         }),
       });
@@ -199,6 +226,8 @@ class OpenAIImageService {
       if (maskFile) {
         formData.append('mask', maskFile);
       }
+      if (options?.markup) formData.append('markup', options.markup);
+      if (options?.outputFormat) formData.append('output_format', options.outputFormat);
       formData.append('prompt', prompt);
       formData.append('n', String(options?.n || 1));
       formData.append('size', options?.size || DEFAULT_SIZE);
@@ -277,13 +306,27 @@ export const useOpenAIImage = () => {
       quality?: ImageQuality;
       complexity?: ImageComplexity;
       model?: string;
+      background?: 'transparent' | 'opaque' | 'auto';
+      n?: number;
+      outputFormat?: 'png' | 'jpeg' | 'webp' | 'svg' | 'gif';
     } = {}
   ) => {
     const result = await openaiImageService.generateImage({ prompt, ...opts });
     return { url: result.url, images: result.images };
   };
 
+  const editWithMarkup = async (
+    image: File,
+    markup: File,
+    prompt: string,
+    opts: Partial<ImageGenerationOptions> = {}
+  ) => {
+    const result = await openaiImageService.editImage(image, undefined, prompt, { ...opts, markup });
+    return { url: result.url, images: result.images };
+  };
+
   return {
     generateImage,
+    editWithMarkup,
   };
 };

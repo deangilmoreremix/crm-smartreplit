@@ -31,6 +31,41 @@ interface BatchResult {
 }
 
 const MAX_CONCURRENCY = 3;
+/** Above this many requests the work runs as a Netlify background job (sync functions time out at 10-26s). */
+export const BACKGROUND_JOB_THRESHOLD = 5;
+
+export type AiJobKind = 'bulk_lead_score' | 'image_generate_hq' | 'batch_respond';
+
+/**
+ * Runs a server-side AI job (POST /api/ai/jobs, processed by the ai-jobs-background Netlify
+ * function) and polls GET /api/ai/jobs/:id until it finishes. Throws on failure or timeout.
+ */
+export async function runAiJob<T = any>(
+  kind: AiJobKind,
+  input: Record<string, unknown>,
+  opts: { pollIntervalMs?: number; timeoutMs?: number; onUpdate?: (status: string) => void } = {}
+): Promise<T> {
+  const { pollIntervalMs = 2000, timeoutMs = 15 * 60 * 1000, onUpdate } = opts;
+  const createRes = await fetch('/api/ai/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind, input }),
+  });
+  const created = await createRes.json().catch(() => ({}));
+  if (!createRes.ok) throw new Error(created.error || `Could not start job (${createRes.status})`);
+
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, pollIntervalMs));
+    const res = await fetch(`/api/ai/jobs/${created.id}`);
+    const job = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(job.error || `Job status failed (${res.status})`);
+    onUpdate?.(job.status);
+    if (job.status === 'done') return job.result as T;
+    if (job.status === 'failed') throw new Error(job.error || 'Job failed');
+  }
+  throw new Error('Job timed out');
+}
 
 /**
  * Processes bulk AI work by sending each item to the server (POST /api/respond)
@@ -65,8 +100,23 @@ class OpenAIBatchAPIService {
     return job;
   }
 
+  /** Large batches run as one server-side background job instead of many sync calls. */
+  private async respondViaJob(requests: BatchRequest[]): Promise<BatchResult[]> {
+    const out = await runAiJob<{ results: Array<{ index: number; ok: boolean; text?: string; error?: string }> }>(
+      'batch_respond',
+      {
+        prompts: requests.map((r) => `${r.system}\n\n${r.prompt}`),
+        maxOutputTokens: Math.max(...requests.map((r) => r.maxOutputTokens)),
+      }
+    );
+    return out.results.map((r) => ({
+      custom_id: requests[r.index].custom_id,
+      ...(r.ok ? { content: r.text ?? '' } : { error: r.error || 'Request failed' }),
+    }));
+  }
+
   private async runJob(job: BatchJob, requests: BatchRequest[]): Promise<void> {
-    const results: BatchResult[] = new Array(requests.length);
+    let results: BatchResult[] = new Array(requests.length);
     let next = 0;
 
     const worker = async () => {
@@ -86,7 +136,22 @@ class OpenAIBatchAPIService {
       }
     };
 
-    await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENCY, requests.length) }, worker));
+    if (requests.length > BACKGROUND_JOB_THRESHOLD) {
+      try {
+        results = await this.respondViaJob(requests);
+        job.progress!.completed = results.length;
+        job.progress!.failed = results.filter((r) => r.error !== undefined).length;
+        job.error = results.find((r) => r.error)?.error;
+      } catch (error) {
+        job.status = 'failed';
+        job.error = error instanceof Error ? error.message : String(error);
+        job.completedAt = new Date().toISOString();
+        logger.error(`Batch job ${job.id} background job failed`, error as Error);
+        return;
+      }
+    } else {
+      await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENCY, requests.length) }, worker));
+    }
 
     job.results = results;
     const succeeded = results.filter((r) => r.content !== undefined);

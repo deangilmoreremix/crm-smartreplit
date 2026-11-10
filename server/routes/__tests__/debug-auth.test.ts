@@ -3,6 +3,12 @@ import express from 'express';
 import request from 'supertest';
 import { createClient } from '@supabase/supabase-js';
 
+// auth.ts reads these at module load.
+vi.hoisted(() => {
+  process.env.SUPABASE_URL = 'http://test';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test';
+});
+
 const mockSupabaseClient = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
@@ -13,7 +19,7 @@ const mockSupabaseClient = {
   })),
   auth: {
     admin: {
-      inviteUserByEmail: vi.fn().mockResolvedValue({ user: { id: '1' } }),
+      inviteUserByEmail: vi.fn().mockResolvedValue({ data: { user: { id: '1' } }, error: null }),
     },
   },
 };

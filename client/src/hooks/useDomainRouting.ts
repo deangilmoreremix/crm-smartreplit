@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { DomainRouter } from '../utils/domainRouter';
+import { DomainRouter, type HostResolution } from '../utils/domainRouter';
+import type { WhitelabelConfig } from '../types/whitelabel';
 
 export interface DomainRoutingState {
   currentDomain: string;
-  currentTenantId: string;
+  /** 'own' for built-in SmartCRM hosts, 'custom' for a registered custom domain, 'unknown' otherwise. */
+  hostKind: HostResolution['kind'] | null;
+  /** Branding for the current custom domain, if any. */
+  branding: Partial<WhitelabelConfig> | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -11,56 +15,47 @@ export interface DomainRoutingState {
 export const useDomainRouting = () => {
   const [state, setState] = useState<DomainRoutingState>({
     currentDomain: '',
-    currentTenantId: '',
+    hostKind: null,
+    branding: null,
     isLoading: true,
     error: null,
   });
 
   useEffect(() => {
-    try {
-      const currentDomain = window.location.hostname;
-      const tenantId = DomainRouter.getTenantFromDomain(currentDomain);
-
-      setState({
-        currentDomain,
-        currentTenantId: tenantId,
-        isLoading: false,
-        error: null,
+    let cancelled = false;
+    const host = window.location.hostname;
+    DomainRouter.resolveHost(host)
+      .then((resolution) => {
+        if (cancelled) return;
+        setState({
+          currentDomain: resolution.host,
+          hostKind: resolution.kind,
+          branding: resolution.branding,
+          isLoading: false,
+          error: null,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setState({
+          currentDomain: host,
+          hostKind: null,
+          branding: null,
+          isLoading: false,
+          error: error instanceof Error ? error.message : 'Unknown domain routing error',
+        });
       });
-    } catch (error) {
-      setState({
-        currentDomain: '',
-        currentTenantId: '',
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Unknown domain routing error',
-      });
-    }
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const switchToDomain = (domain: string) => {
-    try {
-      const tenantId = DomainRouter.getTenantFromDomain(domain);
-      window.location.href = `${window.location.protocol}//${domain}${window.location.pathname}`;
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'Failed to switch domain',
-      }));
-    }
+    const host = DomainRouter.normalizeHost(domain);
+    window.location.href = `${window.location.protocol}//${host}${window.location.pathname}`;
   };
 
-  const getAvailableDomains = () => {
-    return [
-      'app.smartcrm.vip',
-      'pipeline.smartcrm.vip',
-      'contacts.smartcrm.vip',
-      'analytics.smartcrm.vip',
-      'agency.smartcrm.vip',
-      'calendar.smartcrm.vip',
-      'research.smartcrm.vip',
-      'white-label.smartcrm.vip',
-    ];
-  };
+  const getAvailableDomains = () => DomainRouter.getOwnHosts();
 
   return {
     ...state,

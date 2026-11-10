@@ -11,10 +11,6 @@ import companiesRoutes from './companies';
 import openaiRoutes from './openai';
 import openaiResponsesRoutes from './openaiResponses';
 import assistantsRoutes from './assistants';
-import domainsRoutes from './domains';
-import themesRoutes from './themes';
-import provisioningRoutes from './provisioning';
-import assetsRoutes from './assets';
 import whitelabelRoutes from './whitelabel';
 
 // Import register functions
@@ -32,6 +28,7 @@ import { registerAIProductivityRoutes } from './aiProductivity';
 import { registerAIAdvancedRoutes } from './aiAdvanced';
 import { registerAIAutomationRoutes } from './aiAutomation';
 import { registerPartnersRoutes } from './partners';
+import { registerAIJobRoutes } from './aiJobs';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -98,22 +95,6 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Assistants (Responses API: saved configs + chained threads)
   app.use('/api/assistants', assistantsRoutes);
 
-  // Register domains routes
-  console.log('Registering domains routes at /api/domains');
-  app.use('/api/domains', domainsRoutes);
-
-  // Register themes routes
-  console.log('Registering themes routes at /api/themes');
-  app.use('/api/themes', themesRoutes);
-
-  // Register provisioning routes
-  console.log('Registering provisioning routes at /api/provisioning');
-  app.use('/api/provisioning', provisioningRoutes);
-
-  // Register assets routes
-  console.log('Registering assets routes at /api/assets');
-  app.use('/api/assets', assetsRoutes);
-
   // Register white-label settings propagation routes
   console.log('Registering white-label routes at /api/whitelabel');
   app.use('/api/whitelabel', whitelabelRoutes);
@@ -145,6 +126,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register Automation Tools routes
   console.log('Registering Automation Tools routes');
   registerAIAutomationRoutes(app);
+
+  // Register AI jobs routes (Netlify background function backed)
+  registerAIJobRoutes(app);
 
   // Register partners routes
   console.log('Registering partners routes');

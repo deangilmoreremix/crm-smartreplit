@@ -1,6 +1,5 @@
-import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
+import { getUserOpenAIKey } from './openaiUserKey';
 import { SELECTABLE_MODELS, tierModel } from '../../shared/aiModels';
 
 export interface ResponsesModel {
@@ -52,16 +51,9 @@ export class OpenAIResponsesService {
       throw new Error('Database not available');
     }
 
-    const keyRecord = await db.query.userApiKeys.findFirst({
-      where: and(
-        eq(userApiKeys.userId, userId),
-        eq(userApiKeys.provider, 'openai'),
-        eq(userApiKeys.isActive, true)
-      ),
-      orderBy: (userApiKeys, { desc }) => [desc(userApiKeys.isDefault)],
-    });
+    const keyRecord = await getUserOpenAIKey(userId);
 
-    if (!keyRecord || !keyRecord.apiKey) {
+    if (!keyRecord) {
       throw new Error('No active OpenAI API key configured. Add your key in Settings > API Keys.');
     }
 

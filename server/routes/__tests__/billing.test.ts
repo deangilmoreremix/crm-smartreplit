@@ -4,7 +4,7 @@ import request from 'supertest';
 import { billingRoutes } from '../billing';
 import { createClient } from '@supabase/supabase-js';
 
-const mockSupabaseClient = {
+const mockSupabaseClient = vi.hoisted(() => ({
   from: vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
@@ -17,20 +17,21 @@ const mockSupabaseClient = {
       })),
     })),
   })),
-};
+}));
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }));
 
-vi.mock('./auth', () => ({
+vi.mock('../auth', () => ({
   requireAuth: () => (req: any, res: any, next: any) => {
+    if (req.headers['x-anon']) return res.status(401).json({ error: 'Unauthorized' });
     req.session = { userId: 'test-user', userEmail: 'test@test.com' };
     next();
   },
 }));
 
-vi.mock('../middleware/entitlements', () => ({
+vi.mock('../../middleware/entitlements', () => ({
   requireEntitlement: () => (req: any, res: any, next: any) => {
     next();
   },
@@ -41,6 +42,7 @@ describe('Billing Routes', () => {
     process.env.SUPABASE_URL = 'http://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
     vi.clearAllMocks();
+    mockSupabaseClient.from.mockReset(); // drop unconsumed mockReturnValueOnce from earlier tests
   });
 
   describe('GET /api/billing/plans', () => {
@@ -65,6 +67,7 @@ describe('Billing Routes', () => {
 
       const response = await request(unauthApp)
         .post('/api/billing/upgrade')
+        .set('x-anon', '1')
         .send({ tierId: 'smartcrm_bundle' });
 
       expect(response.status).toBe(401);

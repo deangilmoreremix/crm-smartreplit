@@ -1,3 +1,5 @@
+> **This repo requires pnpm, not npm.** Workspace packages are linked with the `workspace:*` protocol, which `npm install` cannot resolve (it fails with `EUNSUPPORTEDPROTOCOL`). Use `corepack enable && pnpm install`. See [docs/CI.md](docs/CI.md).
+
 # Supabase CLI
 
 [![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=develop)](https://coveralls.io/github/supabase/cli?branch=develop) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)

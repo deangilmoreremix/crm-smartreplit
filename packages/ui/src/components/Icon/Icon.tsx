@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../utils/cn';
+import { cn } from '../../utils/cn';
 
 export type IconName =
   | 'home'
@@ -61,7 +61,7 @@ export type IconName =
   | 'trending-up'
   | 'trending-down';
 
-interface IconProps extends React.SVGProps<SVGSVGElement> {
+export interface IconProps extends React.SVGProps<SVGSVGElement> {
   name: IconName;
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }

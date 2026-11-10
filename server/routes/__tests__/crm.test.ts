@@ -3,43 +3,45 @@ import express from 'express';
 import request from 'supertest';
 import { registerCRMRoutes } from '../crm';
 
-vi.mock('./auth', () => ({
+vi.mock('../auth', () => ({
   requireAuth: () => (req: any, res: any, next: any) => {
-    req.userId = 'test-user';
+    req.userId = '11111111-1111-4111-8111-111111111111';
     next();
   },
 }));
 
-const mockDb = {
-  select: vi.fn().mockReturnThis(),
-  from: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  and: vi.fn().mockReturnThis(),
-  desc: vi.fn().mockReturnThis(),
-  insert: vi.fn().mockReturnThis(),
-  values: vi.fn().mockReturnThis(),
-  returning: vi.fn(),
-  update: vi.fn().mockReturnThis(),
-  set: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-  orderBy: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
-};
+// Drizzle-style fake: every chained call returns the same thenable chain, and each `await`
+// consumes the next queued result (default: empty list). Queue results in the order the
+// route awaits queries.
+const { queue, mockDb } = vi.hoisted(() => {
+  const queue: unknown[] = [];
+  const chain: any = {};
+  for (const m of [
+    'select', 'from', 'where', 'orderBy', 'limit', 'insert', 'values', 'update', 'set',
+    'delete', 'returning',
+  ]) {
+    chain[m] = () => chain;
+  }
+  chain.then = (resolve: any, reject: any) =>
+    Promise.resolve(queue.length ? queue.shift() : []).then(resolve, reject);
+  return { queue, mockDb: chain };
+});
+const queueDb = (...results: unknown[]) => queue.push(...results);
 
-vi.mock('../db', () => ({
+vi.mock('../../db', () => ({
   db: mockDb,
 }));
 
 describe('CRM Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queue.length = 0;
   });
 
   describe('Contacts API', () => {
     it('GET /api/contacts returns list of contacts', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Doe', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Doe', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -53,8 +55,8 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/contacts/:id returns single contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Doe', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Doe', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -67,7 +69,7 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/contacts/:id returns 404 when contact not found', async () => {
-      mockDb.returning.mockResolvedValueOnce([]);
+      queueDb([]);
 
       const app = express();
       app.use(express.json());
@@ -79,8 +81,8 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/contacts creates new contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'Jane', lastName: 'Smith', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'Jane', lastName: 'Smith', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -108,11 +110,11 @@ describe('CRM Routes', () => {
     });
 
     it('PUT /api/contacts/:id updates existing contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Doe', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Doe', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Smith', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Smith', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -128,7 +130,7 @@ describe('CRM Routes', () => {
     });
 
     it('PUT /api/contacts/:id returns 404 when contact not found', async () => {
-      mockDb.returning.mockResolvedValueOnce([]);
+      queueDb([]);
 
       const app = express();
       app.use(express.json());
@@ -143,8 +145,8 @@ describe('CRM Routes', () => {
     });
 
     it('DELETE /api/contacts/:id deletes contact', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -157,7 +159,7 @@ describe('CRM Routes', () => {
     });
 
     it('DELETE /api/contacts/:id returns 404 when contact not found', async () => {
-      mockDb.returning.mockResolvedValueOnce([]);
+      queueDb([]);
 
       const app = express();
       app.use(express.json());
@@ -169,9 +171,9 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/contacts/duplicates returns duplicate groups', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', phone: '123', company: 'Acme', profileId: 'test-user' },
-        { id: 2, firstName: 'John', lastName: 'Doe', email: 'john@test.com', phone: '456', company: 'Acme', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', phone: '123', company: 'Acme', profileId: '11111111-1111-4111-8111-111111111111' },
+        { id: 2, firstName: 'John', lastName: 'Doe', email: 'john@test.com', phone: '456', company: 'Acme', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -185,14 +187,14 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/contacts/merge merges two contacts', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 2, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: 'test-user' },
+      queueDb([
+        { id: 2, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: 'test-user' },
+      queueDb([
+        { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -208,6 +210,8 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/contacts/merge rejects same contact', async () => {
+      // the route loads both contacts before comparing ids
+      queueDb([{ id: 1, profileId: '11111111-1111-4111-8111-111111111111' }], [{ id: 1, profileId: '11111111-1111-4111-8111-111111111111' }]);
       const app = express();
       app.use(express.json());
       registerCRMRoutes(app);
@@ -223,8 +227,8 @@ describe('CRM Routes', () => {
 
   describe('Deals API', () => {
     it('GET /api/deals returns list of deals', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, title: 'Deal 1', profileId: 'test-user' },
+      queueDb([
+        { id: 1, title: 'Deal 1', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -237,8 +241,8 @@ describe('CRM Routes', () => {
     });
 
     it('GET /api/deals/:id returns single deal', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, title: 'Deal 1', profileId: 'test-user' },
+      queueDb([
+        { id: 1, title: 'Deal 1', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -251,8 +255,8 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/deals creates new deal', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, title: 'New Deal', profileId: 'test-user' },
+      queueDb([
+        { id: 1, title: 'New Deal', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -261,7 +265,7 @@ describe('CRM Routes', () => {
 
       const response = await request(app)
         .post('/api/deals')
-        .send({ title: 'New Deal', value: 50000 });
+        .send({ title: 'New Deal', value: '50000', stage: 'lead' });
 
       expect(response.status).toBe(201);
       expect(response.body.title).toBe('New Deal');
@@ -270,8 +274,8 @@ describe('CRM Routes', () => {
 
   describe('Tasks API', () => {
     it('GET /api/tasks returns list of tasks', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, title: 'Task 1', profileId: 'test-user' },
+      queueDb([
+        { id: 1, title: 'Task 1', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();
@@ -284,8 +288,8 @@ describe('CRM Routes', () => {
     });
 
     it('POST /api/tasks creates new task', async () => {
-      mockDb.returning.mockResolvedValueOnce([
-        { id: 1, title: 'New Task', profileId: 'test-user' },
+      queueDb([
+        { id: 1, title: 'New Task', profileId: '11111111-1111-4111-8111-111111111111' },
       ]);
 
       const app = express();

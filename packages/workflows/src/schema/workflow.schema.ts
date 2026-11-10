@@ -40,6 +40,7 @@ export const actionTypes = [
   'SEND_SMS',
   'CREATE_DEAL',
   'CREATE_CONTACT',
+  'AI',
 ] as const;
 export type ActionType = (typeof actionTypes)[number];
 

@@ -29,7 +29,8 @@ export interface GenerateImagesOptions {
   quality?: ImageQuality;
   complexity?: ImageComplexity;
   background?: 'transparent' | 'opaque' | 'auto';
-  outputFormat?: 'png' | 'jpeg' | 'webp';
+  /** svg: generations only, n=1. gif: generations and edits. (Image generation guide, 2026-11.) */
+  outputFormat?: 'png' | 'jpeg' | 'webp' | 'svg' | 'gif';
   n?: number;
   /** End-user id; sent as a sha256-hashed safety_identifier. */
   userId?: string;
@@ -46,7 +47,13 @@ export interface EditImageOptions extends Omit<GenerateImagesOptions, 'backgroun
 }
 
 const MAX_N = 10;
-const MIME: Record<string, string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp' };
+const MIME: Record<string, string> = {
+  png: 'image/png',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  gif: 'image/gif',
+};
 
 export function hashSafetyIdentifier(userId: string): string {
   return createHash('sha256').update(userId).digest('hex');
@@ -62,6 +69,7 @@ function common(opts: GenerateImagesOptions): Record<string, unknown> {
   if (opts.quality) body.quality = opts.quality;
   if (opts.complexity) body.complexity = opts.complexity;
   if (opts.outputFormat) body.output_format = opts.outputFormat;
+  if (opts.outputFormat === 'svg') body.n = 1;
   if (opts.userId) body.safety_identifier = hashSafetyIdentifier(opts.userId);
   return body;
 }
@@ -94,6 +102,7 @@ export async function generateImages(opts: GenerateImagesOptions): Promise<Gener
 }
 
 export function buildEditRequest(opts: EditImageOptions, toFile: (f: any) => any): Record<string, unknown> {
+  if (opts.outputFormat === 'svg') throw new Error('SVG output is not supported by image edits');
   if (opts.mask && opts.markup) throw new Error('mask and markup cannot be combined');
   if (!opts.images.length) throw new Error('At least one image is required');
   const file = (f: { buffer: Buffer; mimeType?: string; filename?: string }, name: string) =>

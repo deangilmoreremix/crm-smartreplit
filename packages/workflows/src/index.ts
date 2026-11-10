@@ -39,6 +39,9 @@ export {
   waitAction,
   branchAction,
   sendSmsAction,
+  aiAction,
   createDealAction,
   createContactAction,
 } from './actions';
+export { runWorkflow } from './engine/runner';
+export type { RunWorkflowOptions } from './engine/runner';

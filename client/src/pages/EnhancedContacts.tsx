@@ -40,6 +40,9 @@ import {
 import { useContactStore } from '../store/contactStore';
 import ContactImport from '../components/contacts/ContactImport';
 import ContactExport from '../components/contacts/ContactExport';
+import ImportContactsModal from '../components/ImportContactsModal';
+import SavedViewsMenu from '../components/SavedViewsMenu';
+import InlineEditCell from '../components/InlineEditCell';
 
 const Contacts: React.FC = () => {
   const { isDark } = useTheme();
@@ -63,6 +66,7 @@ const Contacts: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showCsvImportModal, setShowCsvImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
   const [importValidation, setImportValidation] = useState<{ error?: string; success?: string }>(
@@ -355,20 +359,32 @@ const Contacts: React.FC = () => {
       columnHelper.accessor('name', {
         header: 'Name',
         cell: (info) => (
-          <Link to={`/contacts/${info.row.original.id}`} className="flex items-center">
-            <Avatar name={info.getValue()} size="40" round className="mr-3" />
+          <div className="flex items-center">
+            <Link to={`/contacts/${info.row.original.id}`}>
+              <Avatar name={info.getValue()} size="40" round className="mr-3" />
+            </Link>
             <div>
-              <div className="text-sm font-medium text-gray-900">{info.getValue()}</div>
+              <div className="text-sm font-medium text-gray-900">
+                <InlineEditCell
+                  value={info.getValue()}
+                  onSave={(v) => updateContact(info.row.original.id, { name: String(v) })}
+                />
+              </div>
               <div className="text-sm text-gray-500">{info.row.original.email}</div>
             </div>
-          </Link>
+          </div>
         ),
       }),
       columnHelper.accessor('company', {
         header: 'Company',
         cell: (info) => (
           <div>
-            <div className="text-sm text-gray-900">{info.getValue() || 'N/A'}</div>
+            <div className="text-sm text-gray-900">
+              <InlineEditCell
+                value={info.getValue()}
+                onSave={(v) => updateContact(info.row.original.id, { company: String(v) })}
+              />
+            </div>
             <div className="text-sm text-gray-500">{info.row.original.position || ''}</div>
           </div>
         ),
@@ -376,13 +392,23 @@ const Contacts: React.FC = () => {
       columnHelper.accessor('status', {
         header: 'Status',
         cell: (info) => (
-          <span
-            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-              statusColors[info.getValue() as keyof typeof statusColors]
-            }`}
+          <InlineEditCell
+            type="select"
+            value={info.getValue()}
+            options={statuses.map((st) => ({
+              value: st,
+              label: st.charAt(0).toUpperCase() + st.slice(1),
+            }))}
+            onSave={(v) => updateContact(info.row.original.id, { status: String(v) })}
           >
-            {info.getValue().charAt(0).toUpperCase() + info.getValue().slice(1)}
-          </span>
+            <span
+              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                statusColors[info.getValue() as keyof typeof statusColors]
+              }`}
+            >
+              {info.getValue().charAt(0).toUpperCase() + info.getValue().slice(1)}
+            </span>
+          </InlineEditCell>
         ),
       }),
       columnHelper.accessor('score', {
@@ -546,6 +572,13 @@ const Contacts: React.FC = () => {
             Import
           </button>
           <button
+            onClick={() => setShowCsvImportModal(true)}
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors"
+          >
+            <Upload size={18} className="mr-1" />
+            Import CSV
+          </button>
+          <button
             onClick={() => setShowAddContactModal(true)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
           >
@@ -667,6 +700,16 @@ const Contacts: React.FC = () => {
                 <Select
                   placeholder="Status"
                   isClearable
+                  value={
+                    activeFilters.status
+                      ? {
+                          value: activeFilters.status,
+                          label:
+                            activeFilters.status.charAt(0).toUpperCase() +
+                            activeFilters.status.slice(1),
+                        }
+                      : null
+                  }
                   className="min-w-[150px]"
                   options={statuses.map((status) => ({
                     value: status,
@@ -684,6 +727,11 @@ const Contacts: React.FC = () => {
                 <Select
                   placeholder="Industry"
                   isClearable
+                  value={
+                    activeFilters.industry
+                      ? { value: activeFilters.industry, label: activeFilters.industry }
+                      : null
+                  }
                   className="min-w-[170px]"
                   options={industries.map((industry) => ({ value: industry, label: industry }))}
                   onChange={(selectedOption) =>
@@ -694,6 +742,18 @@ const Contacts: React.FC = () => {
                   }
                 />
               </div>
+              <SavedViewsMenu
+                objectType="contacts"
+                currentFilters={{ ...activeFilters, searchTerm }}
+                onApply={(f) => {
+                  setActiveFilters({
+                    status: (f.status as string | null) ?? null,
+                    industry: (f.industry as string | null) ?? null,
+                    score: (f.score as [number, number] | null) ?? null,
+                  });
+                  setSearchTerm((f.searchTerm as string) ?? '');
+                }}
+              />
               <div className="flex space-x-2">
                 <button
                   onClick={() => setViewMode('table')}
@@ -1071,6 +1131,21 @@ const Contacts: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ImportContactsModal
+        isOpen={showCsvImportModal}
+        onClose={() => setShowCsvImportModal(false)}
+        onCreate={async (contact) => {
+          const res = await fetch('/api/contacts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(contact),
+          });
+          if (!res.ok) throw new Error(`Failed to save contact (${res.status})`);
+        }}
+        onComplete={() => fetchContacts()}
+      />
 
       {/* Import Contacts Modal */}
       {showImportModal && (

@@ -1,9 +1,25 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WorkflowEngine } from '../engine/WorkflowEngine';
 import { registerAllTriggers } from '../triggers';
 import { registerAllActions } from '../actions';
 
+vi.mock('../supabase', () => {
+  const b: any = {};
+  for (const op of ['insert', 'update', 'select', 'eq']) b[op] = () => b;
+  b.single = () => Promise.resolve({ data: { id: 1 }, error: null });
+  b.then = (res: any) => Promise.resolve({ data: [{ id: 1 }], error: null }).then(res);
+  return { supabase: { from: () => b } };
+});
+
+vi.mock('@sendgrid/mail', () => ({
+  default: { setApiKey: vi.fn(), send: vi.fn().mockResolvedValue([{ headers: { 'x-message-id': 'm1' } }]) },
+}));
+
 describe('WorkflowEngine', () => {
+  beforeEach(() => {
+    process.env.SENDGRID_API_KEY = 'SG.test';
+  });
+
   let engine: WorkflowEngine;
 
   beforeEach(() => {
@@ -102,6 +118,7 @@ describe('WorkflowEngine', () => {
         runId: 'run-1',
         triggerType: 'MANUAL',
         timestamp: new Date(),
+        userId: 'user-1',
         variables: { contactId: 'c-123' },
       };
 
@@ -171,9 +188,9 @@ describe('WorkflowEngine', () => {
       const steps = [
         {
           id: 'step-1',
-          actionType: 'CODE',
+          actionType: 'BRANCH',
           configuration: {
-            code: 'console.log("condition passed")',
+            condition: { field: 'status', operator: 'equals', value: 'active' },
           },
           order: 1,
           condition: { field: 'status', operator: 'equals', value: 'active' },
@@ -212,6 +229,17 @@ describe('WorkflowEngine', () => {
   });
 
   describe('error handling', () => {
+    it('fails the workflow when an action throws (no fake success)', async () => {
+      registerAllActions(engine);
+      delete process.env.SENDGRID_API_KEY;
+      const result = await engine.executeWorkflow(
+        [{ id: 's1', actionType: 'SEND_EMAIL', configuration: { to: 'a@b.com', subject: 's', body: 'b' }, order: 1 }],
+        { workflowId: 'wf-1', runId: 'run-1', triggerType: 'MANUAL', timestamp: new Date(), variables: {} }
+      );
+      expect(result.success).toBe(false);
+      expect(result.results['s1'].error).toContain('Email not configured');
+    });
+
     it('should handle unknown action type gracefully', async () => {
       const result = await engine.executeAction(
         'UNKNOWN_ACTION',

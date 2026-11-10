@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from '../hooks/use-toast';
@@ -440,6 +441,9 @@ const WhiteLabelCustomization: React.FC = () => {
                 </>
               )}
             </Button>
+            <RouterLink to="/white-label/domains" className="text-sm underline px-2">
+              Custom domains
+            </RouterLink>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={resetToDefault}>

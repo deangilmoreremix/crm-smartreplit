@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../utils/cn';
+import { cn } from '../../utils/cn';
 import { Icon, IconName } from '../Icon';
 
 export interface CalloutProps extends React.HTMLAttributes<HTMLDivElement> {

@@ -4,9 +4,6 @@
  */
 
 import type { Express, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
@@ -19,40 +16,12 @@ import {
 } from '../services/openaiClient';
 import { tierModel, SELECTABLE_MODELS, imageModel, ImageQuality, ImageComplexity } from '../../shared/aiModels';
 import { generateImages, editImage, toDataUrl, type GeneratedImage } from '../services/openaiImages';
+import { getUserOpenAIKey } from '../services/openaiUserKey';
 import multer from 'multer';
 
-// Helper: Get user's active API key for a provider
-async function getUserApiKey(userId: string, provider: 'openai'): Promise<{ apiKey: string; model: string | null } | null> {
-  if (!db) return null;
-
-  // Try default key first
-  const defaultKey = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, provider),
-      eq(userApiKeys.isActive, true),
-      eq(userApiKeys.isDefault, true)
-    ),
-  });
-
-  if (defaultKey) {
-    return { apiKey: defaultKey.apiKey, model: defaultKey.model };
-  }
-
-  // Fallback to any active key
-  const anyKey = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, provider),
-      eq(userApiKeys.isActive, true)
-    ),
-  });
-
-  if (anyKey) {
-    return { apiKey: anyKey.apiKey, model: anyKey.model };
-  }
-
-  return null;
+// Helper: Get user's OpenAI key via the canonical user_api_keys_openai view
+async function getUserApiKey(userId: string, _provider: 'openai'): Promise<{ apiKey: string; model: string | null } | null> {
+  return getUserOpenAIKey(userId);
 }
 
 // Helper: Create OpenAI client from user's key (model is the user's saved override, if any)
@@ -228,6 +197,7 @@ export function registerAIRoutes(app: Express) {
     quality: typeof body.quality === 'string' ? (body.quality as ImageQuality) : undefined,
     complexity: typeof body.complexity === 'string' ? (body.complexity as ImageComplexity) : undefined,
     background: body.background as any,
+    outputFormat: ['png', 'jpeg', 'webp', 'svg', 'gif'].includes(body.output_format) ? body.output_format : undefined,
     n: body.n !== undefined ? Number(body.n) : undefined,
   });
 

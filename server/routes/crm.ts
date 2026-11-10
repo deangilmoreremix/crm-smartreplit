@@ -24,6 +24,7 @@
  import { requireAuth } from './auth';
   import { memoryService } from '../memory';
 import { respondText } from '../services/openaiClient';
+import { emitCrmEvent } from '../services/workflowTriggers';
 
   export function registerCRMRoutes(app: Express): void {
     // ==================== CONTACTS API ====================
@@ -48,7 +49,7 @@ import { respondText } from '../services/openaiClient';
     });
 
   // Get a single contact
-  app.get('/api/contacts/:id', requireAuth({ checkEntitlement: false }), async (req, res) => {
+  app.get('/api/contacts/:id(\\d+)', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
       const userId = (req as any).userId;
 
@@ -83,6 +84,7 @@ import { respondText } from '../services/openaiClient';
 
       const [newContact] = await db.insert(contacts).values(validatedData).returning();
 
+      emitCrmEvent('RECORD_CREATED', 'contacts', userId, newContact);
       res.status(201).json(newContact);
     } catch (error: any) {
       console.error('Error creating contact:', error);
@@ -121,6 +123,7 @@ import { respondText } from '../services/openaiClient';
         .where(and(eq(contacts.id, contactId), eq(contacts.profileId, userId)))
         .returning();
 
+      emitCrmEvent('RECORD_UPDATED', 'contacts', userId, updatedContact);
       res.json(updatedContact);
     } catch (error: any) {
       console.error('Error updating contact:', error);
@@ -348,6 +351,7 @@ import { respondText } from '../services/openaiClient';
 
       const [newDeal] = await db.insert(deals).values(validatedData).returning();
 
+      emitCrmEvent('RECORD_CREATED', 'deals', userId, newDeal);
       res.status(201).json(newDeal);
     } catch (error: any) {
       console.error('Error creating deal:', error);
@@ -386,6 +390,7 @@ import { respondText } from '../services/openaiClient';
         .where(and(eq(deals.id, dealId), eq(deals.profileId, userId)))
         .returning();
 
+      emitCrmEvent('RECORD_UPDATED', 'deals', userId, updatedDeal);
       res.json(updatedDeal);
     } catch (error: any) {
       console.error('Error updating deal:', error);
@@ -474,6 +479,7 @@ import { respondText } from '../services/openaiClient';
 
       const [newTask] = await db.insert(tasks).values(validatedData).returning();
 
+      emitCrmEvent('RECORD_CREATED', 'tasks', userId, newTask);
       res.status(201).json(newTask);
     } catch (error: any) {
       console.error('Error creating task:', error);
@@ -515,6 +521,7 @@ import { respondText } from '../services/openaiClient';
         .where(and(eq(tasks.id, taskId), eq(tasks.profileId, userId))) // Double-check ownership
         .returning();
 
+      emitCrmEvent('RECORD_UPDATED', 'tasks', userId, updatedTask);
       res.json(updatedTask);
     } catch (error: any) {
       console.error('Error updating task:', error);

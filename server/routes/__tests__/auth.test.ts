@@ -4,17 +4,21 @@ import request from 'supertest';
 import { createClient } from '@supabase/supabase-js';
 import authRouter from '../auth';
 
+// auth.ts reads these at module load, so they must be set before the (hoisted) imports run.
+vi.hoisted(() => {
+  process.env.SUPABASE_URL = 'http://test.supabase.co';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+});
+
 const mockSupabaseClient = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
-        single: vi.fn(),
+        single: vi.fn().mockResolvedValue({ data: null, error: null }),
       })),
     })),
-    rpc: vi.fn(() => ({
-      single: vi.fn(),
-    })),
   })),
+  rpc: vi.fn(),
   auth: {
     admin: {
       inviteUserByEmail: vi.fn(),
@@ -38,11 +42,8 @@ describe('Auth Routes', () => {
     mockSupabaseClient.from.mockImplementation(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          single: vi.fn(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
         })),
-      })),
-      rpc: vi.fn(() => ({
-        single: vi.fn(),
       })),
     }));
     mockSupabaseClient.auth.admin.inviteUserByEmail.mockClear();
@@ -253,9 +254,7 @@ describe('Auth Routes', () => {
           })),
         })),
       });
-      mockSupabaseClient.rpc.mockReturnValueOnce({
-        single: vi.fn().mockResolvedValue({ data: true, error: null }),
-      });
+      mockSupabaseClient.rpc.mockResolvedValueOnce({ data: true, error: null });
 
       const { requireAdmin } = await import('../auth');
       const app = express();
@@ -281,9 +280,7 @@ describe('Auth Routes', () => {
           })),
         })),
       });
-      mockSupabaseClient.rpc.mockReturnValueOnce({
-        single: vi.fn().mockResolvedValue({ data: true, error: null }),
-      });
+      mockSupabaseClient.rpc.mockResolvedValueOnce({ data: true, error: null });
 
       const { requireAdmin } = await import('../auth');
       const app = express();
@@ -334,9 +331,7 @@ describe('Auth Routes', () => {
           })),
         })),
       });
-      mockSupabaseClient.rpc.mockReturnValueOnce({
-        single: vi.fn().mockResolvedValue({ data: false, error: null }),
-      });
+      mockSupabaseClient.rpc.mockResolvedValueOnce({ data: false, error: null });
 
       const { requireAdmin } = await import('../auth');
       const app = express();
@@ -369,6 +364,7 @@ describe('Auth Routes', () => {
     it('returns 500 when Supabase is not configured', async () => {
       process.env.SUPABASE_URL = '';
       process.env.SUPABASE_SERVICE_ROLE_KEY = '';
+      vi.resetModules(); // auth.ts reads env at module load
 
       const { requireAdmin } = await import('../auth');
       const app = express();
@@ -390,7 +386,8 @@ describe('Auth Routes', () => {
   describe('Auth router routes', () => {
     it('POST /api/auth/invite sends invitation email', async () => {
       mockSupabaseClient.auth.admin.inviteUserByEmail.mockResolvedValue({
-        user: { id: 'new-user', email: 'invited@test.com' },
+        data: { user: { id: 'new-user', email: 'invited@test.com' } },
+        error: null,
       });
 
       const app = express();
@@ -421,10 +418,12 @@ describe('Auth Routes', () => {
 
     it('POST /api/auth/invite returns 500 when service role key missing', async () => {
       process.env.SUPABASE_SERVICE_ROLE_KEY = '';
+      vi.resetModules(); // auth.ts reads env at module load
+      const { default: freshAuthRouter } = await import('../auth');
 
       const app = express();
       app.use(express.json());
-      app.use('/api/auth', authRouter);
+      app.use('/api/auth', freshAuthRouter);
 
       const response = await request(app)
         .post('/api/auth/invite')
@@ -436,8 +435,8 @@ describe('Auth Routes', () => {
 
     it('GET /api/auth/users returns paginated users list', async () => {
       mockSupabaseClient.auth.admin.listUsers.mockResolvedValue({
-        users: [{ id: '1', email: 'user@test.com' }],
-        total_metadata: { total_count: 1 },
+        data: { users: [{ id: '1', email: 'user@test.com' }], total_metadata: { total_count: 1 } },
+        error: null,
       });
 
       const app = express();
@@ -466,7 +465,8 @@ describe('Auth Routes', () => {
 
     it('PATCH /api/auth/users/:id updates user metadata', async () => {
       mockSupabaseClient.auth.admin.updateUserById.mockResolvedValue({
-        user: { id: 'user-123', email: 'updated@test.com' },
+        data: { user: { id: 'user-123', email: 'updated@test.com' } },
+        error: null,
       });
 
       const app = express();

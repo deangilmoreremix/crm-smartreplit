@@ -10,7 +10,7 @@ expect.extend(matchers);
 // userEvent.setup();
 
 // Make vi available globally
-global.vi = vi;
+(globalThis as any).vi = vi;
 
 // Clean up after each test
 afterEach(() => {
@@ -34,7 +34,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
+(globalThis as any).IntersectionObserver = class IntersectionObserver {
   constructor() {}
   observe() {
     return null;
@@ -48,7 +48,7 @@ global.IntersectionObserver = class IntersectionObserver {
 };
 
 // Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
+(globalThis as any).ResizeObserver = class ResizeObserver {
   constructor() {}
   observe() {
     return null;

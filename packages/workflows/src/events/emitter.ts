@@ -147,14 +147,17 @@ export function setupWorkflowTriggerHandlers(
 }
 
 export async function triggerWorkflowsForEvent(event: WorkflowEvent): Promise<void> {
-  const { supabase } = await import('../supabase');
+  const [{ supabase }, { runWorkflow }] = await Promise.all([
+    import('../supabase'),
+    import('../engine/runner'),
+  ]);
 
   const { data: workflows, error } = await supabase
     .from('workflows')
-    .select('*')
+    .select('id, trigger_config')
     .eq('trigger_type', event.type)
     .eq('enabled', true)
-    .eq('tenant_id', event.tenantId);
+    .eq('user_id', event.userId);
 
   if (error) {
     console.error('Error fetching workflows for event:', error);
@@ -162,30 +165,20 @@ export async function triggerWorkflowsForEvent(event: WorkflowEvent): Promise<vo
   }
 
   for (const workflow of workflows || []) {
-    const { data: actions } = await supabase
-      .from('workflow_actions')
-      .select('*')
-      .eq('workflow_id', workflow.id)
-      .order('order_index');
+    // Optional per-workflow filter: trigger_config.objectType (e.g. "contacts")
+    const wanted = (workflow.trigger_config as Record<string, unknown> | null)?.objectType;
+    if (wanted && event.objectType && wanted !== event.objectType) continue;
 
-    if (!actions || actions.length === 0) continue;
-
-    const runId = `run_${Date.now()}`;
-    const context = {
-      workflowId: workflow.id,
-      runId,
-      triggerType: event.type,
-      recordId: event.recordId,
-      userId: event.userId,
-      timestamp: event.timestamp,
-      variables: event.data || {},
-    };
-
-    await supabase.from('workflow_runs').insert({
-      workflow_id: workflow.id,
-      status: 'pending',
-      triggered_by: { eventType: event.type, recordId: event.recordId },
-      context: {},
-    });
+    try {
+      await runWorkflow({
+        workflowId: workflow.id,
+        userId: event.userId,
+        triggerType: event.type,
+        recordId: event.recordId,
+        triggerData: { ...(event.data || {}), objectType: event.objectType, recordId: event.recordId },
+      });
+    } catch (e) {
+      console.error(`Workflow ${workflow.id} failed to run:`, e);
+    }
   }
 }

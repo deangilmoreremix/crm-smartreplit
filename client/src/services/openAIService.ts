@@ -216,7 +216,8 @@ class OpenAIService {
       return inputCost + outputCost;
     }
 
-    // TODO: fill from OpenAI pricing page. No default prices are invented; cost is 0 until set.
+    // Prices live in supabaseAIService FALLBACK_MODELS (from https://developers.openai.com/api/docs/pricing).
+    // Unknown models cost 0; nothing is invented.
     return 0;
   }
 

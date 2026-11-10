@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 
-interface TimelineActivity {
+export interface TimelineActivity {
   id: string;
   created_at: string;
   updated_at: string;
@@ -19,7 +19,7 @@ interface TimelineActivity {
   activity_type: 'email' | 'call' | 'meeting' | 'note' | 'task' | 'sms' | 'meeting_transcript';
 }
 
-interface EventGroup {
+export interface EventGroup {
   year: number;
   month: number;
   items: TimelineActivity[];

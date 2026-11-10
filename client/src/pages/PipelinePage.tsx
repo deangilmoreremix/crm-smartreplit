@@ -6,12 +6,14 @@ import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
 import ModuleFederationPipeline from '../components/ModuleFederationPipeline';
 import GTMIntegration from '../components/GTMIntegration';
+import DealKanbanBoard from '../components/DealKanbanBoard';
 
 const PipelinePage: React.FC = () => {
   const { isDark } = useTheme();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
   const [activeTab, setActiveTab] = useState('pipeline');
+  const [dealView, setDealView] = useState<'kanban' | 'list'>('kanban');
 
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: '📊' },
@@ -50,8 +52,31 @@ const PipelinePage: React.FC = () => {
       {/* Tab Content */}
       <div className="h-full overflow-hidden">
         {activeTab === 'pipeline' && (
-          <div className="h-full w-full">
-            <ModuleFederationPipeline showHeader={false} />
+          <div className="h-full w-full flex flex-col">
+            <div className="flex justify-end px-6 py-2" role="tablist" aria-label="Deal view">
+              {(['kanban', 'list'] as const).map((view) => (
+                <button
+                  key={view}
+                  role="tab"
+                  aria-selected={dealView === view}
+                  onClick={() => setDealView(view)}
+                  className={`px-3 py-1 text-sm font-medium border first:rounded-l-md last:rounded-r-md ${
+                    dealView === view
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {view === 'kanban' ? 'Kanban' : 'List'}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-auto">
+              {dealView === 'kanban' ? (
+                <DealKanbanBoard />
+              ) : (
+                <ModuleFederationPipeline showHeader={false} />
+              )}
+            </div>
           </div>
         )}
 

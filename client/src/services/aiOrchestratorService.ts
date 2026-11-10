@@ -700,12 +700,14 @@ class AIOrchestratorService {
    */
   private estimateCost(modelId: string, tokens: number): number {
     // Per-token unit cost by model id; null = unknown (cost reported as 0).
-    // TODO: fill from OpenAI pricing page
+    // USD per 1M tokens (Standard, <=272K input) from https://developers.openai.com/api/docs/pricing
+    // (read 2026-11-10). Only total tokens are known here, so cost uses a 70% input / 30% output blend.
+    const blended = (inPer1M: number, outPer1M: number) => (0.7 * inPer1M + 0.3 * outPer1M) / 1_000_000;
     const PRICING: Record<string, number | null> = {
-      [MODEL_TIERS.fast]: null,
-      [MODEL_TIERS.default]: null,
-      [MODEL_TIERS.deep]: null,
-      [MODEL_TIERS.max]: null,
+      [MODEL_TIERS.fast]: blended(0.1, 0.5), // gpt-6-luna
+      [MODEL_TIERS.default]: blended(1, 5), // gpt-6.1-terra
+      [MODEL_TIERS.deep]: blended(2, 10), // gpt-6.1-sol
+      [MODEL_TIERS.max]: blended(10, 50), // gpt-6-astra
     };
 
     const unitCost = PRICING[modelId];

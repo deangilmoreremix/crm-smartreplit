@@ -26,6 +26,8 @@ import {
   X,
 } from 'lucide-react';
 import Avatar from 'react-avatar';
+import { ContactActivityTimeline } from '../components/ContactActivityTimeline';
+import ContactAttachments from '../components/ContactAttachments';
 
 const ContactDetail: React.FC = () => {
   const { isDark } = useTheme();
@@ -647,6 +649,16 @@ const ContactDetail: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-medium mb-4">Activity Timeline</h3>
+            <ContactActivityTimeline contactId={contact.id} />
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-medium mb-4">Attachments</h3>
+            <ContactAttachments contactId={contact.id} />
           </div>
         </div>
       </div>
