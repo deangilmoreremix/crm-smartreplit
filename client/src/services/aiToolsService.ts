@@ -1,4 +1,5 @@
-import { openaiService } from './openaiService';
+import { openAIService } from './openAIService';
+import { DEFAULT_MODEL } from '@shared/aiModels';
 import { geminiService } from './geminiService';
 
 export interface AIToolRequest {
@@ -35,8 +36,9 @@ class AIToolsService {
           maxOutputTokens: options.maxTokens || 1000,
         });
       } else {
-        response = await openaiService.generateCompletion(enhancedPrompt, {
-          model: options.model || 'gpt-4',
+        response = await openAIService.generateContent({
+          messages: [{ role: 'user', content: enhancedPrompt }],
+          model: options.model || DEFAULT_MODEL,
           temperature: options.temperature || 0.7,
           maxTokens: options.maxTokens || 1000,
         });

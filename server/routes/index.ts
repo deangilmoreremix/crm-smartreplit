@@ -10,6 +10,7 @@ import authRoutes from './auth';
 import companiesRoutes from './companies';
 import openaiRoutes from './openai';
 import openaiResponsesRoutes from './openaiResponses';
+import assistantsRoutes from './assistants';
 import domainsRoutes from './domains';
 import themesRoutes from './themes';
 import provisioningRoutes from './provisioning';
@@ -93,6 +94,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register OpenAI Responses API routes
   console.log('Registering OpenAI Responses API routes at /api/openai');
   app.use('/api/openai', openaiResponsesRoutes);
+
+  // Assistants (Responses API: saved configs + chained threads)
+  app.use('/api/assistants', assistantsRoutes);
 
   // Register domains routes
   console.log('Registering domains routes at /api/domains');

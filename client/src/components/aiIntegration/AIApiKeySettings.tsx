@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SELECTABLE_MODELS, DEFAULT_MODEL } from '@shared/aiModels';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { ChevronLeft, ChevronRight, Check, X, Shield, Key, Zap, Brain, Globe, BookOpen, Bot } from 'lucide-react';
@@ -28,7 +29,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [provider, setProvider] = useState<'openai' | 'gemini' | 'openclaw'>('openai');
   const [localApiConfig, setLocalApiConfig] = useState({
-    openai: { apiKey: '', model: 'gpt-4.1' },
+    openai: { apiKey: '', model: DEFAULT_MODEL },
     gemini: { apiKey: '', model: 'gemini-1.5-flash' },
     openclaw: { apiKey: '', model: 'default', baseUrl: '' }
   });
@@ -53,11 +54,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   ];
 
   const currentModels = provider === 'openai' ? [
-    { value: 'gpt-4.1', label: 'GPT-4.1', description: 'Most capable GPT-4.1 model for complex reasoning, coding, and instruction-following', pricing: '$2.00 / $8.00 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini', description: 'Balanced GPT-4.1 model optimized for speed and cost-efficiency', pricing: '$0.40 / $1.60 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano', description: 'Fastest, most affordable GPT-4.1 model for lightweight tasks and high throughput', pricing: '$0.10 / $0.40 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'o3', label: 'o3', description: 'Advanced reasoning model with extended thinking for math, science, and complex problem-solving', pricing: '$2.00 / $8.00 per 1M tokens', contextLength: '200K tokens' },
-    { value: 'o4-mini', label: 'o4-mini', description: 'Fast, cost-efficient reasoning model ideal for coding, math, and agentic tasks at scale', pricing: '$0.60 / $2.40 per 1M tokens', contextLength: '200K tokens' }
+    ...SELECTABLE_MODELS.map((m) => ({ value: m.id, label: m.label, description: m.description, pricing: 'See OpenAI pricing page', contextLength: 'See OpenAI model docs' }))
   ] : provider === 'gemini' ? [
     { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Fast, efficient model optimized for speed', pricing: '$0.000075/$0.00015 per 1K tokens', contextLength: '1M tokens' },
     { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', description: 'Most capable model for complex reasoning', pricing: '$0.00125/$0.0025 per 1K tokens', contextLength: '1M tokens' }
@@ -73,7 +70,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
       // Pre-populate from saved config so user sees what they already have
       if (apiConfig) {
         setLocalApiConfig({
-          openai: { apiKey: apiConfig.openai?.apiKey || '', model: apiConfig.openai?.model || 'gpt-4.1' },
+          openai: { apiKey: apiConfig.openai?.apiKey || '', model: apiConfig.openai?.model || DEFAULT_MODEL },
           gemini: { apiKey: apiConfig.gemini?.apiKey || '', model: apiConfig.gemini?.model || 'gemini-1.5-flash' },
           openclaw: { apiKey: apiConfig.openclaw?.apiKey || '', model: apiConfig.openclaw?.model || 'default', baseUrl: apiConfig.openclaw?.baseUrl || '' }
         });

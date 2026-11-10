@@ -1,5 +1,6 @@
 import { enhancedGeminiService } from './enhancedGeminiService';
 import { openAIService } from './openAIService';
+import { MODEL_TIERS, tierModel } from '@shared/aiModels';
 
 // Feature types for orchestration
 export type AIFeature =
@@ -56,8 +57,7 @@ class AIOrchestratorService {
       'gemma-2-27b-it',
       'gemini-2.5-flash',
       'gemini-2.5-flash-8b',
-      'gpt-4o-mini',
-      'gpt-3.5-turbo',
+      ...Object.values(MODEL_TIERS),
     ];
 
     models.forEach((model) => {
@@ -197,11 +197,11 @@ class AIOrchestratorService {
       if (status.configured) {
         // If OpenAI is available, prefer it for quality tasks
         if (context.priority === 'quality' && feature === 'business_analysis') {
-          return 'gpt-4o-mini';
+          return tierModel('deep');
         } else if (context.priority === 'cost') {
-          return 'gpt-3.5-turbo';
+          return tierModel('fast');
         } else {
-          return 'gpt-4o-mini';
+          return tierModel('default');
         }
       }
     } catch (error) {
@@ -593,7 +593,7 @@ class AIOrchestratorService {
     const useGPT4 =
       (dealData.deals && dealData.deals.some((deal: any) => deal.value > 100000)) ||
       taskContext.complexity === 'high';
-    const defaultModelId = useGPT4 ? 'gpt-4o-mini' : 'gemini-2.5-flash';
+    const defaultModelId = useGPT4 ? tierModel('deep') : 'gemini-2.5-flash';
 
     const modelId = await this.getOptimalModel('deal_insights', {
       ...taskContext,
@@ -798,17 +798,22 @@ class AIOrchestratorService {
    * Estimate cost based on model and tokens
    */
   private estimateCost(modelId: string, tokens: number): number {
-    const pricing: Record<string, number> = {
-      'gemma-2-2b-it': 0.00000035, // per token
-      'gemma-2-9b-it': 0.0000005, // per token
-      'gemma-2-27b-it': 0.00000125, // per token
-      'gemini-2.5-flash': 0.00000075, // per token
-      'gemini-2.5-flash-8b': 0.00000035, // per token
-      'gpt-4o-mini': 0.00015, // per token
-      'gpt-3.5-turbo': 0.0000015, // per token
+    // Per-token unit cost by model id; null = unknown (cost reported as 0).
+    // TODO: fill from OpenAI pricing page
+    const PRICING: Record<string, number | null> = {
+      'gemma-2-2b-it': 0.00000035,
+      'gemma-2-9b-it': 0.0000005,
+      'gemma-2-27b-it': 0.00000125,
+      'gemini-2.5-flash': 0.00000075,
+      'gemini-2.5-flash-8b': 0.00000035,
+      [MODEL_TIERS.fast]: null,
+      [MODEL_TIERS.default]: null,
+      [MODEL_TIERS.deep]: null,
+      [MODEL_TIERS.max]: null,
     };
 
-    return tokens * (pricing[modelId] || 0.0000015);
+    const unitCost = PRICING[modelId];
+    return unitCost == null ? 0 : tokens * unitCost;
   }
 
   /**

@@ -35,6 +35,7 @@ const AssistantsDashboard: React.FC = () => {
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
   const [activeThreads, setActiveThreads] = useState<Map<string, any>>(new Map());
   const [systemStats, setSystemStats] = useState<any>({});
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadAssistantData();
@@ -56,10 +57,12 @@ const AssistantsDashboard: React.FC = () => {
         threadsMap.set(assistant.id, threads);
       }
       setActiveThreads(threadsMap);
+      setError(null);
 
       setLoading(false);
     } catch (error) {
       console.error('Failed to load assistant data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load assistants');
       setLoading(false);
     }
   };
@@ -419,10 +422,12 @@ const AssistantsDashboard: React.FC = () => {
             <Bot className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-700 mb-2">No AI Assistants Found</h3>
             <p className="text-gray-500 mb-6">
-              Your AI assistants will appear here once they're initialized.
+              {error
+                ? `Could not load assistants: ${error}`
+                : "Your AI assistants will appear here once they're initialized."}
             </p>
             <button
-              onClick={() => persistentAssistantService.initialize()}
+              onClick={() => loadAssistantData()}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Initialize Assistants

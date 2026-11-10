@@ -4,6 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Eye, EyeOff, Key, AlertCircle, Save, Trash2, CheckCircle, XCircle, Loader2, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useToast } from '../hooks/use-toast';
+import { DEFAULT_MODEL } from '@shared/aiModels';
 
 interface ApiKeyRecord {
   id: string;
@@ -310,7 +311,7 @@ const Settings: React.FC = () => {
                   type="text"
                   value={newModel}
                   onChange={(e) => setNewModel(e.target.value)}
-                  placeholder={newProvider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash'}
+                  placeholder={newProvider === 'openai' ? DEFAULT_MODEL : 'gemini-1.5-flash'}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave empty to use the default model</p>

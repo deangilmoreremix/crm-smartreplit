@@ -35,7 +35,6 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(!propAssistantId);
-  const [runId, setRunId] = useState<string | null>(null);
 
   // Settings form state
   const [assistantName, setAssistantName] = useState('Sales Assistant');
@@ -57,25 +56,10 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
     scrollToBottom();
   }, [messages]);
 
-  // Poll for updates when there's an active run
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (runId && threadId) {
-      intervalId = setInterval(() => {
-        checkRunStatus();
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [runId, threadId]);
-
   const initializeThread = async () => {
     try {
       if (!threadId) {
-        const thread = await assistants.createThread();
+        const thread = await assistants.createThread(propAssistantId);
         setThreadId(thread.id);
 
         // Add welcome message
@@ -153,61 +137,21 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
     setError(null);
 
     try {
-      // Send message to the thread
-      await assistants.addMessageToThread(threadId, input);
-
-      // Run the assistant
-      const run = await assistants.runAssistant(threadId, assistantId);
-      setRunId(run.id);
+      // Responses are synchronous: one call returns the assistant's reply.
+      const result = await assistants.chatWithAssistant(input, assistantId, threadId);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: result.responseId,
+          role: 'assistant',
+          content: result.response,
+          createdAt: new Date(),
+        },
+      ]);
     } catch (err) {
-      setError('Error sending message');
+      setError(err instanceof Error ? err.message : 'Error sending message');
       console.error(err);
-      setIsLoading(false);
-    }
-  };
-
-  const checkRunStatus = async () => {
-    if (!threadId || !runId) return;
-
-    try {
-      const run = await assistants.getRunStatus(threadId, runId);
-
-      if (run.status === 'completed') {
-        // Get the latest messages
-        const threadMessages = await assistants.getThreadMessages(threadId);
-
-        if (threadMessages.data.length > 0) {
-          // Convert the latest assistant message to our format
-          const latestAssistantMessage = threadMessages.data.find((m) => m.role === 'assistant');
-
-          if (latestAssistantMessage && latestAssistantMessage.content[0].type === 'text') {
-            const newMessage: Message = {
-              id: latestAssistantMessage.id,
-              role: 'assistant',
-              content: latestAssistantMessage.content[0].text.value,
-              createdAt: new Date(latestAssistantMessage.created_at * 1000),
-            };
-
-            // Check if we already have this message
-            const messageExists = messages.some((m) => m.id === newMessage.id);
-            if (!messageExists) {
-              setMessages((prev) => [...prev, newMessage]);
-            }
-          }
-        }
-
-        setRunId(null);
-        setIsLoading(false);
-      } else if (run.status === 'failed') {
-        setError('The assistant encountered an error');
-        setRunId(null);
-        setIsLoading(false);
-      }
-      // For other statuses (queued, in_progress), keep waiting
-    } catch (err) {
-      setError('Error checking message status');
-      console.error(err);
-      setRunId(null);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -388,7 +332,7 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
           ))}
           <div ref={messageEndRef} />
 
-          {isLoading && !runId && messages.length === 0 && (
+          {isLoading && messages.length === 0 && (
             <div className="flex justify-center my-6">
               <div className="flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100">
                 <RefreshCw className="h-6 w-6 text-indigo-600 animate-spin" />
@@ -396,7 +340,7 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
             </div>
           )}
 
-          {isLoading && runId && (
+          {isLoading && messages.length > 0 && (
             <div className="flex items-center space-x-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-indigo-100">
               <div className="relative">
                 <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">

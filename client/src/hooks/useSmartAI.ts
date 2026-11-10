@@ -9,6 +9,7 @@ import { supabaseAIService } from '../services/supabaseAIService';
 import { aiOrchestratorService } from '../services/aiOrchestratorService';
 import { openAIService } from '../services/openAIService';
 import { Contact } from '../types/contact';
+import { MODEL_TIERS } from '@shared/aiModels';
 
 // Define types for task optimization
 export type TaskType =
@@ -246,7 +247,7 @@ const enhancedAI = {
           taskTypes: ['categorization', 'basic_classification'],
         },
         {
-          model: 'gpt-4o-mini',
+          model: MODEL_TIERS.default,
           successRate: 0.96,
           avgTime: 820,
           avgCost: 0.009,
@@ -294,7 +295,7 @@ class TaskOptimizationHelper {
         estimatedCost: 0.045,
       },
       lead_qualification: {
-        recommendedModel: 'gpt-4o-mini',
+        recommendedModel: MODEL_TIERS.default,
         recommendedProvider: 'OpenAI',
         reasoning:
           'Superior reasoning capabilities for complex lead qualification judgments. Strong accuracy on nuanced decision-making tasks.',

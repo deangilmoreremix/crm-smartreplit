@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { DEFAULT_MODEL } from '@shared/aiModels';
 import {
   AIAutomationRule,
   AIInsight,
@@ -132,7 +133,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       workflows: [],
       workflowExecutions: [],
       models: [],
-      activeModel: 'gpt-4',
+      activeModel: DEFAULT_MODEL,
       suggestions: [],
       pendingSuggestions: 0,
       enrichmentRequests: [],
@@ -505,7 +506,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
               },
               confidence: 0.87,
               reasoning: 'Based on similar successful interactions and customer profile analysis.',
-              aiModel: 'gpt-4',
+              aiModel: DEFAULT_MODEL,
               createdAt: new Date(),
               expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
               status: 'pending',
@@ -528,7 +529,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
               confidence: 0.92,
               reasoning:
                 'Meeting notes indicate technical requirements discussion and next steps agreement.',
-              aiModel: 'gpt-4',
+              aiModel: DEFAULT_MODEL,
               createdAt: new Date(),
               expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
               status: 'pending',

@@ -17,6 +17,7 @@ import {
   Save,
   AlertCircle,
 } from 'lucide-react';
+import { tierModel } from '@shared/aiModels';
 
 const VisualContentGeneratorContent: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -109,7 +110,7 @@ Provide a comprehensive visual content idea including:
           { role: 'system', content: `You are an expert visual content designer specializing in ${formData.contentType}s.` },
           { role: 'user', content: prompt }
         ],
-        model: 'gpt-4o-mini',
+        model: tierModel('fast'),
         featureUsed: 'visual-content-generator',
         temperature: 0.7,
         maxTokens: 1200,

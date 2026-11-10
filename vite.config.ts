@@ -44,6 +44,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'client/src'),
+      '@shared/aiModels': path.resolve(__dirname, 'shared/aiModels.ts'),
       'stream': 'stream-browserify',
       '@crm/openclaw-api': path.resolve(__dirname, 'packages/openclaw-api/src'),
       '@crm/twenty-fields': path.resolve(__dirname, 'packages/twenty-fields/src'),

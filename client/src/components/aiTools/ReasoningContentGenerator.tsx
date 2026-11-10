@@ -20,6 +20,7 @@ import {
   Hash,
   Save,
 } from 'lucide-react';
+import { tierModel } from '@shared/aiModels';
 
 interface ReasoningContentGeneratorProps {
   contentType?: 'email' | 'proposal' | 'script' | 'objection' | 'social';
@@ -120,7 +121,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
           { role: 'system', content: 'You are an expert AI reasoning engine for content creation.' },
           { role: 'user', content: reasoningPrompt }
         ],
-        model: 'gpt-4o-mini',
+        model: tierModel('fast'),
         featureUsed: 'reasoning-content-generator',
         temperature: 0.7,
         maxTokens: 1000,
@@ -152,7 +153,7 @@ const ReasoningContentGenerator: React.FC<ReasoningContentGeneratorProps> = ({
           { role: 'system', content: `You are an expert ${contentTitle} creator.` },
           { role: 'user', content: contentPrompt }
         ],
-        model: 'gpt-4o-mini',
+        model: tierModel('fast'),
         featureUsed: 'reasoning-content-generator',
         temperature: 0.7,
         maxTokens: 1500,

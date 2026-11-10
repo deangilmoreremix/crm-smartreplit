@@ -166,7 +166,19 @@ export const useOpenAI = () => {
     return result || 'Unable to generate visual content idea';
   };
 
+  const predictLeadScore = async (contact: unknown) => {
+    const result = await respondText({
+      system:
+        'You are an expert sales analyst. Score leads from 0-100 and explain the score concisely.',
+      user: `Predict the lead score for this contact and explain the main factors, buying signals, risks and a recommended next action:\n${JSON.stringify(contact)}`,
+      maxOutputTokens: 600,
+      temperature: 0.3,
+    });
+    return result || 'Unable to predict lead score';
+  };
+
   return {
+    predictLeadScore,
     generateEmailDraft,
     optimizeSubjectLine,
     analyzeSentiment,

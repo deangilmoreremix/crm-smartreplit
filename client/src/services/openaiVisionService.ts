@@ -29,5 +29,17 @@ export const useOpenAIVision = () => {
     });
   };
 
-  return { analyzeImage, analyzeImageFile };
+  const analyzeCompetitorVisuals = (imageUrl: string, competitorName: string) =>
+    analyzeImage(
+      imageUrl,
+      `Analyze this image as competitive intelligence about ${competitorName}. Describe branding, messaging, positioning, pricing or offer details, strengths and weaknesses, and how we could differentiate.`
+    );
+
+  const analyzeClientDocument = (imageUrl: string) =>
+    analyzeImage(
+      imageUrl,
+      'Extract the text from this document, then summarize its purpose, key terms, dates, amounts, parties involved, and any action items.'
+    );
+
+  return { analyzeImage, analyzeImageFile, analyzeCompetitorVisuals, analyzeClientDocument };
 };

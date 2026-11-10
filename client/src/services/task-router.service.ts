@@ -7,6 +7,12 @@ import { logger } from './logger.service';
 import { rateLimiter } from './rate-limiter.service';
 import { cacheService } from './cache.service';
 import apiConfig, { AIModel, getModelsByCapability } from '../config/api.config';
+import { tierModel } from '@shared/aiModels';
+
+const OPENAI_FAST = tierModel('fast');
+const OPENAI_DEFAULT = tierModel('default');
+const OPENAI_DEEP = tierModel('deep');
+const isPremiumOpenAI = (id: string) => id === OPENAI_DEEP || id === tierModel('max');
 
 export interface TaskRequirements {
   accuracy: 'low' | 'medium' | 'high' | 'critical';
@@ -86,16 +92,16 @@ class TaskRouterService {
       ],
       openaiModels: [
         {
-          model: 'gpt-4o-mini',
+          model: OPENAI_DEFAULT,
           score: 88,
           reasoning: 'Optimal cost-performance for contact scoring',
         },
         {
-          model: 'gpt-4o',
+          model: OPENAI_DEEP,
           score: 95,
           reasoning: 'Highest accuracy for critical scoring decisions',
         },
-        { model: 'gpt-3.5-turbo', score: 78, reasoning: 'Cost-effective for basic scoring' },
+        { model: OPENAI_FAST, score: 78, reasoning: 'Cost-effective for basic scoring' },
       ],
       defaultRequirements: {
         accuracy: 'high',
@@ -116,9 +122,9 @@ class TaskRouterService {
         { model: 'gemma-2-9b-it', score: 82, reasoning: 'Good balance for standard enrichment' },
       ],
       openaiModels: [
-        { model: 'gpt-4o', score: 95, reasoning: 'Superior reasoning for complex data enrichment' },
+        { model: OPENAI_DEEP, score: 95, reasoning: 'Superior reasoning for complex data enrichment' },
         {
-          model: 'gpt-4o-mini',
+          model: OPENAI_DEFAULT,
           score: 85,
           reasoning: 'Cost-effective enrichment with good quality',
         },
@@ -143,8 +149,8 @@ class TaskRouterService {
         { model: 'gemma-2-9b-it', score: 85, reasoning: 'More nuanced categorization' },
       ],
       openaiModels: [
-        { model: 'gpt-4o-mini', score: 88, reasoning: 'Reliable categorization with consistency' },
-        { model: 'gpt-3.5-turbo', score: 82, reasoning: 'Basic categorization at low cost' },
+        { model: OPENAI_DEFAULT, score: 88, reasoning: 'Reliable categorization with consistency' },
+        { model: OPENAI_FAST, score: 82, reasoning: 'Basic categorization at low cost' },
       ],
       defaultRequirements: {
         accuracy: 'medium',
@@ -165,8 +171,8 @@ class TaskRouterService {
         },
       ],
       openaiModels: [
-        { model: 'gpt-4o-mini', score: 85, reasoning: 'Consistent tagging quality' },
-        { model: 'gpt-3.5-turbo', score: 80, reasoning: 'Cost-effective basic tagging' },
+        { model: OPENAI_DEFAULT, score: 85, reasoning: 'Consistent tagging quality' },
+        { model: OPENAI_FAST, score: 80, reasoning: 'Cost-effective basic tagging' },
       ],
       defaultRequirements: {
         accuracy: 'medium',
@@ -187,12 +193,12 @@ class TaskRouterService {
       ],
       openaiModels: [
         {
-          model: 'gpt-4o',
+          model: OPENAI_DEEP,
           score: 95,
           reasoning: 'Superior reasoning for complex relationship mapping',
         },
         {
-          model: 'gpt-4o-mini',
+          model: OPENAI_DEFAULT,
           score: 80,
           reasoning: 'Good relationship detection with efficiency',
         },
@@ -216,9 +222,9 @@ class TaskRouterService {
         },
       ],
       openaiModels: [
-        { model: 'gpt-4o', score: 95, reasoning: 'Best-in-class qualification accuracy' },
+        { model: OPENAI_DEEP, score: 95, reasoning: 'Best-in-class qualification accuracy' },
         {
-          model: 'gpt-4o-mini',
+          model: OPENAI_DEFAULT,
           score: 87,
           reasoning: 'Efficient qualification with good accuracy',
         },
@@ -242,8 +248,8 @@ class TaskRouterService {
         },
       ],
       openaiModels: [
-        { model: 'gpt-4o-mini', score: 90, reasoning: 'Nuanced sentiment detection' },
-        { model: 'gpt-4o', score: 95, reasoning: 'Superior emotional intelligence' },
+        { model: OPENAI_DEFAULT, score: 90, reasoning: 'Nuanced sentiment detection' },
+        { model: OPENAI_DEEP, score: 95, reasoning: 'Superior emotional intelligence' },
       ],
       defaultRequirements: {
         accuracy: 'high',
@@ -394,7 +400,7 @@ class TaskRouterService {
     let score = baseScore;
 
     // Accuracy requirement adjustment
-    if (requirements.accuracy === 'critical' && modelConfig.id.includes('gpt-4o')) {
+    if (requirements.accuracy === 'critical' && isPremiumOpenAI(modelConfig.id)) {
       score += 15; // Boost OpenAI GPT-4o for critical accuracy
     } else if (requirements.accuracy === 'critical' && modelConfig.id.includes('gemma-2-27b')) {
       score += 10; // Boost largest Gemma for critical accuracy
@@ -406,9 +412,9 @@ class TaskRouterService {
     if (requirements.speed === 'realtime') {
       if (modelConfig.id.includes('flash-8b') || modelConfig.id.includes('2b')) {
         score += 20; // Significant boost for fastest models
-      } else if (modelConfig.id.includes('mini') || modelConfig.id.includes('flash')) {
+      } else if (modelConfig.id === OPENAI_FAST || modelConfig.id.includes('flash')) {
         score += 10;
-      } else if (modelConfig.id.includes('gpt-4o') && !modelConfig.id.includes('mini')) {
+      } else if (isPremiumOpenAI(modelConfig.id)) {
         score -= 10; // Penalize slower models for realtime needs
       }
     }
@@ -423,7 +429,7 @@ class TaskRouterService {
     } else if (requirements.cost === 'low') {
       if (modelConfig.costPer1kTokens && modelConfig.costPer1kTokens < 0.001) {
         score += 15;
-      } else if (modelConfig.id.includes('mini')) {
+      } else if (modelConfig.id === OPENAI_FAST) {
         score += 10;
       }
     }
@@ -441,7 +447,7 @@ class TaskRouterService {
 
     // Complexity adjustment
     if (requirements.complexity === 'expert') {
-      if (modelConfig.id.includes('gpt-4o') && !modelConfig.id.includes('mini')) {
+      if (isPremiumOpenAI(modelConfig.id)) {
         score += 20; // Strong preference for GPT-4o for expert tasks
       } else if (modelConfig.id.includes('27b') || modelConfig.id.includes('1.5-pro')) {
         score += 15; // Boost larger models for complex tasks
@@ -450,7 +456,7 @@ class TaskRouterService {
       if (
         modelConfig.id.includes('2b') ||
         modelConfig.id.includes('8b') ||
-        modelConfig.id.includes('3.5')
+        modelConfig.id === OPENAI_FAST
       ) {
         score += 10; // Prefer smaller/simpler models for simple tasks
       }
@@ -565,11 +571,11 @@ class TaskRouterService {
       'gemini-2.0-flash-exp': 1200,
       'gemini-1.5-flash': 1500,
       'gemma-2-9b-it': 2000,
-      'gpt-4o-mini': 2200,
-      'gpt-3.5-turbo': 1800,
+      [OPENAI_DEFAULT]: 2200,
+      [OPENAI_FAST]: 1800,
       'gemma-2-27b-it': 3500,
       'gemini-1.5-pro': 3000,
-      'gpt-4o': 4000,
+      [OPENAI_DEEP]: 4000,
     };
 
     let latency = baseLatencies[modelConfig.id] || 2500;

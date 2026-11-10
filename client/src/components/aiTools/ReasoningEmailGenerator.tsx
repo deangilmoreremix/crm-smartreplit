@@ -12,6 +12,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { openAIService } from '../../services/openAIService';
+import { DEFAULT_MODEL } from '@shared/aiModels';
 
 const ReasoningEmailGenerator: React.FC = () => {
   const { isDark } = useTheme();
@@ -37,8 +38,9 @@ Please provide:
 
 Format the response as JSON with these keys: email, reasoning, improvements, analytics`;
 
-      const response = await openAIService.generateCompletion(prompt, {
-        model: 'gpt-4',
+      const response = await openAIService.generateContent({
+        messages: [{ role: 'user', content: prompt }],
+        model: DEFAULT_MODEL,
         temperature: 0.7,
         maxTokens: 1000,
       });

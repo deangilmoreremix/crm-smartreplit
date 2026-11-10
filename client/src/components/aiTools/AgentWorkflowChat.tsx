@@ -98,7 +98,7 @@ const AgentWorkflowChat: React.FC = () => {
 
       setAssistantId(assistant.id);
 
-      const thread = await assistants.createThread();
+      const thread = await assistants.createThread(assistant.id);
       setThreadId(thread.id);
 
       // Welcome message
@@ -113,6 +113,14 @@ const AgentWorkflowChat: React.FC = () => {
       ]);
     } catch (error) {
       console.error('Failed to initialize workflow agent:', error);
+      setMessages([
+        {
+          id: 'init-error',
+          role: 'system',
+          content: `Workflow agent unavailable: ${error instanceof Error ? error.message : 'initialization failed'}`,
+          createdAt: new Date(),
+        },
+      ]);
     }
   };
 
@@ -147,64 +155,31 @@ const AgentWorkflowChat: React.FC = () => {
         }
       }
 
-      // Send to AI assistant
-      await assistants.addMessageToThread(threadId, input);
-      const run = await assistants.runAssistant(threadId, assistantId);
-
-      // Poll for response
-      const response = await pollForResponse(run.id);
-      if (response) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: response.id,
-            role: 'assistant',
-            content: response.content,
-            createdAt: new Date(),
-          },
-        ]);
-      }
+      // Send to AI assistant (synchronous Responses call)
+      const result = await assistants.chatWithAssistant(input, assistantId, threadId);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: result.responseId,
+          role: 'assistant',
+          content: result.response,
+          createdAt: new Date(),
+        },
+      ]);
     } catch (error) {
       console.error('Error processing message:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          role: 'system',
+          content: `Error: ${error instanceof Error ? error.message : 'Failed to get a response'}`,
+          createdAt: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const pollForResponse = async (runId: string): Promise<any> => {
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    while (attempts < maxAttempts) {
-      try {
-        const run = await assistants.getRunStatus(threadId!, runId);
-
-        if (run.status === 'completed') {
-          const messages = await assistants.getThreadMessages(threadId!);
-          const latestMessage = messages.data.find((m) => m.role === 'assistant');
-
-          if (latestMessage && latestMessage.content[0].type === 'text') {
-            return {
-              id: latestMessage.id,
-              content: latestMessage.content[0].text.value,
-            };
-          }
-        } else if (run.status === 'failed') {
-          throw new Error('Assistant run failed');
-        }
-
-        // Wait for assistant run completion with polling interval
-        await new Promise((resolve) => {
-          setTimeout(() => resolve(undefined), 1000);
-        });
-        attempts++;
-      } catch (error) {
-        console.error('Error polling for response:', error);
-        break;
-      }
-    }
-
-    return null;
   };
 
   const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow | null> => {

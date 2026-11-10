@@ -19,7 +19,6 @@ import {
   Mail,
   Users,
 } from 'lucide-react';
-import { useOpenAI } from '../services/openaiService';
 import { useForm } from 'react-hook-form';
 import Avatar from 'react-avatar';
 import { CSVLink } from 'react-csv';
@@ -59,7 +58,6 @@ const Contacts: React.FC = () => {
 
   // Local state for UI
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const openai = useOpenAI();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddContactModal, setShowAddContactModal] = useState(false);

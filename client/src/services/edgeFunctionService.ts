@@ -105,6 +105,16 @@ export async function generateMeetingSummary(meeting: any): Promise<string> {
   }
 }
 
+export async function analyzeBusinessData(data: {
+  businessName?: string;
+  industry?: string;
+  websiteUrl?: string;
+  socialLinks?: unknown;
+}): Promise<string> {
+  const prompt = `Analyze this business and provide a concise report with strengths, weaknesses, opportunities, threats, target audience, and recommended next steps.\n\nBusiness: ${data.businessName || 'Unknown'}\nIndustry: ${data.industry || 'Unknown'}\nWebsite: ${data.websiteUrl || 'N/A'}\nSocial links: ${JSON.stringify(data.socialLinks ?? {})}`;
+  return useServerAPI(prompt, 'business-analyzer');
+}
+
 export async function analyzeMarketTrends(market: string): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke('analyze-market-trends', {

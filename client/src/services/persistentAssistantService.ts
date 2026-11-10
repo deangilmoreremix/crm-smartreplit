@@ -21,46 +21,44 @@ class PersistentAssistantService {
   private activeAssistants: Map<string, PersistentAssistant> = new Map();
   private initialized = false;
 
+  private initPromise: Promise<void> | null = null;
+
   async initialize(): Promise<void> {
     if (this.initialized) return;
-
-    try {
-      // Load existing assistants
-      await this.loadPersistedAssistants();
-
-      // Create specialized assistants if they don't exist
-      await this.ensureSpecializedAssistants();
-
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize persistent assistant service:', error);
+    // Share one in-flight init so concurrent callers don't create duplicate assistants.
+    if (!this.initPromise) {
+      this.initPromise = (async () => {
+        await this.loadPersistedAssistants();
+        await this.ensureSpecializedAssistants();
+        this.initialized = true;
+      })().finally(() => {
+        this.initPromise = null;
+      });
     }
+    return this.initPromise;
   }
 
   private async loadPersistedAssistants(): Promise<void> {
-    try {
-      const assistantsList = await this.assistants.listAssistants();
+    // Errors propagate so callers can show an error state.
+    const assistantsList = await this.assistants.listAssistants();
 
-      for (const assistant of assistantsList.data) {
-        const persistentAssistant: PersistentAssistant = {
-          id: assistant.id,
-          name: assistant.name || 'Unnamed Assistant',
-          type: this.getAssistantType(assistant.name || ''),
-          instructions: assistant.instructions || '',
-          activeThreads: new Map(),
-          totalInteractions: 0,
-          lastUsed: new Date(assistant.created_at * 1000),
-          performance: {
-            averageResponseTime: 2000,
-            successRate: 0.95,
-            userSatisfaction: 4.5,
-          },
-        };
+    for (const assistant of assistantsList.data) {
+      const persistentAssistant: PersistentAssistant = {
+        id: assistant.id,
+        name: assistant.name || 'Unnamed Assistant',
+        type: this.getAssistantType(assistant.name || ''),
+        instructions: assistant.instructions || '',
+        activeThreads: new Map(),
+        totalInteractions: 0,
+        lastUsed: new Date(assistant.created_at * 1000),
+        performance: {
+          averageResponseTime: 2000,
+          successRate: 0.95,
+          userSatisfaction: 4.5,
+        },
+      };
 
-        this.activeAssistants.set(assistant.id, persistentAssistant);
-      }
-    } catch (error) {
-      console.warn('Could not load existing assistants:', error);
+      this.activeAssistants.set(assistant.id, persistentAssistant);
     }
   }
 
@@ -96,8 +94,6 @@ class PersistentAssistantService {
 
           this.activeAssistants.set(assistant.id, persistentAssistant);
 
-          // Store assistant ID in environment variable format
-          this.setAssistantIdForType(type, assistant.id);
         } catch (error) {
           console.error(`Failed to create ${type} assistant:`, error);
         }
@@ -112,12 +108,6 @@ class PersistentAssistantService {
     if (lowerName.includes('task')) return 'task';
     if (lowerName.includes('pipeline')) return 'pipeline';
     return 'general';
-  }
-
-  private setAssistantIdForType(type: string, assistantId: string): void {
-    // Store in local storage or environment variables
-    const envKey = `VITE_${type.toUpperCase()}_ASSISTANT_ID`;
-    localStorage.setItem(envKey, assistantId);
   }
 
   async getOrCreateThread(
@@ -142,7 +132,8 @@ class PersistentAssistantService {
       const thread = await assistantThreadManager.getOrCreateThread(
         assistantType,
         entityId,
-        context
+        context,
+        assistant.id
       );
       threadId = thread.id;
       assistant.activeThreads.set(entityId, threadId);
@@ -164,6 +155,7 @@ class PersistentAssistantService {
     threadId: string;
     assistantId: string;
     persistentMemory: boolean;
+    model: string;
   }> {
     const startTime = Date.now();
 
@@ -206,6 +198,7 @@ class PersistentAssistantService {
         threadId: result.threadId,
         assistantId,
         persistentMemory: true,
+        model: result.model,
       };
     } catch (error) {
       console.error('Persistent assistant chat failed:', error);
@@ -239,7 +232,7 @@ class PersistentAssistantService {
 
       return messages.data.map((msg) => ({
         role: msg.role,
-        content: Array.isArray(msg.content) ? msg.content[0]?.text?.value || '' : msg.content,
+        content: msg.content,
         timestamp: new Date(msg.created_at * 1000),
       }));
     } catch (error) {

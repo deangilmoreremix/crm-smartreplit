@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_MODEL } from '@shared/aiModels';
 import {
   Bot,
   Key,
@@ -196,12 +197,12 @@ const AIProviderSettings: React.FC<AIProviderSettingsProps> = ({ className }) =>
           provider: providerId,
           model:
             providerId === 'openai'
-              ? 'gpt-5.4'
+              ? DEFAULT_MODEL
               : providerId === 'openrouter'
-                ? 'openai/gpt-5.4'
+                ? `openai/${DEFAULT_MODEL}`
                 : providerId === 'anthropic'
                   ? 'claude-3.5-sonnet-20241022'
-                  : 'gpt-3.5-turbo', // fallback
+                  : DEFAULT_MODEL, // fallback
           messages: [{ role: 'user', content: 'Hello, test message' }],
           maxTokens: 50,
         }),

@@ -8,6 +8,7 @@ import { cacheService } from './cache.service';
 import { rateLimiter } from './rate-limiter.service';
 import { httpClient } from './http-client.service';
 import { Contact } from '../types/contact';
+import { openaiAssistantsService } from './openaiAssistantsService';
 
 export interface AIRequest {
   id: string;
@@ -29,6 +30,7 @@ export interface AIRequest {
     sessionId?: string;
     businessContext?: string;
     assistantThreadId?: string;
+    assistantId?: string;
     entityId?: string;
   };
   options?: {
@@ -367,7 +369,7 @@ class AIOrchestrator {
 
       return {
         result: result.response,
-        model: 'gpt-4o-assistant-persistent',
+        model: result.model,
         confidence: 95,
         cost: 0.003, // Slightly higher cost for persistent memory
         threadId: result.threadId,
@@ -380,31 +382,22 @@ class AIOrchestrator {
     }
   }
 
-  private async callAssistantThread(provider: AIProvider, request: AIRequest): Promise<any> {
-    // This method handles assistant thread-based requests
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration missing');
-    }
-
-    // For assistant threads, use a specialized endpoint
-    const response = await httpClient.post(
-      `${supabaseUrl}/functions/v1/assistant-thread`,
-      {
-        ...request.data,
-        threadId: request.context?.assistantThreadId,
-        aiProvider: provider.name,
-        options: request.options,
-      },
-      {
-        headers: { Authorization: `Bearer ${supabaseKey}` },
-        timeout: request.options?.timeout || 30000,
-      }
+  private async callAssistantThread(_provider: AIProvider, request: AIRequest): Promise<any> {
+    // Responses-API thread: the server chains previous_response_id and resolves the thread's assistant.
+    const threadId = request.context?.assistantThreadId;
+    const result = await openaiAssistantsService.chatWithAssistant(
+      JSON.stringify(request.data),
+      request.context?.assistantId || '',
+      threadId
     );
 
-    return response.data;
+    return {
+      result: result.response,
+      model: result.model,
+      confidence: 90,
+      threadId: result.threadId,
+      usage: result.usage,
+    };
   }
 
   private updateProviderPerformance(providerName: string, metadata: AIResponse['metadata']): void {
