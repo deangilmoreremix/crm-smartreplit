@@ -56,6 +56,10 @@ describe('buildRequest', () => {
     expect(body).not.toHaveProperty('response_format');
   });
 
+  it('clamps max_output_tokens to the API minimum of 16', () => {
+    expect(buildRequest({ input: 'x', effort: 'none', maxOutputTokens: 1 }).max_output_tokens).toBe(16);
+  });
+
   it('adds reasoning headroom to max_output_tokens only when reasoning is on', () => {
     expect(buildRequest({ tier: 'deep', input: 'x', effort: 'low', maxOutputTokens: 500 }).max_output_tokens).toBe(500 + REASONING_HEADROOM);
     expect(buildRequest({ tier: 'fast', input: 'x', effort: 'none', maxOutputTokens: 500 }).max_output_tokens).toBe(500);
@@ -160,6 +164,7 @@ describe('respondWithTools', () => {
       handlers: { add: ({ a, b }: any) => ({ sum: a + b }) },
     });
     expect(result.text).toBe('sum is 3');
+    expect(result.toolCalls).toEqual([{ name: 'add', arguments: '{"a":1,"b":2}' }]);
     expect(result.usage.totalTokens).toBe(6);
     const secondInput = client.responses.create.mock.calls[1][0].input;
     expect(secondInput.at(-1)).toEqual({ type: 'function_call_output', call_id: 'c1', output: '{"sum":3}' });

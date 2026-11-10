@@ -20,6 +20,7 @@ export type { ModelTier, ReasoningEffort };
 
 /** Extra output tokens granted when reasoning is enabled. */
 export const REASONING_HEADROOM = 1024;
+export const MIN_OUTPUT_TOKENS = 16;
 
 type JsonSchemaFormat = { name: string; schema: Record<string, unknown>; strict?: boolean };
 
@@ -111,8 +112,10 @@ export function buildRequest(opts: RespondOptions): Record<string, unknown> {
   if (effort) body.reasoning = { effort };
   if (opts.maxOutputTokens) {
     // max_output_tokens also counts reasoning tokens, so leave headroom when reasoning is on.
-    body.max_output_tokens =
+    // The Responses API rejects values below 16.
+    const requested =
       effort && effort !== 'none' ? opts.maxOutputTokens + REASONING_HEADROOM : opts.maxOutputTokens;
+    body.max_output_tokens = Math.max(MIN_OUTPUT_TOKENS, requested);
   }
 
   // Sampling params are only valid when reasoning is explicitly off.
@@ -226,13 +229,14 @@ export type ToolHandler = (args: any) => unknown | Promise<unknown>;
  */
 export async function respondWithTools(
   opts: RespondOptions & { handlers: Record<string, ToolHandler>; maxTurns?: number }
-): Promise<{ text: string; usage: Usage; response: any }> {
+): Promise<{ text: string; usage: Usage; response: any; toolCalls: Array<{ name: string; arguments: string }> }> {
   const { handlers, maxTurns = 5, ...base } = opts;
   const client = requireClient(base);
   let context: unknown[] =
     typeof base.input === 'string' ? [{ role: 'user', content: base.input }] : [...base.input];
   const total: Usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
   let response: any;
+  const toolCalls: Array<{ name: string; arguments: string }> = [];
 
   for (let turn = 0; turn < maxTurns; turn++) {
     const request = buildRequest({ ...base, input: context });
@@ -249,6 +253,7 @@ export async function respondWithTools(
 
     context = [...context, ...response.output];
     for (const call of calls) {
+      toolCalls.push({ name: call.name, arguments: call.arguments });
       let output: unknown;
       try {
         const handler = handlers[call.name];
@@ -264,5 +269,5 @@ export async function respondWithTools(
       });
     }
   }
-  return { text: outputText(response), usage: total, response };
+  return { text: outputText(response), usage: total, response, toolCalls };
 }

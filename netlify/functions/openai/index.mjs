@@ -1,5 +1,176 @@
-// server/openai/index.ts
+// server/services/openaiClient.ts
 import OpenAI from "openai";
+
+// shared/aiModels.ts
+var MODEL_TIERS = {
+  fast: "gpt-6-luna",
+  default: "gpt-6.1-terra",
+  deep: "gpt-6.1-sol",
+  max: "gpt-6-astra"
+};
+var DEFAULT_MODEL = MODEL_TIERS.default;
+var ENV_NAMES = {
+  fast: "OPENAI_MODEL_FAST",
+  default: "OPENAI_MODEL_DEFAULT",
+  deep: "OPENAI_MODEL_DEEP",
+  max: "OPENAI_MODEL_MAX"
+};
+var defaultEnv = () => typeof process !== "undefined" && process.env ? process.env : {};
+function tierModel(tier = "default", env = defaultEnv()) {
+  return env[ENV_NAMES[tier]]?.trim() || MODEL_TIERS[tier];
+}
+function resolveModel(tierOrModel, env = defaultEnv()) {
+  if (!tierOrModel) return tierModel("default", env);
+  if (tierOrModel in MODEL_TIERS) return tierModel(tierOrModel, env);
+  return tierOrModel;
+}
+function modelSupportsNoReasoning(model) {
+  return !/^gpt-6(\.1)?-(astra|sol)/.test(model) || model === "gpt-6-sol";
+}
+function normalizeEffort(model, effort) {
+  if (!effort) return void 0;
+  if (effort === "minimal") return "low";
+  if (effort === "none" && !modelSupportsNoReasoning(model)) return "low";
+  return effort;
+}
+
+// server/services/openaiClient.ts
+var REASONING_HEADROOM = 1024;
+var MIN_OUTPUT_TOKENS = 16;
+var cachedClient = null;
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_FALLBACK;
+  if (!apiKey) return null;
+  if (!cachedClient) cachedClient = new OpenAI({ apiKey });
+  return cachedClient;
+}
+function requireClient(opts) {
+  const client = opts.client ?? getOpenAIClient();
+  if (!client) throw new Error("OpenAI not configured");
+  return client;
+}
+function toResponsesTool(tool) {
+  if (tool?.type === "function" && tool.function) {
+    const { name, description, parameters, strict } = tool.function;
+    return {
+      type: "function",
+      name,
+      description,
+      parameters,
+      ...strict !== void 0 ? { strict } : {}
+    };
+  }
+  return tool;
+}
+function toResponsesToolChoice(choice) {
+  if (choice && typeof choice === "object" && choice.type === "function" && choice.function?.name) {
+    return { type: "function", name: choice.function.name };
+  }
+  return choice;
+}
+function buildRequest(opts) {
+  const model = opts.model ? resolveModel(opts.model) : tierModel(opts.tier ?? "default");
+  const effort = normalizeEffort(model, opts.effort);
+  const body = { model, input: opts.input };
+  if (opts.instructions) body.instructions = opts.instructions;
+  if (effort) body.reasoning = { effort };
+  if (opts.maxOutputTokens) {
+    const requested = effort && effort !== "none" ? opts.maxOutputTokens + REASONING_HEADROOM : opts.maxOutputTokens;
+    body.max_output_tokens = Math.max(MIN_OUTPUT_TOKENS, requested);
+  }
+  if (effort === "none") {
+    if (opts.temperature !== void 0) body.temperature = opts.temperature;
+    if (opts.topP !== void 0) body.top_p = opts.topP;
+  }
+  if (opts.json === true) {
+    body.text = { format: { type: "json_object" } };
+  } else if (opts.json) {
+    body.text = {
+      format: {
+        type: "json_schema",
+        name: opts.json.name,
+        schema: opts.json.schema,
+        strict: opts.json.strict ?? true
+      }
+    };
+  }
+  if (opts.tools?.length) {
+    body.tools = opts.tools.map(toResponsesTool);
+    if (opts.toolChoice !== void 0) body.tool_choice = toResponsesToolChoice(opts.toolChoice);
+  }
+  if (opts.previousResponseId) body.previous_response_id = opts.previousResponseId;
+  body.store = opts.store ?? !!opts.previousResponseId;
+  return body;
+}
+function outputText(response) {
+  if (typeof response?.output_text === "string") return response.output_text;
+  const parts = [];
+  for (const item of response?.output ?? []) {
+    if (item?.type !== "message") continue;
+    for (const c of item.content ?? []) {
+      if (c?.type === "output_text" && typeof c.text === "string") parts.push(c.text);
+    }
+  }
+  return parts.join("");
+}
+function usageOf(response) {
+  const u = response?.usage ?? {};
+  const inputTokens = u.input_tokens ?? 0;
+  const outputTokens = u.output_tokens ?? 0;
+  return { inputTokens, outputTokens, totalTokens: u.total_tokens ?? inputTokens + outputTokens };
+}
+function functionCalls(response) {
+  return (response?.output ?? []).filter((i) => i?.type === "function_call");
+}
+async function respond(opts) {
+  const client = requireClient(opts);
+  return client.responses.create(buildRequest(opts));
+}
+async function respondText(opts) {
+  const response = await respond(opts);
+  return { text: outputText(response), usage: usageOf(response), model: response.model ?? String(buildRequest(opts).model) };
+}
+async function respondJson(opts) {
+  const { text, usage, model } = await respondText({ ...opts, json: opts.json ?? true });
+  return { data: JSON.parse(text || "{}"), usage, model };
+}
+async function respondWithTools(opts) {
+  const { handlers, maxTurns = 5, ...base } = opts;
+  const client = requireClient(base);
+  let context = typeof base.input === "string" ? [{ role: "user", content: base.input }] : [...base.input];
+  const total = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  let response;
+  const toolCalls = [];
+  for (let turn = 0; turn < maxTurns; turn++) {
+    const request = buildRequest({ ...base, input: context });
+    if (request.store === false) request.include = ["reasoning.encrypted_content"];
+    response = await client.responses.create(request);
+    const u = usageOf(response);
+    total.inputTokens += u.inputTokens;
+    total.outputTokens += u.outputTokens;
+    total.totalTokens += u.totalTokens;
+    const calls = functionCalls(response);
+    if (!calls.length) break;
+    context = [...context, ...response.output];
+    for (const call of calls) {
+      toolCalls.push({ name: call.name, arguments: call.arguments });
+      let output;
+      try {
+        const handler2 = handlers[call.name];
+        if (!handler2) throw new Error(`No handler for tool "${call.name}"`);
+        output = await handler2(JSON.parse(call.arguments || "{}"));
+      } catch (error) {
+        output = { error: error?.message ?? "Tool failed" };
+      }
+      context.push({
+        type: "function_call_output",
+        call_id: call.call_id,
+        output: typeof output === "string" ? output : JSON.stringify(output)
+      });
+    }
+  }
+  return { text: outputText(response), usage: total, response, toolCalls };
+}
 
 // server/services/enhancedCache.ts
 var LRUCache = class {
@@ -281,9 +452,7 @@ var MemoryService = class {
 var memoryService = new MemoryService();
 
 // server/openai/index.ts
-var userOpenAIKey = process.env.OPENAI_API_KEY;
-var openaiApiKey = userOpenAIKey || process.env.OPENAI_API_KEY_FALLBACK;
-var openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+var openai = getOpenAIClient();
 var AICircuitBreaker = class {
   failures = 0;
   lastFailureTime = 0;
@@ -383,7 +552,7 @@ async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
   if (!googleAIKey) {
     throw new Error("Google AI API key not configured");
   }
-  const response2 = await fetch(
+  const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleAIKey}`,
     {
       method: "POST",
@@ -399,10 +568,10 @@ async function callGoogleAI(prompt, model = "gemini-1.5-flash") {
       })
     }
   );
-  if (!response2.ok) {
-    throw new Error(`Google AI API error: ${response2.status} ${response2.statusText}`);
+  if (!response.ok) {
+    throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
   }
-  const data = await response2.json();
+  const data = await response.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 var handler = async (event, _context) => {
@@ -463,11 +632,7 @@ var handler = async (event, _context) => {
         if (!openai) {
           throw new Error("OpenAI client not initialized");
         }
-        await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: "test" }],
-          max_tokens: 1
-        });
+        await respond({ tier: "fast", input: "test", maxOutputTokens: 16, effort: "none" });
         gpt5Available = true;
       } catch (_error) {
         gpt5Available = false;
@@ -545,25 +710,17 @@ var handler = async (event, _context) => {
             return cachedResult;
           }
           const result = await aiCircuitBreaker.execute(async () => {
-            const response2 = await openai.chat.completions.create({
-              model: "gpt-4o-mini",
-              messages: [
-                {
-                  role: "system",
-                  content: "You are an expert business strategist. Generate personalized greetings and strategic insights."
-                },
-                {
-                  role: "user",
-                  content: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
-                }
-              ],
-              response_format: { type: "json_object" },
+            const response = await respondJson({
+              tier: "fast",
+              effort: "none",
               temperature: 0.7,
-              max_tokens: 200
+              maxOutputTokens: 200,
+              instructions: "You are an expert business strategist. Generate personalized greetings and strategic insights.",
+              input: `Generate a personalized, strategic greeting for ${timeOfDay}. User has ${userMetrics?.totalDeals || 0} deals worth $${userMetrics?.totalValue || 0}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both greeting and strategic insight in JSON format with 'greeting' and 'insight' fields.`
             });
-            const parsedResult = JSON.parse(response2.choices[0].message.content || "{}");
+            const parsedResult = response.data;
             await aiResponseCache.set(cacheKey, parsedResult);
-            const tokensUsed = response2.usage?.total_tokens || 200;
+            const tokensUsed = response.usage.totalTokens || 200;
             const estimatedCost = tokensUsed / 1e3 * 0.15;
             aiUsageTracker.trackUsage({
               userId: event.headers["x-user-id"] || "anonymous",
@@ -571,7 +728,7 @@ var handler = async (event, _context) => {
               tokensUsed,
               cost: estimatedCost,
               timestamp: Date.now(),
-              model: "gpt-4o-mini",
+              model: tierModel("fast"),
               success: true
             });
             memoryService.recordChatInteraction(
@@ -589,8 +746,8 @@ var handler = async (event, _context) => {
             headers,
             body: JSON.stringify({
               ...result,
-              source: "gpt-4o-mini",
-              model: "gpt-4o-mini"
+              source: tierModel("fast"),
+              model: tierModel("fast")
             })
           };
         } catch (error) {
@@ -604,7 +761,7 @@ var handler = async (event, _context) => {
             tokensUsed: 0,
             cost: 0,
             timestamp: Date.now(),
-            model: "gpt-4o-mini",
+            model: tierModel("fast"),
             success: false
           });
           memoryService.recordObservation(
@@ -650,35 +807,27 @@ var handler = async (event, _context) => {
         }
         const { historicalData, currentMetrics } = JSON.parse(body);
         try {
-          const response2 = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "system",
-                content: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations."
-              },
-              {
-                role: "user",
-                content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
-              }
-            ],
-            response_format: { type: "json_object" },
+          const response = await respondText({
+            tier: "fast",
+            effort: "none",
             temperature: 0.3,
-            max_tokens: 800
+            maxOutputTokens: 800,
+            json: true,
+            instructions: "You are an expert business analyst with advanced mathematical reasoning capabilities. Analyze KPI trends and provide strategic insights with confidence intervals and actionable recommendations.",
+            input: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`
           });
           let result;
           try {
-            const content = response2.choices[0].message.content || "{}";
-            result = JSON.parse(content);
+            result = JSON.parse(response.text || "{}");
           } catch (_parseError) {
             result = {
               error: "Failed to parse AI response",
               summary: "Analysis completed but response parsing failed",
               recommendations: ["Review data format", "Check API response"],
-              parsed_content: response2.choices[0].message.content
+              parsed_content: response.text
             };
           }
-          const tokensUsed = response2.usage?.total_tokens || 0;
+          const tokensUsed = response.usage.totalTokens || 0;
           memoryService.recordChatInteraction(
             userId,
             sessionId,
@@ -713,12 +862,12 @@ var handler = async (event, _context) => {
         const sessionId = event.headers["x-session-id"] || `session-${Date.now()}`;
         const { prompt } = JSON.parse(body);
         try {
-          const response2 = await callGoogleAI(prompt || "Generate a business insight in one sentence.");
+          const response = await callGoogleAI(prompt || "Generate a business insight in one sentence.");
           memoryService.recordChatInteraction(
             userId,
             sessionId,
             `Google AI test request - prompt: ${prompt?.slice(0, 100)}`,
-            `Response: ${response2?.slice(0, 100)}`,
+            `Response: ${response?.slice(0, 100)}`,
             { endpoint: "googleai/test", provider: "gemini" }
           ).catch(() => {
           });
@@ -728,7 +877,7 @@ var handler = async (event, _context) => {
             body: JSON.stringify({
               success: true,
               model: "gemini-1.5-flash",
-              output: response2,
+              output: response,
               message: "Google AI working perfectly!"
             })
           };
@@ -771,23 +920,19 @@ var handler = async (event, _context) => {
           };
         }
         try {
-          const response2 = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [
-              {
-                role: "user",
-                content: "Generate a business insight about CRM efficiency in exactly 1 sentence."
-              }
-            ],
-            max_tokens: 50
+          const response = await respondText({
+            tier: "fast",
+            effort: "none",
+            maxOutputTokens: 50,
+            input: "Generate a business insight about CRM efficiency in exactly 1 sentence."
           });
-          const output = response2.choices[0].message.content;
+          const output = response.text;
           memoryService.recordChatInteraction(
             userId,
             sessionId,
             "Direct GPT test request",
             `Test response: ${output?.slice(0, 100) || "N/A"}`,
-            { endpoint: "test-gpt5-direct", model: "gpt-4o-mini", tokensUsed: response2.usage?.total_tokens }
+            { endpoint: "test-gpt5-direct", model: tierModel("fast"), tokensUsed: response.usage.totalTokens }
           ).catch(() => {
           });
           return {
@@ -795,7 +940,7 @@ var handler = async (event, _context) => {
             headers,
             body: JSON.stringify({
               success: true,
-              model: "gpt-4o-mini",
+              model: tierModel("fast"),
               output,
               message: "AI working perfectly!"
             })
@@ -856,144 +1001,91 @@ var handler = async (event, _context) => {
           { sessionId, endpoint: "respond", hasImage: !!imageUrl, schema: !!schema }
         ).catch(() => {
         });
-        const messages = [
-          {
-            role: "system",
-            content: "You are a helpful sales + ops assistant for white-label CRM applications."
-          },
+        const input = imageUrl ? [
           {
             role: "user",
-            content: imageUrl ? `${prompt}
-
-Image URL: ${imageUrl}` : prompt
+            content: [
+              { type: "input_text", text: prompt },
+              { type: "input_image", image_url: imageUrl }
+            ]
           }
-        ];
-        const response2 = await openai.chat.completions.create({
-          model: useThinking ? "gpt-4o" : "gpt-4o-mini",
-          messages,
-          temperature,
-          max_tokens: max_output_tokens,
-          response_format: schema ? { type: "json_object" } : void 0,
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "analyzeBusinessData",
-                description: "Analyze business data and provide insights",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    dataType: { type: "string" },
-                    analysisType: { type: "string" },
-                    timeRange: { type: "string" }
-                  },
-                  required: ["dataType"]
-                }
-              }
-            },
-            {
-              type: "function",
-              function: {
-                name: "generateRecommendations",
-                description: "Generate business recommendations based on data",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    context: { type: "string" },
-                    goals: { type: "array", items: { type: "string" } },
-                    constraints: { type: "array", items: { type: "string" } }
-                  }
-                }
+        ] : prompt;
+        const wlTools = [
+          {
+            type: "function",
+            name: "analyzeBusinessData",
+            description: "Analyze business data and provide insights",
+            parameters: {
+              type: "object",
+              properties: {
+                dataType: { type: "string" },
+                analysisType: { type: "string" },
+                timeRange: { type: "string" }
+              },
+              required: ["dataType"]
+            }
+          },
+          {
+            type: "function",
+            name: "generateRecommendations",
+            description: "Generate business recommendations based on data",
+            parameters: {
+              type: "object",
+              properties: {
+                context: { type: "string" },
+                goals: { type: "array", items: { type: "string" } },
+                constraints: { type: "array", items: { type: "string" } }
               }
             }
-          ],
-          tool_choice: forceToolName ? { type: "function", function: { name: forceToolName } } : "auto"
-        });
-        const toolCalls = response2.choices[0].message.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
+          }
+        ];
+        const runTool = (name) => async (args) => {
+          const output = await executeWLTool({ function: { name, arguments: JSON.stringify(args ?? {}) } });
           memoryService.recordObservation(
             userId,
             "tool_use",
-            `Tools invoked: ${toolCalls.map((tc) => tc.function.name).join(", ")}`,
-            { sessionId, endpoint: "respond", toolCalls: toolCalls.map((tc) => tc.function.name) }
+            `Tool result: ${output?.slice(0, 200) || "empty"}`,
+            { sessionId, endpoint: "respond", tool: name }
           ).catch(() => {
           });
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (tc) => ({
-              tool_call_id: tc.id,
-              output: await executeWLTool(tc)
-            }))
-          );
-          for (const tool of toolOutputs) {
-            memoryService.recordObservation(
-              userId,
-              "tool_use",
-              `Tool result: ${tool.output?.slice(0, 200) || "empty"}`,
-              { sessionId, endpoint: "respond", tool_call_id: tool.tool_call_id }
-            ).catch(() => {
-            });
+          return output;
+        };
+        const result = await respondWithTools({
+          tier: useThinking ? "deep" : "fast",
+          effort: "none",
+          temperature,
+          maxOutputTokens: max_output_tokens,
+          json: schema ? true : void 0,
+          instructions: "You are a helpful sales + ops assistant for white-label CRM applications.",
+          input,
+          tools: wlTools,
+          toolChoice: forceToolName ? { type: "function", name: forceToolName } : "auto",
+          handlers: {
+            analyzeBusinessData: runTool("analyzeBusinessData"),
+            generateRecommendations: runTool("generateRecommendations")
           }
-          const continuedMessages = [
-            ...messages,
-            response2.choices[0].message,
-            ...toolOutputs.map((o) => ({
-              role: "tool",
-              content: o.output,
-              tool_call_id: o.tool_call_id
-            }))
-          ];
-          const continuedResponse = await openai.chat.completions.create({
-            model: useThinking ? "gpt-4o" : "gpt-4o-mini",
-            messages: continuedMessages,
-            temperature,
-            max_tokens: max_output_tokens,
-            response_format: schema ? { type: "json_object" } : void 0
-          });
-          const finalOutput = continuedResponse.choices[0].message.content;
-          memoryService.recordChatInteraction(
+        });
+        const hadToolCalls = result.toolCalls.length > 0;
+        if (hadToolCalls) {
+          memoryService.recordObservation(
             userId,
-            sessionId,
-            `AI respond (with tools) - prompt: ${prompt?.slice(0, 150)}...`,
-            `Final response: ${finalOutput?.slice(0, 200) || "N/A"}`,
-            {
-              endpoint: "respond",
-              hadToolCalls: true,
-              toolCount: toolCalls.length,
-              tokensUsed: continuedResponse.usage?.total_tokens
-            }
+            "tool_use",
+            `Tools invoked: ${result.toolCalls.map((tc) => tc.name).join(", ")}`,
+            { sessionId, endpoint: "respond", toolCalls: result.toolCalls.map((tc) => tc.name) }
           ).catch(() => {
           });
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-              output_text: finalOutput,
-              output: [
-                {
-                  content: [
-                    {
-                      type: "output_text",
-                      text: finalOutput
-                    }
-                  ]
-                }
-              ],
-              tool_calls: toolCalls,
-              continued: true
-            })
-          };
         }
-        const outputText = response2.choices[0].message.content;
         memoryService.recordChatInteraction(
           userId,
           sessionId,
-          `AI respond (direct) - prompt: ${prompt?.slice(0, 150)}...`,
-          `Response: ${outputText?.slice(0, 200) || "N/A"}`,
+          `AI respond (${hadToolCalls ? "with tools" : "direct"}) - prompt: ${prompt?.slice(0, 150)}...`,
+          `Response: ${result.text?.slice(0, 200) || "N/A"}`,
           {
             endpoint: "respond",
-            hadToolCalls: false,
-            tokensUsed: response2.usage?.total_tokens,
-            model: response2.model
+            hadToolCalls,
+            toolCount: result.toolCalls.length,
+            tokensUsed: result.usage.totalTokens,
+            model: result.response?.model
           }
         ).catch(() => {
         });
@@ -1001,41 +1093,14 @@ Image URL: ${imageUrl}` : prompt
           statusCode: 200,
           headers,
           body: JSON.stringify({
-            output_text: outputText,
-            output: [
-              {
-                content: [
-                  {
-                    type: "output_text",
-                    text: outputText
-                  }
-                ]
-              }
-            ],
-            model: response2.model,
-            usage: response2.usage
+            output_text: result.text,
+            output: [{ content: [{ type: "output_text", text: result.text }] }],
+            model: result.response?.model,
+            usage: result.response?.usage,
+            ...hadToolCalls ? { tool_calls: result.toolCalls, continued: true } : {}
           })
         };
       }
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          output_text: response.choices[0].message.content,
-          output: [
-            {
-              content: [
-                {
-                  type: "output_text",
-                  text: response.choices[0].message.content
-                }
-              ]
-            }
-          ],
-          model: response.model,
-          usage: response.usage
-        })
-      };
     }
     return {
       statusCode: 404,
