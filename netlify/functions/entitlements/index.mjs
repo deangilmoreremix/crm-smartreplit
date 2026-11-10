@@ -23,9 +23,14 @@ __export(schema_exports, {
   aiQueries: () => aiQueries,
   aiResellerPricing: () => aiResellerPricing,
   appointments: () => appointments,
+  billingCycles: () => billingCycles,
+  billingNotifications: () => billingNotifications,
   commissions: () => commissions,
   communications: () => communications,
+  contactActivities: () => contactActivities,
+  contactCustomFields: () => contactCustomFields,
   contacts: () => contacts,
+  creditTransactions: () => creditTransactions,
   deals: () => deals,
   documents: () => documents,
   entitlements: () => entitlements,
@@ -33,6 +38,13 @@ __export(schema_exports, {
   features: () => features,
   fieldMetadata: () => fieldMetadata,
   fieldTypes: () => fieldTypes,
+  insertAppointmentSchema: () => insertAppointmentSchema,
+  insertCommunicationSchema: () => insertCommunicationSchema,
+  insertContactSchema: () => insertContactSchema,
+  insertDealSchema: () => insertDealSchema,
+  insertDocumentSchema: () => insertDocumentSchema,
+  insertNoteSchema: () => insertNoteSchema,
+  insertTaskSchema: () => insertTaskSchema,
   notes: () => notes,
   objectMetadata: () => objectMetadata,
   partnerCustomers: () => partnerCustomers,
@@ -45,15 +57,25 @@ __export(schema_exports, {
   productTiers: () => productTiers,
   profiles: () => profiles,
   relationMetadata: () => relationMetadata,
+  resellerCreditTransactions: () => resellerCreditTransactions,
+  resellerCredits: () => resellerCredits,
   roles: () => roles,
   tasks: () => tasks,
   tenantConfigs: () => tenantConfigs,
   tokenTransactions: () => tokenTransactions,
+  updateAppointmentSchema: () => updateAppointmentSchema,
+  updateNoteSchema: () => updateNoteSchema,
+  updateTaskSchema: () => updateTaskSchema,
+  usageEvents: () => usageEvents,
+  usagePlans: () => usagePlans,
   userAiTokens: () => userAiTokens,
+  userApiKeys: () => userApiKeys,
+  userCredits: () => userCredits,
   userFeatures: () => userFeatures,
   userGeneratedImages: () => userGeneratedImages,
   userRoles: () => userRoles,
   userRolesTable: () => userRolesTable,
+  userUsageLimits: () => userUsageLimits,
   userWLSettings: () => userWLSettings,
   viewTypes: () => viewTypes,
   views: () => views,
@@ -69,6 +91,7 @@ __export(schema_exports, {
 });
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { createInsertSchema } from "drizzle-zod";
 var userRoles = ["super_admin", "wl_user", "regular_user"];
 var productTiers = ["super_admin", "whitelabel", "smartcrm_bundle", "smartcrm", "sales_maximizer", "ai_boost_unlimited", "ai_communication"];
 var fieldTypes = ["ACTOR", "ADDRESS", "ARRAY", "BOOLEAN", "CURRENCY", "DATE", "DATE_TIME", "EMAILS", "FILES", "FULL_NAME", "LINKS", "MORPH_RELATION", "MULTI_SELECT", "NUMBER", "NUMERIC", "PHONES", "POSITION", "RATING", "RAW_JSON", "RELATION", "RICH_TEXT", "SELECT", "TEXT", "TS_VECTOR", "UUID"];
@@ -606,6 +629,206 @@ var tasks = pgTable("tasks", {
   dealId: integer("deal_id").references(() => deals.id),
   profileId: uuid("profile_id").references(() => profiles.id),
   assignedTo: uuid("assigned_to").references(() => profiles.id)
+});
+var billingCycles = pgTable("billing_cycles", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  tenantId: uuid("tenant_id"),
+  billingPlanId: uuid("billing_plan_id"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  status: text("status").default("active"),
+  totalUsage: jsonb("total_usage").default({}),
+  totalCostCents: integer("total_cost_cents").default(0),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var usageEvents = pgTable("usage_events", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  tenantId: uuid("tenant_id"),
+  eventType: text("event_type").notNull(),
+  featureName: text("feature_name").notNull(),
+  quantity: text("quantity").notNull(),
+  unit: text("unit").notNull(),
+  costCents: integer("cost_cents").default(0),
+  metadata: jsonb("metadata").default({}),
+  billingCycleId: uuid("billing_cycle_id"),
+  stripeSubscriptionItemId: text("stripe_subscription_item_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var userUsageLimits = pgTable("user_usage_limits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  tenantId: uuid("tenant_id"),
+  featureName: text("feature_name").notNull(),
+  limitValue: text("limit_value").notNull(),
+  usedValue: text("used_value").default("0"),
+  billingCycleId: uuid("billing_cycle_id"),
+  isHardLimit: boolean("is_hard_limit").default(false),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var billingNotifications = pgTable("billing_notifications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  notificationType: text("notification_type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var usagePlans = pgTable("usage_plans", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  planName: text("plan_name").notNull(),
+  displayName: text("display_name").notNull(),
+  description: text("description"),
+  billingType: text("billing_type").default("subscription"),
+  billingInterval: text("billing_interval").default("month"),
+  basePriceCents: integer("base_price_cents").default(0),
+  pricingTiers: jsonb("pricing_tiers").default([]),
+  features: jsonb("features").default([]),
+  limits: jsonb("limits").default({}),
+  isActive: boolean("is_active").default(true),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var userApiKeys = pgTable("user_api_keys", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => profiles.id).notNull(),
+  provider: text("provider").notNull(),
+  apiKey: text("api_key").notNull(),
+  model: text("model"),
+  isActive: boolean("is_active").default(true),
+  isDefault: boolean("is_default").default(false),
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var contactCustomFields = pgTable("contact_custom_fields", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+  fieldKey: text("field_key").notNull(),
+  fieldValue: jsonb("field_value"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var contactActivities = pgTable("contact_activities", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+  activityType: text("activity_type").notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var userCredits = pgTable("user_credits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => profiles.id),
+  tenantId: uuid("tenant_id"),
+  totalCredits: decimal("total_credits", { precision: 12, scale: 4 }).default("0"),
+  usedCredits: decimal("used_credits", { precision: 12, scale: 4 }).default("0"),
+  availableCredits: decimal("available_credits", { precision: 12, scale: 4 }).default("0"),
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  version: integer("version").default(1),
+  // Optimistic locking version
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var creditTransactions = pgTable("credit_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => profiles.id),
+  tenantId: uuid("tenant_id"),
+  type: text("type").notNull(),
+  // 'purchase', 'usage', 'refund', 'admin_grant'
+  amount: decimal("amount", { precision: 12, scale: 4 }).notNull(),
+  // Positive for purchases/grants, negative for usage
+  description: text("description"),
+  balanceBefore: decimal("balance_before", { precision: 12, scale: 4 }),
+  balanceAfter: decimal("balance_after", { precision: 12, scale: 4 }),
+  stripeTransactionId: text("stripe_transaction_id"),
+  // Link to Stripe if purchased
+  usageEventId: uuid("usage_event_id"),
+  // Link to usage event if deducted for usage
+  idempotencyKey: varchar("idempotency_key", { length: 64 }),
+  // For duplicate prevention
+  createdAt: timestamp("created_at").defaultNow()
+});
+var resellerCredits = pgTable("reseller_credits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull().unique(),
+  wholesaleCreditsPurchased: integer("wholesale_credits_purchased").default(0),
+  wholesaleCreditsUsed: integer("wholesale_credits_used").default(0),
+  wholesaleCreditsAvailable: integer("wholesale_credits_available").default(0),
+  totalRevenueCents: integer("total_revenue_cents").default(0),
+  totalProfitCents: integer("total_profit_cents").default(0),
+  lastPurchaseAt: timestamp("last_purchase_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+var resellerCreditTransactions = pgTable("reseller_credit_transactions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+  type: text("type").notNull(),
+  // 'wholesale_purchase', 'retail_sale', 'payout'
+  creditsAmount: integer("credits_amount").notNull(),
+  amountCents: integer("amount_cents"),
+  endUserId: uuid("end_user_id").references(() => profiles.id),
+  featureKey: text("feature_key"),
+  description: text("description"),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+var insertContactSchema = createInsertSchema(contacts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var insertDealSchema = createInsertSchema(deals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var insertTaskSchema = createInsertSchema(tasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true
+});
+var updateTaskSchema = insertTaskSchema.partial().omit({
+  profileId: true
+  // Never allow updating profileId
+});
+var insertAppointmentSchema = createInsertSchema(appointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var updateAppointmentSchema = insertAppointmentSchema.partial().omit({
+  profileId: true
+  // Never allow updating profileId
+});
+var insertCommunicationSchema = createInsertSchema(communications).omit({
+  id: true,
+  createdAt: true
+});
+var insertNoteSchema = createInsertSchema(notes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+var updateNoteSchema = insertNoteSchema.partial().omit({
+  profileId: true
+  // Never allow updating profileId
+});
+var insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true
 });
 
 // server/db.ts

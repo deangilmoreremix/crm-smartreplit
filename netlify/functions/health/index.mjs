@@ -27,7 +27,10 @@ __export(schema_exports, {
   billingNotifications: () => billingNotifications,
   commissions: () => commissions,
   communications: () => communications,
+  contactActivities: () => contactActivities,
+  contactCustomFields: () => contactCustomFields,
   contacts: () => contacts,
+  creditTransactions: () => creditTransactions,
   deals: () => deals,
   documents: () => documents,
   entitlements: () => entitlements,
@@ -35,6 +38,13 @@ __export(schema_exports, {
   features: () => features,
   fieldMetadata: () => fieldMetadata,
   fieldTypes: () => fieldTypes,
+  insertAppointmentSchema: () => insertAppointmentSchema,
+  insertCommunicationSchema: () => insertCommunicationSchema,
+  insertContactSchema: () => insertContactSchema,
+  insertDealSchema: () => insertDealSchema,
+  insertDocumentSchema: () => insertDocumentSchema,
+  insertNoteSchema: () => insertNoteSchema,
+  insertTaskSchema: () => insertTaskSchema,
   notes: () => notes,
   objectMetadata: () => objectMetadata,
   partnerCustomers: () => partnerCustomers,
@@ -47,14 +57,20 @@ __export(schema_exports, {
   productTiers: () => productTiers,
   profiles: () => profiles,
   relationMetadata: () => relationMetadata,
+  resellerCreditTransactions: () => resellerCreditTransactions,
+  resellerCredits: () => resellerCredits,
   roles: () => roles,
   tasks: () => tasks,
   tenantConfigs: () => tenantConfigs,
   tokenTransactions: () => tokenTransactions,
+  updateAppointmentSchema: () => updateAppointmentSchema,
+  updateNoteSchema: () => updateNoteSchema,
+  updateTaskSchema: () => updateTaskSchema,
   usageEvents: () => usageEvents,
   usagePlans: () => usagePlans,
   userAiTokens: () => userAiTokens,
   userApiKeys: () => userApiKeys,
+  userCredits: () => userCredits,
   userFeatures: () => userFeatures,
   userGeneratedImages: () => userGeneratedImages,
   userRoles: () => userRoles,
@@ -75,7 +91,8 @@ __export(schema_exports, {
 });
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys;
+import { createInsertSchema } from "drizzle-zod";
+var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, updateTaskSchema, insertAppointmentSchema, updateAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -698,6 +715,124 @@ var init_schema = __esm({
       metadata: jsonb("metadata").default({}),
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
+    });
+    contactCustomFields = pgTable("contact_custom_fields", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+      fieldKey: text("field_key").notNull(),
+      fieldValue: jsonb("field_value"),
+      createdAt: timestamp("created_at").defaultNow()
+    });
+    contactActivities = pgTable("contact_activities", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+      activityType: text("activity_type").notNull(),
+      description: text("description"),
+      metadata: jsonb("metadata"),
+      createdAt: timestamp("created_at").defaultNow()
+    });
+    userCredits = pgTable("user_credits", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: uuid("user_id").notNull().references(() => profiles.id),
+      tenantId: uuid("tenant_id"),
+      totalCredits: decimal("total_credits", { precision: 12, scale: 4 }).default("0"),
+      usedCredits: decimal("used_credits", { precision: 12, scale: 4 }).default("0"),
+      availableCredits: decimal("available_credits", { precision: 12, scale: 4 }).default("0"),
+      lastPurchaseAt: timestamp("last_purchase_at"),
+      version: integer("version").default(1),
+      // Optimistic locking version
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    creditTransactions = pgTable("credit_transactions", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      userId: uuid("user_id").notNull().references(() => profiles.id),
+      tenantId: uuid("tenant_id"),
+      type: text("type").notNull(),
+      // 'purchase', 'usage', 'refund', 'admin_grant'
+      amount: decimal("amount", { precision: 12, scale: 4 }).notNull(),
+      // Positive for purchases/grants, negative for usage
+      description: text("description"),
+      balanceBefore: decimal("balance_before", { precision: 12, scale: 4 }),
+      balanceAfter: decimal("balance_after", { precision: 12, scale: 4 }),
+      stripeTransactionId: text("stripe_transaction_id"),
+      // Link to Stripe if purchased
+      usageEventId: uuid("usage_event_id"),
+      // Link to usage event if deducted for usage
+      idempotencyKey: varchar("idempotency_key", { length: 64 }),
+      // For duplicate prevention
+      createdAt: timestamp("created_at").defaultNow()
+    });
+    resellerCredits = pgTable("reseller_credits", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      resellerId: uuid("reseller_id").references(() => profiles.id).notNull().unique(),
+      wholesaleCreditsPurchased: integer("wholesale_credits_purchased").default(0),
+      wholesaleCreditsUsed: integer("wholesale_credits_used").default(0),
+      wholesaleCreditsAvailable: integer("wholesale_credits_available").default(0),
+      totalRevenueCents: integer("total_revenue_cents").default(0),
+      totalProfitCents: integer("total_profit_cents").default(0),
+      lastPurchaseAt: timestamp("last_purchase_at"),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    resellerCreditTransactions = pgTable("reseller_credit_transactions", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+      type: text("type").notNull(),
+      // 'wholesale_purchase', 'retail_sale', 'payout'
+      creditsAmount: integer("credits_amount").notNull(),
+      amountCents: integer("amount_cents"),
+      endUserId: uuid("end_user_id").references(() => profiles.id),
+      featureKey: text("feature_key"),
+      description: text("description"),
+      metadata: json("metadata"),
+      createdAt: timestamp("created_at").defaultNow()
+    });
+    insertContactSchema = createInsertSchema(contacts).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertDealSchema = createInsertSchema(deals).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    insertTaskSchema = createInsertSchema(tasks).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      completedAt: true
+    });
+    updateTaskSchema = insertTaskSchema.partial().omit({
+      profileId: true
+      // Never allow updating profileId
+    });
+    insertAppointmentSchema = createInsertSchema(appointments).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    updateAppointmentSchema = insertAppointmentSchema.partial().omit({
+      profileId: true
+      // Never allow updating profileId
+    });
+    insertCommunicationSchema = createInsertSchema(communications).omit({
+      id: true,
+      createdAt: true
+    });
+    insertNoteSchema = createInsertSchema(notes).omit({
+      id: true,
+      createdAt: true,
+      updatedAt: true
+    });
+    updateNoteSchema = insertNoteSchema.partial().omit({
+      profileId: true
+      // Never allow updating profileId
+    });
+    insertDocumentSchema = createInsertSchema(documents).omit({
+      id: true,
+      createdAt: true
     });
   }
 });
