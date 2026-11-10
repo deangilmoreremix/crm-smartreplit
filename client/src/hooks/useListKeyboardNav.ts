@@ -10,10 +10,18 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   return !!el.closest?.('[contenteditable="true"], .ProseMirror, [role="dialog"], [role="menu"], [role="listbox"]');
 }
 
+/** Focusable controls handle Enter themselves (click / start inline edit); the list must not also "open" the row. */
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  return !!el?.closest?.('button, a, [data-edit-cell]');
+}
+
 export interface ListKeyboardNavOptions<T> {
   items: T[];
   getId: (item: T) => string;
   onOpen?: (item: T) => void;
+  /** Called when `x` toggles the focused row, so callers with their own selection state can mirror it. */
+  onToggle?: (item: T) => void;
   /** Called when `/` is pressed; typically focuses the page search input. */
   onFocusSearch?: () => void;
   enabled?: boolean;
@@ -33,13 +41,14 @@ export function useListKeyboardNav<T>({
   items,
   getId,
   onOpen,
+  onToggle,
   onFocusSearch,
   enabled = true,
 }: ListKeyboardNavOptions<T>) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const ref = useRef({ items, getId, onOpen, onFocusSearch, activeIndex });
-  ref.current = { items, getId, onOpen, onFocusSearch, activeIndex };
+  const ref = useRef({ items, getId, onOpen, onToggle, onFocusSearch, activeIndex });
+  ref.current = { items, getId, onOpen, onToggle, onFocusSearch, activeIndex };
 
   useEffect(() => {
     if (activeIndex >= items.length) setActiveIndex(items.length - 1);
@@ -59,7 +68,7 @@ export function useListKeyboardNav<T>({
     const handler = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
       if (isTypingTarget(e.target)) return;
-      const { items: list, getId: id, onOpen: open, onFocusSearch: focus, activeIndex: idx } = ref.current;
+      const { items: list, getId: id, onOpen: open, onToggle: onTog, onFocusSearch: focus, activeIndex: idx } = ref.current;
       switch (e.key) {
         case 'j':
         case 'ArrowDown':
@@ -74,7 +83,7 @@ export function useListKeyboardNav<T>({
           setActiveIndex(Math.max(idx - 1, 0));
           break;
         case 'Enter':
-          if (idx >= 0 && list[idx] && open) {
+          if (idx >= 0 && list[idx] && open && !isInteractiveTarget(e.target)) {
             e.preventDefault();
             open(list[idx]);
           }
@@ -83,6 +92,7 @@ export function useListKeyboardNav<T>({
           if (idx >= 0 && list[idx]) {
             e.preventDefault();
             toggle(id(list[idx]));
+            onTog?.(list[idx]);
           }
           break;
         case '/':

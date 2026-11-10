@@ -27,6 +27,7 @@ import { cellText, computeAggregate, groupRows } from './tableUtils';
 import type { BulkAdapter, RecordColumn, RowMenuItem, TableViewState } from './types';
 import { defaultViewState, deserializeView, serializeView } from './viewState';
 import { useSafeNavigate } from './useSafeNavigate';
+import { useListKeyboardNav } from '../../hooks/useListKeyboardNav';
 
 // TanStack Table v9: features are registered explicitly and must be stable (module scope).
 const features = tableFeatures({
@@ -132,6 +133,7 @@ function RecordTable<T extends RowData>({
   const [notice, setNotice] = useState<string | null>(null);
   const [drawerId, setDrawerId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const colsRef = useOutside(showColumns, () => setShowColumns(false));
   const exportRef = useOutside(showExport, () => setShowExport(false));
 
@@ -324,6 +326,34 @@ function RecordTable<T extends RowData>({
     onRowClick?.(row);
   };
 
+  /* ---------- list keyboard nav: j/k/arrows move, Enter opens, x selects, / focuses search ---------- */
+  const navRows = useMemo(
+    () => items.flatMap((i) => (i.kind === 'row' ? [i] : [])),
+    [items]
+  );
+  const nav = useListKeyboardNav({
+    items: navRows,
+    getId: (i) => i.id,
+    onOpen: (i) => openRow(i.row),
+    onToggle: (i) => setSelection((s) => toggleRow(s, orderedIds, i.id, false)),
+    onFocusSearch: () => searchRef.current?.focus(),
+    enabled: !loading && !error && !drawerId,
+  });
+  const activeRowId = nav.activeId;
+  useEffect(() => {
+    if (!activeRowId) return;
+    if (virtualize) {
+      const idx = items.findIndex((i) => i.kind === 'row' && i.id === activeRowId);
+      if (idx >= 0) virtualizer.scrollToIndex(idx);
+      return;
+    }
+    const el = Array.from(scrollRef.current?.querySelectorAll<HTMLElement>('[data-row-id]') ?? []).find(
+      (n) => n.dataset.rowId === activeRowId
+    );
+    el?.scrollIntoView?.({ block: 'nearest' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRowId]);
+
   const renderCell = (col: RecordColumn<T>, row: T, r: number, c: number) => {
     const value = col.accessor(row);
     const display = col.render ? col.render(row) : undefined;
@@ -380,11 +410,13 @@ function RecordTable<T extends RowData>({
       <div
         role="row"
         aria-selected={selected}
+        data-row-id={id}
+        data-active={id === activeRowId ? 'true' : undefined}
         style={{ ...style, minWidth: totalWidth, height: ROW_H }}
         onClick={() => openRow(row)}
         className={`flex items-center border-b text-sm hover:bg-gray-50 ${onRowClick || drawer ? 'cursor-pointer' : ''} ${
           selected ? 'bg-blue-50' : 'bg-white'
-        }`}
+        } ${id === activeRowId ? 'ring-2 ring-inset ring-blue-400' : ''}`}
       >
         <div role="cell" style={{ width: CHECK_W }} className="shrink-0 flex justify-center">
           <input
@@ -533,6 +565,7 @@ function RecordTable<T extends RowData>({
       <div className="flex-1 min-w-0 flex flex-col p-4">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <input
+            ref={searchRef}
             type="search"
             placeholder={searchLabel}
             aria-label={searchLabel}

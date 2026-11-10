@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import { useWidgetSettings } from './LayoutWidgetSettings';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
 import Avatar from '../ui/Avatar';
@@ -22,13 +23,29 @@ import {
   Cell,
 } from 'recharts';
 
-const ChartsSection: React.FC = () => {
+type ChartMetric = 'performance' | 'pipeline' | 'breakdown';
+const CHART_METRICS: ChartMetric[] = ['performance', 'pipeline', 'breakdown'];
+const TIMEFRAMES = { week: 7, month: 30, quarter: 90 } as const;
+
+/** Trailing window of the monthly series for a date range (7d: last 2 points, 30d: last 3, 90d: all). */
+export function sliceForRange<T>(series: T[], rangeDays: number): T[] {
+  const keep = rangeDays <= 7 ? 2 : rangeDays <= 30 ? 3 : series.length;
+  return series.slice(-keep);
+}
+
+/** `sectionId` selects which persisted widget settings (range / metric) this chart reads. */
+const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-section' }) => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'performance' | 'pipeline' | 'breakdown'>(
-    'performance'
-  );
-  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'quarter'>('month');
+  const { rangeDays, metric, setSettings } = useWidgetSettings(sectionId);
+  const activeTab: ChartMetric = CHART_METRICS.includes(metric as ChartMetric)
+    ? (metric as ChartMetric)
+    : 'performance';
+  const setActiveTab = (m: ChartMetric) => setSettings({ metric: m });
+  const timeframe = (Object.keys(TIMEFRAMES) as Array<keyof typeof TIMEFRAMES>).find(
+    (k) => TIMEFRAMES[k] === rangeDays
+  ) ?? 'month';
+  const setTimeframe = (k: keyof typeof TIMEFRAMES) => setSettings({ rangeDays: TIMEFRAMES[k] });
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
 
@@ -104,7 +121,7 @@ const ChartsSection: React.FC = () => {
   };
 
   // Sample data for performance chart
-  const performanceData = [
+  const fullPerformanceData = [
     { name: 'Jan', revenue: 12000, deals: 8 },
     { name: 'Feb', revenue: 15000, deals: 10 },
     { name: 'Mar', revenue: 18000, deals: 12 },
@@ -112,6 +129,8 @@ const ChartsSection: React.FC = () => {
     { name: 'May', revenue: 21000, deals: 15 },
     { name: 'Jun', revenue: 19000, deals: 14 },
   ];
+
+  const performanceData = sliceForRange(fullPerformanceData, rangeDays);
 
   // Sample data for pipeline chart
   const pipelineData = [
@@ -199,7 +218,7 @@ const ChartsSection: React.FC = () => {
             {['week', 'month', 'quarter'].map((period) => (
               <button
                 key={period}
-                onClick={() => setTimeframe(period as any)}
+                onClick={() => setTimeframe(period as keyof typeof TIMEFRAMES)}
                 className={`px-3 py-1.5 text-sm ${
                   timeframe === period
                     ? isDark

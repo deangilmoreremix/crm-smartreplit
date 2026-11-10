@@ -74,6 +74,9 @@ describe('helpers', () => {
   it('parses record routes', () => {
     expect(parseRecordRoute('/contacts/12')).toEqual({ objectType: 'contact', recordId: '12' });
     expect(parseRecordRoute('/contacts')).toBeNull();
+    expect(parseRecordRoute('/contacts/duplicates')).toBeNull();
+    expect(parseRecordRoute('/companies/abc')).toEqual({ objectType: 'company', recordId: 'abc' });
+    expect(parseRecordRoute('/deals/7')).toEqual({ objectType: 'deal', recordId: '7' });
   });
   it('builds items that call navigate', () => {
     const nav = vi.fn();

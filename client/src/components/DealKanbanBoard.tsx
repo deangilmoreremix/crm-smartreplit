@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
   Plus,
@@ -20,6 +20,7 @@ import { Deal, DealStage } from '../types/deal';
 import { useContactStore } from '../store/contactStore';
 import RowContextMenu from './record-table/RowContextMenu';
 import { useSafeNavigate } from './record-table/useSafeNavigate';
+import { useListKeyboardNav } from '../hooks/useListKeyboardNav';
 
 interface DealCardProps {
   deal: Deal;
@@ -27,9 +28,11 @@ interface DealCardProps {
   onEdit: (deal: Deal) => void;
   onView: (deal: Deal) => void;
   onDelete: (dealId: string) => void;
+  /** Keyboard-focused card (j/k). */
+  active?: boolean;
 }
 
-const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDelete }) => {
+const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDelete, active }) => {
   const { contacts } = useContactStore();
   const contact = contacts[deal.contactId];
   const navigate = useSafeNavigate();
@@ -82,9 +85,11 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          data-deal-id={deal.id}
+          data-active={active ? 'true' : undefined}
           className={`bg-white rounded-lg shadow-sm border-l-4 p-4 mb-3 hover:shadow-md transition-shadow cursor-pointer ${getPriorityColor(
             deal.priority
-          )} ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''}`}
+          )} ${snapshot.isDragging ? 'shadow-lg rotate-2' : ''} ${active ? 'ring-2 ring-blue-500' : ''}`}
         >
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
@@ -201,6 +206,7 @@ interface StageColumnProps {
   onEditDeal: (deal: Deal) => void;
   onViewDeal: (deal: Deal) => void;
   onDeleteDeal: (dealId: string) => void;
+  activeDealId?: string | null;
 }
 
 const StageColumn: React.FC<StageColumnProps> = ({
@@ -210,6 +216,7 @@ const StageColumn: React.FC<StageColumnProps> = ({
   onEditDeal,
   onViewDeal,
   onDeleteDeal,
+  activeDealId,
 }) => {
   const totalValue = deals.reduce((sum, deal) => sum + deal.value, 0);
 
@@ -271,6 +278,7 @@ const StageColumn: React.FC<StageColumnProps> = ({
                 onEdit={onEditDeal}
                 onView={onViewDeal}
                 onDelete={onDeleteDeal}
+                active={deal.id === activeDealId}
               />
             ))}
             {provided.placeholder}
@@ -312,6 +320,8 @@ const DealKanbanBoard: React.FC = () => {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isAddingDeal, setIsAddingDeal] = useState(false);
   const [newDealStage, setNewDealStage] = useState<string>('');
+  const navigate = useSafeNavigate();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const pipeline = getActivePipeline();
   const filteredDeals = getFilteredDeals();
@@ -326,6 +336,31 @@ const DealKanbanBoard: React.FC = () => {
   useEffect(() => {
     setFilters({ searchTerm: searchTerm || undefined });
   }, [searchTerm, setFilters]);
+
+  // Keyboard nav: cards in visual order (stage by stage). j/k move, Enter opens the deal record, / focuses search.
+  const orderedDeals = useMemo(
+    () =>
+      pipeline
+        ? [...pipeline.stages]
+            .sort((a, b) => a.order - b.order)
+            .flatMap((stage) => filteredDeals.filter((deal) => deal.stage.id === stage.id))
+        : [],
+    [pipeline, filteredDeals]
+  );
+  const nav = useListKeyboardNav({
+    items: orderedDeals,
+    getId: (d) => d.id,
+    onOpen: (d) => navigate(`/deals/${d.id}`),
+    onFocusSearch: () => searchRef.current?.focus(),
+    enabled: !selectedDeal && !isAddingDeal,
+  });
+  useEffect(() => {
+    if (!nav.activeId) return;
+    const el = Array.from(document.querySelectorAll<HTMLElement>('[data-deal-id]')).find(
+      (n) => n.dataset.dealId === nav.activeId
+    );
+    el?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [nav.activeId]);
 
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
@@ -391,6 +426,7 @@ const DealKanbanBoard: React.FC = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
+              ref={searchRef}
               type="text"
               placeholder="Search deals..."
               value={searchTerm}
@@ -490,6 +526,7 @@ const DealKanbanBoard: React.FC = () => {
                   onEditDeal={handleEditDeal}
                   onViewDeal={handleViewDeal}
                   onDeleteDeal={handleDeleteDeal}
+                  activeDealId={nav.activeId}
                 />
               ))}
           </div>

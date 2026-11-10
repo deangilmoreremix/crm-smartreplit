@@ -29,13 +29,14 @@ export const objectLabel = (type: string) => LABELS[type] ?? `${type.charAt(0).t
 export function recordPath(objectType: string, recordId: string): string {
   switch (objectType) {
     case 'contact':
-      return `/contacts/${recordId}`;
+      return `/contacts/${encodeURIComponent(recordId)}`;
     case 'deal':
-      return `/deals/${recordId}`;
+      return `/deals/${encodeURIComponent(recordId)}`;
     case 'task':
-      return `/tasks?id=${recordId}`;
+      // The Tasks page has no record route / ?id= support yet; land on the list.
+      return '/tasks';
     case 'company':
-      return `/companies/${recordId}`;
+      return `/companies/${encodeURIComponent(recordId)}`;
     default:
       return '/';
   }

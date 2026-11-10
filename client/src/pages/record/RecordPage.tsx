@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ContactActivityTimeline } from '../../components/ContactActivityTimeline';
+import { RecordTimeline } from '../../components/timeline';
+import { RichNoteEditor, RichNoteView, toStored, EMPTY_NOTE, type DocNode, type NoteValue } from '../../components/notes';
+import FavoriteButton from '../../components/FavoriteButton';
 import ContactAttachments from '../../components/ContactAttachments';
 import InlineEditCell from '../../components/InlineEditCell';
 import { usePersistedLayout } from '../../hooks/usePersistedLayout';
@@ -12,6 +15,9 @@ export interface TargetNote {
   id: string;
   title?: string | null;
   content: string;
+  /** Rich (tiptap) body; null/absent for legacy plain notes. */
+  body_json?: DocNode | null;
+  body_text?: string | null;
   createdAt?: string | null;
 }
 export interface TargetTask {
@@ -55,8 +61,8 @@ export function useRecordTargets(objectType: RecordObjectType, recordId: string)
   }, [reload]);
 
   const addNote = useCallback(
-    async (content: string) => {
-      const body: Record<string, unknown> = { content };
+    async (content: string, rich?: RichNotePayload) => {
+      const body: Record<string, unknown> = { content, ...rich };
       if (objectType === 'contact') body.contactId = Number(recordId);
       const note = await json<{ id: string }>('/api/notes', { method: 'POST', body: JSON.stringify(body) });
       await json(`${base}/notes`, { method: 'POST', body: JSON.stringify({ noteId: note.id }) });
@@ -89,34 +95,35 @@ export function useRecordTargets(objectType: RecordObjectType, recordId: string)
   return { notes, tasks, error, reload, addNote, addTask, setTaskDone };
 }
 
-export interface NoteEditorSlotProps {
-  onSubmit: (content: string) => Promise<void>;
+export interface RichNotePayload {
+  body_json: DocNode | null;
+  body_text: string;
 }
 
-const DefaultNoteEditor: React.FC<NoteEditorSlotProps> = ({ onSubmit }) => {
-  const [text, setText] = useState('');
-  const [busy, setBusy] = useState(false);
+export interface NoteEditorSlotProps {
+  /** `content` is the plain text; `rich` carries the tiptap JSON for the notes API. */
+  onSubmit: (content: string, rich?: RichNotePayload) => Promise<void>;
+}
+
+/** Tiptap-based default editor for the Notes tab; stores JSON plus plain-text `content`. */
+export const RichNoteSlot: React.FC<NoteEditorSlotProps> = ({ onSubmit }) => {
+  const [value, setValue] = useState<NoteValue>(EMPTY_NOTE);
   const [err, setErr] = useState<string | null>(null);
-  const submit = async () => {
-    if (!text.trim()) return;
-    setBusy(true);
+  const submit = async (v: NoteValue) => {
+    if (!v.text.trim()) return;
     setErr(null);
     try {
-      await onSubmit(text.trim());
-      setText('');
+      const { content, body_json, body_text } = toStored(v);
+      await onSubmit(content, { body_json, body_text });
+      setValue(EMPTY_NOTE);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not save note');
-    } finally {
-      setBusy(false);
     }
   };
   return (
     <div className="space-y-2">
-      <textarea aria-label="New note" value={text} onChange={(e) => setText(e.target.value)} rows={3} className="w-full border rounded p-2 text-sm" placeholder="Write a note..." />
+      <RichNoteEditor value={value} onChange={setValue} onSubmit={(v) => void submit(v)} />
       {err && <p className="text-xs text-red-600">{err}</p>}
-      <button type="button" onClick={submit} disabled={busy || !text.trim()} className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded disabled:opacity-50">
-        Add note
-      </button>
     </div>
   );
 };
@@ -125,14 +132,14 @@ type Targets = ReturnType<typeof useRecordTargets>;
 
 const NotesTab: React.FC<{ t: Targets; renderNoteEditor?: (p: NoteEditorSlotProps) => React.ReactNode }> = ({ t, renderNoteEditor }) => (
   <div className="space-y-4">
-    {renderNoteEditor ? renderNoteEditor({ onSubmit: t.addNote }) : <DefaultNoteEditor onSubmit={t.addNote} />}
+    {renderNoteEditor ? renderNoteEditor({ onSubmit: t.addNote }) : <RichNoteSlot onSubmit={t.addNote} />}
     {t.error && <p role="alert" className="text-sm text-red-600">{t.error}</p>}
     {t.notes.length === 0 && !t.error && <p className="text-sm text-gray-500">No notes yet.</p>}
     <ul className="space-y-3">
       {t.notes.map((n) => (
         <li key={n.id} className="border rounded p-3 text-sm">
           {n.title && <div className="font-medium">{n.title}</div>}
-          <div className="whitespace-pre-wrap">{n.content}</div>
+          <RichNoteView json={n.body_json ?? null} text={n.body_text ?? n.content} />
           {n.createdAt && <div className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</div>}
         </li>
       ))}
@@ -212,7 +219,7 @@ export interface RecordShellProps {
   recordId: string;
   overview: React.ReactNode;
   related: React.ReactNode;
-  /** Slot for a rich note editor; receives `onSubmit(content)`. Defaults to a plain textarea. */
+  /** Slot for a rich note editor; receives `onSubmit(content)`. Defaults to the tiptap RichNoteSlot. */
   renderNoteEditor?: (p: NoteEditorSlotProps) => React.ReactNode;
 }
 
@@ -243,8 +250,13 @@ export const RecordShell: React.FC<RecordShellProps> = ({ objectType, recordId, 
       </div>
       <div role="tabpanel">
         {tab === 'overview' && overview}
-        {tab === 'timeline' &&
-          (objectType === 'contact' ? <ContactActivityTimeline contactId={recordId} /> : <CombinedTimeline t={targets} />)}
+        {tab === 'timeline' && (
+          <RecordTimeline
+            objectType={objectType}
+            recordId={recordId}
+            fallback={objectType === 'contact' ? <ContactActivityTimeline contactId={recordId} /> : <CombinedTimeline t={targets} />}
+          />
+        )}
         {tab === 'notes' && <NotesTab t={targets} renderNoteEditor={renderNoteEditor} />}
         {tab === 'tasks' && <TasksTab t={targets} />}
         {tab === 'files' && <ContactAttachments contactId={filesKey} />}
@@ -374,7 +386,10 @@ const RecordPage: React.FC<RecordPageProps> = ({
           <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
           {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
         </div>
-        <div className="flex gap-2">{headerActions}</div>
+        <div className="flex items-center gap-2">
+          <FavoriteButton objectType={objectType} recordId={recordId} />
+          {headerActions}
+        </div>
       </header>
       <RecordShell objectType={objectType} recordId={recordId} overview={overview} related={related} renderNoteEditor={renderNoteEditor} />
     </div>

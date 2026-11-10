@@ -243,6 +243,9 @@ export const notes = pgTable('notes', {
   updatedAt: timestamp('updated_at').defaultNow(),
   profileId: uuid('profile_id').references(() => profiles.id),
   contactId: integer('contact_id').references(() => contacts.id),
+  // Rich-text (tiptap) body; `content` stays populated with the plain text for legacy readers.
+  body_json: jsonb('body_json'),
+  body_text: text('body_text'),
 });
 
 export const communications = pgTable('communications', {

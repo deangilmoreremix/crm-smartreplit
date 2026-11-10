@@ -301,7 +301,7 @@ const Dashboard: React.FC = React.memo(() => {
                 { value: 'breakdown', label: 'Breakdown' },
               ]}
             />
-            <ChartsSection />
+            <ChartsSection sectionId={sectionId} />
           </>
         );
 

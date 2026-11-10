@@ -323,6 +323,8 @@ export function registerCompaniesCrmRoutes(app: Express): void {
           id: n.id,
           title: n.title,
           content: n.content,
+          body_json: n.body_json ?? null,
+          body_text: n.body_text ?? null,
           createdAt: n.created_at,
           updatedAt: n.updated_at,
         }))

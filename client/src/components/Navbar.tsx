@@ -61,7 +61,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  Star,
+  Database,
+  Key,
+  Webhook,
+  Workflow,
+  Building2,
 } from 'lucide-react';
+import FavoritesSidebarSection from './FavoritesSidebarSection';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { useNavigation } from '../contexts/NavigationContext';
@@ -239,6 +246,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       icon: Settings,
       isExternal: false,
     },
+    { name: 'Custom Domains', url: '/white-label/domains', icon: Globe, isExternal: false },
     { name: 'Revenue Sharing', url: '/revenue-sharing', icon: DollarSign, isExternal: false },
     { name: 'Package Builder', url: '/package-builder', icon: Package, isExternal: false },
     { name: 'Partner Dashboard', url: '/partner-dashboard', icon: Users, isExternal: false },
@@ -248,7 +256,9 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   // General connected apps
   const connectedApps = [
     { name: 'Contacts', url: '/contacts', icon: Users, isExternal: false },
+    { name: 'Companies', url: '/companies', icon: Building2, isExternal: false },
     { name: 'Pipeline Deals', url: '/pipeline', icon: Briefcase, isExternal: false },
+    { name: 'Workflows', url: '/workflows', icon: Workflow, isExternal: false },
     { name: 'Calendar', url: '/calendar', icon: Calendar, isExternal: false },
     { name: 'Agency', url: '/agency', icon: Megaphone, isExternal: false },
     { name: 'Analytics', url: '/analytics', icon: BarChart3, isExternal: false },
@@ -277,6 +287,17 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       isExternal: false,
       requiresAccess: 'super_admin',
     },
+  ];
+
+  // Workspace settings pages. These are per-workspace (the server scopes every request to the caller's
+  // workspace and enforces team roles), so they are not platform-admin pages; /admin keeps its isAdmin gate.
+  const settingsLinks = [
+    { name: 'Data Model', url: '/settings/data-model', icon: Database },
+    { name: 'Roles', url: '/settings/roles', icon: Shield },
+    { name: 'Team', url: '/settings/team', icon: Users },
+    { name: 'Webhooks', url: '/settings/webhooks', icon: Webhook },
+    { name: 'API Keys', url: '/settings/api-keys-public', icon: Key },
+    { name: 'API Docs', url: '/settings/api-docs', icon: BookOpen },
   ];
 
   const analyticsOptions = [
@@ -518,6 +539,22 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     // { id: 'sales', label: 'Sales', icon: DollarSign, badge: salesTools.length, color: 'from-green-500 to-teal-500', badgeColor: 'bg-green-500', requiresAccess: 'ai_tools' },
     // { id: 'intel', label: 'Business Intel', icon: BarChart3, badge: 35, color: 'from-amber-500 to-orange-500', badgeColor: 'bg-amber-500', requiresAccess: 'ai_tools' },
     {
+      id: 'favorites',
+      label: 'Favorites',
+      icon: Star,
+      badge: 0,
+      color: 'from-yellow-500 to-amber-500',
+      badgeColor: 'bg-yellow-500',
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
+      badge: 0,
+      color: 'from-slate-500 to-gray-600',
+      badgeColor: 'bg-slate-500',
+    },
+    {
       id: 'wl',
       label: 'WL',
       icon: Globe,
@@ -724,6 +761,18 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                           group
                         `}
                         >
+                          {menu.id === 'favorites' && (
+                            <Star
+                              size={16}
+                              className="block overflow-visible flex-none transition-transform duration-300 group-hover:scale-105"
+                            />
+                          )}
+                          {menu.id === 'settings' && (
+                            <Settings
+                              size={16}
+                              className="block overflow-visible flex-none transition-transform duration-300 group-hover:scale-105"
+                            />
+                          )}
                           {menu.id === 'sales' && (
                             <DollarSign
                               size={16}
@@ -763,7 +812,11 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
                           {!isMinimized && (
                             <span className="text-xs font-medium">
-                              {menu.id === 'sales'
+                              {menu.id === 'favorites'
+                                ? 'Favorites'
+                                : menu.id === 'settings'
+                                  ? 'Settings'
+                                  : menu.id === 'sales'
                                 ? 'Sales'
                                 : menu.id === 'communications'
                                   ? 'Communication'
@@ -779,6 +832,8 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
                           {/* Only show chevron for dropdown menus when not minimized */}
                           {!isMinimized &&
                             (menu.id === 'sales' ||
+                              menu.id === 'favorites' ||
+                              menu.id === 'settings' ||
                               menu.id === 'communications' ||
                               menu.id === 'apps' ||
                               menu.id === 'wl' ||
@@ -1226,6 +1281,21 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
                 <hr className={`${isDark ? 'border-white/20' : 'border-gray-200'}`} />
 
+                <FavoritesSidebarSection />
+
+                {settingsLinks.map((link) => (
+                  <button
+                    key={link.url}
+                    onClick={() => handleNavigation(link.url, 'settings')}
+                    className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+                  >
+                    <link.icon size={20} className="block overflow-visible shrink-0" />
+                    <span className="font-medium">{link.name}</span>
+                  </button>
+                ))}
+
+                <hr className={`${isDark ? 'border-white/20' : 'border-gray-200'}`} />
+
                 <div className="flex items-center justify-between">
                   <button
                     onClick={toggleTheme}
@@ -1377,6 +1447,51 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
             >
               <tool.icon size={16} className="block overflow-visible shrink-0 text-blue-500" />
               <span className="text-sm font-medium">{tool.name}</span>
+            </button>
+          ))}
+        </div>
+      </DropdownPortal>
+
+      {/* Favorites Dropdown Portal */}
+      <DropdownPortal
+        isOpen={activeDropdown === 'favorites'}
+        anchor={dropdownAnchor}
+        onClose={closeDropdown}
+        isDark={isDark}
+      >
+        <div
+          className="p-3 max-h-96 overflow-y-auto"
+          data-testid="favorites-panel"
+          onClick={(e) => {
+            // Close after following a favorite link
+            if ((e.target as HTMLElement).closest('a')) closeDropdown();
+          }}
+        >
+          <FavoritesSidebarSection />
+        </div>
+      </DropdownPortal>
+
+      {/* Settings Dropdown Portal */}
+      <DropdownPortal
+        isOpen={activeDropdown === 'settings'}
+        anchor={dropdownAnchor}
+        onClose={closeDropdown}
+        isDark={isDark}
+      >
+        <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          {settingsLinks.map((link) => (
+            <button
+              key={link.url}
+              onClick={() => {
+                navigate(link.url);
+                closeDropdown();
+                setIsMobileMenuOpen(false);
+              }}
+              data-testid={`settings-link-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+              className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+            >
+              <link.icon size={16} className="block overflow-visible shrink-0 text-slate-500" />
+              <span className="text-sm font-medium">{link.name}</span>
             </button>
           ))}
         </div>

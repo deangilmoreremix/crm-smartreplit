@@ -12,7 +12,6 @@ import {
   Calendar,
   RefreshCw,
   AlertOctagon,
-  FileText,
   MessageSquare,
   BarChart3,
   Brain,
@@ -29,6 +28,9 @@ import Avatar from 'react-avatar';
 import { usePersistedLayout } from '../hooks/usePersistedLayout';
 import { RecordShell } from './record/RecordPage';
 import ContactRelated from './record/ContactRelated';
+import ContactEngagement from './record/ContactEngagement';
+import { RecordTimeline } from '../components/timeline';
+import FavoriteButton from '../components/FavoriteButton';
 import { LayoutCustomizer, LayoutPref, applyLayout, emptyLayout } from './record/layout';
 
 const ContactDetail: React.FC = () => {
@@ -519,35 +521,13 @@ const ContactDetail: React.FC = () => {
       },
       {
         id: 'history',
-        label: 'Interaction history',
+        label: 'Recent activity',
         col: 'left',
         node: (
           <React.Fragment>
-            {/* Interaction History */}
             <div className="bg-white rounded-lg shadow-sm p-6 mt-6 border border-gray-100">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Interaction History</h3>
-
-              <div className="space-y-4">
-                {previousInteractions.map((interaction, idx) => (
-                  <div key={idx} className="border-b pb-4 last:border-0">
-                    <div className="flex items-start">
-                      <div className="mr-3 mt-1">
-                        {idx === 0 && <MessageSquare size={16} className="text-blue-500" />}
-                        {idx === 1 && <Mail size={16} className="text-purple-500" />}
-                        {idx === 2 && <FileText size={16} className="text-green-500" />}
-                      </div>
-                      <div>
-                        <p className="text-gray-800 text-sm">{interaction}</p>
-                        <p className="text-gray-400 text-xs mt-1">
-                          {new Date(
-                            Date.now() - idx * 7 * 24 * 60 * 60 * 1000
-                          ).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Recent activity</h3>
+              <RecordTimeline objectType="contact" recordId={contact.id} limit={5} />
             </div>
           </React.Fragment>
         ),
@@ -641,37 +621,7 @@ const ContactDetail: React.FC = () => {
                 <h3 className="text-lg font-medium">Engagement Summary</h3>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500">Email Engagement</span>
-                    <span className="font-medium">64%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '64%' }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500">Meeting Attendance</span>
-                    <span className="font-medium">100%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }}></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-500">Response Time</span>
-                    <span className="font-medium">8 hours avg.</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '70%' }}></div>
-                  </div>
-                </div>
-              </div>
+              <ContactEngagement contactId={contact.id} />
             </div>
           </React.Fragment>
         ),
@@ -699,7 +649,8 @@ const ContactDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-4 sm:mt-0 flex flex-wrap gap-2">
+        <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-2">
+          <FavoriteButton objectType="contact" recordId={contact.id} />
           <button
             onClick={handleEditToggle}
             className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"

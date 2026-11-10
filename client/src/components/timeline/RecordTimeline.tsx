@@ -29,12 +29,15 @@ export const TimelineEventRow: React.FC<{ event: TimelineEvent; showRecord?: boo
   );
 };
 
-export const RecordTimeline: React.FC<{ objectType: string; recordId: string; limit?: number }> = ({
-  objectType,
-  recordId,
-  limit,
-}) => {
-  const { events, loading } = useTimeline({ objectType, recordId }, limit);
+export const RecordTimeline: React.FC<{
+  objectType: string;
+  recordId: string;
+  limit?: number;
+  /** Rendered instead of the timeline when timeline_events cannot be read (e.g. migration not applied). */
+  fallback?: React.ReactNode;
+}> = ({ objectType, recordId, limit, fallback }) => {
+  const { events, loading, error } = useTimeline({ objectType, recordId }, limit);
+  if (error && fallback) return <>{fallback}</>;
   if (loading) return <div className="text-sm text-gray-500 dark:text-gray-400">Loading timeline...</div>;
   if (events.length === 0) return <div className="text-sm text-gray-500 dark:text-gray-400">No activity yet.</div>;
   return (

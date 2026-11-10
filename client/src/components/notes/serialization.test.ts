@@ -28,4 +28,14 @@ describe('note serialization', () => {
   it('extracts mentions', () => {
     expect(extractMentions(doc)).toEqual([{ id: '7', label: 'Ann' }]);
   });
+  it('round-trips through the notes API JSON shape (POST body -> stored row -> list response)', () => {
+    const body = JSON.parse(JSON.stringify(toStored(toNoteValue(doc))));
+    // what the API stores and returns is the same keys; legacy `content` is kept for older readers
+    const row = { id: 'n1', title: null, ...body, createdAt: '2026-01-01T00:00:00Z' };
+    const back = fromStored(JSON.parse(JSON.stringify(row)));
+    expect(back.json).toEqual(doc);
+    expect(back.text).toBe('Title\nHi @Ann\none');
+    // a legacy plain note (no body_json/body_text columns populated) still renders
+    expect(fromStored({ body_json: null, body_text: null, content: 'old note' }).text).toBe('old note');
+  });
 });

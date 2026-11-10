@@ -34,3 +34,13 @@ Notes: `npm run typecheck` runs both ratchets; `typecheck:client` / `typecheck:s
 ## `.github/workflows/netlify-preview.yml`
 
 Runs `npx netlify-cli deploy --build` for a draft preview and comments the URL on the PR. Needs repo secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID`; skipped when they are missing (including fork PRs). Runtime env vars come from the Netlify site settings.
+
+## Client test status (known)
+
+- `npx vitest run server packages` is a hard CI gate (all green).
+- Client tests run as informational (`continue-on-error`). About 14 client test files were already
+  failing before the AI/Twenty work: ErrorBoundary, ai/BatchOperations, ai/SmartAIControls,
+  EnhancedContactCard, LeadScoringVisualization, mfe/loadRemoteEntry, services/__tests__ (5),
+  shared/EventBus, tests/Login, tests/contacts.
+- `client/src/tests/ProtectedRoute.test.tsx` hangs (infinite wait) on the base branch too and is
+  excluded in CI; it exhausts memory when run with the whole suite.

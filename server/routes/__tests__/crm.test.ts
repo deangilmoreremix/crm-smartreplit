@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { registerCRMRoutes } from '../crm';
+import { insertNoteSchema, updateNoteSchema } from '../../../shared/schema';
 
 vi.mock('../auth', () => ({
   requireAuth: () => (req: any, res: any, next: any) => {
@@ -302,6 +303,33 @@ describe('CRM Routes', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.title).toBe('New Task');
+    });
+  });
+
+  describe('Rich notes', () => {
+    const doc = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'hi' }] }] };
+
+    it('insert/update schemas keep body_json and body_text instead of stripping them', () => {
+      const ins = insertNoteSchema.parse({ content: 'hi', body_json: doc, body_text: 'hi', profileId: '11111111-1111-4111-8111-111111111111' });
+      expect(ins.body_json).toEqual(doc);
+      expect(ins.body_text).toBe('hi');
+      const upd = updateNoteSchema.parse({ body_json: doc, body_text: 'hi' });
+      expect(upd.body_json).toEqual(doc);
+    });
+
+    it('plain notes without rich columns still validate', () => {
+      const ins = insertNoteSchema.parse({ content: 'plain', profileId: '11111111-1111-4111-8111-111111111111' });
+      expect(ins.body_json).toBeUndefined();
+    });
+
+    it('POST /api/notes accepts a rich body and returns it', async () => {
+      queueDb([{ id: 'n1', content: 'hi', body_json: doc, body_text: 'hi' }]);
+      const app = express();
+      app.use(express.json());
+      registerCRMRoutes(app);
+      const res = await request(app).post('/api/notes').send({ content: 'hi', body_json: doc, body_text: 'hi' });
+      expect(res.status).toBe(201);
+      expect(res.body.body_json).toEqual(doc);
     });
   });
 });

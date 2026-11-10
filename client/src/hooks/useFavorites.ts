@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { supabase } from '../lib/supabase';
 
 export interface Favorite {
@@ -45,27 +45,66 @@ export function positionAt(items: Array<{ position: number }>, index: number): n
   return (items[index - 1].position + items[index].position) / 2;
 }
 
-export function useFavorites() {
-  const [favorites, setFavorites] = useState<Favorite[]>([]);
-  const [folders, setFolders] = useState<FavoriteFolder[]>([]);
-  const [loading, setLoading] = useState(true);
+// One shared store so every FavoriteButton / sidebar / command-menu consumer reuses a single fetch.
+interface FavState {
+  favorites: Favorite[];
+  folders: FavoriteFolder[];
+  loading: boolean;
+}
+let state: FavState = { favorites: [], folders: [], loading: true };
+let started = false;
+let inFlight: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+const setState = (patch: Partial<FavState> | ((s: FavState) => Partial<FavState>)) => {
+  state = { ...state, ...(typeof patch === 'function' ? patch(state) : patch) };
+  listeners.forEach((l) => l());
+};
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+const getState = () => state;
 
-  const load = useCallback(async () => {
+async function loadShared(): Promise<void> {
+  if (inFlight) return inFlight;
+  inFlight = (async () => {
     try {
       const [f, d] = await Promise.all([
         supabase.from('favorites').select('*').order('position'),
         supabase.from('favorite_folders').select('*').order('position'),
       ]);
-      setFavorites(((f.data as Favorite[]) || []).map((x) => ({ ...x, position: Number(x.position) })));
-      setFolders(((d.data as FavoriteFolder[]) || []).map((x) => ({ ...x, position: Number(x.position) })));
+      setState({
+        favorites: ((f.data as Favorite[]) || []).map((x) => ({ ...x, position: Number(x.position) })),
+        folders: ((d.data as FavoriteFolder[]) || []).map((x) => ({ ...x, position: Number(x.position) })),
+      });
+    } catch {
+      /* keep previous state; favorites tables may be missing */
     } finally {
-      setLoading(false);
+      setState({ loading: false });
+      inFlight = null;
     }
-  }, []);
+  })();
+  return inFlight;
+}
+
+/** Test helper: forget cached favorites. */
+export function resetFavoritesStore() {
+  state = { favorites: [], folders: [], loading: true };
+  started = false;
+  inFlight = null;
+}
+
+export function useFavorites() {
+  const { favorites, folders, loading } = useSyncExternalStore(subscribe, getState, getState);
+  const load = loadShared;
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (started) return;
+    started = true;
+    void loadShared();
+  }, []);
 
   const isFavorite = useCallback(
     (objectType: string, recordId: string) =>
@@ -95,9 +134,9 @@ export function useFavorites() {
 
   const removeFavorite = useCallback(
     async (objectType: string, recordId: string) => {
-      setFavorites((prev) =>
-        prev.filter((f) => !(f.object_type === objectType && f.record_id === String(recordId)))
-      );
+      setState((st) => ({
+        favorites: st.favorites.filter((f) => !(f.object_type === objectType && f.record_id === String(recordId))),
+      }));
       await supabase
         .from('favorites')
         .delete()
@@ -122,9 +161,9 @@ export function useFavorites() {
         .filter((f) => f.id !== favoriteId && (f.folder_id ?? null) === folderId)
         .sort(byPosition);
       const position = positionAt(target, index);
-      setFavorites((prev) =>
-        prev.map((f) => (f.id === favoriteId ? { ...f, folder_id: folderId, position } : f))
-      );
+      setState((st) => ({
+        favorites: st.favorites.map((f) => (f.id === favoriteId ? { ...f, folder_id: folderId, position } : f)),
+      }));
       await supabase.from('favorites').update({ folder_id: folderId, position }).eq('id', favoriteId);
     },
     [favorites]
@@ -141,7 +180,7 @@ export function useFavorites() {
 
   const renameFolder = useCallback(
     async (id: string, name: string) => {
-      setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, name } : f)));
+      setState((st) => ({ folders: st.folders.map((f) => (f.id === id ? { ...f, name } : f)) }));
       await supabase.from('favorite_folders').update({ name }).eq('id', id);
     },
     []

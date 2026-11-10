@@ -226,6 +226,8 @@ const CommandMenu: React.FC<CommandMenuProps> = ({
 export function parseRecordRoute(pathname: string): { objectType: string; recordId: string } | null {
   const m = pathname.match(/^\/(contacts|deals|companies)\/([^/]+)\/?$/);
   if (!m) return null;
+  // Static sub-pages that share the /contacts/ prefix are not records.
+  if (m[1] === 'contacts' && ['duplicates', 'relationships'].includes(m[2])) return null;
   const type = { contacts: 'contact', deals: 'deal', companies: 'company' }[m[1] as 'contacts' | 'deals' | 'companies'];
   return { objectType: type, recordId: decodeURIComponent(m[2]) };
 }
