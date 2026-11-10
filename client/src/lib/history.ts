@@ -11,11 +11,12 @@ export type HistoryEntry = {
   note?: string;
 };
 
-const KEY = 'gemini_image_history_v1';
+const KEY = 'ai_image_history_v1';
+const LEGACY_KEY = 'gemini_image_history_v1'; // read once so existing history is kept
 
 export function loadHistory(): HistoryEntry[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
     return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
   } catch {
     return [];

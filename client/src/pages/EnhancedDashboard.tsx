@@ -11,7 +11,7 @@ import AIToolsCard from '../components/Dashboard/AIToolsCard';
 import DealAnalytics from '../components/DealAnalytics';
 import HelpTooltip from '../components/ui/HelpTooltip';
 import { useEnhancedHelp } from '../contexts/EnhancedHelpContext';
-import GeminiImageModal from '../components/GeminiImageModal';
+import AIImageModal from '../components/AIImageModal';
 import {
   BarChart3,
   TrendingUp,
@@ -951,7 +951,7 @@ const Dashboard: React.FC = () => {
 
       {/* Avatar Generator Modal */}
       {showAvatarGenerator && (
-        <GeminiImageModal
+        <AIImageModal
           open={showAvatarGenerator}
           onClose={() => setShowAvatarGenerator(false)}
         />

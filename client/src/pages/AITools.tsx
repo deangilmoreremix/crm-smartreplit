@@ -51,7 +51,7 @@ import CallScriptContent from '../components/aiTools/CallScriptContent';
 import EmailResponseContent from '../components/aiTools/EmailResponseContent';
 import MeetingAgendaContent from '../components/aiTools/MeetingAgendaContent';
 import CustomerPersonaContent from '../components/aiTools/CustomerPersonaContent';
-import GeminiImageModal from '../components/GeminiImageModal';
+import AIImageModal from '../components/AIImageModal';
 import FunctionAssistantContent from '../components/aiTools/FunctionAssistantContent';
 import ObjectionHandlerContent from '../components/aiTools/ObjectionHandlerContent';
 import ProposalGenerator from '../components/aiTools/ProposalGenerator';
@@ -428,7 +428,7 @@ const AITools: React.FC = () => {
       case 'function-assistant':
         return <FunctionAssistantContent />;
       case 'image-generator':
-        return <GeminiImageModal open={true} onClose={() => {}} />;
+        return <AIImageModal open={true} onClose={() => {}} />;
       case 'instant-response':
         return <InstantAIResponseGenerator />;
       case 'meeting-agenda':

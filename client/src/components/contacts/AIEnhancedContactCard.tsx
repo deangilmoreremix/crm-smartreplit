@@ -8,7 +8,7 @@ import { aiEnrichmentService } from '../../services/aiEnrichmentService';
 import { cacheService } from '../../services/cache.service';
 import { httpClient } from '../../services/http-client.service';
 import { OpenClawService } from '@crm/openclaw-api';
-import GeminiImageModal from '../GeminiImageModal';
+import AIImageModal from '../AIImageModal';
 import {
   Edit,
   AlertCircle,
@@ -630,7 +630,7 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
 
       {/* Avatar Generator Modal */}
       {showAvatarGenerator && (
-        <GeminiImageModal
+        <AIImageModal
           open={showAvatarGenerator}
           onClose={() => setShowAvatarGenerator(false)}
         />

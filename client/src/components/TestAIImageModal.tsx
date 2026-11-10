@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import GeminiImageModal from './GeminiImageModal';
+import AIImageModal from './AIImageModal';
 
-export default function TestGeminiModal() {
+export default function TestAIImageModal() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -12,7 +12,7 @@ export default function TestGeminiModal() {
       >
         Open SmartCRM Image Workspace
       </button>
-      <GeminiImageModal open={open} onClose={() => setOpen(false)} />
+      <AIImageModal open={open} onClose={() => setOpen(false)} />
     </div>
   );
 }

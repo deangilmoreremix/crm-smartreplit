@@ -51,7 +51,7 @@ function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-export default function GeminiImageModal({ open, onClose }: Props) {
+export default function AIImageModal({ open, onClose }: Props) {
   const [feature, setFeature] = useState<FeatureKey>('Enhanced Contacts');
   const [format, setFormat] = useState<FormatKey>('Poster');
   const [benefit, setBenefit] = useState(FEATURE_BENEFITS['Enhanced Contacts']);

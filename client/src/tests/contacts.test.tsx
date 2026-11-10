@@ -50,8 +50,8 @@ vi.mock('../components/ui/CustomizableAIToolbar', () => ({
   CustomizableAIToolbar: () => <div>AI Toolbar</div>,
 }));
 
-vi.mock('../components/GeminiImageModal', () => ({
-  default: () => <div>Gemini Modal</div>,
+vi.mock('../components/AIImageModal', () => ({
+  default: () => <div>AI Image Modal</div>,
 }));
 
 const mockContact: Contact = {

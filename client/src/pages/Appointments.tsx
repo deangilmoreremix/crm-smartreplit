@@ -6,7 +6,7 @@ import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
-import GeminiImageModal from '../components/GeminiImageModal';
+import AIImageModal from '../components/AIImageModal';
 import {
   Clock,
   User,
@@ -1186,7 +1186,7 @@ const Appointments: React.FC = () => {
 
       {/* Avatar Generator Modal */}
       {showAvatarGenerator && appointmentDetail && (
-        <GeminiImageModal
+        <AIImageModal
           open={showAvatarGenerator}
           onClose={() => setShowAvatarGenerator(false)}
         />
