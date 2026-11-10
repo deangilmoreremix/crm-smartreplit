@@ -3,6 +3,23 @@
  * Use this for backend integrations
  */
 
+// Mirrors shared/aiModels.ts tier defaults (plain JS cannot import the TS helper).
+const DEFAULT_MODEL =
+  (typeof process !== 'undefined' && process.env && process.env.OPENAI_MODEL_DEFAULT) ||
+  'gpt-6.1-terra';
+
+/** Pull text out of a Responses API payload (output_text or output[].content[].output_text). */
+function responseText(data) {
+  if (typeof data?.output_text === 'string') return data.output_text;
+  const parts = [];
+  for (const item of data?.output || []) {
+    for (const c of item?.content || []) {
+      if (c?.type === 'output_text' && typeof c.text === 'string') parts.push(c.text);
+    }
+  }
+  return parts.join('');
+}
+
 class SocialMediaAPIHelper {
   constructor(apiKey, options = {}) {
     this.apiKey = apiKey;
@@ -11,17 +28,29 @@ class SocialMediaAPIHelper {
   }
 
   async makeGPT5Request(messages, options = {}) {
+    // Chat-shaped messages -> Responses API: system -> instructions, user -> input.
+    const instructions = messages
+      .filter((m) => m.role === 'system')
+      .map((m) => m.content)
+      .join('\n\n');
+    const input = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => m.content)
+      .join('\n\n');
+
     const requestBody = {
-      model: 'gpt-4o',
-      messages,
-      response_format: { type: 'json_object' },
+      model: options.model || DEFAULT_MODEL,
+      instructions,
+      input,
+      text: { format: { type: 'json_object' } },
+      reasoning: { effort: 'none' },
       temperature: options.temperature || 0.3,
-      max_tokens: options.maxTokens || 3000,
-      ...options,
+      max_output_tokens: options.maxTokens || 3000,
+      store: false,
     };
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      const response = await fetch(`${this.baseUrl}/responses`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
@@ -35,7 +64,7 @@ class SocialMediaAPIHelper {
       }
 
       const data = await response.json();
-      return JSON.parse(data.choices[0].message.content);
+      return JSON.parse(responseText(data));
     } catch (error) {
       console.error('GPT-5 request failed:', error);
       throw error;

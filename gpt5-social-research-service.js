@@ -3,6 +3,23 @@
  * Advanced social media discovery using GPT-5's web research capabilities
  */
 
+// Mirrors shared/aiModels.ts tier defaults (plain JS cannot import the TS helper).
+const DEFAULT_MODEL =
+  (typeof process !== 'undefined' && process.env && process.env.OPENAI_MODEL_DEFAULT) ||
+  'gpt-6.1-terra';
+
+/** Pull text out of a Responses API payload (output_text or output[].content[].output_text). */
+function responseText(data) {
+  if (typeof data?.output_text === 'string') return data.output_text;
+  const parts = [];
+  for (const item of data?.output || []) {
+    for (const c of item?.content || []) {
+      if (c?.type === 'output_text' && typeof c.text === 'string') parts.push(c.text);
+    }
+  }
+  return parts.join('');
+}
+
 class GPT5SocialResearchService {
   constructor(apiKey, options = {}) {
     this.apiKey = apiKey;
@@ -39,22 +56,16 @@ class GPT5SocialResearchService {
     const searchPlatforms = platforms.length > 0 ? platforms : this.supportedPlatforms;
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      const response = await fetch(`${this.baseUrl}/responses`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `You are an expert social media researcher. Research the given contact across multiple platforms and provide detailed insights. Use GPT-5's web search capabilities to find accurate, up-to-date information.`,
-            },
-            {
-              role: 'user',
-              content: `Research social media profiles for:
+          model: DEFAULT_MODEL,
+          instructions: `You are an expert social media researcher. Research the given contact across multiple platforms and provide detailed insights. Use GPT-5's web search capabilities to find accurate, up-to-date information.`,
+          input: `Research social media profiles for:
 Name: ${contact.name}
 Email: ${contact.email}
 Company: ${contact.company || 'Unknown'}
@@ -72,32 +83,16 @@ Provide detailed analysis including:
 6. Optimal outreach strategies
 
 Return as JSON with complete profile data.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+          text: { format: { type: 'json_object' } },
+          reasoning: { effort: 'none' },
           temperature: 0.3,
-          max_tokens: 3000,
-          tools: [
-            {
-              type: 'function',
-              function: {
-                name: 'web_search',
-                description: 'Search the web for social media profiles and information',
-              },
-            },
-            {
-              type: 'function',
-              function: {
-                name: 'profile_verification',
-                description: 'Verify authenticity of social media profiles',
-              },
-            },
-          ],
+          max_output_tokens: 3000,
+          store: false,
         }),
       });
 
       const data = await response.json();
-      const result = JSON.parse(data.choices[0].message.content);
+      const result = JSON.parse(responseText(data));
 
       return {
         contactId: contact.id,
@@ -143,23 +138,17 @@ Return as JSON with complete profile data.`,
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      const response = await fetch(`${this.baseUrl}/responses`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are an expert behavioral analyst. Analyze social media profiles to provide deep personality insights for business relationship building.',
-            },
-            {
-              role: 'user',
-              content: `Analyze personality traits for ${contact.name} based on their social media presence:
+          model: DEFAULT_MODEL,
+          instructions:
+            'You are an expert behavioral analyst. Analyze social media profiles to provide deep personality insights for business relationship building.',
+          input: `Analyze personality traits for ${contact.name} based on their social media presence:
 
 Profiles: ${JSON.stringify(socialProfiles)}
 
@@ -172,16 +161,16 @@ Provide detailed analysis of:
 6. Relationship opportunities
 
 Return comprehensive insights as JSON.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+          text: { format: { type: 'json_object' } },
+          reasoning: { effort: 'none' },
           temperature: 0.4,
-          max_tokens: 2000,
+          max_output_tokens: 2000,
+          store: false,
         }),
       });
 
       const data = await response.json();
-      return JSON.parse(data.choices[0].message.content);
+      return JSON.parse(responseText(data));
     } catch (error) {
       console.error('Personality insights generation failed:', error);
       throw error;
