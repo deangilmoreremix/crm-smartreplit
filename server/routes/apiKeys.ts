@@ -8,6 +8,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { userApiKeys } from '../../shared/schema';
 import { requireAuth } from './auth';
+import { createUserClient, respondText } from '../services/openaiClient';
 
 // Google AI interface for testing
 interface GoogleAIResponse {
@@ -382,12 +383,12 @@ function maskApiKey(key: string): string {
 // Helper: Test OpenAI API key
 async function testOpenAIKey(apiKey: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const OpenAI = (await import('openai')).default;
-    const client = new OpenAI({ apiKey });
-    await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: 'test' }],
-      max_tokens: 1,
+    await respondText({
+      client: createUserClient(apiKey),
+      tier: 'fast',
+      input: 'test',
+      maxOutputTokens: 16,
+      effort: 'none',
     });
     return { success: true };
   } catch (error: any) {

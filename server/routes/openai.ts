@@ -4,35 +4,13 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
 import { memoryService } from '../memory';
 import { requireAuth } from './auth';
+import { createUserOpenAIClient as getUserOpenAI } from './ai';
+import { respondJson, respondText } from '../services/openaiClient';
+import { tierModel } from '../../shared/aiModels';
 
 const router = Router();
-
-// Helper: Get user's OpenAI client
-async function getUserOpenAI(userId: string): Promise<{ client: any; model: string } | null> {
-  if (!db) return null;
-
-  const keyRecord = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, 'openai'),
-      eq(userApiKeys.isActive, true)
-    ),
-    orderBy: (userApiKeys, { desc }) => [desc(userApiKeys.isDefault)],
-  });
-
-  if (!keyRecord) return null;
-
-  const OpenAI = (await import('openai')).default;
-  return {
-    client: new OpenAI({ apiKey: keyRecord.apiKey }),
-    model: keyRecord.model || 'gpt-4o-mini',
-  };
-}
 
 // Check API key status - uses user's key
 router.get('/api/openai/status', requireAuth(), async (req: Request, res: Response) => {
@@ -49,20 +27,23 @@ router.get('/api/openai/status', requireAuth(), async (req: Request, res: Respon
   }
 
   try {
-    await openaiData.client.chat.completions.create({
-      model: openaiData.model,
-      messages: [{ role: 'user', content: 'test' }],
-      max_tokens: 1,
+    const ping = await respondText({
+      client: openaiData.client,
+      model: openaiData.model ?? undefined,
+      tier: 'fast',
+      input: 'test',
+      maxOutputTokens: 16,
+      effort: 'none',
     });
     res.json({
       configured: true,
-      model: openaiData.model,
+      model: ping.model,
       status: 'ready',
     });
   } catch (error: any) {
     res.json({
       configured: false,
-      model: openaiData.model,
+      model: openaiData.model ?? tierModel('fast'),
       status: 'api_key_invalid',
       error: error?.message || 'API key validation failed',
     });
@@ -88,25 +69,20 @@ router.post('/api/openai/smart-greeting', requireAuth(), async (req: Request, re
       });
     }
 
-    const response = await openaiData.client.chat.completions.create({
-      model: openaiData.model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert business advisor. Generate personalized, strategic greetings that provide actionable insights based on user data.',
-        },
-        {
-          role: 'user',
-          content: `Generate a smart greeting for ${timeOfDay}. User metrics: ${JSON.stringify(userMetrics)}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both a greeting and a strategic insight in JSON format.`,
-        },
-      ],
-      response_format: { type: 'json_object' },
+    const response = await respondJson({
+      client: openaiData.client,
+      model: openaiData.model ?? undefined,
+      tier: 'fast',
+      instructions:
+        'You are an expert business advisor. Generate personalized, strategic greetings that provide actionable insights based on user data.',
+      input: `Generate a smart greeting for ${timeOfDay}. User metrics: ${JSON.stringify(userMetrics)}. Recent activity: ${JSON.stringify(recentActivity)}. Provide both a greeting and a strategic insight in JSON format.`,
+      json: true,
+      effort: 'none',
       temperature: 0.7,
-      max_tokens: 300,
+      maxOutputTokens: 300,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = response.data;
 
     await memoryService.recordChatInteraction(
       userId,
@@ -152,25 +128,20 @@ router.post('/api/openai/kpi-analysis', requireAuth(), async (req: Request, res:
       });
     }
 
-    const response = await openaiData.client.chat.completions.create({
-      model: openaiData.model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert business analyst. Analyze KPI trends and provide strategic insights with actionable recommendations.',
-        },
-        {
-          role: 'user',
-          content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
-        },
-      ],
-      response_format: { type: 'json_object' },
+    const response = await respondJson({
+      client: openaiData.client,
+      model: openaiData.model ?? undefined,
+      tier: 'default',
+      instructions:
+        'You are an expert business analyst. Analyze KPI trends and provide strategic insights with actionable recommendations.',
+      input: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
+      json: true,
+      effort: 'none',
       temperature: 0.3,
-      max_tokens: 800,
+      maxOutputTokens: 800,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = response.data;
 
     await memoryService.recordChatInteraction(
       userId,
@@ -221,25 +192,20 @@ router.post('/api/openai/deal-intelligence', requireAuth(), async (req: Request,
       });
     }
 
-    const response = await openaiData.client.chat.completions.create({
-      model: openaiData.model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert sales strategist. Provide comprehensive deal intelligence including win probability, risk factors, and strategic recommendations.',
-        },
-        {
-          role: 'user',
-          content: `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext)}. Provide probability_score, risk_level, key_factors, recommendations, confidence_level, estimated_close_days, and value_optimization in JSON format.`,
-        },
-      ],
-      response_format: { type: 'json_object' },
+    const response = await respondJson({
+      client: openaiData.client,
+      model: openaiData.model ?? undefined,
+      tier: 'default',
+      instructions:
+        'You are an expert sales strategist. Provide comprehensive deal intelligence including win probability, risk factors, and strategic recommendations.',
+      input: `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext)}. Provide probability_score, risk_level, key_factors, recommendations, confidence_level, estimated_close_days, and value_optimization in JSON format.`,
+      json: true,
+      effort: 'none',
       temperature: 0.2,
-      max_tokens: 600,
+      maxOutputTokens: 600,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = response.data;
 
     await memoryService.recordChatInteraction(
       userId,
@@ -294,25 +260,20 @@ router.post('/api/openai/business-intelligence', requireAuth(), async (req: Requ
       });
     }
 
-    const response = await openaiData.client.chat.completions.create({
-      model: openaiData.model,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a senior business consultant. Generate strategic business intelligence including market insights, competitive advantages, risk factors, growth opportunities, and strategic recommendations.',
-        },
-        {
-          role: 'user',
-          content: `Generate business intelligence for: ${JSON.stringify(businessData)}. Market context: ${JSON.stringify(marketContext)}. Objectives: ${JSON.stringify(objectives)}. Provide market_insights, competitive_advantages, risk_factors, growth_opportunities, and strategic_recommendations in JSON format.`,
-        },
-      ],
-      response_format: { type: 'json_object' },
+    const response = await respondJson({
+      client: openaiData.client,
+      model: openaiData.model ?? undefined,
+      tier: 'default',
+      instructions:
+        'You are a senior business consultant. Generate strategic business intelligence including market insights, competitive advantages, risk factors, growth opportunities, and strategic recommendations.',
+      input: `Generate business intelligence for: ${JSON.stringify(businessData)}. Market context: ${JSON.stringify(marketContext)}. Objectives: ${JSON.stringify(objectives)}. Provide market_insights, competitive_advantages, risk_factors, growth_opportunities, and strategic_recommendations in JSON format.`,
+      json: true,
+      effort: 'none',
       temperature: 0.4,
-      max_tokens: 1000,
+      maxOutputTokens: 1000,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = response.data;
 
     await memoryService.recordChatInteraction(
       userId,

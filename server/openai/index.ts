@@ -540,6 +540,74 @@ export const handler = async (
        }
      }
 
+     // POST /api/openai/business-intelligence - business intelligence summary
+     if (
+       pathParts.length >= 2 &&
+       pathParts[0] === 'openai' &&
+       pathParts[1] === 'business-intelligence' &&
+       httpMethod === 'POST'
+     ) {
+       const userId = event.headers['x-user-id'] || event.headers['x-forwarded-for'] || 'anonymous';
+       const sessionId = event.headers['x-session-id'] || `session-${Date.now()}`;
+
+       if (!openai) {
+         return {
+           statusCode: 400,
+           headers,
+           body: JSON.stringify({
+             error: 'OpenAI API key not configured',
+             summary: 'Configure OpenAI API key for business intelligence analysis.',
+             recommendations: ['Set up API credentials', 'Enable advanced analytics'],
+           }),
+         };
+       }
+
+       const { data, focus } = JSON.parse(body || '{}');
+
+       try {
+         const response = await respondText({
+           tier: 'default',
+           effort: 'none',
+           maxOutputTokens: 1200,
+           json: true,
+           instructions:
+             'You are an expert business intelligence analyst. Turn CRM and business data into concise, actionable insights.',
+           input: `Create a business intelligence summary${focus ? ` focused on: ${focus}` : ''}. Data: ${JSON.stringify(data ?? {})}. Respond in JSON with keys: summary, key_metrics, trends, risks, opportunities, and recommendations.`,
+         });
+
+         let result;
+         try {
+           result = JSON.parse(response.text || '{}');
+         } catch (_parseError: unknown) {
+           result = {
+             error: 'Failed to parse AI response',
+             summary: 'Analysis completed but response parsing failed',
+             parsed_content: response.text,
+           };
+         }
+
+         memoryService.recordChatInteraction(
+           userId,
+           sessionId,
+           `Business intelligence request - focus: ${String(focus ?? '').slice(0, 100)}`,
+           `Summary: ${result.summary?.slice(0, 100) || 'N/A'}`,
+           { endpoint: 'business-intelligence', tokensUsed: response.usage.totalTokens }
+         ).catch(() => {});
+
+         return { statusCode: 200, headers, body: JSON.stringify(result) };
+       } catch (error: unknown) {
+         console.error('Business intelligence error:', error);
+         return {
+           statusCode: 503,
+           headers,
+           body: JSON.stringify({
+             error: 'Analysis failed',
+             summary: 'Business intelligence temporarily unavailable.',
+           }),
+         };
+       }
+     }
+
      // POST /api/googleai/test - Google AI test
      if (
        pathParts.length >= 2 &&

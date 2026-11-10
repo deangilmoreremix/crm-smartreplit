@@ -10,6 +10,14 @@ import { userApiKeys } from '../../shared/schema';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
+import {
+  createUserClient,
+  respondJson,
+  respondStream,
+  respondText,
+  respondWithTools,
+} from '../services/openaiClient';
+import { tierModel } from '../../shared/aiModels';
 
 // Google AI interface
 interface GoogleAIResponse {
@@ -54,15 +62,12 @@ async function getUserApiKey(userId: string, provider: 'openai' | 'gemini'): Pro
   return null;
 }
 
-// Helper: Create OpenAI client from user's key
-async function createUserOpenAIClient(userId: string): Promise<{ client: any; model: string } | null> {
+// Helper: Create OpenAI client from user's key (model is the user's saved override, if any)
+export async function createUserOpenAIClient(userId: string): Promise<{ client: any; model: string | null } | null> {
   const keyData = await getUserApiKey(userId, 'openai');
   if (!keyData) return null;
 
-  const OpenAI = (await import('openai')).default;
-  const client = new OpenAI({ apiKey: keyData.apiKey });
-  const model = keyData.model || 'gpt-4o-mini';
-  return { client, model };
+  return { client: createUserClient(keyData.apiKey), model: keyData.model || null };
 }
 
 // Helper: Call Google AI with user's key
@@ -118,20 +123,24 @@ export function registerAIRoutes(app: Express) {
         };
       } else {
         // Try user's preferred model first, then fallback
-        const modelsToTry = [openaiData.model, 'gpt-4o-mini', 'gpt-4o'];
+        const modelsToTry = [openaiData.model, tierModel('fast'), tierModel('default')].filter(
+          (m): m is string => !!m
+        );
         let success = false;
         for (const model of modelsToTry) {
           try {
-            await openaiData.client.chat.completions.create({
+            await respondText({
+              client: openaiData.client,
               model,
-              messages: [{ role: 'user', content: 'test' }],
-              max_tokens: 1,
+              input: 'test',
+              maxOutputTokens: 16,
+              effort: 'none',
             });
             results.openai = {
               available: true,
               model,
               error: null,
-              version: model.startsWith('gpt-5') ? '5.x' : '4o',
+              version: model.match(/^gpt-(\d+(?:\.\d+)?[a-z]*)/i)?.[1] ?? model,
             };
             success = true;
             break;
@@ -227,15 +236,18 @@ export function registerAIRoutes(app: Express) {
             message: 'Please add your OpenAI API key in Settings > API Keys',
           });
         }
-        const response = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages: [{ role: 'user', content: 'Generate a business insight' }],
-          max_tokens: 50,
+        const response = await respondText({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'fast',
+          input: 'Generate a business insight',
+          maxOutputTokens: 50,
+          effort: 'none',
         });
         res.json({
           success: true,
-          model: openaiData.model,
-          output: response.choices[0].message.content,
+          model: response.model,
+          output: response.text,
         });
       } catch (error: any) {
         res.status(500).json({ error: error.message });
@@ -318,26 +330,21 @@ export function registerAIRoutes(app: Express) {
       }
 
       try {
-        const response = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are an expert business advisor. Generate personalized, strategic greetings that provide actionable insights based on user data.',
-            },
-            {
-              role: 'user',
-              content: `Generate a smart greeting for ${timeOfDay}. User metrics: ${JSON.stringify(userMetrics)}. Provide both a greeting and a strategic insight in JSON format.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondJson({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'fast',
+          instructions:
+            'You are an expert business advisor. Generate personalized, strategic greetings that provide actionable insights based on user data.',
+          input: `Generate a smart greeting for ${timeOfDay}. User metrics: ${JSON.stringify(userMetrics)}. Provide both a greeting and a strategic insight in JSON format.`,
+          json: true,
+          effort: 'none',
           temperature: 0.7,
-          max_tokens: 300,
+          maxOutputTokens: 300,
         });
         res.json({
-          ...JSON.parse(response.choices[0].message.content || '{}'),
-          source: openaiData.model,
+          ...response.data,
+          source: response.model,
         });
       } catch (error) {
         res.json({
@@ -367,24 +374,19 @@ export function registerAIRoutes(app: Express) {
       }
 
       try {
-        const response = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are an expert business analyst. Analyze KPI trends and provide strategic insights with actionable recommendations.',
-            },
-            {
-              role: 'user',
-              content: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondJson({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'default',
+          instructions:
+            'You are an expert business analyst. Analyze KPI trends and provide strategic insights with actionable recommendations.',
+          input: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
+          json: true,
+          effort: 'none',
           temperature: 0.3,
-          max_tokens: 800,
+          maxOutputTokens: 800,
         });
-        res.json(JSON.parse(response.choices[0].message.content || '{}'));
+        res.json(response.data);
       } catch (error) {
         res.json({ summary: 'Analysis unavailable', recommendations: ['Retry'] });
       }
@@ -410,24 +412,19 @@ export function registerAIRoutes(app: Express) {
       }
 
       try {
-        const response = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are an expert sales strategist. Provide comprehensive deal intelligence including win probability, risk factors, and strategic recommendations.',
-            },
-            {
-              role: 'user',
-              content: `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext)}. Provide probability_score, risk_level, key_factors, recommendations, confidence_level, estimated_close_days, and value_optimization in JSON format.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondJson({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'default',
+          instructions:
+            'You are an expert sales strategist. Provide comprehensive deal intelligence including win probability, risk factors, and strategic recommendations.',
+          input: `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext)}. Provide probability_score, risk_level, key_factors, recommendations, confidence_level, estimated_close_days, and value_optimization in JSON format.`,
+          json: true,
+          effort: 'none',
           temperature: 0.2,
-          max_tokens: 600,
+          maxOutputTokens: 600,
         });
-        res.json(JSON.parse(response.choices[0].message.content || '{}'));
+        res.json(response.data);
       } catch (error) {
         res.json({ probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] });
       }
@@ -452,24 +449,19 @@ export function registerAIRoutes(app: Express) {
       }
 
       try {
-        const response = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a senior business consultant. Generate strategic business intelligence including market insights, competitive advantages, risk factors, growth opportunities, and strategic recommendations.',
-            },
-            {
-              role: 'user',
-              content: `Generate business intelligence for: ${JSON.stringify(businessData)}. Market context: ${JSON.stringify(marketContext)}. Objectives: ${JSON.stringify(objectives)}. Provide market_insights, competitive_advantages, risk_factors, growth_opportunities, and strategic_recommendations in JSON format.`,
-            },
-          ],
-          response_format: { type: 'json_object' },
+        const response = await respondJson({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'default',
+          instructions:
+            'You are a senior business consultant. Generate strategic business intelligence including market insights, competitive advantages, risk factors, growth opportunities, and strategic recommendations.',
+          input: `Generate business intelligence for: ${JSON.stringify(businessData)}. Market context: ${JSON.stringify(marketContext)}. Objectives: ${JSON.stringify(objectives)}. Provide market_insights, competitive_advantages, risk_factors, growth_opportunities, and strategic_recommendations in JSON format.`,
+          json: true,
+          effort: 'none',
           temperature: 0.4,
-          max_tokens: 1000,
+          maxOutputTokens: 1000,
         });
-        res.json(JSON.parse(response.choices[0].message.content || '{}'));
+        res.json(response.data);
       } catch (error) {
         res.json({ market_insights: ['Retry analysis'] });
       }
@@ -501,23 +493,18 @@ export function registerAIRoutes(app: Express) {
           });
         }
 
-        const messages: any[] = [
-          {
-            role: 'system',
-            content: 'You are a helpful sales + ops assistant for white-label CRM applications.',
-          },
-          {
-            role: 'user',
-            content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
-          },
-        ];
+        const userPrompt = imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt;
 
-        const response = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages,
+        const result = await respondWithTools({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'deep',
+          instructions: 'You are a helpful sales + ops assistant for white-label CRM applications.',
+          input: userPrompt,
+          effort: 'none',
           temperature,
-          max_tokens: max_output_tokens,
-          response_format: schema ? { type: 'json_object' } : undefined,
+          maxOutputTokens: max_output_tokens,
+          json: schema ? true : undefined,
           tools: [
             {
               type: 'function',
@@ -551,70 +538,46 @@ export function registerAIRoutes(app: Express) {
               },
             },
           ],
-          tool_choice: forceToolName
+          toolChoice: forceToolName
             ? { type: 'function', function: { name: forceToolName } }
             : 'auto',
+          handlers: {
+            analyzeBusinessData: (args) =>
+              executeWLTool({ function: { name: 'analyzeBusinessData', arguments: args } }),
+            generateRecommendations: (args) =>
+              executeWLTool({ function: { name: 'generateRecommendations', arguments: args } }),
+          },
         });
 
-        // Handle tool calls
-        const toolCalls = response.choices[0].message.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (tc: any) => ({
-              tool_call_id: tc.id,
-              output: await executeWLTool(tc),
-            }))
-          );
-
-          const continuedMessages = [
-            ...messages,
-            response.choices[0].message,
-            ...toolOutputs.map((o) => ({
-              role: 'tool' as const,
-              content: o.output,
-              tool_call_id: o.tool_call_id,
-            })),
-          ];
-
-          const continuedResponse = await openaiData.client.chat.completions.create({
-            model: openaiData.model,
-            messages: continuedMessages,
-            temperature,
-            max_tokens: max_output_tokens,
-            response_format: schema ? { type: 'json_object' } : undefined,
-          });
-
-          return res.json({
-            output_text: continuedResponse.choices[0].message.content,
-            output: [
+        const outputPayload = [
+          {
+            content: [
               {
-                content: [
-                  {
-                    type: 'output_text',
-                    text: continuedResponse.choices[0].message.content,
-                  },
-                ],
+                type: 'output_text',
+                text: result.text,
               },
             ],
-            tool_calls: toolCalls,
+          },
+        ];
+
+        // Handle tool calls
+        if (result.toolCalls.length > 0) {
+          return res.json({
+            output_text: result.text,
+            output: outputPayload,
+            tool_calls: result.toolCalls.map((tc) => ({
+              type: 'function',
+              function: { name: tc.name, arguments: tc.arguments },
+            })),
             continued: true,
           });
         }
 
         res.json({
-          output_text: response.choices[0].message.content,
-          output: [
-            {
-              content: [
-                {
-                  type: 'output_text',
-                  text: response.choices[0].message.content,
-                },
-              ],
-            },
-          ],
-          model: response.model,
-          usage: response.usage,
+          output_text: result.text,
+          output: outputPayload,
+          model: result.response?.model,
+          usage: result.usage,
         });
       } catch (error: any) {
         console.error('AI API error:', error);
@@ -648,18 +611,19 @@ export function registerAIRoutes(app: Express) {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        const stream = await openaiData.client.chat.completions.create({
-          model: openaiData.model,
-          messages: [{ role: 'user', content: prompt }],
+        for await (const ev of respondStream({
+          client: openaiData.client,
+          model: openaiData.model ?? undefined,
+          tier: 'default',
+          input: prompt,
+          effort: 'none',
           temperature,
-          max_tokens: max_output_tokens,
-          stream: true,
-        });
-
-        for await (const chunk of stream) {
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          maxOutputTokens: max_output_tokens,
+        })) {
+          if (ev.type === 'delta') {
+            res.write(`data: ${JSON.stringify({ content: ev.text })}\n\n`);
+          } else if (ev.type === 'error') {
+            res.write(`data: ${JSON.stringify({ error: ev.message })}\n\n`);
           }
         }
 

@@ -23,6 +23,7 @@
   } from '../../shared/schema.js';
  import { requireAuth } from './auth';
   import { memoryService } from '../memory';
+import { respondText } from '../services/openaiClient';
 
   export function registerCRMRoutes(app: Express): void {
     // ==================== CONTACTS API ====================
@@ -1245,7 +1246,6 @@
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
-        const { OpenAI } = await import('openai');
 
         // Verify contact exists and belongs to user
         const [contact] = await db
@@ -1266,7 +1266,6 @@
 
         let enrichedData;
         try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
           const prompt = `Enrich this contact's information with additional professional details:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ''}
@@ -1276,14 +1275,15 @@ Email: ${contact.email || ''}
 
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
-          const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [{ role: 'user', content: prompt }],
+          const completion = await respondText({
+            tier: 'default',
+            input: prompt,
+            effort: 'none',
             temperature: 0.3,
           });
 
           try {
-            enrichedData = JSON.parse(completion.choices[0].message.content || '{}');
+            enrichedData = JSON.parse(completion.text || '{}');
           } catch (parseError) {
             memoryService.recordObservation(
               userId,
@@ -1390,7 +1390,6 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
-        const { OpenAI } = await import('openai');
 
         const [contact] = await db
           .select()
@@ -1410,7 +1409,6 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
         let scoreData;
         try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
           const prompt = `Score this contact's sales potential on a scale of 0-100:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ''}
@@ -1421,14 +1419,15 @@ Notes: ${contact.notes || ''}
 
 Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
 
-          const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [{ role: 'user', content: prompt }],
+          const completion = await respondText({
+            tier: 'default',
+            input: prompt,
+            effort: 'none',
             temperature: 0.3,
           });
 
           try {
-            scoreData = JSON.parse(completion.choices[0].message.content || '{}');
+            scoreData = JSON.parse(completion.text || '{}');
           } catch (parseError) {
             memoryService.recordObservation(
               userId,

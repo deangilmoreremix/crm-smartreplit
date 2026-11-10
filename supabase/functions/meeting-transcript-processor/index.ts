@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { respondText, getUserOpenAIKey } from '../_shared/openai.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,42 +42,15 @@ async function getUserFromToken(token: string) {
   return user;
 }
 
-async function getOpenAIApiKey(supabase: ReturnType<typeof createClient>, userId: string): Promise<string> {
-  const { data, error } = await supabase
-    .from('user_api_keys')
-    .select('api_key')
-    .eq('user_id', userId)
-    .eq('provider', 'openai')
-    .single();
-  
-  if (error || !data) {
-    const { data: globalData } = await supabase
-      .from('user_api_keys')
-      .select('api_key')
-      .eq('user_id', userId)
-      .eq('provider', 'openai')
-      .single();
-    
-    if (!globalData) throw new Error('OpenAI API key not configured');
-    return globalData.api_key;
-  }
-  
-  return data.api_key;
-}
-
 async function processTranscriptWithOpenAI(
   transcript: string,
-  apiKey: string
+  userKey: { apiKey?: string; model?: string }
 ): Promise<ProcessedTranscript> {
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      input: `You are an AI assistant that analyzes meeting transcripts and extracts key information. 
+  const { text: outputText } = await respondText({
+    model: userKey.model || 'fast',
+    apiKey: userKey.apiKey,
+    effort: 'none',
+    input: `You are an AI assistant that analyzes meeting transcripts and extracts key information. 
 Analyze the following meeting transcript and provide a structured summary.
 
 Transcript:
@@ -90,40 +64,9 @@ Provide a JSON response with the following structure:
   "sentiment": "positive/neutral/negative",
   "topics": ["topic1", "topic2", "topic3"]
 }`,
-      tools: [{ type: 'computer_20241022', display_width: 1024, display_height: 768 }],
-    }),
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`OpenAI API error: ${error}`);
-  }
-
-  const result = await response.json();
-  
   try {
-    let outputText = '';
-    if (result.output && result.output.length > 0) {
-      for (const output of result.output) {
-        if (output.type === 'message' && output.content) {
-          for (const content of output.content) {
-            if (content.type === 'output_text') {
-              outputText = content.text || '';
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    if (!outputText && result.choices && result.choices[0]) {
-      outputText = result.choices[0].message?.content || '';
-    }
-
-    if (!outputText) {
-      outputText = result.response || JSON.stringify(result);
-    }
-
     const parsed = JSON.parse(outputText);
     return {
       summary: parsed.summary || '',
@@ -134,7 +77,7 @@ Provide a JSON response with the following structure:
     };
   } catch (e) {
     return {
-      summary: result.choices?.[0]?.message?.content || 'Transcript processed',
+      summary: outputText || 'Transcript processed',
       key_points: [],
       action_items: [],
       sentiment: 'neutral',
@@ -192,9 +135,9 @@ async function handleTranscriptProcessing(
   payload: TranscriptPayload,
   userId: string
 ) {
-  const openAIApiKey = await getOpenAIApiKey(supabase, userId);
+  const userKey = await getUserOpenAIKey(supabase, userId);
   
-  const processed = await processTranscriptWithOpenAI(payload.transcript, openAIApiKey);
+  const processed = await processTranscriptWithOpenAI(payload.transcript, userKey);
   
   const activity = await createContactActivity(supabase, payload, processed, userId);
   

@@ -241,27 +241,22 @@ If information is not available, use empty arrays or null values.
     
     if (openaiKey) {
       try {
-        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        // Responses API (deep tier). Reasoning is on, so no temperature; max_output_tokens
+        // includes reasoning tokens, so leave headroom above the 2000-token answer budget.
+        const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${openaiKey}`
           },
           body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: "You are an AI assistant that analyzes meeting transcripts and extracts structured information. Always respond with valid JSON."
-              },
-              {
-                role: "user",
-                content: analysisPrompt
-              }
-            ],
-            temperature: 0.3,
-            max_tokens: 2000,
-            response_format: { type: "json_object" }
+            model: (process.env.OPENAI_MODEL_DEEP || '').trim() || "gpt-6.1-sol",
+            instructions: "You are an AI assistant that analyzes meeting transcripts and extracts structured information. Always respond with valid JSON.",
+            input: analysisPrompt,
+            reasoning: { effort: "low" },
+            max_output_tokens: 2000 + 1024,
+            text: { format: { type: "json_object" } },
+            store: false
           })
         });
         
@@ -270,7 +265,16 @@ If information is not available, use empty arrays or null values.
         }
         
         const openaiData = await openaiResponse.json();
-        aiResponse = JSON.parse(openaiData.choices[0].message.content);
+        let openaiText = typeof openaiData.output_text === 'string' ? openaiData.output_text : '';
+        if (!openaiText) {
+          for (const item of openaiData.output || []) {
+            if (item?.type !== 'message') continue;
+            for (const c of item.content || []) {
+              if (c?.type === 'output_text' && typeof c.text === 'string') openaiText += c.text;
+            }
+          }
+        }
+        aiResponse = JSON.parse(openaiText);
         usedProvider = 'openai';
       } catch (openaiError) {
         console.warn('OpenAI failed, trying Anthropic:', openaiError.message);

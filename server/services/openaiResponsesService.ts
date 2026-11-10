@@ -1,6 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { userApiKeys } from '../../shared/schema';
+import { SELECTABLE_MODELS, tierModel } from '../../shared/aiModels';
 
 export interface ResponsesModel {
   id: string;
@@ -10,43 +11,13 @@ export interface ResponsesModel {
   contextLength: string;
 }
 
-const RESPONSES_API_MODELS: ResponsesModel[] = [
-  {
-    id: 'gpt-4.1',
-    name: 'GPT-4.1',
-    description: 'Most capable GPT-4.1 model for complex reasoning, coding, and instruction-following',
-    pricing: '$2.00 / $8.00 per 1M tokens',
-    contextLength: '1M tokens',
-  },
-  {
-    id: 'gpt-4.1-mini',
-    name: 'GPT-4.1 Mini',
-    description: 'Balanced GPT-4.1 model optimized for speed and cost-efficiency',
-    pricing: '$0.40 / $1.60 per 1M tokens',
-    contextLength: '1M tokens',
-  },
-  {
-    id: 'gpt-4.1-nano',
-    name: 'GPT-4.1 Nano',
-    description: 'Fastest, most affordable GPT-4.1 model for lightweight tasks and high throughput',
-    pricing: '$0.10 / $0.40 per 1M tokens',
-    contextLength: '1M tokens',
-  },
-  {
-    id: 'o3',
-    name: 'o3',
-    description: 'Advanced reasoning model with extended thinking for math, science, and complex problem-solving',
-    pricing: '$2.00 / $8.00 per 1M tokens',
-    contextLength: '200K tokens',
-  },
-  {
-    id: 'o4-mini',
-    name: 'o4-mini',
-    description: 'Fast, cost-efficient reasoning model ideal for coding, math, and agentic tasks at scale',
-    pricing: '$0.60 / $2.40 per 1M tokens',
-    contextLength: '200K tokens',
-  },
-];
+const RESPONSES_API_MODELS: ResponsesModel[] = SELECTABLE_MODELS.map((m) => ({
+  id: m.id,
+  name: m.label,
+  description: m.description,
+  pricing: '',
+  contextLength: '',
+}));
 
 function extractResponseText(response: any): string {
   try {
@@ -94,7 +65,7 @@ export class OpenAIResponsesService {
       throw new Error('No active OpenAI API key configured. Add your key in Settings > API Keys.');
     }
 
-    const selectedModel = model || keyRecord.model || 'gpt-4.1';
+    const selectedModel = model || keyRecord.model || tierModel('default');
     const OpenAI = (await import('openai')).default;
     const openai = new OpenAI({ apiKey: keyRecord.apiKey });
 

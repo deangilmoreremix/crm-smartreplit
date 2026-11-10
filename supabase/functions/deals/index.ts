@@ -2,17 +2,12 @@
 // Handles CRUD operations with AI-powered deal intelligence and predictions
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { respondJson, respondStream } from '../_shared/openai.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -99,14 +94,12 @@ Deno.serve(async (req) => {
           - competitive_advantages (array)
           - deal_health_score (0-100)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: predictionPrompt }],
-          response_format: { type: 'json_object' },
+        const { data: prediction } = await respondJson({
+          model: 'deep',
+          input: predictionPrompt,
+          effort: 'none',
           temperature: 0.3,
         })
-
-        const prediction = JSON.parse(completion.choices[0].message.content || '{}')
 
         // Log the prediction
         await supabase.from('contact_activities').insert({
@@ -154,14 +147,12 @@ Deno.serve(async (req) => {
           - momentum_analysis (improving/declining/stable)
           - key_stakeholders (array of contact names)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: summaryPrompt }],
-          response_format: { type: 'json_object' },
+        const { data: summary } = await respondJson({
+          model: 'default',
+          input: summaryPrompt,
+          effort: 'none',
           temperature: 0.3,
         })
-
-        const summary = JSON.parse(completion.choices[0].message.content || '{}')
 
         return new Response(JSON.stringify({
           success: true,
@@ -203,22 +194,17 @@ Deno.serve(async (req) => {
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              const completion = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  ...messages.map((m: any) => ({
-                    role: m.role || 'user',
-                    content: m.content
-                  }))
-                ],
-                stream: true,
+              for await (const content of respondStream({
+                model: 'default',
+                instructions: systemPrompt,
+                input: messages.map((m: any) => ({
+                  role: m.role || 'user',
+                  content: m.content
+                })),
+                effort: 'none',
                 temperature: 0.5,
-                max_tokens: 1500
-              })
-
-              for await (const chunk of completion) {
-                const content = chunk.choices[0]?.delta?.content
+                maxOutputTokens: 1500
+              })) {
                 if (content) {
                   controller.enqueue(new TextEncoder().encode(content))
                 }
@@ -329,14 +315,12 @@ Deno.serve(async (req) => {
           - success_factors (array)`
 
         try {
-          const analysisCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: transitionPrompt }],
-            response_format: { type: 'json_object' },
+          const { data: analysis } = await respondJson({
+            model: 'fast',
+            input: transitionPrompt,
+            effort: 'none',
             temperature: 0.2,
           })
-
-          const analysis = JSON.parse(analysisCompletion.choices[0].message.content || '{}')
 
           // Log transition analysis
           await supabase.from('contact_activities').insert({
@@ -411,14 +395,12 @@ Deno.serve(async (req) => {
           Return JSON with: recommended_actions (array), risk_factors (array), best_practices (array)`
 
         try {
-          const insightsCompletion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: insightsPrompt }],
-            response_format: { type: 'json_object' },
+          const { data: insights } = await respondJson({
+            model: 'fast',
+            input: insightsPrompt,
+            effort: 'none',
             temperature: 0.3,
           })
-
-          const insights = JSON.parse(insightsCompletion.choices[0].message.content || '{}')
 
           await supabase.from('contact_activities').insert({
             contact_id: newDeal.contact_id,

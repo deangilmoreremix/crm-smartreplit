@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { respondText, getUserOpenAIKey } from '../_shared/openai.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,7 +55,7 @@ async function generateSummaryWithOpenAI(
     workspace_member?: { full_name: string };
   }>,
   contactInfo: { name?: string; company?: string },
-  apiKey: string
+  userKey: { apiKey?: string; model?: string }
 ): Promise<ActivitySummary> {
   const activitiesText = activities.map(a => {
     const props = a.properties || {};
@@ -62,15 +63,11 @@ async function generateSummaryWithOpenAI(
     return `[${a.activity_type.toUpperCase()}] ${a.workspace_member?.full_name || 'System'} - ${a.name}${body ? `: ${body}` : ''}`;
   }).join('\n');
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      input: `You are an AI assistant that generates activity summaries from CRM data.
+  const { text: outputText } = await respondText({
+    model: userKey.model || 'fast',
+    apiKey: userKey.apiKey,
+    effort: 'none',
+    input: `You are an AI assistant that generates activity summaries from CRM data.
 
 Contact: ${contactInfo.name || 'Unknown'}
 Company: ${contactInfo.company || 'Unknown'}
@@ -88,32 +85,7 @@ Generate a JSON summary with:
   "sentiment": "positive/neutral/negative",
   "summary": "2-3 sentence summary of overall activity and status"
 }`,
-    }),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to generate summary');
-  }
-
-  const result = await response.json();
-  let outputText = '';
-  
-  if (result.output && result.output.length > 0) {
-    for (const output of result.output) {
-      if (output.type === 'message' && output.content) {
-        for (const content of output.content) {
-          if (content.type === 'output_text') {
-            outputText = content.text || '';
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  if (!outputText) {
-    outputText = result.choices?.[0]?.message?.content || JSON.stringify(result);
-  }
 
   try {
     const parsed = JSON.parse(outputText);
@@ -291,18 +263,6 @@ async function getContactInfo(
   return { name, company };
 }
 
-async function getOpenAIApiKey(supabase: ReturnType<typeof createClient>, userId: string): Promise<string> {
-  const { data } = await supabase
-    .from('user_api_keys')
-    .select('api_key')
-    .eq('user_id', userId)
-    .eq('provider', 'openai')
-    .single();
-  
-  if (!data) throw new Error('OpenAI API key not configured');
-  return data.api_key;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -343,9 +303,9 @@ Deno.serve(async (req) => {
     }
 
     const contactInfo = await getContactInfo(supabase, body.contactId, body.companyId);
-    const apiKey = await getOpenAIApiKey(supabase, user.id);
+    const userKey = await getUserOpenAIKey(supabase, user.id);
     
-    const summary = await generateSummaryWithOpenAI(activities, contactInfo, apiKey);
+    const summary = await generateSummaryWithOpenAI(activities, contactInfo, userKey);
     
     let deliveryStatus = 'internal';
     

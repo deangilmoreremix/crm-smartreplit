@@ -2,17 +2,12 @@
 // Handles AI agent operations with streaming support
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { respondText, respondStream } from '../_shared/openai.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -259,22 +254,17 @@ Deno.serve(async (req) => {
         const stream = new ReadableStream({
           async start(controller) {
             try {
-              const completion = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: [
-                  { role: 'system', content: systemPrompt },
-                  ...messages.map((m: any) => ({
-                    role: m.role || 'user',
-                    content: m.content
-                  }))
-                ],
-                stream: true,
+              for await (const content of respondStream({
+                model: 'deep',
+                instructions: systemPrompt,
+                input: messages.map((m: any) => ({
+                  role: m.role || 'user',
+                  content: m.content
+                })),
+                effort: 'none',
                 temperature: 0.7,
-                max_tokens: 2000
-              })
-
-              for await (const chunk of completion) {
-                const content = chunk.choices[0]?.delta?.content
+                maxOutputTokens: 2000
+              })) {
                 if (content) {
                   controller.enqueue(new TextEncoder().encode(content))
                 }
@@ -342,17 +332,14 @@ async function executeAgentStream(
     systemPrompt += `\n\nAgent ID: ${agentId}\nExecution ID: ${executionId}`
 
     // Use OpenAI for intelligent response
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: JSON.stringify(inputData) }
-      ],
+    const { text: response } = await respondText({
+      model: 'deep',
+      instructions: systemPrompt,
+      input: JSON.stringify(inputData),
+      effort: 'none',
       temperature: 0.7,
-      max_tokens: 1500
+      maxOutputTokens: 1500
     })
-
-    const response = completion.choices[0]?.message?.content || ''
     
     // Try to parse as JSON
     let output;

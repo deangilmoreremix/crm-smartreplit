@@ -2,17 +2,12 @@
 // Handles CRUD operations with AI-powered contact intelligence
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { respondJson, embed } from '../_shared/openai.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -75,12 +70,7 @@ Deno.serve(async (req) => {
         const limit = parseInt(urlObj.searchParams.get('limit') || '20')
         
         // Use OpenAI embeddings for semantic search
-        const embeddingResponse = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
-          input: query,
-        })
-        
-        const queryEmbedding = embeddingResponse.data[0].embedding
+        const queryEmbedding = await embed(query)
         
         // Search contacts with similarity (using enrichment_data for vector search)
         const { data: contacts } = await supabase
@@ -101,14 +91,12 @@ Deno.serve(async (req) => {
               Return JSON with: relevance_score (0-1), summary (why match)`
 
             try {
-              const scoreResponse = await openai.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [{ role: 'user', content: scorePrompt }],
-                response_format: { type: 'json_object' },
+              const { data: scoring } = await respondJson({
+                model: 'fast',
+                input: scorePrompt,
+                effort: 'none',
                 temperature: 0.1,
               })
-              
-              const scoring = JSON.parse(scoreResponse.choices[0].message.content || '{}')
               return { ...contact, ai_score: scoring.relevance_score, ai_summary: scoring.summary }
             } catch {
               return { ...contact, ai_score: 0.5, ai_summary: '' }
@@ -167,14 +155,12 @@ Deno.serve(async (req) => {
           
           Return JSON with: answer, confidence (0-1), suggested_actions (array)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: insightPrompt }],
-          response_format: { type: 'json_object' },
+        const { data: insights } = await respondJson({
+          model: 'default',
+          input: insightPrompt,
+          effort: 'none',
           temperature: 0.3,
         })
-
-        const insights = JSON.parse(completion.choices[0].message.content || '{}')
 
         return new Response(JSON.stringify({
           success: true,
@@ -244,14 +230,12 @@ Deno.serve(async (req) => {
 
               Return JSON with: linkedin_url, background, company_size, revenue_range, industry_insights, interests`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: [{ role: 'user', content: prompt }],
-              response_format: { type: 'json_object' },
+            const { data: enrichedData } = await respondJson({
+              model: 'default',
+              input: prompt,
+              effort: 'none',
               temperature: 0.3,
             })
-
-            const enrichedData = JSON.parse(completion.choices[0].message.content || '{}')
 
             const { data: updated } = await supabase
               .from('contacts')
@@ -293,14 +277,12 @@ Deno.serve(async (req) => {
 
               Return JSON with: score (0-100), rationale, lead_score, engagement_score`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: [{ role: 'user', content: prompt }],
-              response_format: { type: 'json_object' },
+            const { data: scoreData } = await respondJson({
+              model: 'default',
+              input: prompt,
+              effort: 'none',
               temperature: 0.3,
             })
-
-            const scoreData = JSON.parse(completion.choices[0].message.content || '{}')
 
             const { data: updated } = await supabase
               .from('contacts')
@@ -362,14 +344,12 @@ Deno.serve(async (req) => {
               Return JSON with: subject, body, tone (professional/friendly/formal),
               estimated_response_rate (0-1), key_points_to_mention (array)`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
-              messages: [{ role: 'user', content: composePrompt }],
-              response_format: { type: 'json_object' },
+            const { data: composed } = await respondJson({
+              model: 'default',
+              input: composePrompt,
+              effort: 'none',
               temperature: 0.5,
             })
-
-            const composed = JSON.parse(completion.choices[0].message.content || '{}')
 
             return new Response(JSON.stringify({
               success: true,

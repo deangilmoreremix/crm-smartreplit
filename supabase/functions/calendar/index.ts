@@ -2,17 +2,12 @@
 // Handles calendar operations with intelligent scheduling assistance
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { respondJson } from '../_shared/openai.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -74,14 +69,12 @@ Deno.serve(async (req) => {
           
           Return JSON with optimal_time_slots (array of {start, end, score}) and reasoning.`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: prompt }],
-          response_format: { type: 'json_object' },
+        const { data: suggestions } = await respondJson({
+          model: 'default',
+          input: prompt,
+          effort: 'none',
           temperature: 0.3,
         })
-
-        const suggestions = JSON.parse(completion.choices[0].message.content || '{}')
         
         // Store scheduling session
         const { data: session } = await supabase
@@ -122,14 +115,12 @@ Deno.serve(async (req) => {
           
           Return JSON with: title, description, agenda_items (array), preparation_notes`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: prompt }],
-          response_format: { type: 'json_object' },
+        const { data: generated } = await respondJson({
+          model: 'default',
+          input: prompt,
+          effort: 'none',
           temperature: 0.5,
         })
-
-        const generated = JSON.parse(completion.choices[0].message.content || '{}')
 
         return new Response(JSON.stringify({ 
           success: true, 
@@ -173,14 +164,12 @@ Deno.serve(async (req) => {
           Return JSON with: is_available (boolean), conflict_severity (low/medium/high), 
           alternative_suggestions (array of {start, end}), reason`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          response_format: { type: 'json_object' },
+        const { data: analysis } = await respondJson({
+          model: 'fast',
+          input: prompt,
+          effort: 'none',
           temperature: 0.2,
         })
-
-        const analysis = JSON.parse(completion.choices[0].message.content || '{}')
 
         return new Response(JSON.stringify({
           success: true,
@@ -372,14 +361,12 @@ Deno.serve(async (req) => {
             Return JSON with: reminder_text, reminder_time (30 min before), notification_channel`
 
           try {
-            const reminderCompletion = await openai.chat.completions.create({
-              model: 'gpt-4o-mini',
-              messages: [{ role: 'user', content: reminderPrompt }],
-              response_format: { type: 'json_object' },
+            const { data: reminderData } = await respondJson({
+              model: 'fast',
+              input: reminderPrompt,
+              effort: 'none',
               temperature: 0.3,
             })
-            
-            const reminderData = JSON.parse(reminderCompletion.choices[0].message.content || '{}')
             
             await supabase
               .from('contact_activities')

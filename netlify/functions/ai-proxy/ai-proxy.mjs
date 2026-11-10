@@ -1,11 +1,113 @@
 // netlify/functions/ai-proxy.js
+var MIN_OUTPUT_TOKENS = 16;
+var REASONING_HEADROOM = 1024;
+function normalizeEffort(model, effort) {
+  if (!effort) return void 0;
+  if (effort === "minimal") return "low";
+  if (effort === "none" && /^gpt-6(\.1)?-(astra|sol)/.test(model) && model !== "gpt-6-sol") return "low";
+  return effort;
+}
+function buildOpenAIResponsesPayload({ model, messages, temperature, maxTokens, stream, reasoningEffort }) {
+  const text = (c) => typeof c === "string" ? c : Array.isArray(c) ? c.map((p) => p?.text || "").join("") : String(c ?? "");
+  const instructions = messages.filter((m) => m.role === "system" || m.role === "developer").map((m) => text(m.content)).join("\n\n");
+  const input = messages.filter((m) => m.role !== "system" && m.role !== "developer").map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: text(m.content) }));
+  const effort = normalizeEffort(model, reasoningEffort);
+  const payload = { model, input, store: false };
+  if (instructions) payload.instructions = instructions;
+  if (effort) payload.reasoning = { effort };
+  if (maxTokens) {
+    const requested = effort && effort !== "none" ? maxTokens + REASONING_HEADROOM : maxTokens;
+    payload.max_output_tokens = Math.max(MIN_OUTPUT_TOKENS, requested);
+  }
+  if (effort === "none" && temperature !== void 0) payload.temperature = temperature;
+  if (stream) payload.stream = true;
+  return payload;
+}
+function responsesOutputText(r) {
+  if (typeof r?.output_text === "string") return r.output_text;
+  let out = "";
+  for (const item of r?.output || []) {
+    if (item?.type !== "message") continue;
+    for (const c of item.content || []) {
+      if (c?.type === "output_text" && typeof c.text === "string") out += c.text;
+    }
+  }
+  return out;
+}
+function responsesToChatCompletion(r, model) {
+  const inTok = r?.usage?.input_tokens || 0;
+  const outTok = r?.usage?.output_tokens || 0;
+  return {
+    id: r?.id || `openai-${Date.now()}`,
+    object: "chat.completion",
+    model: r?.model || model,
+    choices: [{
+      index: 0,
+      message: { role: "assistant", content: responsesOutputText(r) },
+      finish_reason: r?.status === "incomplete" ? "length" : "stop"
+    }],
+    usage: {
+      prompt_tokens: inTok,
+      completion_tokens: outTok,
+      total_tokens: r?.usage?.total_tokens ?? inTok + outTok
+    }
+  };
+}
+function responsesStreamToChatStream(upstream, model) {
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  const reader = upstream.getReader();
+  let buffer = "";
+  const chunk = (delta, finish) => encoder.encode(`data: ${JSON.stringify({
+    object: "chat.completion.chunk",
+    model,
+    choices: [{ index: 0, delta, finish_reason: finish || null }]
+  })}
+
+`);
+  const handleEvent = (block, controller) => {
+    const dataLine = block.split("\n").find((l) => l.startsWith("data:"));
+    if (!dataLine) return;
+    let evt;
+    try {
+      evt = JSON.parse(dataLine.slice(5).trim());
+    } catch {
+      return;
+    }
+    if (evt.type === "response.output_text.delta" && evt.delta) {
+      controller.enqueue(chunk({ content: evt.delta }));
+    } else if (evt.type === "response.completed") {
+      controller.enqueue(chunk({}, "stop"));
+    } else if (evt.type === "response.incomplete") {
+      controller.enqueue(chunk({}, "length"));
+    }
+  };
+  return new ReadableStream({
+    async pull(controller) {
+      const { done, value } = await reader.read();
+      if (done) {
+        if (buffer.trim()) handleEvent(buffer, controller);
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split("\n\n");
+      buffer = blocks.pop();
+      for (const b of blocks) handleEvent(b, controller);
+    },
+    cancel() {
+      return reader.cancel();
+    }
+  });
+}
 var ai_proxy_default = async (request, context) => {
   try {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
     }
     const body = await request.json();
-    const { provider, apiKey: userApiKey, model, messages, temperature, maxTokens, stream } = body || {};
+    const { provider, apiKey: userApiKey, model, messages, temperature, maxTokens, stream, reasoningEffort } = body || {};
     if (!provider || !model || !messages) {
       return new Response(
         JSON.stringify({
@@ -40,7 +142,7 @@ var ai_proxy_default = async (request, context) => {
     };
     switch (provider) {
       case "openai":
-        apiUrl = "https://api.openai.com/v1/chat/completions";
+        apiUrl = "https://api.openai.com/v1/responses";
         break;
       case "openrouter":
         apiUrl = "https://openrouter.ai/api/v1/chat/completions";
@@ -80,6 +182,8 @@ var ai_proxy_default = async (request, context) => {
         temperature: temperature || 0.7,
         messages
       };
+    } else if (provider === "openai") {
+      payload = buildOpenAIResponsesPayload({ model, messages, temperature, maxTokens, stream, reasoningEffort });
     } else if (provider === "google") {
       payload = {
         contents: messages.map((msg) => ({
@@ -120,6 +224,12 @@ var ai_proxy_default = async (request, context) => {
         }
       );
     }
+    if (provider === "openai" && stream) {
+      return new Response(responsesStreamToChatStream(response.body, model), {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" }
+      });
+    }
     const responseData = await response.json();
     let normalizedResponse = {};
     if (provider === "anthropic") {
@@ -158,6 +268,8 @@ var ai_proxy_default = async (request, context) => {
           total_tokens: responseData.usageMetadata?.totalTokenCount || 0
         }
       };
+    } else if (provider === "openai") {
+      normalizedResponse = responsesToChatCompletion(responseData, model);
     } else {
       normalizedResponse = responseData;
     }

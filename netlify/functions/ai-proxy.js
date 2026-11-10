@@ -1,3 +1,119 @@
+// OpenAI Responses API helpers (inlined: this function is plain JS and cannot import the TS helper).
+// Rules: instructions + input, max_output_tokens >= 16, temperature only with reasoning effort "none",
+// "minimal" -> "low", "none" -> "low" on Sol/Astra models.
+const MIN_OUTPUT_TOKENS = 16;
+const REASONING_HEADROOM = 1024;
+
+function normalizeEffort(model, effort) {
+  if (!effort) return undefined;
+  if (effort === "minimal") return "low";
+  if (effort === "none" && /^gpt-6(\.1)?-(astra|sol)/.test(model) && model !== "gpt-6-sol") return "low";
+  return effort;
+}
+
+function buildOpenAIResponsesPayload({ model, messages, temperature, maxTokens, stream, reasoningEffort }) {
+  const text = (c) =>
+    typeof c === "string" ? c : Array.isArray(c) ? c.map((p) => p?.text || "").join("") : String(c ?? "");
+  const instructions = messages
+    .filter((m) => m.role === "system" || m.role === "developer")
+    .map((m) => text(m.content))
+    .join("\n\n");
+  const input = messages
+    .filter((m) => m.role !== "system" && m.role !== "developer")
+    .map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: text(m.content) }));
+
+  const effort = normalizeEffort(model, reasoningEffort);
+  const payload = { model, input, store: false };
+  if (instructions) payload.instructions = instructions;
+  if (effort) payload.reasoning = { effort };
+  if (maxTokens) {
+    // max_output_tokens also counts reasoning tokens
+    const requested = effort && effort !== "none" ? maxTokens + REASONING_HEADROOM : maxTokens;
+    payload.max_output_tokens = Math.max(MIN_OUTPUT_TOKENS, requested);
+  }
+  if (effort === "none" && temperature !== undefined) payload.temperature = temperature;
+  if (stream) payload.stream = true;
+  return payload;
+}
+
+function responsesOutputText(r) {
+  if (typeof r?.output_text === "string") return r.output_text;
+  let out = "";
+  for (const item of r?.output || []) {
+    if (item?.type !== "message") continue;
+    for (const c of item.content || []) {
+      if (c?.type === "output_text" && typeof c.text === "string") out += c.text;
+    }
+  }
+  return out;
+}
+
+// Re-wrap a Responses result as chat-completions JSON so callers need no change.
+function responsesToChatCompletion(r, model) {
+  const inTok = r?.usage?.input_tokens || 0;
+  const outTok = r?.usage?.output_tokens || 0;
+  return {
+    id: r?.id || `openai-${Date.now()}`,
+    object: "chat.completion",
+    model: r?.model || model,
+    choices: [{
+      index: 0,
+      message: { role: "assistant", content: responsesOutputText(r) },
+      finish_reason: r?.status === "incomplete" ? "length" : "stop"
+    }],
+    usage: {
+      prompt_tokens: inTok,
+      completion_tokens: outTok,
+      total_tokens: r?.usage?.total_tokens ?? inTok + outTok
+    }
+  };
+}
+
+// Translate Responses SSE events into chat-style `data: {choices:[{delta:{content}}]}` chunks + [DONE].
+function responsesStreamToChatStream(upstream, model) {
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  const reader = upstream.getReader();
+  let buffer = "";
+  const chunk = (delta, finish) =>
+    encoder.encode(`data: ${JSON.stringify({
+      object: "chat.completion.chunk",
+      model,
+      choices: [{ index: 0, delta, finish_reason: finish || null }]
+    })}\n\n`);
+
+  const handleEvent = (block, controller) => {
+    const dataLine = block.split("\n").find((l) => l.startsWith("data:"));
+    if (!dataLine) return;
+    let evt;
+    try { evt = JSON.parse(dataLine.slice(5).trim()); } catch { return; }
+    if (evt.type === "response.output_text.delta" && evt.delta) {
+      controller.enqueue(chunk({ content: evt.delta }));
+    } else if (evt.type === "response.completed") {
+      controller.enqueue(chunk({}, "stop"));
+    } else if (evt.type === "response.incomplete") {
+      controller.enqueue(chunk({}, "length"));
+    }
+  };
+
+  return new ReadableStream({
+    async pull(controller) {
+      const { done, value } = await reader.read();
+      if (done) {
+        if (buffer.trim()) handleEvent(buffer, controller);
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split("\n\n");
+      buffer = blocks.pop();
+      for (const b of blocks) handleEvent(b, controller);
+    },
+    cancel() { return reader.cancel(); }
+  });
+}
+
 export default async (request, context) => {
   try {
     if (request.method !== "POST") {
@@ -5,7 +121,7 @@ export default async (request, context) => {
     }
 
     const body = await request.json();
-    const { provider, apiKey: userApiKey, model, messages, temperature, maxTokens, stream } = body || {};
+    const { provider, apiKey: userApiKey, model, messages, temperature, maxTokens, stream, reasoningEffort } = body || {};
 
     if (!provider || !model || !messages) {
       return new Response(
@@ -49,7 +165,7 @@ export default async (request, context) => {
 
     switch (provider) {
       case "openai":
-        apiUrl = "https://api.openai.com/v1/chat/completions";
+        apiUrl = "https://api.openai.com/v1/responses";
         break;
 
       case "openrouter":
@@ -98,6 +214,8 @@ export default async (request, context) => {
         temperature: temperature || 0.7,
         messages
       };
+    } else if (provider === "openai") {
+      payload = buildOpenAIResponsesPayload({ model, messages, temperature, maxTokens, stream, reasoningEffort });
     } else if (provider === "google") {
       payload = {
         contents: messages.map(msg => ({
@@ -142,6 +260,13 @@ export default async (request, context) => {
       );
     }
 
+    if (provider === "openai" && stream) {
+      return new Response(responsesStreamToChatStream(response.body, model), {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" }
+      });
+    }
+
     const responseData = await response.json();
 
     // Normalize response format
@@ -183,8 +308,10 @@ export default async (request, context) => {
           total_tokens: responseData.usageMetadata?.totalTokenCount || 0
         }
       };
+    } else if (provider === "openai") {
+      normalizedResponse = responsesToChatCompletion(responseData, model);
     } else {
-      // OpenAI-compatible format
+      // OpenAI-compatible format (OpenRouter, Together, Groq)
       normalizedResponse = responseData;
     }
 
