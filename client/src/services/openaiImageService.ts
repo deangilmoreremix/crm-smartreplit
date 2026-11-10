@@ -20,7 +20,6 @@ interface ImageGenerationResult {
 }
 
 class OpenAIImageService {
-  private baseUrl: string = 'https://api.openai.com/v1';
 
   constructor(apiKey?: string) {
     // API key is now handled server-side only

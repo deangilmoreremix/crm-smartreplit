@@ -9,7 +9,7 @@ import { corsConfig, securityHeaders } from './middleware/security';
 import { healthCheckMiddleware } from './health';
 
 export const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // vision uploads send base64 images
 app.use(express.urlencoded({ extended: false }));
 
 // Security middleware

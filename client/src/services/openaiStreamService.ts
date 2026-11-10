@@ -1,78 +1,78 @@
-import { useApiStore } from '../store/apiStore';
-import { useState } from 'react';
+/**
+ * Streaming chat via the server (POST /api/stream, SSE).
+ * The server holds the user's API key and chooses the model tier; no keys are handled in the browser.
+ * Events: `data: {"content": "..."}` per delta, `data: {"error": "..."}` on failure, then `data: [DONE]`.
+ */
+
+type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+
+const messagesToPrompt = (messages: ChatMessage[]): string =>
+  messages
+    .map((m) => (m.role === 'system' ? m.content : `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`))
+    .join('\n\n');
+
+// Streams from /api/stream, calling onToken per delta. Returns the full text.
+const streamPrompt = async (prompt: string, onToken: (token: string) => void, model?: string): Promise<string> => {
+  const response = await fetch('/api/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, ...(model ? { model } : {}), max_output_tokens: 2000 }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || error.error || `API error: ${response.statusText}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Failed to get response reader');
+  }
+
+  const decoder = new TextDecoder();
+  const fullContent: string[] = [];
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') return fullContent.join('');
+
+      let parsed: any;
+      try {
+        parsed = JSON.parse(data);
+      } catch {
+        continue; // ignore malformed chunks
+      }
+      if (parsed.error) throw new Error(parsed.error);
+      if (parsed.content) {
+        fullContent.push(parsed.content);
+        onToken(parsed.content);
+      }
+    }
+  }
+
+  return fullContent.join('');
+};
 
 export const useOpenAIStream = () => {
-  const { apiKeys } = useApiStore();
-
   const streamChat = async (
-    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+    messages: ChatMessage[],
     onChunk: (chunk: string) => void,
     onComplete: () => void,
     onError: (error: Error) => void,
-    model: string = 'gpt-4o'
+    model?: string
   ) => {
-    if (!apiKeys.openai) {
-      onError(new Error('OpenAI API key is not set'));
-      return;
-    }
-
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKeys.openai}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: true,
-          max_tokens: 1000,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get response reader');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              onComplete();
-              return;
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                onChunk(content);
-              }
-            } catch (e) {
-              // Ignore parsing errors for incomplete chunks
-            }
-          }
-        }
-      }
-
+      await streamPrompt(messagesToPrompt(messages), onChunk, model);
       onComplete();
     } catch (error) {
       onError(error as Error);
@@ -83,79 +83,9 @@ export const useOpenAIStream = () => {
     userMessage: string,
     systemPrompt: string,
     onToken: (token: string) => void,
-    model: string = 'gpt-4o'
-  ): Promise<string> => {
-    if (!apiKeys.openai) {
-      throw new Error('OpenAI API key is not set');
-    }
-
-    const fullContent: string[] = [];
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKeys.openai}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          stream: true,
-          max_tokens: 2000,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get response reader');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return fullContent.join('');
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                fullContent.push(content);
-                onToken(content);
-              }
-            } catch (e) {
-              // Ignore parsing errors for incomplete chunks
-            }
-          }
-        }
-      }
-
-      return fullContent.join('');
-    } catch (error) {
-      throw error;
-    }
-  };
+    model?: string
+  ): Promise<string> =>
+    streamPrompt(messagesToPrompt([{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }]), onToken, model);
 
   return { streamChat, streamChatCompletion };
 };

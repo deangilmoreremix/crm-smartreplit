@@ -38,7 +38,6 @@ interface GenerateResponse {
 
 class OpenAIService {
   private apiKey: string;
-  private baseUrl: string = 'https://api.openai.com/v1';
   private defaultModel: string = 'gpt-4o-mini';
 
   constructor(apiKey?: string) {

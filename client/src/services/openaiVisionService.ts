@@ -1,49 +1,15 @@
-import { useApiStore } from '../store/apiStore';
+import { aiAdvanced } from './aiToolsApiService';
 
+/**
+ * Vision analysis via the server (POST /api/ai/vision/analyze).
+ * No API keys are handled in the browser.
+ */
 export const useOpenAIVision = () => {
-  const { apiKeys } = useApiStore();
-
   const analyzeImage = async (imageUrl: string, prompt: string = "What's in this image?") => {
-    if (!apiKeys.openai) {
-      throw new Error('OpenAI API key is not set');
-    }
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKeys.openai}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: imageUrl,
-                  },
-                },
-              ],
-            },
-          ],
-          max_tokens: 300,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content || 'Unable to analyze image';
-    } catch (error) {
-      throw error;
-    }
+    const data = await aiAdvanced.analyzeImage(imageUrl, prompt);
+    const analysis = data?.analysis;
+    const text = typeof analysis === 'string' ? analysis : analysis?.analysis;
+    return (text as string) || 'Unable to analyze image';
   };
 
   const analyzeImageFile = async (file: File, prompt: string = "What's in this image?") => {

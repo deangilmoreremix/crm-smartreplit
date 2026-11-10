@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOpenAIStream } from '../../services/openaiStreamService';
+import { SELECTABLE_MODELS, DEFAULT_MODEL } from '@shared/aiModels';
 import { Send, User, Bot, RefreshCw, Clock, Copy, Check, X, Zap, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,12 +22,7 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
   systemPrompt = 'You are an AI sales assistant helping with CRM tasks, sales strategies, and customer communication.',
   initialMessage = "Hello! I'm your AI sales assistant. How can I help you today?",
   placeholder = 'Type your message here...',
-  modelOptions = [
-    { value: 'gpt-4o', label: 'GPT-4o' },
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-    { value: 'gemma-2-27b-it', label: 'Gemma 2 27B' },
-    { value: 'gemma-2-9b-it', label: 'Gemma 2 9B' },
-  ],
+  modelOptions = SELECTABLE_MODELS.map((m) => ({ value: m.id, label: m.label })),
 }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -39,7 +35,7 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
 
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_MODEL);
   const [showSettings, setShowSettings] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState<'normal' | 'faster' | 'instant'>('normal');
@@ -338,7 +334,7 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
             <span>Responses stream in real-time</span>
           </div>
           <span className="text-indigo-600">
-            {selectedModel.includes('gemini') ? 'Powered by Gemini AI' : 'Powered by OpenAI'}
+            Powered by OpenAI
           </span>
         </div>
       </div>

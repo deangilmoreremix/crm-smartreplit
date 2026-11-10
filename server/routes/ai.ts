@@ -17,7 +17,7 @@ import {
   respondText,
   respondWithTools,
 } from '../services/openaiClient';
-import { tierModel } from '../../shared/aiModels';
+import { tierModel, SELECTABLE_MODELS } from '../../shared/aiModels';
 
 // Google AI interface
 interface GoogleAIResponse {
@@ -596,7 +596,9 @@ export function registerAIRoutes(app: Express) {
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const { prompt, temperature = 0.4, max_output_tokens = 2048 } = req.body;
+        const { prompt, model: requestedModel, temperature = 0.4, max_output_tokens = 2048 } = req.body;
+        // Only allow known models from the selector; otherwise use the user's saved model / default tier.
+        const selectedModel = SELECTABLE_MODELS.find((m) => m.id === requestedModel)?.id;
 
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -613,7 +615,7 @@ export function registerAIRoutes(app: Express) {
 
         for await (const ev of respondStream({
           client: openaiData.client,
-          model: openaiData.model ?? undefined,
+          model: selectedModel ?? openaiData.model ?? undefined,
           tier: 'default',
           input: prompt,
           effort: 'none',
