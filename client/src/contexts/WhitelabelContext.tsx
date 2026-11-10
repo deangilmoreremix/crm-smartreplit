@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { fetchBrandingForHost, fetchOwnBranding, saveOwnBranding } from '../services/whitelabelService';
 import {
   WhitelabelConfig,
   WhitelabelContextType,
@@ -98,6 +99,48 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       loadFromUrl(urlParams);
     }
   }, []);
+
+  // Hydrate from Supabase: custom-domain branding (read-only for visitors) or the
+  // signed-in owner's saved branding. localStorage stays as an offline cache.
+  const hydratedRef = useRef(false);
+  const skipNextRemoteSaveRef = useRef(false);
+  const readOnlyRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const hostBranding = await fetchBrandingForHost(window.location.hostname);
+        const remote = hostBranding ?? (await fetchOwnBranding());
+        if (cancelled) return;
+        readOnlyRef.current = !!hostBranding;
+        if (remote) {
+          skipNextRemoteSaveRef.current = true;
+          setConfig(sanitiseWhitelabelConfig(remote as Record<string, unknown>, DEFAULT_WHITELABEL_CONFIG));
+        }
+      } catch (error) {
+        console.warn('[WhitelabelContext] remote branding load failed:', error);
+      } finally {
+        if (!cancelled) hydratedRef.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Debounced save to Supabase after the user changes branding (not for custom-domain visitors)
+  useEffect(() => {
+    if (!hydratedRef.current || readOnlyRef.current) return;
+    if (skipNextRemoteSaveRef.current) {
+      skipNextRemoteSaveRef.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      saveOwnBranding(config);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [config]);
 
   // Save to localStorage whenever config changes
   useEffect(() => {
@@ -417,6 +460,12 @@ export const WhitelabelProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     root.style.setProperty('--wl-primary-color', config.primaryColor);
     root.style.setProperty('--wl-secondary-color', config.secondaryColor);
   }, [config.primaryColor, config.secondaryColor]);
+
+  // Re-apply font and custom CSS whenever config changes (including on load)
+  useEffect(() => {
+    if (config.fontFamily) setThemeFontFamily(config.fontFamily);
+    if (config.customCss) injectCustomCSS(config.customCss);
+  }, [config.fontFamily, config.customCss]);
 
   const applyTheme = useCallback((variables: Record<string, string>, smooth: boolean = true) => {
     const root = document.documentElement;

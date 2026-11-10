@@ -142,7 +142,10 @@ const WhiteLabelCustomization: React.FC = () => {
       const { supabase } = await import('../lib/supabase');
       const fileExt = file.name.split('.').pop();
       const fileName = `logo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      const filePath = `whitelabel/${fileName}`;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user.id;
+      if (!uid) throw new Error('Sign in to upload a logo');
+      const filePath = `${uid}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('whitelabel-assets')
