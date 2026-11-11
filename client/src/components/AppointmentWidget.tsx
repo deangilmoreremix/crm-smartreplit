@@ -1,24 +1,48 @@
 import React from 'react';
 import { useAppointmentStore } from '../store/appointmentStore';
-import { Calendar, Clock, Video, Phone, MoreHorizontal, Plus } from 'lucide-react';
+import type { Appointment, AppointmentType } from '../store/appointmentStore';
+import { Calendar, Clock, Video, Phone, MapPin, MoreHorizontal, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import SampleBadge from './SampleBadge';
 
 interface AppointmentWidgetProps {
   limit?: number;
 }
+
+/** Scheduled appointments that start after `now`, soonest first. */
+export function selectUpcomingAppointments(
+  appointments: Record<string, Appointment>,
+  limit: number,
+  now: number = Date.now()
+): Appointment[] {
+  return Object.values(appointments)
+    .filter((apt) => apt.status === 'scheduled' && new Date(apt.date).getTime() > now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, limit);
+}
+
+const TYPE_ICON: Record<AppointmentType, typeof Video> = {
+  video: Video,
+  phone: Phone,
+  'in-person': MapPin,
+};
+
+const TYPE_COLOR: Record<AppointmentType, string> = {
+  video: 'text-green-500 bg-green-500/20',
+  phone: 'text-blue-500 bg-blue-500/20',
+  'in-person': 'text-purple-500 bg-purple-500/20',
+};
 
 const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
   const { appointments } = useAppointmentStore();
   const { isDark } = useTheme();
   const navigate = useNavigate();
 
-  const upcomingAppointments = Object.values(appointments)
-    .filter((apt) => apt.status === 'scheduled' && apt.startTime > new Date())
-    .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
-    .slice(0, limit);
+  const upcomingAppointments = selectUpcomingAppointments(appointments, limit);
 
-  const formatDateTime = (date: Date) => {
+  const formatDateTime = (value: Date) => {
+    const date = new Date(value);
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
@@ -41,102 +65,82 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
     return `${dateStr} at ${timeStr}`;
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'call':
-        return Phone;
-      case 'demo':
-      case 'meeting':
-      case 'presentation':
-      default:
-        return Video;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'call':
-        return 'text-blue-400 bg-blue-500/20';
-      case 'demo':
-        return 'text-green-400 bg-green-500/20';
-      case 'presentation':
-        return 'text-purple-400 bg-purple-500/20';
-      default:
-        return 'text-gray-400 bg-gray-500/20';
-    }
-  };
+  const strong = isDark ? 'text-white' : 'text-gray-900';
+  const muted = isDark ? 'text-gray-400' : 'text-gray-500';
 
   return (
-    <div className="p-6 relative">
+    <section className="p-6 relative" aria-label="Upcoming appointments">
       {/* Add Appointment Button */}
       <button
-        onClick={() => navigate('/appointments/new')}
+        onClick={() => navigate('/appointments')}
         className={`absolute top-4 right-4 p-1 rounded-full ${
           isDark
             ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400'
             : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
         }`}
         title="New appointment"
+        aria-label="New appointment"
       >
         <Plus size={16} />
       </button>
 
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-white flex items-center">
-          <Calendar size={20} className="text-blue-400 mr-2" />
-          Upcoming Appointments
-        </h2>
-        {upcomingAppointments.length > 0 && (
-          <span className="text-sm text-gray-400">{upcomingAppointments.length} scheduled</span>
-        )}
-      </div>
+      {upcomingAppointments.length > 0 && (
+        <div className="flex items-center justify-between mb-4 pr-8">
+          <span className={`text-sm ${muted}`}>{upcomingAppointments.length} scheduled</span>
+        </div>
+      )}
 
       {upcomingAppointments.length > 0 ? (
         <div className="space-y-3">
           {upcomingAppointments.map((appointment) => {
-            const TypeIcon = getTypeIcon(appointment.type);
+            const TypeIcon = TYPE_ICON[appointment.type] ?? Calendar;
+            const color = TYPE_COLOR[appointment.type] ?? 'text-gray-500 bg-gray-500/20';
 
             return (
               <div
                 key={appointment.id}
-                className="border border-white/10 rounded-lg p-4 hover:bg-white/5 transition-colors group cursor-pointer"
-                onClick={() => navigate(`/appointments/${appointment.id}`)}
+                role="button"
+                tabIndex={0}
+                className={`border rounded-lg p-4 transition-colors group cursor-pointer ${
+                  isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
+                }`}
+                onClick={() => navigate('/appointments')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate('/appointments');
+                  }
+                }}
               >
                 <div className="flex items-start space-x-3">
-                  <div className={`p-2 rounded-lg ${getTypeColor(appointment.type)}`}>
+                  <div className={`p-2 rounded-lg ${color}`}>
                     <TypeIcon size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-white text-sm truncate group-hover:text-green-400 transition-colors">
+                    <h3
+                      className={`font-medium text-sm truncate group-hover:text-green-500 transition-colors ${strong}`}
+                    >
                       {appointment.title}
+                      {appointment.isDemo && <SampleBadge className="ml-2 align-middle" />}
                     </h3>
-                    {appointment.description && (
-                      <p className="text-xs text-gray-400 mt-1 truncate">
-                        {appointment.description}
+                    {(appointment.notes || appointment.contactName) && (
+                      <p className={`text-xs mt-1 truncate ${muted}`}>
+                        {appointment.contactName || appointment.notes}
                       </p>
                     )}
-                    <div className="flex items-center mt-2 text-xs text-gray-400">
+                    <div className={`flex items-center mt-2 text-xs ${muted}`}>
                       <Clock size={12} className="mr-1" />
-                      {formatDateTime(appointment.startTime)}
+                      {formatDateTime(appointment.date)}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        appointment.type === 'demo'
-                          ? 'bg-green-500/20 text-green-400'
-                          : appointment.type === 'call'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : appointment.type === 'presentation'
-                              ? 'bg-purple-500/20 text-purple-400'
-                              : 'bg-gray-500/20 text-gray-400'
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
                       {appointment.type}
                     </span>
-                    <button className="text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
-                      <MoreHorizontal size={14} />
-                    </button>
+                    <MoreHorizontal
+                      size={14}
+                      className={`${muted} opacity-0 group-hover:opacity-100 transition-opacity`}
+                    />
                   </div>
                 </div>
               </div>
@@ -145,17 +149,17 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
         </div>
       ) : (
         <div className="text-center py-10">
-          <Calendar size={32} className="mx-auto text-gray-600 mb-3" />
-          <p className="text-gray-400 mb-3">No upcoming appointments</p>
+          <Calendar size={32} className={`mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+          <p className={`mb-3 ${muted}`}>No upcoming appointments</p>
           <button
-            onClick={() => navigate('/appointments/new')}
+            onClick={() => navigate('/appointments')}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors"
           >
             Schedule Appointment
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

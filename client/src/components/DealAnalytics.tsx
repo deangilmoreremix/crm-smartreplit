@@ -33,12 +33,30 @@ import {
 } from 'lucide-react';
 import Avatar from './ui/Avatar';
 import { getInitials } from '../utils/avatars';
+import {
+  closeTimeOf,
+  computeDealTotals,
+  createdPeriodChange,
+  dealsInPeriod,
+  inWindowBy,
+  isActiveDeal,
+  isLostDeal,
+  isWonDeal,
+  pctChange,
+  pipelineByMonth,
+  quickStats,
+  stageIdOf,
+  toTime,
+  trendSeries,
+} from './dashboard/dealMetrics';
+
+const PERIOD_DAYS = { week: 7, month: 30, quarter: 90 } as const;
 
 interface KPIMetric {
   title: string;
   value: string;
-  change: number;
-  changeType: 'increase' | 'decrease';
+  /** Percent change vs the previous period; null when it cannot be computed (badge hidden). */
+  change: number | null;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
   relatedContacts?: Array<{ id: string; name: string; avatar?: string }>;
@@ -52,13 +70,20 @@ interface PipelineStage {
 }
 
 const DealAnalytics: React.FC = () => {
-  const { deals, getStageValues } = useDealStore();
+  const { deals: allDeals } = useDealStore();
   const { contacts } = useContactStore();
   const { isDark } = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'quarter'>('month');
+  const rangeDays = PERIOD_DAYS[selectedPeriod];
+  const now = React.useMemo(() => Date.now(), [allDeals, selectedPeriod]);
+  // The selected period narrows every figure below (sample deals are always kept).
+  const deals = React.useMemo(() => dealsInPeriod(allDeals, rangeDays, now), [allDeals, rangeDays, now]);
 
-  // Get stage values by calling the getter function
-  const stageValues = getStageValues();
+  const stageValues = React.useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const d of deals) out[stageIdOf(d)] = (out[stageIdOf(d)] ?? 0) + (d.value || 0);
+    return out;
+  }, [deals]);
 
   // Render avatar stack
   const renderAvatarStack = (
@@ -98,15 +123,34 @@ const DealAnalytics: React.FC = () => {
 
   // Calculate KPI metrics
   const calculateKPIs = (): KPIMetric[] => {
-    const dealsArray = deals ? Object.values(deals) : [];
-    const totalRevenue = dealsArray
-      .filter((deal) => deal.stage === 'closed-won')
-      .reduce((sum, deal) => sum + deal.value, 0);
+    const dealsArray = deals;
+    const totals = computeDealTotals(dealsArray);
+    const totalRevenue = totals.wonValue;
     const totalDeals = dealsArray.length;
-    const wonDeals = dealsArray.filter((deal) => deal.stage === 'closed-won').length;
+    const wonDeals = totals.wonCount;
     const conversionRate = totalDeals > 0 ? (wonDeals / totalDeals) * 100 : 0;
     const totalContacts = Object.keys(contacts).length || 0;
-    const avgDealSize = wonDeals > 0 ? totalRevenue / wonDeals : 0;
+    const avgDealSize = totals.avgWonDealSize;
+
+    // Change vs the previous period of the same length (nothing to compare -> null -> hidden)
+    const wonClosed = (offset: number) =>
+      inWindowBy(allDeals.filter(isWonDeal), closeTimeOf, now, rangeDays, offset);
+    const sumOf = (list: typeof allDeals) => list.reduce((s, d) => s + (d.value || 0), 0);
+    const avgOf = (list: typeof allDeals) => (list.length ? sumOf(list) / list.length : null);
+    const revenueChange = pctChange(sumOf(wonClosed(0)), sumOf(wonClosed(rangeDays)));
+    const avgSizeChange = pctChange(avgOf(wonClosed(0)), avgOf(wonClosed(rangeDays)));
+    const conversionChange = createdPeriodChange(
+      allDeals,
+      (c) => (c.length ? (c.filter(isWonDeal).length / c.length) * 100 : null),
+      now,
+      rangeDays
+    );
+    const contactList = Object.values(contacts);
+    const contactCreated = (c: (typeof contactList)[number]) => toTime(c.createdAt);
+    const contactsChange = pctChange(
+      inWindowBy(contactList, contactCreated, now, rangeDays, 0).length,
+      inWindowBy(contactList, contactCreated, now, rangeDays, rangeDays).length
+    );
 
     // Get representative contacts
     const representativeContacts = Object.values(contacts)
@@ -119,7 +163,7 @@ const DealAnalytics: React.FC = () => {
 
     // Get contacts associated with won deals
     const wonDealContacts = dealsArray
-      .filter((deal) => deal.stage === 'closed-won')
+      .filter(isWonDeal)
       .map((deal) => {
         const contact = contacts[deal.contactId];
         return contact
@@ -151,8 +195,7 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Total Revenue',
         value: `$${(totalRevenue / 1000).toFixed(1)}k`,
-        change: 12.5,
-        changeType: 'increase',
+        change: revenueChange,
         icon: DollarSign,
         description: 'Revenue from closed deals',
         relatedContacts: wonDealContacts,
@@ -160,8 +203,7 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Conversion Rate',
         value: `${conversionRate.toFixed(1)}%`,
-        change: 8.2,
-        changeType: 'increase',
+        change: conversionChange,
         icon: Target,
         description: 'Deals won vs total deals',
         relatedContacts: wonDealContacts,
@@ -169,8 +211,7 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Total Contacts',
         value: totalContacts.toString(),
-        change: 15.3,
-        changeType: 'increase',
+        change: contactsChange,
         icon: Users,
         description: 'Active contacts in pipeline',
         relatedContacts: representativeContacts,
@@ -178,8 +219,7 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Avg Deal Size',
         value: `$${(avgDealSize / 1000).toFixed(1)}k`,
-        change: -2.1,
-        changeType: 'decrease',
+        change: avgSizeChange,
         icon: TrendingUp,
         description: 'Average revenue per deal',
         relatedContacts: highValueDealContacts,
@@ -189,78 +229,41 @@ const DealAnalytics: React.FC = () => {
 
   // Calculate deal counts by stage
   const calculateDealCounts = () => {
-    const dealsArray = Object.values(deals);
+    const countOf = (id: string) => deals.filter((deal) => stageIdOf(deal) === id).length;
     return {
-      qualification: dealsArray.filter((deal) => deal.stage === 'qualification').length,
-      proposal: dealsArray.filter((deal) => deal.stage === 'proposal').length,
-      negotiation: dealsArray.filter((deal) => deal.stage === 'negotiation').length,
-      'closed-won': dealsArray.filter((deal) => deal.stage === 'closed-won').length,
-      'closed-lost': dealsArray.filter((deal) => deal.stage === 'closed-lost').length,
+      qualification: countOf('qualification'),
+      proposal: countOf('proposal'),
+      negotiation: countOf('negotiation'),
+      'closed-won': countOf('closed-won'),
+      'closed-lost': countOf('closed-lost'),
     };
   };
 
   // Calculate values by status with representative contacts
   const calculateValuesByStatus = () => {
-    const dealsArray = Object.values(deals);
-
-    // Get active deals with contacts
-    const activeDealsWithContacts = dealsArray
-      .filter((deal) => deal.stage !== 'closed-won' && deal.stage !== 'closed-lost')
-      .map((deal) => ({
-        ...deal,
-        contact: contacts[deal.contactId],
-      }))
-      .filter((deal) => deal.contact)
-      .slice(0, 5);
-
-    // Get won deals with contacts
-    const wonDealsWithContacts = dealsArray
-      .filter((deal) => deal.stage === 'closed-won')
-      .map((deal) => ({
-        ...deal,
-        contact: contacts[deal.contactId],
-      }))
-      .filter((deal) => deal.contact)
-      .slice(0, 5);
-
-    // Get lost deals with contacts
-    const lostDealsWithContacts = dealsArray
-      .filter((deal) => deal.stage === 'closed-lost')
-      .map((deal) => ({
-        ...deal,
-        contact: contacts[deal.contactId],
-      }))
-      .filter((deal) => deal.contact)
-      .slice(0, 5);
+    const withContact = (list: typeof deals) =>
+      list
+        .map((deal) => ({ ...deal, contact: contacts[deal.contactId] }))
+        .filter((deal) => deal.contact)
+        .slice(0, 5);
+    const active = deals.filter(isActiveDeal);
+    const won = deals.filter(isWonDeal);
+    const lost = deals.filter(isLostDeal);
+    const total = (list: typeof deals) => list.reduce((sum, deal) => sum + deal.value, 0);
 
     return {
-      active: dealsArray
-        .filter((deal) => deal.stage !== 'closed-won' && deal.stage !== 'closed-lost')
-        .reduce((sum, deal) => sum + deal.value, 0),
-      won: dealsArray
-        .filter((deal) => deal.stage === 'closed-won')
-        .reduce((sum, deal) => sum + deal.value, 0),
-      lost: dealsArray
-        .filter((deal) => deal.stage === 'closed-lost')
-        .reduce((sum, deal) => sum + deal.value, 0),
-      activeDealsWithContacts,
-      wonDealsWithContacts,
-      lostDealsWithContacts,
+      active: total(active),
+      won: total(won),
+      lost: total(lost),
+      activeDealsWithContacts: withContact(active),
+      wonDealsWithContacts: withContact(won),
+      lostDealsWithContacts: withContact(lost),
     };
   };
 
-  // Generate trend data
-  const generateTrendData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const totalValue = Object.values(deals).reduce((sum, deal) => sum + deal.value, 0);
-
-    return months.map((month, index) => ({
-      month,
-      revenue: Math.floor((totalValue * (0.7 + Math.random() * 0.6)) / 6),
-      deals: Math.floor((Object.keys(deals).length * (0.8 + Math.random() * 0.4)) / 6),
-      pipeline: Math.floor((valuesByStatus.active * (0.6 + Math.random() * 0.8)) / 6),
-    }));
-  };
+  // Deterministic series for the selected period (no random data)
+  const trendData = trendSeries(deals, rangeDays, now);
+  const hasTrendData = trendData.some((p) => p.revenue > 0 || p.deals > 0 || p.pipeline > 0);
 
   // Calculate conversion rates
   const calculateConversionRate = (fromStage: string, toStage: string) => {
@@ -274,7 +277,7 @@ const DealAnalytics: React.FC = () => {
   const kpiMetrics = calculateKPIs();
   const dealCounts = calculateDealCounts();
   const valuesByStatus = calculateValuesByStatus();
-  const trendData = generateTrendData();
+  const stats = quickStats(deals);
 
   // Pipeline stage data with colors
   const pipelineStageData: PipelineStage[] = [
@@ -325,30 +328,27 @@ const DealAnalytics: React.FC = () => {
     count,
   }));
 
-  // Calculate monthly pipeline value
-  const pipelineByMonth: Record<string, number> = {};
-  Object.values(deals).forEach((deal) => {
-    if (deal.stage !== 'closed-won' && deal.stage !== 'closed-lost') {
-      const month = deal.dueDate
-        ? `${deal.dueDate.getFullYear()}-${String(deal.dueDate.getMonth() + 1).padStart(2, '0')}`
-        : 'No date';
-
-      pipelineByMonth[month] = (pipelineByMonth[month] || 0) + deal.value;
-    }
-  });
-
-  const monthlyData = Object.entries(pipelineByMonth)
-    .sort()
-    .map(([month, value]) => ({
-      month: month === 'No date' ? month : month.split('-')[1],
-      value,
-    }));
+  // Open pipeline value by month of expected close (falls back to creation date)
+  const monthlyData = pipelineByMonth(deals);
 
   const conversionRates = {
     qualToProposal: calculateConversionRate('qualification', 'proposal'),
     proposalToNegotiation: calculateConversionRate('proposal', 'negotiation'),
     negotiationToWon: calculateConversionRate('negotiation', 'closed-won'),
   };
+
+  if (allDeals.length === 0) {
+    return (
+      <div
+        data-testid="deal-analytics-empty"
+        className={`rounded-xl border p-8 text-center text-sm ${
+          isDark ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-500'
+        }`}
+      >
+        No deals yet. Add deals to your pipeline to see analytics here.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -384,16 +384,19 @@ const DealAnalytics: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-2">
               <metric.icon className={`h-8 w-8 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <div
-                className={`text-xs px-2 py-1 rounded-full ${
-                  metric.changeType === 'increase'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                }`}
-              >
-                {metric.changeType === 'increase' ? '+' : ''}
-                {metric.change}%
-              </div>
+              {metric.change !== null && (
+                <div
+                  data-testid="deal-kpi-change"
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    metric.change >= 0
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                  }`}
+                >
+                  {metric.change >= 0 ? '+' : ''}
+                  {Math.round(metric.change * 10) / 10}%
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -510,6 +513,14 @@ const DealAnalytics: React.FC = () => {
             </div>
           </div>
           <div className="p-4">
+            {!hasTrendData ? (
+              <div
+                role="status"
+                className={`h-[320px] flex items-center justify-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+              >
+                No deal activity in this period.
+              </div>
+            ) : (
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={trendData}>
                 <CartesianGrid
@@ -566,6 +577,7 @@ const DealAnalytics: React.FC = () => {
                 />
               </LineChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -732,7 +744,7 @@ const DealAnalytics: React.FC = () => {
                   <span
                     className={`text-base font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
                   >
-                    $95k
+                    {stats.topDealValue === null ? '—' : `$${(stats.topDealValue / 1000).toFixed(1)}k`}
                   </span>
                 </div>
               </div>
@@ -745,7 +757,7 @@ const DealAnalytics: React.FC = () => {
                   <span
                     className={`text-base font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
                   >
-                    32 days
+                    {stats.avgDaysToClose === null ? '—' : `${Math.round(stats.avgDaysToClose)} days`}
                   </span>
                 </div>
               </div>
@@ -758,7 +770,7 @@ const DealAnalytics: React.FC = () => {
                   <span
                     className={`text-base font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
                   >
-                    24%
+                    {stats.winRate === null ? '—' : `${Math.round(stats.winRate)}%`}
                   </span>
                 </div>
               </div>

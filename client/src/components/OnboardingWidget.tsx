@@ -9,11 +9,14 @@ import { useOnboarding } from '../hooks/useOnboarding';
 
 export const OnboardingWidget: React.FC = () => {
   const navigate = useNavigate();
-  const { steps, nextStep, progress, markStepCompleted } = useOnboarding();
+  const { steps, nextStep, progress, markStepCompleted, markStepsCompleted } = useOnboarding();
 
   if (steps.length === 0) {
     return null; // All onboarding complete
   }
+
+  // Exclude the highlighted next step from the upcoming list
+  const upcomingSteps = steps.filter((step) => step.id !== nextStep?.id);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -102,11 +105,11 @@ export const OnboardingWidget: React.FC = () => {
         )}
 
         {/* All Remaining Steps */}
-        {steps.length > 1 && (
+        {upcomingSteps.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-blue-900">Upcoming Steps:</h4>
             <div className="space-y-2 max-h-32 overflow-y-auto">
-              {steps.slice(1, 4).map((step) => (
+              {upcomingSteps.slice(0, 3).map((step) => (
                 <div
                   key={step.id}
                   className="flex items-center justify-between p-2 bg-white/50 rounded border border-blue-100"
@@ -120,9 +123,9 @@ export const OnboardingWidget: React.FC = () => {
                   </Badge>
                 </div>
               ))}
-              {steps.length > 4 && (
+              {upcomingSteps.length > 3 && (
                 <div className="text-center text-xs text-blue-600 py-1">
-                  +{steps.length - 4} more steps
+                  +{upcomingSteps.length - 3} more steps
                 </div>
               )}
             </div>
@@ -136,7 +139,7 @@ export const OnboardingWidget: React.FC = () => {
             size="sm"
             onClick={() => {
               // Mark all steps as completed
-              steps.forEach((step) => markStepCompleted(step.id));
+              markStepsCompleted(steps.map((step) => step.id));
             }}
             className="w-full text-blue-600 hover:text-blue-800 hover:bg-blue-100"
           >

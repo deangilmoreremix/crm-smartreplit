@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Brain, Zap, RefreshCw, TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useAITools } from '../../components/AIToolsProvider';
+import { useAITools, type AIToolType } from '../../components/AIToolsProvider';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
-import { aiAssistantService } from '../../services/aiAssistantService';
+import { openAIService } from '../../services/openAIService';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
 
-interface Insight {
+export interface Insight {
   type: 'success' | 'warning' | 'insight';
   title: string;
   description: string;
@@ -18,144 +18,124 @@ interface Insight {
   relatedContacts?: Array<{ id: string; name: string; avatar?: string }>;
 }
 
+type InsightType = Insight['type'];
+
+const TOOL_FOR_TYPE: Record<InsightType, AIToolType> = {
+  success: 'sales-insights',
+  warning: 'live-deal-analysis',
+  insight: 'sales-forecast',
+};
+
+const isClosed = (stageId?: string) => stageId === 'closed-won' || stageId === 'closed-lost';
+
+const extractJson = (text: string): any => {
+  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '');
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start === -1 || end <= start) throw new Error('AI response was not valid JSON');
+    return JSON.parse(cleaned.slice(start, end + 1));
+  }
+};
+
 const AIInsightsPanel = () => {
   const { isDark } = useTheme();
   const { openTool } = useAITools();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
 
+  const dealsArray = Object.values(deals);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiKeysConfigured, setApiKeysConfigured] = useState(true);
+  const [aiInsights, setAiInsights] = useState<Array<Omit<Insight, 'icon' | 'color' | 'bgColor'>>>(
+    []
+  );
 
-  // Create initial insights with the three required categories
-  const createDefaultInsights = (): Insight[] => {
-    // Get contacts for the insights
-    const activeDeals = Object.values(deals).filter(
-      (deal) => deal.stage !== 'closed-won' && deal.stage !== 'closed-lost'
-    );
+  const styleFor = (type: InsightType) =>
+    type === 'success'
+      ? {
+          icon: CheckCircle,
+          color: isDark ? 'text-green-400' : 'text-green-600',
+          bgColor: isDark ? 'bg-green-500/20' : 'bg-green-100',
+        }
+      : type === 'warning'
+        ? {
+            icon: AlertTriangle,
+            color: isDark ? 'text-orange-400' : 'text-orange-600',
+            bgColor: isDark ? 'bg-orange-500/20' : 'bg-orange-100',
+          }
+        : {
+            icon: TrendingUp,
+            color: isDark ? 'text-blue-400' : 'text-blue-600',
+            bgColor: isDark ? 'bg-blue-500/20' : 'bg-blue-100',
+          };
 
-    // High value deals
-    const highValueDeals = activeDeals.filter((deal) => deal.value > 50000);
-    const highValueContacts = highValueDeals
+  const toRelated = (list: typeof dealsArray) =>
+    list
       .map((deal) => {
         const contact = contacts[deal.contactId];
-        return contact
-          ? {
-              id: contact.id,
-              name: contact.name,
-              avatar: contact.avatar,
-            }
-          : null;
+        return contact ? { id: contact.id, name: contact.name, avatar: contact.avatar } : null;
       })
       .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
 
-    // Stalled deals
-    const stalledDeals = activeDeals.filter((deal) => deal.daysInStage && deal.daysInStage > 10);
-    const stalledContacts = stalledDeals
-      .map((deal) => {
-        const contact = contacts[deal.contactId];
-        return contact
-          ? {
-              id: contact.id,
-              name: contact.name,
-              avatar: contact.avatar,
-            }
-          : null;
-      })
-      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
 
-    // High probability deals
-    const highProbDeals = activeDeals.filter((deal) => deal.probability > 70);
-    const highProbContacts = highProbDeals
-      .map((deal) => {
-        const contact = contacts[deal.contactId];
-        return contact
-          ? {
-              id: contact.id,
-              name: contact.name,
-              avatar: contact.avatar,
-            }
-          : null;
-      })
-      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
+  // Counts computed from the real deals; refreshed whenever deals/contacts/theme change.
+  const insights: Insight[] = useMemo(() => {
+    const active = dealsArray.filter((deal) => !isClosed(deal.stage?.id));
+    const highValue = active.filter((deal) => deal.value > 50000);
+    const stalled = active.filter((deal) => deal.daysInStage && deal.daysInStage > 10);
+    const highProb = active.filter((deal) => deal.probability > 70);
+    const activeValue = active.reduce((sum, d) => sum + Number(d.value || 0), 0);
 
     return [
       {
         type: 'success',
-        title: 'Pipeline Health Strong',
-        description:
-          'Your pipeline velocity has increased 23% this month with high-quality leads entering the qualification stage.',
-        icon: CheckCircle,
-        color: isDark ? 'text-green-400' : 'text-green-600',
-        bgColor: isDark ? 'bg-green-500/20' : 'bg-green-100',
-        relatedContacts: highValueContacts,
+        title: 'Pipeline Overview',
+        description: `${active.length} active deals worth $${activeValue.toLocaleString()}; ${highValue.length} above $50,000.`,
+        ...styleFor('success'),
+        relatedContacts: toRelated(highValue),
       },
       {
         type: 'warning',
-        title: 'Deal Risk Alert',
-        description: `${stalledDeals.length} high-value deals show stagnation in negotiation stage. Consider immediate follow-up actions.`,
-        icon: AlertTriangle,
-        color: isDark ? 'text-orange-400' : 'text-orange-600',
-        bgColor: isDark ? 'bg-orange-500/20' : 'bg-orange-100',
-        relatedContacts: stalledContacts,
+        title: 'Stalled Deals',
+        description: `${stalled.length} active deals have been in their stage for more than 10 days.`,
+        ...styleFor('warning'),
+        relatedContacts: toRelated(stalled),
       },
       {
         type: 'insight',
-        title: 'Conversion Opportunity',
-        description: `AI identified ${highProbDeals.length} prospects with 85%+ closing probability. Prioritize these for immediate attention.`,
-        icon: TrendingUp,
-        color: isDark ? 'text-blue-400' : 'text-blue-600',
-        bgColor: isDark ? 'bg-blue-500/20' : 'bg-blue-100',
-        relatedContacts: highProbContacts,
+        title: 'High-Probability Deals',
+        description: `${highProb.length} active deals have a probability above 70%.`,
+        ...styleFor('insight'),
+        relatedContacts: toRelated(highProb),
       },
     ];
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deals, contacts, isDark]);
 
-  const [insights, setInsights] = useState<Insight[]>(createDefaultInsights());
-
-  // DISABLED: Using demo data only, no API calls
-  // useEffect(() => {
-  //   // Generate initial insights when component mounts
-  //   generateInitialInsights();
-  // }, []);
-
-  // When theme changes, regenerate default insights to update colors
+  // AI results describe the deals they were generated from; drop them when the deals change.
+  const dealsSignature = dealsArray.map((d) => `${d.id}:${d.stage?.id}:${d.value}`).join('|');
   useEffect(() => {
-    setInsights(createDefaultInsights());
-  }, [isDark]);
-
-  const generateInitialInsights = async () => {
-    // Only generate if we have enough data
-    if (Object.keys(deals).length < 2 || Object.keys(contacts).length < 2) {
-      return;
-    }
-
-    if (!(await aiAssistantService.isApiKeyConfigured())) {
-      setApiKeysConfigured(false);
-      return;
-    }
-
-    try {
-      await generateRealInsights();
-    } catch (error) {
-      console.error('Failed to generate initial insights:', error);
-      setApiKeysConfigured(false);
-      // Don't set error state for initial load failures
-    }
-  };
+    setAiInsights([]);
+  }, [dealsSignature]);
 
   const generateInsights = async () => {
     setIsGenerating(true);
     setError(null);
-
     try {
       await generateRealInsights();
-    } catch (error) {
-      console.error('Failed to generate insights:', error);
-      // Set a more user-friendly error message
-      setError('Unable to generate AI insights at this time. Please try again later.');
-      setApiKeysConfigured(false);
+    } catch (err) {
+      console.error('Failed to generate insights:', err);
+      const message = err instanceof Error ? err.message : '';
+      setAiInsights([]);
+      setError(
+        /api key/i.test(message)
+          ? 'Add your OpenAI API key in Settings > API Keys to enable AI insights.'
+          : message || 'Unable to generate AI insights. Please try again later.'
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -198,73 +178,54 @@ const AIInsightsPanel = () => {
   };
 
   const generateRealInsights = async () => {
-    if (!(await aiAssistantService.isApiKeyConfigured())) {
-      setError(
-        'OpenAI is not configured on the server. Add an OpenAI API key in Settings.'
-      );
-      setApiKeysConfigured(false);
-      return;
+    if (dealsArray.length === 0) {
+      throw new Error('Add at least one deal to generate AI insights.');
     }
-
-    // Convert to arrays for analysis
-    const dealsArray = Object.values(deals);
-    const contactsArray = Object.values(contacts);
-
-    // Prepare pipeline data for analysis
-    const pipelineData = {
-      deals: dealsArray.map((deal) => ({
-        id: deal.id,
-        title: deal.title,
-        value: deal.value,
-        stage: deal.stage,
-        probability: deal.probability,
-        daysInStage: deal.daysInStage,
-        priority: deal.priority,
-        contactId: deal.contactId,
+    const active = dealsArray.filter((d) => !isClosed(d.stage?.id));
+    const summary = {
+      totalDeals: dealsArray.length,
+      activeDeals: active.length,
+      activePipelineValue: active.reduce((sum, d) => sum + Number(d.value || 0), 0),
+      wonDeals: dealsArray.filter((d) => d.stage?.id === 'closed-won').length,
+      lostDeals: dealsArray.filter((d) => d.stage?.id === 'closed-lost').length,
+      deals: dealsArray.slice(0, 25).map((d) => ({
+        title: d.title,
+        value: d.value,
+        stage: d.stage?.id,
+        probability: d.probability,
+        daysInStage: d.daysInStage,
+        priority: d.priority,
       })),
-      contacts: contactsArray.map((contact) => ({
-        id: contact.id,
-        name: contact.name,
-        company: contact.company,
-        status: contact.status,
-        source: contact.source,
-        tags: contact.tags,
-      })),
-      summary: {
-        activeDealCount: dealsArray.filter(
-          (d) => d.stage !== 'closed-won' && d.stage !== 'closed-lost'
-        ).length,
-        totalPipelineValue: dealsArray
-          .filter((d) => d.stage !== 'closed-won' && d.stage !== 'closed-lost')
-          .reduce((sum, deal) => sum + deal.value, 0),
-        avgDealSize:
-          dealsArray.length > 0
-            ? dealsArray.reduce((sum, deal) => sum + deal.value, 0) / dealsArray.length
-            : 0,
-        hotLeadsCount: contactsArray.filter((c) => c.status === 'hot').length,
-      },
     };
 
-    try {
-      // Use aiAssistantService to analyze pipeline health
-      const response = await aiAssistantService.generatePersonalizedMessage(pipelineData, 'email');
+    const response = await openAIService.generateContent({
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a sales pipeline analyst. Use only the data provided. Respond with JSON only, no markdown.',
+        },
+        {
+          role: 'user',
+          content: `Analyze this pipeline and return JSON: {"insights":[{"type":"success"|"warning"|"insight","title":string,"description":string}]} with 3 to 5 concise insights.\n${JSON.stringify(summary)}`,
+        },
+      ],
+      temperature: 0.3,
+      maxTokens: 700,
+      featureUsed: 'pipeline-insights',
+    });
 
-      // Reset API keys configured flag if we got a successful result
-      setApiKeysConfigured(true);
-
-      // Get default insights
-      const defaultInsights = createDefaultInsights();
-
-      // For now, keep the default insights since the service doesn't have pipeline analysis
-      if (response) {
-        setInsights(defaultInsights);
-      }
-    } catch (error) {
-      console.error('Error generating insights:', error);
-      // Set a more user-friendly error message
-      setError('Unable to generate AI insights at this time. Please try again later.');
-      setApiKeysConfigured(false);
-    }
+    const parsed = extractJson(response.content);
+    const list = Array.isArray(parsed?.insights) ? parsed.insights : [];
+    const valid = list
+      .filter((i: any) => i && typeof i.title === 'string' && typeof i.description === 'string')
+      .map((i: any) => ({
+        type: (['success', 'warning', 'insight'].includes(i.type) ? i.type : 'insight') as InsightType,
+        title: i.title,
+        description: i.description,
+      }));
+    if (valid.length === 0) throw new Error('AI returned no usable insights.');
+    setAiInsights(valid);
   };
 
   return (
@@ -279,9 +240,7 @@ const AIInsightsPanel = () => {
               AI Pipeline Intelligence
             </h2>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              {apiKeysConfigured
-                ? 'Real-time insights powered by AI'
-                : 'Configure API keys to enable AI features'}
+              Pipeline counts from your deals, plus on-demand AI insights
             </p>
           </div>
         </div>
@@ -307,13 +266,9 @@ const AIInsightsPanel = () => {
             <Info className={`h-5 w-5 mt-0.5 ${isDark ? 'text-red-400' : 'text-red-500'}`} />
             <div className="ml-3">
               <h3 className={`text-sm font-medium ${isDark ? 'text-red-300' : 'text-red-800'}`}>
-                AI Service Unavailable
+                AI insights unavailable
               </h3>
-              <p className={`mt-1 text-sm ${isDark ? 'text-red-300' : 'text-red-700'}`}>
-                {error.includes('API key')
-                  ? 'Please configure your AI API keys in the .env file to enable AI insights.'
-                  : error}
-              </p>
+              <p className={`mt-1 text-sm ${isDark ? 'text-red-300' : 'text-red-700'}`}>{error}</p>
             </div>
           </div>
         </div>
@@ -326,17 +281,7 @@ const AIInsightsPanel = () => {
             className={`${
               isDark ? 'bg-white/5' : 'bg-white'
             } rounded-xl p-4 hover:${isDark ? 'bg-white/10' : 'bg-gray-50'} transition-all group cursor-pointer`}
-            onClick={() => {
-              // Open the corresponding AI tool based on insight type
-              const toolMap: Record<string, string> = {
-                success: 'pipeline-analysis',
-                warning: 'deal-alerts',
-                insight: 'smart-insights',
-              };
-
-              const toolName = toolMap[insight.type] || 'ai-insights';
-              openTool(toolName);
-            }}
+            onClick={() => openTool(TOOL_FOR_TYPE[insight.type])}
           >
             <div className="flex items-start space-x-3">
               <div className={`p-2 rounded-lg ${insight.bgColor}`}>
@@ -361,6 +306,38 @@ const AIInsightsPanel = () => {
           </div>
         ))}
       </div>
+      {aiInsights.length > 0 && (
+        <div className="mt-6" data-testid="ai-generated-insights">
+          <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            AI Insights
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {aiInsights.map((insight, index) => {
+              const st = styleFor(insight.type);
+              return (
+                <div
+                  key={index}
+                  className={`${isDark ? 'bg-white/5' : 'bg-white'} rounded-xl p-4 border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className={`p-2 rounded-lg ${st.bgColor}`}>
+                      <st.icon size={16} className={st.color} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        {insight.title}
+                      </h4>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                        {insight.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

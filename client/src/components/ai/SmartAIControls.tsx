@@ -3,6 +3,7 @@ import { useSmartAI, useTaskOptimization } from '../../hooks/useSmartAI';
 import { ModernButton } from '../ui/ModernButton';
 import { GlassCard } from '../ui/GlassCard';
 import { Contact } from '../../types/contact';
+import { useContactStore } from '../../store/contactStore';
 import {
   Brain,
   Zap,
@@ -27,10 +28,29 @@ interface SmartAIControlsProps {
 }
 
 export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
-  contact,
-  contacts = [],
+  contact: contactProp,
+  contacts: contactsProp,
   onAnalysisComplete,
 }) => {
+  // Contact pickers: used when the panels are mounted without contact/contacts props.
+  const { contacts: storeContacts } = useContactStore();
+  const contactPool: Contact[] = Object.values(storeContacts || {});
+  const [pickedContactId, setPickedContactId] = useState('');
+  const [pickedBulkIds, setPickedBulkIds] = useState<string[]>([]);
+
+  // Pickers are only used when mounted without any contact props (props keep priority).
+  const pickerMode = !contactProp && !(contactsProp && contactsProp.length > 0);
+  const contact: Contact | undefined =
+    contactProp ?? (pickerMode ? contactPool.find((c) => c.id === pickedContactId) : undefined);
+  const usePickerForBulk = pickerMode;
+  const contacts: Contact[] = usePickerForBulk
+    ? contactPool.filter((c) => pickedBulkIds.includes(c.id))
+    : (contactsProp ?? []);
+  const showBulk = usePickerForBulk ? contactPool.length > 1 : contacts.length > 1;
+
+  const toggleBulkId = (id: string) =>
+    setPickedBulkIds((ids) => (ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]));
+
   const {
     smartScoreContact,
     smartEnrichContact,
@@ -188,6 +208,35 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
         </GlassCard>
       )}
 
+      {/* Single contact picker (when no contact prop is supplied) */}
+      {pickerMode && (
+        <GlassCard className="p-4">
+          <label
+            htmlFor="smart-ai-contact-picker"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Contact to analyze
+          </label>
+          {contactPool.length === 0 ? (
+            <p className="text-sm text-gray-500">No contacts available yet.</p>
+          ) : (
+            <select
+              id="smart-ai-contact-picker"
+              value={pickedContactId}
+              onChange={(e) => setPickedContactId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Select a contact...</option>
+              {contactPool.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </GlassCard>
+      )}
+
       {/* Single Contact Analysis */}
       {contact && (
         <GlassCard className="p-6">
@@ -330,12 +379,28 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
       )}
 
       {/* Bulk Analysis */}
-      {contacts.length > 1 && (
+      {showBulk && (
         <GlassCard className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <Layers className="w-5 h-5 mr-2 text-green-600" />
             Smart Bulk Analysis ({contacts.length} contacts)
           </h3>
+
+          {usePickerForBulk && (
+            <fieldset className="mb-4 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2">
+              <legend className="text-sm font-medium text-gray-700 px-1">Select contacts</legend>
+              {contactPool.map((c) => (
+                <label key={c.id} className="flex items-center gap-2 text-sm py-0.5">
+                  <input
+                    type="checkbox"
+                    checked={pickedBulkIds.includes(c.id)}
+                    onChange={() => toggleBulkId(c.id)}
+                  />
+                  {c.name}
+                </label>
+              ))}
+            </fieldset>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Analysis Type */}
@@ -405,6 +470,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
                 setIsProcessing(false);
               }}
               loading={isProcessing}
+              disabled={contacts.length === 0}
               className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600"
             >
               <Zap className="w-4 h-4" />
@@ -427,6 +493,7 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
                 setIsProcessing(false);
               }}
               loading={isProcessing}
+              disabled={contacts.length === 0}
               className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-blue-600"
             >
               <Layers className="w-4 h-4" />

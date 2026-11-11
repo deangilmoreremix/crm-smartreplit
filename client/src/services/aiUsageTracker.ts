@@ -290,6 +290,14 @@ class AIUsageTracker {
   }
 
   /**
+   * Read-only: usage records (from memory, else localStorage `ai_usage_history`) since a date.
+   */
+  getRecordsSince(since: Date): UsageRecord[] {
+    if (this.usageHistory.length === 0) this.loadFromStorage();
+    return this.usageHistory.filter((r) => r.timestamp.getTime() >= since.getTime());
+  }
+
+  /**
    * Clear all usage data
    */
   clearUsageData(): void {

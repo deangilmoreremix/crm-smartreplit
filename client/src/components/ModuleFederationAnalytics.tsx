@@ -18,17 +18,30 @@ if (import.meta.env.DEV) {
   });
 }
 
-// Local fallback component
-const LocalAnalyticsFallback: React.FC = () => {
+// Fallback card shown when the remote is disabled or failed to load
+const LocalAnalyticsFallback: React.FC<{ onRetry: () => void }> = ({ onRetry }) => {
   return (
     <div className="w-full h-full bg-gray-50 dark:bg-gray-900 p-6 overflow-auto">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Analytics Module Unavailable</p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-            Module Federation is disabled or remote module failed to load
-          </p>
+      <div className="max-w-md mx-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-center">
+        <p className="text-gray-900 dark:text-white font-semibold">Analytics Module Unavailable</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          The analytics module is disabled or failed to load.
+        </p>
+        <div className="mt-4 flex justify-center gap-2">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Retry
+          </button>
+          <button
+            type="button"
+            onClick={() => window.open(ANALYTICS_REMOTE_URL, '_blank', 'noopener,noreferrer')}
+            className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Open in new tab
+          </button>
         </div>
       </div>
     </div>
@@ -42,6 +55,8 @@ interface ModuleFederationAnalyticsProps {
 const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({
   showHeader = false,
 }) => {
+  // Hooks must run on every render, before any early return.
+  const sharedData = useSharedModuleState((state) => state.sharedData);
   const {
     component: RemoteAnalyticsApp,
     loading,
@@ -53,7 +68,7 @@ const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({
   );
 
   if (!ENABLE_MFE || error) {
-    return <LocalAnalyticsFallback />;
+    return <LocalAnalyticsFallback onRetry={() => window.location.reload()} />;
   }
 
   if (loading || !RemoteAnalyticsApp) {
@@ -67,7 +82,6 @@ const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({
     );
   }
 
-  const sharedData = useSharedModuleState((state) => state.sharedData);
   const AnalyticsApp = RemoteAnalyticsApp as React.ComponentType<any>;
 
   return (

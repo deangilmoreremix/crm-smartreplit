@@ -176,6 +176,48 @@ export function mergePerformance(real: PerformancePoint[], demo: PerformancePoin
   return [...out.values()];
 }
 
+/**
+ * Lay sample values (oldest first) onto the real bucket labels, aligned to the newest bucket, so
+ * the sample series uses exactly the buckets `performanceSeries` produced for the selected range.
+ * Extra sample values are dropped; buckets without a sample value get none.
+ */
+export function alignPerformance(
+  real: PerformancePoint[],
+  demo: Array<{ revenue: number; deals: number }>
+): PerformancePoint[] {
+  const n = Math.min(real.length, demo.length);
+  const offset = real.length - n;
+  const tail = demo.slice(demo.length - n);
+  return tail.map((d, i) => ({ name: real[offset + i].name, revenue: d.revenue, deals: d.deals }));
+}
+
+/** Fill unknown (null) real KPI values from the sample ones; known real values always win. */
+export function mergeKpis(real: SalesKpis, demo: SalesKpis): SalesKpis {
+  return {
+    conversionRate: real.conversionRate ?? demo.conversionRate,
+    avgDealSize: real.avgDealSize ?? demo.avgDealSize,
+    salesCycleDays: real.salesCycleDays ?? demo.salesCycleDays,
+    winRate: real.winRate ?? demo.winRate,
+  };
+}
+
+/** KPIs implied by the sample series; values the sample cannot support stay null. */
+export function sampleKpis(
+  performance: Array<{ revenue: number; deals: number }>,
+  breakdown: Array<{ name: string; value: number }>
+): SalesKpis {
+  const revenue = performance.reduce((s, p) => s + p.revenue, 0);
+  const deals = performance.reduce((s, p) => s + p.deals, 0);
+  const total = breakdown.reduce((s, p) => s + p.value, 0);
+  const won = breakdown.find((p) => p.name === 'Closed Won')?.value ?? 0;
+  return {
+    conversionRate: total > 0 ? (won / total) * 100 : null,
+    avgDealSize: deals > 0 ? revenue / deals : null,
+    salesCycleDays: null,
+    winRate: null,
+  };
+}
+
 function mergeNamed<T extends { name: string; value: number }>(real: T[], demo: T[]): T[] {
   const out = new Map<string, T>();
   for (const p of [...demo, ...real]) {

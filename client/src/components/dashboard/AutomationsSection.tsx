@@ -18,7 +18,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useLocation } from 'wouter';
+import { useNavigate } from 'react-router-dom';
 
 interface Automation {
   id: string;
@@ -32,7 +32,7 @@ interface Automation {
 
 const AutomationsSection = () => {
   const { isDark } = useTheme();
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     'follow-up' | 'pipeline' | 'relationships' | 'time-savers'
   >('follow-up');
@@ -216,9 +216,17 @@ const AutomationsSection = () => {
     },
   ];
 
+  const isConfigured = (automationId: string) => {
+    try {
+      return localStorage.getItem(`automation-config-${automationId}`) !== null;
+    } catch {
+      return false;
+    }
+  };
+
   const handleAutomationClick = (automationId: string) => {
     // Navigate to automation configuration page
-    setLocation(`/automations/${automationId}`);
+    navigate(`/automations/${automationId}`);
   };
 
   return (
@@ -293,7 +301,9 @@ const AutomationsSection = () => {
             </div>
             <div className="mt-4 flex items-center text-white/60 text-xs">
               <Repeat className="h-3 w-3 mr-1" />
-              <span data-testid={`text-status-${automation.id}`}>Not configured</span>
+              <span data-testid={`text-status-${automation.id}`}>
+                {isConfigured(automation.id) ? 'Configured' : 'Not configured'}
+              </span>
             </div>
           </button>
         ))}

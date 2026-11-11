@@ -37,12 +37,17 @@ export const useOnboarding = () => {
     }
   };
 
-  const markStepCompleted = (stepId: string) => {
-    const newCompleted = new Set(completedSteps);
-    newCompleted.add(stepId);
-    setCompletedSteps(newCompleted);
-    saveCompletedSteps(newCompleted);
+  // Mark several steps in ONE state update (avoids stale-closure overwrites)
+  const markStepsCompleted = (stepIds: string[]) => {
+    setCompletedSteps((prev) => {
+      const next = new Set(prev);
+      stepIds.forEach((id) => next.add(id));
+      saveCompletedSteps(next);
+      return next;
+    });
   };
+
+  const markStepCompleted = (stepId: string) => markStepsCompleted([stepId]);
 
   const getOnboardingSteps = (): OnboardingStep[] => {
     if (!user) return [];
@@ -181,6 +186,7 @@ export const useOnboarding = () => {
     nextStep: getNextStep(),
     progress: getProgress(),
     markStepCompleted,
+    markStepsCompleted,
     resetOnboarding,
     isComplete: getOnboardingSteps().length === 0,
   };

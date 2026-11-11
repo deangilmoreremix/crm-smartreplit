@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { CheckCircle2, Circle, Calendar, Activity as ActivityIcon } from 'lucide-react';
@@ -9,6 +9,7 @@ import {
   mergeUnifiedItems,
   type UnifiedFilter,
   type UnifiedItem,
+  type UnifiedKind,
 } from './UnifiedActivityData';
 
 const FILTERS: { id: UnifiedFilter; label: string }[] = [
@@ -17,6 +18,12 @@ const FILTERS: { id: UnifiedFilter; label: string }[] = [
   { id: 'appointments', label: 'Appointments' },
   { id: 'activity', label: 'Activity' },
 ];
+
+const KIND_LABEL: Record<UnifiedKind, string> = {
+  task: 'tasks',
+  appointment: 'appointments',
+  activity: 'activity',
+};
 
 const KIND_ICON = {
   task: CheckCircle2,
@@ -33,16 +40,24 @@ const UnifiedActivityWidget: React.FC<Props> = ({ limit = 15 }) => {
   const [items, setItems] = useState<UnifiedItem[]>([]);
   const [filter, setFilter] = useState<UnifiedFilter>('all');
   const [loading, setLoading] = useState(true);
+  const [skipped, setSkipped] = useState<UnifiedKind[]>([]);
+  const mounted = useRef(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await fetchUnifiedItems({ supabase });
+    if (!mounted.current) return;
     setItems(res.items);
+    setSkipped(res.skipped);
     setLoading(false);
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     load();
+    return () => {
+      mounted.current = false;
+    };
   }, [load]);
 
   const visible = useMemo(() => mergeUnifiedItems(items, { filter, limit }), [items, filter, limit]);
@@ -78,6 +93,23 @@ const UnifiedActivityWidget: React.FC<Props> = ({ limit = 15 }) => {
           ))}
         </div>
       </div>
+
+      {!loading && skipped.length > 0 && (
+        <div
+          role="status"
+          data-testid="unified-skipped"
+          className="mb-3 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+        >
+          <span>Could not load {skipped.map((k) => KIND_LABEL[k]).join(', ')}.</span>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="font-medium underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-sm text-gray-500">Loading...</p>

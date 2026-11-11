@@ -31,12 +31,18 @@ vi.mock('../../../services/openai-batch-api.service', () => ({
   batchAPIService: { enrichContactsBulk: vi.fn() },
 }));
 
+const store = vi.hoisted(() => ({ contacts: {} as Record<string, any> }));
+vi.mock('../../../store/contactStore', () => ({
+  useContactStore: () => ({ contacts: store.contacts }),
+}));
+
 const contact = { id: 'ct-1', name: 'Ada Lovelace' } as any;
 
 describe('SmartAIControls', () => {
   beforeEach(() => {
     smartScoreContact.mockReset();
     smartQualifyLead.mockReset();
+    store.contacts = {};
   });
 
   it('renders nothing actionable without a contact or contacts', () => {
@@ -78,6 +84,34 @@ describe('SmartAIControls', () => {
     const { rerender } = render(<SmartAIControls contacts={[contact]} />);
     expect(screen.queryByText(/Smart Bulk Analysis/)).not.toBeInTheDocument();
     rerender(<SmartAIControls contacts={[contact, { id: 'ct-2', name: 'Grace' } as any]} />);
+    expect(screen.getByText('Smart Bulk Analysis (2 contacts)')).toBeInTheDocument();
+  });
+
+  it('lets the user pick a contact from the store when no props are passed', async () => {
+    store.contacts = {
+      'ct-1': { id: 'ct-1', name: 'Ada Lovelace' },
+      'ct-2': { id: 'ct-2', name: 'Grace Hopper' },
+    };
+    smartScoreContact.mockResolvedValue({ score: 1 });
+    render(<SmartAIControls />);
+    expect(screen.queryByText(/Smart AI Analysis -/)).not.toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Contact to analyze'), 'ct-2');
+    expect(screen.getByText('Smart AI Analysis - Grace Hopper')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Run Smart Scoring'));
+    await waitFor(() =>
+      expect(smartScoreContact).toHaveBeenCalledWith('ct-2', store.contacts['ct-2'], 'medium')
+    );
+  });
+
+  it('offers a multi-select bulk picker from the store when no contacts prop is passed', async () => {
+    store.contacts = {
+      'ct-1': { id: 'ct-1', name: 'Ada Lovelace' },
+      'ct-2': { id: 'ct-2', name: 'Grace Hopper' },
+    };
+    render(<SmartAIControls />);
+    expect(screen.getByText('Smart Bulk Analysis (0 contacts)')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Ada Lovelace' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Grace Hopper' }));
     expect(screen.getByText('Smart Bulk Analysis (2 contacts)')).toBeInTheDocument();
   });
 });

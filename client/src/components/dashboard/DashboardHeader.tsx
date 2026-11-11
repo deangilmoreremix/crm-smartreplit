@@ -97,14 +97,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           recentActivity
         );
 
-        if (greetingResult.greeting) {
-          setSmartGreeting(greetingResult.greeting);
-        }
+        setSmartGreeting(greetingResult.greeting);
       } catch (error) {
-        console.error('GPT-5 Smart Greeting Error:', error);
-        setSmartGreeting(
-          `Good ${timeOfDay}! Your pipeline looks strong with ${deals.length} deals in progress.`
-        );
+        // No AI greeting available: fall back to the static subtitle (no badge)
+        console.warn('Smart greeting unavailable:', error);
+        setSmartGreeting('');
       } finally {
         isGeneratingRef.current = false;
         setIsLoadingAI(false);
@@ -124,7 +121,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               {title}
             </h1>
-            {(smartGreeting || isLoadingAI) && (
+            {smartGreeting && (
               <div
                 className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs ${
                   isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-600'
@@ -204,7 +201,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </div>
             <div>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Pipeline Value (GPT-5 Analyzed)
+                Pipeline Value
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 ${deals.reduce((sum: number, deal: Deal) => sum + deal.value, 0).toLocaleString()}
@@ -225,7 +222,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </div>
             <div>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                AI Win Probability
+                Win Rate (closed deals)
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {deals.length > 0
@@ -246,10 +243,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </div>
             <div>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                New Customers
+                Total Contacts
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {Object.keys(contacts).length || 34}
+                {Object.keys(contacts).length}
               </div>
             </div>
           </div>

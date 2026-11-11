@@ -2,24 +2,39 @@ import React from 'react';
 import { Target, ChevronRight } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import { useGoalStore } from '../store/goalStore';
 
-interface Goal {
-  id: number;
+const MAX_GOALS = 3;
+
+interface GoalRow {
+  id: string;
   name: string;
   progress: number;
   category: string;
-  daysLeft?: number;
 }
 
 const AIGoalsCard: React.FC = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
 
-  const goals: Goal[] = [
-    { id: 1, name: 'Increase Lead Conversion', progress: 65, category: 'Sales', daysLeft: 12 },
-    { id: 2, name: 'Optimize Email Campaigns', progress: 45, category: 'Marketing', daysLeft: 5 },
-    { id: 3, name: 'Reduce Deal Cycle Time', progress: 80, category: 'Operations' },
-  ];
+  const catalog = useGoalStore((s) => s.goals);
+  const activeExecutions = useGoalStore((s) => s.activeExecutions);
+  const completedGoals = useGoalStore((s) => s.completedGoals);
+  const favoriteGoals = useGoalStore((s) => s.favoriteGoals);
+
+  // Goals the user is working on: running, completed or starred (progress comes from the store).
+  const goals: GoalRow[] = catalog
+    .filter((g) => activeExecutions.has(g.id) || completedGoals.has(g.id) || favoriteGoals.has(g.id))
+    .map((g) => ({
+      id: g.id,
+      name: g.title,
+      category: g.category,
+      progress: Math.round(
+        activeExecutions.get(g.id)?.progress ?? (completedGoals.has(g.id) ? 100 : 0)
+      ),
+    }))
+    .sort((a, b) => Number(activeExecutions.has(b.id)) - Number(activeExecutions.has(a.id)))
+    .slice(0, MAX_GOALS);
 
   const handleViewAll = () => {
     navigate('/ai-goals');
@@ -52,9 +67,26 @@ const AIGoalsCard: React.FC = () => {
       </div>
 
       <div className="p-4 space-y-3">
+        {goals.length === 0 && (
+          <p
+            role="status"
+            className={`text-sm text-center py-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+          >
+            No goals yet. Pick an AI goal to start tracking progress.
+          </p>
+        )}
         {goals.map((goal) => (
           <div
             key={goal.id}
+            role="button"
+            tabIndex={0}
+            onClick={handleViewAll}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleViewAll();
+              }
+            }}
             className={`p-3 rounded-lg ${isDark ? 'bg-gray-800/50 hover:bg-gray-800' : 'bg-gray-50 hover:bg-gray-100'} transition-colors cursor-pointer`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -63,11 +95,6 @@ const AIGoalsCard: React.FC = () => {
                   <h4 className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     {goal.name}
                   </h4>
-                  {goal.daysLeft && (
-                    <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {goal.daysLeft} days left
-                    </span>
-                  )}
                 </div>
                 <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>
                   {goal.category}

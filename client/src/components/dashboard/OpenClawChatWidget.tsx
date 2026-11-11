@@ -5,37 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useContactStore } from '../../hooks/useContactStore';
 import { useDealStore } from '../../store/dealStore';
-
-// Simple OpenClaw service implementation
-class OpenClawService {
-  private baseUrl: string;
-  private apiKey: string;
-
-  constructor(config: { baseUrl: string; apiKey: string }) {
-    this.baseUrl = config.baseUrl;
-    this.apiKey = config.apiKey;
-  }
-
-  async chat({ message, context }: { message: string; context: any }) {
-    const response = await fetch(`${this.baseUrl}/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        message,
-        context,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenClaw API error: ${response.status}`);
-    }
-
-    return await response.json();
-  }
-}
+import { useAIApiKeys } from '../../hooks/useAIApiKeys';
+import { openclawService } from '../../services/openclawService';
 
 interface OpenClawChatWidgetProps {
   className?: string;
@@ -51,6 +22,8 @@ interface ChatMessage {
 export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ className = '' }) => {
   const { contacts } = useContactStore();
   const { deals } = useDealStore();
+  const { apiConfig } = useAIApiKeys();
+  const isConfigured = Boolean(apiConfig?.openclaw?.apiKey?.trim());
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -62,16 +35,9 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Initialize OpenClaw service
-  const openClawService = React.useMemo(() => {
-    return new OpenClawService({
-      baseUrl: process.env.REACT_APP_OPENCLAW_API_URL || 'https://api.openclaw.com',
-      apiKey: process.env.REACT_APP_OPENCLAW_API_KEY || '',
-    });
-  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -82,7 +48,7 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !isConfigured) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -91,6 +57,7 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
       timestamp: new Date(),
     };
 
+    setError(null);
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -119,28 +86,23 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
         currentView: 'dashboard',
       };
 
-      const response = await openClawService.chat({
-        message: userMessage.content,
-        context,
-      });
+      const history = messages
+        .filter((m) => m.id !== 'welcome')
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const reply = await openclawService.sendMessage(userMessage.content, history, context);
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.response,
+        content: reply,
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('OpenClaw chat error:', error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "Sorry, I'm having trouble connecting right now. Please try again later.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setError(error instanceof Error ? error.message : 'Request to OpenClaw failed');
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
@@ -164,6 +126,15 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
         </div>
         <MessageSquare className="w-4 h-4 text-gray-500" />
       </div>
+
+      {!isConfigured && (
+        <div
+          data-testid="openclaw-not-configured"
+          className="px-4 py-2 text-sm text-amber-800 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-200"
+        >
+          OpenClaw is not configured. Add your OpenClaw API key in AI settings to start chatting.
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -198,6 +169,16 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
           </div>
         )}
 
+        {error && (
+          <div
+            role="alert"
+            data-testid="openclaw-chat-error"
+            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
+          >
+            {error}
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -210,10 +191,10 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask me anything about your CRM..."
-            disabled={isLoading}
+            disabled={isLoading || !isConfigured}
             className="flex-1"
           />
-          <Button onClick={handleSendMessage} disabled={!input.trim() || isLoading} size="sm">
+          <Button onClick={handleSendMessage} disabled={!input.trim() || isLoading || !isConfigured} size="sm">
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (

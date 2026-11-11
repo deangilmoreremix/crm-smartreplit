@@ -22,6 +22,7 @@ import AssistantStatusWidget from './ui/AssistantStatusWidget';
 import AIConfigurationStatusWidget from './ui/AIConfigurationStatusWidget';
 import AIProviderSettingsModal from './modals/AIProviderSettingsModal';
 import { OnboardingWidget } from './OnboardingWidget';
+import SectionErrorBoundary from './SectionErrorBoundary';
 import { useAIConfiguration } from '../contexts/AIConfigurationContext';
 import OpenClawStatusBanner from './OpenClawStatusBanner';
 import { useAIApiKeys } from '../hooks/useAIApiKeys';
@@ -33,6 +34,8 @@ import AISmartFeaturesHub from './sections/AISmartFeaturesHub';
 import SalesPipelineDealAnalytics from './sections/SalesPipelineDealAnalytics';
 import CustomerLeadManagement from './sections/CustomerLeadManagement';
 import ActivitiesCommunications from './sections/ActivitiesCommunications';
+import ContactsSection from './sections/ContactsSection';
+import TasksListSection from './sections/TasksListSection';
 import IntegrationsSystem from './sections/IntegrationsSystem';
 
 // Keep legacy components for backward compatibility
@@ -50,6 +53,12 @@ import KPICards from './dashboard/KPICards';
 import QuickActions from './dashboard/QuickActions';
 import AutomationsSection from './dashboard/AutomationsSection';
 
+const OpenClawChatWidget = React.lazy(() =>
+  import('./dashboard/OpenClawChatWidget').then((module) => ({
+    default: module.OpenClawChatWidget,
+  }))
+);
+
 // GPT-5 Enhanced Components
 import GPT5AnalyticsPanel from './dashboard/GPT5AnalyticsPanel';
 import GPT5DealIntelligence from './dashboard/GPT5DealIntelligence';
@@ -66,7 +75,7 @@ const SIZE_CLASS = { compact: 'max-w-3xl', normal: '', wide: 'lg:-mx-2 xl:-mx-4'
 
 // Memo Dashboard component to prevent unnecessary re-renders
 const Dashboard: React.FC = React.memo(() => {
-  const { deals, fetchDeals, isLoading } = useDealStore();
+  const { deals, fetchDeals, isLoading, error: dealsError } = useDealStore();
 
   const { contacts, fetchContacts, isLoading: contactsLoading } = useContactStore();
 
@@ -81,8 +90,7 @@ const Dashboard: React.FC = React.memo(() => {
 
   // Prevent repeated data fetching by using a ref to track initialization
   const initializedRef = useRef(false);
-  const [dashboardError, setDashboardError] = React.useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = React.useState(false);
+  const [dismissedDealsError, setDismissedDealsError] = React.useState<string | null>(null);
   const [showOpenClawBanner, setShowOpenClawBanner] = React.useState(true);
   const [showOpenClawSettings, setShowOpenClawSettings] = React.useState(false);
   const { showAIProviderModal, setShowAIProviderModal } = useAIConfiguration();
@@ -90,79 +98,35 @@ const Dashboard: React.FC = React.memo(() => {
   const hasOpenClawKey = Boolean(openclawConfig?.openclaw?.apiKey?.trim());
 
   useEffect(() => {
-    // Only fetch data once
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    // Render immediately; load data in the background (sections show their own loading states)
+    fetchDeals().catch((error: unknown) => console.warn('Failed to fetch deals:', error));
 
-    const initializeDashboard = async () => {
-      try {
-        // Fetch deals immediately - they're fast
-        await fetchDeals();
+    const contactsTimer = window.setTimeout(() => {
+      Promise.resolve(fetchContacts()).catch((error: unknown) =>
+        console.warn('Failed to fetch contacts:', error)
+      );
+    }, 100);
 
-        // Fetch contacts in background without blocking dashboard
-        setTimeout(async () => {
-          try {
-            await fetchContacts();
-          } catch (error) {
-            console.warn('Failed to fetch contacts:', error);
-          }
-        }, 100);
+    const appointmentsTimer = window.setTimeout(() => {
+      Promise.resolve(fetchAppointments()).catch((error: unknown) =>
+        console.warn('Failed to fetch appointments:', error)
+      );
+    }, 200);
 
-        // Wrap in try/catch to prevent errors from breaking the app
-        setTimeout(async () => {
-          try {
-            await fetchAppointments();
-          } catch (error) {
-            console.warn('Failed to fetch appointments:', error);
-          }
-        }, 200);
-
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Dashboard initialization error:', error);
-        setDashboardError('Failed to load dashboard data');
-        setIsInitialized(true); // Still show dashboard with error
-      }
-    };
-
-    initializeDashboard();
-
-    // Set up timer to refresh data periodically
+    // Refresh every 5 minutes; cleanup clears it so StrictMode's second effect run re-creates it
     const intervalId = window.setInterval(() => {
-      try {
-        fetchDeals();
-        fetchContacts();
-      } catch (error) {
-        console.warn('Periodic data refresh failed:', error);
-      }
-    }, 300000); // Refresh every 5 minutes
+      fetchDeals().catch((error: unknown) => console.warn('Periodic deals refresh failed:', error));
+      Promise.resolve(fetchContacts()).catch((error: unknown) =>
+        console.warn('Periodic contacts refresh failed:', error)
+      );
+    }, 300000);
 
-    // Proper cleanup
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.clearTimeout(contactsTimer);
+      window.clearTimeout(appointmentsTimer);
+      window.clearInterval(intervalId);
+    };
   }, []);
-
-  // Show loading state while initializing
-  if (!isInitialized) {
-    return (
-      <main className="w-full h-full flex items-center justify-center px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-            Loading Dashboard
-          </h2>
-          <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Initializing your CRM...
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  // Log error but don't block the dashboard
-  if (dashboardError) {
-    console.warn('Dashboard warning:', dashboardError);
-    // Continue rendering the dashboard instead of blocking it
-  }
 
   // Render section content based on section ID
   const renderSectionContent = (sectionId: string) => {
@@ -225,27 +189,20 @@ const Dashboard: React.FC = React.memo(() => {
         return <AIInsightsPanel />;
 
       case 'openclaw-chat-section':
-        return React.createElement(() => {
-          const OpenClawChatWidget = React.lazy(() =>
-            import('./dashboard/OpenClawChatWidget').then((module) => ({
-              default: module.OpenClawChatWidget,
-            }))
-          );
-          return (
-            <React.Suspense
-              fallback={
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    OpenClaw AI Assistant
-                  </h3>
-                  <LoadingSpinner message="Loading AI assistant..." size="sm" />
-                </div>
-              }
-            >
-              <OpenClawChatWidget />
-            </React.Suspense>
-          );
-        });
+        return (
+          <React.Suspense
+            fallback={
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  OpenClaw AI Assistant
+                </h3>
+                <LoadingSpinner message="Loading AI assistant..." size="sm" />
+              </div>
+            }
+          >
+            <OpenClawChatWidget />
+          </React.Suspense>
+        );
 
       case 'gpt5-analytics-section':
         return <GPT5AnalyticsPanel />;
@@ -310,12 +267,7 @@ const Dashboard: React.FC = React.memo(() => {
 
       case 'contacts-section':
         return (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Contacts & Leads
-            </h3>
-            <LoadingSpinner message="Loading contacts..." size="lg" />
-          </div>
+          <ContactsSection />
         );
 
       case 'pipeline-section':
@@ -341,12 +293,7 @@ const Dashboard: React.FC = React.memo(() => {
 
       case 'tasks-section':
         return (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Tasks & Activities
-            </h3>
-            <LoadingSpinner message="Loading tasks..." size="lg" />
-          </div>
+          <TasksListSection />
         );
 
       case 'white-label-section':
@@ -428,6 +375,33 @@ const Dashboard: React.FC = React.memo(() => {
         </p>
       </div>
 
+      {dealsError && dealsError !== dismissedDealsError && (
+        <div
+          role="alert"
+          data-testid="deals-error-banner"
+          className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200"
+        >
+          <span>{dealsError}</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => fetchDeals().catch(() => undefined)}
+              className="text-sm underline"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => setDismissedDealsError(dealsError)}
+              className="text-sm"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Onboarding Widget - Show for new users */}
       <OnboardingWidget />
 
@@ -450,30 +424,15 @@ const Dashboard: React.FC = React.memo(() => {
       <div className="space-y-8 pb-20">
         {sectionOrder && sectionOrder.length > 0 ? (
           sectionOrder.map((sectionId, index) => {
-            try {
-              return (
-                <DraggableSection key={sectionId} sectionId={sectionId} index={index}>
-                  <div id={sectionId} className={SIZE_CLASS[sectionSizes[sectionId] ?? 'normal']}>
+            return (
+              <DraggableSection key={sectionId} sectionId={sectionId} index={index}>
+                <div id={sectionId} className={SIZE_CLASS[sectionSizes[sectionId] ?? 'normal']}>
+                  <SectionErrorBoundary name={sectionId}>
                     {renderSectionContent(sectionId)}
-                  </div>
-                </DraggableSection>
-              );
-            } catch (error) {
-              console.error(`Error rendering section ${sectionId}:`, error);
-              return (
-                <div
-                  key={sectionId}
-                  className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800"
-                >
-                  <h3 className="text-red-800 dark:text-red-200 font-semibold">
-                    Error loading section: {sectionId}
-                  </h3>
-                  <p className="text-red-600 dark:text-red-400 text-sm mt-1">
-                    Check console for details
-                  </p>
+                  </SectionErrorBoundary>
                 </div>
-              );
-            }
+              </DraggableSection>
+            );
           })
         ) : (
           <div className="bg-blue-50 dark:bg-blue-900/20 p-8 rounded-xl border border-blue-200 dark:border-blue-800">

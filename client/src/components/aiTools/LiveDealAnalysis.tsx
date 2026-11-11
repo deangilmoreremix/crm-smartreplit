@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import openAIService from '../../services/openAIService';
 import { Deal } from '../../types';
+import { useDealStore } from '../../store/dealStore';
 import {
   BarChart3,
   DollarSign,
@@ -36,10 +37,30 @@ interface LiveDealAnalysisProps {
   onAnalysisComplete?: (analysis: any) => void;
 }
 
+const toIso = (d: unknown): string | undefined => {
+  if (!d) return undefined;
+  const date = d instanceof Date ? d : new Date(d as string);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
-  deal = sampleDeal,
+  deal: dealProp,
   onAnalysisComplete,
 }) => {
+  // Deal picker: defaults to the first REAL deal, falling back to the sample deal.
+  const realDeals = useDealStore((state) => state.realDeals);
+  const [pickedDealId, setPickedDealId] = useState('');
+  const picked = dealProp ?? realDeals.find((d) => d.id === pickedDealId) ?? realDeals[0];
+  const isSample = !picked;
+  // Store deals carry a stage object; normalise to the stage id string this view uses.
+  const deal: Deal = picked
+    ? ({
+        ...(picked as any),
+        stage: typeof picked.stage === 'string' ? picked.stage : (picked.stage as any)?.id ?? '',
+        priority: picked.priority ?? 'medium',
+        probability: picked.probability ?? 0,
+      } as Deal)
+    : sampleDeal;
   // Using server-side OpenAI service for production-ready AI analysis
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +90,8 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
         probability: deal.probability || 0,
         daysInStage: deal.daysInStage || 0,
         priority: deal.priority || 'medium',
-        createdAt: deal.createdAt?.toISOString(),
-        updatedAt: deal.updatedAt?.toISOString(),
+        createdAt: toIso(deal.createdAt),
+        updatedAt: toIso(deal.updatedAt),
       };
 
       const aiAnalysis = await openAIService.generateDealInsights(dealData);
@@ -139,6 +160,44 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Deal picker */}
+      {!dealProp && (
+        <div className="p-4 border-b border-gray-100">
+          {realDeals.length > 0 ? (
+            <>
+              <label
+                htmlFor="live-deal-picker"
+                className="block text-xs font-medium text-gray-600 mb-1"
+              >
+                Deal to analyze
+              </label>
+              <select
+                id="live-deal-picker"
+                value={picked?.id ?? ''}
+                onChange={(e) => {
+                  setPickedDealId(e.target.value);
+                  setAnalysisResults(null);
+                  setError(null);
+                }}
+                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+              >
+                {realDeals.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.title}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : (
+            isSample && (
+              <p data-testid="sample-deal-note" className="text-xs text-gray-500">
+                No deals yet. Analyzing a sample deal.
+              </p>
+            )
+          )}
+        </div>
+      )}
 
       {/* Deal summary */}
       <div className="p-4 border-b border-gray-100 bg-gray-50">

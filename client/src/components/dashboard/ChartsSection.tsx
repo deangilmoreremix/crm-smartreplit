@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useNavigate } from 'react-router-dom';
 import { useWidgetSettings } from './LayoutWidgetSettings';
 import {
   ApiDeal,
@@ -10,11 +9,14 @@ import {
   pipelineByStage,
   valueByStage,
   salesKpis,
-  sliceForRange,
+  alignPerformance,
+  mergeKpis,
+  sampleKpis,
   mergePerformance,
   mergePipeline,
   mergeBreakdown,
 } from './chartData';
+import { useSalesData } from '../../hooks/useSalesData';
 import { useDemoDataSafe } from '../../contexts/DemoDataContext';
 import { DEMO_PERFORMANCE, DEMO_PIPELINE, DEMO_BREAKDOWN } from '../../data/demoData';
 import SampleBadge from '../SampleBadge';
@@ -41,45 +43,6 @@ type ChartMetric = 'performance' | 'pipeline' | 'breakdown';
 const CHART_METRICS: ChartMetric[] = ['performance', 'pipeline', 'breakdown'];
 const TIMEFRAMES = { week: 7, month: 30, quarter: 90 } as const;
 
-interface ApiContact {
-  id: number | string;
-  firstName?: string | null;
-  lastName?: string | null;
-}
-
-export interface SalesData {
-  deals: ApiDeal[];
-  contacts: ApiContact[];
-  loading: boolean;
-  error: string | null;
-}
-
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: 'include' });
-  if (!res.ok) throw new Error(`Request failed (${res.status})`);
-  return res.json() as Promise<T>;
-}
-
-/** Loads deals and contacts from the CRM API (no local/sample data). */
-export function useSalesData(): SalesData {
-  const [state, setState] = React.useState<SalesData>({ deals: [], contacts: [], loading: true, error: null });
-  React.useEffect(() => {
-    let cancelled = false;
-    Promise.all([getJson<ApiDeal[]>('/api/deals'), getJson<ApiContact[]>('/api/contacts').catch(() => [])])
-      .then(([deals, contacts]) => {
-        if (!cancelled) setState({ deals, contacts, loading: false, error: null });
-      })
-      .catch((e) => {
-        if (!cancelled)
-          setState({ deals: [], contacts: [], loading: false, error: e instanceof Error ? e.message : 'Failed to load' });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-  return state;
-}
-
 const fmtMoney = (n: number | null) => (n === null ? '—' : `$${Math.round(n).toLocaleString()}`);
 const fmtPct = (n: number | null) => (n === null ? '—' : `${n.toFixed(1)}%`);
 const fmtDays = (n: number | null) => (n === null ? '—' : `${Math.round(n)} days`);
@@ -87,7 +50,6 @@ const fmtDays = (n: number | null) => (n === null ? '—' : `${Math.round(n)} da
 /** `sectionId` selects which persisted widget settings (range / metric) this chart reads. */
 const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-section' }) => {
   const { isDark } = useTheme();
-  const navigate = useNavigate();
   const { rangeDays, metric, setSettings } = useWidgetSettings(sectionId);
   const activeTab: ChartMetric = CHART_METRICS.includes(metric as ChartMetric)
     ? (metric as ChartMetric)
@@ -97,7 +59,7 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
     (k) => TIMEFRAMES[k] === rangeDays
   ) ?? 'month';
   const setTimeframe = (k: keyof typeof TIMEFRAMES) => setSettings({ rangeDays: TIMEFRAMES[k] });
-  const { deals, contacts, loading, error } = useSalesData();
+  const { deals, contacts, loading, error, refetch } = useSalesData();
   const { showDemoData } = useDemoDataSafe();
   const now = React.useMemo(() => Date.now(), [deals, rangeDays]);
 
@@ -163,7 +125,8 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
   // Sample series are merged with the real aggregates only while demo data is enabled.
   const performanceData = React.useMemo(() => {
     const real = performanceSeries(deals, rangeDays, now);
-    return showDemoData ? mergePerformance(real, sliceForRange(DEMO_PERFORMANCE, rangeDays)) : real;
+    // Sample values are laid onto the same buckets as the real series, then summed per bucket.
+    return showDemoData ? mergePerformance(real, alignPerformance(real, DEMO_PERFORMANCE)) : real;
   }, [deals, rangeDays, now, showDemoData]);
   const pipelineData = React.useMemo(() => {
     const real = pipelineByStage(deals, rangeDays, now);
@@ -173,7 +136,11 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
     const real = valueByStage(deals, rangeDays, now);
     return showDemoData ? mergeBreakdown(real, DEMO_BREAKDOWN) : real;
   }, [deals, rangeDays, now, showDemoData]);
-  const kpis = React.useMemo(() => salesKpis(deals, rangeDays, now), [deals, rangeDays, now]);
+  const kpis = React.useMemo(() => {
+    const real = salesKpis(deals, rangeDays, now);
+    // Sample values only fill KPIs that real data cannot provide yet.
+    return showDemoData ? mergeKpis(real, sampleKpis(DEMO_PERFORMANCE, DEMO_BREAKDOWN)) : real;
+  }, [deals, rangeDays, now, showDemoData]);
 
   const hasData =
     activeTab === 'performance'
@@ -278,11 +245,22 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
               error ? 'text-red-500' : isDark ? 'text-gray-400' : 'text-gray-500'
             }`}
           >
-            {loading
-              ? 'Loading sales data…'
-              : error
-                ? `Could not load sales data: ${error}`
-                : 'No deal data for this period yet.'}
+            {loading ? (
+              'Loading sales data…'
+            ) : error ? (
+              <div className="text-center">
+                <p>{`Could not load sales data: ${error}`}</p>
+                <button
+                  type="button"
+                  onClick={() => void refetch()}
+                  className="mt-3 rounded-lg bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              'No deal data for this period yet.'
+            )}
           </div>
         )}
         {!loading && !error && hasData && activeTab === 'performance' && (

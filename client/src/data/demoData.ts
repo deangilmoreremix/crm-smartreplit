@@ -113,13 +113,19 @@ export const DEMO_DEALS: Deal[] = [
 
 // --- Chart sample series (same shapes as the real aggregates in chartData.ts) ---
 
-export const DEMO_PERFORMANCE: Array<{ name: string; revenue: number; deals: number }> = [
-  { name: 'Jan', revenue: 12000, deals: 8 },
-  { name: 'Feb', revenue: 15000, deals: 10 },
-  { name: 'Mar', revenue: 18000, deals: 12 },
-  { name: 'Apr', revenue: 16000, deals: 9 },
-  { name: 'May', revenue: 21000, deals: 15 },
-  { name: 'Jun', revenue: 19000, deals: 14 },
+/**
+ * Sample revenue / closed-deal counts per time bucket, oldest first. They carry no labels: the
+ * charts lay the trailing values onto the real bucket labels (see alignPerformance in chartData).
+ * 7 values cover the largest bucket count (the daily week view).
+ */
+export const DEMO_PERFORMANCE: Array<{ revenue: number; deals: number }> = [
+  { revenue: 12000, deals: 8 },
+  { revenue: 15000, deals: 10 },
+  { revenue: 18000, deals: 12 },
+  { revenue: 16000, deals: 9 },
+  { revenue: 21000, deals: 15 },
+  { revenue: 19000, deals: 14 },
+  { revenue: 23000, deals: 16 },
 ];
 
 /** Deals per stage (names match chartData's stage labels so real counts sum into them). */
@@ -131,13 +137,12 @@ export const DEMO_PIPELINE: Array<{ name: string; value: number }> = [
   { name: 'Closed Won', value: 30 },
 ];
 
-/** Pipeline value in dollars per category (original sample shares scaled to $1k units). */
+/** Sample pipeline value in dollars per stage (names match chartData's stage labels so real values sum into them). */
 export const DEMO_BREAKDOWN: Array<{ name: string; value: number }> = [
-  { name: 'Software', value: 45000 },
-  { name: 'Services', value: 25000 },
-  { name: 'Hardware', value: 15000 },
-  { name: 'Training', value: 10000 },
-  { name: 'Other', value: 5000 },
+  { name: 'Qualified', value: 25000 },
+  { name: 'Proposal', value: 45000 },
+  { name: 'Negotiation', value: 75000 },
+  { name: 'Closed Won', value: 120000 },
 ];
 
 /** Funnel conversion sample (rate in %, delta = change vs previous period in points). */

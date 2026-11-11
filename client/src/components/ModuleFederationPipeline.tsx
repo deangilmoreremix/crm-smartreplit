@@ -64,6 +64,10 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
 }) => {
   const [retryCount, setRetryCount] = React.useState(0);
   const [isRetrying, setIsRetrying] = React.useState(false);
+  // Hooks must run on every render, before any early return.
+  const sharedData = useSharedModuleState((state) => state.sharedData);
+  // Real deals only: sample/demo deals must never reach a remote.
+  const realDeals = useDealStore((state) => state.realDeals);
 
   const {
     component: RemotePipelineApp,
@@ -138,8 +142,6 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
     );
   }
 
-  const sharedData = useSharedModuleState((state) => state.sharedData);
-  const { deals } = useDealStore();
   const PipelineApp = RemotePipelineApp as React.ComponentType<any>;
 
   return (
@@ -150,7 +152,7 @@ const ModuleFederationPipeline: React.FC<ModuleFederationPipelineProps> = ({
         </div>
       )}
       <div className="flex-1 h-full">
-        <PipelineApp sharedData={sharedData} deals={deals} />
+        <PipelineApp sharedData={sharedData} deals={realDeals} />
       </div>
     </div>
   );

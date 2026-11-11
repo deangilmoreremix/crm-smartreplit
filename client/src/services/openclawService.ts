@@ -374,6 +374,39 @@ class OpenClawService {
   }
 
   /**
+   * Send one chat message through the server route POST /api/openclaw/chat
+   * (body: { message, history, context }). The server uses the user's saved
+   * OpenClaw key. Throws on failure so callers can show a real error state.
+   */
+  async sendMessage(
+    message: string,
+    history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+    context?: Record<string, any>
+  ): Promise<string> {
+    const response = await api.post<any>(
+      `${this.baseEndpoint}/chat`,
+      { message, history, context },
+      { timeout: 60000, retries: 0 }
+    );
+
+    if (!response.success) {
+      throw new Error(response.error || 'OpenClaw request failed');
+    }
+
+    const data = response.data;
+    const reply =
+      (typeof data === 'string' ? data : undefined) ??
+      data?.response ??
+      data?.message ??
+      data?.choices?.[0]?.message?.content;
+
+    if (typeof reply !== 'string' || !reply.trim()) {
+      throw new Error('OpenClaw returned an empty response');
+    }
+    return reply;
+  }
+
+  /**
    * Stream chat responses (for real-time output)
    */
   async *chatStream(

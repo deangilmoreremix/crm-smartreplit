@@ -1,29 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Target, Brain, AlertCircle, TrendingUp, Clock, DollarSign, User, Zap } from 'lucide-react';
+import { Target, Brain, Clock, Zap } from 'lucide-react';
 import { gpt5Service } from '../../services/gpt5Service';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
+import AIStateNotice from './AIStateNotice';
 
 interface DealIntelligence {
   dealId: string;
   dealTitle: string;
-  winProbability: number;
-  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  error?: unknown;
+  /** True when the AI response lacked some fields and values shown are partial. */
+  isEstimate: boolean;
+  winProbability?: number;
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
   keyFactors: string[];
   recommendations: string[];
-  expectedOutcome: string;
-  confidence: number;
-  timeToClose: number; // days
-  valueOptimization: number; // potential additional value
+  expectedOutcome?: string;
+  confidence?: number;
+  timeToClose?: number;
+  valueOptimization?: number;
 }
 
-interface DealInsight {
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  actionable: boolean;
-}
+const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
+
+const strings = (v: unknown): string[] =>
+  Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string' && x.length > 0) : [];
+
+const num = (v: unknown): number | undefined =>
+  typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 
 const GPT5DealIntelligence: React.FC = () => {
   const { isDark } = useTheme();
@@ -33,133 +38,121 @@ const GPT5DealIntelligence: React.FC = () => {
   const [dealIntelligence, setDealIntelligence] = useState<DealIntelligence[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<string | null>(null);
-  const [insights, setInsights] = useState<DealInsight[]>([]);
+  const [topError, setTopError] = useState<unknown>(null);
+  const [retryTick, setRetryTick] = useState(0);
 
-  // Get active deals with contact data
-  const getActiveDealsWithContacts = () => {
-    return Object.values(deals)
-      .filter((deal) => deal.stage !== 'won' && deal.stage !== 'lost')
-      .map((deal) => ({
-        ...deal,
-        contact: contacts[deal.contactId],
-      }))
-      .filter((deal) => deal.contact);
-  };
+  // Active deals; the contact is optional context
+  const activeDeals = useMemo(
+    () =>
+      Object.values(deals)
+        .filter((deal) => deal.stage?.id !== 'closed-won' && deal.stage?.id !== 'closed-lost')
+        .map((deal) => ({ ...deal, contact: contacts[deal.contactId] })),
+    [deals, contacts]
+  );
 
-  // GPT-5 Deal Intelligence Analysis
-  const analyzeDealIntelligence = async () => {
-    const activeDeals = getActiveDealsWithContacts();
-    if (activeDeals.length === 0) return;
+  const signature = JSON.stringify(
+    activeDeals.slice(0, 5).map((d) => [d.id, d.value, d.stage?.id, d.probability, !!d.contact])
+  );
 
-    setIsAnalyzing(true);
-    try {
-      const intelligenceResults = await Promise.all(
-        activeDeals.slice(0, 5).map(async (deal) => {
-          // Analyze top 5 deals
+  useEffect(() => {
+    if (activeDeals.length === 0) {
+      setDealIntelligence([]);
+      setTopError(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setIsAnalyzing(true);
+      const results = await Promise.all(
+        activeDeals.slice(0, 5).map(async (deal): Promise<DealIntelligence> => {
+          const base = { dealId: String(deal.id), dealTitle: deal.title };
           const dealData = {
             id: deal.id,
             title: deal.title,
             value: deal.value,
-            stage: deal.stage,
+            stage: deal.stage?.id,
             probability: deal.probability,
             expectedCloseDate: deal.expectedCloseDate,
             description: deal.description,
           };
-
-          const contactHistory = {
-            contact: deal.contact,
-            industry: deal.contact?.industry,
-            company: deal.contact?.company,
-            position: deal.contact?.position,
-          };
-
-          const marketContext = {
-            industry: deal.contact?.industry || 'general',
-            dealSize: deal.value,
-            competition: 'moderate',
-            timing: 'good',
-          };
+          const contactHistory = deal.contact
+            ? {
+                contact: deal.contact,
+                industry: deal.contact.industry,
+                company: deal.contact.company,
+                position: deal.contact.position,
+              }
+            : {};
+          const marketContext = { dealSize: deal.value, industry: deal.contact?.industry };
 
           try {
-            // Call GPT-5 Expert Deal Intelligence
-            const analysis = await gpt5Service.analyzeDealIntelligence(
+            const a = await gpt5Service.analyzeDealIntelligence(
               dealData,
               contactHistory,
               marketContext
             );
-
+            const risk = typeof a.risk_level === 'string' ? a.risk_level.toLowerCase() : '';
+            const keyFactors = strings(a.key_factors);
+            const recommendations = strings(a.recommendations);
+            const winProbability = num(a.probability_score);
+            const timeToClose = num(a.estimated_close_days);
+            const confidence =
+              a.confidence_level === 'high'
+                ? 0.9
+                : a.confidence_level === 'medium'
+                  ? 0.7
+                  : a.confidence_level === 'low'
+                    ? 0.5
+                    : undefined;
+            const complete =
+              winProbability !== undefined &&
+              RISK_LEVELS.includes(risk) &&
+              keyFactors.length > 0 &&
+              recommendations.length > 0 &&
+              timeToClose !== undefined &&
+              confidence !== undefined;
             return {
-              dealId: deal.id.toString(),
-              dealTitle: deal.title,
-              winProbability: analysis.probability_score || deal.probability || 0,
-              riskLevel: analysis.risk_level || 'medium',
-              keyFactors: analysis.key_factors || ['Stage progression', 'Contact engagement'],
-              recommendations: analysis.recommendations || ['Follow up regularly', 'Schedule demo'],
-              expectedOutcome: analysis.expected_outcome || 'Positive outlook',
-              confidence:
-                analysis.confidence_level === 'high'
-                  ? 0.9
-                  : analysis.confidence_level === 'medium'
-                    ? 0.7
-                    : 0.5,
-              timeToClose: analysis.estimated_close_days || 30,
-              valueOptimization: analysis.value_optimization || 0,
-            } as DealIntelligence;
-          } catch (error) {
-            console.error('Deal analysis error:', error);
-            // Fallback analysis
-            return {
-              dealId: deal.id.toString(),
-              dealTitle: deal.title,
-              winProbability: deal.probability || 50,
-              riskLevel: 'medium' as const,
-              keyFactors: ['Regular follow-up needed', 'Decision timeline unclear'],
-              recommendations: ['Schedule next meeting', 'Confirm budget authority'],
-              expectedOutcome: 'Requires attention',
-              confidence: 0.6,
-              timeToClose: 30,
-              valueOptimization: Number(deal.value) * 0.1,
+              ...base,
+              isEstimate: !complete,
+              winProbability,
+              riskLevel: RISK_LEVELS.includes(risk) ? (risk as DealIntelligence['riskLevel']) : undefined,
+              keyFactors,
+              recommendations,
+              expectedOutcome: typeof a.expected_outcome === 'string' ? a.expected_outcome : undefined,
+              confidence,
+              timeToClose,
+              valueOptimization: num(a.value_optimization),
             };
+          } catch (error) {
+            return { ...base, isEstimate: true, keyFactors: [], recommendations: [], error };
           }
         })
       );
-
-      setDealIntelligence(intelligenceResults);
-
-      // Generate overall insights
-      const overallInsights: DealInsight[] = [
-        {
-          title: 'High-Priority Opportunities',
-          description: `${intelligenceResults.filter((d) => d.winProbability > 70).length} deals show strong win probability`,
-          priority: 'high',
-          actionable: true,
-        },
-        {
-          title: 'Risk Mitigation Required',
-          description: `${intelligenceResults.filter((d) => d.riskLevel === 'high').length} deals need immediate attention`,
-          priority: 'high',
-          actionable: true,
-        },
-        {
-          title: 'Value Optimization Potential',
-          description: `$${intelligenceResults.reduce((sum, d) => sum + d.valueOptimization, 0).toLocaleString()} in additional revenue possible`,
-          priority: 'medium',
-          actionable: true,
-        },
-      ];
-
-      setInsights(overallInsights);
-    } catch (error) {
-      console.error('GPT-5 Deal Intelligence Error:', error);
-    } finally {
+      if (cancelled) return;
+      setDealIntelligence(results);
+      const allFailed = results.length > 0 && results.every((r) => r.error);
+      setTopError(allFailed ? results[0].error : null);
       setIsAnalyzing(false);
-    }
-  };
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // activeDeals is derived from the same inputs captured by `signature`
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature, retryTick]);
 
-  useEffect(() => {
-    const timer = setTimeout(analyzeDealIntelligence, 3000);
-    return () => clearTimeout(timer);
-  }, [deals, contacts]);
+  const analyzed = dealIntelligence.filter((d) => !d.error);
+  const overall = [
+    {
+      title: 'High-Probability Deals',
+      description: `${analyzed.filter((d) => (d.winProbability ?? 0) > 70).length} of ${analyzed.length} analyzed deals have AI win probability above 70%`,
+    },
+    {
+      title: 'High-Risk Deals',
+      description: `${analyzed.filter((d) => d.riskLevel === 'high' || d.riskLevel === 'critical').length} analyzed deals flagged high risk`,
+    },
+  ];
 
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
@@ -183,9 +176,10 @@ const GPT5DealIntelligence: React.FC = () => {
     return isDark ? 'text-red-400' : 'text-red-600';
   };
 
+  const muted = isDark ? 'text-gray-300' : 'text-gray-600';
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div
         className={`p-4 rounded-xl border ${
           isDark
@@ -200,14 +194,13 @@ const GPT5DealIntelligence: React.FC = () => {
             </div>
             <div>
               <h3 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                GPT-5 Deal Intelligence
+                Deal Intelligence
               </h3>
               <p className={`text-sm ${isDark ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                Advanced deal analysis and win probability forecasting
+                AI deal analysis and win probability
               </p>
             </div>
           </div>
-
           {isAnalyzing && (
             <div className="flex items-center gap-2">
               <div className="animate-spin">
@@ -221,41 +214,28 @@ const GPT5DealIntelligence: React.FC = () => {
         </div>
       </div>
 
-      {/* Insights Overview */}
-      {insights.length > 0 && (
-        <div className="grid md:grid-cols-3 gap-4">
-          {insights.map((insight, index) => (
+      {topError != null && (
+        <AIStateNotice error={topError} onRetry={() => setRetryTick((t) => t + 1)} />
+      )}
+
+      {analyzed.length > 0 && (
+        <div className="grid md:grid-cols-2 gap-4">
+          {overall.map((insight) => (
             <div
-              key={index}
+              key={insight.title}
               className={`p-4 rounded-lg border ${
                 isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-white'
               }`}
             >
-              <div className="flex items-center gap-2 mb-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    insight.priority === 'high'
-                      ? isDark
-                        ? 'bg-red-400'
-                        : 'bg-red-500'
-                      : isDark
-                        ? 'bg-yellow-400'
-                        : 'bg-yellow-500'
-                  }`}
-                />
-                <h4 className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {insight.title}
-                </h4>
-              </div>
-              <p className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                {insight.description}
-              </p>
+              <h4 className={`font-medium text-sm mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {insight.title}
+              </h4>
+              <p className={`text-xs ${muted}`}>{insight.description}</p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Deal Intelligence Cards */}
       <div className="space-y-4">
         <h4
           className={`font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
@@ -268,6 +248,7 @@ const GPT5DealIntelligence: React.FC = () => {
           {dealIntelligence.map((intelligence) => (
             <div
               key={intelligence.dealId}
+              data-testid="deal-intel-card"
               className={`p-4 rounded-lg border ${
                 isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-white'
               } hover:shadow-lg transition-shadow cursor-pointer`}
@@ -281,115 +262,111 @@ const GPT5DealIntelligence: React.FC = () => {
                     <h5 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {intelligence.dealTitle}
                     </h5>
-                    <div
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(intelligence.riskLevel)}`}
-                    >
-                      {intelligence.riskLevel} risk
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Target className="h-3 w-3" />
-                      <span
-                        className={`font-medium ${getProbabilityColor(intelligence.winProbability)}`}
+                    {intelligence.riskLevel && (
+                      <div
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskColor(intelligence.riskLevel)}`}
                       >
-                        {intelligence.winProbability}% win probability
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Clock className={`h-3 w-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                      <span className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {intelligence.timeToClose} days to close
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Zap
-                        className={`h-3 w-3 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}
-                      />
-                      <span className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {Math.round(intelligence.confidence * 100)}% confidence
-                      </span>
-                    </div>
+                        {intelligence.riskLevel} risk
+                      </div>
+                    )}
+                    {!intelligence.error && intelligence.isEstimate && (
+                      <div
+                        data-testid="estimate-badge"
+                        className="px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-500"
+                      >
+                        Estimate
+                      </div>
+                    )}
                   </div>
+
+                  {intelligence.error != null ? (
+                    <AIStateNotice error={intelligence.error} />
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-6 text-sm">
+                      {intelligence.winProbability !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <Target className="h-3 w-3" />
+                          <span
+                            className={`font-medium ${getProbabilityColor(intelligence.winProbability)}`}
+                          >
+                            {intelligence.winProbability}% win probability
+                          </span>
+                        </div>
+                      )}
+                      {intelligence.timeToClose !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span className={muted}>{intelligence.timeToClose} days to close</span>
+                        </div>
+                      )}
+                      {intelligence.confidence !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <Zap
+                            className={`h-3 w-3 ${isDark ? 'text-yellow-400' : 'text-yellow-500'}`}
+                          />
+                          <span className={muted}>
+                            {Math.round(intelligence.confidence * 100)}% confidence
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                <div className="text-right">
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Optimization Potential
+                {!!intelligence.valueOptimization && (
+                  <div className="text-right">
+                    <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Optimization Potential
+                    </div>
+                    <div className={`font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                      +${intelligence.valueOptimization.toLocaleString()}
+                    </div>
                   </div>
-                  <div className={`font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                    +${intelligence.valueOptimization.toLocaleString()}
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Expandable Details */}
-              {selectedDeal === intelligence.dealId && (
+              {selectedDeal === intelligence.dealId && !intelligence.error && (
                 <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
-                  <div>
-                    <h6
-                      className={`text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
-                    >
-                      Key Factors
-                    </h6>
-                    <ul className="space-y-1">
-                      {intelligence.keyFactors.map((factor, index) => (
-                        <li
-                          key={index}
-                          className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'} flex items-center gap-2`}
-                        >
-                          <div
-                            className={`w-1 h-1 rounded-full ${isDark ? 'bg-blue-400' : 'bg-blue-500'}`}
-                          />
-                          {factor}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h6
-                      className={`text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
-                    >
-                      GPT-5 Recommendations
-                    </h6>
-                    <ul className="space-y-1">
-                      {intelligence.recommendations.map((rec, index) => (
-                        <li
-                          key={index}
-                          className={`text-xs ${isDark ? 'text-green-300' : 'text-green-600'} flex items-center gap-2`}
-                        >
-                          <div
-                            className={`w-1 h-1 rounded-full ${isDark ? 'bg-green-400' : 'bg-green-500'}`}
-                          />
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div
-                    className={`p-3 rounded-lg ${
-                      isDark
-                        ? 'bg-blue-500/10 border border-blue-500/20'
-                        : 'bg-blue-50 border border-blue-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Brain className={`h-3 w-3 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                      <span
-                        className={`text-xs font-medium ${isDark ? 'text-blue-300' : 'text-blue-700'}`}
+                  {intelligence.keyFactors.length > 0 && (
+                    <div>
+                      <h6
+                        className={`text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                       >
-                        GPT-5 Analysis
-                      </span>
+                        Key Factors
+                      </h6>
+                      <ul className="space-y-1">
+                        {intelligence.keyFactors.map((factor, index) => (
+                          <li key={index} className={`text-xs ${muted}`}>
+                            {factor}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
+                  )}
+                  {intelligence.recommendations.length > 0 && (
+                    <div>
+                      <h6
+                        className={`text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                      >
+                        AI Recommendations
+                      </h6>
+                      <ul className="space-y-1">
+                        {intelligence.recommendations.map((rec, index) => (
+                          <li
+                            key={index}
+                            className={`text-xs ${isDark ? 'text-green-300' : 'text-green-600'}`}
+                          >
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {intelligence.expectedOutcome && (
                     <p className={`text-xs ${isDark ? 'text-blue-200' : 'text-blue-600'}`}>
                       {intelligence.expectedOutcome}
                     </p>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
@@ -397,7 +374,10 @@ const GPT5DealIntelligence: React.FC = () => {
         </div>
 
         {dealIntelligence.length === 0 && !isAnalyzing && (
-          <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          <div
+            data-testid="deal-intel-empty"
+            className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+          >
             <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No active deals to analyze</p>
           </div>

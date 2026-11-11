@@ -1,93 +1,50 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Target,
-  Award,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
-import { useNavigation } from '../../contexts/NavigationContext';
+import { DollarSign, Target, Award, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
-
-interface KPIMetric {
-  title: string;
-  value: string;
-  change: number;
-  changeType: 'increase' | 'decrease';
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-  relatedContacts?: Array<{ id: string; name: string; avatar?: string; avatarSrc?: string }>;
-}
+import {
+  computeDealTotals,
+  createdPeriodChange,
+  formatChange,
+  isActiveDeal,
+  isWonDeal,
+} from './dealMetrics';
 
 const KPICards: React.FC = () => {
   const { isDark } = useTheme();
-  const { navigateToFeature } = useNavigation();
+  const navigate = useNavigate();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
 
-  // Get active deals with their contacts
-  const getActiveDealsWithContacts = () => {
-    const activeDeals = Object.values(deals).filter(
-      (deal) => String(deal.stage) !== 'closed-won' && String(deal.stage) !== 'closed-lost'
-    );
+  // Deals with a known contact, for the avatar stacks.
+  const withContacts = (list: typeof deals) =>
+    list.map((deal) => ({ ...deal, contact: contacts[deal.contactId] })).filter((deal) => deal.contact);
 
-    return activeDeals
-      .map((deal) => ({
-        ...deal,
-        contact: contacts[deal.contactId],
-      }))
-      .filter((deal) => deal.contact); // Only include deals with valid contacts
+  const activeDealsWithContacts = withContacts(deals.filter(isActiveDeal));
+  const wonDealsWithContacts = withContacts(deals.filter(isWonDeal));
+
+  const totals = computeDealTotals(deals);
+  const metrics = {
+    totalActiveDeals: totals.activeCount,
+    totalValue: totals.activeValue,
+    avgDealSize: totals.avgActiveDealSize,
+    wonDeals: totals.wonCount,
   };
 
-  // Get won deals with their contacts
-  const getWonDealsWithContacts = () => {
-    const wonDeals = Object.values(deals).filter((deal) => String(deal.stage) === 'closed-won');
-
-    return wonDeals
-      .map((deal) => ({
-        ...deal,
-        contact: contacts[deal.contactId],
-      }))
-      .filter((deal) => deal.contact); // Only include deals with valid contacts
-  };
-
-  const activeDealsWithContacts = getActiveDealsWithContacts();
-  const wonDealsWithContacts = getWonDealsWithContacts();
-
-  // Calculate metrics
-  const calculateMetrics = () => {
-    const dealsArray = Object.values(deals);
-    let totalActiveDeals = 0;
-    let totalValue = 0;
-    let wonValue = 0;
-
-    dealsArray.forEach((deal) => {
-      if (String(deal.stage) !== 'closed-won' && String(deal.stage) !== 'closed-lost') {
-        totalActiveDeals++;
-        totalValue += deal.value;
-      }
-
-      if (String(deal.stage) === 'closed-won') {
-        wonValue += deal.value;
-      }
-    });
-
+  // Period-over-period (deals created in the last 30 days vs the 30 before); null hides the badge.
+  const changes = React.useMemo(() => {
+    const now = Date.now();
     return {
-      totalActiveDeals,
-      totalValue,
-      avgDealSize: totalActiveDeals > 0 ? totalValue / totalActiveDeals : 0,
-      wonDeals: Object.values(deals).filter((d) => String(d.stage) === 'closed-won').length,
+      active: createdPeriodChange(deals, (c) => computeDealTotals(c).activeCount, now),
+      value: createdPeriodChange(deals, (c) => computeDealTotals(c).activeValue, now),
+      won: createdPeriodChange(deals, (c) => computeDealTotals(c).wonCount, now),
+      avg: createdPeriodChange(deals, (c) => computeDealTotals(c).avgActiveDealSize, now),
     };
-  };
-
-  const metrics = calculateMetrics();
+  }, [deals]);
 
   // Format currency values
   const formatCurrency = (value: number) => {
@@ -139,11 +96,11 @@ const KPICards: React.FC = () => {
     {
       title: 'Active Deals',
       value: metrics.totalActiveDeals.toString(),
-      change: '+12%',
-      trend: 'up',
+      change: formatChange(changes.active),
+      trend: (changes.active ?? 0) >= 0 ? 'up' : 'down',
       icon: Target,
       color: 'from-blue-500 to-cyan-500',
-      feature: 'pipeline-section',
+      feature: '/pipeline',
       renderContent: () =>
         activeDealsWithContacts.length > 0 ? (
           renderAvatarStack(activeDealsWithContacts)
@@ -158,11 +115,11 @@ const KPICards: React.FC = () => {
     {
       title: 'Pipeline Value',
       value: formatCurrency(metrics.totalValue),
-      change: '+8%',
-      trend: 'up',
+      change: formatChange(changes.value),
+      trend: (changes.value ?? 0) >= 0 ? 'up' : 'down',
       icon: DollarSign,
       color: 'from-green-500 to-emerald-500',
-      feature: 'pipeline-section',
+      feature: '/pipeline',
       renderContent: () => (
         <h3
           className={`text-2xl font-bold ${isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'} transition-colors`}
@@ -174,11 +131,11 @@ const KPICards: React.FC = () => {
     {
       title: 'Won Deals',
       value: metrics.wonDeals.toString(),
-      change: '+15%',
-      trend: 'up',
+      change: formatChange(changes.won),
+      trend: (changes.won ?? 0) >= 0 ? 'up' : 'down',
       icon: Award,
       color: 'from-purple-500 to-pink-500',
-      feature: 'pipeline-section',
+      feature: '/pipeline',
       renderContent: () =>
         wonDealsWithContacts.length > 0 ? (
           renderAvatarStack(wonDealsWithContacts)
@@ -193,11 +150,11 @@ const KPICards: React.FC = () => {
     {
       title: 'Avg Deal Size',
       value: formatCurrency(metrics.avgDealSize),
-      change: '-3%',
-      trend: 'down',
+      change: formatChange(changes.avg),
+      trend: (changes.avg ?? 0) >= 0 ? 'up' : 'down',
       icon: BarChart3,
       color: 'from-orange-500 to-red-500',
-      feature: 'analytics-section',
+      feature: '/analytics',
       renderContent: () => (
         <h3
           className={`text-2xl font-bold ${isDark ? 'text-white group-hover:text-green-400' : 'text-gray-900 group-hover:text-green-600'} transition-colors`}
@@ -213,23 +170,35 @@ const KPICards: React.FC = () => {
       {kpis.map((kpi, index) => (
         <div
           key={index}
-          onClick={() => navigateToFeature(kpi.feature)}
+          role="button"
+          tabIndex={0}
+          onClick={() => navigate(kpi.feature)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate(kpi.feature);
+            }
+          }}
           className={`${isDark ? 'bg-white/5' : 'bg-white'} backdrop-blur-xl rounded-2xl p-6 hover:${isDark ? 'bg-white/10' : 'bg-gray-50'} transition-all duration-300 group`}
         >
           <div className="flex items-center justify-between mb-4">
             <div className={`p-3 rounded-xl bg-gradient-to-r ${kpi.color} shadow-lg`}>
               <kpi.icon className="h-6 w-6 text-white" />
             </div>
-            <div
-              className={`flex items-center ${kpi.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
-            >
-              {kpi.trend === 'up' ? (
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 mr-1" />
-              )}
-              <span className="text-sm font-medium">{kpi.change}</span>
-            </div>
+            {kpi.change !== null && (
+              <div
+                className={`flex items-center ${kpi.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
+              >
+                {kpi.trend === 'up' ? (
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                ) : (
+                  <ArrowDownRight className="h-4 w-4 mr-1" />
+                )}
+                <span className="text-sm font-medium" data-testid="kpi-change">
+                  {kpi.change}
+                </span>
+              </div>
+            )}
           </div>
           <div className="space-y-3">
             {kpi.renderContent && <div>{kpi.renderContent()}</div>}

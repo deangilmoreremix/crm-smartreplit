@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useRoute, useLocation } from 'wouter';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Play, Pause, Clock, Calendar, Settings, RefreshCw, Check } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/button';
@@ -12,14 +12,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const AutomationConfig = () => {
   const { isDark } = useTheme();
-  const [, params] = useRoute('/automations/:id');
-  const [, navigate] = useLocation();
-  const automationId = params?.id || '';
+  const params = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const automationId = params.id || '';
 
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [schedule, setSchedule] = useState('daily');
-  const [timeOfDay, setTimeOfDay] = useState('09:00');
-  const [customRules, setCustomRules] = useState('');
+  // Local config is the source of truth until a real persistence endpoint exists
+  const stored = React.useMemo(() => {
+    try {
+      const raw = localStorage.getItem(`automation-config-${automationId}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, [automationId]);
+
+  const [isEnabled, setIsEnabled] = useState<boolean>(stored?.isEnabled ?? false);
+  const [schedule, setSchedule] = useState<string>(stored?.schedule ?? 'daily');
+  const [timeOfDay, setTimeOfDay] = useState<string>(stored?.timeOfDay ?? '09:00');
+  const [customRules, setCustomRules] = useState<string>(stored?.customRules ?? '');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -52,6 +62,13 @@ const AutomationConfig = () => {
     setSaveError(null);
 
     try {
+      const config = { isEnabled, schedule, timeOfDay, customRules };
+      try {
+        localStorage.setItem(`automation-config-${automationId}`, JSON.stringify(config));
+      } catch {
+        // storage unavailable; surfaced below only if the request also fails
+      }
+
       const response = await fetch('/api/ai/automation/auto-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,6 +81,13 @@ const AutomationConfig = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to save automation configuration');
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (result?.success !== true) {
+        throw new Error(
+          'Saved in this browser only: the AI service did not confirm (check that an OpenAI key is configured).'
+        );
       }
 
       setSaveStatus('saved');
@@ -211,6 +235,12 @@ const AutomationConfig = () => {
             >
               Cancel
             </Button>
+            <span
+              className={`text-xs self-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+              data-testid="text-storage-note"
+            >
+              Stored in this browser
+            </span>
             {saveError && (
               <span className="text-sm text-red-600 self-center" data-testid="text-save-error">
                 {saveError}
