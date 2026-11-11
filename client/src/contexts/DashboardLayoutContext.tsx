@@ -29,6 +29,8 @@ interface DashboardLayoutContextType {
   getSectionConfig: (id: string) => SectionConfig | undefined;
   reorderSections: (startIndex: number, endIndex: number) => void;
   resetToDefault: () => void;
+  /** Restore the built-in default layout (ignores the user's default saved layout). */
+  resetToBuiltInDefault: (options?: { clearWidgetSettings?: boolean }) => void;
   // Additive layout API
   hiddenSections: string[];
   visibleSections: string[];
@@ -368,6 +370,14 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
     dispatch({ type: 'reset', defaultOrder: defaultSectionOrder });
   };
 
+  const resetToBuiltInDefault = (options?: { clearWidgetSettings?: boolean }) => {
+    dispatch({
+      type: 'resetBuiltIn',
+      defaultOrder: defaultSectionOrder,
+      clearWidgetSettings: options?.clearWidgetSettings,
+    });
+  };
+
   const newId = () =>
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
@@ -384,6 +394,7 @@ export const DashboardLayoutProvider: React.FC<{ children: React.ReactNode }> = 
       getSectionConfig,
       reorderSections,
       resetToDefault,
+      resetToBuiltInDefault,
       hiddenSections: state.hiddenSections,
       visibleSections: getVisibleSections(state),
       isSectionVisible: (id) => isVisibleIn(state, id),

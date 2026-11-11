@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { RecordTable, contactsAdapter, useSafeNavigate } from './record-table';
 import type { RecordColumn } from './record-table';
@@ -68,6 +69,41 @@ const ContactsManager: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const navigate = useSafeNavigate();
+
+  // Deep links: ?new=1 opens the create dialog, ?search=1 focuses the search box.
+  const inRouter = useInRouterContext();
+  // The router context never changes for a mounted component, so the hook order is stable.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const routerLocation = inRouter ? useLocation() : null;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const routerNavigate = inRouter ? useNavigate() : null;
+  const urlSearch = routerLocation?.search ?? '';
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createSaving, setCreateSaving] = useState(false);
+
+  const clearParam = (name: string) => {
+    if (!routerLocation || !routerNavigate) return;
+    const params = new URLSearchParams(routerLocation.search);
+    params.delete(name);
+    const qs = params.toString();
+    routerNavigate(`${routerLocation.pathname}${qs ? `?${qs}` : ''}`, { replace: true });
+  };
+
+  useEffect(() => {
+    if (new URLSearchParams(urlSearch).get('new') === '1') {
+      setCreateOpen(true);
+      clearParam('new');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (loading || new URLSearchParams(urlSearch).get('search') !== '1') return;
+    document.querySelector<HTMLInputElement>('input[aria-label="Search contacts"]')?.focus();
+    clearParam('search');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch, loading]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -144,6 +180,32 @@ const ContactsManager: React.FC = () => {
     });
   };
 
+  const submitCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    const field = (k: string) => String(form.get(k) ?? '').trim();
+    setCreateSaving(true);
+    setCreateError(null);
+    try {
+      await api('/api/contacts', {
+        method: 'POST',
+        body: JSON.stringify({
+          firstName: field('firstName'),
+          lastName: field('lastName'),
+          email: field('email'),
+          phone: field('phone'),
+          company: field('company'),
+        }),
+      });
+      setCreateOpen(false);
+      void load();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create contact');
+    } finally {
+      setCreateSaving(false);
+    }
+  };
+
   return (
     <div className="h-full">
       <RecordTable<ApiContact>
@@ -178,6 +240,39 @@ const ContactsManager: React.FC = () => {
           </button>
         }
       />
+
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <form
+            role="dialog"
+            aria-label="New contact"
+            onSubmit={submitCreate}
+            className="bg-white dark:bg-gray-900 rounded-lg p-6 w-96 max-w-full mx-4 space-y-3"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New contact</h3>
+            {(['firstName', 'lastName', 'email', 'phone', 'company'] as const).map((name) => (
+              <input
+                key={name}
+                name={name}
+                type={name === 'email' ? 'email' : 'text'}
+                required={name === 'firstName'}
+                placeholder={{ firstName: 'First name', lastName: 'Last name', email: 'Email', phone: 'Phone', company: 'Company' }[name]}
+                aria-label={name}
+                className="w-full border rounded px-3 py-1.5 text-sm"
+              />
+            ))}
+            {createError && <p className="text-sm text-red-600">{createError}</p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setCreateOpen(false)} className="border rounded px-3 py-1.5 text-sm">
+                Cancel
+              </button>
+              <button type="submit" disabled={createSaving} className="border rounded px-3 py-1.5 text-sm bg-indigo-600 text-white">
+                {createSaving ? 'Saving...' : 'Create'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <ImportContactsModal
         isOpen={importOpen}

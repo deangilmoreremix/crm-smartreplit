@@ -1,14 +1,45 @@
-import React, { useState } from 'react';
+import React from 'react';
 import TaskCard from './TaskCard';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { Plus } from 'lucide-react';
+import { useTaskStore } from '../store/taskStore';
+import { useDemoDataSafe } from '../contexts/DemoDataContext';
+import SampleBadge from './SampleBadge';
+
+const CARD_TYPES = ['meeting', 'proposal', 'call', 'follow-up'] as const;
+type CardType = (typeof CARD_TYPES)[number];
+const toCardType = (t: string): CardType =>
+  (CARD_TYPES as readonly string[]).includes(t) ? (t as CardType) : 'follow-up';
+const toCardPriority = (p: string): 'high' | 'medium' | 'low' =>
+  p === 'urgent' || p === 'high' ? 'high' : p === 'low' ? 'low' : 'medium';
 
 const TasksSection = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const { showDemoData } = useDemoDataSafe();
+  const storeTasks = useTaskStore((s) => s.tasks);
 
-  const tasks = [
+  const realTasks = (storeTasks ?? [])
+    .filter((t) => t.status !== 'completed' && t.status !== 'cancelled')
+    .sort(
+      (a, b) =>
+        (a.dueDate ? +new Date(a.dueDate) : Infinity) -
+        (b.dueDate ? +new Date(b.dueDate) : Infinity)
+    )
+    .slice(0, 6)
+    .map((t) => ({
+      id: t.id,
+      title: t.title,
+      subtitle: t.dueDate ? `Due ${new Date(t.dueDate).toLocaleDateString()}` : undefined,
+      type: toCardType(t.type),
+      status: t.status,
+      priority: toCardPriority(t.priority),
+      dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
+      ...(t.assignedUserName ? { assignee: { name: t.assignedUserName, role: '' } } : {}),
+    }));
+
+  const sampleTasks = [
     {
       id: '1',
       title: 'Google Meet Call',
@@ -54,12 +85,16 @@ const TasksSection = () => {
     },
   ];
 
+  const isSample = realTasks.length === 0 && showDemoData;
+  const tasks = realTasks.length ? realTasks : showDemoData ? sampleTasks : [];
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Your Days Tasks
+            {isSample && <SampleBadge className="ml-2 align-middle" />}
           </h2>
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {tasks?.length || 0} active tasks
@@ -78,6 +113,14 @@ const TasksSection = () => {
         </button>
       </div>
 
+      {tasks.length === 0 && (
+        <p
+          className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+          data-testid="tasks-empty"
+        >
+          No tasks yet. Create one with New Task.
+        </p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {tasks.map((task, index) => (
           <TaskCard key={task.id} task={task} index={index} />

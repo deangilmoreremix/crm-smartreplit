@@ -247,8 +247,8 @@ const items: CommandItem[] = [
     label: 'Go to Deals',
     description: 'Navigate to deals pipeline',
     category: 'Navigation',
-    shortcut: 'G D',
-    action: () => navigate('/deals')
+    shortcut: 'G P',
+    action: () => navigate('/pipeline')
   },
   {
     id: 'tasks',
@@ -277,40 +277,28 @@ const items: CommandItem[] = [
     label: 'Create Contact',
     description: 'Add a new contact',
     category: 'Actions',
-    shortcut: 'N C',
-    action: () => navigate('/contacts?new=true')
+    action: () => navigate('/contacts?new=1')
   },
   {
     id: 'create-deal',
     label: 'Create Deal',
-    description: 'Add a new deal',
+    description: 'Open the pipeline to add a deal',
     category: 'Actions',
-    shortcut: 'N D',
-    action: () => navigate('/deals?new=true')
+    action: () => navigate('/pipeline')
   },
   {
     id: 'create-task',
     label: 'Create Task',
     description: 'Add a new task',
     category: 'Actions',
-    shortcut: 'N T',
-    action: () => navigate('/tasks?new=true')
+    action: () => navigate('/tasks?new=1')
   },
   {
     id: 'search-contacts',
     label: 'Search Contacts',
     description: 'Find contacts by name or email',
     category: 'Search',
-    shortcut: '/ C',
-    action: () => navigate('/contacts?search=true')
-  },
-  {
-    id: 'search-deals',
-    label: 'Search Deals',
-    description: 'Find deals by name or value',
-    category: 'Search',
-    shortcut: '/ D',
-    action: () => navigate('/deals?search=true')
+    action: () => navigate('/contacts?search=1')
   },
   {
     id: 'settings',

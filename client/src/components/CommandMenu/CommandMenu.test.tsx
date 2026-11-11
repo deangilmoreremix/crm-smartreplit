@@ -35,7 +35,7 @@ describe('CommandMenu', () => {
     wrap();
     open();
     fireEvent.click(screen.getByText('Create Contact'));
-    expect(screen.getByTestId('loc')).toHaveTextContent('/contacts?new=true');
+    expect(screen.getByTestId('loc')).toHaveTextContent('/contacts?new=1');
   });
 
   it('shows record results grouped by object and navigates to them', async () => {

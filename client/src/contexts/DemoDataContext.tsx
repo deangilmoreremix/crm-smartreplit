@@ -10,16 +10,28 @@ interface DemoDataContextType {
   restoreDemoData: () => void;
 }
 
+const STORAGE_KEY = 'smartcrm_show_demo_data';
+
+const readStoredFlag = (): boolean => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored !== null ? stored === 'true' : true;
+  } catch {
+    return true; // SSR / private mode: default to sample data on
+  }
+};
+
 const DemoDataContext = createContext<DemoDataContextType | undefined>(undefined);
 
 export const DemoDataProvider = ({ children }: { children: ReactNode }) => {
-  const [showDemoData, setShowDemoData] = useState(() => {
-    const stored = localStorage.getItem('smartcrm_show_demo_data');
-    return stored !== null ? stored === 'true' : true;
-  });
+  const [showDemoData, setShowDemoData] = useState(readStoredFlag);
 
   useEffect(() => {
-    localStorage.setItem('smartcrm_show_demo_data', String(showDemoData));
+    try {
+      localStorage.setItem(STORAGE_KEY, String(showDemoData));
+    } catch {
+      /* storage unavailable: the flag just won't persist */
+    }
     // Keep every store that holds sample content in step with the toggle.
     useDealStore.getState().setDemoEnabled(showDemoData);
     useContactStore.getState().setDemoEnabled(showDemoData);

@@ -25,13 +25,13 @@ describe('ClearDemoDataModal', () => {
   });
   afterEach(() => vi.useRealTimers());
 
-  it('only lists content that is really hidden (no tasks / communications)', () => {
+  it('lists the content that is hidden, including the gated dashboard blocks', () => {
     setup();
     expect(screen.getByText(/Sample deals in the pipeline/)).toBeInTheDocument();
     expect(screen.getByText(/Sample contacts/)).toBeInTheDocument();
     expect(screen.getByText(/Sample appointments/)).toBeInTheDocument();
-    expect(screen.queryByText(/tasks/i)).toBeNull();
-    expect(screen.queryByText(/communications/i)).toBeNull();
+    expect(screen.getByText(/customer profile, tasks and interaction history/i)).toBeInTheDocument();
+    expect(screen.getByText(/communications, upcoming deals and activity feed/i)).toBeInTheDocument();
   });
 
   it('Clear Demo Data hides sample data (flag + deal store) and closes', () => {
@@ -39,9 +39,6 @@ describe('ClearDemoDataModal', () => {
     setup(onClose);
     expect(useDealStore.getState().demoEnabled).toBe(true);
     fireEvent.click(screen.getByTestId('button-clear-demo'));
-    act(() => {
-      vi.advanceTimersByTime(800);
-    });
     expect(screen.getByTestId('flag')).toHaveTextContent('false');
     expect(useDealStore.getState().demoEnabled).toBe(false);
     act(() => {

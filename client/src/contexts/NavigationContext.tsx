@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef } from 'react';
-import { useNavigate as reactNavigate } from 'react-router-dom';
+import { useSafeNavigate } from '../components/record-table/useSafeNavigate';
+import { APP_ROUTES } from '../utils/appLinks';
 import { useAITools, AIToolType } from '../components/AIToolsProvider';
 
 interface NavigationContextType {
@@ -19,7 +20,7 @@ export const useNavigation = () => {
 };
 
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const routerNavigate = reactNavigate;
+  const routerNavigate = useSafeNavigate();
   const [currentPath, setCurrentPath] = React.useState('');
 
   // Safe access to AITools with error handling
@@ -81,13 +82,35 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       case 'apps':
         scrollToSection('apps-section');
         break;
+      // Dashboard section ids (and plain paths) resolve to their full pages.
+      case 'pipeline-section':
+        routerNavigate(APP_ROUTES.pipeline);
+        break;
+      case 'analytics-section':
+        routerNavigate(APP_ROUTES.analytics);
+        break;
+      case 'contacts-section':
+      case 'customer-lead-management':
+        routerNavigate(APP_ROUTES.contacts);
+        break;
+      case 'tasks-section':
+      case 'activities-communications':
+        routerNavigate(APP_ROUTES.tasks);
+        break;
+      case 'ai-smart-features-hub':
+        routerNavigate(APP_ROUTES.aiTools);
+        break;
+      case 'calendar':
+        routerNavigate(APP_ROUTES.calendar);
+        break;
       case '/deals':
       case '/contacts':
       case '/tasks':
       case '/settings':
-        routerNavigate(feature as any);
+        routerNavigate(feature);
         break;
       default:
+        console.warn(`navigateToFeature: unknown feature "${feature}"`);
     }
   };
 

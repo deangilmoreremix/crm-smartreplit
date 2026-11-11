@@ -57,7 +57,40 @@ describe('layout migration', () => {
       [LAYOUT_STORAGE_KEY]: JSON.stringify(v2),
       [LEGACY_ORDER_KEY]: JSON.stringify(['q']),
     });
-    expect(loadLocalLayoutState(DEFAULT, st).sectionOrder).toEqual(['z']);
+    const order = loadLocalLayoutState(DEFAULT, st).sectionOrder;
+    expect(order[0]).toBe('z');
+    expect(order).not.toContain('q');
+  });
+
+  it('appends default sections missing from a saved v2 layout, once, and persists', () => {
+    const saved = { ...createDefaultLayoutState(['a', 'b']), sectionOrder: ['b', 'a'], hiddenSections: [], updatedAt: 5 };
+    const st = memStorage({ [LAYOUT_STORAGE_KEY]: JSON.stringify(saved) });
+    const s = loadLocalLayoutState(['a', 'b', 'new-section', 'unified-activity'], st);
+    expect(s.sectionOrder).toEqual(['b', 'a', 'new-section', 'unified-activity']);
+    expect(s.hiddenSections).toEqual(['unified-activity']); // hidden-by-default stays hidden
+    expect(getVisibleSections(s)).toContain('new-section');
+    expect(s.updatedAt).toBeGreaterThan(5);
+    const persisted = JSON.parse(st.getItem(LAYOUT_STORAGE_KEY)!);
+    expect(persisted.sectionOrder).toContain('new-section');
+
+    // second load: nothing to migrate, updatedAt unchanged
+    const again = loadLocalLayoutState(['a', 'b', 'new-section', 'unified-activity'], st);
+    expect(again.updatedAt).toBe(s.updatedAt);
+    expect(again.sectionOrder).toEqual(s.sectionOrder);
+  });
+
+  it('does not re-show a section the user hid after it was migrated', () => {
+    const st = memStorage({
+      [LAYOUT_STORAGE_KEY]: JSON.stringify({
+        ...createDefaultLayoutState(['a', 'b']),
+        sectionOrder: ['a', 'b'],
+        hiddenSections: ['b'],
+        updatedAt: 5,
+      }),
+    });
+    const s = loadLocalLayoutState(['a', 'b'], st);
+    expect(s.hiddenSections).toEqual(['b']);
+    expect(s.updatedAt).toBe(5);
   });
 
   it('falls back to defaults on corrupt storage', () => {
@@ -121,6 +154,27 @@ describe('layoutReducer', () => {
     expect(s.defaultLayoutId).toBeNull();
     s = layoutReducer(s, { type: 'reset', defaultOrder: DEFAULT, now: 11 });
     expect(s.sectionOrder.slice(0, 3)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('resetBuiltIn ignores the default saved layout, keeps saved layouts, optionally clears widget settings', () => {
+    let s = layoutReducer(base, { type: 'setOrder', order: ['c', 'b', 'a'], now: 1 });
+    s = layoutReducer(s, { type: 'saveAs', name: 'Mine', layoutId: 'L1', now: 2 });
+    s = layoutReducer(s, { type: 'setDefault', layoutId: 'L1', now: 3 });
+    s = layoutReducer(s, { type: 'widgetSettings', id: 'w', patch: { rangeDays: 7 }, now: 4 });
+    s = layoutReducer(s, { type: 'setSize', id: 'a', size: 'wide', now: 5 });
+
+    const kept = layoutReducer(s, { type: 'resetBuiltIn', defaultOrder: DEFAULT, now: 6 });
+    expect(kept.sectionOrder.slice(0, 3)).toEqual(['a', 'b', 'c']);
+    expect(kept.sectionSizes).toEqual({});
+    expect(kept.savedLayouts).toHaveLength(1);
+    expect(kept.widgetSettings.w).toEqual({ rangeDays: 7 });
+    expect(kept.hiddenSections).toEqual(['unified-activity']);
+
+    const cleared = layoutReducer(s, { type: 'resetBuiltIn', defaultOrder: DEFAULT, clearWidgetSettings: true, now: 7 });
+    expect(cleared.widgetSettings).toEqual({});
+
+    // legacy reset still applies the user's default layout
+    expect(layoutReducer(s, { type: 'reset', defaultOrder: DEFAULT, now: 8 }).sectionOrder).toEqual(['c', 'b', 'a']);
   });
 
   it('same-name save overwrites, empty name is ignored, widget settings merge', () => {

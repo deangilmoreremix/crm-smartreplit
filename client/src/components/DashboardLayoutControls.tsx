@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDashboardLayout } from '../contexts/DashboardLayoutContext';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useDashboardLayout, sectionConfigs } from '../contexts/DashboardLayoutContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   Settings,
@@ -18,11 +18,24 @@ import {
   Trash2,
 } from 'lucide-react';
 
+/** Ids Dashboard.tsx renders that have no (or a different) entry in sectionConfigs. */
+const EXTRA_RENDERED_SECTIONS = ['charts-section', 'analytics-section', 'unified-activity', 'ai-goals-section'];
+/** Ids Dashboard.tsx renders as null (now part of executive-overview-section): never list them. */
+export const NON_RENDERING_SECTIONS = ['metrics-cards-section', 'kpi-cards-section', 'quick-actions-section'];
+
+const fallbackTitle = (id: string) =>
+  id
+    .replace(/-section$/, '')
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
 const DashboardLayoutControls: React.FC = () => {
   const {
     sectionOrder,
     setSectionOrder,
-    resetToDefault,
+    resetToBuiltInDefault,
+    layoutLoading,
     getSectionConfig,
     isSectionVisible,
     toggleSection,
@@ -52,31 +65,46 @@ const DashboardLayoutControls: React.FC = () => {
   const { isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [alsoClearWidgets, setAlsoClearWidgets] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Close the panel on click-outside and Escape.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPointer = (e: MouseEvent | TouchEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('touchstart', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('touchstart', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [isOpen]);
+  useEffect(() => {
+    if (!isOpen) setConfirmReset(false);
+  }, [isOpen]);
 
   const handleSectionToggle = (sectionId: string, enabled: boolean) => {
     if (enabled !== isSectionVisible(sectionId)) toggleSection(sectionId);
   };
 
-  const allSections = [
-    'gpt5-enhanced-dashboard',
-    'gpt5-smart-kpi-section',
-    'executive-overview-section',
-    'automations-section',
-    'quick-actions-section',
-    'gpt5-analytics-section',
-    'gpt5-deal-intelligence-section',
-    'ai-smart-features-hub',
-    'sales-pipeline-deal-analytics',
-    'customer-lead-management',
-    'activities-communications',
-    'integrations-system',
-    'pipeline-section',
-    'contacts-section',
-    'tasks-section',
-    'apps-section',
-    'analytics-section',
-    'unified-activity',
-  ];
+  // Every section Dashboard can render, so a hidden one can always be re-shown.
+  const allSections = useMemo(() => {
+    const ids = new Set<string>([
+      ...sectionOrder,
+      ...Object.keys(sectionConfigs),
+      ...EXTRA_RENDERED_SECTIONS,
+    ]);
+    return Array.from(ids).filter((id) => !NON_RENDERING_SECTIONS.includes(id));
+  }, [sectionOrder]);
+  const titleOf = (id: string) => getSectionConfig(id)?.title ?? fallbackTitle(id);
   // Visible sections follow their dashboard order; the rest keep list order after them.
   const orderedSections = [...allSections].sort((x, y) => {
     const ix = sectionOrder.indexOf(x);
@@ -86,7 +114,7 @@ const DashboardLayoutControls: React.FC = () => {
   const nextSize = { compact: 'normal', normal: 'wide', wide: 'compact' } as const;
 
   return (
-    <div className="fixed top-24 right-2 sm:right-4 z-50">
+    <div ref={rootRef} className="fixed top-24 right-2 sm:right-4 z-50">
       <div className="relative">
         {/* Control Button */}
         <button
@@ -145,7 +173,7 @@ const DashboardLayoutControls: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Move3D size={16} />
-                  <span className="text-sm font-medium">Drag & Drop Mode</span>
+                  <span className="text-sm font-medium">Show order</span>
                 </div>
                 <div
                   className={`w-5 h-5 rounded border-2 ${
@@ -158,8 +186,49 @@ const DashboardLayoutControls: React.FC = () => {
                 </div>
               </button>
 
+              {confirmReset ? (
+                <div
+                  role="alertdialog"
+                  aria-label="Confirm reset layout"
+                  className={`p-3 rounded-lg border ${
+                    isDark ? 'border-orange-500/30 bg-orange-500/10' : 'border-orange-200 bg-orange-50'
+                  }`}
+                >
+                  <p className={`text-sm mb-2 ${isDark ? 'text-orange-200' : 'text-orange-800'}`}>
+                    Reset section order, visibility and sizes to the built-in default? Saved layouts are kept.
+                  </p>
+                  <label className={`flex items-center gap-2 text-xs mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <input
+                      type="checkbox"
+                      checked={alsoClearWidgets}
+                      onChange={(e) => setAlsoClearWidgets(e.target.checked)}
+                    />
+                    Also clear widget settings (date ranges, metrics)
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        resetToBuiltInDefault({ clearWidgetSettings: alsoClearWidgets });
+                        setConfirmReset(false);
+                        setAlsoClearWidgets(false);
+                      }}
+                      className="flex-1 px-3 py-1.5 rounded-md text-sm font-medium bg-orange-600 text-white hover:bg-orange-700"
+                    >
+                      Confirm reset
+                    </button>
+                    <button
+                      onClick={() => setConfirmReset(false)}
+                      className={`flex-1 px-3 py-1.5 rounded-md text-sm ${
+                        isDark ? 'bg-white/10 text-gray-200' : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
               <button
-                onClick={resetToDefault}
+                onClick={() => setConfirmReset(true)}
                 className={`w-full flex items-center justify-center space-x-2 p-3 rounded-lg ${
                   isDark
                     ? 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-400'
@@ -169,6 +238,7 @@ const DashboardLayoutControls: React.FC = () => {
                 <RotateCcw size={16} />
                 <span className="text-sm font-medium">Reset Layout</span>
               </button>
+              )}
             </div>
 
             {/* Section Visibility Controls */}
@@ -179,19 +249,34 @@ const DashboardLayoutControls: React.FC = () => {
                 Section Visibility
               </h4>
 
+              {layoutLoading ? (
+                <div className="space-y-2" data-testid="layout-skeleton" aria-busy="true">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className={`h-9 rounded-lg animate-pulse ${isDark ? 'bg-white/10' : 'bg-gray-100'}`}
+                    />
+                  ))}
+                </div>
+              ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {orderedSections.map((sectionId) => {
                   const config = getSectionConfig(sectionId);
                   const isEnabled = isSectionVisible(sectionId);
                   const size = sectionSizes[sectionId] ?? 'normal';
 
-                  if (!config) return null;
+                  const title = titleOf(sectionId);
 
                   return (
                     <div
                       key={sectionId}
                       draggable={sectionOrder.includes(sectionId)}
-                      onDragStart={() => setDragId(sectionId)}
+                      onDragStart={(e) => {
+                        // Firefox will not start a drag without data.
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', sectionId);
+                        setDragId(sectionId);
+                      }}
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => dragId && moveSection(dragId, sectionId)}
                       onDragEnd={() => setDragId(null)}
@@ -206,17 +291,19 @@ const DashboardLayoutControls: React.FC = () => {
                           aria-label="Drag to reorder"
                         />
                         <div
-                          className={`w-3 h-3 rounded-full bg-gradient-to-r ${config.color}`}
+                          className={`w-3 h-3 rounded-full bg-gradient-to-r ${config?.color ?? 'from-gray-400 to-gray-500'}`}
                         ></div>
                         <div>
                           <p
                             className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
                           >
-                            {config.title}
+                            {title}
                           </p>
-                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {config.description}
-                          </p>
+                          {config?.description && (
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {config.description}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -234,7 +321,7 @@ const DashboardLayoutControls: React.FC = () => {
                         checked={isEnabled}
                         onChange={(e) => handleSectionToggle(sectionId, e.target.checked)}
                         className="sr-only"
-                        aria-label={`Show ${config.title}`}
+                        aria-label={`Show ${title}`}
                       />
                       <button
                         onClick={() => handleSectionToggle(sectionId, !isEnabled)}
@@ -251,6 +338,7 @@ const DashboardLayoutControls: React.FC = () => {
                   );
                 })}
               </div>
+              )}
             </div>
 
             {/* Saved Layouts */}
@@ -343,7 +431,7 @@ const DashboardLayoutControls: React.FC = () => {
                 <div className="space-y-1">
                   {sectionOrder.map((sectionId, index) => {
                     const config = getSectionConfig(sectionId);
-                    if (!config) return null;
+                    if (NON_RENDERING_SECTIONS.includes(sectionId)) return null;
 
                     return (
                       <div
@@ -358,10 +446,10 @@ const DashboardLayoutControls: React.FC = () => {
                           {index + 1}
                         </span>
                         <div
-                          className={`w-2 h-2 rounded-full bg-gradient-to-r ${config.color}`}
+                          className={`w-2 h-2 rounded-full bg-gradient-to-r ${config?.color ?? 'from-gray-400 to-gray-500'}`}
                         ></div>
                         <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          {config.title}
+                          {titleOf(sectionId)}
                         </span>
                       </div>
                     );
@@ -375,7 +463,8 @@ const DashboardLayoutControls: React.FC = () => {
               className={`mt-4 p-3 rounded-lg ${isDark ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-200'} border`}
             >
               <p className={`text-xs ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
-                💡 <strong>Tip:</strong> Hover over any section and drag the handle (⋮⋮) to reorder.
+                💡 <strong>Tip:</strong> Hover over any section and drag the handle (⋮⋮) to reorder, or
+                use its up/down arrows. Hidden sections can be shown again from the list above.
                 Changes are saved automatically.
               </p>
             </div>

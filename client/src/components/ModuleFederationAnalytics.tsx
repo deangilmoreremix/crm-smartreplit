@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { useRemoteComponent } from '../utils/dynamicModuleFederation';
 import { useSharedModuleState } from '../utils/moduleFederationOrchestrator';
+import { useRemoteEmbedStatus } from '../utils/remoteAppManager';
 
 const ENABLE_MFE = import.meta.env.VITE_ENABLE_MFE === 'true';
 
@@ -48,6 +49,32 @@ const LocalAnalyticsFallback: React.FC<{ onRetry: () => void }> = ({ onRetry }) 
   );
 };
 
+// Iframe fallback (like ModuleFederationContacts): used when the MFE is disabled or errors.
+// If the iframe never loads, the Retry / Open in new tab card is shown.
+const ANALYTICS_IFRAME_URL = `${ANALYTICS_REMOTE_URL}?embedded=true`;
+const AnalyticsIframeFallback: React.FC = () => {
+  const { iframeRef, status, onLoad, retry, attempt } = useRemoteEmbedStatus(ANALYTICS_IFRAME_URL);
+  if (status === 'timeout') return <LocalAnalyticsFallback onRetry={retry} />;
+  return (
+    <div className="w-full h-full flex flex-col relative">
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-900 z-10">
+          <p className="text-gray-600 dark:text-gray-400">Loading analytics...</p>
+        </div>
+      )}
+      <iframe
+        key={attempt}
+        ref={iframeRef}
+        src={ANALYTICS_IFRAME_URL}
+        onLoad={onLoad}
+        title="Remote AI Analytics"
+        className="w-full h-full border-0"
+        style={{ minHeight: '500px' }}
+      />
+    </div>
+  );
+};
+
 interface ModuleFederationAnalyticsProps {
   showHeader?: boolean;
 }
@@ -68,7 +95,7 @@ const ModuleFederationAnalytics: React.FC<ModuleFederationAnalyticsProps> = ({
   );
 
   if (!ENABLE_MFE || error) {
-    return <LocalAnalyticsFallback onRetry={() => window.location.reload()} />;
+    return <AnalyticsIframeFallback />;
   }
 
   if (loading || !RemoteAnalyticsApp) {

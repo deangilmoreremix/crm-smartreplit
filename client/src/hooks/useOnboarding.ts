@@ -61,7 +61,7 @@ export const useOnboarding = () => {
         title: 'Complete Your Profile',
         description: 'Add your name and contact information',
         action: 'Update Profile',
-        route: '/settings',
+        route: '/profile',
         completed: completedSteps.has('profile_completion'),
         priority: 'high',
         category: 'account',

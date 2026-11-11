@@ -1,8 +1,17 @@
 // Remote White Label Suite Loader
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { ExternalLink, RefreshCw, Wifi, WifiOff, Sun, Moon } from 'lucide-react';
-import { useRemoteAppUpdates } from '../utils/remoteAppManager';
+import { getOrigin, useRemoteEmbedStatus } from '../utils/remoteAppManager';
+import RemoteEmbedFallback from './RemoteEmbedFallback';
 import { useTheme } from '../contexts/ThemeContext';
+import { EntitlementContext } from '../contexts/EntitlementContext';
+import { canAccessFeature, FeatureKey } from '../types/entitlements';
+
+export const WHITE_LABEL_REMOTE_URL: string =
+  import.meta.env.VITE_WHITE_LABEL_REMOTE_URL || 'https://white-label.smartcrm.vip';
+const REMOTE_URL = WHITE_LABEL_REMOTE_URL;
+const IFRAME_ID = 'wl-remote-iframe';
+const IFRAME_ORIGIN = getOrigin(REMOTE_URL);
 
 interface RemoteWhiteLabelLoaderProps {
   showHeader?: boolean;
@@ -11,48 +20,27 @@ interface RemoteWhiteLabelLoaderProps {
 const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
   showHeader = true, // Show header by default to make theme toggle visible
 }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { isDark, toggleTheme } = useTheme(); // Use global theme context
   const currentTheme = isDark ? 'dark' : 'light';
+  // Initial theme only: the iframe src must not change on toggle (that would reload the
+  // editor and drop unsaved edits); later changes go through postMessage below.
+  const [initialTheme] = useState(currentTheme);
 
-  const REMOTE_URL = 'https://white-label.smartcrm.vip';
-  const IFRAME_ID = 'wl-remote-iframe';
-  const IFRAME_ORIGIN = 'https://white-label.smartcrm.vip';
-
-  const { manualRefresh, checkForUpdates, isChecking } = useRemoteAppUpdates(
-    IFRAME_ID,
-    REMOTE_URL,
-    true // Enable auto-refresh
-  );
-
-  // Theme toggle uses global context - PostMessage will be handled by dedicated effect
-
-  // Handle iframe load events - mounted once, not dependent on theme changes
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (iframe) {
-      const handleLoad = () => {
-        setError(null);
-        setIsConnected(true);
-        // Don't send theme here to avoid stale values - dedicated effect handles this
-      };
-
-      const handleError = () => {
-        setError('Network error: Could not connect to the white label suite.');
-        setIsConnected(false);
-      };
-
-      iframe.addEventListener('load', handleLoad);
-      iframe.addEventListener('error', handleError);
-
-      return () => {
-        iframe.removeEventListener('load', handleLoad);
-        iframe.removeEventListener('error', handleError);
-      };
+  const { iframeRef, status, onLoad, retry, attempt } = useRemoteEmbedStatus(REMOTE_URL);
+  const isLoaded = status === 'loaded' || status === 'unconfirmed' || status === 'confirmed';
+  const iframeSrc = (() => {
+    try {
+      const u = new URL(REMOTE_URL);
+      u.searchParams.set('theme', initialTheme);
+      u.searchParams.set('mode', 'light');
+      u.searchParams.set('allowInteraction', 'true');
+      return u.toString();
+    } catch {
+      return `${REMOTE_URL}?theme=${initialTheme}&mode=light&allowInteraction=true`;
     }
-  }, []); // Only mount once
+  })();
+  // NOTE: auto-refresh is intentionally NOT used here: this is an editing UI and a periodic
+  // reload would wipe unsaved edits.
 
   // Handle messages from iframe to fix button interaction issues - mounted once
   useEffect(() => {
@@ -93,7 +81,7 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
   // Canonical theme sender - always sends the latest theme when it changes or when connected
   useEffect(() => {
     const iframe = iframeRef.current;
-    if (iframe?.contentWindow && isConnected) {
+    if (iframe?.contentWindow && isLoaded) {
       iframe.contentWindow.postMessage(
         {
           type: 'SET_THEME',
@@ -102,13 +90,23 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
         IFRAME_ORIGIN
       );
     }
-  }, [currentTheme, isConnected]);
+  }, [currentTheme, isLoaded, status]);
 
   const handleRefresh = () => {
-    setError(null);
-    manualRefresh();
-    // Theme will be sent automatically by the dedicated effect when iframe reconnects
+    // Remounts the iframe with the same src (query params preserved) and resets status.
+    retry();
   };
+
+  const statusLabel =
+    status === 'confirmed'
+      ? 'Connected'
+      : status === 'unconfirmed'
+        ? 'Loaded (not confirmed)'
+        : status === 'timeout'
+          ? 'Unavailable'
+          : 'Connecting...';
+  const statusColor =
+    status === 'confirmed' ? '#10b981' : status === 'timeout' ? '#ef4444' : '#9ca3af';
 
   return (
     <div className="h-full w-full overflow-auto">
@@ -128,10 +126,10 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  color: isConnected ? '#10b981' : '#ef4444',
+                  color: statusColor,
                 }}
               >
-                {isConnected ? <Wifi size={16} /> : <WifiOff size={16} />}
+                {status === 'confirmed' ? <Wifi size={16} /> : <WifiOff size={16} />}
                 <span
                   style={{
                     fontSize: '14px',
@@ -139,7 +137,7 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
                     color: currentTheme === 'dark' ? '#e5e7eb' : '#374151',
                   }}
                 >
-                  {isConnected ? 'Connected' : 'Disconnected'}
+                  {statusLabel}
                 </span>
               </div>
 
@@ -165,7 +163,6 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
 
               <button
                 onClick={handleRefresh}
-                disabled={isChecking}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -176,15 +173,11 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
                   border: 'none',
                   borderRadius: '6px',
                   fontSize: '12px',
-                  cursor: isChecking ? 'not-allowed' : 'pointer',
-                  opacity: isChecking ? 0.6 : 1,
+                  cursor: 'pointer',
                 }}
               >
-                <RefreshCw
-                  size={12}
-                  style={{ animation: isChecking ? 'spin 1s linear infinite' : 'none' }}
-                />
-                {isChecking ? 'Refreshing...' : 'Refresh'}
+                <RefreshCw size={12} />
+                Refresh
               </button>
             </div>
 
@@ -212,31 +205,22 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
         </div>
       )}
 
-      {error && (
-        <div
-          style={{
-            backgroundColor: '#fee2e2',
-            color: '#dc2626',
-            padding: '12px',
-            textAlign: 'center',
-            fontSize: '14px',
-            borderBottom: '1px solid #fecaca',
-          }}
-        >
-          {error}
-        </div>
+      {status === 'timeout' && (
+        <RemoteEmbedFallback title="White Label Suite" url={REMOTE_URL} onRetry={retry} />
       )}
 
       <iframe
+        key={attempt}
         ref={iframeRef}
         id={IFRAME_ID}
-        src={`${REMOTE_URL}?theme=${currentTheme}&mode=light&allowInteraction=true`}
+        src={iframeSrc}
+        onLoad={onLoad}
         style={{
+          display: status === 'timeout' ? 'none' : 'block',
           width: '100%',
           height: showHeader ? 'calc(100vh - 60px)' : '100vh',
           minHeight: '800px',
           border: 'none',
-          display: 'block',
           overflow: 'auto',
           backgroundColor: currentTheme === 'dark' ? '#1f2937' : '#ffffff',
           transition: 'background-color 0.3s ease',
@@ -250,6 +234,40 @@ const RemoteWhiteLabelLoader: React.FC<RemoteWhiteLabelLoaderProps> = ({
       />
     </div>
   );
+};
+
+/**
+ * Dashboard embed gated on the same entitlement as the /white-label route
+ * (FeatureKey.WHITE_LABEL_CUSTOMIZATION). Users without access get an upgrade card, not an iframe.
+ */
+export const GatedWhiteLabelSection: React.FC<RemoteWhiteLabelLoaderProps> = (props) => {
+  const ctx = useContext(EntitlementContext);
+  if (ctx?.isLoading) {
+    return (
+      <div className="p-6 text-sm text-gray-500 dark:text-gray-400" data-testid="white-label-gate-loading">
+        Checking access...
+      </div>
+    );
+  }
+  if (!canAccessFeature(ctx?.entitlement ?? null, FeatureKey.WHITE_LABEL_CUSTOMIZATION)) {
+    return (
+      <div className="p-6 flex items-center justify-center" data-testid="white-label-upgrade-card">
+        <div className="max-w-md rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-center">
+          <p className="font-semibold text-gray-900 dark:text-white">White Label Suite</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            White label customization is not included in your current plan.
+          </p>
+          <a
+            href="/upgrade"
+            className="inline-block mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            Upgrade to unlock
+          </a>
+        </div>
+      </div>
+    );
+  }
+  return <RemoteWhiteLabelLoader {...props} />;
 };
 
 export default RemoteWhiteLabelLoader;

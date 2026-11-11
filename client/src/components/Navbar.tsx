@@ -1,5 +1,6 @@
 // src/components/Navbar.tsx
 import React, { useState, useEffect, useCallback, useRef, useContext } from 'react';
+import { canAccessFeature, FeatureKey } from '../types/entitlements';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -262,7 +263,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
   ];
 
   // General connected apps
-  const connectedApps = [
+  const allConnectedApps = [
     { name: 'Contacts', url: '/contacts', icon: Users, isExternal: false },
     { name: 'Companies', url: '/companies', icon: Building2, isExternal: false },
     { name: 'Pipeline Deals', url: '/pipeline', icon: Briefcase, isExternal: false },
@@ -296,6 +297,16 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
       requiresAccess: 'super_admin',
     },
   ];
+
+  // Hide entries whose requiresAccess the user lacks (OpenClaw: super_admin or the OPENCLAW feature).
+  const connectedApps = allConnectedApps.filter((app) => {
+    const required = (app as { requiresAccess?: string }).requiresAccess;
+    if (!required) return true;
+    if (required === 'super_admin') {
+      return isSuperAdmin || canAccessFeature(entitlement ?? null, FeatureKey.OPENCLAW);
+    }
+    return canAccess(required);
+  });
 
   // Workspace settings pages. These are per-workspace (the server scopes every request to the caller's
   // workspace and enforces team roles), so they are not platform-admin pages; /admin keeps its isAdmin gate.
@@ -450,7 +461,7 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
     if (path === '/dashboard') setActiveTab('dashboard');
     else if (path === '/contacts') setActiveTab('contacts');
     else if (path === '/pipeline') setActiveTab('pipeline');
-    else if (path === '/tasks' || path === '/appointments') setActiveTab('appointments');
+    else if (path === '/calendar' || path === '/appointments') setActiveTab('calendar');
     else if (path === '/ai-tools') setActiveTab('ai-tools');
     else if (path === '/analytics') setActiveTab('analytics');
     else if (path === '/ai-goals') setActiveTab('ai-goals');

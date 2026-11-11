@@ -34,6 +34,7 @@ import RemoteAppRefreshManager from './components/RemoteAppRefreshManager';
 import { universalDataSync } from './services/universalDataSync';
 import { Toaster } from './components/ui/toaster';
 import ProtectedRoute from './components/ProtectedRoute';
+import { RedirectWithParams } from './utils/RedirectWithParams';
 import { recordRoutes } from './routes/recordRoutes';
 import { dataModelRoutes } from './routes/dataModelRoutes';
 import { automationRoutes } from './routes/automationRoutes';
@@ -51,6 +52,9 @@ import AutomationConfig from './pages/AutomationConfig';
 
 // Lazy pages
 const TasksNew = lazy(() => import('./pages/TasksNew'));
+const SettingsHub = lazy(() => import('./pages/SettingsHub'));
+const Help = lazy(() => import('./pages/Help'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage'));
 const Workflows = lazy(() => import('./pages/Workflows'));
 const Communication = lazy(() => import('./pages/Communication'));
 const ContactsWorking = lazy(() => import('./pages/ContactsWorking'));
@@ -687,6 +691,9 @@ function AppContent() {
               }
             />
 
+            <Route path="/tasks/new" element={<RedirectWithParams to="/tasks?new=1" />} />
+            <Route path="/tasks/:id" element={<RedirectWithParams to="/tasks?id=:id" />} />
+
             {/* Workflows */}
             <Route
               path="/workflows"
@@ -698,8 +705,16 @@ function AppContent() {
               }
             />
 
-            {/* Calendar - deprecated, redirect to appointments */}
-            <Route path="/calendar" element={<Navigate to="/appointments" replace />} />
+            {/* Calendar - gated by FeatureKey.CALENDAR (the Navbar Calendar tab), renders the Appointments page */}
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.CALENDAR}>
+                  <Navbar />
+                  <Appointments />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Communication Apps */}
             <Route
@@ -711,6 +726,9 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            {/* Deep links consumed by the Appointments page (?new=1 / ?id=) */}
+            <Route path="/appointments/new" element={<RedirectWithParams to="/appointments?new=1" />} />
+            <Route path="/appointments/:id" element={<RedirectWithParams to="/appointments?id=:id" />} />
             {/* Appointments Dashboard - deprecated, redirect to appointments */}
             <Route path="/appointments-dashboard" element={<Navigate to="/appointments" replace />} />
             <Route
@@ -1065,6 +1083,8 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/contacts/new" element={<RedirectWithParams to="/contacts?new=1" />} />
+            <Route path="/interactions/:id" element={<RedirectWithParams to="/contacts/:id" />} />
             <Route
               path="/contacts/duplicates"
               element={
@@ -1089,6 +1109,49 @@ function AppContent() {
                 <ProtectedRoute featureKey={FeatureKey.PIPELINE}>
                   <Navbar />
                   <PipelinePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Legacy / link-target aliases */}
+            <Route path="/deals" element={<RedirectWithParams to="/pipeline" />} />
+            <Route path="/analytics-dashboard" element={<RedirectWithParams to="/analytics" />} />
+
+            {/* Settings hub, help and profile */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <SettingsHub />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/help"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Help />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Agency remote app (same page and feature gate as AI Goals) */}
+            <Route
+              path="/agency"
+              element={
+                <ProtectedRoute featureKey={FeatureKey.AI_GOALS}>
+                  <Navbar />
+                  <AIGoalsWithRemote />
                 </ProtectedRoute>
               }
             />

@@ -120,6 +120,15 @@ export const Tasks: React.FC = () => {
       setActiveTab(tab);
     }
 
+    // Deep link: /tasks?new=1 opens the create-task dialog.
+    if (params.get('new') === '1') {
+      setShowTaskModal(true);
+      params.delete('new');
+      const qs = params.toString();
+      navigate(`/tasks${qs ? `?${qs}` : ''}`, { replace: true });
+      return;
+    }
+
     // Handle actions from dropdown
     if (action) {
       switch (action) {

@@ -1,3 +1,19 @@
+/**
+ * Cache-busting URL for an iframe refresh. Existing query params (e.g. ?theme=dark) are
+ * preserved; only the _refresh/_nocache params are added or replaced.
+ */
+export function buildRefreshUrl(currentSrc: string, timestamp: number, nonce: number): string {
+  try {
+    const url = new URL(currentSrc);
+    url.searchParams.set('_refresh', String(timestamp));
+    url.searchParams.set('_nocache', String(nonce));
+    return url.toString();
+  } catch {
+    const sep = currentSrc.includes('?') ? '&' : '?';
+    return `${currentSrc}${sep}_refresh=${timestamp}&_nocache=${nonce}`;
+  }
+}
+
 class RemoteAppManager {
   private refreshIntervals: Map<string, NodeJS.Timeout> = new Map();
   private lastUpdateChecks: Map<string, number> = new Map();
@@ -108,9 +124,8 @@ class RemoteAppManager {
     const iframe = document.getElementById(iframeId) as HTMLIFrameElement;
     if (iframe) {
       // Add timestamp to force refresh and prevent caching
-      const originalSrc = iframe.src.split('?')[0]; // Remove existing query params
       const timestamp = Date.now();
-      iframe.src = `${originalSrc}?_refresh=${timestamp}&_nocache=${Math.random()}`;
+      iframe.src = buildRefreshUrl(iframe.src, timestamp, Math.random());
 
       // Dispatch custom event for refresh
       window.dispatchEvent(
@@ -126,6 +141,12 @@ class RemoteAppManager {
     this.refreshIntervals.forEach((_, iframeId) => {
       this.refreshIframe(iframeId);
     });
+  }
+
+  // Stop every auto-refresh interval (keeps bridges and event handlers intact)
+  stopAllAutoRefresh() {
+    this.refreshIntervals.forEach((interval) => clearInterval(interval));
+    this.refreshIntervals.clear();
   }
 
   // Stop auto-refresh
@@ -251,7 +272,7 @@ class RemoteAppManager {
 export const remoteAppManager = new RemoteAppManager();
 
 // React hook for remote app updates
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 export function useRemoteAppUpdates(
   iframeId: string,
@@ -319,4 +340,81 @@ export function useRemoteAppUpdates(
     toggleAutoRefresh,
     isAutoRefreshActive: remoteAppManager.getActiveRefreshCount() > 0,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Embed status: an iframe `error` event never fires for blocked/cross-origin frames and
+// `load` also fires for browser error pages, so `load` alone cannot prove the remote is up.
+//   loading     -> waiting for `load`
+//   loaded      -> `load` fired, waiting up to handshakeMs for a postMessage from the remote
+//   unconfirmed -> `load` fired but the remote never posted a message ("Loaded (not confirmed)")
+//   confirmed   -> the remote posted a message from the expected origin
+//   timeout     -> `load` never fired within the timeout (show fallback card)
+// ---------------------------------------------------------------------------
+
+export type RemoteEmbedStatus = 'loading' | 'loaded' | 'unconfirmed' | 'confirmed' | 'timeout';
+
+export const DEFAULT_REMOTE_LOAD_TIMEOUT_MS = 15000;
+export const REMOTE_HANDSHAKE_MS = 3000;
+
+export function getRemoteLoadTimeoutMs(): number {
+  const raw = Number(import.meta.env?.VITE_REMOTE_LOAD_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_REMOTE_LOAD_TIMEOUT_MS;
+}
+
+export function getOrigin(url: string): string {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
+}
+
+export function useRemoteEmbedStatus(
+  remoteUrl: string,
+  options: { timeoutMs?: number; handshakeMs?: number } = {}
+) {
+  const timeoutMs = options.timeoutMs ?? getRemoteLoadTimeoutMs();
+  const handshakeMs = options.handshakeMs ?? REMOTE_HANDSHAKE_MS;
+  const origin = getOrigin(remoteUrl);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [status, setStatus] = useState<RemoteEmbedStatus>('loading');
+  const [attempt, setAttempt] = useState(0);
+
+  // Load timeout
+  useEffect(() => {
+    if (status !== 'loading') return;
+    const t = setTimeout(() => setStatus((s) => (s === 'loading' ? 'timeout' : s)), timeoutMs);
+    return () => clearTimeout(t);
+  }, [status, attempt, timeoutMs]);
+
+  // Handshake window after `load`
+  useEffect(() => {
+    if (status !== 'loaded') return;
+    const t = setTimeout(() => setStatus((s) => (s === 'loaded' ? 'unconfirmed' : s)), handshakeMs);
+    return () => clearTimeout(t);
+  }, [status, handshakeMs]);
+
+  // Any postMessage from the expected origin confirms the remote is alive.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (!origin || event.origin !== origin) return;
+      const frame = iframeRef.current?.contentWindow;
+      if (frame && event.source && event.source !== frame) return;
+      setStatus('confirmed');
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [origin]);
+
+  const onLoad = useCallback(() => {
+    setStatus((s) => (s === 'confirmed' ? s : 'loaded'));
+  }, []);
+
+  const retry = useCallback(() => {
+    setStatus('loading');
+    setAttempt((a) => a + 1);
+  }, []);
+
+  return { iframeRef, status, onLoad, retry, attempt, origin };
 }

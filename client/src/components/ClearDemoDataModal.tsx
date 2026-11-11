@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDemoData } from '../contexts/DemoDataContext';
 import { X, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -11,31 +11,41 @@ interface ClearDemoDataModalProps {
 const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
   const { isDark } = useTheme();
   const { clearDemoData } = useDemoData();
-  const [isClearing, setIsClearing] = useState(false);
   const [isCleared, setIsCleared] = useState(false);
+
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Cancel any pending close/reset timers if the modal unmounts mid-flow.
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+    },
+    []
+  );
 
   if (!isOpen) return null;
 
+  // Keep in step with what the dashboard actually hides when the sample-data flag is off.
   const demoContentItems = [
     { label: 'Sample deals in the pipeline (4)', count: 4 },
     { label: 'Sample contacts (5)', count: 5 },
     { label: 'Sample appointments (3)', count: 3 },
-    { label: 'Sample sales charts and conversion metrics', count: 1 },
-    { label: 'Sample upcoming deals and activity feed', count: 1 },
-    { label: 'Sample analytics metrics and insights', count: 1 },
+    { label: 'Sample sales charts, conversion metrics and analytics insights', count: 1 },
+    { label: 'Sample customer profile, tasks and interaction history', count: 1 },
+    { label: 'Sample communications, upcoming deals and activity feed', count: 1 },
+    { label: 'Sample stage funnel and task schedule', count: 1 },
   ];
 
   const handleClear = () => {
-    setIsClearing(true);
-    setTimeout(() => {
-      clearDemoData();
-      setIsClearing(false);
-      setIsCleared(true);
+    clearDemoData();
+    setIsCleared(true);
+    timers.current.push(
       setTimeout(() => {
         onClose();
         setIsCleared(false);
-      }, 1500);
-    }, 800);
+      }, 1500)
+    );
   };
 
   return (
@@ -77,7 +87,7 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
                   This will remove all demo content from your dashboard
                 </p>
                 <p className={`text-xs mt-1 ${isDark ? 'text-yellow-500' : 'text-yellow-700'}`}>
-                  You can restore it anytime from Settings
+                  You can restore it anytime from Settings or the Restore button on the dashboard
                 </p>
               </div>
             </div>
@@ -112,7 +122,6 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                disabled={isClearing}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
                   isDark
                     ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
@@ -124,33 +133,10 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
               </button>
               <button
                 onClick={handleClear}
-                disabled={isClearing}
                 className="flex-1 px-4 py-2 rounded-lg font-medium bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="button-clear-demo"
               >
-                {isClearing ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    Clearing...
-                  </span>
-                ) : (
-                  'Clear Demo Data'
-                )}
+                Clear Demo Data
               </button>
             </div>
           </>

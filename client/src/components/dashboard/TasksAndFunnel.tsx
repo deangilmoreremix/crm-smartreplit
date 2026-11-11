@@ -1,63 +1,91 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useContactStore } from '../../store/contactStore';
-import { MoreHorizontal, ArrowRight, Calendar, UserPlus, Users, Plus } from 'lucide-react';
+import { useTaskStore } from '../../store/taskStore';
+import { useDealStore } from '../../store/dealStore';
+import { useDemoDataSafe } from '../../contexts/DemoDataContext';
+import SampleBadge from '../SampleBadge';
+import { ArrowRight, Users } from 'lucide-react';
 import Avatar from '../ui/Avatar';
-import { getInitials } from '../../utils/avatars';
 
-// Update taskData to include contactIds instead of direct assignee objects
-const taskData = [
-  {
-    day: 'Mon',
-    tasks: 2,
-    assigneeIds: ['1', '2'], // Contact IDs from the contact store
-  },
-  {
-    day: 'Tue',
-    tasks: 0,
-    assigneeIds: [],
-  },
-  {
-    day: 'Wed',
-    tasks: 3,
-    assigneeIds: ['3', '1', '5'],
-  },
-  {
-    day: 'Thu',
-    tasks: 1,
-    assigneeIds: ['4'],
-  },
-  {
-    day: 'Fri',
-    tasks: 4,
-    assigneeIds: ['1', '2', '3', '1'],
-  },
-  {
-    day: 'Sat',
-    tasks: 2,
-    assigneeIds: ['5', '4'],
-  },
-  {
-    day: 'Sun',
-    tasks: 1,
-    assigneeIds: ['2'],
-  },
+export interface DayInfo {
+  assigneeIds: string[];
+  taskCount: number;
+  titles: string[];
+}
+
+const EMPTY_DAY: DayInfo = { assigneeIds: [], taskCount: 0, titles: [] };
+const SAMPLE_CONTACT_IDS = ['1', '2', '3', '4', '5'];
+
+export const dateKey = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Deterministic sample schedule: same date -> same assignees, no randomness. */
+export function sampleDayInfo(d: Date): DayInfo {
+  const day = d.getDate();
+  if (!(day % 3 === 0 || day % 7 === 2)) return EMPTY_DAY;
+  const count = (day % 4) + 1;
+  return { assigneeIds: SAMPLE_CONTACT_IDS.slice(0, count), taskCount: count, titles: [] };
+}
+
+/** Group open/closed tasks by local due date. Assignees are the tasks' linked contacts. */
+export function groupTasksByDay(
+  tasks: { title: string; dueDate?: Date | string; contactId?: string }[]
+): Map<string, DayInfo> {
+  const map = new Map<string, DayInfo>();
+  for (const t of tasks) {
+    if (!t.dueDate) continue;
+    const when = new Date(t.dueDate);
+    if (Number.isNaN(when.getTime())) continue;
+    const key = dateKey(when);
+    const info = map.get(key) ?? { assigneeIds: [], taskCount: 0, titles: [] };
+    info.taskCount += 1;
+    info.titles.push(t.title);
+    if (t.contactId && !info.assigneeIds.includes(t.contactId)) info.assigneeIds.push(t.contactId);
+    map.set(key, info);
+  }
+  return map;
+}
+
+/** Calendar layout for a month: real days-in-month and the weekday of the 1st (0 = Sunday). */
+export function monthLayout(year: number, month: number) {
+  return {
+    daysInMonth: new Date(year, month + 1, 0).getDate(),
+    leadingBlanks: new Date(year, month, 1).getDay(),
+  };
+}
+
+const FUNNEL_STAGES = [
+  { id: 'qualification', name: 'Qualification', color: 'bg-gray-500' },
+  { id: 'proposal', name: 'Proposal', color: 'bg-gray-400' },
+  { id: 'negotiation', name: 'Negotiation', color: 'bg-gray-300' },
 ];
 
-const funnelData = [
-  { stage: 'Total in Pipeline', value: '350,500', color: 'bg-gray-600' },
-  { stage: 'Qualification', value: '92,350$', color: 'bg-gray-500' },
-  { stage: 'Royal Package Opportunity', value: '67,120$', color: 'bg-gray-400' },
-  { stage: 'Value Proposition', value: '28,980$', color: 'bg-gray-300' },
-];
+/** Funnel numbers from deals: open value per stage, total open pipeline and its weighted value. */
+export function computeFunnel(
+  deals: { value: number; probability?: number; stage?: { id: string } }[]
+) {
+  const stages = FUNNEL_STAGES.map((st) => ({
+    ...st,
+    value: deals.filter((d) => d.stage?.id === st.id).reduce((n, d) => n + (d.value || 0), 0),
+  }));
+  const open = deals.filter((d) => d.stage?.id !== 'closed-won' && d.stage?.id !== 'closed-lost');
+  return {
+    stages,
+    total: open.reduce((n, d) => n + (d.value || 0), 0),
+    weighted: open.reduce((n, d) => n + ((d.value || 0) * (d.probability ?? 0)) / 100, 0),
+  };
+}
+
+const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
 // Component to display assignee avatars
 const TaskAssignees: React.FC<{
   assigneeIds: string[];
   maxVisible?: number;
   size?: 'sm' | 'md';
-  onClick?: (id: string) => void;
-}> = ({ assigneeIds, maxVisible = 3, size = 'sm', onClick }) => {
+}> = ({ assigneeIds, maxVisible = 3, size = 'sm' }) => {
   const { isDark } = useTheme();
   const { contacts } = useContactStore();
 
@@ -91,8 +119,7 @@ const TaskAssignees: React.FC<{
         return (
           <div
             key={assigneeId}
-            className="relative cursor-pointer hover:z-10 transition-all hover:transform hover:scale-110"
-            onClick={() => onClick && onClick(assigneeId)}
+            className="relative hover:z-10 transition-all hover:transform hover:scale-110"
             title={contact.name}
           >
             <Avatar
@@ -159,36 +186,49 @@ const CalendarDay: React.FC<{
 
 const TasksAndFunnel: React.FC = () => {
   const { isDark } = useTheme();
-  const { contacts = {} } = useContactStore();
+  const navigate = useNavigate();
+  const contacts = useContactStore((s) => s.contacts) ?? {};
+  const tasks = useTaskStore((s) => s.tasks);
+  const deals = useDealStore((s) => s.deals);
+  const { showDemoData } = useDemoDataSafe();
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const today = new Date().getDate();
 
-  // Mock calendar data with assignee IDs
-  const calendarData = Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-    // Randomly determine if this day has assignees
-    const hasAssignees = Math.random() > 0.65;
-    if (!hasAssignees) return { day, assigneeIds: [] };
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = now.getDate();
+  const monthName = now.toLocaleDateString('en-US', { month: 'long' });
+  const { daysInMonth, leadingBlanks } = monthLayout(year, month);
 
-    // Get 1-4 random assignee IDs from our contacts store
-    const contactIds = Object.keys(contacts);
-    const shuffled = [...contactIds].sort(() => 0.5 - Math.random());
-    const count = Math.floor(Math.random() * 4) + 1;
+  const realByDay = useMemo(() => groupTasksByDay(tasks ?? []), [tasks]);
+  const hasRealTasks = realByDay.size > 0;
+  const useSampleTasks = !hasRealTasks && showDemoData;
+  const infoFor = (d: Date): DayInfo =>
+    useSampleTasks ? sampleDayInfo(d) : (realByDay.get(dateKey(d)) ?? EMPTY_DAY);
 
-    return {
-      day,
-      assigneeIds: shuffled.slice(0, count),
-    };
+  const monthDays = Array.from({ length: daysInMonth }, (_, i) => ({
+    day: i + 1,
+    ...infoFor(new Date(year, month, i + 1)),
+  }));
+
+  // Monday-Sunday of the current week, limited to this month's tasks view
+  const mondayOffset = (now.getDay() + 6) % 7;
+  const weekRows = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(year, month, today - mondayOffset + i);
+    return { label: d.toLocaleDateString('en-US', { weekday: 'short' }), ...infoFor(d) };
   });
 
-  const handleAssigneeClick = (id: string) => {
-    // In a real implementation, this would open the contact details modal
-    // You could call the onContactsClick function from props here
-  };
+  const teamIds = Array.from(new Set(monthDays.flatMap((d) => d.assigneeIds))).filter(
+    (id) => contacts[id]
+  );
 
-  const handleDayClick = (day: number) => {
-    setSelectedDay(day);
-    // In a real implementation, this might open a modal to create/view tasks for this day
-  };
+  const hasRealDeals = (deals ?? []).some((d) => !d.isDemo);
+  const hasSampleDeals = (deals ?? []).some((d) => d.isDemo);
+  const funnel = computeFunnel(deals ?? []);
+  const maxStage = Math.max(1, ...funnel.stages.map((st) => st.value));
+
+  const selected = selectedDay ? monthDays[selectedDay - 1] : null;
+  const muted = isDark ? 'text-gray-400' : 'text-gray-500';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -197,29 +237,24 @@ const TasksAndFunnel: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Tasks Schedule
+            {useSampleTasks && <SampleBadge className="ml-2 align-middle" />}
           </h3>
-          <div className="flex space-x-2">
-            <button
-              className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-            >
-              <UserPlus className="w-5 h-5" />
-            </button>
-            <button
-              className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
-            <button
-              className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-            >
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/tasks')}
+            aria-label="Open tasks"
+            className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
 
         <div className="mb-4">
-          <h4 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-            October
+          <h4
+            className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}
+            data-testid="calendar-month"
+          >
+            {monthName} {year}
           </h4>
           <div className="grid grid-cols-7 gap-1 text-center text-sm mb-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
@@ -228,71 +263,67 @@ const TasksAndFunnel: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-sm">
-            {calendarData.map(({ day, assigneeIds }) => (
+          <div className="grid grid-cols-7 gap-1 text-center text-sm" data-testid="calendar-grid">
+            {Array.from({ length: leadingBlanks }, (_, i) => (
+              <div key={`blank-${i}`} />
+            ))}
+            {monthDays.map(({ day, assigneeIds }) => (
               <CalendarDay
                 key={day}
                 day={day}
                 isToday={day === today}
                 assigneeIds={assigneeIds}
-                onClick={() => handleDayClick(day)}
+                onClick={() => setSelectedDay(day === selectedDay ? null : day)}
               />
             ))}
           </div>
         </div>
 
+        {!hasRealTasks && !useSampleTasks && (
+          <p className={`text-sm ${muted}`} data-testid="tasks-schedule-empty">
+            No tasks scheduled yet.
+          </p>
+        )}
+
         <div className="space-y-3">
-          {taskData.map((task, index) => (
-            <div
-              key={index}
-              className={`flex items-center justify-between ${isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100'} p-3 rounded-lg transition-colors`}
-            >
-              <div className="flex items-center space-x-3">
-                <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-700'}`}>
-                  {task.day}
+          {(hasRealTasks || useSampleTasks) &&
+            weekRows.map((row, index) => (
+              <div
+                key={index}
+                className={`flex items-center justify-between ${isDark ? 'bg-white/5' : 'bg-gray-50'} p-3 rounded-lg`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`font-medium ${isDark ? 'text-white' : 'text-gray-700'}`}>
+                    {row.label}
+                  </div>
+                  <TaskAssignees assigneeIds={row.assigneeIds} />
                 </div>
-                <TaskAssignees assigneeIds={task.assigneeIds} onClick={handleAssigneeClick} />
-              </div>
-              <div className="flex items-center space-x-2">
                 <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {task.tasks} tasks
+                  {row.taskCount} tasks
                 </span>
-                <button
-                  className={`p-1 ${isDark ? 'text-gray-400 hover:text-gray-200 hover:bg-white/10' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'} rounded transition-colors`}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {/* Selected Day Details */}
-        {selectedDay && (
+        {selected && (
           <div className={`mt-4 p-4 ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'} rounded-lg`}>
-            <div className="flex items-center justify-between mb-2">
-              <h5 className={`font-semibold ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
-                October {selectedDay}
-              </h5>
-              <button
-                className={`p-1 ${isDark ? 'text-blue-400 hover:bg-blue-500/20' : 'text-blue-600 hover:bg-blue-100'} rounded`}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
+            <h5 className={`font-semibold mb-2 ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
+              {monthName} {selectedDay}
+            </h5>
             <p className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
-              {calendarData[selectedDay - 1].assigneeIds.length > 0
-                ? `${calendarData[selectedDay - 1].assigneeIds.length} assignees with scheduled tasks`
+              {selected.taskCount > 0
+                ? `${selected.taskCount} task${selected.taskCount === 1 ? '' : 's'} scheduled`
                 : 'No tasks scheduled for this day'}
             </p>
-            {calendarData[selectedDay - 1].assigneeIds.length > 0 && (
-              <div className="mt-2 flex items-center space-x-2">
-                <TaskAssignees
-                  assigneeIds={calendarData[selectedDay - 1].assigneeIds}
-                  maxVisible={5}
-                  onClick={handleAssigneeClick}
-                />
-              </div>
+            {selected.titles.length > 0 && (
+              <ul
+                className={`mt-1 text-sm list-disc pl-5 ${isDark ? 'text-blue-200' : 'text-blue-700'}`}
+              >
+                {selected.titles.map((t, i) => (
+                  <li key={i}>{t}</li>
+                ))}
+              </ul>
             )}
           </div>
         )}
@@ -303,109 +334,124 @@ const TasksAndFunnel: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Stage Funnel
+            {hasSampleDeals && <SampleBadge className="ml-2 align-middle" />}
           </h3>
-          <div className="flex space-x-2">
-            <button
-              className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
-            <button
-              className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-            >
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/pipeline')}
+            aria-label="Open pipeline"
+            className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
 
-        <div className="space-y-4">
-          {funnelData.map((stage, index) => (
-            <div key={index} className="space-y-2">
+        {!hasRealDeals && !hasSampleDeals ? (
+          <p className={`text-sm ${muted}`} data-testid="funnel-empty">
+            No deals in the pipeline yet.
+          </p>
+        ) : (
+          <>
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span
                   className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 >
-                  {stage.stage}
+                  Total in Pipeline
                 </span>
                 <span
                   className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                 >
-                  {stage.value}
+                  {money(funnel.total)}
                 </span>
               </div>
-              <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
-                <div
-                  className={`${stage.color} ${isDark ? 'opacity-80' : 'opacity-100'} h-2 rounded-full transition-all duration-300`}
-                  style={{ width: `${(4 - index) * 25}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className={`mt-6 p-4 ${isDark ? 'bg-white/5' : 'bg-gray-50'} rounded-lg`}>
-          <div className="flex items-center justify-between">
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              Weighted
-            </span>
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              Total
-            </span>
-          </div>
-        </div>
-
-        {/* Added Team Overview */}
-        <div className={`mt-4 p-4 ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'} rounded-lg`}>
-          <div className="flex items-center justify-between mb-3">
-            <h4
-              className={`font-semibold ${isDark ? 'text-blue-300' : 'text-blue-900'} flex items-center`}
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Team Assignments
-            </h4>
-            <button
-              className={`p-1 rounded ${isDark ? 'hover:bg-blue-500/20 text-blue-300' : 'hover:bg-blue-100 text-blue-700'}`}
-            >
-              <UserPlus className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-3">
-            {/* Get unique assignees from all tasks */}
-            {Array.from(new Set(taskData.flatMap((t) => t.assigneeIds)))
-              .filter((id) => contacts[id]) // Filter out invalid IDs
-              .map((assigneeId) => {
-                const contact = contacts[assigneeId];
-                const taskCount = taskData.filter((t) => t.assigneeIds.includes(assigneeId)).length;
-
-                // Map interestLevel to status
-                let status: 'online' | 'away' | 'offline' = 'offline';
-                if (contact.interestLevel === 'hot') status = 'online';
-                else if (contact.interestLevel === 'warm' || contact.interestLevel === 'medium')
-                  status = 'away';
-
-                return (
-                  <div key={assigneeId} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Avatar
-                        src={contact.avatarSrc || contact.avatar}
-                        alt={contact.name}
-                        size="sm"
-                        status={status}
-                      />
-                      <span
-                        className={`text-sm font-medium ${isDark ? 'text-blue-100' : 'text-blue-800'}`}
-                      >
-                        {contact.name}
-                      </span>
-                    </div>
+              {funnel.stages.map((stage) => (
+                <div key={stage.id} className="space-y-2">
+                  <div className="flex items-center justify-between">
                     <span
-                      className={`text-xs ${isDark ? 'text-blue-300 bg-blue-500/30' : 'text-blue-700 bg-blue-100'} px-2 py-1 rounded`}
+                      className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                     >
-                      {taskCount} days
+                      {stage.name}
+                    </span>
+                    <span
+                      className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      {money(stage.value)}
                     </span>
                   </div>
-                );
-              })}
+                  <div
+                    className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}
+                  >
+                    <div
+                      className={`${stage.color} h-2 rounded-full transition-all duration-300`}
+                      style={{ width: `${(stage.value / maxStage) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className={`mt-6 p-4 ${isDark ? 'bg-white/5' : 'bg-gray-50'} rounded-lg`}>
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  Weighted {money(funnel.weighted)}
+                </span>
+                <span
+                  className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  Total {money(funnel.total)}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Team Overview: contacts linked to scheduled tasks */}
+        <div className={`mt-4 p-4 ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'} rounded-lg`}>
+          <h4
+            className={`font-semibold mb-3 ${isDark ? 'text-blue-300' : 'text-blue-900'} flex items-center`}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Team Assignments
+          </h4>
+          {teamIds.length === 0 && (
+            <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-blue-700'}`}>
+              No assignments yet.
+            </p>
+          )}
+          <div className="space-y-3">
+            {teamIds.map((assigneeId) => {
+              const contact = contacts[assigneeId];
+              const taskCount = monthDays.filter((d) => d.assigneeIds.includes(assigneeId)).length;
+              let status: 'online' | 'away' | 'offline' = 'offline';
+              if (contact.interestLevel === 'hot') status = 'online';
+              else if (contact.interestLevel === 'warm' || contact.interestLevel === 'medium')
+                status = 'away';
+              return (
+                <div key={assigneeId} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Avatar
+                      src={contact.avatarSrc || contact.avatar}
+                      alt={contact.name}
+                      size="sm"
+                      status={status}
+                    />
+                    <span
+                      className={`text-sm font-medium ${isDark ? 'text-blue-100' : 'text-blue-800'}`}
+                    >
+                      {contact.name}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-xs ${isDark ? 'text-blue-300 bg-blue-500/30' : 'text-blue-700 bg-blue-100'} px-2 py-1 rounded`}
+                  >
+                    {taskCount} days
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 
 const remote = vi.hoisted(() => ({
   value: { component: null as any, loading: true, error: null as any },
@@ -34,12 +34,21 @@ describe('Module Federation components hook order', () => {
     expect(screen.getByText('Remote analytics')).toBeInTheDocument();
   });
 
-  it('Analytics: error shows Retry and Open in new tab', async () => {
-    remote.value = { component: null, loading: false, error: new Error('x') };
-    const { default: Analytics } = await import('./ModuleFederationAnalytics');
-    render(<Analytics />);
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open in new tab' })).toBeInTheDocument();
+  it('Analytics: error falls back to the iframe, then Retry and Open in new tab if it never loads', async () => {
+    vi.useFakeTimers();
+    try {
+      remote.value = { component: null, loading: false, error: new Error('x') };
+      const { default: Analytics } = await import('./ModuleFederationAnalytics');
+      render(<Analytics />);
+      expect(screen.getByTitle('Remote AI Analytics')).toBeInTheDocument();
+      act(() => {
+        vi.advanceTimersByTime(15_001);
+      });
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Open in new tab' })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('Pipeline: loading -> loaded does not throw and passes real deals only', async () => {

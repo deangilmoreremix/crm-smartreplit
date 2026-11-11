@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
 import { useDashboardLayout } from '../../contexts/DashboardLayoutContext';
 
@@ -27,9 +27,29 @@ const LayoutWidgetSettings: React.FC<{ sectionId: string; metrics?: WidgetMetric
 }) => {
   const [open, setOpen] = useState(false);
   const { rangeDays, metric, setSettings } = useWidgetSettings(sectionId);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Close on click-outside and Escape.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: MouseEvent | TouchEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('touchstart', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('touchstart', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <div className="relative flex justify-end mb-2">
+    <div ref={rootRef} className="relative flex justify-end mb-2">
       <button
         onClick={() => setOpen((o) => !o)}
         title="Widget settings"

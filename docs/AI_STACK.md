@@ -31,3 +31,12 @@ The browser sends the Supabase access token as `Authorization: Bearer <jwt>` (pa
 
 ## Required environment variables
 `OPENAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_JOBS_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (and other `STRIPE_*` price ids), plus `DATABASE_URL` for the Drizzle-backed routes. Netlify supplies `URL` at runtime.
+
+## Client embed environment variables (Vite, optional)
+| Env var | Default | Purpose |
+|---|---|---|
+| `VITE_PRODUCT_RESEARCH_URL` | `https://product-research-mod-uay0.bolt.host/` | Product Research iframe on the dashboard (default is a bolt.new preview host; set a stable URL in production) |
+| `VITE_WHITE_LABEL_REMOTE_URL` | `https://white-label.smartcrm.vip` | White Label Suite iframe on the dashboard |
+| `VITE_REMOTE_LOAD_TIMEOUT_MS` | `15000` | Load timeout for embedded remotes before the Retry / Open in new tab card is shown |
+
+Embeds show "Connected" only after the remote posts a message from its own origin; if the iframe only fires `load` and nothing arrives within 3s the status reads "Loaded (not confirmed)". The white-label and product-research embeds do not auto-refresh (it would wipe unsaved edits).

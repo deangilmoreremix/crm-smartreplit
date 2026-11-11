@@ -38,7 +38,7 @@ const RemoteAppRefreshManager: React.FC = () => {
 
   const toggleGlobalAutoRefresh = () => {
     if (isGlobalAutoRefresh) {
-      remoteAppManager.cleanup();
+      remoteAppManager.stopAllAutoRefresh();
     } else {
       // This would need to be implemented based on which apps are currently loaded
       window.location.reload(); // Simple solution to restart all auto-refresh

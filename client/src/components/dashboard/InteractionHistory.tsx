@@ -2,17 +2,58 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useContactStore } from '../../store/contactStore';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, ArrowRight } from 'lucide-react';
+import { useCommunicationStore } from '../../store/communicationStore';
+import { useDemoDataSafe } from '../../contexts/DemoDataContext';
+import SampleBadge from '../SampleBadge';
+import { ArrowRight } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
+
+const CARD_COLORS = [
+  { bg: 'bg-blue-500', text: 'text-white' },
+  { bg: 'bg-teal-500', text: 'text-white' },
+  { bg: 'bg-black', text: 'text-white' },
+  { bg: 'bg-yellow-400', text: 'text-black' },
+  { bg: 'bg-gray-300', text: 'text-black' },
+];
+
+interface Interaction {
+  id: string | number;
+  type: string;
+  value: string;
+  date: string;
+  status: string;
+  bgColor: string;
+  textColor: string;
+  participantIds: string[];
+  /** Set for real interactions; clicking opens this contact. Sample cards have none. */
+  contactId?: string;
+}
 
 const InteractionHistory: React.FC = () => {
   const { isDark } = useTheme();
   const { contacts } = useContactStore();
   const navigate = useNavigate();
+  const { showDemoData } = useDemoDataSafe();
+  const logs = useCommunicationStore((s) => s.communicationLogs);
 
-  // Updated interactions with contactIds instead of direct participant arrays
-  const interactions = [
+  const realInteractions = [...(logs ?? [])]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 6)
+    .map((log, i) => ({
+      id: log.id,
+      type: log.subject || `${log.type.replace('_', ' ')} (${log.direction})`,
+      value: log.type.replace('_', ' '),
+      date: new Date(log.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      status: log.status,
+      bgColor: CARD_COLORS[i % CARD_COLORS.length].bg,
+      textColor: CARD_COLORS[i % CARD_COLORS.length].text,
+      participantIds: log.contactId ? [log.contactId] : [],
+      contactId: log.contactId,
+    }));
+
+  // Sample interactions (shown only while sample data is on and there are no real ones)
+  const sampleInteractions = [
     {
       id: 1,
       type: 'Royal Package Opportunity',
@@ -75,9 +116,15 @@ const InteractionHistory: React.FC = () => {
     },
   ];
 
-  const handleInteractionClick = (interactionId: number) => {
-    // Navigate to the detailed view of the interaction
-    navigate(`/interactions/${interactionId}`);
+  const isSample = realInteractions.length === 0 && showDemoData;
+  const interactions: Interaction[] = realInteractions.length
+    ? realInteractions
+    : showDemoData
+      ? sampleInteractions
+      : [];
+
+  const handleInteractionClick = (interaction: Interaction) => {
+    if (interaction.contactId) navigate(`/contacts/${interaction.contactId}`);
   };
 
   return (
@@ -85,41 +132,31 @@ const InteractionHistory: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Interaction History
+          {isSample && <SampleBadge className="ml-2 align-middle" />}
         </h2>
-        <div className="flex items-center space-x-2">
-          <button
-            className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-          >
-            <MoreHorizontal className="w-5 h-5" />
-          </button>
-          <button
-            className={`p-2 ${isDark ? 'text-gray-400 hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
-          >
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
       </div>
 
+      {interactions.length === 0 && (
+        <p
+          className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+          data-testid="interactions-empty"
+        >
+          No interactions yet. Logged calls, emails and meetings will appear here.
+        </p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {interactions.map((interaction) => (
           <div
-            onClick={() => handleInteractionClick(interaction.id)}
+            onClick={interaction.contactId ? () => handleInteractionClick(interaction) : undefined}
             key={interaction.id}
             className={`
               ${interaction.bgColor} ${interaction.textColor} 
-              rounded-2xl p-5 hover:scale-105 transition-all duration-300 cursor-pointer
+              rounded-2xl p-5 transition-all duration-300 ${interaction.contactId ? 'cursor-pointer hover:scale-105' : ''}
               shadow-lg hover:shadow-xl
             `}
           >
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium opacity-90">{interaction.date}</span>
-              <button
-                className={`p-1.5 rounded-lg transition-colors ${
-                  interaction.textColor === 'text-white' ? 'hover:bg-white/20' : 'hover:bg-black/10'
-                }`}
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
             </div>
 
             <div className="mb-6">

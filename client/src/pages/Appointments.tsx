@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 // @ts-ignore
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -99,6 +100,26 @@ const Appointments: React.FC = () => {
       setShowAppointmentDetail(true);
     }
   }, [selectedAppointment, appointments]);
+
+  // Deep links: /appointments?new=1 opens the create form; /appointments?id=<id> opens that appointment.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('new') !== '1') return;
+    setIsEditing(false);
+    setShowAppointmentForm(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('new');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (!id || !appointments[id]) return;
+    selectAppointment(id);
+    const next = new URLSearchParams(searchParams);
+    next.delete('id');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, appointments, selectAppointment, setSearchParams]);
 
   // Calculate appointments for the selected date
   const appointmentsForSelectedDate = getAppointmentsForDate(selectedDate);

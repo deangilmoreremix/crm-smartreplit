@@ -14,7 +14,7 @@ import UnifiedActivityWidget from './dashboard/UnifiedActivityWidget';
 import LayoutWidgetSettings from './dashboard/LayoutWidgetSettings';
 import { LoadingSpinner } from './ui/LoadingSpinner';
 import ModuleFederationPipeline from './ModuleFederationPipeline';
-import RemoteWhiteLabelLoader from './RemoteWhiteLabelLoader';
+import { GatedWhiteLabelSection } from './RemoteWhiteLabelLoader';
 import RemoteProductResearchLoader from './RemoteProductResearchLoader';
 import ModuleFederationAnalytics from './ModuleFederationAnalytics';
 import RemoteAIGoalsLoader from './RemoteAIGoalsLoader';
@@ -312,7 +312,7 @@ const Dashboard: React.FC = React.memo(() => {
               className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden"
               style={{ minHeight: '600px', height: 'calc(100vh - 200px)' }}
             >
-              <RemoteWhiteLabelLoader showHeader={true} />
+              <GatedWhiteLabelSection showHeader={true} />
             </div>
           </React.Suspense>
         );

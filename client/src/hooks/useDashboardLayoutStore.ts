@@ -112,6 +112,19 @@ export function migrateLayoutState(raw: unknown, defaultOrder: string[]): Layout
   sectionOrder = Array.from(new Set(sectionOrder));
   hiddenSections = Array.from(new Set(hiddenSections));
 
+  // Sections added to the default order after this layout was saved would otherwise never
+  // show up (and could not be re-shown from the panel). Append them; ones that start hidden
+  // by default stay hidden. Hiding keeps an id in the order, so this is a one-time migration.
+  // (v1 layouts are excluded: there, absence from the order meant "hidden".)
+  for (const id of version >= 2 ? defaultOrder : []) {
+    if (!sectionOrder.includes(id)) {
+      sectionOrder.push(id);
+      if (DEFAULT_HIDDEN_SECTIONS.includes(id) && !hiddenSections.includes(id)) {
+        hiddenSections.push(id);
+      }
+    }
+  }
+
   const sectionSizes: Record<string, SectionSize> = {};
   if (r.sectionSizes && typeof r.sectionSizes === 'object') {
     for (const [k, v] of Object.entries(r.sectionSizes)) {
@@ -165,8 +178,19 @@ export function loadLocalLayoutState(
     try {
       const v2 = storage.getItem(LAYOUT_STORAGE_KEY);
       if (v2) {
-        const migrated = migrateLayoutState(JSON.parse(v2), defaultOrder);
-        if (migrated) return migrated;
+        const parsedV2 = JSON.parse(v2);
+        const migrated = migrateLayoutState(parsedV2, defaultOrder);
+        if (migrated) {
+          const storedCount = Array.isArray(parsedV2?.sectionOrder)
+            ? new Set(parsedV2.sectionOrder).size
+            : 0;
+          if (migrated.sectionOrder.length > storedCount) {
+            // New default sections were appended: stamp + persist so it happens once and syncs.
+            migrated.updatedAt = Date.now();
+            saveLocalLayoutState(migrated, storage);
+          }
+          return migrated;
+        }
       }
     } catch (error) {
       console.warn('Failed to load dashboard layout from localStorage:', error);
@@ -230,6 +254,7 @@ export type LayoutAction =
   | { type: 'toggle'; id: string; now?: number }
   | { type: 'setSize'; id: string; size: SectionSize; now?: number }
   | { type: 'reset'; defaultOrder: string[]; now?: number }
+  | { type: 'resetBuiltIn'; defaultOrder: string[]; clearWidgetSettings?: boolean; now?: number }
   | { type: 'saveAs'; name: string; layoutId: string; now?: number }
   | { type: 'apply'; layoutId: string; now?: number }
   | { type: 'rename'; layoutId: string; name: string; now?: number }
@@ -281,6 +306,16 @@ export function layoutReducer(state: LayoutState, action: LayoutAction): LayoutS
         sectionOrder: fresh.sectionOrder,
         hiddenSections: fresh.hiddenSections,
         sectionSizes: {},
+      });
+    }
+    case 'resetBuiltIn': {
+      // Ignores the user's default saved layout; saved layouts themselves are kept.
+      const fresh = createDefaultLayoutState(action.defaultOrder);
+      return stamp({
+        sectionOrder: fresh.sectionOrder,
+        hiddenSections: fresh.hiddenSections,
+        sectionSizes: {},
+        ...(action.clearWidgetSettings ? { widgetSettings: {} } : {}),
       });
     }
     case 'saveAs': {

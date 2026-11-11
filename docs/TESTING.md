@@ -169,6 +169,31 @@ Use user A on the deploy preview unless stated. Tick each only when the stated r
 9. **AI tools** (needs an OpenAI key in Settings > API Keys or the site key). `/ai-tools` loads; run one tool (e.g. lead scoring) and get a result; `/assistants`: create an assistant, chat two turns, the second answer uses the first; start a bulk AI job and watch it reach `done`.
 10. **White-label.** `/white-label`: change company name and colours, save; in a private window logged in as A the values are the same (stored in Supabase, not localStorage). `/white-label/domains`: add `crm.example.com`: row appears as pending with a TXT token; `evil.netlify.app` and `x.smartcrm.vip` are refused; remove works. After adding the TXT record at a real DNS provider and clicking verify, status becomes active and opening the site on that host shows the branding (needs real DNS and a Netlify domain alias, see below).
 
+### Dashboard manual checklist
+
+Automated in `tests/playwright/staging/01-dashboard-layout.spec.ts` (console errors, notification bell, no spinner after 10s, Clear/Restore demo data, hide -> re-show). Do the rest by hand on `/dashboard` as user A.
+
+Global checks
+- [ ] Page loads with no uncaught errors in the browser console.
+- [ ] Notification bell opens the panel; Escape closes it.
+- [ ] Every section shows content, an explicit empty state, or an error with Retry. No spinner after 10 seconds.
+- [ ] Clear Demo Data hides sample contacts/deals/tasks/activity in every section; "Restore sample data" brings all of it back. Real (non-sample) data is never hidden.
+- [ ] Layout panel (gear): lists every section, including OpenClaw, White Label, Product Research, AI Analytics and Sales Charts. Hide a section with the hover eye, re-show it from the panel. "Show order" only previews the order. Reset Layout asks to confirm and offers to also clear widget settings. Escape / click outside closes the panel and widget-settings popovers. A skeleton shows while the saved layout loads.
+- [ ] Reordering: drag the handle on a section (works in Firefox too) or use its up/down arrows. Selecting text and typing in widgets still works; kanban/task drag inside a widget does not move the section.
+- [ ] A section added in a new release appears for users with a saved layout (unless hidden by default, e.g. Unified Activity).
+
+Section by section (audit categories)
+
+| Category | Sections | Expect |
+|---|---|---|
+| Overview and KPIs | Executive Overview, GPT-5 Smart KPI, GPT-5 Enhanced Dashboard | numbers match Contacts/Deals pages; empty account shows zeros or an empty state, not NaN |
+| AI | AI Smart Features Hub, GPT-5 Analytics, GPT-5 Deal Intelligence, AI Pipeline Intelligence, OpenClaw chat | each loads or shows a clear "not configured" state; with an OpenAI key an action returns a result |
+| Pipeline and sales | Sales Pipeline and Analytics, Pipeline, Sales Charts, Comprehensive Analytics | charts render; date-range popover changes the data and persists after reload |
+| People | Customer and Lead Management, Contacts, Customer Profile, Interaction History | rows open the record; sample rows disappear on Clear Demo Data |
+| Activity | Activities and Communications, Tasks, Tasks and Funnel, Recent Activity, Unified Activity | tasks can be completed; items link to their record |
+| Automations and apps | Automations, Integrations and System, Connected Apps | toggles persist; links go to the right settings page |
+| Embeds (remote apps) | White Label Suite, Product Research, AI Analytics | status reads Connecting, then Connected (remote answered) or "Loaded (not confirmed)"; if the remote is down a Retry / Open in new tab card appears within 15s; no auto-reload while editing; white-label shows "Upgrade to unlock" for plans without access |
+
 ## 5. What needs live credentials / real infrastructure
 
 | Item | Needs |

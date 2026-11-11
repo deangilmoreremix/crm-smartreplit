@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useDashboardLayout } from '../contexts/DashboardLayoutContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { GripVertical, Eye, EyeOff } from 'lucide-react';
+import { GripVertical, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface DraggableSectionProps {
   sectionId: string;
@@ -19,6 +19,7 @@ const DraggableSection: React.FC<DraggableSectionProps> = ({ sectionId, children
     setSectionOrder,
     getSectionConfig,
     toggleSection,
+    visibleSections,
   } = useDashboardLayout();
 
   const { isDark } = useTheme();
@@ -27,22 +28,36 @@ const DraggableSection: React.FC<DraggableSectionProps> = ({ sectionId, children
 
   const sectionConfig = getSectionConfig(sectionId);
 
+  // Only the handle is draggable so text selection, inputs and in-widget drag (kanban/tasks)
+  // keep working. The drag image is the whole section container.
   const handleDragStart = (e: React.DragEvent) => {
     setIsDragging(true);
     setDraggedItem(sectionId);
     e.dataTransfer.effectAllowed = 'move';
+    // Firefox will not start a drag without data.
     e.dataTransfer.setData('text/plain', sectionId);
-
-    // Add drag image
-    if (dragRef.current) {
-      const dragImage = dragRef.current.cloneNode(true) as HTMLElement;
-      dragImage.style.transform = 'rotate(2deg)';
-      dragImage.style.opacity = '0.8';
-      document.body.appendChild(dragImage);
-      e.dataTransfer.setDragImage(dragImage, 0, 0);
-      setTimeout(() => document.body.removeChild(dragImage), 0);
+    if (dragRef.current && typeof e.dataTransfer.setDragImage === 'function') {
+      e.dataTransfer.setDragImage(dragRef.current, 16, 16);
     }
   };
+
+  // Keyboard / click reordering among the currently visible sections.
+  const moveBy = (delta: -1 | 1) => {
+    const pos = visibleSections.indexOf(sectionId);
+    const neighbor = visibleSections[pos + delta];
+    if (pos === -1 || !neighbor) return;
+    const from = sectionOrder.indexOf(sectionId);
+    const to = sectionOrder.indexOf(neighbor);
+    if (from === -1 || to === -1) return;
+    const next = [...sectionOrder];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setSectionOrder(next);
+  };
+  const visiblePos = visibleSections.indexOf(sectionId);
+  const canMoveUp = visiblePos > 0;
+  const canMoveDown = visiblePos !== -1 && visiblePos < visibleSections.length - 1;
+  const title = sectionConfig?.title ?? sectionId;
 
   const handleDragEnd = () => {
     setIsDragging(false);
@@ -111,13 +126,10 @@ const DraggableSection: React.FC<DraggableSectionProps> = ({ sectionId, children
 
       <div
         ref={dragRef}
-        draggable
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`group relative transition-all duration-300 cursor-move ${
+        className={`group relative transition-all duration-300 ${
           isBeingDragged
             ? 'opacity-50 scale-95 rotate-1 z-50'
             : isDragging
@@ -129,23 +141,57 @@ const DraggableSection: React.FC<DraggableSectionProps> = ({ sectionId, children
             : ''
         }`}
       >
-        {/* Drag Handle */}
+        {/* Reorder controls: drag handle + keyboard-accessible move buttons */}
         <div
-          className={`absolute left-2 top-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-grab active:cursor-grabbing`}
+          className="absolute left-2 top-4 z-20 flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200"
         >
           <div
-            className={`p-2 rounded-lg ${isDark ? 'bg-gray-800/80 border-white/10' : 'bg-white/80 border-gray-200'} backdrop-blur-sm border shadow-lg`}
+            className={`rounded-lg ${isDark ? 'bg-gray-800/80 border-white/10' : 'bg-white/80 border-gray-200'} backdrop-blur-sm border shadow-lg flex flex-col items-center`}
           >
-            <GripVertical size={16} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+            <button
+              type="button"
+              onClick={() => moveBy(-1)}
+              disabled={!canMoveUp}
+              aria-label={`Move ${title} up`}
+              title="Move up"
+              className="p-1 disabled:opacity-30"
+            >
+              <ChevronUp size={14} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+            </button>
+            <div
+              draggable
+              role="button"
+              tabIndex={-1}
+              aria-label={`Drag to reorder ${title}`}
+              title="Drag to reorder"
+              data-testid={`drag-handle-${sectionId}`}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              className="p-1 cursor-grab active:cursor-grabbing"
+            >
+              <GripVertical size={16} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+            </div>
+            <button
+              type="button"
+              onClick={() => moveBy(1)}
+              disabled={!canMoveDown}
+              aria-label={`Move ${title} down`}
+              title="Move down"
+              className="p-1 disabled:opacity-30"
+            >
+              <ChevronDown size={14} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+            </button>
           </div>
         </div>
 
         {/* Section Controls */}
         <div
-          className={`absolute right-2 top-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2`}
+          className={`absolute right-2 top-4 z-20 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 flex space-x-2`}
         >
           <button
+            type="button"
             onClick={handleRemoveSection}
+            aria-label={`Hide ${title}`}
             className={`p-2 rounded-lg ${isDark ? 'bg-gray-800/80 border-white/10 hover:bg-red-500/20' : 'bg-white/80 border-gray-200 hover:bg-red-50'} backdrop-blur-sm border shadow-lg transition-colors`}
             title="Hide Section"
           >

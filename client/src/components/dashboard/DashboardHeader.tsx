@@ -19,6 +19,7 @@ import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
 import { Deal } from '../../types/deal';
 import ClearDemoDataModal from '../ClearDemoDataModal';
+import RestoreSampleData from '../RestoreSampleData';
 
 interface DashboardHeaderProps {
   title?: string;
@@ -168,6 +169,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               Clear Demo Data
             </button>
           )}
+          {!showDemoData && <RestoreSampleData />}
           <div
             className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm flex items-center`}
           >
