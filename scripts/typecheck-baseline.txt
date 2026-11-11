@@ -12,11 +12,8 @@ client/src/components/AIProviderSettings.tsx: TS2304 8
 client/src/components/ActivityFeed.tsx: TS2322 1
 client/src/components/ActivityFeed.tsx: TS2345 1
 client/src/components/ActivityFeed.tsx: TS2353 2
-client/src/components/AppointmentWidget.tsx: TS2339 6
-client/src/components/AppointmentWidget.tsx: TS2367 3
 client/src/components/BillingDashboard.tsx: TS2307 1
 client/src/components/CallRecording.tsx: TS18046 1
-client/src/components/DealAnalytics.tsx: TS2367 18
 client/src/components/DealDetail.tsx: TS7006 4
 client/src/components/DealDetail.tsx: TS7015 1
 client/src/components/EmailComposer.tsx: TS2322 1
@@ -28,7 +25,6 @@ client/src/components/GTMPromptLibrary.tsx: TS7006 3
 client/src/components/InCallMessaging.tsx: TS7006 1
 client/src/components/Navbar.tsx: TS2339 5
 client/src/components/Navbar.tsx: TS2345 1
-client/src/components/NotificationCenter.tsx: TS2304 2
 client/src/components/PartnerManagement.tsx: TS2322 1
 client/src/components/PartnerManagement.tsx: TS2339 2
 client/src/components/PipelineModal.tsx: TS2339 2
@@ -110,11 +106,7 @@ client/src/components/contacts/ContactList.tsx: TS2558 1
 client/src/components/contacts/ContactList.tsx: TS2724 3
 client/src/components/contacts/ContactList.tsx: TS7006 4
 client/src/components/contacts/RemoteContactsWithAssistant.tsx: TS2345 1
-client/src/components/dashboard/AIInsightsPanel.tsx: TS2345 1
-client/src/components/dashboard/AIInsightsPanel.tsx: TS2367 6
 client/src/components/dashboard/APIKeyStatus.tsx: TS2307 1
-client/src/components/dashboard/GPT5AnalyticsPanel.tsx: TS2339 8
-client/src/components/dashboard/GPT5DealIntelligence.tsx: TS2367 2
 client/src/components/dashboard/RecentActivity.tsx: TS2339 9
 client/src/components/dashboard/TasksAndFunnel.tsx: TS2367 2
 client/src/components/deals/AIEnhancedDealCard.tsx: TS2322 1
@@ -276,8 +268,6 @@ client/src/shared/federation/useWhitelabelFederation.ts: TS2345 1
 client/src/store/aiIntegrationStore.ts: TS18046 2
 client/src/store/aiIntegrationStore.ts: TS2741 2
 client/src/store/communicationStore.ts: TS2345 1
-client/src/store/goalStore.ts: TS2305 1
-client/src/store/goalStore.ts: TS7006 1
 client/src/store/taskStore.ts: TS2322 1
 client/src/store/taskStore.ts: TS2741 1
 client/src/test/setup.ts: TS2322 1
