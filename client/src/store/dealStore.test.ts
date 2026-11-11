@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const toastMock = vi.fn();
 vi.mock('../hooks/use-toast', () => ({ toast: (...a: unknown[]) => toastMock(...a) }));
 
-import { useDealStore, fromApiDeal } from './dealStore';
+import { useDealStore, fromApiDeal, toApiStage } from './dealStore';
+import { DEMO_DEALS } from '../data/demoData';
 
 const row = { id: 7, title: 'Big deal', value: '1200.50', stage: 'proposal', probability: 40, contactId: 3 };
 
@@ -70,3 +71,116 @@ describe('dealStore server sync', () => {
     expect(useDealStore.getState().deals[0].stage.id).toBe('negotiation');
   });
 });
+
+describe('dealStore demo (sample) deals', () => {
+  beforeEach(() => {
+    toastMock.mockReset();
+    vi.stubGlobal('fetch', vi.fn());
+    const stages = useDealStore.getState().pipelines.default.stages;
+    useDealStore.setState({
+      deals: [fromApiDeal(row, stages)],
+      demoDeals: DEMO_DEALS.map((d) => ({ ...d })),
+      demoEnabled: true,
+      error: null,
+      filters: {},
+    });
+  });
+
+  it('keeps `deals` real-only and uses demo- ids flagged isDemo', () => {
+    expect(useDealStore.getState().deals.map((d) => d.id)).toEqual(['7']);
+    expect(DEMO_DEALS.map((d) => d.id)).toEqual(['demo-1', 'demo-2', 'demo-3', 'demo-4']);
+    expect(DEMO_DEALS.every((d) => d.isDemo)).toBe(true);
+  });
+
+  it('includes demo deals in getters when demoEnabled', () => {
+    const s = useDealStore.getState();
+    expect(s.getFilteredDeals().map((d) => d.id).sort()).toEqual(['7', 'demo-1', 'demo-2', 'demo-3', 'demo-4']);
+    expect(s.getSalesMetrics().totalDeals).toBe(5);
+    // open pipeline: real 1200.5 + demo 75000 + 45000 + 25000
+    expect(s.getTotalPipelineValue()).toBeCloseTo(146200.5);
+    expect(s.getStageValues()['closed-won']).toBe(120000);
+    expect(s.getSalesMetrics().wonValue).toBe(120000);
+    expect(s.calculateForecast().totalPipeline).toBeCloseTo(146200.5);
+    expect(s.getSalesVelocity()).toBeCloseTo(4000);
+  });
+
+  it('excludes demo deals from every getter when disabled', () => {
+    useDealStore.getState().setDemoEnabled(false);
+    const s = useDealStore.getState();
+    expect(s.getFilteredDeals().map((d) => d.id)).toEqual(['7']);
+    expect(s.getSalesMetrics().totalDeals).toBe(1);
+    expect(s.getTotalPipelineValue()).toBeCloseTo(1200.5);
+    expect(s.getStageValues()['closed-won']).toBe(0);
+    expect(s.calculateForecast().totalPipeline).toBeCloseTo(1200.5);
+    expect(s.getSalesVelocity()).toBe(0);
+  });
+
+  it('demo moves update local state and make NO network call', async () => {
+    await useDealStore.getState().moveDeal('demo-3', 'negotiation');
+    expect(fetch).not.toHaveBeenCalled();
+    const d = useDealStore.getState().demoDeals.find((x) => x.id === 'demo-3')!;
+    expect(d.stage.id).toBe('negotiation');
+    expect(d.probability).toBe(70);
+    expect(useDealStore.getState().getStageValues().negotiation).toBe(100000);
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it('demo update/delete/bulk update make no network call', async () => {
+    const s = useDealStore.getState();
+    await s.updateDeal('demo-1', { title: 'Renamed' });
+    await s.bulkUpdateDeals(['demo-1', 'demo-2'], { priority: 'low' });
+    await s.deleteDeal('demo-4');
+    expect(fetch).not.toHaveBeenCalled();
+    const { demoDeals, deals } = useDealStore.getState();
+    expect(demoDeals.find((d) => d.id === 'demo-1')!.title).toBe('Renamed');
+    expect(demoDeals.find((d) => d.id === 'demo-2')!.priority).toBe('low');
+    expect(demoDeals.some((d) => d.id === 'demo-4')).toBe(false);
+    expect(deals.map((d) => d.id)).toEqual(['7']);
+  });
+
+  it('real moves still PUT while demo is enabled', async () => {
+    (fetch as any).mockResolvedValue({ ok: true, json: async () => ({}) });
+    await useDealStore.getState().moveDeal('7', 'negotiation');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect((fetch as any).mock.calls[0][0]).toBe('/api/deals/7');
+  });
+});
+
+describe('dealStore stage mapping round trip', () => {
+  beforeEach(() => {
+    toastMock.mockReset();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }));
+  });
+
+  it('maps API lead and qualified to the qualification column and remembers which', () => {
+    const stages = useDealStore.getState().pipelines.default.stages;
+    const lead = fromApiDeal({ ...row, stage: 'lead' }, stages);
+    const qualified = fromApiDeal({ ...row, stage: 'qualified' }, stages);
+    expect(lead.stage.id).toBe('qualification');
+    expect(qualified.stage.id).toBe('qualification');
+    expect(lead.qualificationStage).toBe('lead');
+    expect(qualified.qualificationStage).toBe('qualified');
+    expect(fromApiDeal({ ...row, stage: 'proposal' }, stages).qualificationStage).toBeUndefined();
+  });
+
+  it('toApiStage is the inverse of the mapping', () => {
+    expect(toApiStage('qualification')).toBe('qualified');
+    expect(toApiStage('qualification', 'lead')).toBe('lead');
+    expect(toApiStage('proposal')).toBe('proposal');
+    expect(toApiStage('closed-won')).toBe('closed-won');
+  });
+
+  it('a lead moved away and back is restored as lead, and an unmoved lead is never written', async () => {
+    const stages = useDealStore.getState().pipelines.default.stages;
+    useDealStore.setState({ deals: [fromApiDeal({ ...row, stage: 'lead', probability: 20 }, stages)], demoEnabled: false });
+
+    await useDealStore.getState().moveDeal('7', 'qualification'); // same column: no-op
+    expect(fetch).not.toHaveBeenCalled();
+
+    await useDealStore.getState().moveDeal('7', 'proposal');
+    await useDealStore.getState().moveDeal('7', 'qualification');
+    const bodies = (fetch as any).mock.calls.map((c: any[]) => JSON.parse(c[1].body).stage);
+    expect(bodies).toEqual(['proposal', 'lead']);
+  });
+});
+

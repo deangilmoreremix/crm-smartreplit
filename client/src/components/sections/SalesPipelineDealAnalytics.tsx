@@ -3,7 +3,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { BarChart3, TrendingUp } from 'lucide-react';
 import DealAnalytics from '../DealAnalytics';
 import ChartsSection, { useSalesData } from '../dashboard/ChartsSection';
-import { stageConversions, mergeConversions } from '../dashboard/chartData';
+import { stageConversions, mergeConversions, type ConversionPoint } from '../dashboard/chartData';
 import { useDemoDataSafe } from '../../contexts/DemoDataContext';
 import { DEMO_CONVERSIONS } from '../../data/demoData';
 import SampleBadge from '../SampleBadge';
@@ -12,7 +12,7 @@ const SalesPipelineDealAnalytics: React.FC = () => {
   const { isDark } = useTheme();
   const { deals, loading, error } = useSalesData();
   const { showDemoData } = useDemoDataSafe();
-  const conversions = React.useMemo(() => {
+  const conversions = React.useMemo<ConversionPoint[]>(() => {
     const real = stageConversions(deals);
     return showDemoData ? mergeConversions(real, DEMO_CONVERSIONS) : real;
   }, [deals, showDemoData]);
