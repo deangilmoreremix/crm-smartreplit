@@ -100,7 +100,7 @@ describe('dealStore demo (sample) deals', () => {
     expect(s.getTotalPipelineValue()).toBeCloseTo(146200.5);
     expect(s.getStageValues()['closed-won']).toBe(120000);
     expect(s.getSalesMetrics().wonValue).toBe(120000);
-    expect(s.calculateForecast().totalPipeline).toBeCloseTo(146200.5);
+    expect((s.calculateForecast() as any).totalPipeline).toBeCloseTo(146200.5);
     expect(s.getSalesVelocity()).toBeCloseTo(4000);
   });
 
@@ -111,7 +111,7 @@ describe('dealStore demo (sample) deals', () => {
     expect(s.getSalesMetrics().totalDeals).toBe(1);
     expect(s.getTotalPipelineValue()).toBeCloseTo(1200.5);
     expect(s.getStageValues()['closed-won']).toBe(0);
-    expect(s.calculateForecast().totalPipeline).toBeCloseTo(1200.5);
+    expect((s.calculateForecast() as any).totalPipeline).toBeCloseTo(1200.5);
     expect(s.getSalesVelocity()).toBe(0);
   });
 
