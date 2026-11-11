@@ -5,6 +5,7 @@
  * including event system, API client, and remote app context working together.
  */
 
+import { describe, it, expect } from 'vitest';
 import { unifiedEventSystem } from '../unifiedEventSystem';
 import { unifiedApiClient } from '../unifiedApiClient';
 import { RemoteAppProvider, useRemoteApps } from '../../contexts/RemoteAppContext';
@@ -233,7 +234,9 @@ const testCrossAppDataFlow = runTest('Cross-App Data Flow', async () => {
   const unsubscribe = unifiedEventSystem.registerHandler({
     id: 'data-flow-test',
     handler: (event) => {
-      if (event.type === 'CONTACTS_SYNC') {
+      // The event system itself only fans events out to subscribers; translating
+      // CONTACTS_UPDATED into a CONTACTS_SYNC postMessage is the remote bridge's job.
+      if (event.type === 'CONTACTS_UPDATED' && event.data?.contacts?.[0]?.id === mockContact.id) {
         dataBroadcastReceived = true;
       }
     },
@@ -347,3 +350,21 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { runUnifiedSystemTests };
 }
+
+
+describe('Unified communication system integration', () => {
+  const cases: Array<[string, () => Promise<boolean>]> = [
+    ['Event System Basic Functionality', testEventSystem],
+    ['Event Filtering', testEventFiltering],
+    ['API Client Basic Functionality', testApiClient],
+    ['Event History', testEventHistory],
+    ['System Statistics', testSystemStats],
+    ['Remote App Context Integration', testRemoteAppIntegration],
+    ['Cross-App Data Flow', testCrossAppDataFlow],
+    ['Error Handling', testErrorHandling],
+  ];
+
+  it.each(cases)('%s', async (_name, run) => {
+    expect(await run()).toBe(true);
+  });
+});

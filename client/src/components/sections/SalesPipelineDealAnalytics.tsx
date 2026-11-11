@@ -2,10 +2,13 @@ import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BarChart3, TrendingUp } from 'lucide-react';
 import DealAnalytics from '../DealAnalytics';
-import ChartsSection from '../dashboard/ChartsSection';
+import ChartsSection, { useSalesData } from '../dashboard/ChartsSection';
+import { stageConversions } from '../dashboard/chartData';
 
 const SalesPipelineDealAnalytics: React.FC = () => {
   const { isDark } = useTheme();
+  const { deals, loading, error } = useSalesData();
+  const conversions = React.useMemo(() => stageConversions(deals), [deals]);
 
   return (
     <div className="mb-10">
@@ -50,65 +53,17 @@ const SalesPipelineDealAnalytics: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div
-            className={`p-4 ${isDark ? 'bg-white/5' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
-          >
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Lead to Opportunity
-            </p>
-            <div className="flex items-center justify-between mt-2">
-              <p className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                32%
+          {conversions.map((c) => (
+            <div
+              key={c.label}
+              className={`p-4 ${isDark ? 'bg-white/5' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
+            >
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{c.label}</p>
+              <p className={`text-2xl font-semibold mt-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                {loading ? '…' : error || c.rate === null ? '—' : `${Math.round(c.rate)}%`}
               </p>
-              <div
-                className={`text-xs px-2 py-1 rounded-full ${
-                  isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'
-                }`}
-              >
-                +4.5%
-              </div>
             </div>
-          </div>
-
-          <div
-            className={`p-4 ${isDark ? 'bg-white/5' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
-          >
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Opportunity to Proposal
-            </p>
-            <div className="flex items-center justify-between mt-2">
-              <p className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                68%
-              </p>
-              <div
-                className={`text-xs px-2 py-1 rounded-full ${
-                  isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'
-                }`}
-              >
-                +2.1%
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={`p-4 ${isDark ? 'bg-white/5' : 'bg-gray-50'} rounded-lg border ${isDark ? 'border-white/10' : 'border-gray-200'}`}
-          >
-            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              Proposal to Win
-            </p>
-            <div className="flex items-center justify-between mt-2">
-              <p className={`text-2xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                45%
-              </p>
-              <div
-                className={`text-xs px-2 py-1 rounded-full ${
-                  isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
-                }`}
-              >
-                -1.2%
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

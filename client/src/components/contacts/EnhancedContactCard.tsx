@@ -379,6 +379,7 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
             {contact.socialProfiles.linkedin && (
               <a
                 href={contact.socialProfiles.linkedin}
+                aria-label="LinkedIn profile"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-700 transition-colors"
@@ -389,6 +390,7 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
             {contact.socialProfiles.twitter && (
               <a
                 href={contact.socialProfiles.twitter}
+                aria-label="Twitter profile"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-500 transition-colors"
@@ -399,6 +401,7 @@ const EnhancedContactCard: React.FC<EnhancedContactCardProps> = ({
             {contact.socialProfiles.website && (
               <a
                 href={contact.socialProfiles.website}
+                aria-label="Website profile"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-600 hover:text-gray-700 transition-colors"

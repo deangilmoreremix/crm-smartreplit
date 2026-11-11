@@ -55,12 +55,8 @@ jobs:
       - name: Unit tests (server, packages)
         run: npx vitest run server packages
 
-      # Informational: ~14 client test files already failed before the Twenty/OpenAI work
-      # (see docs/CI.md). client/src/tests/ProtectedRoute.test.tsx hangs and is excluded.
-      # Remove continue-on-error once those suites are fixed.
-      - name: Unit tests (client, informational)
-        continue-on-error: true
-        run: npx vitest run client/src --exclude client/src/tests/ProtectedRoute.test.tsx
+      - name: Unit tests (client)
+        run: npx vitest run client/src
 
       - name: Build (client + Netlify functions)
         run: npm run build

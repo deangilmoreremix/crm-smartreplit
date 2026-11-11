@@ -1,76 +1,83 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import SmartAIControls from '../../ai/SmartAIControls';
+import { SmartAIControls } from '../SmartAIControls';
 
-vi.mock('../../store/aiIntegrationStore', () => ({
-  useAIIntegrationStore: () => ({
-    batchAnalyzeContacts: vi.fn(),
-    bulkEnrichContacts: vi.fn(),
+const { smartScoreContact, smartQualifyLead } = vi.hoisted(() => ({
+  smartScoreContact: vi.fn(),
+  smartQualifyLead: vi.fn(),
+}));
+
+vi.mock('../../../hooks/useSmartAI', () => ({
+  useSmartAI: () => ({
+    smartScoreContact,
+    smartEnrichContact: vi.fn(),
+    smartCategorizeAndTag: vi.fn(),
+    smartQualifyLead,
+    smartBulkAnalysis: vi.fn(),
+    analyzing: false,
     enriching: false,
-    selectedContactIds: [],
+    results: {},
+    errors: {},
+  }),
+  useTaskOptimization: () => ({
+    getRecommendations: () => null,
+    getInsights: () => null,
+    performance: null,
   }),
 }));
 
-describe('Bulk Operations Tests', () => {
-  const mockContactIds = ['ct-1', 'ct-2', 'ct-3'];
-  let batchAnalyzeMock;
-  let bulkEnrichMock;
+vi.mock('../../../services/openai-batch-api.service', () => ({
+  batchAPIService: { enrichContactsBulk: vi.fn() },
+}));
 
+const contact = { id: 'ct-1', name: 'Ada Lovelace' } as any;
+
+describe('SmartAIControls', () => {
   beforeEach(() => {
-    batchAnalyzeMock = useAIIntegrationStore.mock.results[0].value.batchAnalyzeContacts;
-    bulkEnrichMock = useAIIntegrationStore.mock.results[0].value.bulkEnrichContacts;
-    vi.clearAllMocks();
+    smartScoreContact.mockReset();
+    smartQualifyLead.mockReset();
   });
 
-  it('renders bulk operations panel', () => {
-    render(<SmartAIControls selectedContactIds={mockContactIds} />);
-    expect(screen.getByText('Bulk Operations')).toBeInTheDocument();
-    expect(screen.getByText('Selected: 3 contacts')).toBeInTheDocument();
+  it('renders nothing actionable without a contact or contacts', () => {
+    render(<SmartAIControls />);
+    expect(screen.queryByText(/Smart AI Analysis/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Smart Bulk Analysis/)).not.toBeInTheDocument();
   });
 
-  it('triggers bulk enrichment', async () => {
-    bulkEnrichMock.mockResolvedValue({ jobId: 'job-1', success: true });
-    render(<SmartAIControls selectedContactIds={mockContactIds} />);
-    await userEvent.click(screen.getByText('Bulk Enrich Contacts'));
+  it('renders the single-contact panel with all operations', () => {
+    render(<SmartAIControls contact={contact} />);
+    expect(screen.getByText('Smart AI Analysis - Ada Lovelace')).toBeInTheDocument();
+    expect(screen.getByText('Smart Scoring')).toBeInTheDocument();
+    expect(screen.getByText('Lead Qualification')).toBeInTheDocument();
+  });
+
+  it('runs smart scoring with the chosen urgency and reports the result', async () => {
+    const onAnalysisComplete = vi.fn();
+    smartScoreContact.mockResolvedValue({ score: 80 });
+    render(<SmartAIControls contact={contact} onAnalysisComplete={onAnalysisComplete} />);
+    await userEvent.click(screen.getByText('High'));
+    await userEvent.click(screen.getByText('Run Smart Scoring'));
     await waitFor(() => {
-      expect(bulkEnrichMock).toHaveBeenCalledWith(mockContactIds, [
-        'scoring',
-        'social',
-        'personality',
-      ]);
+      expect(smartScoreContact).toHaveBeenCalledWith('ct-1', contact, 'high');
+    });
+    expect(onAnalysisComplete).toHaveBeenCalledWith({ score: 80 });
+  });
+
+  it('runs lead qualification when that operation is selected', async () => {
+    smartQualifyLead.mockResolvedValue({ qualified: true });
+    render(<SmartAIControls contact={contact} />);
+    await userEvent.click(screen.getByText('Lead Qualification'));
+    await userEvent.click(screen.getByText('Run Lead Qualification'));
+    await waitFor(() => {
+      expect(smartQualifyLead).toHaveBeenCalledWith('ct-1', contact);
     });
   });
 
-  it('triggers batch analysis', async () => {
-    batchAnalyzeMock.mockResolvedValue({ jobId: 'job-2', success: true });
-    render(<SmartAIControls selectedContactIds={mockContactIds} />);
-    await userEvent.click(screen.getByText('Batch Analyze Contacts'));
-    await waitFor(() => {
-      expect(batchAnalyzeMock).toHaveBeenCalledWith(mockContactIds);
-    });
-  });
-
-  it('triggers social research', async () => {
-    bulkEnrichMock.mockResolvedValue({ jobId: 'job-3', success: true });
-    render(<SmartAIControls selectedContactIds={mockContactIds} />);
-    await userEvent.click(screen.getByText('Research Social Profiles'));
-    await waitFor(() => {
-      expect(bulkEnrichMock).toHaveBeenCalledWith(mockContactIds, ['social']);
-    });
-  });
-
-  it('disables buttons when no contacts selected', () => {
-    render(<SmartAIControls selectedContactIds={[]} />);
-    expect(screen.getByText('Bulk Enrich Contacts')).toBeDisabled();
-    expect(screen.getByText('Batch Analyze Contacts')).toBeDisabled();
-    expect(screen.getByText('Research Social Profiles')).toBeDisabled();
-  });
-
-  it('shows progress during operations', async () => {
-    bulkEnrichMock.mockImplementation(() => new Promise(() => {}));
-    render(<SmartAIControls selectedContactIds={mockContactIds} />);
-    await userEvent.click(screen.getByText('Bulk Enrich Contacts'));
-    expect(screen.getByText('Processing...')).toBeInTheDocument();
+  it('shows the bulk panel only when more than one contact is provided', () => {
+    const { rerender } = render(<SmartAIControls contacts={[contact]} />);
+    expect(screen.queryByText(/Smart Bulk Analysis/)).not.toBeInTheDocument();
+    rerender(<SmartAIControls contacts={[contact, { id: 'ct-2', name: 'Grace' } as any]} />);
+    expect(screen.getByText('Smart Bulk Analysis (2 contacts)')).toBeInTheDocument();
   });
 });

@@ -52,9 +52,30 @@ export interface WorkflowStep {
   condition?: Record<string, unknown>;
 }
 
+/**
+ * One level of the path from the top-level step list down to a paused step. Persisted in
+ * workflow_run_waits.cursor so a run paused inside IF_ELSE / ITERATOR can resume there.
+ */
+export type CursorFrame =
+  | { kind: 'if'; stepId: string; branch: 'then' | 'else' }
+  | { kind: 'iter'; stepId: string; index: number; items: unknown[]; iterations: unknown[] };
+
+interface ResumePoint {
+  /** Container frames still to descend through (outermost first). Empty: the paused step is in this list. */
+  path: CursorFrame[];
+  leafId: string;
+  output: unknown;
+}
+
 export interface ExecuteOptions {
-  /** Resume after this (previously paused, top-level) step. */
+  /** Resume after this previously paused step (nested steps are located through `cursor`). */
   resumeFromStepId?: string;
+  /** Containers (IF_ELSE / ITERATOR) the paused step sits inside, outermost first; empty/absent for top level. */
+  cursor?: CursorFrame[];
+  /** `steps.<id>.output` values recorded before the pause (nested steps are not derivable from results). */
+  priorStepsOut?: Record<string, { output: unknown }>;
+  /** Step executions already used by earlier segments of this run (the step limit spans pauses). */
+  priorExecutions?: number;
   /** Results recorded before the pause. */
   priorResults?: Record<string, ActionResult>;
   /** Output that becomes the paused step's result (form values, event payload...). */
@@ -66,6 +87,10 @@ export interface ExecuteResult {
   results: Record<string, ActionResult>;
   status: 'completed' | 'failed' | 'waiting' | 'filtered';
   wait?: WaitRequest & { stepId: string };
+  /** Set with `wait`: persist these to resume the run later. */
+  cursor?: CursorFrame[];
+  stepsOut?: Record<string, { output: unknown }>;
+  executions?: number;
 }
 
 export const MAX_ITERATIONS = 100;
@@ -135,6 +160,7 @@ interface RunState {
   executions: number;
   filtered: boolean;
   wait?: WaitRequest & { stepId: string };
+  waitPath: CursorFrame[];
   failed: boolean;
 }
 
@@ -220,18 +246,32 @@ export class WorkflowEngine {
     depth: number,
     extraScope: Record<string, unknown>,
     keyPrefix: string,
-    startIndex = 0
+    startIndex = 0,
+    resume?: ResumePoint
   ): Promise<void> {
-    for (let i = startIndex; i < steps.length; i++) {
+    let first = startIndex;
+    if (resume) {
+      const targetId = resume.path[0]?.stepId ?? resume.leafId;
+      first = steps.findIndex((s) => s.id === targetId);
+      if (first < 0) throw new Error(`Cannot resume: step ${targetId} no longer exists`);
+    }
+    for (let i = first; i < steps.length; i++) {
       const step = steps[i];
       const key = `${keyPrefix}${step.id}`;
+      const resuming = resume && i === first ? resume : undefined;
+      if (resuming && resuming.path.length === 0) {
+        // The paused step itself: its result is what resumed it; continue with the following siblings.
+        state.results[key] = { success: true, output: resuming.output };
+        state.stepsOut[step.id] = { output: resuming.output };
+        continue;
+      }
       if (++state.executions > MAX_STEP_EXECUTIONS) {
         state.results[key] = { success: false, error: `Step execution limit (${MAX_STEP_EXECUTIONS}) exceeded` };
         state.failed = true;
         return;
       }
       const scope = this.scopeFor(context, state, extraScope);
-      if (step.condition && !evaluateCondition(step.condition, scope, context.variables)) {
+      if (!resuming && step.condition && !evaluateCondition(step.condition, scope, context.variables)) {
         state.results[key] = { success: true, output: 'Skipped: condition not met' };
         continue;
       }
@@ -251,10 +291,11 @@ export class WorkflowEngine {
       if (FLOW_ACTIONS.has(type)) {
         const started = Date.now();
         try {
-          result = await this.runFlowAction(type, step, config, context, state, depth, extraScope, key);
+          result = await this.runFlowAction(type, step, config, context, state, depth, extraScope, key, resuming);
         } catch (e) {
           result = { success: false, error: e instanceof Error ? e.message : String(e) };
         }
+        if (state.wait) return; // paused inside this container; it finishes after the resume
         result.duration = Date.now() - started;
         state.results[key] = result;
         if (!result.success) {
@@ -270,15 +311,8 @@ export class WorkflowEngine {
       state.results[key] = result;
 
       if (result.success && result.wait) {
-        if (depth > 0) {
-          state.results[key] = {
-            success: false,
-            error: 'Pausing steps (long delay, wait_for_event, form) are only allowed at the top level',
-          };
-          state.failed = true;
-          return;
-        }
         state.wait = { ...result.wait, stepId: step.id };
+        state.waitPath = [];
         return;
       }
       if (result.success) state.stepsOut[step.id] = { output: result.output };
@@ -298,7 +332,8 @@ export class WorkflowEngine {
     state: RunState,
     depth: number,
     extraScope: Record<string, unknown>,
-    key: string
+    key: string,
+    resume?: ResumePoint
   ): Promise<ActionResult> {
     const scope = this.scopeFor(context, state, extraScope);
     const sortNested = (raw: unknown): WorkflowStep[] =>
@@ -321,21 +356,30 @@ export class WorkflowEngine {
     if (type === 'IF_ELSE') {
       const condition = config.condition as Record<string, unknown> | undefined;
       if (!condition) return { success: false, error: 'Missing required field: condition' };
-      const taken = evaluateCondition(condition, scope, context.variables);
+      const frame = resume?.path[0];
+      const taken =
+        frame?.kind === 'if' ? frame.branch === 'then' : evaluateCondition(condition, scope, context.variables);
       await this.runSteps(
         sortNested(taken ? config.then : config.else),
         context,
         state,
         depth + 1,
         extraScope,
-        `${key}.${taken ? 'then' : 'else'}.`
+        `${key}.${taken ? 'then' : 'else'}.`,
+        0,
+        resume && { ...resume, path: resume.path.slice(1) }
       );
+      if (state.wait) {
+        state.waitPath.unshift({ kind: 'if', stepId: step.id, branch: taken ? 'then' : 'else' });
+        return { success: true };
+      }
       if (state.failed) return { success: false, error: 'A step inside the branch failed', output: { branch: taken } };
       return { success: true, output: { branch: taken ? 'then' : 'else' } };
     }
 
     // ITERATOR
-    const items = config.items;
+    const frame = resume?.path[0];
+    const items = frame?.kind === 'iter' ? frame.items : config.items;
     if (!Array.isArray(items)) {
       return { success: false, error: 'ITERATOR "items" must resolve to an array' };
     }
@@ -343,17 +387,24 @@ export class WorkflowEngine {
       return { success: false, error: `ITERATOR exceeds the ${MAX_ITERATIONS} item limit (${items.length})` };
     }
     const nested = sortNested(config.steps);
-    const iterations: unknown[] = [];
-    for (let idx = 0; idx < items.length; idx++) {
+    const iterations: unknown[] = frame?.kind === 'iter' ? [...frame.iterations] : [];
+    for (let idx = frame?.kind === 'iter' ? frame.index : 0; idx < items.length; idx++) {
       const before = { ...state.stepsOut };
+      const resumeHere = resume && frame?.kind === 'iter' && idx === frame.index;
       await this.runSteps(
         nested,
         context,
         state,
         depth + 1,
         { ...extraScope, item: items[idx], index: idx },
-        `${key}[${idx}].`
+        `${key}[${idx}].`,
+        0,
+        resumeHere ? { ...resume, path: resume.path.slice(1) } : undefined
       );
+      if (state.wait) {
+        state.waitPath.unshift({ kind: 'iter', stepId: step.id, index: idx, items, iterations });
+        return { success: true };
+      }
       if (state.failed) {
         return { success: false, error: `Iteration ${idx} failed` };
       }
@@ -374,24 +425,20 @@ export class WorkflowEngine {
     const state: RunState = {
       results: { ...(options.priorResults || {}) },
       stepsOut: {},
-      executions: 0,
+      executions: options.priorExecutions ?? 0,
       filtered: false,
       failed: false,
+      waitPath: [],
     };
     for (const [id, r] of Object.entries(state.results)) {
       if (r.success) state.stepsOut[id] = { output: r.output };
     }
+    Object.assign(state.stepsOut, options.priorStepsOut || {});
 
-    let start = 0;
-    if (options.resumeFromStepId) {
-      const idx = sorted.findIndex((s) => s.id === options.resumeFromStepId);
-      if (idx < 0) throw new Error(`Cannot resume: step ${options.resumeFromStepId} no longer exists`);
-      state.results[options.resumeFromStepId] = { success: true, output: options.resumeOutput };
-      state.stepsOut[options.resumeFromStepId] = { output: options.resumeOutput };
-      start = idx + 1;
-    }
-
-    await this.runSteps(sorted, context, state, 0, {}, '', start);
+    const resume: ResumePoint | undefined = options.resumeFromStepId
+      ? { path: options.cursor || [], leafId: options.resumeFromStepId, output: options.resumeOutput }
+      : undefined;
+    await this.runSteps(sorted, context, state, 0, {}, '', 0, resume);
 
     const allSuccessful = Object.values(state.results).every((r) => r.success);
     const status: ExecuteResult['status'] = state.wait
@@ -405,7 +452,9 @@ export class WorkflowEngine {
       success: status !== 'failed',
       results: state.results,
       status,
-      ...(state.wait ? { wait: state.wait } : {}),
+      ...(state.wait
+        ? { wait: state.wait, cursor: state.waitPath, stepsOut: state.stepsOut, executions: state.executions }
+        : {}),
     };
   }
 

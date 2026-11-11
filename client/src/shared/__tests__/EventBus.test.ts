@@ -1,4 +1,5 @@
 // Tests for EventBus
+import { vi } from 'vitest';
 import { eventBus } from '../federation/EventBus';
 
 describe('EventBus', () => {
@@ -13,7 +14,7 @@ describe('EventBus', () => {
 
   describe('subscribe and publish', () => {
     it('calls subscriber when event is published', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       eventBus.subscribe('test-event', handler);
       
       eventBus.publish({
@@ -32,7 +33,7 @@ describe('EventBus', () => {
     });
 
     it('adds timestamp to published event', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       eventBus.subscribe('timed-event', handler);
       
       const before = Date.now();
@@ -55,8 +56,8 @@ describe('EventBus', () => {
     });
 
     it('supports multiple subscribers', () => {
-      const handler1 = jest.fn();
-      const handler2 = jest.fn();
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
       
       eventBus.subscribe('multi', handler1);
       eventBus.subscribe('multi', handler2);
@@ -68,7 +69,7 @@ describe('EventBus', () => {
     });
 
     it('returns unsubscribe function', () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
       const unsubscribe = eventBus.subscribe('unsub', handler);
       
       eventBus.publish({ type: 'unsub', payload: {}, source: 'test' });
@@ -83,8 +84,8 @@ describe('EventBus', () => {
 
   describe('publish different event types', () => {
     it('only calls subscribers for matching event type', () => {
-      const handler1 = jest.fn();
-      const handler2 = jest.fn();
+      const handler1 = vi.fn();
+      const handler2 = vi.fn();
       
       eventBus.subscribe('event-a', handler1);
       eventBus.subscribe('event-b', handler2);
@@ -111,8 +112,16 @@ describe('EventBus request/response', () => {
   });
 
   it('rejects on timeout', async () => {
-    await expect(
-      eventBus.request('nonexistent-app', 'test')
-    ).rejects.toThrow('timed out');
+    // The bus times requests out after 10s; use fake timers rather than waiting in real time
+    vi.useFakeTimers();
+    try {
+      const pending = expect(eventBus.request('nonexistent-app', 'test')).rejects.toThrow(
+        'timed out'
+      );
+      await vi.advanceTimersByTimeAsync(10000);
+      await pending;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

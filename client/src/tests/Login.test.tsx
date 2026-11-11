@@ -18,13 +18,13 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
-vi.mock('../../lib/supabase', () => ({
+vi.mock('../lib/supabase', () => ({
   auth: {
     signIn: vi.fn(),
   },
 }));
 
-vi.mock('../../contexts/ThemeContext', () => ({
+vi.mock('../contexts/ThemeContext', () => ({
   useTheme: () => ({ isDark: false }),
 }));
 
@@ -48,7 +48,7 @@ describe('Login Page', () => {
   });
 
   it('shows error message on failed login', async () => {
-    const { auth } = await import('../../lib/supabase');
+    const { auth } = await import('../lib/supabase');
     vi.mocked(auth.signIn).mockResolvedValue({
       data: null,
       error: { message: 'Invalid credentials' },
@@ -66,7 +66,7 @@ describe('Login Page', () => {
   });
 
   it('calls auth.signIn with correct credentials', async () => {
-    const { auth } = await import('../../lib/supabase');
+    const { auth } = await import('../lib/supabase');
     vi.mocked(auth.signIn).mockResolvedValue({
       data: { user: { id: '1' } },
       error: null,
@@ -84,7 +84,7 @@ describe('Login Page', () => {
   });
 
   it('navigates to dashboard on successful login', async () => {
-    const { auth } = await import('../../lib/supabase');
+    const { auth } = await import('../lib/supabase');
     vi.mocked(auth.signIn).mockResolvedValue({
       data: { user: { id: '1' } },
       error: null,
@@ -102,7 +102,7 @@ describe('Login Page', () => {
   });
 
   it('shows loading state during login', async () => {
-    const { auth } = await import('../../lib/supabase');
+    const { auth } = await import('../lib/supabase');
     vi.mocked(auth.signIn).mockImplementation(
       () => new Promise(() => {})
     );
@@ -114,7 +114,8 @@ describe('Login Page', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(screen.getByText('Signing in...')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeDisabled();
+    // While loading the button label becomes "Signing in..."
+    expect(screen.getByRole('button', { name: /signing in/i })).toBeDisabled();
   });
 
   it('has link to signup page', () => {
@@ -134,7 +135,7 @@ describe('Login Page', () => {
   });
 
   it('handles unexpected errors gracefully', async () => {
-    const { auth } = await import('../../lib/supabase');
+    const { auth } = await import('../lib/supabase');
     vi.mocked(auth.signIn).mockRejectedValue(new Error('Network error'));
 
     renderWithRouter(<Login />);

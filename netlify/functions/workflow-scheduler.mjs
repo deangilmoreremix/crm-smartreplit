@@ -189,17 +189,29 @@ var init_WorkflowEngine = __esm({
         }
         return out;
       }
-      async runSteps(steps, context, state, depth, extraScope, keyPrefix, startIndex = 0) {
-        for (let i = startIndex; i < steps.length; i++) {
+      async runSteps(steps, context, state, depth, extraScope, keyPrefix, startIndex = 0, resume) {
+        let first = startIndex;
+        if (resume) {
+          const targetId = resume.path[0]?.stepId ?? resume.leafId;
+          first = steps.findIndex((s) => s.id === targetId);
+          if (first < 0) throw new Error(`Cannot resume: step ${targetId} no longer exists`);
+        }
+        for (let i = first; i < steps.length; i++) {
           const step = steps[i];
           const key2 = `${keyPrefix}${step.id}`;
+          const resuming = resume && i === first ? resume : void 0;
+          if (resuming && resuming.path.length === 0) {
+            state.results[key2] = { success: true, output: resuming.output };
+            state.stepsOut[step.id] = { output: resuming.output };
+            continue;
+          }
           if (++state.executions > MAX_STEP_EXECUTIONS) {
             state.results[key2] = { success: false, error: `Step execution limit (${MAX_STEP_EXECUTIONS}) exceeded` };
             state.failed = true;
             return;
           }
           const scope = this.scopeFor(context, state, extraScope);
-          if (step.condition && !evaluateCondition(step.condition, scope, context.variables)) {
+          if (!resuming && step.condition && !evaluateCondition(step.condition, scope, context.variables)) {
             state.results[key2] = { success: true, output: "Skipped: condition not met" };
             continue;
           }
@@ -217,10 +229,11 @@ var init_WorkflowEngine = __esm({
           if (FLOW_ACTIONS.has(type)) {
             const started = Date.now();
             try {
-              result = await this.runFlowAction(type, step, config2, context, state, depth, extraScope, key2);
+              result = await this.runFlowAction(type, step, config2, context, state, depth, extraScope, key2, resuming);
             } catch (e) {
               result = { success: false, error: e instanceof Error ? e.message : String(e) };
             }
+            if (state.wait) return;
             result.duration = Date.now() - started;
             state.results[key2] = result;
             if (!result.success) {
@@ -234,15 +247,8 @@ var init_WorkflowEngine = __esm({
           result = await this.executeAction(step.actionType, context, config2);
           state.results[key2] = result;
           if (result.success && result.wait) {
-            if (depth > 0) {
-              state.results[key2] = {
-                success: false,
-                error: "Pausing steps (long delay, wait_for_event, form) are only allowed at the top level"
-              };
-              state.failed = true;
-              return;
-            }
             state.wait = { ...result.wait, stepId: step.id };
+            state.waitPath = [];
             return;
           }
           if (result.success) state.stepsOut[step.id] = { output: result.output };
@@ -252,7 +258,7 @@ var init_WorkflowEngine = __esm({
           }
         }
       }
-      async runFlowAction(type, step, config2, context, state, depth, extraScope, key2) {
+      async runFlowAction(type, step, config2, context, state, depth, extraScope, key2, resume) {
         const scope = this.scopeFor(context, state, extraScope);
         const sortNested = (raw) => (Array.isArray(raw) ? raw : []).map((s, idx) => ({ ...s, order: s.order ?? idx, configuration: s.configuration || {} })).sort((a, b) => a.order - b.order);
         if (type === "FILTER") {
@@ -268,19 +274,27 @@ var init_WorkflowEngine = __esm({
         if (type === "IF_ELSE") {
           const condition = config2.condition;
           if (!condition) return { success: false, error: "Missing required field: condition" };
-          const taken = evaluateCondition(condition, scope, context.variables);
+          const frame2 = resume?.path[0];
+          const taken = frame2?.kind === "if" ? frame2.branch === "then" : evaluateCondition(condition, scope, context.variables);
           await this.runSteps(
             sortNested(taken ? config2.then : config2.else),
             context,
             state,
             depth + 1,
             extraScope,
-            `${key2}.${taken ? "then" : "else"}.`
+            `${key2}.${taken ? "then" : "else"}.`,
+            0,
+            resume && { ...resume, path: resume.path.slice(1) }
           );
+          if (state.wait) {
+            state.waitPath.unshift({ kind: "if", stepId: step.id, branch: taken ? "then" : "else" });
+            return { success: true };
+          }
           if (state.failed) return { success: false, error: "A step inside the branch failed", output: { branch: taken } };
           return { success: true, output: { branch: taken ? "then" : "else" } };
         }
-        const items = config2.items;
+        const frame = resume?.path[0];
+        const items = frame?.kind === "iter" ? frame.items : config2.items;
         if (!Array.isArray(items)) {
           return { success: false, error: 'ITERATOR "items" must resolve to an array' };
         }
@@ -288,17 +302,24 @@ var init_WorkflowEngine = __esm({
           return { success: false, error: `ITERATOR exceeds the ${MAX_ITERATIONS} item limit (${items.length})` };
         }
         const nested = sortNested(config2.steps);
-        const iterations = [];
-        for (let idx = 0; idx < items.length; idx++) {
+        const iterations = frame?.kind === "iter" ? [...frame.iterations] : [];
+        for (let idx = frame?.kind === "iter" ? frame.index : 0; idx < items.length; idx++) {
           const before = { ...state.stepsOut };
+          const resumeHere = resume && frame?.kind === "iter" && idx === frame.index;
           await this.runSteps(
             nested,
             context,
             state,
             depth + 1,
             { ...extraScope, item: items[idx], index: idx },
-            `${key2}[${idx}].`
+            `${key2}[${idx}].`,
+            0,
+            resumeHere ? { ...resume, path: resume.path.slice(1) } : void 0
           );
+          if (state.wait) {
+            state.waitPath.unshift({ kind: "iter", stepId: step.id, index: idx, items, iterations });
+            return { success: true };
+          }
           if (state.failed) {
             return { success: false, error: `Iteration ${idx} failed` };
           }
@@ -314,29 +335,24 @@ var init_WorkflowEngine = __esm({
         const state = {
           results: { ...options.priorResults || {} },
           stepsOut: {},
-          executions: 0,
+          executions: options.priorExecutions ?? 0,
           filtered: false,
-          failed: false
+          failed: false,
+          waitPath: []
         };
         for (const [id, r] of Object.entries(state.results)) {
           if (r.success) state.stepsOut[id] = { output: r.output };
         }
-        let start = 0;
-        if (options.resumeFromStepId) {
-          const idx = sorted.findIndex((s) => s.id === options.resumeFromStepId);
-          if (idx < 0) throw new Error(`Cannot resume: step ${options.resumeFromStepId} no longer exists`);
-          state.results[options.resumeFromStepId] = { success: true, output: options.resumeOutput };
-          state.stepsOut[options.resumeFromStepId] = { output: options.resumeOutput };
-          start = idx + 1;
-        }
-        await this.runSteps(sorted, context, state, 0, {}, "", start);
+        Object.assign(state.stepsOut, options.priorStepsOut || {});
+        const resume = options.resumeFromStepId ? { path: options.cursor || [], leafId: options.resumeFromStepId, output: options.resumeOutput } : void 0;
+        await this.runSteps(sorted, context, state, 0, {}, "", 0, resume);
         const allSuccessful = Object.values(state.results).every((r) => r.success);
         const status = state.wait ? "waiting" : state.filtered ? "filtered" : allSuccessful && !state.failed ? "completed" : "failed";
         return {
           success: status !== "failed",
           results: state.results,
           status,
-          ...state.wait ? { wait: state.wait } : {}
+          ...state.wait ? { wait: state.wait, cursor: state.waitPath, stepsOut: state.stepsOut, executions: state.executions } : {}
         };
       }
       getRegisteredTriggers() {
@@ -948,8 +964,11 @@ async function finish(runId, outcome, snapshotBase) {
   const patch = { result: results, error: null };
   if (outcome.status === "waiting" && outcome.wait) {
     const w = outcome.wait;
+    const cursor = outcome.cursor && outcome.cursor.length ? outcome.cursor : null;
     const { error: waitError } = await supabase.from("workflow_run_waits").insert({
       run_id: runId,
+      // Only set for waits nested in IF_ELSE / ITERATOR, so top-level pauses work before the migration.
+      ...cursor ? { cursor } : {},
       kind: w.kind,
       step_id: w.stepId,
       resume_at: "resumeAt" in w && w.resumeAt ? w.resumeAt : null,
@@ -957,6 +976,8 @@ async function finish(runId, outcome, snapshotBase) {
       payload: {
         ...snapshotBase,
         results,
+        stepsOut: outcome.stepsOut,
+        executions: outcome.executions,
         match: w.kind === "event" ? w.match : void 0,
         form: w.kind === "form" ? w.form : void 0
       }
@@ -1037,7 +1058,14 @@ async function resumeWait(waitId, output) {
         timestamp: /* @__PURE__ */ new Date(),
         variables: snap.variables
       },
-      { resumeFromStepId: claimed.step_id, priorResults: snap.results, resumeOutput: output }
+      {
+        resumeFromStepId: claimed.step_id,
+        cursor: claimed.cursor ?? [],
+        priorResults: snap.results,
+        priorStepsOut: snap.stepsOut,
+        priorExecutions: snap.executions,
+        resumeOutput: output
+      }
     );
     return await finish(run.id, outcome, {
       userId: snap.userId,
@@ -1291,12 +1319,24 @@ var TICK_BUDGET_MS = 22e3;
 var QUEUE_GRACE_MS = 1e4;
 var MAX_DUE_PER_TICK = 25;
 var MAX_EVENTS_PER_TICK = 50;
+var STALE_RUN_MS = 10 * 6e4;
+var STALE_RUN_ERROR = "timed out (function limit)";
 function computeNextRun(cron, from) {
   try {
     return nextCronRun(cron, from)?.toISOString() ?? null;
   } catch {
     return null;
   }
+}
+async function failStaleRuns(db, now) {
+  const cutoff = new Date(now.getTime() - STALE_RUN_MS).toISOString();
+  const { data: recent } = await db.from("workflow_run_waits").select("run_id").gte("resolved_at", cutoff).limit(500);
+  const active = [...new Set((recent || []).map((r) => r.run_id))];
+  let q = db.from("workflow_runs").update({ status: "failed", error: STALE_RUN_ERROR, finished_at: now.toISOString() }).eq("status", "running").lt("started_at", cutoff);
+  if (active.length) q = q.not("id", "in", `(${active.join(",")})`);
+  const { data, error } = await q.select("id");
+  if (error) throw new Error(error.message);
+  return data?.length ?? 0;
 }
 async function runSchedulerTick(deps) {
   const { db } = deps;
@@ -1306,8 +1346,13 @@ async function runSchedulerTick(deps) {
   const trigger = deps.triggerWorkflowsForEvent ?? triggerWorkflowsForEvent;
   const started = Date.now();
   const outOfTime = () => Date.now() - started > (deps.budgetMs ?? TICK_BUDGET_MS);
-  const stats = { initialized: 0, scheduledRuns: 0, resumedWaits: 0, drainedEvents: 0, errors: [] };
+  const stats = { initialized: 0, scheduledRuns: 0, resumedWaits: 0, staleRuns: 0, drainedEvents: 0, errors: [] };
   const now = clock();
+  try {
+    stats.staleRuns = await failStaleRuns(db, now);
+  } catch (e) {
+    stats.errors.push(`stale: ${e?.message ?? e}`);
+  }
   try {
     const { data: fresh } = await db.from("workflows").select("id, schedule_cron").eq("enabled", true).not("schedule_cron", "is", null).is("next_run_at", null).limit(50);
     for (const w of fresh || []) {
@@ -1405,9 +1450,12 @@ export {
   MAX_DUE_PER_TICK,
   MAX_EVENTS_PER_TICK,
   QUEUE_GRACE_MS,
+  STALE_RUN_ERROR,
+  STALE_RUN_MS,
   TICK_BUDGET_MS,
   computeNextRun,
   config,
   handler as default,
+  failStaleRuns,
   runSchedulerTick
 };

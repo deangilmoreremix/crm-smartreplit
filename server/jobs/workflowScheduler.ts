@@ -4,7 +4,7 @@
  * Built with `npm run build:workflow-scheduler` into netlify/functions/workflow-scheduler.mjs.
  *
  * Netlify scheduled functions have a 30s limit, so the tick stops picking up new work after
- * TICK_BUDGET_MS. A run that is still executing when the function is cut off stays 'running'.
+ * TICK_BUDGET_MS. A run still executing when the function is cut off stays 'running' until failStaleRuns marks it failed.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -20,6 +20,9 @@ export const TICK_BUDGET_MS = 22_000;
 export const QUEUE_GRACE_MS = 10_000;
 export const MAX_DUE_PER_TICK = 25;
 export const MAX_EVENTS_PER_TICK = 50;
+/** A run still 'running' after this long was cut off by the function time limit. */
+export const STALE_RUN_MS = 10 * 60_000;
+export const STALE_RUN_ERROR = 'timed out (function limit)';
 
 export interface SchedulerDeps {
   db: SupabaseClient;
@@ -34,6 +37,7 @@ export interface TickStats {
   initialized: number;
   scheduledRuns: number;
   resumedWaits: number;
+  staleRuns: number;
   drainedEvents: number;
   errors: string[];
 }
@@ -47,6 +51,25 @@ export function computeNextRun(cron: string, from: Date): string | null {
   }
 }
 
+/**
+ * Marks runs stuck in 'running' for longer than STALE_RUN_MS as failed. Runs resumed from a wait keep their
+ * original started_at, so runs with a wait resolved inside the window are still in flight and are skipped.
+ */
+export async function failStaleRuns(db: SupabaseClient, now: Date): Promise<number> {
+  const cutoff = new Date(now.getTime() - STALE_RUN_MS).toISOString();
+  const { data: recent } = await db.from('workflow_run_waits').select('run_id').gte('resolved_at', cutoff).limit(500);
+  const active = [...new Set((recent || []).map((r: { run_id: string }) => r.run_id))];
+  let q = db
+    .from('workflow_runs')
+    .update({ status: 'failed', error: STALE_RUN_ERROR, finished_at: now.toISOString() })
+    .eq('status', 'running')
+    .lt('started_at', cutoff);
+  if (active.length) q = q.not('id', 'in', `(${active.join(',')})`);
+  const { data, error } = await q.select('id');
+  if (error) throw new Error(error.message);
+  return data?.length ?? 0;
+}
+
 export async function runSchedulerTick(deps: SchedulerDeps): Promise<TickStats> {
   const { db } = deps;
   const clock = deps.now ?? (() => new Date());
@@ -55,8 +78,15 @@ export async function runSchedulerTick(deps: SchedulerDeps): Promise<TickStats> 
   const trigger = deps.triggerWorkflowsForEvent ?? triggerWorkflowsForEvent;
   const started = Date.now();
   const outOfTime = () => Date.now() - started > (deps.budgetMs ?? TICK_BUDGET_MS);
-  const stats: TickStats = { initialized: 0, scheduledRuns: 0, resumedWaits: 0, drainedEvents: 0, errors: [] };
+  const stats: TickStats = { initialized: 0, scheduledRuns: 0, resumedWaits: 0, staleRuns: 0, drainedEvents: 0, errors: [] };
   const now = clock();
+
+  // 0. Runs cut off by the function limit would otherwise stay 'running' forever.
+  try {
+    stats.staleRuns = await failStaleRuns(db, now);
+  } catch (e: any) {
+    stats.errors.push(`stale: ${e?.message ?? e}`);
+  }
 
   // 1. Workflows whose cron was set but next_run_at was never computed: initialise, do not run.
   try {

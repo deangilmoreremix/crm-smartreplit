@@ -100,7 +100,7 @@ BEGIN
       WHERE (coalesce(c.first_name,'') || ' ' || coalesce(c.last_name,'')) ILIKE $2
          OR c.email ILIKE $2 OR c.company ILIKE $2
          OR similarity(coalesce(c.first_name,'') || ' ' || coalesce(c.last_name,''), $1) > 0.3
-    $p$;
+    $p$::text;
   END IF;
   IF to_regclass('public.deals') IS NOT NULL THEN
     parts := parts || $p$
@@ -109,7 +109,7 @@ BEGIN
              similarity(d.title, $1)::real
       FROM public.deals d
       WHERE d.title ILIKE $2 OR similarity(d.title, $1) > 0.3
-    $p$;
+    $p$::text;
   END IF;
   IF to_regclass('public.tasks') IS NOT NULL THEN
     parts := parts || $p$
@@ -118,7 +118,7 @@ BEGIN
              similarity(t.title, $1)::real
       FROM public.tasks t
       WHERE t.title ILIKE $2 OR similarity(t.title, $1) > 0.3
-    $p$;
+    $p$::text;
   END IF;
   IF to_regclass('public.companies') IS NOT NULL THEN
     parts := parts || $p$
@@ -126,7 +126,7 @@ BEGIN
              similarity(co.name, $1)::real
       FROM public.companies co
       WHERE co.name ILIKE $2 OR similarity(co.name, $1) > 0.3
-    $p$;
+    $p$::text;
   END IF;
 
   IF array_length(parts, 1) IS NULL THEN

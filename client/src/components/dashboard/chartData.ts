@@ -1,0 +1,157 @@
+/**
+ * Pure aggregation helpers for the dashboard sales charts. They take rows as returned by
+ * GET /api/deals and never invent data: with no rows the results are empty / null.
+ */
+
+export interface ApiDeal {
+  id: number | string;
+  title?: string | null;
+  value?: string | number | null;
+  stage?: string | null;
+  status?: string | null;
+  contactId?: number | string | null;
+  createdAt?: string | Date | null;
+  updatedAt?: string | Date | null;
+  actualCloseDate?: string | Date | null;
+}
+
+export interface PerformancePoint {
+  name: string;
+  revenue: number;
+  deals: number;
+}
+export interface StagePoint {
+  name: string;
+  stage: string;
+  value: number;
+}
+export interface SalesKpis {
+  /** Won deals / deals touched in range (0-100), null without deals. */
+  conversionRate: number | null;
+  /** Average value of deals won in range, null without wins. */
+  avgDealSize: number | null;
+  /** Average days from creation to close for deals won in range, null without wins. */
+  salesCycleDays: number | null;
+  /** Won / (won + lost) closed in range (0-100), null without closed deals. */
+  winRate: number | null;
+}
+
+const DAY_MS = 86_400_000;
+const STAGE_ORDER = ['lead', 'qualified', 'qualification', 'proposal', 'negotiation', 'closed-won', 'closed-lost'];
+
+export const isWon = (d: ApiDeal) => d.stage === 'closed-won' || d.status === 'won';
+export const isLost = (d: ApiDeal) => d.stage === 'closed-lost' || d.status === 'lost';
+
+const toTime = (v: string | Date | null | undefined): number | null => {
+  if (!v) return null;
+  const t = v instanceof Date ? v.getTime() : Date.parse(v);
+  return Number.isNaN(t) ? null : t;
+};
+
+export const dealValue = (d: ApiDeal): number => {
+  const n = typeof d.value === 'number' ? d.value : parseFloat(d.value ?? '');
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** When a deal was closed (falls back to last update for closed deals without a close date). */
+const closeTime = (d: ApiDeal) => toTime(d.actualCloseDate) ?? toTime(d.updatedAt) ?? toTime(d.createdAt);
+/** Last time anything happened to the deal. */
+const touchTime = (d: ApiDeal) =>
+  Math.max(toTime(d.updatedAt) ?? 0, toTime(d.createdAt) ?? 0, toTime(d.actualCloseDate) ?? 0) || null;
+
+const inWindow = (t: number | null, now: number, rangeDays: number) =>
+  t !== null && t <= now && t > now - rangeDays * DAY_MS;
+
+/** Bucket size in days for a date range: daily for a week, then 5 and 15 day buckets. */
+export const bucketDays = (rangeDays: number) => (rangeDays <= 7 ? 1 : rangeDays <= 30 ? 5 : 15);
+
+const label = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+/** Revenue and closed-won count per time bucket across the trailing `rangeDays`. */
+export function performanceSeries(deals: ApiDeal[], rangeDays: number, now: number = Date.now()): PerformancePoint[] {
+  const size = bucketDays(rangeDays) * DAY_MS;
+  const count = Math.ceil(rangeDays / bucketDays(rangeDays));
+  const start = now - count * size;
+  const points: PerformancePoint[] = Array.from({ length: count }, (_, i) => ({
+    name: label(start + i * size + size),
+    revenue: 0,
+    deals: 0,
+  }));
+  for (const d of deals) {
+    if (!isWon(d)) continue;
+    const t = closeTime(d);
+    if (t === null || t > now || t <= start) continue;
+    const idx = Math.min(count - 1, Math.floor((t - start) / size));
+    points[idx].revenue += dealValue(d);
+    points[idx].deals += 1;
+  }
+  return points;
+}
+
+const stageName = (s: string) => s.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+const stageRank = (s: string) => {
+  const i = STAGE_ORDER.indexOf(s);
+  return i === -1 ? STAGE_ORDER.length : i;
+};
+
+function byStage(deals: ApiDeal[], rangeDays: number, now: number, weigh: (d: ApiDeal) => number): StagePoint[] {
+  const totals = new Map<string, number>();
+  for (const d of deals) {
+    if (!inWindow(touchTime(d), now, rangeDays)) continue;
+    const stage = d.stage || 'unknown';
+    totals.set(stage, (totals.get(stage) ?? 0) + weigh(d));
+  }
+  return [...totals.entries()]
+    .sort((a, b) => stageRank(a[0]) - stageRank(b[0]) || a[0].localeCompare(b[0]))
+    .map(([stage, value]) => ({ stage, name: stageName(stage), value }));
+}
+
+/** Number of deals per stage (deals touched in range), in funnel order. */
+export const pipelineByStage = (deals: ApiDeal[], rangeDays: number, now: number = Date.now()) =>
+  byStage(deals, rangeDays, now, () => 1);
+
+/** Total deal value per stage (deals touched in range), zero-value stages omitted. */
+export const valueByStage = (deals: ApiDeal[], rangeDays: number, now: number = Date.now()) =>
+  byStage(deals, rangeDays, now, dealValue).filter((p) => p.value > 0);
+
+export function salesKpis(deals: ApiDeal[], rangeDays: number, now: number = Date.now()): SalesKpis {
+  const touched = deals.filter((d) => inWindow(touchTime(d), now, rangeDays));
+  const won = deals.filter((d) => isWon(d) && inWindow(closeTime(d), now, rangeDays));
+  const lost = deals.filter((d) => isLost(d) && inWindow(closeTime(d), now, rangeDays));
+  const cycles = won.flatMap((d) => {
+    const c = closeTime(d);
+    const s = toTime(d.createdAt);
+    return c !== null && s !== null && c >= s ? [(c - s) / DAY_MS] : [];
+  });
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  return {
+    conversionRate: touched.length ? (won.length / touched.length) * 100 : null,
+    avgDealSize: avg(won.map(dealValue)),
+    salesCycleDays: avg(cycles),
+    winRate: won.length + lost.length ? (won.length / (won.length + lost.length)) * 100 : null,
+  };
+}
+
+/**
+ * Funnel step conversion over all deals. A deal "reached" a stage when its current stage is at
+ * or beyond it; lost deals only count as having reached the first stage (we don't know how far
+ * they got).
+ */
+export function stageConversions(deals: ApiDeal[]): Array<{ label: string; rate: number | null }> {
+  const level = (d: ApiDeal) => {
+    if (isWon(d)) return 4;
+    if (isLost(d)) return 0;
+    const s = d.stage ?? '';
+    if (s === 'negotiation') return 3;
+    if (s === 'proposal') return 2;
+    if (s === 'qualified' || s === 'qualification') return 1;
+    return 0;
+  };
+  const reached = (n: number) => deals.filter((d) => level(d) >= n).length;
+  const rate = (to: number, from: number) => (reached(from) ? (reached(to) / reached(from)) * 100 : null);
+  return [
+    { label: 'Lead to Opportunity', rate: rate(1, 0) },
+    { label: 'Opportunity to Proposal', rate: rate(2, 1) },
+    { label: 'Proposal to Win', rate: rate(4, 2) },
+  ];
+}

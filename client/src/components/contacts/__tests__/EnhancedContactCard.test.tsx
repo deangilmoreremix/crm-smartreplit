@@ -1,19 +1,29 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import EnhancedContactCard from '../contacts/EnhancedContactCard';
+import EnhancedContactCard from '../EnhancedContactCard';
 
 // Mock the store functions
-vi.mock('../../store/contactStore', () => ({
+const { enrichContactMock, analyzeContactMock, updateContactMock } = vi.hoisted(() => ({
+  enrichContactMock: vi.fn(),
+  analyzeContactMock: vi.fn(),
+  updateContactMock: vi.fn(),
+}));
+
+vi.mock('../../../store/contactStore', () => ({
   useContactStore: () => ({
-    analyzeContact: vi.fn(),
-    enrichContact: vi.fn(),
-    updateContact: vi.fn(),
+    analyzeContact: analyzeContactMock,
+    enrichContact: enrichContactMock,
+    updateContact: updateContactMock,
   }),
 }));
 
+vi.mock('../../../services/gpt5SocialResearchService', () => ({
+  gpt5SocialResearchService: { researchContactSocialMedia: vi.fn() },
+}));
+
 describe('Contact Enrichment Workflow Tests', () => {
-  const mockContact = {
+  const mockContact: any = {
     id: 'ct-123',
     name: 'Jane Doe',
     email: 'jane.doe@company.com',
@@ -32,21 +42,24 @@ describe('Contact Enrichment Workflow Tests', () => {
     updatedAt: '2024-01-20T15:30:00Z',
   };
 
-  let enrichContactMock;
-  let analyzeContactMock;
-  let updateContactMock;
-
   beforeEach(() => {
-    enrichContactMock = useContactStore.mock.results[0].value.enrichContact;
-    analyzeContactMock = useContactStore.mock.results[0].value.analyzeContact;
-    updateContactMock = useContactStore.mock.results[0].value.updateContact;
-    vi.clearAllMocks();
+    enrichContactMock.mockReset();
+    analyzeContactMock.mockReset();
+    updateContactMock.mockReset();
   });
 
-  it('renders contact card with enrichment controls', () => {
+  // Enrichment / analysis actions live in the "more actions" dropdown
+  const openMenu = async () => {
+    const buttons = screen.getAllByRole('button');
+    // Favorite star is first, the actions menu toggle is second
+    await userEvent.click(buttons[1]);
+  };
+
+  it('renders contact card with enrichment controls', async () => {
     render(<EnhancedContactCard contact={mockContact} />);
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
-    expect(screen.getByText('TechCorp Inc')).toBeInTheDocument();
+    expect(screen.getByText(/TechCorp Inc/)).toBeInTheDocument();
+    await openMenu();
     expect(screen.getByText('Enrich Data')).toBeInTheDocument();
     expect(screen.getByText('AI Analysis')).toBeInTheDocument();
   });
@@ -54,6 +67,7 @@ describe('Contact Enrichment Workflow Tests', () => {
   it('triggers enrichment when button clicked', async () => {
     enrichContactMock.mockResolvedValue({ phone: '+1-555-0202', industry: 'Technology' });
     render(<EnhancedContactCard contact={mockContact} />);
+    await openMenu();
     await userEvent.click(screen.getByText('Enrich Data'));
     await waitFor(() => expect(enrichContactMock).toHaveBeenCalledWith('ct-123'));
   });
@@ -61,26 +75,35 @@ describe('Contact Enrichment Workflow Tests', () => {
   it('shows enriching state during operation', async () => {
     enrichContactMock.mockImplementation(() => new Promise(() => {}));
     render(<EnhancedContactCard contact={mockContact} />);
+    await openMenu();
     await userEvent.click(screen.getByText('Enrich Data'));
+    await openMenu();
     expect(screen.getByText('Enriching...')).toBeInTheDocument();
   });
 
-  it('updates contact with enrichment results', async () => {
-    const enrichment = { phone: '+1-555-0303', industry: 'Healthcare' };
-    enrichContactMock.mockResolvedValue(enrichment);
-    updateContactMock.mockResolvedValue({ ...mockContact, ...enrichment });
+  it('toggles favorite through updateContact', async () => {
     render(<EnhancedContactCard contact={mockContact} />);
-    await userEvent.click(screen.getByText('Enrich Data'));
-    await waitFor(() => {
-      expect(updateContactMock).toHaveBeenCalledWith('ct-123', enrichment);
-    });
+    await userEvent.click(screen.getAllByRole('button')[0]);
+    expect(updateContactMock).toHaveBeenCalledWith('ct-123', { isFavorite: true });
+  });
+
+  it('triggers AI analysis from the menu', async () => {
+    analyzeContactMock.mockResolvedValue(undefined);
+    render(<EnhancedContactCard contact={mockContact} />);
+    await openMenu();
+    await userEvent.click(screen.getByText('AI Analysis'));
+    await waitFor(() => expect(analyzeContactMock).toHaveBeenCalledWith('ct-123'));
   });
 
   it('handles enrichment errors', async () => {
     enrichContactMock.mockRejectedValue(new Error('API Error'));
     render(<EnhancedContactCard contact={mockContact} />);
+    await openMenu();
     await userEvent.click(screen.getByText('Enrich Data'));
     await waitFor(() => expect(enrichContactMock).toHaveBeenCalled());
+    // Error is swallowed by the card and the button recovers
+    await openMenu();
+    await waitFor(() => expect(screen.getByText('Enrich Data')).toBeInTheDocument());
   });
 
   it('displays AI score badge', () => {

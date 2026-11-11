@@ -12,7 +12,7 @@ import {
 
 export class OpenClawService {
   private axiosInstance: AxiosInstance;
-  private supabase: SupabaseClient;
+  private supabaseClient: SupabaseClient | null = null;
   private config: OpenClawConfig;
 
   constructor(config: OpenClawConfig) {
@@ -28,8 +28,22 @@ export class OpenClawService {
       timeout: 30000, // 30 second timeout
     });
 
-    // Initialize Supabase for caching and local data
-    this.supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
+  }
+
+  /**
+   * Supabase is created lazily: the constructor runs in the browser too (via useMemo), where
+   * process.env is empty and createClient would throw. Reads Vite env first, then process.env.
+   */
+  private get supabase(): SupabaseClient {
+    if (!this.supabaseClient) {
+      const viteEnv = (import.meta as unknown as { env?: Record<string, string> }).env ?? {};
+      const proc = typeof process !== 'undefined' ? process.env : ({} as Record<string, string | undefined>);
+      const url = viteEnv.VITE_SUPABASE_URL || proc.SUPABASE_URL;
+      const key = viteEnv.VITE_SUPABASE_ANON_KEY || proc.SUPABASE_ANON_KEY;
+      if (!url || !key) throw new Error('Supabase is not configured for OpenClawService');
+      this.supabaseClient = createClient(url, key);
+    }
+    return this.supabaseClient;
   }
 
   // Contact enrichment using OpenClaw APIs

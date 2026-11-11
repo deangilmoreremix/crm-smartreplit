@@ -63,14 +63,6 @@ client/src/components/admin/SecuritySettings.tsx: TS2307 1
 client/src/components/admin/SecuritySettings.tsx: TS7006 5
 client/src/components/admin/TenantManagement.tsx: TS2339 8
 client/src/components/admin/TenantManagement.tsx: TS7006 5
-client/src/components/ai/__tests__/BatchOperations.test.tsx: TS2304 3
-client/src/components/ai/__tests__/BatchOperations.test.tsx: TS2613 1
-client/src/components/ai/__tests__/BatchOperations.test.tsx: TS7005 8
-client/src/components/ai/__tests__/BatchOperations.test.tsx: TS7034 2
-client/src/components/ai/__tests__/SmartAIControls.test.tsx: TS2304 3
-client/src/components/ai/__tests__/SmartAIControls.test.tsx: TS2613 1
-client/src/components/ai/__tests__/SmartAIControls.test.tsx: TS7005 7
-client/src/components/ai/__tests__/SmartAIControls.test.tsx: TS7034 2
 client/src/components/aiTools/CallScriptContent.tsx: TS2739 1
 client/src/components/aiTools/CompetitorAnalysisContent.tsx: TS2554 1
 client/src/components/aiTools/LiveDealAnalysis.tsx: TS2322 1
@@ -118,17 +110,9 @@ client/src/components/contacts/ContactList.tsx: TS2558 1
 client/src/components/contacts/ContactList.tsx: TS2724 3
 client/src/components/contacts/ContactList.tsx: TS7006 4
 client/src/components/contacts/RemoteContactsWithAssistant.tsx: TS2345 1
-client/src/components/contacts/__tests__/EnhancedContactCard.test.tsx: TS2304 4
-client/src/components/contacts/__tests__/EnhancedContactCard.test.tsx: TS2307 1
-client/src/components/contacts/__tests__/EnhancedContactCard.test.tsx: TS7005 8
-client/src/components/contacts/__tests__/EnhancedContactCard.test.tsx: TS7034 2
-client/src/components/contacts/__tests__/LeadScoringVisualization.test.tsx: TS2304 1
-client/src/components/contacts/__tests__/LeadScoringVisualization.test.tsx: TS2307 1
-client/src/components/contacts/__tests__/LeadScoringVisualization.test.tsx: TS2349 1
 client/src/components/dashboard/AIInsightsPanel.tsx: TS2345 1
 client/src/components/dashboard/AIInsightsPanel.tsx: TS2367 6
 client/src/components/dashboard/APIKeyStatus.tsx: TS2307 1
-client/src/components/dashboard/ChartsSection.tsx: TS2367 2
 client/src/components/dashboard/GPT5AnalyticsPanel.tsx: TS2339 8
 client/src/components/dashboard/GPT5DealIntelligence.tsx: TS2367 2
 client/src/components/dashboard/RecentActivity.tsx: TS2339 9
@@ -166,7 +150,6 @@ client/src/hooks/useWLSettings.ts: TS2724 6
 client/src/lib/supabase.ts: TS2353 1
 client/src/main.tsx: TS5097 1
 client/src/mfe/__tests__/loadRemoteEntry.test.ts: TS18046 2
-client/src/mfe/__tests__/loadRemoteEntry.test.ts: TS2307 1
 client/src/pages/AIGoals/AIGoalsPage.tsx: TS2305 1
 client/src/pages/AIGoals/AIGoalsPage.tsx: TS2322 1
 client/src/pages/AIGoals/AIGoalsPageEnhanced.tsx: TS2305 1
@@ -231,10 +214,8 @@ client/src/pages/landing/FeaturePage/AiToolsFeaturePage.tsx: TS2741 9
 client/src/pages/landing/FeaturePage/CommunicationsFeaturePage.tsx: TS2741 6
 client/src/pages/landing/Voice Profiles/VoiceProfiles.tsx: TS2307 2
 client/src/sampleContacts.ts: TS2307 1
-client/src/services/__tests__/unifiedEventSystem.test.ts: TS2304 18
 client/src/services/__tests__/unifiedEventSystem.test.ts: TS2322 2
 client/src/services/__tests__/unifiedEventSystem.test.ts: TS2345 7
-client/src/services/__tests__/unifiedEventSystem.test.ts: TS2593 14
 client/src/services/ai-automation-engine.service.ts: TS18046 2
 client/src/services/ai-automation-engine.service.ts: TS2322 3
 client/src/services/ai-automation-engine.service.ts: TS2571 1
@@ -283,7 +264,6 @@ client/src/services/workflowExecutionService.ts: TS18046 7
 client/src/services/workflowExecutionService.ts: TS2724 1
 client/src/shared/__tests__/EventBus.test.ts: TS2304 17
 client/src/shared/__tests__/EventBus.test.ts: TS2593 11
-client/src/shared/__tests__/EventBus.test.ts: TS2708 7
 client/src/shared/__tests__/FederationProvider.test.tsx: TS2304 7
 client/src/shared/__tests__/FederationProvider.test.tsx: TS2593 9
 client/src/shared/__tests__/RemoteRegistry.test.ts: TS2304 20
@@ -302,9 +282,7 @@ client/src/store/taskStore.ts: TS2322 1
 client/src/store/taskStore.ts: TS2741 1
 client/src/test/setup.ts: TS2322 1
 client/src/test/setup.ts: TS7017 1
-client/src/tests/Login.test.tsx: TS2307 5
 client/src/tests/contacts.test.tsx: TS2322 1
-client/src/tests/contacts.test.tsx: TS2339 2
 client/src/types/entitlements.ts: TS1117 23
 client/src/types/entitlements.ts: TS2741 1
 client/src/types/index.ts: TS2308 2

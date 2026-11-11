@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
+import { EntitlementContext } from '../contexts/EntitlementContext';
 
 const mockUseAuth = vi.fn();
 const mockEntitlementContext = {
@@ -13,15 +14,26 @@ vi.mock('../contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-vi.mock('../contexts/EntitlementContext', () => ({
-  EntitlementContext: {
-    Consumer: ({ children }: { children: (ctx: typeof mockEntitlementContext) => React.ReactNode }) =>
-      children(mockEntitlementContext),
-  },
-  useEntitlements: () => mockEntitlementContext,
-}));
+// ProtectedRoute reads the entitlements with useContext(EntitlementContext), so the mocked
+// module must export a real React context (a stub object with a Consumer is not enough: the
+// component would then never see isLoading/entitlement, fall through to <Navigate>, and - when
+// rendered outside <Routes> - redirect in an endless loop).
+vi.mock('../contexts/EntitlementContext', async () => {
+  const { createContext } = await import('react');
+  const EntitlementContext = createContext<any>(undefined);
+  return {
+    EntitlementContext,
+    useEntitlements: () => mockEntitlementContext,
+  };
+});
 
-describe('ProtectedRoute', () => {
+// Provide the current mock entitlement state to whatever is rendered
+const renderWithEntitlements = (ui: React.ReactElement) =>
+  render(
+    <EntitlementContext.Provider value={mockEntitlementContext as any}>{ui}</EntitlementContext.Provider>
+  );
+
+describe('ProtectedRoute', { timeout: 10000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEntitlementContext.entitlement = null;
@@ -36,7 +48,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: false,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter>
         <ProtectedRoute>
           <div>Protected Content</div>
@@ -55,7 +67,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: false,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter>
         <ProtectedRoute>
           <div>Protected Content</div>
@@ -74,7 +86,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: true,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter>
         <ProtectedRoute>
           <div>Protected Content</div>
@@ -93,7 +105,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: false,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter initialEntries={['/signin']}>
         <Routes>
           <Route path="/signin" element={<ProtectedRoute><div>Sign In Page</div></ProtectedRoute>} />
@@ -112,7 +124,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: false,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter initialEntries={['/dashboard']}>
         <Routes>
           <Route path="/dashboard" element={<ProtectedRoute><div>Dashboard</div></ProtectedRoute>} />
@@ -132,7 +144,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: true,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter initialEntries={['/ai-tools']}>
         <Routes>
           <Route path="/ai-tools" element={<ProtectedRoute featureKey="ai_tools"><div>AI Tools</div></ProtectedRoute>} />
@@ -153,7 +165,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: true,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter>
         <ProtectedRoute featureKey="ai_tools">
           <div>AI Tools</div>
@@ -173,7 +185,7 @@ describe('ProtectedRoute', () => {
       isAuthenticated: true,
     });
 
-    render(
+    renderWithEntitlements(
       <MemoryRouter>
         <ProtectedRoute featureKey="ai_tools">
           <div>AI Tools</div>

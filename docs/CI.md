@@ -35,12 +35,14 @@ Notes: `npm run typecheck` runs both ratchets; `typecheck:client` / `typecheck:s
 
 Runs `npx netlify-cli deploy --build` for a draft preview and comments the URL on the PR. Needs repo secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID`; skipped when they are missing (including fork PRs). Runtime env vars come from the Netlify site settings.
 
-## Client test status (known)
+## Client test status
 
-- `npx vitest run server packages` is a hard CI gate (all green).
-- Client tests run as informational (`continue-on-error`). About 14 client test files were already
-  failing before the AI/Twenty work: ErrorBoundary, ai/BatchOperations, ai/SmartAIControls,
-  EnhancedContactCard, LeadScoringVisualization, mfe/loadRemoteEntry, services/__tests__ (5),
-  shared/EventBus, tests/Login, tests/contacts.
-- `client/src/tests/ProtectedRoute.test.tsx` hangs (infinite wait) on the base branch too and is
-  excluded in CI; it exhausts memory when run with the whole suite.
+- `npx vitest run server packages` and `npx vitest run client/src` are both hard CI gates (all green,
+  no `continue-on-error`, nothing excluded).
+- Per-test and per-hook timeouts are set in `vitest.config.ts` (15s) so a stuck async test fails
+  instead of stalling the job.
+- `client/src/tests/ProtectedRoute.test.tsx` used to hang: its `EntitlementContext` mock was a stub
+  object rather than a real React context, so `ProtectedRoute` never saw `isLoading`/`entitlement`
+  and rendered `<Navigate>` outside `<Routes>` in an endless redirect loop. The mock now exports a
+  real context that the tests provide.
+- Browser-console helper scripts live next to the tests as `*.console.js` (not collected by vitest).

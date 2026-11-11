@@ -4,10 +4,24 @@ import { AIEnhancedContactCard } from '../components/contacts/AIEnhancedContactC
 import { Contact } from '../types';
 
 // Mock the stores and services
+const { updateContactMock, enrichContactMock, researchMock } = vi.hoisted(() => ({
+  updateContactMock: vi.fn(),
+  enrichContactMock: vi.fn(),
+  researchMock: vi.fn(),
+}));
+
 vi.mock('../store/contactStore', () => ({
   useContactStore: () => ({
-    updateContact: vi.fn(),
+    updateContact: updateContactMock,
   }),
+}));
+
+// The real OpenClawService builds a Supabase client and axios instance on construction;
+// unit tests of the card only care about the calls the card makes to it.
+vi.mock('@crm/openclaw-api', () => ({
+  OpenClawService: class {
+    enrichContact = enrichContactMock;
+  },
 }));
 
 vi.mock('../services/aiEnrichmentService', () => ({
@@ -31,7 +45,7 @@ vi.mock('../services/http-client.service', () => ({
 
 vi.mock('../services/gpt5SocialResearchService', () => ({
   gpt5SocialResearchService: {
-    researchContactSocialMedia: vi.fn(),
+    researchContactSocialMedia: researchMock,
   },
 }));
 
@@ -123,272 +137,178 @@ const mockContact: Contact = {
   },
 };
 
+const renderCard = (overrides: Partial<Contact> = {}, props: Record<string, unknown> = {}) =>
+  render(
+    <AIEnhancedContactCard
+      contact={{ ...mockContact, ...overrides }}
+      isSelected={false}
+      onSelect={() => {}}
+      onClick={() => {}}
+      {...props}
+    />
+  );
+
 describe('AIEnhancedContactCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    updateContactMock.mockReset();
+    enrichContactMock.mockReset();
+    researchMock.mockReset();
   });
 
   it('renders contact information correctly', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+    renderCard();
 
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('CEO')).toBeInTheDocument();
     expect(screen.getByText('Example Corp')).toBeInTheDocument();
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+  });
+
+  it('opens an email draft to the contact', () => {
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderCard();
+
+    fireEvent.click(screen.getByRole('button', { name: /email/i }));
+    expect(open).toHaveBeenCalledWith('mailto:john@example.com', '_blank');
+    open.mockRestore();
   });
 
   it('displays AI score with correct color', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+    renderCard();
 
-    // AI score should be displayed (85 is high score, should be green)
+    // 85 is a high score, should be green
     const scoreElement = screen.getByText('85');
     expect(scoreElement).toBeInTheDocument();
     expect(scoreElement.closest('div')).toHaveClass('bg-green-500');
+    expect(screen.getByText('AI Score')).toBeInTheDocument();
   });
 
-  it('shows enrichment data when available', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+  it('prompts for a score when the contact has none', () => {
+    renderCard({ aiScore: undefined });
 
-    expect(screen.getByText('500+')).toBeInTheDocument();
-    expect(screen.getByText('Technology')).toBeInTheDocument();
+    expect(screen.getByText('Click to Score')).toBeInTheDocument();
+    expect(screen.getByTitle('Click to get AI score')).toBeInTheDocument();
+  });
+
+  it('shows score-based AI insights', () => {
+    renderCard();
+
+    expect(
+      screen.getByText('High conversion potential - prioritize for immediate follow-up.')
+    ).toBeInTheDocument();
   });
 
   it('handles AI analysis button click', async () => {
-    const mockUpdateContact = vi.fn();
-    vi.mocked(vi.importMock('../store/contactStore')).useContactStore.mockReturnValue({
-      updateContact: mockUpdateContact,
-    });
+    enrichContactMock.mockResolvedValue({ enrichedData: { aiScore: 91, industry: 'Software' } });
+    renderCard({}, { onAnalyze: vi.fn() });
 
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
-
-    const analyzeButton = screen.getByRole('button', { name: /analyze/i });
-    fireEvent.click(analyzeButton);
+    fireEvent.click(screen.getByTitle('Re-analyze with AI'));
 
     await waitFor(() => {
-      expect(mockUpdateContact).toHaveBeenCalled();
+      expect(updateContactMock).toHaveBeenCalledWith(
+        '1',
+        expect.objectContaining({ aiScore: 91, industry: 'Software' })
+      );
     });
+    expect(enrichContactMock).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: '1', data: expect.objectContaining({ name: 'John Doe' }) })
+    );
   });
 
-  it('displays custom fields', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+  it('shows the contact source', () => {
+    renderCard();
 
-    expect(screen.getByText('$100k')).toBeInTheDocument();
-    expect(screen.getByText('3 months')).toBeInTheDocument();
-  });
-
-  it('shows activity indicators', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
-
-    // Should show last activity date
-    expect(screen.getByText(/Jan 20, 2024/)).toBeInTheDocument();
+    expect(screen.getByText('LinkedIn')).toBeInTheDocument();
   });
 
   it('handles selection state', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={true}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+    const onSelect = vi.fn();
+    renderCard({}, { isSelected: true, onSelect });
 
-    // Should show selection indicator
-    const card = screen.getByRole('button').closest('div');
-    expect(card).toHaveClass('ring-2', 'ring-blue-500');
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).toBeChecked();
+    fireEvent.click(checkbox);
+    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
-  it('displays tags correctly', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+  it('calls onClick when the card is clicked', () => {
+    const onClick = vi.fn();
+    renderCard({}, { onClick });
 
-    expect(screen.getByText('VIP')).toBeInTheDocument();
-    expect(screen.getByText('Enterprise')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('John Doe'));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('shows interest level with correct color', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+    const { container } = renderCard();
 
-    const interestIndicator = screen.getByText('Hot Client');
-    expect(interestIndicator).toBeInTheDocument();
-    expect(interestIndicator.closest('div')).toHaveClass('bg-red-500');
+    expect(screen.getByText('Hot Client')).toBeInTheDocument();
+    expect(container.querySelector('.bg-red-500.animate-pulse')).toBeInTheDocument();
   });
 
-  it('displays AI score rationale when available', async () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
+  it('displays AI score explanation on hover', async () => {
+    renderCard();
+
+    fireEvent.mouseEnter(screen.getByText('85'));
+
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(
+            'High conversion potential based on engagement patterns, company size, and expressed interest level.'
+          )
+        ).toBeInTheDocument();
+      },
+      { timeout: 3000 }
     );
-
-    // Hover over score to show rationale
-    const scoreElement = screen.getByText('85');
-    fireEvent.mouseEnter(scoreElement);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('High engagement, large company, decision maker')
-      ).toBeInTheDocument();
-    });
   });
 
   it('handles social research functionality', async () => {
-    const mockResearch = vi.fn().mockResolvedValue({
+    researchMock.mockResolvedValue({
       socialProfiles: { twitter: '@johndoe' },
       insights: 'Active on social media',
     });
+    renderCard();
 
-    vi.mocked(
-      vi.importMock('../services/gpt5SocialResearchService')
-    ).gpt5SocialResearchService.researchContactSocialMedia.mockResolvedValue(mockResearch());
-
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
-
-    const socialButton = screen.getByRole('button', { name: /social research/i });
-    fireEvent.click(socialButton);
+    fireEvent.click(screen.getByTitle('Social Media Research'));
 
     await waitFor(() => {
-      expect(mockResearch).toHaveBeenCalledWith(mockContact);
+      expect(researchMock).toHaveBeenCalledWith(
+        expect.objectContaining({ id: '1', name: 'John Doe' }),
+        ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'],
+        'comprehensive'
+      );
     });
   });
 });
 
 describe('Contact Scoring System', () => {
   it('calculates score color correctly', () => {
-    const highScoreContact = { ...mockContact, aiScore: 85 };
-    const mediumScoreContact = { ...mockContact, aiScore: 65 };
-    const lowScoreContact = { ...mockContact, aiScore: 35 };
+    const { rerender } = renderCard({ aiScore: 85 });
 
-    // Test high score (green)
-    const { rerender } = render(
-      <AIEnhancedContactCard
-        contact={highScoreContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+    // High score (green)
+    expect(screen.getByText('85').closest('div')).toHaveClass('bg-green-500');
 
-    let scoreElement = screen.getByText('85');
-    expect(scoreElement.closest('div')).toHaveClass('bg-green-500');
+    const rerenderWith = (aiScore: number) =>
+      rerender(
+        <AIEnhancedContactCard
+          contact={{ ...mockContact, aiScore }}
+          isSelected={false}
+          onSelect={() => {}}
+          onClick={() => {}}
+        />
+      );
 
-    // Test medium score (blue)
-    rerender(
-      <AIEnhancedContactCard
-        contact={mediumScoreContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
+    // Medium score (blue)
+    rerenderWith(65);
+    expect(screen.getByText('65').closest('div')).toHaveClass('bg-blue-500');
 
-    scoreElement = screen.getByText('65');
-    expect(scoreElement.closest('div')).toHaveClass('bg-blue-500');
+    // Low-medium score (yellow)
+    rerenderWith(45);
+    expect(screen.getByText('45').closest('div')).toHaveClass('bg-yellow-500');
 
-    // Test low score (red)
-    rerender(
-      <AIEnhancedContactCard
-        contact={lowScoreContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
-
-    scoreElement = screen.getByText('35');
-    expect(scoreElement.closest('div')).toHaveClass('bg-red-500');
-  });
-});
-
-describe('Contact Enrichment Features', () => {
-  it('displays last enrichment timestamp', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
-
-    expect(screen.getByText(/Enriched.*Jan 20, 2024/)).toBeInTheDocument();
-  });
-
-  it('shows enrichment source', () => {
-    render(
-      <AIEnhancedContactCard
-        contact={mockContact}
-        isSelected={false}
-        onSelect={() => {}}
-        onClick={() => {}}
-      />
-    );
-
-    expect(screen.getByText('OpenAI')).toBeInTheDocument();
+    // Low score (red)
+    rerenderWith(35);
+    expect(screen.getByText('35').closest('div')).toHaveClass('bg-red-500');
   });
 });

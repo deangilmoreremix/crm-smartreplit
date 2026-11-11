@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { useTaskStore } from '../store/taskStore';
+import type { Task } from '../types/task';
 import { TaskKanbanBoard } from '../components/TaskKanbanBoard';
 import { TaskCalendar } from '../components/TaskCalendar';
 import TasksTable from '../components/record-table/TasksTable';
@@ -22,6 +23,48 @@ import { ActivityFeed } from '../components/ActivityFeed';
 import { TaskDetailsModal } from '../components/TaskDetailsModal';
 import { useTheme } from '../contexts/ThemeContext';
 import GlassCard from '../components/GlassCard';
+
+interface ApiTaskRow {
+  id: number | string;
+  title: string;
+  description?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  dueDate?: string | null;
+  completedAt?: string | null;
+  contactId?: number | string | null;
+  dealId?: number | string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+/** Map a /api/tasks row (what global search links to) onto the Task shape the details modal edits. */
+export function apiTaskToTask(r: ApiTaskRow): Task {
+  const date = (v?: string | null) => (v ? new Date(v) : undefined);
+  return {
+    id: String(r.id),
+    title: r.title,
+    description: r.description ?? undefined,
+    type: 'other',
+    status: (r.status as Task['status']) ?? 'pending',
+    priority: (r.priority as Task['priority']) ?? 'medium',
+    contactId: r.contactId != null ? String(r.contactId) : undefined,
+    dealId: r.dealId != null ? String(r.dealId) : undefined,
+    dueDate: date(r.dueDate),
+    completedDate: date(r.completedAt),
+    tags: [],
+    attachments: [],
+    subtasks: [],
+    dependencies: [],
+    reminders: [],
+    customFields: {},
+    createdAt: date(r.createdAt) ?? new Date(),
+    updatedAt: date(r.updatedAt) ?? new Date(),
+    createdBy: '',
+    completed: r.status === 'completed',
+    category: 'other',
+  };
+}
 
 export const Tasks: React.FC = () => {
   const { isDark } = useTheme();
@@ -32,6 +75,39 @@ export const Tasks: React.FC = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+
+  // Deep link: /tasks?id=<taskId> opens that task's details modal.
+  const taskId = new URLSearchParams(location.search).get('id');
+  const [linkedTask, setLinkedTask] = useState<Task | null>(null);
+  useEffect(() => {
+    if (!taskId) {
+      setLinkedTask(null);
+      return;
+    }
+    const local = useTaskStore.getState().getTask(taskId);
+    if (local) {
+      setLinkedTask(local);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/tasks/${encodeURIComponent(taskId)}`, { credentials: 'include' })
+      .then((res) => (res.ok ? (res.json() as Promise<ApiTaskRow>) : null))
+      .then((row) => {
+        if (!cancelled) setLinkedTask(row ? apiTaskToTask(row) : null);
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedTask(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [taskId]);
+  const closeLinkedTask = () => {
+    const params = new URLSearchParams(location.search);
+    params.delete('id');
+    const qs = params.toString();
+    navigate(`/tasks${qs ? `?${qs}` : ''}`, { replace: true });
+  };
 
   // Handle URL parameters for dropdown navigation
   useEffect(() => {
@@ -363,6 +439,9 @@ export const Tasks: React.FC = () => {
       {showTaskModal && (
         <TaskDetailsModal isOpen={showTaskModal} onClose={() => setShowTaskModal(false)} />
       )}
+
+      {/* Deep-linked task (?id=) */}
+      {linkedTask && <TaskDetailsModal task={linkedTask} isOpen onClose={closeLinkedTask} />}
 
       {/* Search Modal */}
       {showSearchModal && (

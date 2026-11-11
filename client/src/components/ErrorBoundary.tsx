@@ -131,7 +131,7 @@ class ErrorBoundary extends Component<Props, State> {
               We're sorry, but something unexpected happened. Please try again or contact support if the problem persists.
             </p>
 
-            {this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <div style={{
                 backgroundColor: '#f3f4f6',
                 borderRadius: '8px',
@@ -141,6 +141,9 @@ class ErrorBoundary extends Component<Props, State> {
                 overflow: 'auto',
                 maxHeight: '150px',
               }}>
+                <p style={{ fontSize: '12px', fontWeight: '600', color: '#374151', margin: '0 0 8px' }}>
+                  Error Details (Development Only)
+                </p>
                 <p style={{
                   fontSize: '12px',
                   color: '#dc2626',

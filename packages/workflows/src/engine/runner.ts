@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { workflowEngine, type ActionResult, type WaitRequest, type WorkflowStep } from './WorkflowEngine';
+import { workflowEngine, type ActionResult, type CursorFrame, type WaitRequest, type WorkflowStep } from './WorkflowEngine';
 import { registerAllTriggers } from '../triggers';
 import { registerAllActions } from '../actions';
 import { getPath } from './interpolate';
@@ -28,6 +28,10 @@ interface WaitSnapshot {
   recordId?: string;
   variables: Record<string, unknown>;
   results: Record<string, ActionResult>;
+  /** steps.<id>.output values (nested steps can't be rebuilt from `results`). */
+  stepsOut?: Record<string, { output: unknown }>;
+  /** Step executions used so far; the step limit spans pauses. */
+  executions?: number;
   versionId?: string | null;
   match?: Record<string, unknown>;
   form?: { title?: string; fields: Array<{ name: string; label?: string; type?: string; required?: boolean }> };
@@ -83,15 +87,18 @@ export async function loadSteps(
 async function finish(
   runId: string,
   outcome: Awaited<ReturnType<typeof workflowEngine.executeWorkflow>>,
-  snapshotBase: Omit<WaitSnapshot, 'results' | 'match' | 'form'>
+  snapshotBase: Omit<WaitSnapshot, 'results' | 'stepsOut' | 'executions' | 'match' | 'form'>
 ) {
   const results = outcome.results;
   const patch: Record<string, unknown> = { result: results, error: null };
 
   if (outcome.status === 'waiting' && outcome.wait) {
     const w = outcome.wait as WaitRequest & { stepId: string };
+    const cursor = outcome.cursor && outcome.cursor.length ? outcome.cursor : null;
     const { error: waitError } = await supabase.from('workflow_run_waits').insert({
       run_id: runId,
+      // Only set for waits nested in IF_ELSE / ITERATOR, so top-level pauses work before the migration.
+      ...(cursor ? { cursor } : {}),
       kind: w.kind,
       step_id: w.stepId,
       resume_at: 'resumeAt' in w && w.resumeAt ? w.resumeAt : null,
@@ -99,6 +106,8 @@ async function finish(
       payload: {
         ...snapshotBase,
         results,
+        stepsOut: outcome.stepsOut,
+        executions: outcome.executions,
         match: w.kind === 'event' ? w.match : undefined,
         form: w.kind === 'form' ? w.form : undefined,
       } satisfies WaitSnapshot,
@@ -217,7 +226,14 @@ export async function resumeWait(waitId: string, output: unknown) {
         timestamp: new Date(),
         variables: snap.variables,
       },
-      { resumeFromStepId: claimed.step_id, priorResults: snap.results, resumeOutput: output }
+      {
+        resumeFromStepId: claimed.step_id,
+        cursor: (claimed.cursor as CursorFrame[] | null) ?? [],
+        priorResults: snap.results,
+        priorStepsOut: snap.stepsOut,
+        priorExecutions: snap.executions,
+        resumeOutput: output,
+      }
     );
     return await finish(run.id, outcome, {
       userId: snap.userId,

@@ -8,6 +8,7 @@ import {
   DealFilter,
   DealSortOption,
 } from '../types/deal';
+import { toast } from '../hooks/use-toast';
 
 // Default pipeline stages
 const defaultStages: DealStage[] = [
@@ -45,6 +46,53 @@ const defaultStages: DealStage[] = [
     isActive: true,
   },
 ];
+
+/** Store stage ids that differ from the API's stage vocabulary (see DEAL_STAGE_OPTIONS). */
+const STAGE_TO_API: Record<string, string> = { qualification: 'qualified' };
+
+interface ApiDealRow {
+  id: number | string;
+  title: string;
+  value?: string | number | null;
+  stage?: string | null;
+  probability?: number | null;
+  description?: string | null;
+  contactId?: number | string | null;
+  daysInStage?: number | null;
+  expectedCloseDate?: string | null;
+  actualCloseDate?: string | null;
+  customFields?: Record<string, any> | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+/** Map a /api/deals row onto the store's Deal shape (API stage `lead`/`qualified` -> `qualification`). */
+export function fromApiDeal(r: ApiDealRow, stages: DealStage[]): Deal {
+  const stageId = r.stage === 'lead' || r.stage === 'qualified' ? 'qualification' : (r.stage ?? 'qualification');
+  const stage = stages.find((s) => s.id === stageId) ?? stages[0];
+  const date = (v?: string | null) => (v ? new Date(v) : undefined);
+  return {
+    id: String(r.id),
+    title: r.title,
+    description: r.description ?? undefined,
+    value: Number(r.value) || 0,
+    stage,
+    probability: r.probability ?? stage.probability,
+    contactId: r.contactId != null ? String(r.contactId) : '',
+    priority: 'medium',
+    daysInStage: r.daysInStage ?? 0,
+    source: 'other',
+    tags: [],
+    customFields: r.customFields ?? {},
+    activities: [],
+    attachments: [],
+    createdAt: date(r.createdAt) ?? new Date(),
+    updatedAt: date(r.updatedAt) ?? new Date(),
+    expectedCloseDate: date(r.expectedCloseDate),
+    actualCloseDate: date(r.actualCloseDate),
+    currency: 'USD',
+  };
+}
 
 const defaultPipeline: Pipeline = {
   id: 'default',
@@ -103,95 +151,7 @@ interface DealStore {
 
 export const useDealStore = create<DealStore>((set, get) => ({
   // Initial state
-  deals: [
-    {
-      id: '1',
-      title: 'Enterprise Software License',
-      description: 'Annual license for enterprise software suite',
-      value: 75000,
-      stage: defaultStages[2], // negotiation
-      probability: 85,
-      contactId: '1',
-      dueDate: new Date('2024-02-15'),
-      priority: 'high',
-      daysInStage: 5,
-      source: 'referral',
-      tags: ['enterprise', 'software'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-15'),
-      currency: 'USD',
-      expectedCloseDate: new Date('2024-02-15'),
-      status: 'active',
-    },
-    {
-      id: '2',
-      title: 'Marketing Automation Platform',
-      description: 'Complete marketing automation solution',
-      value: 45000,
-      stage: defaultStages[1], // proposal
-      probability: 65,
-      contactId: '2',
-      dueDate: new Date('2024-03-01'),
-      priority: 'medium',
-      daysInStage: 12,
-      source: 'website',
-      tags: ['marketing', 'automation'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-20'),
-      currency: 'USD',
-      expectedCloseDate: new Date('2024-03-01'),
-      status: 'active',
-    },
-    {
-      id: '3',
-      title: 'CRM Integration Services',
-      description: 'Custom CRM integration and setup',
-      value: 25000,
-      stage: defaultStages[0], // qualification
-      probability: 30,
-      contactId: '3',
-      priority: 'low',
-      daysInStage: 8,
-      source: 'cold-call',
-      tags: ['crm', 'integration'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2024-01-20'),
-      updatedAt: new Date('2024-01-25'),
-      currency: 'USD',
-      expectedCloseDate: new Date('2024-04-01'),
-      status: 'active',
-    },
-    {
-      id: '4',
-      title: 'Cloud Infrastructure Setup',
-      description: 'Complete cloud migration and setup',
-      value: 120000,
-      stage: defaultStages[3], // closed-won
-      probability: 100,
-      contactId: '4',
-      priority: 'high',
-      daysInStage: 0,
-      source: 'referral',
-      tags: ['cloud', 'infrastructure'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2023-12-01'),
-      updatedAt: new Date('2024-01-10'),
-      closedAt: new Date('2024-01-10'),
-      actualCloseDate: new Date('2024-01-10'),
-      currency: 'USD',
-      status: 'won',
-    },
-  ],
+  deals: [],
 
   pipelines: {
     default: defaultPipeline,
@@ -207,9 +167,11 @@ export const useDealStore = create<DealStore>((set, get) => ({
   fetchDeals: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      set({ isLoading: false });
+      const res = await fetch('/api/deals', { credentials: 'include' });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      const rows = (await res.json()) as ApiDealRow[];
+      const stages = get().pipelines[get().activePipelineId]?.stages ?? defaultStages;
+      set({ deals: rows.map((r) => fromApiDeal(r, stages)), isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch deals', isLoading: false });
     }
@@ -262,14 +224,38 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   moveDeal: async (dealId, newStageId) => {
-    const { pipelines, activePipelineId } = get();
-    const pipeline = pipelines[activePipelineId];
-    const newStage = pipeline?.stages.find((s) => s.id === newStageId);
+    const { pipelines, activePipelineId, deals } = get();
+    const newStage = pipelines[activePipelineId]?.stages.find((s) => s.id === newStageId);
+    const deal = deals.find((d) => d.id === dealId);
+    if (!newStage || !deal || deal.stage.id === newStage.id) return;
 
-    if (newStage) {
-      await get().updateDeal(dealId, {
-        stage: newStage,
-        probability: newStage.probability,
+    const previous = { stage: deal.stage, probability: deal.probability };
+    // Optimistic local move.
+    await get().updateDeal(dealId, { stage: newStage, probability: newStage.probability });
+
+    // Deals created locally (non-numeric ids) have no server row yet.
+    if (!/^\d+$/.test(dealId)) return;
+
+    // Send only the fields that changed.
+    const body: Record<string, unknown> = { stage: STAGE_TO_API[newStage.id] ?? newStage.id };
+    if (newStage.probability !== previous.probability) body.probability = newStage.probability;
+
+    try {
+      const res = await fetch(`/api/deals/${dealId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+    } catch (e) {
+      await get().updateDeal(dealId, previous);
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      set({ error: `Could not move deal: ${message}` });
+      toast({
+        title: 'Could not move deal',
+        description: `"${deal.title}" was returned to ${previous.stage.name}. ${message}`,
+        variant: 'destructive',
       });
     }
   },

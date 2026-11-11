@@ -317,7 +317,6 @@ const DealKanbanBoard: React.FC = () => {
   } = useDealStore();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isAddingDeal, setIsAddingDeal] = useState(false);
   const [newDealStage, setNewDealStage] = useState<string>('');
   const navigate = useSafeNavigate();
@@ -352,7 +351,7 @@ const DealKanbanBoard: React.FC = () => {
     getId: (d) => d.id,
     onOpen: (d) => navigate(`/deals/${d.id}`),
     onFocusSearch: () => searchRef.current?.focus(),
-    enabled: !selectedDeal && !isAddingDeal,
+    enabled: !isAddingDeal,
   });
   useEffect(() => {
     if (!nav.activeId) return;
@@ -376,13 +375,9 @@ const DealKanbanBoard: React.FC = () => {
     setIsAddingDeal(true);
   };
 
-  const handleEditDeal = (deal: Deal) => {
-    setSelectedDeal(deal);
-  };
-
-  const handleViewDeal = (deal: Deal) => {
-    setSelectedDeal(deal);
-  };
+  // The deal record page is the details/edit view (replaces the old placeholder modal).
+  const handleViewDeal = (deal: Deal) => navigate(`/deals/${deal.id}`);
+  const handleEditDeal = handleViewDeal;
 
   const handleDeleteDeal = async (dealId: string) => {
     if (window.confirm('Are you sure you want to delete this deal?')) {
@@ -533,21 +528,6 @@ const DealKanbanBoard: React.FC = () => {
         </DragDropContext>
       </div>
 
-      {/* Modals would go here */}
-      {selectedDeal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Deal Details</h3>
-            <p>Deal modal content would go here for: {selectedDeal.title}</p>
-            <button
-              onClick={() => setSelectedDeal(null)}
-              className="mt-4 px-4 py-2 bg-gray-200 rounded-md"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

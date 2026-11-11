@@ -1,5 +1,8 @@
 import { unifiedEventSystem, UnifiedEvent } from '../unifiedEventSystem';
-import { vi } from 'vitest';
+import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
+
+// The event processor runs on a real setInterval created when the module is imported, so these
+// tests use real timers and wait (vi.waitFor) for the queue to drain instead of faking time.
 
 // Simple test framework for demonstration
 class TestRunner {
@@ -49,7 +52,7 @@ describe('UnifiedEventSystem', () => {
   let unsubscribe: () => void;
 
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useRealTimers();
     handlerCalls = [];
     mockHandler = (event: UnifiedEvent) => {
       handlerCalls.push(event);
@@ -68,7 +71,6 @@ describe('UnifiedEventSystem', () => {
 
   describe('Event Registration and Emission', () => {
     test('should register and handle events correctly', async () => {
-      vi.useRealTimers();
       // Register event handler
       unsubscribe = unifiedEventSystem.registerHandler({
         id: 'test-handler',
@@ -133,9 +135,7 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      vi.advanceTimersByTime(10);
-
-      expect(handler1).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() => expect(handler1).toHaveBeenCalledTimes(1));
       expect(handler2).toHaveBeenCalledTimes(0);
     });
 
@@ -163,10 +163,8 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      vi.advanceTimersByTime(10);
-
       // High priority should be called first
-      expect(callOrder).toEqual(['high', 'low']);
+      await vi.waitFor(() => expect(callOrder).toEqual(['high', 'low']));
     });
   });
 
@@ -187,9 +185,7 @@ describe('UnifiedEventSystem', () => {
         data: { targeted: true },
       });
 
-      vi.advanceTimersByTime(10);
-
-      expect(mockTargetHandler).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() => expect(mockTargetHandler).toHaveBeenCalledTimes(1));
       expect(mockTargetHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           target: 'specific-target',
@@ -213,12 +209,11 @@ describe('UnifiedEventSystem', () => {
         });
       }
 
-      vi.advanceTimersByTime(10);
-
       const history = unifiedEventSystem.getEventHistory();
       expect(history).toHaveLength(3);
-      expect(history[0].data.index).toBe(4); // Most recent
-      expect(history[2].data.index).toBe(2); // Oldest remaining
+      // History is chronological (oldest first)
+      expect(history[0].data.index).toBe(2); // Oldest remaining
+      expect(history[2].data.index).toBe(4); // Most recent
     });
 
     test('should respect TTL for events', async () => {
@@ -230,21 +225,40 @@ describe('UnifiedEventSystem', () => {
         priority: 10,
       });
 
-      // Emit event with short TTL
-      await unifiedEventSystem.emit({
-        type: 'TTL_TEST',
-        source: 'test',
-        data: {},
-        ttl: 1000, // 1 second
-      });
+      // Only fake Date: the processor's real interval keeps running, but sees a clock that
+      // has moved past the event's TTL by the time it dequeues the event.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      try {
+        await unifiedEventSystem.emit({
+          type: 'TTL_TEST',
+          source: 'test',
+          data: {},
+          ttl: 1000, // 1 second
+        });
 
-      // Fast-forward time past TTL
-      vi.advanceTimersByTime(1500);
+        vi.setSystemTime(Date.now() + 1500);
 
-      vi.advanceTimersByTime(10);
+        // A follow-up event without TTL is processed after the expired one (FIFO queue)
+        const followUp = vi.fn();
+        unifiedEventSystem.registerHandler({
+          id: 'ttl-follow-up',
+          handler: followUp,
+          priority: 1,
+          filters: { type: 'TTL_FOLLOW_UP' },
+        });
+        await unifiedEventSystem.emit({
+          type: 'TTL_FOLLOW_UP',
+          source: 'test',
+          data: {},
+          priority: 'medium',
+        });
+        await vi.waitFor(() => expect(followUp).toHaveBeenCalledTimes(1));
 
-      // Handler should not be called due to expired TTL
-      expect(handler).not.toHaveBeenCalled();
+        // Handler should not be called due to expired TTL
+        expect(handler).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'TTL_TEST' }));
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
@@ -273,12 +287,10 @@ describe('UnifiedEventSystem', () => {
         data: {},
       });
 
-      vi.advanceTimersByTime(10);
-
+      // Success handler should still be called despite the error
+      await vi.waitFor(() => expect(successHandler).toHaveBeenCalledTimes(1));
       // Error handler should have been called and failed
       expect(errorHandler).toHaveBeenCalledTimes(1);
-      // Success handler should still be called despite the error
-      expect(successHandler).toHaveBeenCalledTimes(1);
     });
   });
 

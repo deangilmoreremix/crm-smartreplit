@@ -20,6 +20,8 @@ const MAX_BACKOFF_MS = 6 * 3600_000;
 const LEASE_MS = 120_000;
 const RESPONSE_BODY_LIMIT = 1000;
 const TICK_BUDGET_MS = 22_000;
+export const SUCCESS_RETENTION_DAYS = 30;
+export const FAILED_RETENTION_DAYS = 90;
 
 export function signPayload(secret: string, timestamp: number | string, body: string): string {
   return `sha256=${createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex')}`;
@@ -151,13 +153,38 @@ export async function runDeliveryTick(db: SupabaseClient, deps: DeliveryDeps = {
   return stats;
 }
 
+/** Retention: delete delivered rows older than 30 days and failed rows older than 90 days. Pending rows are kept. */
+export async function pruneWebhookDeliveries(db: SupabaseClient, now: Date = new Date()) {
+  const before = (days: number) => new Date(now.getTime() - days * 86_400_000).toISOString();
+  const prune = async (status: string, days: number) => {
+    const { data, error } = await db
+      .from('webhook_deliveries')
+      .delete()
+      .eq('status', status)
+      .lt('created_at', before(days))
+      .select('id');
+    if (error) throw new Error(error.message);
+    return data?.length ?? 0;
+  };
+  return { success: await prune('success', SUCCESS_RETENTION_DAYS), failed: await prune('failed', FAILED_RETENTION_DAYS) };
+}
+
 export default async function handler(): Promise<Response> {
   if (!serverSupabase) {
     console.error('webhook-delivery: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured');
     return new Response('not configured', { status: 500 });
   }
   try {
-    const stats = await runDeliveryTick(serverSupabase as unknown as SupabaseClient);
+    const db = serverSupabase as unknown as SupabaseClient;
+    const stats: Record<string, unknown> = { ...(await runDeliveryTick(db)) };
+    // Hourly sweep (the function runs every minute).
+    if (new Date().getUTCMinutes() === 0) {
+      try {
+        stats.pruned = await pruneWebhookDeliveries(db);
+      } catch (e: any) {
+        console.error('webhook-delivery prune failed:', e?.message);
+      }
+    }
     return new Response(JSON.stringify(stats), { headers: { 'Content-Type': 'application/json' } });
   } catch (e: any) {
     console.error('webhook-delivery failed:', e?.message);

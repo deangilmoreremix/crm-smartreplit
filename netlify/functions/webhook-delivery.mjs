@@ -168,17 +168,29 @@ var init_WorkflowEngine = __esm({
         }
         return out;
       }
-      async runSteps(steps, context, state, depth, extraScope, keyPrefix, startIndex = 0) {
-        for (let i = startIndex; i < steps.length; i++) {
+      async runSteps(steps, context, state, depth, extraScope, keyPrefix, startIndex = 0, resume) {
+        let first = startIndex;
+        if (resume) {
+          const targetId = resume.path[0]?.stepId ?? resume.leafId;
+          first = steps.findIndex((s) => s.id === targetId);
+          if (first < 0) throw new Error(`Cannot resume: step ${targetId} no longer exists`);
+        }
+        for (let i = first; i < steps.length; i++) {
           const step = steps[i];
           const key2 = `${keyPrefix}${step.id}`;
+          const resuming = resume && i === first ? resume : void 0;
+          if (resuming && resuming.path.length === 0) {
+            state.results[key2] = { success: true, output: resuming.output };
+            state.stepsOut[step.id] = { output: resuming.output };
+            continue;
+          }
           if (++state.executions > MAX_STEP_EXECUTIONS) {
             state.results[key2] = { success: false, error: `Step execution limit (${MAX_STEP_EXECUTIONS}) exceeded` };
             state.failed = true;
             return;
           }
           const scope = this.scopeFor(context, state, extraScope);
-          if (step.condition && !evaluateCondition(step.condition, scope, context.variables)) {
+          if (!resuming && step.condition && !evaluateCondition(step.condition, scope, context.variables)) {
             state.results[key2] = { success: true, output: "Skipped: condition not met" };
             continue;
           }
@@ -196,10 +208,11 @@ var init_WorkflowEngine = __esm({
           if (FLOW_ACTIONS.has(type)) {
             const started = Date.now();
             try {
-              result = await this.runFlowAction(type, step, config2, context, state, depth, extraScope, key2);
+              result = await this.runFlowAction(type, step, config2, context, state, depth, extraScope, key2, resuming);
             } catch (e) {
               result = { success: false, error: e instanceof Error ? e.message : String(e) };
             }
+            if (state.wait) return;
             result.duration = Date.now() - started;
             state.results[key2] = result;
             if (!result.success) {
@@ -213,15 +226,8 @@ var init_WorkflowEngine = __esm({
           result = await this.executeAction(step.actionType, context, config2);
           state.results[key2] = result;
           if (result.success && result.wait) {
-            if (depth > 0) {
-              state.results[key2] = {
-                success: false,
-                error: "Pausing steps (long delay, wait_for_event, form) are only allowed at the top level"
-              };
-              state.failed = true;
-              return;
-            }
             state.wait = { ...result.wait, stepId: step.id };
+            state.waitPath = [];
             return;
           }
           if (result.success) state.stepsOut[step.id] = { output: result.output };
@@ -231,7 +237,7 @@ var init_WorkflowEngine = __esm({
           }
         }
       }
-      async runFlowAction(type, step, config2, context, state, depth, extraScope, key2) {
+      async runFlowAction(type, step, config2, context, state, depth, extraScope, key2, resume) {
         const scope = this.scopeFor(context, state, extraScope);
         const sortNested = (raw) => (Array.isArray(raw) ? raw : []).map((s, idx) => ({ ...s, order: s.order ?? idx, configuration: s.configuration || {} })).sort((a, b) => a.order - b.order);
         if (type === "FILTER") {
@@ -247,19 +253,27 @@ var init_WorkflowEngine = __esm({
         if (type === "IF_ELSE") {
           const condition = config2.condition;
           if (!condition) return { success: false, error: "Missing required field: condition" };
-          const taken = evaluateCondition(condition, scope, context.variables);
+          const frame2 = resume?.path[0];
+          const taken = frame2?.kind === "if" ? frame2.branch === "then" : evaluateCondition(condition, scope, context.variables);
           await this.runSteps(
             sortNested(taken ? config2.then : config2.else),
             context,
             state,
             depth + 1,
             extraScope,
-            `${key2}.${taken ? "then" : "else"}.`
+            `${key2}.${taken ? "then" : "else"}.`,
+            0,
+            resume && { ...resume, path: resume.path.slice(1) }
           );
+          if (state.wait) {
+            state.waitPath.unshift({ kind: "if", stepId: step.id, branch: taken ? "then" : "else" });
+            return { success: true };
+          }
           if (state.failed) return { success: false, error: "A step inside the branch failed", output: { branch: taken } };
           return { success: true, output: { branch: taken ? "then" : "else" } };
         }
-        const items = config2.items;
+        const frame = resume?.path[0];
+        const items = frame?.kind === "iter" ? frame.items : config2.items;
         if (!Array.isArray(items)) {
           return { success: false, error: 'ITERATOR "items" must resolve to an array' };
         }
@@ -267,17 +281,24 @@ var init_WorkflowEngine = __esm({
           return { success: false, error: `ITERATOR exceeds the ${MAX_ITERATIONS} item limit (${items.length})` };
         }
         const nested = sortNested(config2.steps);
-        const iterations = [];
-        for (let idx = 0; idx < items.length; idx++) {
+        const iterations = frame?.kind === "iter" ? [...frame.iterations] : [];
+        for (let idx = frame?.kind === "iter" ? frame.index : 0; idx < items.length; idx++) {
           const before = { ...state.stepsOut };
+          const resumeHere = resume && frame?.kind === "iter" && idx === frame.index;
           await this.runSteps(
             nested,
             context,
             state,
             depth + 1,
             { ...extraScope, item: items[idx], index: idx },
-            `${key2}[${idx}].`
+            `${key2}[${idx}].`,
+            0,
+            resumeHere ? { ...resume, path: resume.path.slice(1) } : void 0
           );
+          if (state.wait) {
+            state.waitPath.unshift({ kind: "iter", stepId: step.id, index: idx, items, iterations });
+            return { success: true };
+          }
           if (state.failed) {
             return { success: false, error: `Iteration ${idx} failed` };
           }
@@ -293,29 +314,24 @@ var init_WorkflowEngine = __esm({
         const state = {
           results: { ...options.priorResults || {} },
           stepsOut: {},
-          executions: 0,
+          executions: options.priorExecutions ?? 0,
           filtered: false,
-          failed: false
+          failed: false,
+          waitPath: []
         };
         for (const [id, r] of Object.entries(state.results)) {
           if (r.success) state.stepsOut[id] = { output: r.output };
         }
-        let start = 0;
-        if (options.resumeFromStepId) {
-          const idx = sorted.findIndex((s) => s.id === options.resumeFromStepId);
-          if (idx < 0) throw new Error(`Cannot resume: step ${options.resumeFromStepId} no longer exists`);
-          state.results[options.resumeFromStepId] = { success: true, output: options.resumeOutput };
-          state.stepsOut[options.resumeFromStepId] = { output: options.resumeOutput };
-          start = idx + 1;
-        }
-        await this.runSteps(sorted, context, state, 0, {}, "", start);
+        Object.assign(state.stepsOut, options.priorStepsOut || {});
+        const resume = options.resumeFromStepId ? { path: options.cursor || [], leafId: options.resumeFromStepId, output: options.resumeOutput } : void 0;
+        await this.runSteps(sorted, context, state, 0, {}, "", 0, resume);
         const allSuccessful = Object.values(state.results).every((r) => r.success);
         const status = state.wait ? "waiting" : state.filtered ? "filtered" : allSuccessful && !state.failed ? "completed" : "failed";
         return {
           success: status !== "failed",
           results: state.results,
           status,
-          ...state.wait ? { wait: state.wait } : {}
+          ...state.wait ? { wait: state.wait, cursor: state.waitPath, stepsOut: state.stepsOut, executions: state.executions } : {}
         };
       }
       getRegisteredTriggers() {
@@ -505,6 +521,8 @@ var MAX_BACKOFF_MS = 6 * 36e5;
 var LEASE_MS = 12e4;
 var RESPONSE_BODY_LIMIT = 1e3;
 var TICK_BUDGET_MS = 22e3;
+var SUCCESS_RETENTION_DAYS = 30;
+var FAILED_RETENTION_DAYS = 90;
 function signPayload(secret, timestamp, body) {
   return `sha256=${createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex")}`;
 }
@@ -582,13 +600,30 @@ async function runDeliveryTick(db, deps = {}) {
   }
   return stats;
 }
+async function pruneWebhookDeliveries(db, now = /* @__PURE__ */ new Date()) {
+  const before = (days) => new Date(now.getTime() - days * 864e5).toISOString();
+  const prune = async (status, days) => {
+    const { data, error } = await db.from("webhook_deliveries").delete().eq("status", status).lt("created_at", before(days)).select("id");
+    if (error) throw new Error(error.message);
+    return data?.length ?? 0;
+  };
+  return { success: await prune("success", SUCCESS_RETENTION_DAYS), failed: await prune("failed", FAILED_RETENTION_DAYS) };
+}
 async function handler() {
   if (!supabase2) {
     console.error("webhook-delivery: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not configured");
     return new Response("not configured", { status: 500 });
   }
   try {
-    const stats = await runDeliveryTick(supabase2);
+    const db = supabase2;
+    const stats = { ...await runDeliveryTick(db) };
+    if ((/* @__PURE__ */ new Date()).getUTCMinutes() === 0) {
+      try {
+        stats.pruned = await pruneWebhookDeliveries(db);
+      } catch (e) {
+        console.error("webhook-delivery prune failed:", e?.message);
+      }
+    }
     return new Response(JSON.stringify(stats), { headers: { "Content-Type": "application/json" } });
   } catch (e) {
     console.error("webhook-delivery failed:", e?.message);
@@ -599,12 +634,15 @@ var config = { schedule: "* * * * *" };
 export {
   BATCH_SIZE,
   DELIVERY_TIMEOUT_MS,
+  FAILED_RETENTION_DAYS,
   MAX_ATTEMPTS,
+  SUCCESS_RETENTION_DAYS,
   attemptDelivery,
   backoffMs,
   config,
   handler as default,
   nextState,
+  pruneWebhookDeliveries,
   runDeliveryTick,
   signPayload
 };

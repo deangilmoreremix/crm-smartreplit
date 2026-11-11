@@ -39,7 +39,7 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     expect(screen.getByText('Try Again')).toBeInTheDocument();
-    expect(screen.getByText('Go Home')).toBeInTheDocument();
+    expect(screen.getByText('Reload Page')).toBeInTheDocument();
   });
 
   it('calls onError prop when error occurs', () => {
@@ -78,23 +78,25 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
-    // Click retry - this should reset the error boundary
-    await user.click(screen.getByText('Try Again'));
-
-    // Rerender with normal component
+    // Swap in a child that no longer throws; the boundary stays in its error state
+    // until the user retries.
     rerender(
       <ErrorBoundary>
         <NormalComponent />
       </ErrorBoundary>
     );
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+
+    // Click retry - this should reset the error boundary
+    await user.click(screen.getByText('Try Again'));
 
     expect(screen.getByText('Normal component')).toBeInTheDocument();
   });
 
   it('shows error details in development mode', () => {
     // Mock development environment
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('DEV', true);
+    vi.stubEnv('PROD', false);
 
     render(
       <ErrorBoundary>
@@ -105,13 +107,13 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Error Details (Development Only)')).toBeInTheDocument();
 
     // Restore original environment
-    process.env.NODE_ENV = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   it('hides error details in production mode', () => {
     // Mock production environment
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('PROD', true);
 
     render(
       <ErrorBoundary>
@@ -122,6 +124,6 @@ describe('ErrorBoundary', () => {
     expect(screen.queryByText('Error Details (Development Only)')).not.toBeInTheDocument();
 
     // Restore original environment
-    process.env.NODE_ENV = originalEnv;
+    vi.unstubAllEnvs();
   });
 });

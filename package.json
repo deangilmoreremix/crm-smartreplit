@@ -31,6 +31,8 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:smoke": "node scripts/smoke-api.mjs",
+    "test:e2e": "playwright test --config tests/playwright/staging/playwright.config.ts",
     "format": "prettier --write .",
     "db:push": "drizzle-kit push",
     "prepare": "husky",

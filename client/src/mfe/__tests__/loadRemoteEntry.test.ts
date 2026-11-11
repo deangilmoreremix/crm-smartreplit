@@ -3,7 +3,8 @@
  * Run these to verify remote app loading functionality
  */
 
-import { loadRemoteEntry, getRemoteNames, clearLoadedRemotes } from './loadRemoteEntry';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { loadRemoteEntry, getRemoteNames, clearLoadedRemotes } from '../loadRemoteEntry';
 
 // Test all remote entries
 export async function testAllRemoteEntries() {
@@ -85,3 +86,70 @@ if (import.meta.hot) {
   console.log('- window.mfeTests.healthCheck() - Show health status');
   console.log('- window.mfeTests.clearCache() - Clear loaded cache');
 }
+
+
+describe('loadRemoteEntry', () => {
+  beforeEach(() => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it('lists the configured remotes', () => {
+    expect(getRemoteNames()).toEqual(
+      expect.arrayContaining(['pipeline', 'analytics', 'contacts', 'calendar', 'agency', 'research'])
+    );
+  });
+
+  it('returns false without touching the network when the MFE flag is off', async () => {
+    vi.stubEnv('VITE_ENABLE_MFE', 'false');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+    const mod = await import('../loadRemoteEntry');
+
+    expect(mod.isMFEEnabled()).toBe(false);
+    expect(await mod.loadRemoteEntry('pipeline')).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns false for an unknown remote when enabled', async () => {
+    vi.stubEnv('VITE_ENABLE_MFE', 'true');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+    const mod = await import('../loadRemoteEntry');
+
+    expect(mod.isMFEEnabled()).toBe(true);
+    expect(await mod.loadRemoteEntry('does-not-exist')).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns false and skips retries shortly after a failed load', async () => {
+    vi.stubEnv('VITE_ENABLE_MFE', 'true');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404, statusText: 'Not Found' });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+    const mod = await import('../loadRemoteEntry');
+
+    expect(await mod.loadRemoteEntry('pipeline')).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Recent failure is cached: no second network attempt
+    expect(await mod.loadRemoteEntry('pipeline')).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Clearing the cache allows a fresh attempt
+    mod.clearLoadedRemotes();
+    expect(await mod.loadRemoteEntry('pipeline')).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});

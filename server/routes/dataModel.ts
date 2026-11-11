@@ -271,7 +271,7 @@ router.get('/records', handler(async (req, res, db) => {
   const { data, error } = await q.order('created_at', { ascending: false }).order('id', { ascending: false }).limit(limit + 1);
   if (error) return dbError(res, error);
   const rows = (data ?? []) as any[];
-  const page = rows.slice(0, limit).map((r) => ({ ...r, data: maskData(ctx.fperms, ctx.obj.id, r.data) }));
+  const page = rows.slice(0, limit).map(({ search_text: _st, ...r }) => ({ ...r, data: maskData(ctx.fperms, ctx.obj.id, r.data) }));
   res.json({ records: page, nextCursor: rows.length > limit ? encodeCursor(rows[limit - 1]) : null });
 }));
 
@@ -284,7 +284,7 @@ router.post('/records', handler(async (req, res, db) => {
   if (denied) return res.status(403).json({ error: `No write permission on field ${denied}` });
   const { data, error } = await db.from('records').insert({ object_id: ctx.obj.id, user_id: ctx.ownerId, data: v.value }).select().single();
   if (error) return dbError(res, error);
-  res.status(201).json({ record: { ...data, data: maskData(ctx.fperms, ctx.obj.id, data.data) } });
+  { const { search_text: _st, ...rest } = data as any; res.status(201).json({ record: { ...rest, data: maskData(ctx.fperms, ctx.obj.id, data.data) } }); }
 }));
 
 async function loadRecord(db: Db, access: Access, id: string) {
@@ -307,7 +307,7 @@ router.put('/records/:id', handler(async (req, res, db) => {
   for (const [k, val] of Object.entries(merged)) if (val === null) delete merged[k];
   const { data, error } = await db.from('records').update({ data: merged }).eq('id', rec.id).eq('user_id', ctx.ownerId).select().single();
   if (error) return dbError(res, error);
-  res.json({ record: { ...data, data: maskData(ctx.fperms, ctx.obj.id, data.data) } });
+  { const { search_text: _st, ...rest } = data as any; res.json({ record: { ...rest, data: maskData(ctx.fperms, ctx.obj.id, data.data) } }); }
 }));
 
 router.delete('/records/:id', handler(async (req, res, db) => {

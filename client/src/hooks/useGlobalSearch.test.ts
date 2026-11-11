@@ -17,7 +17,7 @@ describe('groupSearchResults', () => {
     expect(recordPath('contact', '5')).toBe('/contacts/5');
     expect(recordPath('company', 'abc-1')).toBe('/companies/abc-1');
     expect(recordPath('deal', '9')).toBe('/deals/9');
-    expect(recordPath('task', '3')).toBe('/tasks');
+    expect(recordPath('task', '3')).toBe('/tasks?id=3');
     expect(recordPath('weird', '3')).toBe('/');
   });
 });

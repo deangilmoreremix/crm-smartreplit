@@ -1,186 +1,74 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import LeadScoringVisualization from '../contacts/LeadScoringVisualization';
-
-vi.mock('../../store/contactStore', () => ({
-  useContactStore: () => ({
-    contacts: {
-      'ct-1': {
-        id: 'ct-1',
-        name: 'Alice Johnson',
-        email: 'alice@company.com',
-        phone: '+1-555-1111',
-        company: 'Big Corp',
-        position: 'CEO',
-        aiScore: 92,
-        status: 'prospect',
-        interestLevel: 'hot',
-        isFavorite: true,
-        lastContact: '2024-01-20',
-        socialProfiles: {},
-        customFields: {},
-        tags: ['enterprise', 'high-value'],
-        createdAt: '2024-01-10T10:00:00Z',
-        updatedAt: '2024-01-22T15:30:00Z',
-      },
-      'ct-2': {
-        id: 'ct-2',
-        name: 'Bob Smith',
-        email: 'bob@company.com',
-        phone: '+1-555-2222',
-        company: 'Medium Inc',
-        position: 'Manager',
-        aiScore: 65,
-        status: 'customer',
-        interestLevel: 'medium',
-        isFavorite: false,
-        lastContact: '2024-01-18',
-        socialProfiles: {},
-        customFields: {},
-        tags: ['standard'],
-        createdAt: '2024-01-05T10:00:00Z',
-        updatedAt: '2024-01-19T15:30:00Z',
-      },
-      'ct-3': {
-        id: 'ct-3',
-        name: 'Carol White',
-        email: 'carol@company.com',
-        phone: '+1-555-3333',
-        company: 'Small LLC',
-        position: 'Owner',
-        aiScore: 40,
-        status: 'lead',
-        interestLevel: 'cold',
-        isFavorite: false,
-        lastContact: '2024-01-10',
-        socialProfiles: {},
-        customFields: {},
-        tags: ['startup'],
-        createdAt: '2024-01-03T10:00:00Z',
-        updatedAt: '2024-01-15T15:30:00Z',
-      },
-    },
-    getFilteredContacts: () =>
-      Object.values(
-        {
-          'ct-1': {
-            id: 'ct-1',
-            name: 'Alice Johnson',
-            email: 'alice@company.com',
-            phone: '+1-555-1111',
-            company: 'Big Corp',
-            position: 'CEO',
-            aiScore: 92,
-            status: 'prospect',
-            interestLevel: 'hot',
-            isFavorite: true,
-            lastContact: '2024-01-20',
-            socialProfiles: {},
-            customFields: {},
-            tags: ['enterprise', 'high-value'],
-            createdAt: '2024-01-10T10:00:00Z',
-            updatedAt: '2024-01-22T15:30:00Z',
-          },
-          'ct-2': {
-            id: 'ct-2',
-            name: 'Bob Smith',
-            email: 'bob@company.com',
-            phone: '+1-555-2222',
-            company: 'Medium Inc',
-            position: 'Manager',
-            aiScore: 65,
-            status: 'customer',
-            interestLevel: 'medium',
-            isFavorite: false,
-            lastContact: '2024-01-18',
-            socialProfiles: {},
-            customFields: {},
-            tags: ['standard'],
-            createdAt: '2024-01-05T10:00:00Z',
-            updatedAt: '2024-01-19T15:30:00Z',
-          },
-          'ct-3': {
-            id: 'ct-3',
-            name: 'Carol White',
-            email: 'carol@company.com',
-            phone: '+1-555-3333',
-            company: 'Small LLC',
-            position: 'Owner',
-            aiScore: 40,
-            status: 'lead',
-            interestLevel: 'cold',
-            isFavorite: false,
-            lastContact: '2024-01-10',
-            socialProfiles: {},
-            customFields: {},
-            tags: ['startup'],
-            createdAt: '2024-01-03T10:00:00Z',
-            updatedAt: '2024-01-15T15:30:00Z',
-          },
-        }()
-      ),
-  }),
-}));
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import LeadScoringVisualization from '../LeadScoringVisualization';
 
 describe('Lead Scoring Visualization Tests', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it('displays high score as a hot lead', () => {
+    const { container } = render(<LeadScoringVisualization score={92} />);
+    expect(screen.getByText('92')).toBeInTheDocument();
+    expect(screen.getByText('Hot Lead')).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass('text-green-600');
   });
 
-  it('renders lead scoring dashboard', () => {
-    render(<LeadScoringVisualization />);
-    expect(screen.getByText('Lead Scoring Dashboard')).toBeInTheDocument();
-    expect(screen.getByText(/AI Score/i)).toBeInTheDocument();
+  it('displays medium score as a warm lead', () => {
+    const { container } = render(<LeadScoringVisualization score={65} />);
+    expect(screen.getByText('65')).toBeInTheDocument();
+    expect(screen.getByText('Warm Lead')).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass('text-blue-600');
   });
 
-  it('displays high score contacts', () => {
-    render(<LeadScoringVisualization />);
-    expect(screen.getByText(/Alice Johnson/i)).toBeInTheDocument();
-    expect(screen.getByText(/92/i)).toBeInTheDocument();
+  it('displays low score as a cold lead', () => {
+    const { container } = render(<LeadScoringVisualization score={40} />);
+    expect(screen.getByText('40')).toBeInTheDocument();
+    expect(screen.getByText('Cold Lead')).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass('text-yellow-600');
   });
 
-  it('displays medium score contacts', () => {
-    render(<LeadScoringVisualization />);
-    expect(screen.getByText(/Bob Smith/i)).toBeInTheDocument();
-    expect(screen.getByText(/65/i)).toBeInTheDocument();
+  it('displays very low score as ice cold', () => {
+    const { container } = render(<LeadScoringVisualization score={10} />);
+    expect(screen.getByText('Ice Cold')).toBeInTheDocument();
+    expect(container.firstChild).toHaveClass('text-red-600');
   });
 
-  it('displays low score contacts', () => {
-    render(<LeadScoringVisualization />);
-    expect(screen.getByText(/Carol White/i)).toBeInTheDocument();
-    expect(screen.getByText(/40/i)).toBeInTheDocument();
+  it('uses score band boundaries correctly', () => {
+    const { rerender } = render(<LeadScoringVisualization score={80} />);
+    expect(screen.getByText('Hot Lead')).toBeInTheDocument();
+    rerender(<LeadScoringVisualization score={79} />);
+    expect(screen.getByText('Warm Lead')).toBeInTheDocument();
+    rerender(<LeadScoringVisualization score={60} />);
+    expect(screen.getByText('Warm Lead')).toBeInTheDocument();
+    rerender(<LeadScoringVisualization score={59} />);
+    expect(screen.getByText('Cold Lead')).toBeInTheDocument();
+    rerender(<LeadScoringVisualization score={39} />);
+    expect(screen.getByText('Ice Cold')).toBeInTheDocument();
   });
 
-  it('sorts contacts by score descending', () => {
-    render(<LeadScoringVisualization />);
-    const rows = screen.getAllByRole('row');
-    // Verify highest score appears first
-    expect(rows[0]).toContainElement(screen.getByText(/92/i));
+  it('prefers a custom label over the derived one', () => {
+    render(<LeadScoringVisualization score={92} label="VIP" />);
+    expect(screen.getByText('VIP')).toBeInTheDocument();
+    expect(screen.queryByText('Hot Lead')).not.toBeInTheDocument();
   });
 
-  it('shows AI-generated insights', () => {
-    render(<LeadScoringVisualization />);
-    const insightButton = screen.getByText(/AI Insights/i);
-    expect(insightButton).toBeInTheDocument();
+  it('can hide the label and the icon', () => {
+    const { container } = render(
+      <LeadScoringVisualization score={92} showLabel={false} showIcon={false} />
+    );
+    expect(screen.getByText('92')).toBeInTheDocument();
+    expect(screen.queryByText('Hot Lead')).not.toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeNull();
   });
 
-  it('allows filtering by score range', () => {
-    render(<LeadScoringVisualization />);
-    const filterSelect = screen.getByLabelText(/Filter by score/i);
-    expect(filterSelect).toBeInTheDocument();
+  it('applies size classes', () => {
+    const { container, rerender } = render(<LeadScoringVisualization score={50} size="sm" />);
+    expect(container.firstChild).toHaveClass('text-xs');
+    rerender(<LeadScoringVisualization score={50} size="lg" />);
+    expect(container.firstChild).toHaveClass('text-base');
   });
 
-  it('displays status badges correctly', () => {
-    render(<LeadScoringVisualization />);
-    expect(screen.getByText(/Prospect/i)).toBeInTheDocument();
-    expect(screen.getByText(/Customer/i)).toBeInTheDocument();
-    expect(screen.getByText(/Lead/i)).toBeInTheDocument();
-  });
-
-  it('updates scores when data changes', async () => {
-    render(<LeadScoringVisualization />);
-    await waitFor(() => {
-      expect(screen.getByText(/92/i)).toBeInTheDocument();
-    });
+  it('updates when the score changes', () => {
+    const { rerender } = render(<LeadScoringVisualization score={30} />);
+    expect(screen.getByText('Ice Cold')).toBeInTheDocument();
+    rerender(<LeadScoringVisualization score={90} />);
+    expect(screen.getByText('Hot Lead')).toBeInTheDocument();
   });
 });

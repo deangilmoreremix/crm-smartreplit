@@ -138,12 +138,13 @@ describe('engine control flow', () => {
     expect((r.wait as any).resumeAt).toBeTruthy();
   });
 
-  it('pausing steps are rejected inside nested blocks', async () => {
+  it('pausing steps inside nested blocks pause the run with a resume cursor', async () => {
     const r = await engine.executeWorkflow(
       [step('it', 'ITERATOR', { items: [1], steps: [step('d', 'DELAY', { duration: 5, unit: 'minutes' }, 1)] }, 1)],
       ctx()
     );
-    expect(r.status).toBe('failed');
+    expect(r.status).toBe('waiting');
+    expect(r.cursor).toMatchObject([{ kind: 'iter', stepId: 'it', index: 0 }]);
   });
 
   it('validates form submissions', () => {

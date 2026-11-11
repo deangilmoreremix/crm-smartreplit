@@ -8,6 +8,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    // Explicit per-test/hook timeouts so a stuck async test fails instead of stalling CI
+    testTimeout: 15000,
+    hookTimeout: 15000,
     setupFiles: ['./client/src/test/setup.ts'],
     include: [
       'client/src/**/*.{test,spec}.{js,mjs,cjs,ts,mtsx,jsx,tsx}',
@@ -54,7 +57,15 @@ export default defineConfig({
       '@': resolve(__dirname, './client/src'),
       '@server': resolve(__dirname, './server'),
       '@shared': resolve(__dirname, './shared'),
-      '@smartcrm/workflows': resolve(__dirname, './packages/workflows/src/index.ts')
+      '@smartcrm/workflows': resolve(__dirname, './packages/workflows/src/index.ts'),
+      // Mirror the workspace-package aliases from vite.config.ts so client code that imports
+      // them resolves under test the same way it does in the app build.
+      '@crm/openclaw-api': resolve(__dirname, './packages/openclaw-api/src'),
+      '@crm/twenty-fields': resolve(__dirname, './packages/twenty-fields/src'),
+      '@crm/ai-core': resolve(__dirname, './packages/ai-core/src'),
+      '@crm/shared': resolve(__dirname, './packages/shared/src'),
+      '@crm/ui': resolve(__dirname, './packages/ui/src'),
+      '@crm/workflows': resolve(__dirname, './packages/workflows/src')
     }
   }
 });

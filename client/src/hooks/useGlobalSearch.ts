@@ -33,8 +33,7 @@ export function recordPath(objectType: string, recordId: string): string {
     case 'deal':
       return `/deals/${encodeURIComponent(recordId)}`;
     case 'task':
-      // The Tasks page has no record route / ?id= support yet; land on the list.
-      return '/tasks';
+      return `/tasks?id=${encodeURIComponent(recordId)}`;
     case 'company':
       return `/companies/${encodeURIComponent(recordId)}`;
     default:

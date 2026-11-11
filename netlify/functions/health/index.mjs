@@ -294,7 +294,10 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id),
-      contactId: integer("contact_id").references(() => contacts.id)
+      contactId: integer("contact_id").references(() => contacts.id),
+      // Rich-text (tiptap) body; `content` stays populated with the plain text for legacy readers.
+      body_json: jsonb("body_json"),
+      body_text: text("body_text")
     });
     communications = pgTable("communications", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
