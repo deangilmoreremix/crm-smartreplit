@@ -36,7 +36,8 @@ export const closeTimeOf = (d: Deal) =>
   toTime(d.actualCloseDate) ?? toTime(d.closedAt) ?? toTime(d.updatedAt) ?? toTime(d.createdAt);
 
 const touchTimeOf = (d: Deal): number | null =>
-  Math.max(toTime(d.updatedAt) ?? 0, toTime(d.createdAt) ?? 0, toTime(d.actualCloseDate) ?? 0) || null;
+  Math.max(toTime(d.updatedAt) ?? 0, toTime(d.createdAt) ?? 0, toTime(d.actualCloseDate) ?? 0) ||
+  null;
 
 export interface DealTotals {
   activeCount: number;
@@ -121,13 +122,18 @@ export interface TrendPoint {
   pipeline: number;
 }
 
-const label = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const label = (t: number) =>
+  new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 /**
  * Deterministic series across the trailing `rangeDays`: revenue / count of deals won in each
  * bucket (by close date) and value of active deals created in each bucket.
  */
-export function trendSeries(deals: Deal[], rangeDays: number, now: number = Date.now()): TrendPoint[] {
+export function trendSeries(
+  deals: Deal[],
+  rangeDays: number,
+  now: number = Date.now()
+): TrendPoint[] {
   const size = bucketDays(rangeDays) * DAY_MS;
   const count = Math.ceil(rangeDays / bucketDays(rangeDays));
   const start = now - count * size;
@@ -155,7 +161,9 @@ export function trendSeries(deals: Deal[], rangeDays: number, now: number = Date
 }
 
 /** Open pipeline value per month of expected close (falls back to due date, then creation). */
-export function pipelineByMonth(deals: Deal[]): Array<{ key: string; month: string; value: number }> {
+export function pipelineByMonth(
+  deals: Deal[]
+): Array<{ key: string; month: string; value: number }> {
   const totals = new Map<string, number>();
   for (const d of deals) {
     if (!isActiveDeal(d)) continue;
@@ -172,7 +180,10 @@ export function pipelineByMonth(deals: Deal[]): Array<{ key: string; month: stri
       return {
         key,
         value,
-        month: new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        month: new Date(y, m - 1, 1).toLocaleDateString('en-US', {
+          month: 'short',
+          year: 'numeric',
+        }),
       };
     });
 }

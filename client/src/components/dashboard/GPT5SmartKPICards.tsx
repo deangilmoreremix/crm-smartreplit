@@ -42,7 +42,8 @@ const GPT5SmartKPICards: React.FC = () => {
     );
     const wonDeals = dealsArray.filter((d) => d.stage.id === 'closed-won');
     const winRate = dealsArray.length > 0 ? (wonDeals.length / dealsArray.length) * 100 : 0;
-    const avgDealSize = activeDeals.length > 0 ? totalPipelineValue / activeDeals.length : 0;
+    const activeValue = activeDeals.reduce((sum: number, d) => sum + Number(d.value || 0), 0);
+    const avgDealSize = activeDeals.length > 0 ? activeValue / activeDeals.length : 0;
     return {
       dealsCount: dealsArray.length,
       contactsCount,

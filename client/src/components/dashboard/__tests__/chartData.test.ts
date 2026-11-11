@@ -11,6 +11,9 @@ import {
   mergeBreakdown,
   mergeConversions,
   sliceForRange,
+  alignPerformance,
+  mergeKpis,
+  sampleKpis,
   type ApiDeal,
 } from '../chartData';
 
@@ -101,8 +104,8 @@ describe('merging sample series with real aggregates', () => {
     const out = mergePerformance(real, demo);
     expect(out).toEqual([
       { name: 'Jan', revenue: 12100, deals: 9 },
-      { name: 'Feb', revenue: 15000, deals: 10 },
       { name: 'Nov 5', revenue: 50, deals: 2 },
+      { name: 'Feb', revenue: 15000, deals: 10 },
     ]);
     expect(demo[0]).toEqual({ name: 'Jan', revenue: 12000, deals: 8 });
     expect(real[0]).toEqual({ name: 'Jan', revenue: 100, deals: 1 });
@@ -152,5 +155,57 @@ describe('merging sample series with real aggregates', () => {
     expect(sliceForRange(xs, 7)).toEqual([5, 6]);
     expect(sliceForRange(xs, 30)).toEqual([4, 5, 6]);
     expect(sliceForRange(xs, 90)).toEqual(xs);
+  });
+});
+
+describe('sample performance aligned to real buckets', () => {
+  const demo = [
+    { revenue: 1, deals: 1 },
+    { revenue: 2, deals: 2 },
+    { revenue: 3, deals: 3 },
+  ];
+
+  it('uses the real bucket labels, aligned to the newest bucket', () => {
+    const real = performanceSeries(deals, 30, NOW);
+    const aligned = alignPerformance(real, demo);
+    expect(aligned.map((p) => p.name)).toEqual(real.slice(-3).map((p) => p.name));
+    expect(aligned.map((p) => p.revenue)).toEqual([1, 2, 3]);
+  });
+
+  it('drops oldest sample values when there are fewer buckets than samples', () => {
+    const real = [
+      { name: 'a', revenue: 0, deals: 0 },
+      { name: 'b', revenue: 0, deals: 0 },
+    ];
+    expect(alignPerformance(real, demo)).toEqual([
+      { name: 'a', revenue: 2, deals: 2 },
+      { name: 'b', revenue: 3, deals: 3 },
+    ]);
+    expect(alignPerformance([], demo)).toEqual([]);
+  });
+
+  it('merging aligned samples sums per real bucket without adding stray buckets', () => {
+    const real = performanceSeries(deals, 30, NOW);
+    const merged = mergePerformance(real, alignPerformance(real, demo));
+    expect(merged.map((p) => p.name)).toEqual(real.map((p) => p.name));
+    const last = real.length - 1;
+    expect(merged[last].revenue).toBe(real[last].revenue + 3);
+    expect(merged[0].revenue).toBe(real[0].revenue);
+  });
+
+  it('breakdown samples are stage based so they sum into real stage slices', () => {
+    const real = valueByStage(deals, 30, NOW);
+    const merged = mergeBreakdown<{ name: string; value: number }>(real, [
+      { name: 'Proposal', value: 45000 },
+      { name: 'Closed Won', value: 120000 },
+    ]);
+    expect(merged.find((p) => p.name === 'Proposal')?.value).toBe(45200);
+  });
+
+  it('mergeKpis keeps real values and fills only unknown ones from the sample', () => {
+    const sample = sampleKpis(demo, [{ name: 'Closed Won', value: 50 }, { name: 'Proposal', value: 50 }]);
+    expect(sample).toEqual({ conversionRate: 50, avgDealSize: 1, salesCycleDays: null, winRate: null });
+    const real = { conversionRate: null, avgDealSize: 99, salesCycleDays: null, winRate: 10 };
+    expect(mergeKpis(real, sample)).toEqual({ conversionRate: 50, avgDealSize: 99, salesCycleDays: null, winRate: 10 });
   });
 });

@@ -128,7 +128,9 @@ const TasksListSection: React.FC = () => {
           </button>
         </div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">No tasks yet. You are all caught up.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          No tasks yet. You are all caught up.
+        </p>
       ) : (
         <ul className="divide-y divide-gray-100 dark:divide-gray-700">
           {rows.map((r) => (

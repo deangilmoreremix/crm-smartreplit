@@ -34,7 +34,10 @@ let inflight: Promise<SalesPayload> | null = null;
 /** Bumped by every forced load; a response that finished under an older generation is not cached. */
 let generation = 0;
 
-type Update = { type: 'loading' } | { type: 'data'; data: SalesPayload } | { type: 'error'; message: string };
+type Update =
+  | { type: 'loading' }
+  | { type: 'data'; data: SalesPayload }
+  | { type: 'error'; message: string };
 const subscribers = new Set<(u: Update) => void>();
 
 function startFetch(): Promise<SalesPayload> {
@@ -71,7 +74,10 @@ function refreshAll(): Promise<void> {
   subscribers.forEach((s) => s({ type: 'loading' }));
   return loadSalesData(true).then(
     (data) => subscribers.forEach((s) => s({ type: 'data', data })),
-    (e) => subscribers.forEach((s) => s({ type: 'error', message: e instanceof Error ? e.message : 'Failed to load' }))
+    (e) =>
+      subscribers.forEach((s) =>
+        s({ type: 'error', message: e instanceof Error ? e.message : 'Failed to load' })
+      )
   );
 }
 
@@ -101,7 +107,12 @@ export function resetSalesDataCache() {
 
 /** Deals and contacts from the CRM API (no local/sample data), shared across all callers. */
 export function useSalesData(): SalesData & { refetch: () => Promise<void> } {
-  const [state, setState] = useState<SalesData>({ deals: [], contacts: [], loading: true, error: null });
+  const [state, setState] = useState<SalesData>({
+    deals: [],
+    contacts: [],
+    loading: true,
+    error: null,
+  });
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -116,7 +127,12 @@ export function useSalesData(): SalesData & { refetch: () => Promise<void> } {
       (data) => mounted.current && setState({ ...data, loading: false, error: null }),
       (e) =>
         mounted.current &&
-        setState({ deals: [], contacts: [], loading: false, error: e instanceof Error ? e.message : 'Failed to load' })
+        setState({
+          deals: [],
+          contacts: [],
+          loading: false,
+          error: e instanceof Error ? e.message : 'Failed to load',
+        })
     );
     return () => {
       mounted.current = false;

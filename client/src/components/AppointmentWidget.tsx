@@ -149,7 +149,10 @@ const AppointmentWidget: React.FC<AppointmentWidgetProps> = ({ limit = 5 }) => {
         </div>
       ) : (
         <div className="text-center py-10">
-          <Calendar size={32} className={`mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+          <Calendar
+            size={32}
+            className={`mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}
+          />
           <p className={`mb-3 ${muted}`}>No upcoming appointments</p>
           <button
             onClick={() => navigate('/appointments')}

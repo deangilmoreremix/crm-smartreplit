@@ -11,7 +11,10 @@ const MAX_ROWS = 8;
 const isSample = (c: Contact) => Boolean(c.isDemo) || isDemoId(c.id);
 
 /** First `limit` contacts, real ones before sample ones. */
-export function selectDashboardContacts(contacts: Record<string, Contact>, limit = MAX_ROWS): Contact[] {
+export function selectDashboardContacts(
+  contacts: Record<string, Contact>,
+  limit = MAX_ROWS
+): Contact[] {
   const all = Object.values(contacts);
   return [...all.filter((c) => !isSample(c)), ...all.filter(isSample)].slice(0, limit);
 }
@@ -24,7 +27,10 @@ const ContactsSection: React.FC = () => {
   const total = Object.keys(contacts).length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm" data-testid="contacts-section">
+    <div
+      className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm"
+      data-testid="contacts-section"
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Contacts & Leads</h3>
         <button

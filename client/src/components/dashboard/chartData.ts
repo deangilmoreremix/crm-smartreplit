@@ -166,10 +166,13 @@ export function sliceForRange<T>(series: T[], rangeDays: number): T[] {
 // All merges are by bucket name: a name present in both is summed once, a name present in only
 // one side is kept as is. Inputs are never mutated.
 
-/** Sum real performance buckets into the sample buckets (matching names), keeping unmatched real buckets. */
+/**
+ * Sum sample buckets into the real buckets (matching names). Real bucket order is kept (it is the
+ * time axis); sample-only buckets are appended.
+ */
 export function mergePerformance(real: PerformancePoint[], demo: PerformancePoint[]): PerformancePoint[] {
   const out = new Map<string, PerformancePoint>();
-  for (const p of [...demo, ...real]) {
+  for (const p of [...real, ...demo]) {
     const cur = out.get(p.name);
     out.set(p.name, cur ? { name: p.name, revenue: cur.revenue + p.revenue, deals: cur.deals + p.deals } : { ...p });
   }

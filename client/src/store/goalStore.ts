@@ -7,7 +7,7 @@ import {
   GoalExecutionResult,
   AIGoalContext,
 } from '../types/goals';
-import { AI_GOALS } from '../data/aiGoals';
+import { allGoals as AI_GOALS } from '../data/aiGoals';
 import { composioService } from '../services/composioService';
 
 interface GoalFilter {
