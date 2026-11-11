@@ -20,9 +20,15 @@ const readDemoEnabled = (): boolean => {
     return true;
   }
 };
+type DealLists = { realDeals: Deal[]; demoDeals: Deal[]; demoEnabled: boolean };
 /** Real deals plus (only while demo data is enabled) the sample deals. */
-const visibleDeals = (s: { deals: Deal[]; demoDeals: Deal[]; demoEnabled: boolean }): Deal[] =>
-  s.demoEnabled ? [...s.deals, ...s.demoDeals] : s.deals;
+const visibleDeals = (s: DealLists): Deal[] =>
+  s.demoEnabled ? [...s.realDeals, ...s.demoDeals] : s.realDeals;
+/** Keep the public `deals` (visible list) in sync with whatever list fields a partial update changes. */
+const withVisible = (state: DealLists, partial: Partial<DealLists>): Partial<DealLists> & { deals: Deal[] } => ({
+  ...partial,
+  deals: visibleDeals({ ...state, ...partial }),
+});
 const cloneDemoDeals = (): Deal[] => DEMO_DEALS.map((d) => ({ ...d }));
 const isDemoDeal = (d: { id: string; isDemo?: boolean }) => !!d.isDemo || isDemoId(d.id);
 
@@ -101,12 +107,16 @@ const defaultPipeline: Pipeline = {
 
 interface DealStore {
   // State
-  /** Real deals only (from /api/deals or created locally). */
+  /** Source of truth for real deals (from /api/deals or created locally). Never contains samples. */
+  realDeals: Deal[];
+  /** Visible list read by most screens: always `demoEnabled ? [...realDeals, ...demoDeals] : realDeals`. Derived; do not set directly. */
   deals: Deal[];
   /** Sample deals (local state only, never sent to the server); counted only while demoEnabled. */
   demoDeals: Deal[];
   demoEnabled: boolean;
   setDemoEnabled: (enabled: boolean) => void;
+  /** Replace the real deals (visible list is recomputed). */
+  setDeals: (real: Deal[]) => void;
   pipelines: Record<string, Pipeline>;
   activePipelineId: string;
   isLoading: boolean;
@@ -151,10 +161,13 @@ interface DealStore {
 
 export const useDealStore = create<DealStore>((set, get) => ({
   // Initial state
-  deals: [],
-  demoDeals: cloneDemoDeals(),
-  demoEnabled: readDemoEnabled(),
-  setDemoEnabled: (enabled) => set({ demoEnabled: enabled }),
+  ...(() => {
+    const demoDeals = cloneDemoDeals();
+    const demoEnabled = readDemoEnabled();
+    return { realDeals: [] as Deal[], demoDeals, demoEnabled, deals: visibleDeals({ realDeals: [], demoDeals, demoEnabled }) };
+  })(),
+  setDemoEnabled: (enabled) => set((state) => withVisible(state, { demoEnabled: enabled })),
+  setDeals: (real) => set((state) => withVisible(state, { realDeals: real })),
 
   pipelines: {
     default: defaultPipeline,
@@ -174,7 +187,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const rows = (await res.json()) as ApiDealRow[];
       const stages = get().pipelines[get().activePipelineId]?.stages ?? defaultStages;
-      set({ deals: rows.map((r) => fromApiDeal(r, stages)), isLoading: false });
+      set((state) => ({ ...withVisible(state, { realDeals: rows.map((r) => fromApiDeal(r, stages)) }), isLoading: false }));
     } catch (error) {
       set({ error: 'Failed to fetch deals', isLoading: false });
     }
@@ -193,13 +206,11 @@ export const useDealStore = create<DealStore>((set, get) => ({
       tags: dealData.tags || [],
     };
 
-    set((state) => ({
-      deals: [...state.deals, newDeal],
-    }));
-    // Emit event for universal sync
+    set((state) => withVisible(state, { realDeals: [...state.realDeals, newDeal] }));
+    // Emit event for universal sync (real deals only; samples are never synced)
     window.dispatchEvent(
       new CustomEvent('dealsChanged', {
-        detail: { deals: get().deals },
+        detail: { deals: get().realDeals },
       })
     );
 
@@ -209,37 +220,62 @@ export const useDealStore = create<DealStore>((set, get) => ({
   updateDeal: async (id, updates) => {
     // Sample deals live in `demoDeals` only: local state, no sync events, no network.
     if (isDemoId(id) || get().demoDeals.some((d) => d.id === id)) {
-      set((state) => ({
-        demoDeals: state.demoDeals.map((deal) =>
-          deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
-        ),
-      }));
+      set((state) =>
+        withVisible(state, {
+          demoDeals: state.demoDeals.map((deal) =>
+            deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
+          ),
+        })
+      );
       return;
     }
-    set((state) => ({
-      deals: state.deals.map((deal) =>
-        deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
-      ),
-    }));
-    // Emit event for universal sync
+    set((state) =>
+      withVisible(state, {
+        realDeals: state.realDeals.map((deal) =>
+          deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
+        ),
+      })
+    );
+    // Emit event for universal sync (real deals only)
     window.dispatchEvent(
       new CustomEvent('dealsChanged', {
-        detail: { deals: get().deals },
+        detail: { deals: get().realDeals },
       })
     );
   },
 
   deleteDeal: async (id) => {
-    set((state) => ({
-      deals: state.deals.filter((deal) => deal.id !== id),
-      demoDeals: state.demoDeals.filter((deal) => deal.id !== id),
-    }));
+    const removed = get().realDeals.find((deal) => deal.id === id);
+    // Optimistic local removal (sample deals are local only).
+    set((state) =>
+      withVisible(state, {
+        realDeals: state.realDeals.filter((deal) => deal.id !== id),
+        demoDeals: state.demoDeals.filter((deal) => deal.id !== id),
+      })
+    );
+
+    // Only real, server-backed deals (numeric ids) have a row to delete.
+    if (!removed || isDemoDeal(removed) || !/^\d+$/.test(id)) return;
+    try {
+      const res = await fetch(`/api/deals/${id}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok && res.status !== 404) throw new Error(`Request failed (${res.status})`);
+    } catch (e) {
+      // Roll back: put the deal back.
+      set((state) => withVisible(state, { realDeals: [removed, ...state.realDeals] }));
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      set({ error: `Could not delete deal: ${message}` });
+      toast({
+        title: 'Could not delete deal',
+        description: `"${removed.title}" was restored. ${message}`,
+        variant: 'destructive',
+      });
+    }
   },
 
   moveDeal: async (dealId, newStageId) => {
-    const { pipelines, activePipelineId, deals, demoDeals } = get();
+    const { pipelines, activePipelineId, realDeals, demoDeals } = get();
     const newStage = pipelines[activePipelineId]?.stages.find((s) => s.id === newStageId);
-    const deal = deals.find((d) => d.id === dealId) ?? demoDeals.find((d) => d.id === dealId);
+    const deal = realDeals.find((d) => d.id === dealId) ?? demoDeals.find((d) => d.id === dealId);
     if (!newStage || !deal || deal.stage.id === newStage.id) return;
 
     const previous = { stage: deal.stage, probability: deal.probability };
@@ -252,6 +288,9 @@ export const useDealStore = create<DealStore>((set, get) => ({
     // Send only the fields that changed.
     const body: Record<string, unknown> = { stage: toApiStage(newStage.id, deal.qualificationStage) };
     if (newStage.probability !== previous.probability) body.probability = newStage.probability;
+    // deals.status is 'open' | 'won' | 'lost'; keep it aligned with the closed columns.
+    const toStatus = (id: string) => (id === 'closed-won' ? 'won' : id === 'closed-lost' ? 'lost' : 'open');
+    if (toStatus(newStage.id) !== toStatus(previous.stage.id)) body.status = toStatus(newStage.id);
 
     try {
       const res = await fetch(`/api/deals/${dealId}`, {
@@ -528,3 +567,11 @@ export const useDealStore = create<DealStore>((set, get) => ({
     return pipelines[activePipelineId] || null;
   },
 }));
+
+// Safety net: if anything writes realDeals/demoDeals/demoEnabled directly via setState,
+// re-derive the visible `deals` list. No-op when already in sync.
+useDealStore.subscribe((state) => {
+  const expected = visibleDeals(state);
+  const same = state.deals.length === expected.length && state.deals.every((d, i) => d === expected[i]);
+  if (!same) useDealStore.setState({ deals: expected });
+});

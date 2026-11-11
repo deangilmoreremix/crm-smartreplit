@@ -165,12 +165,12 @@ export class UniversalDataSyncService {
 
     return {
       contacts: Object.values(contactStore.contacts),
-      deals: Object.values(dealStore.deals),
+      deals: Object.values(dealStore.realDeals),
       tasks: Object.values(taskStore.tasks),
       activities: [], // Would come from activity store
       analytics: {
         totalContacts: Object.keys(contactStore.contacts).length,
-        totalDeals: Object.keys(dealStore.deals).length,
+        totalDeals: Object.keys(dealStore.realDeals).length,
         totalTasks: Object.keys(taskStore.tasks).length,
       },
       timestamp: Date.now(),

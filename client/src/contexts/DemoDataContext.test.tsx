@@ -41,7 +41,7 @@ describe('DemoDataContext', () => {
       </DemoDataProvider>
     );
     const real = { ...useDealStore.getState().demoDeals[0], id: '42', isDemo: undefined };
-    act(() => useDealStore.setState({ deals: [real] }));
+    act(() => useDealStore.setState({ realDeals: [real] }));
     act(() => useContactStore.setState((s) => ({ contacts: { ...s.contacts, '900': { id: '900', name: 'Real Person', email: 'r@x.io' } as any } })));
     await act(async () => {
       await useAppointmentStore.getState().fetchAppointments();
