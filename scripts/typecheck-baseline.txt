@@ -107,7 +107,6 @@ client/src/components/contacts/ContactList.tsx: TS2724 3
 client/src/components/contacts/ContactList.tsx: TS7006 4
 client/src/components/contacts/RemoteContactsWithAssistant.tsx: TS2345 1
 client/src/components/dashboard/APIKeyStatus.tsx: TS2307 1
-client/src/components/dashboard/RecentActivity.tsx: TS2339 9
 client/src/components/dashboard/TasksAndFunnel.tsx: TS2367 2
 client/src/components/deals/AIEnhancedDealCard.tsx: TS2322 1
 client/src/components/deals/AIEnhancedDealCard.tsx: TS2339 3
@@ -129,7 +128,7 @@ client/src/components/packages/FeaturePackageManager.tsx: TS2353 1
 client/src/components/shared/AIToolContent.tsx: TS2304 1
 client/src/components/shared/GTMAnalyticsWidgets.tsx: TS2307 1
 client/src/components/ui/SmartSearch.tsx: TS2339 2
-client/src/contexts/NavigationContext.tsx: TS2554 2
+client/src/contexts/NavigationContext.tsx: TS2554 1
 client/src/contexts/VideoCallContext.tsx: TS2351 1
 client/src/contexts/VideoCallContext.tsx: TS2709 3
 client/src/data/aiGoals.ts: TS2353 15
