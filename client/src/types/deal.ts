@@ -1,5 +1,9 @@
 export interface Deal {
   id: string;
+  /** Sample record shown while demo data is enabled; never persisted to the server. */
+  isDemo?: boolean;
+  /** API stage (`lead` | `qualified`) this deal had when it sat in the qualification column. */
+  qualificationStage?: 'lead' | 'qualified';
   title: string;
   description?: string;
   value: number;

@@ -1,4 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useDealStore } from '../store/dealStore';
+import { useContactStore } from '../hooks/useContactStore';
+import { useAppointmentStore } from '../store/appointmentStore';
+import { useAnalyticsStore } from '../store/analyticsStore';
 
 interface DemoDataContextType {
   showDemoData: boolean;
@@ -16,6 +20,11 @@ export const DemoDataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     localStorage.setItem('smartcrm_show_demo_data', String(showDemoData));
+    // Keep every store that holds sample content in step with the toggle.
+    useDealStore.getState().setDemoEnabled(showDemoData);
+    useContactStore.getState().setDemoEnabled(showDemoData);
+    useAppointmentStore.getState().setDemoEnabled(showDemoData);
+    useAnalyticsStore.getState().setDemoEnabled(showDemoData);
   }, [showDemoData]);
 
   const clearDemoData = () => {
@@ -39,4 +48,10 @@ export const useDemoData = () => {
     throw new Error('useDemoData must be used within a DemoDataProvider');
   }
   return context;
+};
+
+/** Like useDemoData but safe outside a provider: sample data is simply off. */
+export const useDemoDataSafe = (): { showDemoData: boolean } => {
+  const context = useContext(DemoDataContext);
+  return { showDemoData: context?.showDemoData ?? false };
 };

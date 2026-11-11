@@ -9,46 +9,36 @@ import {
   DealSortOption,
 } from '../types/deal';
 import { toast } from '../hooks/use-toast';
+import { DEFAULT_DEAL_STAGES, DEMO_DEALS, isDemoId } from '../data/demoData';
 
-// Default pipeline stages
-const defaultStages: DealStage[] = [
-  {
-    id: 'qualification',
-    name: 'Qualification',
-    order: 1,
-    color: '#3B82F6',
-    probability: 20,
-    isActive: true,
-  },
-  { id: 'proposal', name: 'Proposal', order: 2, color: '#F59E0B', probability: 40, isActive: true },
-  {
-    id: 'negotiation',
-    name: 'Negotiation',
-    order: 3,
-    color: '#8B5CF6',
-    probability: 70,
-    isActive: true,
-  },
-  {
-    id: 'closed-won',
-    name: 'Closed Won',
-    order: 4,
-    color: '#10B981',
-    probability: 100,
-    isActive: true,
-  },
-  {
-    id: 'closed-lost',
-    name: 'Closed Lost',
-    order: 5,
-    color: '#EF4444',
-    probability: 0,
-    isActive: true,
-  },
-];
+const DEMO_STORAGE_KEY = 'smartcrm_show_demo_data';
+/** Demo data is on unless the user explicitly cleared it (mirrors DemoDataContext). */
+const readDemoEnabled = (): boolean => {
+  try {
+    return localStorage.getItem(DEMO_STORAGE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+};
+/** Real deals plus (only while demo data is enabled) the sample deals. */
+const visibleDeals = (s: { deals: Deal[]; demoDeals: Deal[]; demoEnabled: boolean }): Deal[] =>
+  s.demoEnabled ? [...s.deals, ...s.demoDeals] : s.deals;
+const cloneDemoDeals = (): Deal[] => DEMO_DEALS.map((d) => ({ ...d }));
+const isDemoDeal = (d: { id: string; isDemo?: boolean }) => !!d.isDemo || isDemoId(d.id);
+
+// Default pipeline stages (defined next to the demo deals that reference them)
+const defaultStages: DealStage[] = DEFAULT_DEAL_STAGES;
 
 /** Store stage ids that differ from the API's stage vocabulary (see DEAL_STAGE_OPTIONS). */
 const STAGE_TO_API: Record<string, string> = { qualification: 'qualified' };
+
+/**
+ * Store stage id -> API stage name. The `qualification` column covers both API `lead` and
+ * `qualified`; a deal remembers which one it came from so moving it away and back restores
+ * the original value instead of silently turning `lead` into `qualified`.
+ */
+export const toApiStage = (stageId: string, qualificationStage?: 'lead' | 'qualified'): string =>
+  stageId === 'qualification' ? (qualificationStage ?? STAGE_TO_API.qualification) : (STAGE_TO_API[stageId] ?? stageId);
 
 interface ApiDealRow {
   id: number | string;
@@ -66,9 +56,13 @@ interface ApiDealRow {
   updatedAt?: string | null;
 }
 
+/** API stage name -> store stage id (`lead` and `qualified` both live in the qualification column). */
+export const fromApiStage = (stage?: string | null): string =>
+  stage === 'lead' || stage === 'qualified' ? 'qualification' : (stage ?? 'qualification');
+
 /** Map a /api/deals row onto the store's Deal shape (API stage `lead`/`qualified` -> `qualification`). */
 export function fromApiDeal(r: ApiDealRow, stages: DealStage[]): Deal {
-  const stageId = r.stage === 'lead' || r.stage === 'qualified' ? 'qualification' : (r.stage ?? 'qualification');
+  const stageId = fromApiStage(r.stage);
   const stage = stages.find((s) => s.id === stageId) ?? stages[0];
   const date = (v?: string | null) => (v ? new Date(v) : undefined);
   return {
@@ -91,6 +85,7 @@ export function fromApiDeal(r: ApiDealRow, stages: DealStage[]): Deal {
     expectedCloseDate: date(r.expectedCloseDate),
     actualCloseDate: date(r.actualCloseDate),
     currency: 'USD',
+    ...(r.stage === 'lead' || r.stage === 'qualified' ? { qualificationStage: r.stage } : {}),
   };
 }
 
@@ -106,7 +101,12 @@ const defaultPipeline: Pipeline = {
 
 interface DealStore {
   // State
+  /** Real deals only (from /api/deals or created locally). */
   deals: Deal[];
+  /** Sample deals (local state only, never sent to the server); counted only while demoEnabled. */
+  demoDeals: Deal[];
+  demoEnabled: boolean;
+  setDemoEnabled: (enabled: boolean) => void;
   pipelines: Record<string, Pipeline>;
   activePipelineId: string;
   isLoading: boolean;
@@ -152,6 +152,9 @@ interface DealStore {
 export const useDealStore = create<DealStore>((set, get) => ({
   // Initial state
   deals: [],
+  demoDeals: cloneDemoDeals(),
+  demoEnabled: readDemoEnabled(),
+  setDemoEnabled: (enabled) => set({ demoEnabled: enabled }),
 
   pipelines: {
     default: defaultPipeline,
@@ -204,6 +207,15 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   updateDeal: async (id, updates) => {
+    // Sample deals live in `demoDeals` only: local state, no sync events, no network.
+    if (isDemoId(id) || get().demoDeals.some((d) => d.id === id)) {
+      set((state) => ({
+        demoDeals: state.demoDeals.map((deal) =>
+          deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
+        ),
+      }));
+      return;
+    }
     set((state) => ({
       deals: state.deals.map((deal) =>
         deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
@@ -220,24 +232,25 @@ export const useDealStore = create<DealStore>((set, get) => ({
   deleteDeal: async (id) => {
     set((state) => ({
       deals: state.deals.filter((deal) => deal.id !== id),
+      demoDeals: state.demoDeals.filter((deal) => deal.id !== id),
     }));
   },
 
   moveDeal: async (dealId, newStageId) => {
-    const { pipelines, activePipelineId, deals } = get();
+    const { pipelines, activePipelineId, deals, demoDeals } = get();
     const newStage = pipelines[activePipelineId]?.stages.find((s) => s.id === newStageId);
-    const deal = deals.find((d) => d.id === dealId);
+    const deal = deals.find((d) => d.id === dealId) ?? demoDeals.find((d) => d.id === dealId);
     if (!newStage || !deal || deal.stage.id === newStage.id) return;
 
     const previous = { stage: deal.stage, probability: deal.probability };
     // Optimistic local move.
     await get().updateDeal(dealId, { stage: newStage, probability: newStage.probability });
 
-    // Deals created locally (non-numeric ids) have no server row yet.
-    if (!/^\d+$/.test(dealId)) return;
+    // Sample deals and deals created locally (non-numeric ids) have no server row.
+    if (isDemoDeal(deal) || !/^\d+$/.test(dealId)) return;
 
     // Send only the fields that changed.
-    const body: Record<string, unknown> = { stage: STAGE_TO_API[newStage.id] ?? newStage.id };
+    const body: Record<string, unknown> = { stage: toApiStage(newStage.id, deal.qualificationStage) };
     if (newStage.probability !== previous.probability) body.probability = newStage.probability;
 
     try {
@@ -357,8 +370,8 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
   // Computed getters
   getFilteredDeals: () => {
-    const { deals, filters, sortOption } = get();
-    let filteredDeals = [...deals];
+    const { filters, sortOption } = get();
+    let filteredDeals = [...visibleDeals(get())];
 
     // Apply filters
     if (filters.stages?.length) {
@@ -402,7 +415,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
   getStageValues: () => {
     const { pipelines, activePipelineId } = get();
     const activePipeline = pipelines[activePipelineId];
-    const deals = get().deals; // Use all deals, not filtered ones
+    const deals = visibleDeals(get()); // Use all deals, not filtered ones
     const stageValues: Record<string, number> = {};
 
     // Initialize all stage values to 0, fallback to default stages if no active pipeline
@@ -422,14 +435,14 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   getTotalPipelineValue: () => {
-    const deals = get().deals; // Use all deals instead of filtered
+    const deals = visibleDeals(get()); // Use all deals instead of filtered
     return deals
       .filter((deal) => deal.stage.id !== 'closed-won' && deal.stage.id !== 'closed-lost')
       .reduce((total, deal) => total + deal.value, 0);
   },
 
   getSalesMetrics: () => {
-    const deals = get().deals;
+    const deals = visibleDeals(get());
     const wonDeals = deals.filter((d) => d.stage.id === 'closed-won');
     const lostDeals = deals.filter((d) => d.stage.id === 'closed-lost');
     const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
@@ -458,7 +471,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   calculateForecast: () => {
-    const deals = get().deals;
+    const deals = visibleDeals(get());
     const pipelineDeals = deals.filter(
       (d) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost'
     );
@@ -499,7 +512,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   getSalesVelocity: () => {
-    const deals = get().deals;
+    const deals = visibleDeals(get());
     const wonDeals = deals.filter((d) => d.stage.id === 'closed-won');
 
     if (wonDeals.length === 0) return 0;

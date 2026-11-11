@@ -12,6 +12,8 @@
 --        sed -e "s/AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA/$UID_A/" \
 --            -e "s/BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB/$UID_B/" supabase/tests/rls.sql \
 --          | psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+--   (Since 20261116100000 records / custom_field_values / record_relations are API-only: section 2d-2f proves
+--    anon/authenticated are denied and service_role works. The role service_role must exist, as on Supabase.)
 --   3. Success: the last result is  RLS TESTS PASSED  and a NOTICE "RLS TESTS PASSED: N assertions".
 --      Failure: the script stops with  ERROR: RLS FAIL [...]  naming the table / function and what leaked.
 --
@@ -37,8 +39,8 @@ CREATE TABLE rls_test.tally (n serial PRIMARY KEY, what text NOT NULL);
 CREATE TABLE rls_test.seed  (tbl text NOT NULL, key_col text NOT NULL, key_val text NOT NULL, owner uuid NOT NULL);
 CREATE TABLE rls_test.vars  (k text PRIMARY KEY, v text);
 
-GRANT USAGE ON SCHEMA rls_test TO anon, authenticated;
-GRANT SELECT ON rls_test.seed, rls_test.vars TO anon, authenticated;
+GRANT USAGE ON SCHEMA rls_test TO anon, authenticated, service_role;
+GRANT SELECT ON rls_test.seed, rls_test.vars TO anon, authenticated, service_role;
 
 CREATE FUNCTION rls_test.uid_a() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT current_setting('rls_test.uid_a')::uuid $$;
 CREATE FUNCTION rls_test.uid_b() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT current_setting('rls_test.uid_b')::uuid $$;
@@ -120,7 +122,7 @@ EXCEPTION
     PERFORM rls_test.ok('error ' || p_state || ': ' || p_label);
 END $$;
 
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA rls_test TO anon, authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA rls_test TO anon, authenticated, service_role;
 
 -- ============================================================================================
 -- 0. Preconditions (as the admin role)
@@ -449,6 +451,11 @@ DECLARE r record; want bigint; got bigint;
 BEGIN
   FOR r IN SELECT DISTINCT tbl, key_col FROM rls_test.seed ORDER BY tbl LOOP
     want := cardinality(rls_test.keys(r.tbl, p_me));
+    -- custom-object data is API-only (migration 20261116100000): the browser role cannot read even its OWN rows
+    IF r.tbl IN ('records', 'custom_field_values', 'record_relations')
+       AND NOT has_table_privilege(current_user, 'public.' || r.tbl, 'SELECT') THEN
+      want := 0;
+    END IF;
     got := rls_test.n_visible(r.tbl, r.key_col, p_me);
     IF got <> want THEN
       RAISE EXCEPTION 'RLS FAIL [%]: % sees only % of its own % seeded row(s) (owner policy too strict, or SELECT not granted)', r.tbl, p_label, got, want;
@@ -521,6 +528,96 @@ DO $$
 BEGIN
   IF auth.uid() IS NOT NULL THEN RAISE EXCEPTION 'RLS SETUP: auth.uid() is not null for anon'; END IF;
   PERFORM rls_test.check_anon();
+END $$;
+RESET ROLE;
+
+-- 2d. Custom-object data is API-ONLY (migration 20261116100000): browser roles have no privileges at all on
+--     records / custom_field_values / record_relations (nor on records_masked[_rows]); service_role keeps full access.
+--     Strict: fails if the migration is missing or a grant was re-added later.
+DO $$
+DECLARE t text; r text; priv text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['records', 'custom_field_values', 'record_relations'] LOOP
+    FOREACH r IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+      FOREACH priv IN ARRAY ARRAY['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'] LOOP
+        IF has_table_privilege(r, 'public.' || t, priv) THEN
+          RAISE EXCEPTION 'RLS FAIL [%]: role % still holds % (custom-object data must be API-only)', t, r, priv;
+        END IF;
+      END LOOP;
+    END LOOP;
+    IF NOT (has_table_privilege('service_role', 'public.' || t, 'SELECT') AND has_table_privilege('service_role', 'public.' || t, 'INSERT')
+        AND has_table_privilege('service_role', 'public.' || t, 'UPDATE') AND has_table_privilege('service_role', 'public.' || t, 'DELETE')) THEN
+      RAISE EXCEPTION 'RLS FAIL [%]: service_role lost access (the API could not work)', t;
+    END IF;
+    IF NOT (SELECT c.relrowsecurity FROM pg_class c WHERE c.oid = to_regclass('public.' || t)) THEN
+      RAISE EXCEPTION 'RLS FAIL [%]: RLS must stay enabled as defence in depth', t;
+    END IF;
+    PERFORM rls_test.ok('API-only grants on ' || t || ' (browser roles none, service_role all, RLS on)');
+  END LOOP;
+  IF to_regclass('public.records_masked') IS NOT NULL THEN
+    FOREACH r IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+      IF has_table_privilege(r, 'public.records_masked', 'SELECT') OR has_function_privilege(r, 'public.records_masked_rows(uuid)', 'EXECUTE') THEN
+        RAISE EXCEPTION 'RLS FAIL [records_masked]: role % can still use the masked view / function', r;
+      END IF;
+    END LOOP;
+    IF NOT (has_table_privilege('service_role', 'public.records_masked', 'SELECT') AND has_function_privilege('service_role', 'public.records_masked_rows(uuid)', 'EXECUTE')) THEN
+      RAISE EXCEPTION 'RLS FAIL [records_masked]: service_role cannot use the masked view / function';
+    END IF;
+    PERFORM rls_test.ok('records_masked / records_masked_rows: service_role only');
+  END IF;
+END $$;
+
+-- 2e. actual statements as anon / authenticated are rejected with 42501 (privilege error, not merely "0 rows")
+CREATE FUNCTION rls_test.check_api_only(p_who text) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['records', 'custom_field_values', 'record_relations'] LOOP
+    PERFORM rls_test.expect_denied(p_who || ' SELECT ' || t, format('SELECT count(*) FROM public.%I', t));
+    PERFORM rls_test.expect_denied(p_who || ' UPDATE ' || t, format('UPDATE public.%I SET id = id', t));
+    PERFORM rls_test.expect_denied(p_who || ' DELETE ' || t, format('DELETE FROM public.%I', t));
+  END LOOP;
+  PERFORM rls_test.expect_denied(p_who || ' INSERT records', 'INSERT INTO public.records(object_id, user_id, data) VALUES (gen_random_uuid(), gen_random_uuid(), ''{}'')');
+  PERFORM rls_test.expect_denied(p_who || ' INSERT custom_field_values', 'INSERT INTO public.custom_field_values(user_id, object_type, record_id, field_id) VALUES (gen_random_uuid(), ''contacts'', ''x'', gen_random_uuid())');
+  PERFORM rls_test.expect_denied(p_who || ' INSERT record_relations', 'INSERT INTO public.record_relations(user_id, from_record, to_record, field_id) VALUES (gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid())');
+END $$;
+GRANT EXECUTE ON FUNCTION rls_test.check_api_only(text) TO anon, authenticated;
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', json_build_object('sub', current_setting('rls_test.uid_a'), 'role', 'authenticated')::text, true);
+SELECT set_config('request.jwt.claim.sub', current_setting('rls_test.uid_a'), true);
+DO $$
+BEGIN
+  -- even the OWNER of the data, with a valid JWT, cannot touch these tables directly
+  PERFORM rls_test.check_api_only('authenticated owner');
+END $$;
+RESET ROLE;
+
+SET LOCAL ROLE anon;
+SELECT set_config('request.jwt.claims', json_build_object('role', 'anon')::text, true);
+SELECT set_config('request.jwt.claim.sub', '', true);
+DO $$
+BEGIN
+  PERFORM rls_test.check_api_only('anon');
+END $$;
+RESET ROLE;
+
+-- 2f. service_role (the Netlify API) still works end to end on the three tables
+SET LOCAL ROLE service_role;
+DO $$
+DECLARE n bigint; v_id uuid;
+BEGIN
+  SELECT count(*) INTO n FROM public.records WHERE id = rls_test.var('rec_a')::uuid;
+  IF n <> 1 THEN RAISE EXCEPTION 'RLS FAIL [records]: service_role cannot read a seeded record'; END IF;
+  INSERT INTO public.records(object_id, user_id, data) VALUES (rls_test.var('obj_a')::uuid, rls_test.uid_a(), '{"title":"api"}') RETURNING id INTO v_id;
+  UPDATE public.records SET data = '{"title":"api2"}' WHERE id = v_id;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'RLS FAIL [records]: service_role cannot update'; END IF;
+  DELETE FROM public.records WHERE id = v_id;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  IF n <> 1 THEN RAISE EXCEPTION 'RLS FAIL [records]: service_role cannot delete'; END IF;
+  PERFORM count(*) FROM public.custom_field_values;
+  PERFORM count(*) FROM public.record_relations;
+  PERFORM rls_test.ok('service_role keeps full access to records / custom_field_values / record_relations');
 END $$;
 RESET ROLE;
 
@@ -731,8 +828,10 @@ BEGIN
   IF m ? 'email' OR m ->> 'first_name' <> 'F' THEN RAISE EXCEPTION 'RLS FAIL [mask_record_data]: member got % (email must be stripped, first_name kept)', m; END IF;
   PERFORM rls_test.ok('has_field_perm / mask_record_data strip denied fields for a member');
 
-  -- records of a custom object: read granted, update not
-  IF rls_test.n_visible('records', 'id', a) <> 1 THEN RAISE EXCEPTION 'RLS FAIL [records]: member with can_read cannot read the owner''s record (records_member_select)'; END IF;
+  -- records of a custom object: API-only since 20261116100000 (before it: read granted via records_member_select)
+  IF rls_test.n_visible('records', 'id', a) <> 0 THEN
+    RAISE EXCEPTION 'RLS FAIL [records]: member can read the owner''s records directly (must be API-only)';
+  END IF;
   IF rls_test.n_updated('records', 'id', a) <> 0 THEN RAISE EXCEPTION 'RLS FAIL [records]: member without can_update CAN update the owner''s record'; END IF;
   IF rls_test.n_deleted('records', 'id', a) <> 0 THEN RAISE EXCEPTION 'RLS FAIL [records]: member can DELETE the owner''s record (no member delete policy expected)'; END IF;
   -- the owner's other custom data stays hidden (no role row for it)
@@ -740,7 +839,7 @@ BEGIN
   IF rls_test.n_visible('workflows', 'id', a) <> 0 THEN RAISE EXCEPTION 'RLS FAIL [workflows]: team membership leaks workflows'; END IF;
   IF rls_test.n_visible('webhooks', 'id', a) <> 0 THEN RAISE EXCEPTION 'RLS FAIL [webhooks]: team membership leaks webhooks'; END IF;
   IF rls_test.n_visible('api_keys', 'id', a) <> 0 THEN RAISE EXCEPTION 'RLS FAIL [api_keys]: team membership leaks api_keys'; END IF;
-  PERFORM rls_test.ok('member policies: records read-only per role, nothing else leaks');
+  PERFORM rls_test.ok('member policies: no direct records access, nothing else leaks');
 
   -- contacts (legacy table) through team_member_select, if present and seeded
   IF rls_test.var('contact_a') IS NOT NULL THEN
@@ -756,8 +855,9 @@ BEGIN
 END $$;
 RESET ROLE;
 
--- 4a2. (only when migration 20261115100000 is applied) a role that hides a field of the custom object:
---      raw records rows disappear for the member, the masked view/function still returns the row without that field
+-- 4a2. a role that hides a field of the custom object.
+--      Since 20261116100000 the browser roles have no access to records / records_masked at all; the masking
+--      SQL helpers stay correct for the service role (which runs them with the caller's JWT claims).
 DO $$
 BEGIN
   IF to_regclass('public.records_masked') IS NOT NULL THEN
@@ -769,7 +869,6 @@ SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', json_build_object('sub', current_setting('rls_test.uid_b'), 'role', 'authenticated')::text, true);
 SELECT set_config('request.jwt.claim.sub', current_setting('rls_test.uid_b'), true);
 DO $$
-DECLARE d jsonb; n bigint;
 BEGIN
   IF to_regclass('public.records_masked') IS NULL THEN
     RAISE NOTICE 'records_masked checks skipped (migration 20261115100000 not applied)';
@@ -778,10 +877,23 @@ BEGIN
   IF rls_test.n_visible('records', 'id', rls_test.uid_a()) <> 0 THEN
     RAISE EXCEPTION 'RLS FAIL [records]: member whose role hides a field can still read raw records rows (field read restriction bypass)';
   END IF;
+  PERFORM rls_test.ok('restricted member reads no raw records rows');
+  PERFORM rls_test.expect_denied('restricted member selects records_masked', 'SELECT count(*) FROM public.records_masked');
+  PERFORM rls_test.expect_denied('restricted member calls records_masked_rows', 'SELECT count(*) FROM public.records_masked_rows(NULL)');
+END $$;
+RESET ROLE;
+-- same JWT (B), but through the service role (the API path): the masked helper still hides the field
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claims', json_build_object('sub', current_setting('rls_test.uid_b'), 'role', 'service_role')::text, true);
+SELECT set_config('request.jwt.claim.sub', current_setting('rls_test.uid_b'), true);
+DO $$
+DECLARE d jsonb; n bigint;
+BEGIN
+  IF to_regclass('public.records_masked') IS NULL THEN RETURN; END IF;
   SELECT count(*), max(data::text)::jsonb INTO n, d FROM public.records_masked WHERE id = rls_test.var('rec_a')::uuid;
-  IF n <> 1 THEN RAISE EXCEPTION 'RLS FAIL [records_masked]: restricted member sees % masked rows (expected 1)', n; END IF;
+  IF n <> 1 THEN RAISE EXCEPTION 'RLS FAIL [records_masked]: restricted member sees % masked rows via service_role (expected 1)', n; END IF;
   IF d ? 'title' THEN RAISE EXCEPTION 'RLS FAIL [records_masked]: hidden field "title" is present in the masked view: %', d; END IF;
-  PERFORM rls_test.ok('records_masked hides restricted fields, raw table is closed to restricted members');
+  PERFORM rls_test.ok('records_masked hides restricted fields (service_role path)');
 END $$;
 RESET ROLE;
 DELETE FROM public.role_field_permissions WHERE role_id = rls_test.var('role_a')::uuid AND object_type = rls_test.var('obj_a');
@@ -809,10 +921,10 @@ SELECT set_config('request.jwt.claims', json_build_object('sub', current_setting
 SELECT set_config('request.jwt.claim.sub', current_setting('rls_test.uid_b'), true);
 DO $$
 BEGIN
-  IF rls_test.n_updated('records', 'id', rls_test.uid_a()) <> 1 THEN
-    RAISE EXCEPTION 'RLS FAIL [records]: member with can_update cannot update the owner''s record (records_member_update)';
+  IF rls_test.n_updated('records', 'id', rls_test.uid_a()) <> 0 THEN
+    RAISE EXCEPTION 'RLS FAIL [records]: member with can_update can write records directly (must go through the API)';
   END IF;
-  PERFORM rls_test.ok('records: member with can_update can update');
+  PERFORM rls_test.ok('records: even a member with can_update cannot write directly (API-only)');
 END $$;
 RESET ROLE;
 

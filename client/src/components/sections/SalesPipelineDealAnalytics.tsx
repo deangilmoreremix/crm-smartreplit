@@ -3,12 +3,19 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { BarChart3, TrendingUp } from 'lucide-react';
 import DealAnalytics from '../DealAnalytics';
 import ChartsSection, { useSalesData } from '../dashboard/ChartsSection';
-import { stageConversions } from '../dashboard/chartData';
+import { stageConversions, mergeConversions } from '../dashboard/chartData';
+import { useDemoDataSafe } from '../../contexts/DemoDataContext';
+import { DEMO_CONVERSIONS } from '../../data/demoData';
+import SampleBadge from '../SampleBadge';
 
 const SalesPipelineDealAnalytics: React.FC = () => {
   const { isDark } = useTheme();
   const { deals, loading, error } = useSalesData();
-  const conversions = React.useMemo(() => stageConversions(deals), [deals]);
+  const { showDemoData } = useDemoDataSafe();
+  const conversions = React.useMemo(() => {
+    const real = stageConversions(deals);
+    return showDemoData ? mergeConversions(real, DEMO_CONVERSIONS) : real;
+  }, [deals, showDemoData]);
 
   return (
     <div className="mb-10">
@@ -48,6 +55,7 @@ const SalesPipelineDealAnalytics: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Sales Conversion Metrics
+            {showDemoData && <SampleBadge label="Includes sample data" className="ml-3 align-middle" />}
           </h3>
           <TrendingUp className={`h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
         </div>
@@ -62,6 +70,17 @@ const SalesPipelineDealAnalytics: React.FC = () => {
               <p className={`text-2xl font-semibold mt-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {loading ? '…' : error || c.rate === null ? '—' : `${Math.round(c.rate)}%`}
               </p>
+              {c.delta !== undefined && !loading && !error && (
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    c.delta >= 0
+                      ? isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'
+                      : isDark ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {c.delta >= 0 ? '+' : ''}{c.delta}%
+                </span>
+              )}
             </div>
           ))}
         </div>

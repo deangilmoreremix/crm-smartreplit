@@ -155,3 +155,68 @@ export function stageConversions(deals: ApiDeal[]): Array<{ label: string; rate:
     { label: 'Proposal to Win', rate: rate(4, 2) },
   ];
 }
+
+/** Trailing window of the monthly sample series for a date range (7d: 2 points, 30d: 3, 90d: all). */
+export function sliceForRange<T>(series: T[], rangeDays: number): T[] {
+  const keep = rangeDays <= 7 ? 2 : rangeDays <= 30 ? 3 : series.length;
+  return series.slice(-keep);
+}
+
+// --- Merging sample (demo) series with real aggregates ---------------------------------------
+// All merges are by bucket name: a name present in both is summed once, a name present in only
+// one side is kept as is. Inputs are never mutated.
+
+/** Sum real performance buckets into the sample buckets (matching names), keeping unmatched real buckets. */
+export function mergePerformance(real: PerformancePoint[], demo: PerformancePoint[]): PerformancePoint[] {
+  const out = new Map<string, PerformancePoint>();
+  for (const p of [...demo, ...real]) {
+    const cur = out.get(p.name);
+    out.set(p.name, cur ? { name: p.name, revenue: cur.revenue + p.revenue, deals: cur.deals + p.deals } : { ...p });
+  }
+  return [...out.values()];
+}
+
+function mergeNamed<T extends { name: string; value: number }>(real: T[], demo: T[]): T[] {
+  const out = new Map<string, T>();
+  for (const p of [...demo, ...real]) {
+    const cur = out.get(p.name);
+    out.set(p.name, cur ? { ...cur, value: cur.value + p.value } : { ...p });
+  }
+  return [...out.values()];
+}
+
+/** Deals per stage: sample counts plus real counts under the same stage name. */
+export const mergePipeline = <T extends { name: string; value: number }>(real: T[], demo: T[]): T[] =>
+  mergeNamed(real, demo);
+
+/** Value per stage/category: sample values plus real values under the same name. */
+export const mergeBreakdown = <T extends { name: string; value: number }>(real: T[], demo: T[]): T[] =>
+  mergeNamed(real, demo);
+
+export interface ConversionPoint {
+  label: string;
+  rate: number | null;
+  /** Change vs previous period; only present for sample-derived rates. */
+  delta?: number;
+}
+
+/**
+ * Funnel conversions cannot be summed. With both sides present the rate is the mean of the two
+ * (each side counted once); with only one side that side is used as is. Output follows `real`
+ * order, then any sample-only labels.
+ */
+export function mergeConversions(
+  real: ConversionPoint[],
+  demo: Array<{ label: string; rate: number; delta?: number }>
+): ConversionPoint[] {
+  const demoBy = new Map(demo.map((d) => [d.label, d]));
+  const merged: ConversionPoint[] = real.map((r) => {
+    const d = demoBy.get(r.label);
+    demoBy.delete(r.label);
+    if (!d) return { ...r };
+    if (r.rate === null) return { label: r.label, rate: d.rate, delta: d.delta };
+    return { label: r.label, rate: (r.rate + d.rate) / 2 };
+  });
+  for (const d of demoBy.values()) merged.push({ label: d.label, rate: d.rate, delta: d.delta });
+  return merged;
+}

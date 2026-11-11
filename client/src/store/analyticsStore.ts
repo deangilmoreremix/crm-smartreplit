@@ -15,8 +15,19 @@ import {
   BenchmarkData,
 } from '../types/analytics';
 
+const readDemoEnabled = (): boolean => {
+  try {
+    return localStorage.getItem('smartcrm_show_demo_data') !== 'false';
+  } catch {
+    return true;
+  }
+};
+
 interface AnalyticsStore {
   // State
+  /** Sample metrics/insights are generated only while demo data is enabled. */
+  demoEnabled: boolean;
+  setDemoEnabled: (enabled: boolean) => void;
   data: AnalyticsData[];
   salesMetrics: SalesMetrics;
   pipelineMetrics: PipelineMetrics;
@@ -70,6 +81,21 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
   persist(
     (set, get) => ({
       // Initial state
+      demoEnabled: readDemoEnabled(),
+      setDemoEnabled: (enabled) => {
+        if (enabled) {
+          set({ demoEnabled: true });
+          return;
+        }
+        // Hiding sample data: drop the generated metrics and insights back to empty.
+        const initial = useAnalyticsStore.getInitialState();
+        set({
+          demoEnabled: false,
+          salesMetrics: initial.salesMetrics,
+          pipelineMetrics: initial.pipelineMetrics,
+          insights: [],
+        });
+      },
       data: [],
       salesMetrics: {
         totalRevenue: 0,
@@ -153,6 +179,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       // Actions
       updateMetrics: () => {
+        if (!get().demoEnabled) return;
         // This would typically pull data from other stores
         // For now, we'll generate mock data
         const mockSalesMetrics: SalesMetrics = {
@@ -318,6 +345,10 @@ export const useAnalyticsStore = create<AnalyticsStore>()(
 
       // Insights & Forecasting
       generateInsights: async () => {
+        if (!get().demoEnabled) {
+          set({ insights: [] });
+          return [];
+        }
         const insights: AnalyticsInsight[] = [
           {
             id: crypto.randomUUID(),

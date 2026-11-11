@@ -17,14 +17,12 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
   if (!isOpen) return null;
 
   const demoContentItems = [
-    { label: '8 sample contacts', count: 8 },
-    { label: '5 sample deals in pipeline', count: 5 },
-    { label: '12 sample tasks', count: 12 },
-    { label: '6 sample appointments', count: 6 },
-    { label: '15 sample communications', count: 15 },
-    { label: 'AI-generated insights', count: 1 },
-    { label: 'Sample activity feed', count: 1 },
-    { label: 'Demo metrics and KPIs', count: 1 },
+    { label: 'Sample deals in the pipeline (4)', count: 4 },
+    { label: 'Sample contacts (5)', count: 5 },
+    { label: 'Sample appointments (3)', count: 3 },
+    { label: 'Sample sales charts and conversion metrics', count: 1 },
+    { label: 'Sample upcoming deals and activity feed', count: 1 },
+    { label: 'Sample analytics metrics and insights', count: 1 },
   ];
 
   const handleClear = () => {

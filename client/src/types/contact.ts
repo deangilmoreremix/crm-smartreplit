@@ -1,5 +1,7 @@
 export interface Contact {
   id: string;
+  /** Sample record shown while demo data is enabled. */
+  isDemo?: boolean;
   firstName?: string;
   lastName?: string;
   name: string;

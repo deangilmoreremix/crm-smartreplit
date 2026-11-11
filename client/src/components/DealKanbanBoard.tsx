@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useDealStore } from '../store/dealStore';
 import { Deal, DealStage } from '../types/deal';
+import SampleBadge from './SampleBadge';
 import { useContactStore } from '../store/contactStore';
 import RowContextMenu from './record-table/RowContextMenu';
 import { useSafeNavigate } from './record-table/useSafeNavigate';
@@ -96,6 +97,7 @@ const DealCard: React.FC<DealCardProps> = ({ deal, index, onEdit, onView, onDele
             <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
               {deal.title}
             </h3>
+            {deal.isDemo && <SampleBadge className="ml-2 shrink-0" />}
             <div className="relative">
               <button className="p-1 hover:bg-gray-100 rounded">
                 <MoreVertical size={14} className="text-gray-400" />

@@ -250,29 +250,88 @@ async function recordContext(req: Request, res: Response, db: Db, ref: unknown, 
 const writableOrError = (ctx: { fperms: FieldPermRow[] | null; obj: any }, data: Record<string, unknown>) =>
   Object.keys(data).find((k) => !fieldAllowed(ctx.fperms, ctx.obj.id, k, 'write'));
 
+/** Never lets search_text (derived from ALL fields, hidden ones included) or unmasked data leave the server. */
+const publicRecord = (ctx: { fperms: FieldPermRow[] | null; obj: any }, row: any) => {
+  const { search_text: _st, ...rest } = row;
+  return { ...rest, data: maskData(ctx.fperms, ctx.obj.id, row.data ?? {}) };
+};
+
+/** True when the caller may not read at least one field of this object (search_text must not be used then). */
+const hasReadRestrictions = (ctx: { fperms: FieldPermRow[] | null; obj: any }) =>
+  ctx.fperms !== null && ctx.fperms.some((p) => p.object_type === ctx.obj.id && !p.can_read);
+
+const SCAN_PAGE = 500;
+const SCAN_MAX = 2000;
+
+/** Case-insensitive substring match over the values of already-masked data only. */
+function matchesVisible(masked: Record<string, unknown>, needle: string): boolean {
+  for (const v of Object.values(masked)) {
+    if (v === null || v === undefined) continue;
+    const text = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    if (text.toLowerCase().includes(needle)) return true;
+  }
+  return false;
+}
+
 router.get('/records', handler(async (req, res, db) => {
   const ctx = await recordContext(req, res, db, req.query.object, 'read');
   if (!ctx) return;
-  const filters = parseFilters(req.query.filter, ctx.fields);
+  const restricted = hasReadRestrictions(ctx);
+  // Filtering on a hidden field would let the caller probe its values; treat it as unknown.
+  const filterable = ctx.fields.filter((f) => fieldAllowed(ctx.fperms, ctx.obj.id, f.name, 'read'));
+  const filters = parseFilters(req.query.filter, filterable);
   if (!filters.ok) return res.status(400).json({ error: filters.error });
   const limit = clampLimit(req.query.limit);
-  let q: any = db.from('records').select('*').eq('object_id', ctx.obj.id).eq('user_id', ctx.ownerId).is('deleted_at', null);
-  for (const c of filters.value) {
-    q = c.operator === 'not.is' ? q.not(c.column, 'is', null) : q.filter(c.column, c.operator, c.value);
-  }
-  if (typeof req.query.q === 'string' && req.query.q.trim()) {
-    q = q.ilike('search_text', `%${req.query.q.trim().toLowerCase().slice(0, 100).replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
-  }
+  const term = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase().slice(0, 100) : '';
+  let cur: { created_at: string; id: string } | null = null;
   if (req.query.cursor !== undefined) {
-    const cur = decodeCursor(req.query.cursor);
+    cur = decodeCursor(req.query.cursor);
     if (!cur) return res.status(400).json({ error: 'Invalid cursor' });
-    q = q.or(`created_at.lt.${cur.created_at},and(created_at.eq.${cur.created_at},id.lt.${cur.id})`);
   }
-  const { data, error } = await q.order('created_at', { ascending: false }).order('id', { ascending: false }).limit(limit + 1);
-  if (error) return dbError(res, error);
-  const rows = (data ?? []) as any[];
-  const page = rows.slice(0, limit).map(({ search_text: _st, ...r }) => ({ ...r, data: maskData(ctx.fperms, ctx.obj.id, r.data) }));
-  res.json({ records: page, nextCursor: rows.length > limit ? encodeCursor(rows[limit - 1]) : null });
+  const fetchPage = (after: { created_at: string; id: string } | null, size: number, useSearchText: boolean) => {
+    let q: any = db.from('records').select('*').eq('object_id', ctx.obj.id).eq('user_id', ctx.ownerId).is('deleted_at', null);
+    for (const c of filters.value) {
+      q = c.operator === 'not.is' ? q.not(c.column, 'is', null) : q.filter(c.column, c.operator, c.value);
+    }
+    if (useSearchText && term) q = q.ilike('search_text', `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+    if (after) q = q.or(`created_at.lt.${after.created_at},and(created_at.eq.${after.created_at},id.lt.${after.id})`);
+    return q.order('created_at', { ascending: false }).order('id', { ascending: false }).limit(size);
+  };
+
+  if (!restricted || !term) {
+    const { data, error } = await fetchPage(cur, limit + 1, true);
+    if (error) return dbError(res, error);
+    const rows = (data ?? []) as any[];
+    return res.json({ records: rows.slice(0, limit).map((r) => publicRecord(ctx, r)), nextCursor: rows.length > limit ? encodeCursor(rows[limit - 1]) : null });
+  }
+
+  // Restricted caller with a search term: search_text covers hidden fields too, so scan keyset pages and
+  // match on MASKED data only (bounded). nextCursor lets the client continue past the scan bound.
+  const matches: any[] = [];
+  let scanned = 0;
+  let after = cur;
+  let lastScanned: any = null;
+  let exhausted = false;
+  while (matches.length <= limit && scanned < SCAN_MAX) {
+    const { data, error } = await fetchPage(after, SCAN_PAGE, false);
+    if (error) return dbError(res, error);
+    const rows = (data ?? []) as any[];
+    for (const r of rows) {
+      scanned++;
+      lastScanned = r;
+      if (matchesVisible(maskData(ctx.fperms, ctx.obj.id, r.data ?? {}), term)) {
+        matches.push(r);
+        if (matches.length > limit) break;
+      }
+      if (scanned >= SCAN_MAX) break;
+    }
+    if (rows.length < SCAN_PAGE) { exhausted = true; break; }
+    after = { created_at: rows[rows.length - 1].created_at, id: rows[rows.length - 1].id };
+  }
+  let nextCursor: string | null = null;
+  if (matches.length > limit) nextCursor = encodeCursor(matches[limit - 1]);
+  else if (!exhausted && lastScanned) nextCursor = encodeCursor(lastScanned);
+  res.json({ records: matches.slice(0, limit).map((r) => publicRecord(ctx, r)), nextCursor });
 }));
 
 router.post('/records', handler(async (req, res, db) => {
@@ -284,7 +343,7 @@ router.post('/records', handler(async (req, res, db) => {
   if (denied) return res.status(403).json({ error: `No write permission on field ${denied}` });
   const { data, error } = await db.from('records').insert({ object_id: ctx.obj.id, user_id: ctx.ownerId, data: v.value }).select().single();
   if (error) return dbError(res, error);
-  { const { search_text: _st, ...rest } = data as any; res.status(201).json({ record: { ...rest, data: maskData(ctx.fperms, ctx.obj.id, data.data) } }); }
+  res.status(201).json({ record: publicRecord(ctx, data) });
 }));
 
 async function loadRecord(db: Db, access: Access, id: string) {
@@ -307,7 +366,7 @@ router.put('/records/:id', handler(async (req, res, db) => {
   for (const [k, val] of Object.entries(merged)) if (val === null) delete merged[k];
   const { data, error } = await db.from('records').update({ data: merged }).eq('id', rec.id).eq('user_id', ctx.ownerId).select().single();
   if (error) return dbError(res, error);
-  { const { search_text: _st, ...rest } = data as any; res.json({ record: { ...rest, data: maskData(ctx.fperms, ctx.obj.id, data.data) } }); }
+  res.json({ record: publicRecord(ctx, data) });
 }));
 
 router.delete('/records/:id', handler(async (req, res, db) => {

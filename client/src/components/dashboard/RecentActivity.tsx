@@ -5,13 +5,16 @@ import { useContactStore } from '../../store/contactStore';
 import { Calendar, CheckCircle, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
+import { useDemoDataSafe } from '../../contexts/DemoDataContext';
+import SampleBadge from '../SampleBadge';
 
 const RecentActivity: React.FC = () => {
   const { isDark } = useTheme();
   const { contacts } = useContactStore();
+  const { showDemoData } = useDemoDataSafe();
 
-  // Updated upcomingDeals with contactId instead of direct avatar
-  const upcomingDeals = [
+  // Sample upcoming deals (shown only while demo data is enabled)
+  const sampleUpcomingDeals = [
     {
       id: 1,
       company: 'TechCorp Solutions',
@@ -40,6 +43,8 @@ const RecentActivity: React.FC = () => {
       status: 'online',
     },
   ];
+
+  const upcomingDeals = showDemoData ? sampleUpcomingDeals : [];
 
   const [batchJobs, setBatchJobs] = React.useState([]);
   const [aiInsights, setAIInsights] = React.useState(new Map());
@@ -101,6 +106,9 @@ const RecentActivity: React.FC = () => {
             : 'text-yellow-600',
       assistantInsight: `Cost: $${job.estimatedCost.toFixed(4)} - 50% savings with overnight processing`,
     })),
+    // Sample activity (shown only while demo data is enabled)
+    ...(showDemoData
+      ? [
     {
       type: 'deal',
       icon: TrendingUp,
@@ -136,6 +144,8 @@ const RecentActivity: React.FC = () => {
       time: '1 day ago',
       color: 'text-yellow-600',
     },
+        ]
+      : []),
   ];
 
   return (
@@ -145,6 +155,7 @@ const RecentActivity: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Upcoming Deals
+            {showDemoData && <SampleBadge className="ml-2 align-middle" />}
           </h3>
           <Link
             to="/deals"
@@ -156,6 +167,9 @@ const RecentActivity: React.FC = () => {
         </div>
 
         <div className="space-y-4">
+          {upcomingDeals.length === 0 && (
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No upcoming deals.</p>
+          )}
           {upcomingDeals.map((deal) => {
             // Get contact data using contactId
             const contact = contacts[deal.contactId];
@@ -228,19 +242,25 @@ const RecentActivity: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Recent Activity
+            {showDemoData && <SampleBadge className="ml-2 align-middle" />}
           </h3>
-          <div className="flex items-center space-x-2">
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              24 completed
-            </span>
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>•</span>
-            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              8 pending
-            </span>
-          </div>
+          {showDemoData && (
+            <div className="flex items-center space-x-2">
+              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                24 completed
+              </span>
+              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>•</span>
+              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                8 pending
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
+          {recentActivities.length === 0 && (
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No recent activity.</p>
+          )}
           {recentActivities.map((activity, index) => {
             const Icon = activity.icon;
             return (

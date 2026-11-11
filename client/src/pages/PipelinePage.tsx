@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Target, Users, TrendingUp, ExternalLink, Zap } from 'lucide-react';
@@ -13,6 +13,23 @@ const PipelinePage: React.FC = () => {
   const { isDark } = useTheme();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
+
+  // Pick up deals changed elsewhere when the user returns to this tab (at most once per 30s).
+  const lastFetchRef = useRef(Date.now()); // the board fetches on mount
+  useEffect(() => {
+    const refetch = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - lastFetchRef.current < 30_000) return;
+      lastFetchRef.current = Date.now();
+      void useDealStore.getState().fetchDeals();
+    };
+    window.addEventListener('focus', refetch);
+    document.addEventListener('visibilitychange', refetch);
+    return () => {
+      window.removeEventListener('focus', refetch);
+      document.removeEventListener('visibilitychange', refetch);
+    };
+  }, []);
   const [activeTab, setActiveTab] = useState('pipeline');
   const [dealView, setDealView] = useState<'kanban' | 'table' | 'list'>('kanban');
 

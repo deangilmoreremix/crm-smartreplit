@@ -10,7 +10,14 @@ import {
   pipelineByStage,
   valueByStage,
   salesKpis,
+  sliceForRange,
+  mergePerformance,
+  mergePipeline,
+  mergeBreakdown,
 } from './chartData';
+import { useDemoDataSafe } from '../../contexts/DemoDataContext';
+import { DEMO_PERFORMANCE, DEMO_PIPELINE, DEMO_BREAKDOWN } from '../../data/demoData';
+import SampleBadge from '../SampleBadge';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
 import { BarChart3, LineChart, PieChart as PieChartIcon, TrendingUp, Filter } from 'lucide-react';
@@ -91,6 +98,7 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
   ) ?? 'month';
   const setTimeframe = (k: keyof typeof TIMEFRAMES) => setSettings({ rangeDays: TIMEFRAMES[k] });
   const { deals, contacts, loading, error } = useSalesData();
+  const { showDemoData } = useDemoDataSafe();
   const now = React.useMemo(() => Date.now(), [deals, rangeDays]);
 
   const contactsById = React.useMemo(() => {
@@ -152,9 +160,19 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
     );
   };
 
-  const performanceData = React.useMemo(() => performanceSeries(deals, rangeDays, now), [deals, rangeDays, now]);
-  const pipelineData = React.useMemo(() => pipelineByStage(deals, rangeDays, now), [deals, rangeDays, now]);
-  const breakdownData = React.useMemo(() => valueByStage(deals, rangeDays, now), [deals, rangeDays, now]);
+  // Sample series are merged with the real aggregates only while demo data is enabled.
+  const performanceData = React.useMemo(() => {
+    const real = performanceSeries(deals, rangeDays, now);
+    return showDemoData ? mergePerformance(real, sliceForRange(DEMO_PERFORMANCE, rangeDays)) : real;
+  }, [deals, rangeDays, now, showDemoData]);
+  const pipelineData = React.useMemo(() => {
+    const real = pipelineByStage(deals, rangeDays, now);
+    return showDemoData ? mergePipeline(real, DEMO_PIPELINE) : real;
+  }, [deals, rangeDays, now, showDemoData]);
+  const breakdownData = React.useMemo(() => {
+    const real = valueByStage(deals, rangeDays, now);
+    return showDemoData ? mergeBreakdown(real, DEMO_BREAKDOWN) : real;
+  }, [deals, rangeDays, now, showDemoData]);
   const kpis = React.useMemo(() => salesKpis(deals, rangeDays, now), [deals, rangeDays, now]);
 
   const hasData =
@@ -173,6 +191,7 @@ const ChartsSection: React.FC<{ sectionId?: string }> = ({ sectionId = 'charts-s
       <div className="flex flex-wrap items-center justify-between mb-6">
         <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
           Sales Analytics
+          {showDemoData && <SampleBadge label="Includes sample data" className="ml-3 align-middle" />}
         </h2>
 
         <div className="flex items-center space-x-4">

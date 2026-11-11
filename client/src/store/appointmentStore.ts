@@ -5,6 +5,8 @@ export type AppointmentStatus = 'scheduled' | 'completed' | 'canceled' | 'no-sho
 
 export interface Appointment {
   id: string;
+  /** Sample record shown while demo data is enabled. */
+  isDemo?: boolean;
   title: string;
   contactId?: string;
   contactName: string;
@@ -27,6 +29,8 @@ interface AppointmentState {
   selectedSlot: Date | null;
   isLoading: boolean;
   error: string | null;
+  demoEnabled: boolean;
+  setDemoEnabled: (enabled: boolean) => void;
 
   // Actions
   fetchAppointments: () => Promise<void>;
@@ -39,69 +43,97 @@ interface AppointmentState {
   getAppointmentsForDate: (date: Date) => Appointment[];
 }
 
+const buildSampleAppointments = (): Appointment[] => [
+  {
+    id: 'demo-1',
+    isDemo: true,
+    title: 'Client Strategy Meeting',
+    contactId: '1',
+    contactName: 'John Doe',
+    contactEmail: 'john.doe@example.com',
+    contactPhone: '(555) 123-4567',
+    date: new Date(Date.now() + 86400000), // Tomorrow
+    endDate: new Date(Date.now() + 86400000 + 3600000), // 1 hour later
+    duration: 60,
+    type: 'video',
+    status: 'scheduled',
+    notes: 'Discuss Q4 strategy and upcoming product launches',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 'demo-2',
+    isDemo: true,
+    title: 'Product Demo',
+    contactId: '2',
+    contactName: 'Jane Smith',
+    contactEmail: 'jane.smith@example.com',
+    contactPhone: '(555) 987-6543',
+    date: new Date(Date.now() + 172800000), // Day after tomorrow
+    endDate: new Date(Date.now() + 172800000 + 1800000), // 30 minutes later
+    duration: 30,
+    type: 'video',
+    status: 'scheduled',
+    location: '',
+    notes: 'Demo the new features to potential client',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 'demo-3',
+    isDemo: true,
+    title: 'Office Visit',
+    contactId: '3',
+    contactName: 'Robert Johnson',
+    contactEmail: 'robert@example.com',
+    contactPhone: '(555) 456-7890',
+    date: new Date(Date.now() + 259200000), // 3 days from now
+    endDate: new Date(Date.now() + 259200000 + 5400000), // 1.5 hours later
+    duration: 90,
+    type: 'in-person',
+    status: 'scheduled',
+    location: '123 Business Ave, Suite 400',
+    notes: 'Tour of their facilities and team meeting',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
+const readDemoEnabled = (): boolean => {
+  try {
+    return localStorage.getItem('smartcrm_show_demo_data') !== 'false';
+  } catch {
+    return true;
+  }
+};
+
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   appointments: {},
   selectedAppointment: null,
   selectedSlot: null,
   isLoading: false,
   error: null,
+  demoEnabled: readDemoEnabled(),
+  setDemoEnabled: (enabled) =>
+    set((state) => ({
+      demoEnabled: enabled,
+      appointments: enabled
+        ? {
+            ...Object.fromEntries(buildSampleAppointments().map((a) => [a.id, a])),
+            ...state.appointments,
+          }
+        : Object.fromEntries(Object.entries(state.appointments).filter(([, a]) => !a.isDemo)),
+    })),
 
   fetchAppointments: async () => {
     set({ isLoading: true, error: null });
 
     try {
-      // Mock data - in a real app, this would be an API call
+      // Keep the user's own appointments; add sample ones only while demo data is enabled.
+      const existing = Object.values(get().appointments).filter((a) => !a.isDemo);
       const mockAppointments: Appointment[] = [
-        {
-          id: '1',
-          title: 'Client Strategy Meeting',
-          contactId: '1',
-          contactName: 'John Doe',
-          contactEmail: 'john.doe@example.com',
-          contactPhone: '(555) 123-4567',
-          date: new Date(Date.now() + 86400000), // Tomorrow
-          endDate: new Date(Date.now() + 86400000 + 3600000), // 1 hour later
-          duration: 60,
-          type: 'video',
-          status: 'scheduled',
-          notes: 'Discuss Q4 strategy and upcoming product launches',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '2',
-          title: 'Product Demo',
-          contactId: '2',
-          contactName: 'Jane Smith',
-          contactEmail: 'jane.smith@example.com',
-          contactPhone: '(555) 987-6543',
-          date: new Date(Date.now() + 172800000), // Day after tomorrow
-          endDate: new Date(Date.now() + 172800000 + 1800000), // 30 minutes later
-          duration: 30,
-          type: 'video',
-          status: 'scheduled',
-          location: '',
-          notes: 'Demo the new features to potential client',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '3',
-          title: 'Office Visit',
-          contactId: '3',
-          contactName: 'Robert Johnson',
-          contactEmail: 'robert@example.com',
-          contactPhone: '(555) 456-7890',
-          date: new Date(Date.now() + 259200000), // 3 days from now
-          endDate: new Date(Date.now() + 259200000 + 5400000), // 1.5 hours later
-          duration: 90,
-          type: 'in-person',
-          status: 'scheduled',
-          location: '123 Business Ave, Suite 400',
-          notes: 'Tour of their facilities and team meeting',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
+        ...existing,
+        ...(get().demoEnabled ? buildSampleAppointments() : []),
       ];
 
       const appointmentsMap = mockAppointments.reduce(
