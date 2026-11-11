@@ -6,6 +6,11 @@ import {
   salesKpis,
   stageConversions,
   bucketDays,
+  mergePerformance,
+  mergePipeline,
+  mergeBreakdown,
+  mergeConversions,
+  sliceForRange,
   type ApiDeal,
 } from '../chartData';
 
@@ -80,5 +85,72 @@ describe('chartData', () => {
     expect(c[1].rate).toBeCloseTo(100, 5);
     expect(c[2].rate).toBeCloseTo((2 / 3) * 100, 5);
     expect(stageConversions([]).every((x) => x.rate === null)).toBe(true);
+  });
+});
+
+describe('merging sample series with real aggregates', () => {
+  it('mergePerformance sums matching buckets once and keeps the rest, without mutating inputs', () => {
+    const real = [
+      { name: 'Jan', revenue: 100, deals: 1 },
+      { name: 'Nov 5', revenue: 50, deals: 2 },
+    ];
+    const demo = [
+      { name: 'Jan', revenue: 12000, deals: 8 },
+      { name: 'Feb', revenue: 15000, deals: 10 },
+    ];
+    const out = mergePerformance(real, demo);
+    expect(out).toEqual([
+      { name: 'Jan', revenue: 12100, deals: 9 },
+      { name: 'Feb', revenue: 15000, deals: 10 },
+      { name: 'Nov 5', revenue: 50, deals: 2 },
+    ]);
+    expect(demo[0]).toEqual({ name: 'Jan', revenue: 12000, deals: 8 });
+    expect(real[0]).toEqual({ name: 'Jan', revenue: 100, deals: 1 });
+    // not double counted when merged twice from the same inputs
+    expect(mergePerformance(real, demo)).toEqual(out);
+  });
+
+  it('merge with empty real data returns the sample series; with empty sample returns real', () => {
+    const demo = [{ name: 'Lead', value: 120 }];
+    expect(mergePipeline([], demo)).toEqual(demo);
+    expect(mergePipeline(demo, [])).toEqual(demo);
+    expect(mergePerformance([], [])).toEqual([]);
+  });
+
+  it('mergePipeline and mergeBreakdown sum by name', () => {
+    expect(
+      mergePipeline([{ name: 'Qualified', value: 2 }, { name: 'Closed Lost', value: 1 }], [{ name: 'Qualified', value: 85 }])
+    ).toEqual([
+      { name: 'Qualified', value: 87 },
+      { name: 'Closed Lost', value: 1 },
+    ]);
+    expect(mergeBreakdown([{ name: 'Software', value: 500 }], [{ name: 'Software', value: 45000 }, { name: 'Other', value: 5000 }])).toEqual([
+      { name: 'Software', value: 45500 },
+      { name: 'Other', value: 5000 },
+    ]);
+  });
+
+  it('mergeConversions uses sample when real is null, averages when both exist', () => {
+    const real = [
+      { label: 'Lead to Opportunity', rate: null },
+      { label: 'Opportunity to Proposal', rate: 50 },
+      { label: 'Proposal to Win', rate: null },
+    ];
+    const demo = [
+      { label: 'Lead to Opportunity', rate: 32, delta: 4.5 },
+      { label: 'Opportunity to Proposal', rate: 70, delta: 2.1 },
+    ];
+    expect(mergeConversions(real, demo)).toEqual([
+      { label: 'Lead to Opportunity', rate: 32, delta: 4.5 },
+      { label: 'Opportunity to Proposal', rate: 60 },
+      { label: 'Proposal to Win', rate: null },
+    ]);
+  });
+
+  it('sliceForRange keeps the trailing window', () => {
+    const xs = [1, 2, 3, 4, 5, 6];
+    expect(sliceForRange(xs, 7)).toEqual([5, 6]);
+    expect(sliceForRange(xs, 30)).toEqual([4, 5, 6]);
+    expect(sliceForRange(xs, 90)).toEqual(xs);
   });
 });
