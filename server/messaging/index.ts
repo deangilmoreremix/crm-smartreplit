@@ -6,7 +6,7 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
 // Minimal Twilio REST client (the `twilio` package is not a dependency, and require() is not
 // available in the ESM function bundle). Same messages.create / messages.list shape as the SDK.
-function twilioClient(accountSid: string, authToken: string) {
+export function twilioClient(accountSid: string, authToken: string) {
   const base = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
   const auth = 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64');
   const toMessage = (m: any) => ({

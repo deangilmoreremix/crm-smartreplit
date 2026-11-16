@@ -1,9 +1,15 @@
-import type { Express } from 'express';
+import type { Express, Response } from 'express';
+import { and, desc, eq } from 'drizzle-orm';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
+import { db } from '../db';
+import { communications } from '../../shared/schema';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { respond } from '../services/openaiResponses';
 
-// In-memory storage for phone calls (temporary until database schema is added)
+// Call records are stored per user in the communications table (type = 'call').
+// Previously this module served two hardcoded sample calls, fixed stats and a canned "analysis".
 interface Call {
   id: string;
   caller: string;
@@ -18,52 +24,39 @@ interface Call {
     actionItems: string[];
     sentimentScore: number;
   };
+  createdAt?: Date | null;
 }
 
-interface PhoneStats {
-  totalCalls: number;
-  answeredCalls: number;
-  averageCallDuration: number;
-  callQuality: number;
-  customerSatisfaction: number;
-  aiAccuracy: number;
+const CALL_FIELDS = ['caller', 'duration', 'status', 'sentiment', 'transcript', 'recording', 'gpt5Analysis'] as const;
+
+const toCall = (row: any): Call => ({
+  id: row.id,
+  ...(row.metadata || {}),
+  transcript: row.content ?? row.metadata?.transcript,
+  createdAt: row.createdAt,
+});
+
+const noDb = (res: Response) => res.status(503).json({ error: 'Database not configured' });
+
+async function findCall(userId: string, id: string) {
+  const [row] = await db!
+    .select()
+    .from(communications)
+    .where(and(eq(communications.id, id), eq(communications.profileId, userId), eq(communications.type, 'call')));
+  return row;
 }
 
-// Temporary in-memory storage
-const calls: Call[] = [
-  {
-    id: '1',
-    caller: '+1 (555) 123-4567',
-    duration: 245,
-    status: 'completed',
-    sentiment: 'positive',
-    transcript:
-      "Hello, I'm calling about your product demo. I'm very interested in learning more about your CRM solution.",
-    recording: '/api/recordings/call-1.mp3',
-    gpt5Analysis: {
-      summary:
-        'Prospect is interested in product demo and wants to learn more about CRM capabilities.',
-      keyPoints: ['Interested in product demo', 'Needs more information about CRM features'],
-      actionItems: ['Schedule product demo', 'Send additional product information'],
-      sentimentScore: 0.85,
-    },
+const ANALYSIS_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['summary', 'keyPoints', 'actionItems', 'sentimentScore', 'sentiment'],
+  properties: {
+    summary: { type: 'string' },
+    keyPoints: { type: 'array', items: { type: 'string' } },
+    actionItems: { type: 'array', items: { type: 'string' } },
+    sentimentScore: { type: 'number', description: '0 (very negative) to 1 (very positive)' },
+    sentiment: { type: 'string', enum: ['positive', 'neutral', 'negative'] },
   },
-  {
-    id: '2',
-    caller: '+1 (555) 987-6543',
-    duration: 0,
-    status: 'missed',
-    sentiment: 'neutral',
-  },
-];
-
-const phoneStats: PhoneStats = {
-  totalCalls: 47,
-  answeredCalls: 42,
-  averageCallDuration: 185,
-  callQuality: 0.92,
-  customerSatisfaction: 0.88,
-  aiAccuracy: 0.94,
 };
 
 export function registerPhoneRoutes(app: Express): void {
@@ -73,17 +66,39 @@ export function registerPhoneRoutes(app: Express): void {
   // Get all calls for the authenticated user
   app.get('/api/phone/calls', async (req, res) => {
     try {
-      res.json(calls);
+      if (!db) return noDb(res);
+      const rows = await db
+        .select()
+        .from(communications)
+        .where(and(eq(communications.profileId, (req as any).userId), eq(communications.type, 'call')))
+        .orderBy(desc(communications.createdAt));
+      res.json(rows.map(toCall));
     } catch (error) {
       console.error('Error fetching calls:', error);
       res.status(500).json({ error: 'Failed to fetch calls' });
     }
   });
 
-  // Get phone statistics
+  // Phone statistics computed from the user's call records (unmeasured metrics are null)
   app.get('/api/phone/stats', async (req, res) => {
     try {
-      res.json(phoneStats);
+      if (!db) return noDb(res);
+      const rows = await db
+        .select()
+        .from(communications)
+        .where(and(eq(communications.profileId, (req as any).userId), eq(communications.type, 'call')));
+      const calls = rows.map(toCall);
+      const answered = calls.filter((c) => c.status === 'completed');
+      res.json({
+        totalCalls: calls.length,
+        answeredCalls: answered.length,
+        averageCallDuration: answered.length
+          ? Math.round(answered.reduce((sum, c) => sum + (Number(c.duration) || 0), 0) / answered.length)
+          : 0,
+        callQuality: null,
+        customerSatisfaction: null,
+        aiAccuracy: null,
+      });
     } catch (error) {
       console.error('Error fetching phone stats:', error);
       res.status(500).json({ error: 'Failed to fetch phone stats' });
@@ -93,30 +108,25 @@ export function registerPhoneRoutes(app: Express): void {
   // Create a new call record
   app.post('/api/phone/calls', async (req, res) => {
     try {
-      const { caller, duration, status, transcript } = req.body;
+      if (!db) return noDb(res);
+      const { caller, duration, status, transcript, sentiment, recording } = req.body;
 
       if (!caller || status === undefined) {
         return res.status(400).json({ error: 'Caller and status are required' });
       }
 
-      const newCall: Call = {
-        id: crypto.randomUUID(),
-        caller,
-        duration: duration || 0,
-        status,
-        sentiment: 'neutral',
-        transcript,
-      };
-
-      calls.push(newCall);
-
-      // Update stats
-      phoneStats.totalCalls += 1;
-      if (status === 'completed') {
-        phoneStats.answeredCalls += 1;
-      }
-
-      res.status(201).json(newCall);
+      const [row] = await db
+        .insert(communications)
+        .values({
+          type: 'call',
+          direction: 'outbound',
+          status: String(status),
+          content: transcript ?? null,
+          profileId: (req as any).userId,
+          metadata: { caller, duration: Number(duration) || 0, status, sentiment: sentiment || 'neutral', recording },
+        })
+        .returning();
+      res.status(201).json(toCall(row));
     } catch (error) {
       console.error('Error creating call:', error);
       res.status(500).json({ error: 'Failed to create call' });
@@ -126,14 +136,10 @@ export function registerPhoneRoutes(app: Express): void {
   // Get a specific call
   app.get('/api/phone/calls/:id', async (req, res) => {
     try {
-      const callId = req.params.id;
-      const call = calls.find((c) => c.id === callId);
-
-      if (!call) {
-        return res.status(404).json({ error: 'Call not found' });
-      }
-
-      res.json(call);
+      if (!db) return noDb(res);
+      const row = await findCall((req as any).userId, req.params.id);
+      if (!row) return res.status(404).json({ error: 'Call not found' });
+      res.json(toCall(row));
     } catch (error) {
       console.error('Error fetching call:', error);
       res.status(500).json({ error: 'Failed to fetch call' });
@@ -143,104 +149,78 @@ export function registerPhoneRoutes(app: Express): void {
   // Update a call
   app.put('/api/phone/calls/:id', async (req, res) => {
     try {
-      const callId = req.params.id;
-      const callIndex = calls.findIndex((c) => c.id === callId);
-
-      if (callIndex === -1) {
-        return res.status(404).json({ error: 'Call not found' });
-      }
+      if (!db) return noDb(res);
+      const row = await findCall((req as any).userId, req.params.id);
+      if (!row) return res.status(404).json({ error: 'Call not found' });
 
       // Whitelist allowed fields to prevent mass assignment
-      const allowedFields = [
-        'caller',
-        'duration',
-        'status',
-        'sentiment',
-        'transcript',
-        'recording',
-        'gpt5Analysis',
-      ];
-      const updates: Partial<Call> = {};
+      const updates: Record<string, unknown> = {};
+      for (const field of CALL_FIELDS) if (field in req.body) updates[field] = req.body[field];
 
-      for (const field of allowedFields) {
-        if (field in req.body) {
-          (updates as Record<string, unknown>)[field] = req.body[field];
-        }
-      }
-
-      const updatedCall: Call = {
-        ...calls[callIndex],
-        ...updates,
-      };
-
-      calls[callIndex] = updatedCall;
-      res.json(updatedCall);
+      const [updated] = await db
+        .update(communications)
+        .set({
+          metadata: { ...(row.metadata as object), ...updates },
+          ...('transcript' in updates ? { content: String(updates.transcript ?? '') } : {}),
+          ...('status' in updates ? { status: String(updates.status) } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(communications.id, row.id))
+        .returning();
+      res.json(toCall(updated));
     } catch (error) {
       console.error('Error updating call:', error);
       res.status(500).json({ error: 'Failed to update call' });
     }
   });
 
-  // Analyze call transcript
+  // Analyze a call transcript with the user's OpenAI key (Responses API, structured output)
   app.post('/api/phone/calls/:id/analyze', async (req, res) => {
     try {
-      const callId = req.params.id;
-      const callIndex = calls.findIndex((c) => c.id === callId);
+      if (!db) return noDb(res);
+      const userId = (req as any).userId;
+      const row = await findCall(userId, req.params.id);
+      if (!row) return res.status(404).json({ error: 'Call not found' });
 
-      if (callIndex === -1) {
-        return res.status(404).json({ error: 'Call not found' });
-      }
-
-      const call = calls[callIndex];
-
+      const call = toCall(row);
       if (!call.transcript) {
         return res.status(400).json({ error: 'Call has no transcript to analyze' });
       }
 
-      // Mock AI analysis
-      const analysis = {
-        summary: `Call analysis for ${call.caller}`,
-        keyPoints: [
-          'Customer expressed interest in product features',
-          'Discussed pricing and implementation timeline',
-          'Requested additional documentation',
-        ],
-        actionItems: [
-          'Send product brochure',
-          'Schedule follow-up call',
-          'Prepare pricing proposal',
-        ],
-        sentimentScore: 0.75,
-      };
+      const openaiData = await getUserOpenAIClient(userId);
+      if (!openaiData) {
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+      }
 
-      call.gpt5Analysis = analysis;
+      const result = await respond(openaiData.client, {
+        model: openaiData.model,
+        instructions:
+          'You analyse sales call transcripts. Summarise, list key points and concrete action items, and rate sentiment. Use only what the transcript says.',
+        input: `Caller: ${call.caller}\nTranscript:\n${call.transcript}`,
+        json: { name: 'call_analysis', schema: ANALYSIS_SCHEMA },
+      });
+      if (!result.data) return res.status(502).json({ error: 'The AI response was not valid JSON' });
+
+      const { sentiment, ...analysis } = result.data;
+      await db
+        .update(communications)
+        .set({ metadata: { ...(row.metadata as object), sentiment, gpt5Analysis: analysis }, updatedAt: new Date() })
+        .where(eq(communications.id, row.id));
       res.json(analysis);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error analyzing call:', error);
-      res.status(500).json({ error: 'Failed to analyze call' });
+      res.status(500).json({ error: error?.message || 'Failed to analyze call' });
     }
   });
 
-  // Start a call (WebRTC signaling would go here in production)
+  // Placing calls needs a voice provider integration, which isn't connected
   app.post('/api/phone/calls/start', async (req, res) => {
-    try {
-      const { number, type } = req.body;
-
-      if (!number) {
-        return res.status(400).json({ error: 'Phone number is required' });
-      }
-
-      // In a real implementation, this would initiate a call via Twilio or similar
-      // For now, just return success
-      res.json({
-        callId: crypto.randomUUID(),
-        status: 'initiated',
-        number,
-        type: type || 'voice',
-      });
-    } catch (error) {
-      console.error('Error starting call:', error);
-      res.status(500).json({ error: 'Failed to start call' });
+    const { number } = req.body || {};
+    if (!number) {
+      return res.status(400).json({ error: 'Phone number is required' });
     }
+    res.status(501).json({
+      error: 'Outbound calling is not connected. Use your phone app, then log the call.',
+    });
   });
 }

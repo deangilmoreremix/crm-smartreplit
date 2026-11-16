@@ -890,7 +890,7 @@ var creditService_exports = {};
 __export(creditService_exports, {
   CreditService: () => CreditService
 });
-import { eq as eq5, and as and4, desc as desc4 } from "drizzle-orm";
+import { eq as eq7, and as and6, desc as desc6 } from "drizzle-orm";
 var CreditService;
 var init_creditService = __esm({
   "server/services/creditService.ts"() {
@@ -904,7 +904,7 @@ var init_creditService = __esm({
       static async getCreditBalance(userId, tx) {
         const dbClient = tx || db;
         try {
-          const credits = await dbClient.select().from(userCredits).where(eq5(userCredits.userId, userId)).limit(1);
+          const credits = await dbClient.select().from(userCredits).where(eq7(userCredits.userId, userId)).limit(1);
           if (credits.length === 0) {
             const newCredits = {
               userId,
@@ -937,7 +937,7 @@ var init_creditService = __esm({
        */
       static async purchaseCredits(data) {
         return await db.transaction(async (tx) => {
-          const plan = await tx.select().from(usagePlans).where(eq5(usagePlans.id, data.planId)).limit(1);
+          const plan = await tx.select().from(usagePlans).where(eq7(usagePlans.id, data.planId)).limit(1);
           if (plan.length === 0) {
             throw new Error(`Plan ${data.planId} not found`);
           }
@@ -1000,7 +1000,7 @@ var init_creditService = __esm({
             usedCredits: newUsedCredits.toString(),
             availableCredits: newAvailableCredits.toString(),
             updatedAt: /* @__PURE__ */ new Date()
-          }).where(eq5(userCredits.userId, data.userId));
+          }).where(eq7(userCredits.userId, data.userId));
           const transaction = {
             userId: data.userId,
             type: "usage",
@@ -1037,7 +1037,7 @@ var init_creditService = __esm({
        */
       static async getCreditTransactionHistory(userId, limit = 50) {
         try {
-          const transactions = await db.select().from(creditTransactions).where(eq5(creditTransactions.userId, userId)).orderBy(desc4(creditTransactions.createdAt)).limit(limit);
+          const transactions = await db.select().from(creditTransactions).where(eq7(creditTransactions.userId, userId)).orderBy(desc6(creditTransactions.createdAt)).limit(limit);
           return transactions.map((transaction) => ({
             id: transaction.id,
             type: transaction.type,
@@ -1058,7 +1058,7 @@ var init_creditService = __esm({
        */
       static async getCreditPackages() {
         try {
-          const packages = await db.select().from(usagePlans).where(and4(eq5(usagePlans.billingType, "pay_per_use"), eq5(usagePlans.isActive, true)));
+          const packages = await db.select().from(usagePlans).where(and6(eq7(usagePlans.billingType, "pay_per_use"), eq7(usagePlans.isActive, true)));
           return packages.map((pkg) => {
             const limits = pkg.limits;
             return {
@@ -1126,7 +1126,7 @@ var init_creditService = __esm({
             usedCredits: newUsedCredits.toString(),
             availableCredits: newAvailableCredits.toString(),
             updatedAt: /* @__PURE__ */ new Date()
-          }).where(eq5(userCredits.userId, userId));
+          }).where(eq7(userCredits.userId, userId));
           const transaction = {
             userId,
             type: "refund",
@@ -1329,7 +1329,7 @@ function contentToResponses(content) {
 function chatToResponsesParams(params) {
   const {
     model,
-    messages: messages2 = [],
+    messages = [],
     response_format,
     max_tokens,
     max_completion_tokens,
@@ -1337,8 +1337,8 @@ function chatToResponsesParams(params) {
     tool_choice,
     stream
   } = params;
-  const instructions = messages2.filter((m) => m.role === "system" || m.role === "developer").map((m) => typeof m.content === "string" ? m.content : (m.content || []).map((p) => p.text).join("\n")).join("\n\n");
-  const input = messages2.filter((m) => m.role !== "system" && m.role !== "developer").map(
+  const instructions = messages.filter((m) => m.role === "system" || m.role === "developer").map((m) => typeof m.content === "string" ? m.content : (m.content || []).map((p) => p.text).join("\n")).join("\n\n");
+  const input = messages.filter((m) => m.role !== "system" && m.role !== "developer").map(
     (m) => m.role === "tool" ? { type: "function_call_output", call_id: m.tool_call_id, output: String(m.content ?? "") } : { role: m.role, content: contentToResponses(m.content) }
   );
   let text2;
@@ -1372,7 +1372,7 @@ function chatToResponsesParams(params) {
   };
 }
 function responseToChatCompletion(response) {
-  const calls2 = (response.output || []).filter((item) => item.type === "function_call");
+  const calls = (response.output || []).filter((item) => item.type === "function_call");
   const content = outputText(response);
   return {
     id: response.id,
@@ -1385,15 +1385,15 @@ function responseToChatCompletion(response) {
         message: {
           role: "assistant",
           content: content || null,
-          ...calls2.length ? {
-            tool_calls: calls2.map((c) => ({
+          ...calls.length ? {
+            tool_calls: calls.map((c) => ({
               id: c.call_id,
               type: "function",
               function: { name: c.name, arguments: c.arguments }
             }))
           } : {}
         },
-        finish_reason: calls2.length ? "tool_calls" : response.status === "incomplete" ? "length" : "stop"
+        finish_reason: calls.length ? "tool_calls" : response.status === "incomplete" ? "length" : "stop"
       }
     ],
     usage: response.usage ? {
@@ -2899,6 +2899,23 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
   });
 }
 
+// server/supabase.ts
+import { createClient as createClient2 } from "@supabase/supabase-js";
+var supabaseUrl2 = process.env.SUPABASE_URL || "";
+var supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+if (!supabaseUrl2 || !supabaseServiceKey) {
+  console.warn("Supabase server configuration missing. Some features may not work.");
+}
+var supabase = supabaseUrl2 && supabaseServiceKey ? createClient2(supabaseUrl2, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+}) : null;
+var isSupabaseConfigured = () => {
+  return !!supabase;
+};
+
 // server/middleware/security.ts
 import helmet from "helmet";
 import cors from "cors";
@@ -3605,6 +3622,13 @@ var sanitizeInput = (req, res, next) => {
 // server/routes/admin.ts
 init_schema();
 import { eq as eq3, count, sql as sql3 } from "drizzle-orm";
+async function sendPasswordSetupEmail(email) {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.SITE_URL || "https://smart-crm.videoremix.io"}/auth/callback?setup=true`
+  });
+  if (error) throw new Error(error.message);
+}
 function registerAdminRoutes(app2) {
   app2.get("/api/admin/stats", adminLimiter, requireAdmin, async (req, res) => {
     try {
@@ -3613,9 +3637,9 @@ function registerAdminRoutes(app2) {
       const totalUsers = totalUsersResult[0]?.count || 0;
       const adminUsersResult = await db2.select({ count: count() }).from(profiles).where(sql3`${profiles.role} IN ('super_admin', 'admin')`);
       const adminUsers = adminUsersResult[0]?.count || 0;
-      const systemHealth = 98;
-      const alerts = Math.floor(Math.random() * 5);
-      const activeSessions = Math.floor(totalUsers * 0.3);
+      const systemHealth = null;
+      const alerts = null;
+      const activeSessions = null;
       res.json({
         totalUsers,
         activeSessions,
@@ -3691,7 +3715,8 @@ function registerAdminRoutes(app2) {
         res.json({
           success: true,
           user: newUser[0],
-          message: "User invitation sent successfully"
+          invitationSent: false,
+          message: "User created (no invitation email was sent)"
         });
       } catch (error) {
         console.error("Failed to invite user:", error);
@@ -3824,7 +3849,10 @@ function registerAdminRoutes(app2) {
         if (!email) {
           return res.status(400).json({ error: "Email is required" });
         }
-        console.log(`Password setup email requested for: ${email}`);
+        if (!supabase) {
+          return res.status(501).json({ error: "Email sending is not configured (Supabase)" });
+        }
+        await sendPasswordSetupEmail(email);
         res.json({
           success: true,
           message: "Password setup email sent successfully"
@@ -3846,11 +3874,14 @@ function registerAdminRoutes(app2) {
         if (!Array.isArray(emails) || emails.length === 0) {
           return res.status(400).json({ error: "Emails array is required" });
         }
+        if (!supabase) {
+          return res.status(501).json({ error: "Email sending is not configured (Supabase)" });
+        }
         let sent = 0;
         let failed = 0;
         for (const email of emails) {
           try {
-            console.log(`Bulk password setup email sent to: ${email}`);
+            await sendPasswordSetupEmail(email);
             sent++;
           } catch (error) {
             console.error(`Failed to send to ${email}:`, error);
@@ -3858,7 +3889,7 @@ function registerAdminRoutes(app2) {
           }
         }
         res.json({
-          success: true,
+          success: failed === 0,
           sent,
           failed,
           message: `Bulk password setup emails processed: ${sent} sent, ${failed} failed`
@@ -3951,9 +3982,10 @@ function registerAdminRoutes(app2) {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const totalUsers = await db2.select({ count: count() }).from(profiles);
       const recentUsers = await db2.select({ count: count() }).from(profiles).where(sql3`${profiles.createdAt} > ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1e3)}`);
-      const activeUsers24h = Math.floor(totalUsers[0]?.count * 0.3) || 0;
-      const activeUsers7d = Math.floor(totalUsers[0]?.count * 0.6) || 0;
-      const newUsersToday = Math.floor(recentUsers[0]?.count * 0.1) || 0;
+      const todayUsers = await db2.select({ count: count() }).from(profiles).where(sql3`${profiles.createdAt} > ${new Date(Date.now() - 24 * 60 * 60 * 1e3)}`);
+      const activeUsers24h = null;
+      const activeUsers7d = null;
+      const newUsersToday = todayUsers[0]?.count || 0;
       res.json({
         totalUsers: totalUsers[0]?.count || 0,
         activeUsers24h,
@@ -3977,21 +4009,16 @@ function registerAdminRoutes(app2) {
         database: {
           status: "healthy",
           responseTime: queryTime,
-          connectionCount: 1,
-          // Mock
-          activeConnections: 1
-          // Mock
+          connectionCount: null,
+          activeConnections: null
         },
         system: {
           uptime: process.uptime(),
           memoryUsage: process.memoryUsage(),
-          cpuUsage: 0.15
-          // Mock
+          cpuUsage: process.cpuUsage()
         },
-        lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1e3).toISOString(),
-        // Mock: 24h ago
-        alerts: Math.floor(Math.random() * 3),
-        // 0-2 random alerts
+        lastBackup: null,
+        alerts: null,
         timestamp: (/* @__PURE__ */ new Date()).toISOString()
       };
       res.json(health);
@@ -4007,45 +4034,8 @@ function registerAdminRoutes(app2) {
     try {
       const { page = 1, limit = 50, action, userId, dateFrom, dateTo } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
-      const mockAuditLogs = [
-        {
-          id: 1,
-          adminId: "admin-1",
-          adminEmail: "admin@company.com",
-          action: "USER_CREATE",
-          targetUserId: "user-123",
-          targetUserEmail: "newuser@company.com",
-          details: { role: "regular_user", productTier: "smartcrm" },
-          ipAddress: "192.168.1.100",
-          createdAt: new Date(Date.now() - 1e3 * 60 * 30).toISOString()
-          // 30 min ago
-        },
-        {
-          id: 2,
-          adminId: "admin-1",
-          adminEmail: "admin@company.com",
-          action: "BULK_IMPORT",
-          targetUserId: null,
-          targetUserEmail: null,
-          details: { imported: 25, failed: 2 },
-          ipAddress: "192.168.1.100",
-          createdAt: new Date(Date.now() - 1e3 * 60 * 60 * 2).toISOString()
-          // 2 hours ago
-        },
-        {
-          id: 3,
-          adminId: "admin-1",
-          adminEmail: "admin@company.com",
-          action: "USER_UPDATE",
-          targetUserId: "user-456",
-          targetUserEmail: "existing@company.com",
-          details: { field: "productTier", oldValue: "smartcrm", newValue: "sales_maximizer" },
-          ipAddress: "192.168.1.100",
-          createdAt: new Date(Date.now() - 1e3 * 60 * 60 * 24).toISOString()
-          // 1 day ago
-        }
-      ];
-      let filteredLogs = mockAuditLogs;
+      const auditLogs = [];
+      let filteredLogs = auditLogs;
       if (action) {
         filteredLogs = filteredLogs.filter((log2) => log2.action === action);
       }
@@ -4068,7 +4058,8 @@ function registerAdminRoutes(app2) {
         total: filteredLogs.length,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(filteredLogs.length / parseInt(limit))
+        totalPages: Math.ceil(filteredLogs.length / parseInt(limit)),
+        persisted: false
       });
     } catch (error) {
       console.error("Failed to fetch audit logs:", error);
@@ -4086,18 +4077,7 @@ function registerAdminRoutes(app2) {
         if (!name || !config) {
           return res.status(400).json({ error: "Name and config are required" });
         }
-        const template = {
-          id: Date.now(),
-          name,
-          config,
-          createdBy: req.user.id,
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        };
-        res.json({
-          success: true,
-          template,
-          message: "User template created successfully"
-        });
+        return res.status(501).json({ error: "User templates are not implemented (no storage)" });
       } catch (error) {
         console.error("Failed to create user template:", error);
         res.status(500).json({ error: "Failed to create user template" });
@@ -4106,41 +4086,7 @@ function registerAdminRoutes(app2) {
   );
   app2.get("/api/admin/user-templates", adminLimiter, requireAdmin, async (req, res) => {
     try {
-      const templates = [
-        {
-          id: 1,
-          name: "Sales Representative",
-          config: {
-            role: "wl_user",
-            productTier: "sales_maximizer",
-            permissions: ["contacts.create", "deals.create", "analytics.view"]
-          },
-          createdBy: "admin-1",
-          createdAt: new Date(Date.now() - 1e3 * 60 * 60 * 24 * 7).toISOString()
-        },
-        {
-          id: 2,
-          name: "Marketing Manager",
-          config: {
-            role: "wl_user",
-            productTier: "ai_communication",
-            permissions: ["contacts.create", "campaigns.create", "analytics.view"]
-          },
-          createdBy: "admin-1",
-          createdAt: new Date(Date.now() - 1e3 * 60 * 60 * 24 * 5).toISOString()
-        },
-        {
-          id: 3,
-          name: "Basic User",
-          config: {
-            role: "regular_user",
-            productTier: "smartcrm",
-            permissions: ["contacts.view", "tasks.create"]
-          },
-          createdBy: "admin-1",
-          createdAt: new Date(Date.now() - 1e3 * 60 * 60 * 24 * 3).toISOString()
-        }
-      ];
+      const templates = [];
       res.json({
         success: true,
         templates
@@ -4160,20 +4106,7 @@ function registerAdminRoutes(app2) {
         if (!actionType || !config) {
           return res.status(400).json({ error: "Action type and config are required" });
         }
-        const automatedAction = {
-          id: Date.now(),
-          actionType,
-          // 'suspend_inactive', 'upgrade_trials', 'send_reminders'
-          config,
-          createdBy: req.user.id,
-          isActive: true,
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        };
-        res.json({
-          success: true,
-          action: automatedAction,
-          message: `Automated ${actionType} action configured successfully`
-        });
+        return res.status(501).json({ error: `Automated ${actionType} actions are not implemented` });
       } catch (error) {
         console.error("Failed to setup automated action:", error);
         res.status(500).json({ error: "Failed to setup automated action" });
@@ -4253,23 +4186,6 @@ function registerAdminRoutes(app2) {
 
 // server/routes/workflows.ts
 import { Router as Router2 } from "express";
-
-// server/supabase.ts
-import { createClient as createClient2 } from "@supabase/supabase-js";
-var supabaseUrl2 = process.env.SUPABASE_URL || "";
-var supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-if (!supabaseUrl2 || !supabaseServiceKey) {
-  console.warn("Supabase server configuration missing. Some features may not work.");
-}
-var supabase = supabaseUrl2 && supabaseServiceKey ? createClient2(supabaseUrl2, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-}) : null;
-var isSupabaseConfigured = () => {
-  return !!supabase;
-};
 
 // packages/workflows/src/events/emitter.ts
 var WorkflowEventEmitter = class {
@@ -5210,7 +5126,8 @@ function createVideoForUser(userId, input) {
     },
     gpt5Metadata: {
       generatedScript: false,
-      optimizationScore: 0.8,
+      optimizationScore: null,
+      // not measured
       suggestedImprovements: [],
       tone: "professional",
       targetAudience: "business"
@@ -5244,8 +5161,8 @@ function registerVideoRoutes(app2) {
         totalVideos: userVideos.length,
         totalViews: userVideos.reduce((sum, video) => sum + video.analytics.views, 0),
         averageEngagement: userVideos.length > 0 ? userVideos.reduce((sum, video) => sum + video.analytics.engagement, 0) / userVideos.length : 0,
-        conversionRate: 0.15,
-        // Mock conversion rate
+        conversionRate: null,
+        // conversions are not tracked (was a hardcoded 15%)
         topPerformingVideo: userVideos.length > 0 ? userVideos.reduce(
           (top, video) => video.analytics.views > (userVideos.find((v) => v.title === top)?.analytics.views || 0) ? video.title : top,
           userVideos[0]?.title || ""
@@ -6589,7 +6506,7 @@ async function executeCRMFunction(toolName, params, userId) {
           and3(eq4(communications.contactId, contactId), eq4(communications.profileId, userId))
         );
         const emails = comms.filter((c) => c.type === "email");
-        const calls2 = comms.filter((c) => c.type === "call");
+        const calls = comms.filter((c) => c.type === "call");
         const meetings = comms.filter((c) => c.type === "meeting");
         const sms = comms.filter((c) => c.type === "sms");
         const inboundCount = comms.filter((c) => c.direction === "inbound").length;
@@ -6600,7 +6517,7 @@ async function executeCRMFunction(toolName, params, userId) {
         return {
           totalCommunications: comms.length,
           emails: emails.length,
-          calls: calls2.length,
+          calls: calls.length,
           meetings: meetings.length,
           sms: sms.length,
           inboundCount,
@@ -9808,14 +9725,7 @@ var DomainManager = class _DomainManager {
         ssl_status: "provisioning",
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", domainId);
-      await new Promise((resolve) => setTimeout(resolve, 2e3));
-      const expiresAt = /* @__PURE__ */ new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
-      await supabase3.from("domains").update({
-        ssl_status: "active",
-        ssl_expires_at: expiresAt.toISOString(),
-        updated_at: (/* @__PURE__ */ new Date()).toISOString()
-      }).eq("id", domainId);
+      await this.syncSSLStatus(domainId);
     } catch (error) {
       await supabase3.from("domains").update({
         ssl_status: "failed",
@@ -9880,6 +9790,31 @@ var DomainManager = class _DomainManager {
       health.issues.push("SSL certificate check failed");
     }
     return health;
+  }
+  /**
+   * Record the TLS certificate a domain actually serves: 'active' with its real expiry when a
+   * certificate for the domain is served, otherwise 'pending' (the provider has not issued one yet).
+   */
+  async syncSSLStatus(domainId) {
+    if (!supabase3) throw new Error("Supabase not configured");
+    const { data: row, error } = await supabase3.from("domains").select("domain").eq("id", domainId).single();
+    if (error || !row?.domain) throw new Error(`Domain not found: ${error?.message || domainId}`);
+    let cert = null;
+    try {
+      cert = await this.getSSLCertificate(row.domain);
+    } catch {
+      cert = null;
+    }
+    const names = `${cert?.subject?.CN || ""} ${cert?.subjectaltname || ""}`.toLowerCase();
+    const validTo = cert?.valid_to ? new Date(cert.valid_to) : null;
+    const coversDomain = names.includes(String(row.domain).toLowerCase());
+    const active = Boolean(validTo && validTo > /* @__PURE__ */ new Date() && coversDomain);
+    await supabase3.from("domains").update({
+      ssl_status: active ? "active" : "pending",
+      ssl_expires_at: active && validTo ? validTo.toISOString() : null,
+      error_message: active ? null : "No valid certificate is served for this domain yet",
+      updated_at: (/* @__PURE__ */ new Date()).toISOString()
+    }).eq("id", domainId);
   }
   /**
    * Get SSL certificate information
@@ -9955,14 +9890,7 @@ var DomainManager = class _DomainManager {
         ssl_status: "provisioning",
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", domainId);
-      await new Promise((resolve) => setTimeout(resolve, 1e3));
-      const expiresAt = /* @__PURE__ */ new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
-      await supabase3.from("domains").update({
-        ssl_status: "active",
-        ssl_expires_at: expiresAt.toISOString(),
-        updated_at: (/* @__PURE__ */ new Date()).toISOString()
-      }).eq("id", domainId);
+      await this.syncSSLStatus(domainId);
     } catch (error) {
       await supabase3.from("domains").update({
         ssl_status: "failed",
@@ -13781,73 +13709,89 @@ router13.get("/stream/:tenantId", async (req, res) => {
 var whitelabel_default = router13;
 
 // server/routes/messaging.ts
-var messageProviders = [
-  {
-    id: "twilio",
-    name: "Twilio",
-    apiKey: "***masked***",
-    costPerMessage: 75e-4,
-    supportedFeatures: ["SMS", "MMS", "Voice"],
-    status: "active",
-    deliveryRate: 0.98,
-    responseTime: 2
-  },
-  {
-    id: "aws-sns",
-    name: "AWS SNS",
-    apiKey: "***masked***",
-    costPerMessage: 65e-4,
-    supportedFeatures: ["SMS"],
-    status: "active",
-    deliveryRate: 0.95,
-    responseTime: 3
-  }
-];
-var messages = [
-  {
-    id: "1",
-    content: "Thank you for your interest in our product. Would you like to schedule a demo?",
-    recipient: "+1234567890",
-    provider: "twilio",
-    status: "delivered",
-    sentAt: (/* @__PURE__ */ new Date()).toISOString(),
-    gpt5Suggestions: ["Consider adding a specific time suggestion", "Include a call-to-action"],
-    sentiment: "positive",
-    priority: "high"
-  },
-  {
-    id: "2",
-    content: "Your order has been shipped and will arrive tomorrow.",
-    recipient: "+1987654321",
-    provider: "aws-sns",
-    status: "sent",
-    sentAt: new Date(Date.now() - 36e5).toISOString(),
-    sentiment: "neutral",
-    priority: "medium"
-  }
-];
-var messagingStats = {
-  totalMessages: 245,
-  deliveredMessages: 238,
-  deliveryRate: 0.971,
-  averageResponseTime: 2.3,
-  totalCost: 1.85,
-  costPerMessage: 76e-4,
-  activeProviders: 2
-};
+import { and as and4, desc as desc4, eq as eq5 } from "drizzle-orm";
+init_db();
+init_schema();
+
+// server/messaging/index.ts
+var twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
+var twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+var twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+var supabaseUrl10 = process.env.SUPABASE_URL;
+var supabaseKey6 = process.env.SUPABASE_ANON_KEY;
+function twilioClient(accountSid, authToken) {
+  const base = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  const auth = "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+  const toMessage2 = (m) => ({
+    sid: m.sid,
+    body: m.body,
+    to: m.to,
+    status: m.status,
+    price: m.price,
+    dateSent: m.date_sent,
+    dateCreated: m.date_created
+  });
+  return {
+    messages: {
+      async create(params) {
+        const form = new URLSearchParams({ Body: params.body, To: params.to });
+        if (params.from) form.set("From", params.from);
+        if (params.statusCallback) form.set("StatusCallback", params.statusCallback);
+        const res = await fetch(base, {
+          method: "POST",
+          headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded" },
+          body: form.toString()
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || `Twilio error ${res.status}`);
+        return toMessage2(data);
+      },
+      async list(params) {
+        const query = new URLSearchParams({ PageSize: String(Math.min(1e3, params.limit || 50)) });
+        if (params.dateSentAfter) query.set("DateSent>", params.dateSentAfter.toISOString().slice(0, 10));
+        if (params.dateSentBefore) query.set("DateSent<", params.dateSentBefore.toISOString().slice(0, 10));
+        const res = await fetch(`${base}?${query}`, { headers: { Authorization: auth } });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || `Twilio error ${res.status}`);
+        return (data.messages || []).map(toMessage2);
+      }
+    }
+  };
+}
+
+// server/routes/messaging.ts
+var twilioConfigured = () => Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER);
+var toMessage = (row) => ({
+  id: row.id,
+  content: row.content || "",
+  recipient: row.metadata?.recipient || "",
+  provider: row.metadata?.provider || "twilio",
+  status: row.status || "sent",
+  sentAt: (row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt || Date.now())).toISOString(),
+  priority: row.metadata?.priority || "medium",
+  ...row.metadata?.error ? { error: row.metadata.error } : {}
+});
+var noDb = (res) => res.status(503).json({ error: "Database not configured" });
+async function userMessages(userId) {
+  return db.select().from(communications).where(and4(eq5(communications.profileId, userId), eq5(communications.type, "sms"))).orderBy(desc4(communications.createdAt));
+}
 function registerMessagingRoutes(app2) {
   app2.use("/api/messaging", requireAuth(), requireEntitlement(FeatureKey.TEXT_MESSAGES));
-  app2.get("/api/messaging/providers", async (req, res) => {
-    try {
-      res.json(messageProviders);
-    } catch (error) {
-      console.error("Error fetching message providers:", error);
-      res.status(500).json({ error: "Failed to fetch message providers" });
-    }
+  app2.get("/api/messaging/providers", async (_req, res) => {
+    res.json([
+      {
+        id: "twilio",
+        name: "Twilio",
+        supportedFeatures: ["SMS"],
+        status: twilioConfigured() ? "active" : "inactive",
+        ...twilioConfigured() ? {} : { message: "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER" }
+      }
+    ]);
   });
   app2.get("/api/messaging/messages", async (req, res) => {
     try {
-      res.json(messages);
+      if (!db) return noDb(res);
+      res.json((await userMessages(req.userId)).map(toMessage));
     } catch (error) {
       console.error("Error fetching messages:", error);
       res.status(500).json({ error: "Failed to fetch messages" });
@@ -13855,7 +13799,20 @@ function registerMessagingRoutes(app2) {
   });
   app2.get("/api/messaging/stats", async (req, res) => {
     try {
-      res.json(messagingStats);
+      if (!db) return noDb(res);
+      const messages = (await userMessages(req.userId)).map(toMessage);
+      const delivered = messages.filter((m) => m.status === "delivered").length;
+      const failed = messages.filter((m) => m.status === "failed").length;
+      res.json({
+        totalMessages: messages.length,
+        deliveredMessages: delivered,
+        failedMessages: failed,
+        deliveryRate: messages.length ? delivered / messages.length : null,
+        averageResponseTime: null,
+        totalCost: null,
+        costPerMessage: null,
+        activeProviders: twilioConfigured() ? 1 : 0
+      });
     } catch (error) {
       console.error("Error fetching messaging stats:", error);
       res.status(500).json({ error: "Failed to fetch messaging stats" });
@@ -13863,35 +13820,50 @@ function registerMessagingRoutes(app2) {
   });
   app2.post("/api/messaging/send", async (req, res) => {
     try {
-      const { content, recipient, provider } = req.body;
-      if (!content || !recipient || !provider) {
-        return res.status(400).json({ error: "Content, recipient, and provider are required" });
+      const { content, recipient, provider = "twilio" } = req.body || {};
+      if (!content || !recipient) {
+        return res.status(400).json({ error: "Content and recipient are required" });
       }
-      if (typeof content !== "string" || content.length === 0 || content.length > 5e3) {
-        return res.status(400).json({ error: "Content must be between 1 and 5000 characters" });
+      if (typeof content !== "string" || content.length === 0 || content.length > 1600) {
+        return res.status(400).json({ error: "Content must be between 1 and 1600 characters" });
       }
-      if (typeof recipient !== "string" || recipient.length === 0 || recipient.length > 200) {
-        return res.status(400).json({ error: "Invalid recipient format" });
+      if (typeof recipient !== "string" || !/^\+?[0-9\s().-]{7,20}$/.test(recipient)) {
+        return res.status(400).json({ error: "Recipient must be a phone number" });
       }
-      const providerExists = messageProviders.find(
-        (p) => p.id === provider && p.status === "active"
-      );
-      if (!providerExists) {
-        return res.status(400).json({ error: "Invalid or inactive provider" });
+      if (provider !== "twilio") {
+        return res.status(400).json({ error: `Unsupported provider: ${provider}` });
       }
-      const newMessage = {
-        id: crypto.randomUUID(),
+      if (!twilioConfigured()) {
+        return res.status(501).json({
+          error: "SMS is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER."
+        });
+      }
+      if (!db) return noDb(res);
+      const to = recipient.replace(/[\s().-]/g, "");
+      let status = "failed";
+      let sid;
+      let error;
+      try {
+        const sent = await twilioClient(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN).messages.create({
+          body: content,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to
+        });
+        status = sent.status || "queued";
+        sid = sent.sid;
+      } catch (sendError) {
+        error = sendError?.message || "Twilio send failed";
+      }
+      const [row] = await db.insert(communications).values({
+        type: "sms",
+        direction: "outbound",
         content,
-        recipient,
-        provider,
-        status: "sent",
-        sentAt: (/* @__PURE__ */ new Date()).toISOString(),
-        priority: "medium"
-      };
-      messages.push(newMessage);
-      messagingStats.totalMessages += 1;
-      messagingStats.totalCost += providerExists.costPerMessage;
-      res.status(201).json(newMessage);
+        status,
+        profileId: req.userId,
+        metadata: { recipient: to, provider: "twilio", sid, ...error ? { error } : {} }
+      }).returning();
+      if (error) return res.status(502).json({ error, message: toMessage(row) });
+      res.status(201).json(toMessage(row));
     } catch (error) {
       console.error("Error sending message:", error);
       res.status(500).json({ error: "Failed to send message" });
@@ -13899,12 +13871,16 @@ function registerMessagingRoutes(app2) {
   });
   app2.get("/api/messaging/messages/:id", async (req, res) => {
     try {
-      const messageId = req.params.id;
-      const message = messages.find((m) => m.id === messageId);
-      if (!message) {
-        return res.status(404).json({ error: "Message not found" });
-      }
-      res.json(message);
+      if (!db) return noDb(res);
+      const [row] = await db.select().from(communications).where(
+        and4(
+          eq5(communications.id, req.params.id),
+          eq5(communications.profileId, req.userId),
+          eq5(communications.type, "sms")
+        )
+      );
+      if (!row) return res.status(404).json({ error: "Message not found" });
+      res.json(toMessage(row));
     } catch (error) {
       console.error("Error fetching message:", error);
       res.status(500).json({ error: "Failed to fetch message" });
@@ -13912,18 +13888,20 @@ function registerMessagingRoutes(app2) {
   });
   app2.put("/api/messaging/messages/:id/status", async (req, res) => {
     try {
-      const messageId = req.params.id;
-      const { status } = req.body;
-      const messageIndex = messages.findIndex((m) => m.id === messageId);
-      if (messageIndex === -1) {
-        return res.status(404).json({ error: "Message not found" });
+      if (!db) return noDb(res);
+      const { status } = req.body || {};
+      if (!["queued", "sent", "delivered", "failed", "undelivered"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
       }
-      messages[messageIndex].status = status;
-      if (status === "delivered") {
-        messagingStats.deliveredMessages += 1;
-        messagingStats.deliveryRate = messagingStats.deliveredMessages / messagingStats.totalMessages;
-      }
-      res.json(messages[messageIndex]);
+      const [row] = await db.update(communications).set({ status, updatedAt: /* @__PURE__ */ new Date() }).where(
+        and4(
+          eq5(communications.id, req.params.id),
+          eq5(communications.profileId, req.userId),
+          eq5(communications.type, "sms")
+        )
+      ).returning();
+      if (!row) return res.status(404).json({ error: "Message not found" });
+      res.json(toMessage(row));
     } catch (error) {
       console.error("Error updating message status:", error);
       res.status(500).json({ error: "Failed to update message status" });
@@ -13932,43 +13910,40 @@ function registerMessagingRoutes(app2) {
 }
 
 // server/routes/phone.ts
-var calls = [
-  {
-    id: "1",
-    caller: "+1 (555) 123-4567",
-    duration: 245,
-    status: "completed",
-    sentiment: "positive",
-    transcript: "Hello, I'm calling about your product demo. I'm very interested in learning more about your CRM solution.",
-    recording: "/api/recordings/call-1.mp3",
-    gpt5Analysis: {
-      summary: "Prospect is interested in product demo and wants to learn more about CRM capabilities.",
-      keyPoints: ["Interested in product demo", "Needs more information about CRM features"],
-      actionItems: ["Schedule product demo", "Send additional product information"],
-      sentimentScore: 0.85
-    }
-  },
-  {
-    id: "2",
-    caller: "+1 (555) 987-6543",
-    duration: 0,
-    status: "missed",
-    sentiment: "neutral"
+import { and as and5, desc as desc5, eq as eq6 } from "drizzle-orm";
+init_db();
+init_schema();
+var CALL_FIELDS = ["caller", "duration", "status", "sentiment", "transcript", "recording", "gpt5Analysis"];
+var toCall = (row) => ({
+  id: row.id,
+  ...row.metadata || {},
+  transcript: row.content ?? row.metadata?.transcript,
+  createdAt: row.createdAt
+});
+var noDb2 = (res) => res.status(503).json({ error: "Database not configured" });
+async function findCall(userId, id) {
+  const [row] = await db.select().from(communications).where(and5(eq6(communications.id, id), eq6(communications.profileId, userId), eq6(communications.type, "call")));
+  return row;
+}
+var ANALYSIS_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["summary", "keyPoints", "actionItems", "sentimentScore", "sentiment"],
+  properties: {
+    summary: { type: "string" },
+    keyPoints: { type: "array", items: { type: "string" } },
+    actionItems: { type: "array", items: { type: "string" } },
+    sentimentScore: { type: "number", description: "0 (very negative) to 1 (very positive)" },
+    sentiment: { type: "string", enum: ["positive", "neutral", "negative"] }
   }
-];
-var phoneStats = {
-  totalCalls: 47,
-  answeredCalls: 42,
-  averageCallDuration: 185,
-  callQuality: 0.92,
-  customerSatisfaction: 0.88,
-  aiAccuracy: 0.94
 };
 function registerPhoneRoutes(app2) {
   app2.use("/api/phone", requireAuth(), requireEntitlement(FeatureKey.PHONE_SYSTEM));
   app2.get("/api/phone/calls", async (req, res) => {
     try {
-      res.json(calls);
+      if (!db) return noDb2(res);
+      const rows = await db.select().from(communications).where(and5(eq6(communications.profileId, req.userId), eq6(communications.type, "call"))).orderBy(desc5(communications.createdAt));
+      res.json(rows.map(toCall));
     } catch (error) {
       console.error("Error fetching calls:", error);
       res.status(500).json({ error: "Failed to fetch calls" });
@@ -13976,7 +13951,18 @@ function registerPhoneRoutes(app2) {
   });
   app2.get("/api/phone/stats", async (req, res) => {
     try {
-      res.json(phoneStats);
+      if (!db) return noDb2(res);
+      const rows = await db.select().from(communications).where(and5(eq6(communications.profileId, req.userId), eq6(communications.type, "call")));
+      const calls = rows.map(toCall);
+      const answered = calls.filter((c) => c.status === "completed");
+      res.json({
+        totalCalls: calls.length,
+        answeredCalls: answered.length,
+        averageCallDuration: answered.length ? Math.round(answered.reduce((sum, c) => sum + (Number(c.duration) || 0), 0) / answered.length) : 0,
+        callQuality: null,
+        customerSatisfaction: null,
+        aiAccuracy: null
+      });
     } catch (error) {
       console.error("Error fetching phone stats:", error);
       res.status(500).json({ error: "Failed to fetch phone stats" });
@@ -13984,24 +13970,20 @@ function registerPhoneRoutes(app2) {
   });
   app2.post("/api/phone/calls", async (req, res) => {
     try {
-      const { caller, duration, status, transcript } = req.body;
+      if (!db) return noDb2(res);
+      const { caller, duration, status, transcript, sentiment, recording } = req.body;
       if (!caller || status === void 0) {
         return res.status(400).json({ error: "Caller and status are required" });
       }
-      const newCall = {
-        id: crypto.randomUUID(),
-        caller,
-        duration: duration || 0,
-        status,
-        sentiment: "neutral",
-        transcript
-      };
-      calls.push(newCall);
-      phoneStats.totalCalls += 1;
-      if (status === "completed") {
-        phoneStats.answeredCalls += 1;
-      }
-      res.status(201).json(newCall);
+      const [row] = await db.insert(communications).values({
+        type: "call",
+        direction: "outbound",
+        status: String(status),
+        content: transcript ?? null,
+        profileId: req.userId,
+        metadata: { caller, duration: Number(duration) || 0, status, sentiment: sentiment || "neutral", recording }
+      }).returning();
+      res.status(201).json(toCall(row));
     } catch (error) {
       console.error("Error creating call:", error);
       res.status(500).json({ error: "Failed to create call" });
@@ -14009,12 +13991,10 @@ function registerPhoneRoutes(app2) {
   });
   app2.get("/api/phone/calls/:id", async (req, res) => {
     try {
-      const callId = req.params.id;
-      const call = calls.find((c) => c.id === callId);
-      if (!call) {
-        return res.status(404).json({ error: "Call not found" });
-      }
-      res.json(call);
+      if (!db) return noDb2(res);
+      const row = await findCall(req.userId, req.params.id);
+      if (!row) return res.status(404).json({ error: "Call not found" });
+      res.json(toCall(row));
     } catch (error) {
       console.error("Error fetching call:", error);
       res.status(500).json({ error: "Failed to fetch call" });
@@ -14022,32 +14002,18 @@ function registerPhoneRoutes(app2) {
   });
   app2.put("/api/phone/calls/:id", async (req, res) => {
     try {
-      const callId = req.params.id;
-      const callIndex = calls.findIndex((c) => c.id === callId);
-      if (callIndex === -1) {
-        return res.status(404).json({ error: "Call not found" });
-      }
-      const allowedFields = [
-        "caller",
-        "duration",
-        "status",
-        "sentiment",
-        "transcript",
-        "recording",
-        "gpt5Analysis"
-      ];
+      if (!db) return noDb2(res);
+      const row = await findCall(req.userId, req.params.id);
+      if (!row) return res.status(404).json({ error: "Call not found" });
       const updates = {};
-      for (const field of allowedFields) {
-        if (field in req.body) {
-          updates[field] = req.body[field];
-        }
-      }
-      const updatedCall = {
-        ...calls[callIndex],
-        ...updates
-      };
-      calls[callIndex] = updatedCall;
-      res.json(updatedCall);
+      for (const field of CALL_FIELDS) if (field in req.body) updates[field] = req.body[field];
+      const [updated] = await db.update(communications).set({
+        metadata: { ...row.metadata, ...updates },
+        ..."transcript" in updates ? { content: String(updates.transcript ?? "") } : {},
+        ..."status" in updates ? { status: String(updates.status) } : {},
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq6(communications.id, row.id)).returning();
+      res.json(toCall(updated));
     } catch (error) {
       console.error("Error updating call:", error);
       res.status(500).json({ error: "Failed to update call" });
@@ -14055,52 +14021,43 @@ function registerPhoneRoutes(app2) {
   });
   app2.post("/api/phone/calls/:id/analyze", async (req, res) => {
     try {
-      const callId = req.params.id;
-      const callIndex = calls.findIndex((c) => c.id === callId);
-      if (callIndex === -1) {
-        return res.status(404).json({ error: "Call not found" });
-      }
-      const call = calls[callIndex];
+      if (!db) return noDb2(res);
+      const userId = req.userId;
+      const row = await findCall(userId, req.params.id);
+      if (!row) return res.status(404).json({ error: "Call not found" });
+      const call = toCall(row);
       if (!call.transcript) {
         return res.status(400).json({ error: "Call has no transcript to analyze" });
       }
-      const analysis = {
-        summary: `Call analysis for ${call.caller}`,
-        keyPoints: [
-          "Customer expressed interest in product features",
-          "Discussed pricing and implementation timeline",
-          "Requested additional documentation"
-        ],
-        actionItems: [
-          "Send product brochure",
-          "Schedule follow-up call",
-          "Prepare pricing proposal"
-        ],
-        sentimentScore: 0.75
-      };
-      call.gpt5Analysis = analysis;
+      const openaiData = await getUserOpenAIClient(userId);
+      if (!openaiData) {
+        return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+      }
+      const result = await respond(openaiData.client, {
+        model: openaiData.model,
+        instructions: "You analyse sales call transcripts. Summarise, list key points and concrete action items, and rate sentiment. Use only what the transcript says.",
+        input: `Caller: ${call.caller}
+Transcript:
+${call.transcript}`,
+        json: { name: "call_analysis", schema: ANALYSIS_SCHEMA }
+      });
+      if (!result.data) return res.status(502).json({ error: "The AI response was not valid JSON" });
+      const { sentiment, ...analysis } = result.data;
+      await db.update(communications).set({ metadata: { ...row.metadata, sentiment, gpt5Analysis: analysis }, updatedAt: /* @__PURE__ */ new Date() }).where(eq6(communications.id, row.id));
       res.json(analysis);
     } catch (error) {
       console.error("Error analyzing call:", error);
-      res.status(500).json({ error: "Failed to analyze call" });
+      res.status(500).json({ error: error?.message || "Failed to analyze call" });
     }
   });
   app2.post("/api/phone/calls/start", async (req, res) => {
-    try {
-      const { number, type } = req.body;
-      if (!number) {
-        return res.status(400).json({ error: "Phone number is required" });
-      }
-      res.json({
-        callId: crypto.randomUUID(),
-        status: "initiated",
-        number,
-        type: type || "voice"
-      });
-    } catch (error) {
-      console.error("Error starting call:", error);
-      res.status(500).json({ error: "Failed to start call" });
+    const { number } = req.body || {};
+    if (!number) {
+      return res.status(400).json({ error: "Phone number is required" });
     }
+    res.status(501).json({
+      error: "Outbound calling is not connected. Use your phone app, then log the call."
+    });
   });
 }
 
@@ -14262,7 +14219,7 @@ function registerAppointmentRoutes(app2) {
 init_db();
 init_schema();
 init_creditService();
-import { eq as eq6, and as and5, sql as sql5 } from "drizzle-orm";
+import { eq as eq8, and as and7, sql as sql5 } from "drizzle-orm";
 var AIPricingService = class {
   /**
    * Get all AI features with pricing for a specific user context
@@ -14271,17 +14228,17 @@ var AIPricingService = class {
    * For End User: shows reseller's retail price or base price
    */
   static async getAIFeaturesWithPricing(userId, userRole, resellerId) {
-    const features2 = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.isActive, true));
+    const features2 = await db.select().from(aiFeatureDefinitions).where(eq8(aiFeatureDefinitions.isActive, true));
     const result = [];
     for (const feature of features2) {
       let retailPrice = feature.baseCreditCost;
       let wholesalePrice = Math.floor(feature.baseCreditCost * 0.5);
       if (userRole === "whitelabel" || userRole === "reseller") {
         const resellerPricing = await db.select().from(aiResellerPricing).where(
-          and5(
-            eq6(aiResellerPricing.resellerId, userId),
-            eq6(aiResellerPricing.featureKey, feature.featureKey),
-            eq6(aiResellerPricing.isActive, true)
+          and7(
+            eq8(aiResellerPricing.resellerId, userId),
+            eq8(aiResellerPricing.featureKey, feature.featureKey),
+            eq8(aiResellerPricing.isActive, true)
           )
         ).limit(1);
         if (resellerPricing.length > 0) {
@@ -14290,10 +14247,10 @@ var AIPricingService = class {
         }
       } else if (resellerId) {
         const resellerPricing = await db.select().from(aiResellerPricing).where(
-          and5(
-            eq6(aiResellerPricing.resellerId, resellerId),
-            eq6(aiResellerPricing.featureKey, feature.featureKey),
-            eq6(aiResellerPricing.isActive, true)
+          and7(
+            eq8(aiResellerPricing.resellerId, resellerId),
+            eq8(aiResellerPricing.featureKey, feature.featureKey),
+            eq8(aiResellerPricing.isActive, true)
           )
         ).limit(1);
         if (resellerPricing.length > 0) {
@@ -14321,13 +14278,13 @@ var AIPricingService = class {
     await db.update(aiFeatureDefinitions).set({
       ...updates,
       updatedAt: /* @__PURE__ */ new Date()
-    }).where(eq6(aiFeatureDefinitions.featureKey, featureKey));
+    }).where(eq8(aiFeatureDefinitions.featureKey, featureKey));
   }
   /**
    * Set reseller pricing for their customers
    */
   static async setResellerPricing(resellerId, featureKey, retailCreditCost, wholesaleCreditCost) {
-    const feature = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+    const feature = await db.select().from(aiFeatureDefinitions).where(eq8(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
     if (feature.length === 0) {
       throw new Error(`Feature ${featureKey} not found`);
     }
@@ -14357,17 +14314,17 @@ var AIPricingService = class {
       let wholesalePrice;
       if (options.resellerId) {
         const resellerPricing = await db.select().from(aiResellerPricing).where(
-          and5(
-            eq6(aiResellerPricing.resellerId, options.resellerId),
-            eq6(aiResellerPricing.featureKey, featureKey),
-            eq6(aiResellerPricing.isActive, true)
+          and7(
+            eq8(aiResellerPricing.resellerId, options.resellerId),
+            eq8(aiResellerPricing.featureKey, featureKey),
+            eq8(aiResellerPricing.isActive, true)
           )
         ).limit(1);
         if (resellerPricing.length > 0) {
           retailPrice = resellerPricing[0].retailCreditCost;
           wholesalePrice = resellerPricing[0].wholesaleCreditCost;
         } else {
-          const feature = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+          const feature = await db.select().from(aiFeatureDefinitions).where(eq8(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
           retailPrice = feature[0]?.baseCreditCost || 10;
           wholesalePrice = Math.floor(retailPrice * 0.5);
         }
@@ -14382,7 +14339,7 @@ var AIPricingService = class {
           };
         }
       } else {
-        const feature = await db.select().from(aiFeatureDefinitions).where(eq6(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+        const feature = await db.select().from(aiFeatureDefinitions).where(eq8(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
         retailPrice = feature[0]?.baseCreditCost || 10;
         wholesalePrice = retailPrice;
       }
@@ -14440,7 +14397,7 @@ var AIPricingService = class {
    * Get reseller credit balance
    */
   static async getResellerCreditBalance(resellerId) {
-    const balance = await db.select().from(resellerCredits).where(eq6(resellerCredits.resellerId, resellerId)).limit(1);
+    const balance = await db.select().from(resellerCredits).where(eq8(resellerCredits.resellerId, resellerId)).limit(1);
     if (balance.length === 0) {
       await db.insert(resellerCredits).values({
         resellerId,
@@ -14499,7 +14456,7 @@ var AIPricingService = class {
       wholesaleCreditsUsed: sql5`${resellerCredits.wholesaleCreditsUsed} + ${amount}`,
       wholesaleCreditsAvailable: sql5`${resellerCredits.wholesaleCreditsAvailable} - ${amount}`,
       updatedAt: /* @__PURE__ */ new Date()
-    }).where(eq6(resellerCredits.resellerId, resellerId));
+    }).where(eq8(resellerCredits.resellerId, resellerId));
     const transaction = {
       resellerId,
       type: "retail_sale",
@@ -14521,8 +14478,8 @@ var AIPricingService = class {
       totalWholesale: sql5`sum(${aiFeatureUsage.creditsPaidToPlatform})`,
       totalProfit: sql5`sum(${aiFeatureUsage.resellerProfitCredits})`
     }).from(aiFeatureUsage).where(
-      and5(
-        eq6(aiFeatureUsage.resellerId, resellerId),
+      and7(
+        eq8(aiFeatureUsage.resellerId, resellerId),
         sql5`${aiFeatureUsage.createdAt} >= ${startDate}`,
         sql5`${aiFeatureUsage.createdAt} <= ${endDate}`
       )
@@ -14559,10 +14516,10 @@ var AIPricingService = class {
 // server/routes/aiPricing.ts
 init_db();
 init_schema();
-import { eq as eq7, desc as desc6, sql as sql6 } from "drizzle-orm";
+import { eq as eq9, desc as desc8, sql as sql6 } from "drizzle-orm";
 async function getCallerRole(userId) {
   if (!db || !userId) return "regular_user";
-  const [profile] = await db.select({ role: profiles.role }).from(profiles).where(eq7(profiles.id, userId)).limit(1);
+  const [profile] = await db.select({ role: profiles.role }).from(profiles).where(eq9(profiles.id, userId)).limit(1);
   const role = profile?.role ?? "regular_user";
   return role === "wl_user" ? "whitelabel" : role;
 }
@@ -14625,12 +14582,12 @@ function registerAIPricingRoutes(app2) {
         featureKey: aiFeatureUsage.featureKey,
         usageCount: sql6`count(*)`,
         totalCredits: sql6`sum(${aiFeatureUsage.creditsCharged})`
-      }).from(aiFeatureUsage).groupBy(aiFeatureUsage.featureKey).orderBy(desc6(sql6`count(*)`));
+      }).from(aiFeatureUsage).groupBy(aiFeatureUsage.featureKey).orderBy(desc8(sql6`count(*)`));
       const topResellers = await db.select({
         resellerId: aiFeatureUsage.resellerId,
         usageCount: sql6`count(*)`,
         totalRevenue: sql6`sum(${aiFeatureUsage.creditsCharged})`
-      }).from(aiFeatureUsage).where(sql6`${aiFeatureUsage.resellerId} IS NOT NULL`).groupBy(aiFeatureUsage.resellerId).orderBy(desc6(sql6`count(*)`)).limit(10);
+      }).from(aiFeatureUsage).where(sql6`${aiFeatureUsage.resellerId} IS NOT NULL`).groupBy(aiFeatureUsage.resellerId).orderBy(desc8(sql6`count(*)`)).limit(10);
       res.json({
         success: true,
         analytics: {
@@ -14685,7 +14642,7 @@ function registerAIPricingRoutes(app2) {
         if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
           return res.status(403).json({ success: false, error: "Access denied" });
         }
-        const feature = await db.select().from(aiFeatureDefinitions).where(eq7(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
+        const feature = await db.select().from(aiFeatureDefinitions).where(eq9(aiFeatureDefinitions.featureKey, featureKey)).limit(1);
         if (feature.length === 0) {
           return res.status(404).json({ success: false, error: "Feature not found" });
         }
@@ -14891,7 +14848,7 @@ function registerAIPricingRoutes(app2) {
         creditsCharged: aiFeatureUsage.creditsCharged,
         context: aiFeatureUsage.context,
         createdAt: aiFeatureUsage.createdAt
-      }).from(aiFeatureUsage).where(eq7(aiFeatureUsage.userId, userId)).orderBy(desc6(aiFeatureUsage.createdAt)).limit(Number(limit)).offset(Number(offset));
+      }).from(aiFeatureUsage).where(eq9(aiFeatureUsage.userId, userId)).orderBy(desc8(aiFeatureUsage.createdAt)).limit(Number(limit)).offset(Number(offset));
       res.json({
         success: true,
         usage
@@ -15137,12 +15094,12 @@ function registerAIRoutes(app2) {
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) return noKey(res);
       const page = await openaiData.client.conversations.items.list(req.params.id, { order: "asc", limit: 100 });
-      const messages2 = (page.data || []).filter((item) => item.type === "message").map((item) => ({
+      const messages = (page.data || []).filter((item) => item.type === "message").map((item) => ({
         id: item.id,
         role: item.role,
         text: (item.content || []).map((c) => c.text || "").join("")
       }));
-      res.json({ success: true, messages: messages2 });
+      res.json({ success: true, messages });
     } catch (error) {
       res.status(500).json({ success: false, error: error?.message || "Failed to load conversation" });
     }
@@ -15388,7 +15345,7 @@ function registerAIRoutes(app2) {
             needsApiKey: true
           });
         }
-        const messages2 = [
+        const messages = [
           {
             role: "system",
             content: "You are a helpful sales + ops assistant for white-label CRM applications."
@@ -15405,7 +15362,7 @@ Respond with valid JSON matching this schema: ${JSON.stringify(schema)}` : "")
         ];
         const response = await openaiData.client.chat.completions.create({
           model: openaiData.model,
-          messages: messages2,
+          messages,
           temperature,
           max_tokens: max_output_tokens,
           response_format: schema ? { type: "json_object" } : void 0
@@ -15484,7 +15441,7 @@ Respond with valid JSON matching this schema: ${JSON.stringify(schema)}` : "")
 // server/routes/apiKeys.ts
 init_db();
 init_schema();
-import { eq as eq8, and as and7 } from "drizzle-orm";
+import { eq as eq10, and as and9 } from "drizzle-orm";
 var SUPPORTED_PROVIDERS = ["openai", "openclaw"];
 function registerApiKeyRoutes(app2) {
   const requireApiKeyAuth = requireAuth();
@@ -15498,8 +15455,8 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const keys = await db.query.userApiKeys.findMany({
-        where: eq8(userApiKeys.userId, userId),
-        orderBy: (userApiKeys2, { desc: desc10 }) => [desc10(userApiKeys2.createdAt)]
+        where: eq10(userApiKeys.userId, userId),
+        orderBy: (userApiKeys2, { desc: desc12 }) => [desc12(userApiKeys2.createdAt)]
       });
       const maskedKeys = keys.map((key) => ({
         ...key,
@@ -15542,7 +15499,7 @@ function registerApiKeyRoutes(app2) {
         });
       }
       const existingKeys = await db.query.userApiKeys.findMany({
-        where: and7(eq8(userApiKeys.userId, userId), eq8(userApiKeys.provider, provider))
+        where: and9(eq10(userApiKeys.userId, userId), eq10(userApiKeys.provider, provider))
       });
       if (existingKeys.length > 0) {
         const [updatedKey] = await db.update(userApiKeys).set({
@@ -15552,11 +15509,11 @@ function registerApiKeyRoutes(app2) {
           isActive: true,
           isDefault: true,
           updatedAt: /* @__PURE__ */ new Date()
-        }).where(eq8(userApiKeys.id, existingKeys[0].id)).returning();
+        }).where(eq10(userApiKeys.id, existingKeys[0].id)).returning();
         return res.json({ success: true, key: { ...updatedKey, apiKey: maskApiKey(updatedKey.apiKey) } });
       }
       if (isDefault && existingKeys.length > 0) {
-        await db.update(userApiKeys).set({ isDefault: false, updatedAt: /* @__PURE__ */ new Date() }).where(and7(eq8(userApiKeys.userId, userId), eq8(userApiKeys.provider, provider)));
+        await db.update(userApiKeys).set({ isDefault: false, updatedAt: /* @__PURE__ */ new Date() }).where(and9(eq10(userApiKeys.userId, userId), eq10(userApiKeys.provider, provider)));
       }
       const shouldBeDefault = isDefault || existingKeys.length === 0;
       const [newKey] = await db.insert(userApiKeys).values({
@@ -15593,7 +15550,7 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const apiKeyRecord = await db.query.userApiKeys.findFirst({
-        where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
+        where: and9(eq10(userApiKeys.id, keyId), eq10(userApiKeys.userId, userId))
       });
       if (!apiKeyRecord) {
         return res.status(404).json({ error: "API key not found" });
@@ -15614,7 +15571,7 @@ function registerApiKeyRoutes(app2) {
         testStatus: testResult.success ? "success" : "failed",
         testError: testResult.error || null,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq8(userApiKeys.id, keyId));
+      }).where(eq10(userApiKeys.id, keyId));
       res.json({
         success: testResult.success,
         provider: apiKeyRecord.provider,
@@ -15637,17 +15594,17 @@ function registerApiKeyRoutes(app2) {
       }
       const { apiKeyName, model, isDefault, isActive } = req.body;
       const existingKey = await db.query.userApiKeys.findFirst({
-        where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
+        where: and9(eq10(userApiKeys.id, keyId), eq10(userApiKeys.userId, userId))
       });
       if (!existingKey) {
         return res.status(404).json({ error: "API key not found" });
       }
       if (isDefault) {
         await db.update(userApiKeys).set({ isDefault: false, updatedAt: /* @__PURE__ */ new Date() }).where(
-          and7(
-            eq8(userApiKeys.userId, userId),
-            eq8(userApiKeys.provider, existingKey.provider),
-            eq8(userApiKeys.isDefault, true)
+          and9(
+            eq10(userApiKeys.userId, userId),
+            eq10(userApiKeys.provider, existingKey.provider),
+            eq10(userApiKeys.isDefault, true)
           )
         );
       }
@@ -15657,7 +15614,7 @@ function registerApiKeyRoutes(app2) {
         ...isDefault !== void 0 && { isDefault },
         ...isActive !== void 0 && { isActive },
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq8(userApiKeys.id, keyId)).returning();
+      }).where(eq10(userApiKeys.id, keyId)).returning();
       res.json({
         success: true,
         key: {
@@ -15681,22 +15638,22 @@ function registerApiKeyRoutes(app2) {
         return res.status(503).json({ error: "Database not available" });
       }
       const existingKey = await db.query.userApiKeys.findFirst({
-        where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
+        where: and9(eq10(userApiKeys.id, keyId), eq10(userApiKeys.userId, userId))
       });
       if (!existingKey) {
         return res.status(404).json({ error: "API key not found" });
       }
-      await db.delete(userApiKeys).where(eq8(userApiKeys.id, keyId));
+      await db.delete(userApiKeys).where(eq10(userApiKeys.id, keyId));
       if (existingKey.isDefault) {
         const nextKey = await db.query.userApiKeys.findFirst({
-          where: and7(
-            eq8(userApiKeys.userId, userId),
-            eq8(userApiKeys.provider, existingKey.provider),
-            eq8(userApiKeys.isActive, true)
+          where: and9(
+            eq10(userApiKeys.userId, userId),
+            eq10(userApiKeys.provider, existingKey.provider),
+            eq10(userApiKeys.isActive, true)
           )
         });
         if (nextKey) {
-          await db.update(userApiKeys).set({ isDefault: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq8(userApiKeys.id, nextKey.id));
+          await db.update(userApiKeys).set({ isDefault: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq10(userApiKeys.id, nextKey.id));
         }
       }
       res.json({ success: true });
@@ -15719,19 +15676,19 @@ function registerApiKeyRoutes(app2) {
         return res.status(400).json({ error: 'Provider must be "openai" or "openclaw"' });
       }
       const activeKey = await db.query.userApiKeys.findFirst({
-        where: and7(
-          eq8(userApiKeys.userId, userId),
-          eq8(userApiKeys.provider, provider),
-          eq8(userApiKeys.isActive, true),
-          eq8(userApiKeys.isDefault, true)
+        where: and9(
+          eq10(userApiKeys.userId, userId),
+          eq10(userApiKeys.provider, provider),
+          eq10(userApiKeys.isActive, true),
+          eq10(userApiKeys.isDefault, true)
         )
       });
       if (!activeKey) {
         const anyKey = await db.query.userApiKeys.findFirst({
-          where: and7(
-            eq8(userApiKeys.userId, userId),
-            eq8(userApiKeys.provider, provider),
-            eq8(userApiKeys.isActive, true)
+          where: and9(
+            eq10(userApiKeys.userId, userId),
+            eq10(userApiKeys.provider, provider),
+            eq10(userApiKeys.isActive, true)
           )
         });
         if (!anyKey) {
@@ -17604,27 +17561,27 @@ function registerAIAutomationRoutes(app2) {
 
 // server/routes/partners.ts
 init_schema();
-import { eq as eq11, desc as desc9, sql as sql9, and as and10 } from "drizzle-orm";
+import { eq as eq13, desc as desc11, sql as sql9, and as and12 } from "drizzle-orm";
 
 // server/services/commissionService.ts
 init_db();
 init_schema();
-import { eq as eq9, desc as desc7, and as and8 } from "drizzle-orm";
+import { eq as eq11, desc as desc9, and as and10 } from "drizzle-orm";
 async function calculateCommission(input) {
   const { partnerId, customerId, amount } = input;
-  const partner = await db.select().from(partners).where(eq9(partners.id, partnerId)).limit(1);
+  const partner = await db.select().from(partners).where(eq11(partners.id, partnerId)).limit(1);
   if (!partner.length) {
     throw new Error(`Partner ${partnerId} not found`);
   }
   let tier;
   if (partner[0].tierId) {
-    const tierResult = await db.select().from(partnerTiers).where(eq9(partnerTiers.id, partner[0].tierId)).limit(1);
+    const tierResult = await db.select().from(partnerTiers).where(eq11(partnerTiers.id, partner[0].tierId)).limit(1);
     if (tierResult.length) {
       tier = tierResult[0];
     }
   }
   if (!tier) {
-    const activeTier = await db.select().from(partnerTiers).where(eq9(partnerTiers.isActive, true)).orderBy(partnerTiers.createdAt).limit(1);
+    const activeTier = await db.select().from(partnerTiers).where(eq11(partnerTiers.isActive, true)).orderBy(partnerTiers.createdAt).limit(1);
     if (activeTier.length) {
       tier = activeTier[0];
     }
@@ -17656,25 +17613,25 @@ async function createCommissionRecord(partnerId, customerId, amount, status = "p
   return record;
 }
 async function getPartnerCommissions(partnerId, status) {
-  const conditions = [eq9(commissions.partnerId, partnerId)];
+  const conditions = [eq11(commissions.partnerId, partnerId)];
   if (status) {
-    conditions.push(eq9(commissions.status, status));
+    conditions.push(eq11(commissions.status, status));
   }
-  return await db.select().from(commissions).where(and8(...conditions)).orderBy(desc7(commissions.createdAt));
+  return await db.select().from(commissions).where(and10(...conditions)).orderBy(desc9(commissions.createdAt));
 }
 
 // server/services/payoutService.ts
 init_db();
 init_schema();
-import { eq as eq10, desc as desc8, sql as sql8, and as and9 } from "drizzle-orm";
+import { eq as eq12, desc as desc10, sql as sql8, and as and11 } from "drizzle-orm";
 async function processPayout(payoutId) {
-  const [payout] = await db.select().from(payouts).where(eq10(payouts.id, payoutId)).limit(1);
+  const [payout] = await db.select().from(payouts).where(eq12(payouts.id, payoutId)).limit(1);
   if (!payout) {
     return void 0;
   }
-  const [updated] = await db.update(payouts).set({ status: "paid", paidAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq10(payouts.id, payoutId)).returning();
+  const [updated] = await db.update(payouts).set({ status: "paid", paidAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq12(payouts.id, payoutId)).returning();
   if (updated) {
-    await db.update(commissions).set({ status: "paid", payoutId: updated.id, updatedAt: /* @__PURE__ */ new Date() }).where(eq10(commissions.partnerId, updated.partnerId)).where(eq10(commissions.status, "pending"));
+    await db.update(commissions).set({ status: "paid", payoutId: updated.id, updatedAt: /* @__PURE__ */ new Date() }).where(eq12(commissions.partnerId, updated.partnerId)).where(eq12(commissions.status, "pending"));
   }
   return updated || void 0;
 }
@@ -17684,7 +17641,7 @@ function registerPartnersRoutes(app2) {
   app2.get("/api/partners", requireAuth(), async (req, res) => {
     try {
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const allPartners = await dbConnection.select().from(partners).orderBy(desc9(partners.createdAt));
+      const allPartners = await dbConnection.select().from(partners).orderBy(desc11(partners.createdAt));
       res.json(allPartners);
     } catch (error) {
       console.error("Failed to fetch partners:", error);
@@ -17695,7 +17652,7 @@ function registerPartnersRoutes(app2) {
     try {
       const { id } = req.params;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
+      const [partner] = await dbConnection.select().from(partners).where(eq13(partners.id, id)).limit(1);
       if (!partner) {
         return res.status(404).json({ error: "Partner not found" });
       }
@@ -17735,7 +17692,7 @@ function registerPartnersRoutes(app2) {
       const { id } = req.params;
       const { name, email, company, phone, tierId, status, metadata } = req.body;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [existing] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
+      const [existing] = await dbConnection.select().from(partners).where(eq13(partners.id, id)).limit(1);
       if (!existing) {
         return res.status(404).json({ error: "Partner not found" });
       }
@@ -17748,7 +17705,7 @@ function registerPartnersRoutes(app2) {
         status: status ?? existing.status,
         metadata: metadata ?? existing.metadata,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq11(partners.id, id)).returning();
+      }).where(eq13(partners.id, id)).returning();
       if (!partner) {
         return res.status(500).json({ error: "Failed to update partner" });
       }
@@ -17762,15 +17719,15 @@ function registerPartnersRoutes(app2) {
     try {
       const { id } = req.params;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
+      const [partner] = await dbConnection.select().from(partners).where(eq13(partners.id, id)).limit(1);
       if (!partner) {
         return res.status(404).json({ error: "Partner not found" });
       }
-      const customers = await dbConnection.select().from(partnerCustomers).where(eq11(partnerCustomers.partnerId, id));
+      const customers = await dbConnection.select().from(partnerCustomers).where(eq13(partnerCustomers.partnerId, id));
       const totalCustomers = customers.length;
       const activeCustomers = customers.filter((c) => c.subscriptionStatus === "active").length;
       const totalRevenue = customers.reduce((sum, c) => sum + parseFloat(c.mrr || "0"), 0);
-      const [latestMetric] = await dbConnection.select().from(partnerMetrics).where(eq11(partnerMetrics.partnerId, id)).orderBy(desc9(partnerMetrics.createdAt)).limit(1);
+      const [latestMetric] = await dbConnection.select().from(partnerMetrics).where(eq13(partnerMetrics.partnerId, id)).orderBy(desc11(partnerMetrics.createdAt)).limit(1);
       const previousRevenue = totalRevenue * 0.9;
       const growthRate = previousRevenue > 0 ? (totalRevenue - previousRevenue) / previousRevenue * 100 : 0;
       res.json({
@@ -17805,13 +17762,13 @@ function registerPartnersRoutes(app2) {
         return res.status(400).json({ error: "partnerId, customerId, and amount are required" });
       }
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, partnerId)).limit(1);
+      const [partner] = await dbConnection.select().from(partners).where(eq13(partners.id, partnerId)).limit(1);
       if (!partner) {
         return res.status(404).json({ error: "Partner not found" });
       }
       let tierRate = 0;
       if (partner.tierId) {
-        const [tier] = await dbConnection.select().from(partnerTiers).where(eq11(partnerTiers.id, partner.tierId)).limit(1);
+        const [tier] = await dbConnection.select().from(partnerTiers).where(eq13(partnerTiers.id, partner.tierId)).limit(1);
         if (tier) {
           tierRate = parseFloat(tier.commissionRate) / 100;
         }
@@ -17838,14 +17795,14 @@ function registerPartnersRoutes(app2) {
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const conditions = [];
       if (partnerId) {
-        conditions.push(eq11(payouts.partnerId, partnerId));
+        conditions.push(eq13(payouts.partnerId, partnerId));
       }
       if (status) {
-        conditions.push(eq11(payouts.status, status));
+        conditions.push(eq13(payouts.status, status));
       }
-      let query = dbConnection.select().from(payouts).orderBy(desc9(payouts.createdAt));
+      let query = dbConnection.select().from(payouts).orderBy(desc11(payouts.createdAt));
       if (conditions.length > 0) {
-        query = query.where(and10(...conditions));
+        query = query.where(and12(...conditions));
       }
       const allPayouts = await query;
       res.json(allPayouts);
@@ -18207,9 +18164,9 @@ app.use((req, res, next) => {
   });
   next();
 });
-var supabaseUrl10 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+var supabaseUrl11 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
 var supabaseServiceKey2 = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-var supabaseAdmin = supabaseUrl10 && supabaseServiceKey2 ? createClient12(supabaseUrl10, supabaseServiceKey2) : null;
+var supabaseAdmin = supabaseUrl11 && supabaseServiceKey2 ? createClient12(supabaseUrl11, supabaseServiceKey2) : null;
 app.use("/api", async (req, res, next) => {
   const userId = req.session?.userId;
   const cachedEntitlement = req.session?.entitlement;

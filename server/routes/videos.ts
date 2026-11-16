@@ -21,7 +21,7 @@ interface VideoEmail {
   };
   gpt5Metadata: {
     generatedScript: boolean;
-    optimizationScore: number;
+    optimizationScore: number | null;
     suggestedImprovements: string[];
     tone: string;
     targetAudience: string;
@@ -69,7 +69,7 @@ export function createVideoForUser(
     },
     gpt5Metadata: {
       generatedScript: false,
-      optimizationScore: 0.8,
+      optimizationScore: null, // not measured
       suggestedImprovements: [],
       tone: 'professional',
       targetAudience: 'business',

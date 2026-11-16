@@ -1,224 +1,205 @@
-import type { Express } from 'express';
+import type { Express, Response } from 'express';
+import { and, desc, eq } from 'drizzle-orm';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
+import { db } from '../db';
+import { communications } from '../../shared/schema';
+import { twilioClient } from '../messaging';
 
-// In-memory storage for messaging (temporary until database schema is added)
-interface MessageProvider {
-  id: string;
-  name: string;
-  apiKey: string;
-  costPerMessage: number;
-  supportedFeatures: string[];
-  status: 'active' | 'inactive' | 'error';
-  deliveryRate: number;
-  responseTime: number;
-}
+// SMS is sent through Twilio (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER) and each user's
+// messages are stored in the communications table (type = 'sms'). Previously this module served sample
+// messages, fixed stats and an always-"active" provider, and "sent" messages without sending them.
 
 interface Message {
   id: string;
   content: string;
   recipient: string;
   provider: string;
-  status: 'sent' | 'delivered' | 'failed';
+  status: string;
   sentAt: string;
-  gpt5Suggestions?: string[];
-  sentiment?: 'positive' | 'neutral' | 'negative';
   priority: 'low' | 'medium' | 'high';
+  error?: string;
 }
 
-interface MessagingStats {
-  totalMessages: number;
-  deliveredMessages: number;
-  deliveryRate: number;
-  averageResponseTime: number;
-  totalCost: number;
-  costPerMessage: number;
-  activeProviders: number;
+const twilioConfigured = () =>
+  Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER);
+
+const toMessage = (row: any): Message => ({
+  id: row.id,
+  content: row.content || '',
+  recipient: row.metadata?.recipient || '',
+  provider: row.metadata?.provider || 'twilio',
+  status: row.status || 'sent',
+  sentAt: (row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt || Date.now())).toISOString(),
+  priority: row.metadata?.priority || 'medium',
+  ...(row.metadata?.error ? { error: row.metadata.error } : {}),
+});
+
+const noDb = (res: Response) => res.status(503).json({ error: 'Database not configured' });
+
+async function userMessages(userId: string) {
+  return db!
+    .select()
+    .from(communications)
+    .where(and(eq(communications.profileId, userId), eq(communications.type, 'sms')))
+    .orderBy(desc(communications.createdAt));
 }
-
-// Temporary in-memory storage
-const messageProviders: MessageProvider[] = [
-  {
-    id: 'twilio',
-    name: 'Twilio',
-    apiKey: '***masked***',
-    costPerMessage: 0.0075,
-    supportedFeatures: ['SMS', 'MMS', 'Voice'],
-    status: 'active',
-    deliveryRate: 0.98,
-    responseTime: 2,
-  },
-  {
-    id: 'aws-sns',
-    name: 'AWS SNS',
-    apiKey: '***masked***',
-    costPerMessage: 0.0065,
-    supportedFeatures: ['SMS'],
-    status: 'active',
-    deliveryRate: 0.95,
-    responseTime: 3,
-  },
-];
-
-const messages: Message[] = [
-  {
-    id: '1',
-    content: 'Thank you for your interest in our product. Would you like to schedule a demo?',
-    recipient: '+1234567890',
-    provider: 'twilio',
-    status: 'delivered',
-    sentAt: new Date().toISOString(),
-    gpt5Suggestions: ['Consider adding a specific time suggestion', 'Include a call-to-action'],
-    sentiment: 'positive',
-    priority: 'high',
-  },
-  {
-    id: '2',
-    content: 'Your order has been shipped and will arrive tomorrow.',
-    recipient: '+1987654321',
-    provider: 'aws-sns',
-    status: 'sent',
-    sentAt: new Date(Date.now() - 3600000).toISOString(),
-    sentiment: 'neutral',
-    priority: 'medium',
-  },
-];
-
-const messagingStats: MessagingStats = {
-  totalMessages: 245,
-  deliveredMessages: 238,
-  deliveryRate: 0.971,
-  averageResponseTime: 2.3,
-  totalCost: 1.85,
-  costPerMessage: 0.0076,
-  activeProviders: 2,
-};
 
 export function registerMessagingRoutes(app: Express): void {
   // Protect all messaging routes: require auth + text_messages entitlement
   app.use('/api/messaging', requireAuth(), requireEntitlement(FeatureKey.TEXT_MESSAGES));
 
-  // Get all message providers
-  app.get('/api/messaging/providers', async (req, res) => {
-    try {
-      res.json(messageProviders);
-    } catch (error) {
-      console.error('Error fetching message providers:', error);
-      res.status(500).json({ error: 'Failed to fetch message providers' });
-    }
+  // Providers with their real configuration state
+  app.get('/api/messaging/providers', async (_req, res) => {
+    res.json([
+      {
+        id: 'twilio',
+        name: 'Twilio',
+        supportedFeatures: ['SMS'],
+        status: twilioConfigured() ? 'active' : 'inactive',
+        ...(twilioConfigured() ? {} : { message: 'Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER' }),
+      },
+    ]);
   });
 
-  // Get all messages
+  // The user's messages
   app.get('/api/messaging/messages', async (req, res) => {
     try {
-      res.json(messages);
+      if (!db) return noDb(res);
+      res.json((await userMessages((req as any).userId)).map(toMessage));
     } catch (error) {
       console.error('Error fetching messages:', error);
       res.status(500).json({ error: 'Failed to fetch messages' });
     }
   });
 
-  // Get messaging stats
+  // Stats computed from the user's messages (unmeasured metrics are null)
   app.get('/api/messaging/stats', async (req, res) => {
     try {
-      res.json(messagingStats);
+      if (!db) return noDb(res);
+      const messages = (await userMessages((req as any).userId)).map(toMessage);
+      const delivered = messages.filter((m) => m.status === 'delivered').length;
+      const failed = messages.filter((m) => m.status === 'failed').length;
+      res.json({
+        totalMessages: messages.length,
+        deliveredMessages: delivered,
+        failedMessages: failed,
+        deliveryRate: messages.length ? delivered / messages.length : null,
+        averageResponseTime: null,
+        totalCost: null,
+        costPerMessage: null,
+        activeProviders: twilioConfigured() ? 1 : 0,
+      });
     } catch (error) {
       console.error('Error fetching messaging stats:', error);
       res.status(500).json({ error: 'Failed to fetch messaging stats' });
     }
   });
 
-  // Send a message
+  // Send an SMS through Twilio
   app.post('/api/messaging/send', async (req, res) => {
     try {
-      const { content, recipient, provider } = req.body;
+      const { content, recipient, provider = 'twilio' } = req.body || {};
 
-      // Validate required fields
-      if (!content || !recipient || !provider) {
-        return res.status(400).json({ error: 'Content, recipient, and provider are required' });
+      if (!content || !recipient) {
+        return res.status(400).json({ error: 'Content and recipient are required' });
+      }
+      if (typeof content !== 'string' || content.length === 0 || content.length > 1600) {
+        return res.status(400).json({ error: 'Content must be between 1 and 1600 characters' });
+      }
+      if (typeof recipient !== 'string' || !/^\+?[0-9\s().-]{7,20}$/.test(recipient)) {
+        return res.status(400).json({ error: 'Recipient must be a phone number' });
+      }
+      if (provider !== 'twilio') {
+        return res.status(400).json({ error: `Unsupported provider: ${provider}` });
+      }
+      if (!twilioConfigured()) {
+        return res.status(501).json({
+          error: 'SMS is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER.',
+        });
+      }
+      if (!db) return noDb(res);
+
+      const to = recipient.replace(/[\s().-]/g, '');
+      let status = 'failed';
+      let sid: string | undefined;
+      let error: string | undefined;
+      try {
+        const sent = await twilioClient(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!).messages.create({
+          body: content,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to,
+        });
+        status = sent.status || 'queued';
+        sid = sent.sid;
+      } catch (sendError: any) {
+        error = sendError?.message || 'Twilio send failed';
       }
 
-      // Validate content length
-      if (typeof content !== 'string' || content.length === 0 || content.length > 5000) {
-        return res.status(400).json({ error: 'Content must be between 1 and 5000 characters' });
-      }
+      const [row] = await db
+        .insert(communications)
+        .values({
+          type: 'sms',
+          direction: 'outbound',
+          content,
+          status,
+          profileId: (req as any).userId,
+          metadata: { recipient: to, provider: 'twilio', sid, ...(error ? { error } : {}) },
+        })
+        .returning();
 
-      // Validate recipient format (phone or email)
-      if (typeof recipient !== 'string' || recipient.length === 0 || recipient.length > 200) {
-        return res.status(400).json({ error: 'Invalid recipient format' });
-      }
-
-      // Validate provider exists
-      const providerExists = messageProviders.find(
-        (p) => p.id === provider && p.status === 'active'
-      );
-      if (!providerExists) {
-        return res.status(400).json({ error: 'Invalid or inactive provider' });
-      }
-
-      const newMessage: Message = {
-        id: crypto.randomUUID(),
-        content,
-        recipient,
-        provider,
-        status: 'sent',
-        sentAt: new Date().toISOString(),
-        priority: 'medium',
-      };
-
-      messages.push(newMessage);
-
-      // Update stats
-      messagingStats.totalMessages += 1;
-      messagingStats.totalCost += providerExists.costPerMessage;
-
-      res.status(201).json(newMessage);
+      if (error) return res.status(502).json({ error, message: toMessage(row) });
+      res.status(201).json(toMessage(row));
     } catch (error) {
       console.error('Error sending message:', error);
       res.status(500).json({ error: 'Failed to send message' });
     }
   });
 
-  // Get a specific message
+  // A specific message of the user
   app.get('/api/messaging/messages/:id', async (req, res) => {
     try {
-      const messageId = req.params.id;
-      const message = messages.find((m) => m.id === messageId);
-
-      if (!message) {
-        return res.status(404).json({ error: 'Message not found' });
-      }
-
-      res.json(message);
+      if (!db) return noDb(res);
+      const [row] = await db
+        .select()
+        .from(communications)
+        .where(
+          and(
+            eq(communications.id, req.params.id),
+            eq(communications.profileId, (req as any).userId),
+            eq(communications.type, 'sms')
+          )
+        );
+      if (!row) return res.status(404).json({ error: 'Message not found' });
+      res.json(toMessage(row));
     } catch (error) {
       console.error('Error fetching message:', error);
       res.status(500).json({ error: 'Failed to fetch message' });
     }
   });
 
-  // Update message status (for delivery confirmations)
+  // Update message status (delivery confirmations)
   app.put('/api/messaging/messages/:id/status', async (req, res) => {
     try {
-      const messageId = req.params.id;
-      const { status } = req.body;
-
-      const messageIndex = messages.findIndex((m) => m.id === messageId);
-
-      if (messageIndex === -1) {
-        return res.status(404).json({ error: 'Message not found' });
+      if (!db) return noDb(res);
+      const { status } = req.body || {};
+      if (!['queued', 'sent', 'delivered', 'failed', 'undelivered'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
       }
-
-      messages[messageIndex].status = status;
-
-      // Update stats if message was delivered
-      if (status === 'delivered') {
-        messagingStats.deliveredMessages += 1;
-        messagingStats.deliveryRate =
-          messagingStats.deliveredMessages / messagingStats.totalMessages;
-      }
-
-      res.json(messages[messageIndex]);
+      const [row] = await db
+        .update(communications)
+        .set({ status, updatedAt: new Date() })
+        .where(
+          and(
+            eq(communications.id, req.params.id),
+            eq(communications.profileId, (req as any).userId),
+            eq(communications.type, 'sms')
+          )
+        )
+        .returning();
+      if (!row) return res.status(404).json({ error: 'Message not found' });
+      res.json(toMessage(row));
     } catch (error) {
       console.error('Error updating message status:', error);
       res.status(500).json({ error: 'Failed to update message status' });

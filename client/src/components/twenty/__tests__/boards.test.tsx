@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import DealsBoard from '../DealsBoard';
 import ContactsBoard from '../ContactsBoard';
@@ -20,6 +20,31 @@ describe('applyFilters', () => {
 });
 
 describe('DealsBoard', () => {
+  // The store starts empty and saves through /api/deals, so seed fixture deals and mock the save call
+  beforeEach(() => {
+    const stages = useDealStore.getState().pipelines[useDealStore.getState().activePipelineId].stages;
+    const deal = (id: string, title: string, stageIndex: number) =>
+      ({
+        id,
+        title,
+        value: 1000,
+        stage: stages[stageIndex],
+        probability: stages[stageIndex].probability,
+        contactId: 'c1',
+        priority: 'medium',
+        source: 'website',
+        tags: [],
+        customFields: {},
+        activities: [],
+        attachments: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        currency: 'USD',
+      }) as any;
+    useDealStore.setState({ deals: [deal('d1', 'Fixture deal one', 0), deal('d2', 'Fixture deal two', 1)] } as any);
+    global.fetch = vi.fn(async () => new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })) as any;
+  });
+
   it('renders a kanban column per stage with the store deals', () => {
     render(<DealsBoard />);
     expect(screen.getByText('Deals board')).toBeTruthy();
