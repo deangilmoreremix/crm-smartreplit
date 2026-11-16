@@ -57,13 +57,18 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
       if (!response.ok) throw new Error(`Failed to load API keys (${response.status})`);
       const { keys = [] } = await response.json();
       const openai = keys.find((k: any) => k.provider === 'openai');
-      setApiConfig((prev) => ({
-        ...prev,
+      const openclaw = keys.find((k: any) => k.provider === 'openclaw');
+      setApiConfig({
         openai: {
           apiKey: openai?.apiKey || '',
           model: openai?.model || DEFAULT_OPENAI_MODEL,
         },
-      }));
+        openclaw: {
+          apiKey: openclaw?.apiKey || '',
+          model: openclaw?.model || 'default',
+          baseUrl: openclaw?.metadata?.base_url || '',
+        },
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load API keys');
     } finally {
@@ -76,11 +81,6 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
       setError('User not authenticated');
       return false;
     }
-    if (config.openclaw.apiKey && config.openclaw.apiKey !== apiConfig.openclaw.apiKey) {
-      setError('OpenClaw keys cannot be saved yet.');
-      return false;
-    }
-
     setIsSaving(true);
     setError(null);
     try {
@@ -106,6 +106,29 @@ export const useAIApiKeys = (): UseAIApiKeysReturn => {
           });
           if (!response.ok) throw new Error('Failed to update model');
         }
+      }
+
+      // OpenClaw: provider 'openclaw' row, base URL in metadata (the server only accepts public https URLs)
+      const clawKey = config.openclaw.apiKey.trim();
+      const clawBaseUrl = config.openclaw.baseUrl || '';
+      const clawChanged =
+        clawKey !== apiConfig.openclaw.apiKey || clawBaseUrl !== (apiConfig.openclaw.baseUrl || '');
+      if (clawKey && clawChanged) {
+        if (isMasked(clawKey)) {
+          throw new Error('Re-enter your OpenClaw key to change its settings.');
+        }
+        const response = await fetch('/api/user/api-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: 'openclaw',
+            apiKey: clawKey,
+            baseUrl: clawBaseUrl,
+            model: config.openclaw.model,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Failed to save OpenClaw key');
       }
 
       await loadApiKeys();

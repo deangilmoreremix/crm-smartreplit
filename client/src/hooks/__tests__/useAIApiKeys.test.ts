@@ -57,4 +57,24 @@ describe('useAIApiKeys', () => {
 
     expect(fetchMock.mock.calls.some(([, init]: any[]) => init?.method === 'POST')).toBe(false);
   });
+
+  it('saves an OpenClaw key with its base URL as the openclaw provider row', async () => {
+    const { result } = renderHook(() => useAIApiKeys());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.saveApiKeys({
+        openai: { apiKey: 'sk-a****wxyz', model: 'gpt-6-luna' },
+        openclaw: { apiKey: 'oc-key-1234567890', model: 'default', baseUrl: 'https://claw.example.com' },
+      });
+    });
+
+    const post = fetchMock.mock.calls.find(([, init]: any[]) => init?.method === 'POST');
+    expect(JSON.parse(post?.[1].body)).toEqual({
+      provider: 'openclaw',
+      apiKey: 'oc-key-1234567890',
+      baseUrl: 'https://claw.example.com',
+      model: 'default',
+    });
+  });
 });

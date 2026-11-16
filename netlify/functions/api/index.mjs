@@ -23,7 +23,7 @@ __export(schema_exports, {
   aiQueries: () => aiQueries,
   aiResellerPricing: () => aiResellerPricing,
   appointments: () => appointments,
-  automationRules: () => automationRules2,
+  automationRules: () => automationRules,
   billingCycles: () => billingCycles,
   billingNotifications: () => billingNotifications,
   commissions: () => commissions,
@@ -91,7 +91,7 @@ __export(schema_exports, {
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, automationRules2, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, insertAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
+var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, automationRules, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, insertAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -730,7 +730,7 @@ var init_schema = __esm({
       metadata: jsonb("metadata"),
       createdAt: timestamp("created_at").defaultNow()
     });
-    automationRules2 = pgTable("automation_rules", {
+    automationRules = pgTable("automation_rules", {
       id: serial("id").primaryKey(),
       name: text("name").notNull(),
       description: text("description"),
@@ -1293,16 +1293,16 @@ async function verifySupabaseToken(token) {
 function isRequireAuthOptions(arg) {
   return arg && typeof arg === "object" && !("method" in arg) && !("headers" in arg);
 }
-async function requireAuthHandler(req2, res, next, checkEntitlement) {
+async function requireAuthHandler(req, res, next, checkEntitlement) {
   try {
-    let userId = req2.session?.userId;
-    let userEmail = req2.session?.userEmail;
+    let userId = req.session?.userId;
+    let userEmail = req.session?.userEmail;
     let isAuthenticated = false;
     if (userId) {
       isAuthenticated = true;
     } else {
-      const authHeader = req2.headers.authorization;
-      const hostname = req2.headers.host || "";
+      const authHeader = req.headers.authorization;
+      const hostname = req.headers.host || "";
       const isDevHost = hostname.includes("localhost") || hostname.includes("replit.dev") || hostname.includes("127.0.0.1");
       if (process.env.NODE_ENV !== "production" && isDevHost && authHeader?.startsWith("Bearer ")) {
         const token = authHeader.substring(7);
@@ -1310,7 +1310,7 @@ async function requireAuthHandler(req2, res, next, checkEntitlement) {
           userId = "dev-user-12345";
           userEmail = "dev@smartcrm.local";
           isAuthenticated = true;
-          req2.user = {
+          req.user = {
             id: userId,
             email: userEmail,
             username: userEmail,
@@ -1331,12 +1331,12 @@ async function requireAuthHandler(req2, res, next, checkEntitlement) {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized - Not authenticated" });
     }
-    req2.userId = userId;
-    req2.isAuthenticated = isAuthenticated;
+    req.userId = userId;
+    req.isAuthenticated = isAuthenticated;
     const ctx = requestContext.getStore();
     if (ctx) ctx.userId = userId;
     if (userEmail) {
-      req2.userEmail = userEmail;
+      req.userEmail = userEmail;
     }
     if (checkEntitlement) {
       if (supabaseUrl && serviceRoleKey) {
@@ -1359,15 +1359,15 @@ async function requireAuthHandler(req2, res, next, checkEntitlement) {
 var requireAuth = (options) => {
   if (isRequireAuthOptions(options)) {
     const checkEntitlement = options.checkEntitlement !== false;
-    return (req2, res, next) => requireAuthHandler(req2, res, next, checkEntitlement);
+    return (req, res, next) => requireAuthHandler(req, res, next, checkEntitlement);
   }
-  return (req2, res, next) => requireAuthHandler(req2, res, next, true);
+  return (req, res, next) => requireAuthHandler(req, res, next, true);
 };
-var requireAdmin = async (req2, res, next) => {
+var requireAdmin = async (req, res, next) => {
   try {
-    let userId = req2.userId ?? req2.session?.userId;
-    let userEmail = req2.userEmail ?? req2.session?.userEmail;
-    const authHeader = req2.headers.authorization;
+    let userId = req.userId ?? req.session?.userId;
+    let userEmail = req.userEmail ?? req.session?.userEmail;
+    const authHeader = req.headers.authorization;
     if (!userId && authHeader?.startsWith("Bearer ")) {
       const user = await verifySupabaseToken(authHeader.substring(7));
       userId = user?.id;
@@ -1400,16 +1400,16 @@ var requireAdmin = async (req2, res, next) => {
         message: "Your account does not have admin privileges. Please contact support."
       });
     }
-    req2.user = profile;
+    req.user = profile;
     next();
   } catch (error) {
     console.error("Admin check error:", error);
     res.status(500).json({ error: "Internal server error during admin check" });
   }
 };
-router.post("/invite", async (req2, res) => {
+router.post("/invite", async (req, res) => {
   try {
-    const { email } = req2.body;
+    const { email } = req.body;
     if (!email || !email.includes("@")) {
       return res.status(400).json({ error: "Valid email is required" });
     }
@@ -1436,14 +1436,14 @@ router.post("/invite", async (req2, res) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
-router.get("/users", async (req2, res) => {
+router.get("/users", async (req, res) => {
   try {
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
     }
     const supabase8 = createClient(supabaseUrl, serviceRoleKey);
-    const page = parseInt(req2.query.page) || 1;
-    const perPage = parseInt(req2.query.per_page) || 50;
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.per_page) || 50;
     const { data, error } = await supabase8.auth.admin.listUsers({
       page,
       perPage
@@ -1464,9 +1464,9 @@ router.get("/users", async (req2, res) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
-router.delete("/users/:id", async (req2, res) => {
+router.delete("/users/:id", async (req, res) => {
   try {
-    const { id } = req2.params;
+    const { id } = req.params;
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
     }
@@ -1485,10 +1485,10 @@ router.delete("/users/:id", async (req2, res) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
-router.patch("/users/:id", async (req2, res) => {
+router.patch("/users/:id", async (req, res) => {
   try {
-    const { id } = req2.params;
-    const { email, phone, email_confirm, phone_confirm, user_metadata, app_metadata } = req2.body;
+    const { id } = req.params;
+    const { email, phone, email_confirm, phone_confirm, user_metadata, app_metadata } = req.body;
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
     }
@@ -1532,9 +1532,9 @@ var memoryService = new MemoryService();
 
 // server/routes/crm.ts
 function registerCRMRoutes(app2) {
-  app2.get("/api/contacts", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/contacts", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userContacts = await db2.select().from(contacts).where(eq2(contacts.profileId, userId)).orderBy(desc2(contacts.createdAt));
       res.json(userContacts);
@@ -1543,11 +1543,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch contacts" });
     }
   });
-  app2.get("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
+      const contactId2 = parseInt(req.params.id);
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -1558,12 +1558,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch contact" });
     }
   });
-  app2.post("/api/contacts", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/contacts", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertContactSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newContact] = await db2.insert(contacts).values(validatedData).returning();
@@ -1576,17 +1576,17 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create contact" });
     }
   });
-  app2.put("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.put("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
+      const contactId2 = parseInt(req.params.id);
       const [existingContact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!existingContact) {
         return res.status(404).json({ error: "Contact not found" });
       }
       const [updatedContact] = await db2.update(contacts).set({
-        ...req2.body,
+        ...req.body,
         profileId: userId,
         updatedAt: /* @__PURE__ */ new Date()
       }).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId))).returning();
@@ -1596,11 +1596,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update contact" });
     }
   });
-  app2.delete("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/contacts/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
+      const contactId2 = parseInt(req.params.id);
       const [deletedContact] = await db2.delete(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId))).returning();
       if (!deletedContact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -1611,9 +1611,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete contact" });
     }
   });
-  app2.get("/api/contacts/duplicates", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/contacts/duplicates", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userContacts = await db2.select().from(contacts).where(eq2(contacts.profileId, userId)).orderBy(desc2(contacts.createdAt));
       const groups = [];
@@ -1666,10 +1666,10 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to find duplicates" });
     }
   });
-  app2.post("/api/contacts/merge", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/contacts/merge", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
-      const { primaryId, duplicateId, mergedFields } = req2.body || {};
+      const userId = req.userId;
+      const { primaryId, duplicateId, mergedFields } = req.body || {};
       if (!primaryId || !duplicateId) {
         return res.status(400).json({ error: "primaryId and duplicateId are required" });
       }
@@ -1691,9 +1691,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to merge contacts" });
     }
   });
-  app2.get("/api/deals", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/deals", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userDeals = await db2.select().from(deals).where(eq2(deals.profileId, userId)).orderBy(desc2(deals.createdAt));
       res.json(userDeals);
@@ -1702,11 +1702,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch deals" });
     }
   });
-  app2.get("/api/deals/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/deals/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const dealId = parseInt(req2.params.id);
+      const dealId = parseInt(req.params.id);
       const [deal] = await db2.select().from(deals).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId)));
       if (!deal) {
         return res.status(404).json({ error: "Deal not found" });
@@ -1717,12 +1717,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch deal" });
     }
   });
-  app2.post("/api/deals", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/deals", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertDealSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newDeal] = await db2.insert(deals).values(validatedData).returning();
@@ -1735,17 +1735,17 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create deal" });
     }
   });
-  app2.put("/api/deals/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.put("/api/deals/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const dealId = parseInt(req2.params.id);
+      const dealId = parseInt(req.params.id);
       const [existingDeal] = await db2.select().from(deals).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId)));
       if (!existingDeal) {
         return res.status(404).json({ error: "Deal not found" });
       }
       const [updatedDeal] = await db2.update(deals).set({
-        ...req2.body,
+        ...req.body,
         profileId: userId,
         updatedAt: /* @__PURE__ */ new Date()
       }).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId))).returning();
@@ -1755,11 +1755,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update deal" });
     }
   });
-  app2.delete("/api/deals/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/deals/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const dealId = parseInt(req2.params.id);
+      const dealId = parseInt(req.params.id);
       const [deletedDeal] = await db2.delete(deals).where(and2(eq2(deals.id, dealId), eq2(deals.profileId, userId))).returning();
       if (!deletedDeal) {
         return res.status(404).json({ error: "Deal not found" });
@@ -1770,9 +1770,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete deal" });
     }
   });
-  app2.get("/api/tasks", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/tasks", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userTasks = await db2.select().from(tasks).where(eq2(tasks.profileId, userId)).orderBy(desc2(tasks.createdAt));
       res.json(userTasks);
@@ -1781,11 +1781,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch tasks" });
     }
   });
-  app2.get("/api/tasks/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/tasks/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const taskId = parseInt(req2.params.id);
+      const taskId = parseInt(req.params.id);
       const [task] = await db2.select().from(tasks).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId)));
       if (!task) {
         return res.status(404).json({ error: "Task not found" });
@@ -1796,12 +1796,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch task" });
     }
   });
-  app2.post("/api/tasks", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/tasks", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertTaskSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newTask] = await db2.insert(tasks).values(validatedData).returning();
@@ -1814,16 +1814,16 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create task" });
     }
   });
-  app2.put("/api/tasks/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.put("/api/tasks/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const taskId = parseInt(req2.params.id);
+      const taskId = parseInt(req.params.id);
       const [existingTask] = await db2.select().from(tasks).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId)));
       if (!existingTask) {
         return res.status(404).json({ error: "Task not found" });
       }
-      const validatedData = insertTaskSchema.parse(req2.body);
+      const validatedData = insertTaskSchema.parse(req.body);
       const [updatedTask] = await db2.update(tasks).set({
         ...validatedData,
         profileId: userId,
@@ -1839,11 +1839,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update task" });
     }
   });
-  app2.delete("/api/tasks/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/tasks/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const taskId = parseInt(req2.params.id);
+      const taskId = parseInt(req.params.id);
       const [deletedTask] = await db2.delete(tasks).where(and2(eq2(tasks.id, taskId), eq2(tasks.profileId, userId))).returning();
       if (!deletedTask) {
         return res.status(404).json({ error: "Task not found" });
@@ -1854,9 +1854,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete task" });
     }
   });
-  app2.get("/api/appointments", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/appointments", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userAppointments = await db2.select().from(appointments).where(eq2(appointments.profileId, userId)).orderBy(desc2(appointments.startTime));
       res.json(userAppointments);
@@ -1865,11 +1865,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch appointments" });
     }
   });
-  app2.get("/api/appointments/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/appointments/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const appointmentId = parseInt(req2.params.id);
+      const appointmentId = parseInt(req.params.id);
       const [appointment] = await db2.select().from(appointments).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId)));
       if (!appointment) {
         return res.status(404).json({ error: "Appointment not found" });
@@ -1880,12 +1880,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch appointment" });
     }
   });
-  app2.post("/api/appointments", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/appointments", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertAppointmentSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newAppointment] = await db2.insert(appointments).values(validatedData).returning();
@@ -1898,16 +1898,16 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create appointment" });
     }
   });
-  app2.put("/api/appointments/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.put("/api/appointments/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const appointmentId = parseInt(req2.params.id);
+      const appointmentId = parseInt(req.params.id);
       const [existingAppointment] = await db2.select().from(appointments).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId)));
       if (!existingAppointment) {
         return res.status(404).json({ error: "Appointment not found" });
       }
-      const validatedData = insertAppointmentSchema.parse(req2.body);
+      const validatedData = insertAppointmentSchema.parse(req.body);
       const [updatedAppointment] = await db2.update(appointments).set({
         ...validatedData,
         profileId: userId,
@@ -1923,11 +1923,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update appointment" });
     }
   });
-  app2.delete("/api/appointments/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/appointments/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const appointmentId = parseInt(req2.params.id);
+      const appointmentId = parseInt(req.params.id);
       const [deletedAppointment] = await db2.delete(appointments).where(and2(eq2(appointments.id, appointmentId), eq2(appointments.profileId, userId))).returning();
       if (!deletedAppointment) {
         return res.status(404).json({ error: "Appointment not found" });
@@ -1938,9 +1938,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete appointment" });
     }
   });
-  app2.get("/api/communications", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/communications", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userCommunications = await db2.select().from(communications).where(eq2(communications.profileId, userId)).orderBy(desc2(communications.createdAt));
       res.json(userCommunications);
@@ -1949,12 +1949,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch communications" });
     }
   });
-  app2.post("/api/communications", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/communications", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertCommunicationSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newCommunication] = await db2.insert(communications).values(validatedData).returning();
@@ -1967,9 +1967,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create communication" });
     }
   });
-  app2.get("/api/notes", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/notes", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userNotes = await db2.select().from(notes).where(eq2(notes.profileId, userId)).orderBy(desc2(notes.createdAt));
       res.json(userNotes);
@@ -1978,11 +1978,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch notes" });
     }
   });
-  app2.get("/api/notes/contact/:contactId", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/notes/contact/:contactId", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.contactId);
+      const contactId2 = parseInt(req.params.contactId);
       const contactNotes = await db2.select().from(notes).where(and2(eq2(notes.contactId, contactId2), eq2(notes.profileId, userId))).orderBy(desc2(notes.createdAt));
       res.json(contactNotes);
     } catch (error) {
@@ -1990,11 +1990,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch notes" });
     }
   });
-  app2.get("/api/notes/deal/:dealId", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/notes/deal/:dealId", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const dealId = parseInt(req2.params.dealId);
+      const dealId = parseInt(req.params.dealId);
       const dealNotes = await db2.select().from(notes).where(and2(eq2(notes.dealId, dealId), eq2(notes.profileId, userId))).orderBy(desc2(notes.createdAt));
       res.json(dealNotes);
     } catch (error) {
@@ -2002,12 +2002,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch notes" });
     }
   });
-  app2.post("/api/notes", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/notes", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertNoteSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newNote] = await db2.insert(notes).values(validatedData).returning();
@@ -2020,16 +2020,16 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create note" });
     }
   });
-  app2.put("/api/notes/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.put("/api/notes/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const noteId = parseInt(req2.params.id);
+      const noteId = parseInt(req.params.id);
       const [existingNote] = await db2.select().from(notes).where(and2(eq2(notes.id, noteId), eq2(notes.profileId, userId)));
       if (!existingNote) {
         return res.status(404).json({ error: "Note not found" });
       }
-      const validatedData = updateNoteSchema.parse(req2.body);
+      const validatedData = updateNoteSchema.parse(req.body);
       const [updatedNote] = await db2.update(notes).set({
         ...validatedData,
         profileId: userId,
@@ -2045,11 +2045,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update note" });
     }
   });
-  app2.delete("/api/notes/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/notes/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const noteId = parseInt(req2.params.id);
+      const noteId = parseInt(req.params.id);
       const [deletedNote] = await db2.delete(notes).where(and2(eq2(notes.id, noteId), eq2(notes.profileId, userId))).returning();
       if (!deletedNote) {
         return res.status(404).json({ error: "Note not found" });
@@ -2060,9 +2060,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete note" });
     }
   });
-  app2.get("/api/documents", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/documents", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userDocuments = await db2.select().from(documents).where(eq2(documents.profileId, userId)).orderBy(desc2(documents.createdAt));
       res.json(userDocuments);
@@ -2071,12 +2071,12 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch documents" });
     }
   });
-  app2.post("/api/documents", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/documents", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const validatedData = insertDocumentSchema.parse({
-        ...req2.body,
+        ...req.body,
         profileId: userId
       });
       const [newDocument] = await db2.insert(documents).values(validatedData).returning();
@@ -2089,11 +2089,11 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create document" });
     }
   });
-  app2.delete("/api/documents/:id", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/documents/:id", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const documentId = parseInt(req2.params.id);
+      const documentId = parseInt(req.params.id);
       const [deletedDocument] = await db2.delete(documents).where(and2(eq2(documents.id, documentId), eq2(documents.profileId, userId))).returning();
       if (!deletedDocument) {
         return res.status(404).json({ error: "Document not found" });
@@ -2104,7 +2104,7 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete document" });
     }
   });
-  app2.get("/api/tenants", requireAuth(), async (req2, res) => {
+  app2.get("/api/tenants", requireAuth(), async (req, res) => {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const tenantList = await db2.select().from(tenantConfigs);
@@ -2114,9 +2114,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch tenants" });
     }
   });
-  app2.post("/api/tenants", requireAuth(), async (req2, res) => {
+  app2.post("/api/tenants", requireAuth(), async (req, res) => {
     try {
-      const { name, domain, config } = req2.body;
+      const { name, domain, config } = req.body;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [newTenant] = await db2.insert(tenantConfigs).values({
         tenantId: domain || `tenant-${Date.now()}`,
@@ -2128,10 +2128,10 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to create tenant" });
     }
   });
-  app2.put("/api/tenants/:id", requireAuth(), async (req2, res) => {
+  app2.put("/api/tenants/:id", requireAuth(), async (req, res) => {
     try {
-      const { id } = req2.params;
-      const updates = req2.body;
+      const { id } = req.params;
+      const updates = req.body;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [updatedTenant] = await db2.update(tenantConfigs).set({ ...updates, updatedAt: /* @__PURE__ */ new Date() }).where(eq2(tenantConfigs.id, id)).returning();
       if (!updatedTenant) {
@@ -2143,9 +2143,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update tenant" });
     }
   });
-  app2.delete("/api/tenants/:id", requireAuth(), async (req2, res) => {
+  app2.delete("/api/tenants/:id", requireAuth(), async (req, res) => {
     try {
-      const { id } = req2.params;
+      const { id } = req.params;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       await db2.delete(tenantConfigs).where(eq2(tenantConfigs.id, id));
       res.json({ message: "Tenant deleted successfully" });
@@ -2154,9 +2154,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to delete tenant" });
     }
   });
-  app2.post("/api/domains/verify", requireAuth(), async (req2, res) => {
+  app2.post("/api/domains/verify", requireAuth(), async (req, res) => {
     try {
-      const { domain } = req2.body;
+      const { domain } = req.body;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
       const isValidFormat = domainRegex.test(domain);
@@ -2179,9 +2179,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to verify domain" });
     }
   });
-  app2.post("/api/domains/configure", requireAuth(), async (req2, res) => {
+  app2.post("/api/domains/configure", requireAuth(), async (req, res) => {
     try {
-      const { tenantId, domain } = req2.body;
+      const { tenantId, domain } = req.body;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       if (!tenantId || !domain) {
         return res.status(400).json({ error: "tenantId and domain are required" });
@@ -2208,9 +2208,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to configure domain" });
     }
   });
-  app2.get("/api/domains/status/:domain", requireAuth(), async (req2, res) => {
+  app2.get("/api/domains/status/:domain", requireAuth(), async (req, res) => {
     try {
-      const { domain } = req2.params;
+      const { domain } = req.params;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [tenant] = await db2.select().from(tenantConfigs).where(eq2(tenantConfigs.tenantId, domain));
       const isConfigured = !!tenant;
@@ -2227,9 +2227,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to check domain status" });
     }
   });
-  app2.get("/api/security/audit/:tenantId", requireAuth(), async (req2, res) => {
+  app2.get("/api/security/audit/:tenantId", requireAuth(), async (req, res) => {
     try {
-      const { tenantId } = req2.params;
+      const { tenantId } = req.params;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [userCount] = await db2.select({ count: sql2`count(*)` }).from(profiles);
       const [contactCount] = await db2.select({ count: sql2`count(*)` }).from(contacts);
@@ -2287,9 +2287,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to run security audit" });
     }
   });
-  app2.post("/api/security/policies", requireAuth(), async (req2, res) => {
+  app2.post("/api/security/policies", requireAuth(), async (req, res) => {
     try {
-      const { tenantId, policyType, settings } = req2.body;
+      const { tenantId, policyType, settings } = req.body;
       const policyUpdate = {
         tenantId,
         policyType,
@@ -2306,9 +2306,9 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to update security policy" });
     }
   });
-  app2.get("/api/security/compliance/:tenantId", requireAuth(), async (req2, res) => {
+  app2.get("/api/security/compliance/:tenantId", requireAuth(), async (req, res) => {
     try {
-      const { tenantId } = req2.params;
+      const { tenantId } = req.params;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [contactCount] = await db2.select({ count: sql2`count(*)` }).from(contacts);
       const [activityCount] = await db2.select({ count: sql2`count(*)` }).from(contactActivities);
@@ -2349,10 +2349,10 @@ function registerCRMRoutes(app2) {
       res.status(500).json({ error: "Failed to check compliance status" });
     }
   });
-  app2.post("/api/contacts/:id/enrich", requireAuth({ checkEntitlement: false }), async (req2, res) => {
-    const userId = req2.userId;
+  app2.post("/api/contacts/:id/enrich", requireAuth({ checkEntitlement: false }), async (req, res) => {
+    const userId = req.userId;
     try {
-      const contactId2 = parseInt(req2.params.id);
+      const contactId2 = parseInt(req.params.id);
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
@@ -2446,11 +2446,11 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
       res.status(500).json({ error: "Enrichment failed", details: error.message });
     }
   });
-  app2.get("/api/contacts/:id/enrichment-history", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/contacts/:id/enrichment-history", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
+      const contactId2 = parseInt(req.params.id);
       const [contact] = await db2.select().from(contacts).where(eq2(contacts.id, contactId2));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -2466,10 +2466,10 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
       res.status(500).json({ error: "Failed to fetch enrichment history" });
     }
   });
-  app2.post("/api/contacts/:id/score", requireAuth({ checkEntitlement: false }), async (req2, res) => {
-    const userId = req2.userId;
+  app2.post("/api/contacts/:id/score", requireAuth({ checkEntitlement: false }), async (req, res) => {
+    const userId = req.userId;
     try {
-      const contactId2 = parseInt(req2.params.id);
+      const contactId2 = parseInt(req.params.id);
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
@@ -2571,9 +2571,9 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       res.status(500).json({ error: "Scoring failed", details: error.message });
     }
   });
-  app2.get("/api/contacts/scoring-stats", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/contacts/scoring-stats", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const userContacts = await db2.select().from(contacts).where(eq2(contacts.profileId, userId));
       const scores = userContacts.map((c) => parseFloat(c.score || "0")).filter((s) => !isNaN(s));
@@ -2589,12 +2589,12 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       res.status(500).json({ error: "Failed to fetch scoring stats" });
     }
   });
-  app2.put("/api/contacts/:id/custom-fields", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.put("/api/contacts/:id/custom-fields", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
-      const { customFields } = req2.body;
+      const contactId2 = parseInt(req.params.id);
+      const { customFields } = req.body;
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -2624,12 +2624,12 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       res.status(500).json({ error: "Failed to update custom fields" });
     }
   });
-  app2.delete("/api/contacts/:id/custom-fields/:key", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.delete("/api/contacts/:id/custom-fields/:key", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
-      const fieldKey = req2.params.key;
+      const contactId2 = parseInt(req.params.id);
+      const fieldKey = req.params.key;
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -2644,14 +2644,14 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       res.status(500).json({ error: "Failed to delete custom field" });
     }
   });
-  app2.get("/api/contacts/:id/activities", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.get("/api/contacts/:id/activities", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
-      const type = req2.query.type;
-      const page = parseInt(req2.query.page) || 1;
-      const limit = parseInt(req2.query.limit) || 20;
+      const contactId2 = parseInt(req.params.id);
+      const type = req.query.type;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -2668,12 +2668,12 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       res.status(500).json({ error: "Failed to fetch activities" });
     }
   });
-  app2.post("/api/contacts/:id/activities", requireAuth({ checkEntitlement: false }), async (req2, res) => {
+  app2.post("/api/contacts/:id/activities", requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req2.params.id);
-      const { activityType, description, metadata } = req2.body;
+      const contactId2 = parseInt(req.params.id);
+      const { activityType, description, metadata } = req.body;
       const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
@@ -2775,10 +2775,10 @@ var createRateLimit = (options) => {
     skipSuccessfulRequests: options.skipSuccessfulRequests || false,
     skipFailedRequests: options.skipFailedRequests || false,
     // Use IP address for rate limiting (IPv6-safe via library helper)
-    keyGenerator: (req2) => ipKeyGenerator(req2),
+    keyGenerator: (req) => ipKeyGenerator(req),
     // Custom handler for rate limit exceeded
-    handler: (req2, res) => {
-      console.warn(`Rate limit exceeded for IP: ${req2.ip}, Path: ${req2.path}`);
+    handler: (req, res) => {
+      console.warn(`Rate limit exceeded for IP: ${req.ip}, Path: ${req.path}`);
       res.status(429).json({
         error: "Too many requests",
         message: "Rate limit exceeded. Please try again later.",
@@ -2846,14 +2846,14 @@ var healthLimiter = rateLimit({
 
 // server/middleware/auditLog.ts
 function auditLog(action) {
-  return (req2, res, next) => {
+  return (req, res, next) => {
     const timestamp2 = (/* @__PURE__ */ new Date()).toISOString();
-    const userId = req2.user?.id || "anonymous";
-    const userEmail = req2.user?.username || "unknown";
-    const ip = req2.ip || req2.connection.remoteAddress || "unknown";
-    const method = req2.method;
-    const path2 = req2.path;
-    const userAgent = req2.get("User-Agent") || "unknown";
+    const userId = req.user?.id || "anonymous";
+    const userEmail = req.user?.username || "unknown";
+    const ip = req.ip || req.connection.remoteAddress || "unknown";
+    const method = req.method;
+    const path2 = req.path;
+    const userAgent = req.get("User-Agent") || "unknown";
     console.log(
       `\u{1F50D} AUDIT [${timestamp2}] ${action}: ${userEmail} (${userId}) from ${ip} - ${method} ${path2}`
     );
@@ -2866,9 +2866,9 @@ function auditLog(action) {
       method,
       path: path2,
       userAgent,
-      params: req2.params,
-      query: req2.query,
-      body: req2.method !== "GET" ? req2.body : void 0
+      params: req.params,
+      query: req.query,
+      body: req.method !== "GET" ? req.body : void 0
     };
     next();
   };
@@ -3017,24 +3017,24 @@ var ErrorLogger = class {
   /**
    * Create error context from Express request
    */
-  createContextFromRequest(req2) {
+  createContextFromRequest(req) {
     return {
-      userId: req2.session?.userId || req2.user?.id,
-      requestId: req2.id,
-      endpoint: req2.path,
-      method: req2.method,
-      userAgent: req2.get("user-agent"),
-      ip: req2.ip || req2.connection.remoteAddress
+      userId: req.session?.userId || req.user?.id,
+      requestId: req.id,
+      endpoint: req.path,
+      method: req.method,
+      userAgent: req.get("user-agent"),
+      ip: req.ip || req.connection.remoteAddress
     };
   }
   /**
    * Express middleware for automatic error logging
    */
   errorMiddleware() {
-    return async (err, req2, res, next) => {
-      const context = this.createContextFromRequest(req2);
+    return async (err, req, res, next) => {
+      const context = this.createContextFromRequest(req);
       context.statusCode = res.statusCode || 500;
-      await this.logError(`Unhandled error in ${req2.method} ${req2.path}`, err, context);
+      await this.logError(`Unhandled error in ${req.method} ${req.path}`, err, context);
       next(err);
     };
   }
@@ -3207,7 +3207,7 @@ var schemas = {
   })
 };
 var validateUserData = (fields) => {
-  return (req2, res, next) => {
+  return (req, res, next) => {
     try {
       const schema = z.object({
         email: fields.includes("email") ? schemas.email.optional() : z.undefined(),
@@ -3216,7 +3216,7 @@ var validateUserData = (fields) => {
         firstName: fields.includes("firstName") ? schemas.name.optional() : z.undefined(),
         lastName: fields.includes("lastName") ? schemas.name.optional() : z.undefined()
       });
-      req2.body = schema.parse(req2.body);
+      req.body = schema.parse(req.body);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -3230,7 +3230,7 @@ var validateUserData = (fields) => {
   };
 };
 var validateBulkImport = () => {
-  return (req2, res, next) => {
+  return (req, res, next) => {
     try {
       const schema = z.object({
         users: z.array(z.object({
@@ -3244,7 +3244,7 @@ var validateBulkImport = () => {
         })),
         send_notifications: z.boolean().optional()
       });
-      req2.body = schema.parse(req2.body);
+      req.body = schema.parse(req.body);
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -3258,23 +3258,23 @@ var validateBulkImport = () => {
   };
 };
 var validate = (schema) => {
-  return async (req2, res, next) => {
+  return async (req, res, next) => {
     try {
-      if (req2.body && Object.keys(req2.body).length > 0) {
-        req2.body = schema.parse(req2.body);
+      if (req.body && Object.keys(req.body).length > 0) {
+        req.body = schema.parse(req.body);
       }
-      if (req2.query && Object.keys(req2.query).length > 0) {
+      if (req.query && Object.keys(req.query).length > 0) {
         if (schema === schemas.pagination) {
-          req2.query = schema.parse(req2.query);
+          req.query = schema.parse(req.query);
         }
       }
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
         await errorLogger.logError("Validation failed", error, {
-          endpoint: req2.path,
-          method: req2.method,
-          ip: req2.ip,
+          endpoint: req.path,
+          method: req.method,
+          ip: req.ip,
           errors: error.errors
         });
         return res.status(400).json({
@@ -3288,9 +3288,9 @@ var validate = (schema) => {
         });
       }
       await errorLogger.logError("Unknown validation error", error, {
-        endpoint: req2.path,
-        method: req2.method,
-        ip: req2.ip
+        endpoint: req.path,
+        method: req.method,
+        ip: req.ip
       });
       return res.status(400).json({
         error: "Validation error",
@@ -3369,7 +3369,7 @@ var validateSearchQuery = validate(
     limit: z.number().int().min(1).max(100).optional()
   })
 );
-var sanitizeInput = (req2, res, next) => {
+var sanitizeInput = (req, res, next) => {
   const sanitizeString = (str) => {
     if (typeof str !== "string") return str;
     return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "").replace(/javascript:/gi, "").replace(/on\w+\s*=/gi, "").trim();
@@ -3390,11 +3390,11 @@ var sanitizeInput = (req2, res, next) => {
     }
     return obj;
   };
-  if (req2.body) {
-    req2.body = sanitizeObject(req2.body);
+  if (req.body) {
+    req.body = sanitizeObject(req.body);
   }
-  if (req2.query) {
-    req2.query = sanitizeObject(req2.query);
+  if (req.query) {
+    req.query = sanitizeObject(req.query);
   }
   next();
 };
@@ -3403,7 +3403,7 @@ var sanitizeInput = (req2, res, next) => {
 init_schema();
 import { eq as eq3, count, sql as sql3 } from "drizzle-orm";
 function registerAdminRoutes(app2) {
-  app2.get("/api/admin/stats", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/stats", adminLimiter, requireAdmin, async (req, res) => {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const totalUsersResult = await db2.select({ count: count() }).from(profiles);
@@ -3425,7 +3425,7 @@ function registerAdminRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch system statistics" });
     }
   });
-  app2.get("/api/users", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.get("/api/users", adminLimiter, requireAdmin, async (req, res) => {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const users = await db2.select().from(profiles).orderBy(sql3`${profiles.createdAt} DESC`);
@@ -3461,9 +3461,9 @@ function registerAdminRoutes(app2) {
     sanitizeInput,
     validateUserData(["email", "role"]),
     auditUserCreate,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { email, role, firstName, lastName, permissions: permissions2 } = req2.body;
+        const { email, role, firstName, lastName, permissions: permissions2 } = req.body;
         if (!email || !role) {
           return res.status(400).json({ error: "Email and role are required" });
         }
@@ -3503,10 +3503,10 @@ function registerAdminRoutes(app2) {
     sanitizeInput,
     validateUserData(["role"]),
     auditUserUpdate,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { id } = req2.params;
-        const { role } = req2.body;
+        const { id } = req.params;
+        const { role } = req.body;
         if (!role) {
           return res.status(400).json({ error: "Role is required" });
         }
@@ -3529,10 +3529,10 @@ function registerAdminRoutes(app2) {
       }
     }
   );
-  app2.patch("/api/users/:id/status", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.patch("/api/users/:id/status", adminLimiter, requireAdmin, async (req, res) => {
     try {
-      const { id } = req2.params;
-      const { status } = req2.body;
+      const { id } = req.params;
+      const { status } = req.body;
       if (!status) {
         return res.status(400).json({ error: "Status is required" });
       }
@@ -3558,10 +3558,10 @@ function registerAdminRoutes(app2) {
     sanitizeInput,
     validateUserData(["productTier"]),
     auditTierChange,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { id } = req2.params;
-        const { productTier } = req2.body;
+        const { id } = req.params;
+        const { productTier } = req.body;
         if (!productTier) {
           return res.status(400).json({ error: "Product tier is required" });
         }
@@ -3589,10 +3589,10 @@ function registerAdminRoutes(app2) {
     adminLimiter,
     requireAdmin,
     auditUserDelete,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { id } = req2.params;
-        if (id === req2.user.id) {
+        const { id } = req.params;
+        if (id === req.user.id) {
           return res.status(400).json({ error: "Cannot delete your own account" });
         }
         const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
@@ -3615,9 +3615,9 @@ function registerAdminRoutes(app2) {
     adminLimiter,
     requireAdmin,
     auditEmailSend,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { email, firstName } = req2.body;
+        const { email, firstName } = req.body;
         if (!email) {
           return res.status(400).json({ error: "Email is required" });
         }
@@ -3637,9 +3637,9 @@ function registerAdminRoutes(app2) {
     adminLimiter,
     requireAdmin,
     auditEmailSend,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { emails } = req2.body;
+        const { emails } = req.body;
         if (!Array.isArray(emails) || emails.length === 0) {
           return res.status(400).json({ error: "Emails array is required" });
         }
@@ -3666,9 +3666,9 @@ function registerAdminRoutes(app2) {
       }
     }
   );
-  app2.post("/api/bulk-import/parse-csv", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.post("/api/bulk-import/parse-csv", adminLimiter, requireAdmin, async (req, res) => {
     try {
-      const { csv_content } = req2.body;
+      const { csv_content } = req.body;
       if (!csv_content) {
         return res.status(400).json({ error: "CSV content is required" });
       }
@@ -3700,9 +3700,9 @@ function registerAdminRoutes(app2) {
     adminLimiter,
     requireAdmin,
     auditUserUpdate,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { daysInactive = 30 } = req2.body;
+        const { daysInactive = 30 } = req.body;
         const cutoffDate = /* @__PURE__ */ new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysInactive);
         const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
@@ -3724,9 +3724,9 @@ function registerAdminRoutes(app2) {
     adminLimiter,
     requireAdmin,
     auditUserUpdate,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { targetTier = "smartcrm" } = req2.body;
+        const { targetTier = "smartcrm" } = req.body;
         const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
         const trialUsers = await db2.select().from(profiles).where(
           sql3`${profiles.productTier} IN ('smartcrm', 'sales_maximizer') AND ${profiles.role} != 'super_admin'`
@@ -3743,7 +3743,7 @@ function registerAdminRoutes(app2) {
       }
     }
   );
-  app2.get("/api/admin/activity-stats", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/activity-stats", adminLimiter, requireAdmin, async (req, res) => {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const totalUsers = await db2.select({ count: count() }).from(profiles);
@@ -3764,7 +3764,7 @@ function registerAdminRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch activity statistics" });
     }
   });
-  app2.get("/api/admin/database-health", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/database-health", adminLimiter, requireAdmin, async (req, res) => {
     try {
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
       const startTime = Date.now();
@@ -3800,9 +3800,9 @@ function registerAdminRoutes(app2) {
       });
     }
   });
-  app2.get("/api/admin/audit-logs", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/audit-logs", adminLimiter, requireAdmin, async (req, res) => {
     try {
-      const { page = 1, limit = 50, action, userId, dateFrom, dateTo } = req2.query;
+      const { page = 1, limit = 50, action, userId, dateFrom, dateTo } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
       const mockAuditLogs = [
         {
@@ -3877,9 +3877,9 @@ function registerAdminRoutes(app2) {
     adminLimiter,
     requireAdmin,
     sanitizeInput,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { name, config } = req2.body;
+        const { name, config } = req.body;
         if (!name || !config) {
           return res.status(400).json({ error: "Name and config are required" });
         }
@@ -3887,7 +3887,7 @@ function registerAdminRoutes(app2) {
           id: Date.now(),
           name,
           config,
-          createdBy: req2.user.id,
+          createdBy: req.user.id,
           createdAt: (/* @__PURE__ */ new Date()).toISOString()
         };
         res.json({
@@ -3901,7 +3901,7 @@ function registerAdminRoutes(app2) {
       }
     }
   );
-  app2.get("/api/admin/user-templates", adminLimiter, requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/user-templates", adminLimiter, requireAdmin, async (req, res) => {
     try {
       const templates = [
         {
@@ -3951,9 +3951,9 @@ function registerAdminRoutes(app2) {
     "/api/admin/automated-actions/setup",
     adminLimiter,
     requireAdmin,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { actionType, config } = req2.body;
+        const { actionType, config } = req.body;
         if (!actionType || !config) {
           return res.status(400).json({ error: "Action type and config are required" });
         }
@@ -3962,7 +3962,7 @@ function registerAdminRoutes(app2) {
           actionType,
           // 'suspend_inactive', 'upgrade_trials', 'send_reminders'
           config,
-          createdBy: req2.user.id,
+          createdBy: req.user.id,
           isActive: true,
           createdAt: (/* @__PURE__ */ new Date()).toISOString()
         };
@@ -3983,9 +3983,9 @@ function registerAdminRoutes(app2) {
     requireAdmin,
     validateBulkImport(),
     auditBulkImport,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { users, send_notifications } = req2.body;
+        const { users, send_notifications } = req.body;
         if (!Array.isArray(users)) {
           return res.status(400).json({ error: "Users array is required" });
         }
@@ -4480,9 +4480,9 @@ async function getTenantId(userId) {
   const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("id", userId).single();
   return profile?.tenant_id || "";
 }
-router2.get("/", async (req2, res) => {
+router2.get("/", async (req, res) => {
   try {
-    const userId = req2.user?.id;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4495,10 +4495,10 @@ router2.get("/", async (req2, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-router2.get("/:id", async (req2, res) => {
+router2.get("/:id", async (req, res) => {
   try {
-    const { id } = req2.params;
-    const userId = req2.user?.id;
+    const { id } = req.params;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4514,10 +4514,10 @@ router2.get("/:id", async (req2, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-router2.post("/", async (req2, res) => {
+router2.post("/", async (req, res) => {
   try {
-    const { name, triggerType, appSlug, steps } = req2.body;
-    const userId = req2.user?.id;
+    const { name, triggerType, appSlug, steps } = req.body;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4550,11 +4550,11 @@ router2.post("/", async (req2, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-router2.put("/:id", async (req2, res) => {
+router2.put("/:id", async (req, res) => {
   try {
-    const { id } = req2.params;
-    const { name, triggerType, enabled, steps } = req2.body;
-    const userId = req2.user?.id;
+    const { id } = req.params;
+    const { name, triggerType, enabled, steps } = req.body;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4583,10 +4583,10 @@ router2.put("/:id", async (req2, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-router2.delete("/:id", async (req2, res) => {
+router2.delete("/:id", async (req, res) => {
   try {
-    const { id } = req2.params;
-    const userId = req2.user?.id;
+    const { id } = req.params;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4599,10 +4599,10 @@ router2.delete("/:id", async (req2, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-router2.get("/:id/runs", async (req2, res) => {
+router2.get("/:id/runs", async (req, res) => {
   try {
-    const { id } = req2.params;
-    const userId = req2.user?.id;
+    const { id } = req.params;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4614,11 +4614,11 @@ router2.get("/:id/runs", async (req2, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-router2.post("/:id/run", async (req2, res) => {
+router2.post("/:id/run", async (req, res) => {
   try {
-    const { id } = req2.params;
-    const { triggerData } = req2.body;
-    const userId = req2.user?.id;
+    const { id } = req.params;
+    const { triggerData } = req.body;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4677,10 +4677,10 @@ import { createClient as createClient3 } from "@supabase/supabase-js";
 var supabaseUrl3 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
 var serviceRoleKey2 = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 function requireEntitlement(featureKey) {
-  return async (req2, res, next) => {
+  return async (req, res, next) => {
     try {
-      const userId = req2.userId ?? req2.session?.userId;
-      const userEmail = req2.userEmail ?? req2.session?.userEmail;
+      const userId = req.userId ?? req.session?.userId;
+      const userEmail = req.userEmail ?? req.session?.userEmail;
       if (!userId && !userEmail) {
         return res.status(401).json({ error: "Unauthorized - Not authenticated" });
       }
@@ -4719,8 +4719,8 @@ function requireEntitlement(featureKey) {
           message: "This feature is not available in your current subscription. Please upgrade."
         });
       }
-      req2.entitlement = entitlement;
-      req2.userPackage = entitlement.package;
+      req.entitlement = entitlement;
+      req.userPackage = entitlement.package;
       next();
     } catch (error) {
       console.error("Entitlement check error:", error);
@@ -4858,10 +4858,10 @@ var upgradePricing = {
     name: "Sales Maximizer"
   }
 };
-router3.post("/upgrade", async (req2, res) => {
+router3.post("/upgrade", async (req, res) => {
   try {
-    const { tierId, currentTier } = req2.body;
-    const userId = req2.userId;
+    const { tierId, currentTier } = req.body;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
     }
@@ -4928,8 +4928,8 @@ router3.post("/upgrade", async (req2, res) => {
     res.status(500).json({ error: "Failed to create upgrade session" });
   }
 });
-router3.post("/webhook", async (req2, res) => {
-  const sig = req2.headers["stripe-signature"];
+router3.post("/webhook", async (req, res) => {
+  const sig = req.headers["stripe-signature"];
   const endpointSecret = requireEnv("STRIPE_WEBHOOK_SECRET");
   const stripeClient = await getStripe();
   if (!stripeClient) {
@@ -4937,7 +4937,7 @@ router3.post("/webhook", async (req2, res) => {
   }
   let event;
   try {
-    event = stripeClient.webhooks.constructEvent(req2.body, sig, endpointSecret);
+    event = stripeClient.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.log(`Webhook signature verification failed.`, err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -4965,7 +4965,7 @@ router3.post("/webhook", async (req2, res) => {
     res.status(500).json({ error: "Webhook processing failed" });
   }
 });
-router3.get("/plans", async (req2, res) => {
+router3.get("/plans", async (req, res) => {
   try {
     const plans = Object.entries(upgradePricing).map(([tierId, config]) => ({
       id: tierId,
@@ -4984,27 +4984,223 @@ import { Router as Router4 } from "express";
 init_db();
 init_schema();
 import { eq as eq4, and as and3, or, like, desc as desc3 } from "drizzle-orm";
+
+// server/routes/videos.ts
+var videoEmails = [];
+function listVideosForUser(userId) {
+  return videoEmails.filter((video) => video.profileId === userId);
+}
+function createVideoForUser(userId, input) {
+  const { title, script, recipientName, recipientEmail, company } = input;
+  const newVideo = {
+    id: crypto.randomUUID(),
+    title,
+    script,
+    duration: Math.floor(script.length / 10),
+    // Rough estimate based on script length
+    thumbnail: "/api/placeholder/400/225",
+    // Placeholder thumbnail
+    status: "draft",
+    analytics: {
+      views: 0,
+      completionRate: 0,
+      engagement: 0
+    },
+    gpt5Metadata: {
+      generatedScript: false,
+      optimizationScore: 0.8,
+      suggestedImprovements: [],
+      tone: "professional",
+      targetAudience: "business"
+    },
+    recipient: recipientName && recipientEmail ? {
+      name: recipientName,
+      email: recipientEmail,
+      company: company || ""
+    } : void 0,
+    profileId: userId,
+    createdAt: /* @__PURE__ */ new Date(),
+    updatedAt: /* @__PURE__ */ new Date()
+  };
+  videoEmails.push(newVideo);
+  return newVideo;
+}
+function registerVideoRoutes(app2) {
+  app2.use("/api/videos", requireAuth(), requireEntitlement(FeatureKey.VIDEO_EMAIL));
+  app2.get("/api/videos", async (req, res) => {
+    try {
+      res.json(listVideosForUser(req.userId));
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      res.status(500).json({ error: "Failed to fetch videos" });
+    }
+  });
+  app2.get("/api/videos/stats", async (req, res) => {
+    try {
+      const userVideos = videoEmails.filter((video) => video.profileId === req.userId);
+      const stats = {
+        totalVideos: userVideos.length,
+        totalViews: userVideos.reduce((sum, video) => sum + video.analytics.views, 0),
+        averageEngagement: userVideos.length > 0 ? userVideos.reduce((sum, video) => sum + video.analytics.engagement, 0) / userVideos.length : 0,
+        conversionRate: 0.15,
+        // Mock conversion rate
+        topPerformingVideo: userVideos.length > 0 ? userVideos.reduce(
+          (top, video) => video.analytics.views > (userVideos.find((v) => v.title === top)?.analytics.views || 0) ? video.title : top,
+          userVideos[0]?.title || ""
+        ) : ""
+      };
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching video stats:", error);
+      res.status(500).json({ error: "Failed to fetch video stats" });
+    }
+  });
+  app2.post("/api/videos", async (req, res) => {
+    try {
+      const userId = req.userId;
+      const { title, script, recipientName, recipientEmail, company } = req.body;
+      if (!title || !script) {
+        return res.status(400).json({ error: "Title and script are required" });
+      }
+      const newVideo = createVideoForUser(userId, { title, script, recipientName, recipientEmail, company });
+      res.status(201).json(newVideo);
+    } catch (error) {
+      console.error("Error creating video:", error);
+      res.status(500).json({ error: "Failed to create video" });
+    }
+  });
+  app2.get("/api/videos/:id", async (req, res) => {
+    try {
+      const videoId = req.params.id;
+      const video = videoEmails.find((v) => v.id === videoId && v.profileId === req.userId);
+      if (!video) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+      res.json(video);
+    } catch (error) {
+      console.error("Error fetching video:", error);
+      res.status(500).json({ error: "Failed to fetch video" });
+    }
+  });
+  app2.put("/api/videos/:id", async (req, res) => {
+    try {
+      const videoId = req.params.id;
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req.userId);
+      if (videoIndex === -1) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+      const allowedFields = ["title", "script", "duration", "thumbnail", "status", "recipient"];
+      const updates = {};
+      for (const field of allowedFields) {
+        if (field in req.body) {
+          updates[field] = req.body[field];
+        }
+      }
+      const updatedVideo = {
+        ...videoEmails[videoIndex],
+        ...updates,
+        updatedAt: /* @__PURE__ */ new Date()
+      };
+      videoEmails[videoIndex] = updatedVideo;
+      res.json(updatedVideo);
+    } catch (error) {
+      console.error("Error updating video:", error);
+      res.status(500).json({ error: "Failed to update video" });
+    }
+  });
+  app2.delete("/api/videos/:id", async (req, res) => {
+    try {
+      const videoId = req.params.id;
+      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req.userId);
+      if (videoIndex === -1) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+      videoEmails.splice(videoIndex, 1);
+      res.json({ message: "Video deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      res.status(500).json({ error: "Failed to delete video" });
+    }
+  });
+}
+
+// server/services/safeUrl.ts
+import { lookup } from "dns/promises";
+import { isIP } from "net";
+function isPrivateAddress(address) {
+  const ip = address.toLowerCase().replace(/^\[|\]$/g, "");
+  if (isIP(ip) === 4) {
+    const [a, b] = ip.split(".").map(Number);
+    return a === 0 || // "this" network
+    a === 10 || a === 127 || a === 100 && b >= 64 && b <= 127 || // CGNAT
+    a === 169 && b === 254 || // link-local incl. 169.254.169.254 metadata
+    a === 172 && b >= 16 && b <= 31 || a === 192 && b === 168 || a === 192 && b === 0 || a === 198 && (b === 18 || b === 19) || // benchmarking
+    a >= 224;
+  }
+  if (isIP(ip) === 6) {
+    if (ip === "::" || ip === "::1") return true;
+    const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (mapped) return isPrivateAddress(mapped[1]);
+    return ip.startsWith("fc") || ip.startsWith("fd") || // unique local
+    /^fe[89ab]/.test(ip) || // link-local
+    ip.startsWith("ff");
+  }
+  return true;
+}
+var BLOCKED_HOSTNAMES = ["localhost", "metadata.google.internal"];
+var BLOCKED_SUFFIXES = [".localhost", ".local", ".internal", ".lan", ".home"];
+var defaultResolve = async (host) => (await lookup(host, { all: true, verbatim: true })).map((r) => r.address);
+async function isSafeExternalUrl(rawUrl, options = {}) {
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" || url.username || url.password) return false;
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  if (!host || BLOCKED_HOSTNAMES.includes(host) || BLOCKED_SUFFIXES.some((s) => host.endsWith(s))) {
+    return false;
+  }
+  const allowed = (options.allowedHosts || []).map((h) => h.trim().toLowerCase()).filter(Boolean);
+  if (allowed.length > 0 && !allowed.includes(host)) return false;
+  if (isIP(host.replace(/^\[|\]$/g, ""))) return !isPrivateAddress(host);
+  try {
+    const addresses = await (options.resolve || defaultResolve)(host);
+    return addresses.length > 0 && addresses.every((a) => !isPrivateAddress(a));
+  } catch {
+    return false;
+  }
+}
+
+// server/routes/openclaw.ts
 var router4 = Router4();
 router4.use(requireAuth());
-router4.use((req2, res, next) => {
-  if (req2.path === "/health") {
+router4.use((req, res, next) => {
+  if (req.path === "/health") {
     return next();
   }
-  return requireEntitlement(FeatureKey.OPENCLAW)(req2, res, next);
+  return requireEntitlement(FeatureKey.OPENCLAW)(req, res, next);
 });
 var OPENCLAW_API_URL = process.env.OPENCLAW_API_URL || "http://localhost:3001";
 var OPENCLAW_API_KEY = process.env.OPENCLAW_API_KEY || "";
+var OPENCLAW_ALLOWED_HOSTS = (process.env.OPENCLAW_ALLOWED_HOSTS || "").split(",").map((h) => h.trim()).filter(Boolean);
 async function getOpenClawConfigForUser(userId) {
   let apiKey = OPENCLAW_API_KEY;
   let baseUrl = OPENCLAW_API_URL;
   try {
     if (supabase && userId) {
-      const { data } = await supabase.from("user_api_keys").select("openclaw_api_key, openclaw_base_url").eq("user_id", userId).single();
-      if (data?.openclaw_api_key) {
-        apiKey = data.openclaw_api_key;
+      const { data } = await supabase.from("user_api_keys").select("api_key, metadata").eq("user_id", userId).eq("provider", "openclaw").eq("is_active", true).maybeSingle();
+      if (data?.api_key) {
+        apiKey = data.api_key;
       }
-      if (data?.openclaw_base_url) {
-        baseUrl = data.openclaw_base_url;
+      const userBaseUrl = data?.metadata?.base_url;
+      if (userBaseUrl) {
+        if (await isSafeExternalUrl(userBaseUrl, { allowedHosts: OPENCLAW_ALLOWED_HOSTS })) {
+          baseUrl = userBaseUrl.replace(/\/+$/, "");
+        } else {
+          console.warn("Ignoring unsafe per-user OpenClaw base URL; using server default");
+        }
       }
     }
   } catch (err) {
@@ -5467,8 +5663,8 @@ var crmTools = [
   // Image Generation
   {
     name: "generate_image",
-    description: "Generate an image using AI (DALL-E or Gemini)",
-    parameters: { prompt: "string", size: "string?", style: "string?" },
+    description: "Generate an image with OpenAI (size: 1024x1024, 1536x1024 or 1024x1536)",
+    parameters: { prompt: "string", size: "string?" },
     category: "ai"
   },
   // Video/Demo
@@ -5560,13 +5756,13 @@ var crmTools = [
     category: "ai"
   }
 ];
-router4.post("/chat", async (req2, res) => {
+router4.post("/chat", async (req, res) => {
   try {
-    const { message, history, context } = req2.body;
+    const { message, history, context } = req.body;
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
-    const userId = req2.userId;
+    const userId = req.userId;
     const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } = await getOpenClawConfigForUser(userId);
     const openclawRequest = {
       message,
@@ -5582,6 +5778,8 @@ router4.post("/chat", async (req2, res) => {
       `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: "POST",
+        redirect: "error",
+        // never follow redirects from a (possibly user-supplied) base URL
         headers: {
           "Content-Type": "application/json",
           ...effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}
@@ -5602,13 +5800,13 @@ router4.post("/chat", async (req2, res) => {
     res.status(500).json({ error: "Failed to communicate with OpenClaw API" });
   }
 });
-router4.post("/chat/stream", async (req2, res) => {
+router4.post("/chat/stream", async (req, res) => {
   try {
-    const { message, history, context } = req2.body;
+    const { message, history, context } = req.body;
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
-    const userId = req2.userId;
+    const userId = req.userId;
     const { apiKey: effectiveApiKey, baseUrl: effectiveBaseUrl } = await getOpenClawConfigForUser(userId);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -5628,6 +5826,8 @@ router4.post("/chat/stream", async (req2, res) => {
       `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: "POST",
+        redirect: "error",
+        // never follow redirects from a (possibly user-supplied) base URL
         headers: {
           "Content-Type": "application/json",
           ...effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}
@@ -5653,10 +5853,7 @@ router4.post("/chat/stream", async (req2, res) => {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value);
-      res.write(`data: ${chunk}
-
-`);
+      res.write(decoder.decode(value, { stream: true }));
     }
     res.end();
   } catch (error) {
@@ -5666,16 +5863,16 @@ router4.post("/chat/stream", async (req2, res) => {
 `);
   }
 });
-router4.get("/tools", (req2, res) => {
+router4.get("/tools", (req, res) => {
   res.json({ tools: crmTools });
 });
-router4.post("/execute", async (req2, res) => {
+router4.post("/execute", async (req, res) => {
   try {
-    const { tool, parameters } = req2.body;
+    const { tool, parameters } = req.body;
     if (!tool) {
       return res.status(400).json({ error: "Tool name is required" });
     }
-    const userId = req2.userId;
+    const userId = req.userId;
     const toolDef = crmTools.find((t) => t.name === tool);
     if (!toolDef) {
       return res.status(400).json({ error: `Tool '${tool}' not found` });
@@ -5833,7 +6030,7 @@ async function executeCRMFunction(toolName, params, userId) {
         return { appointment: newAppointment };
       }
       case "cancel_appointment": {
-        const appointmentId = parseInt(params.appointmentId);
+        const appointmentId = String(params.appointmentId);
         await db.delete(appointments).where(and3(eq4(appointments.id, appointmentId), eq4(appointments.profileId, userId)));
         return { success: true, message: "Appointment cancelled" };
       }
@@ -7125,43 +7322,20 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       // Video Management
       case "list_videos": {
+        if (!userId) return { error: "Authentication required" };
         const limit = params.limit || 20;
-        const videoRes = await fetch(
-          `${process.env.CRM_BASE_URL || "http://localhost:3000"}/api/videos`,
-          {
-            headers: {
-              Authorization: req.headers.authorization || "",
-              Cookie: req.headers.cookie || ""
-            }
-          }
-        );
-        if (!videoRes.ok) {
-          return { videos: [], count: 0 };
-        }
-        const videos = await videoRes.json();
+        const videos = listVideosForUser(userId);
         return { videos: videos.slice(0, limit), count: videos.length };
       }
       case "create_video": {
-        const videoRes = await fetch(
-          `${process.env.CRM_BASE_URL || "http://localhost:3000"}/api/videos`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: req.headers.authorization || "",
-              Cookie: req.headers.cookie || ""
-            },
-            body: JSON.stringify({
-              title: params.title,
-              script: params.script,
-              recipient: params.recipientEmail ? { email: params.recipientEmail, name: params.recipientName } : void 0
-            })
-          }
-        );
-        if (!videoRes.ok) {
-          return { error: "Failed to create video" };
-        }
-        const video = await videoRes.json();
+        if (!userId) return { error: "Authentication required" };
+        if (!params.title || !params.script) return { error: "title and script are required" };
+        const video = createVideoForUser(userId, {
+          title: params.title,
+          script: params.script,
+          recipientName: params.recipientName,
+          recipientEmail: params.recipientEmail
+        });
         return { video };
       }
       // Pipeline Drag & Drop
@@ -7383,14 +7557,12 @@ Preparation: ${scheduling.preparation_notes || ""}`
         const appointmentId = params.appointmentId;
         if (!appointmentId) return { error: "Appointment ID is required" };
         const [appointment] = await db.select().from(appointments).where(
-          and3(eq4(appointments.id, parseInt(appointmentId)), eq4(appointments.profileId, userId))
+          and3(eq4(appointments.id, String(appointmentId)), eq4(appointments.profileId, userId))
         );
         if (!appointment) return { error: "Appointment not found" };
         const client = await getOpenAIClient();
         if (!client) return { error: NO_KEY_MESSAGE };
-        const notes2 = await db.select().from(notes2).where(
-          and3(eq4(notes2.appointmentId, parseInt(appointmentId)), eq4(notes2.profileId, userId))
-        );
+        const relatedNotes = appointment.contactId ? await db.select().from(notes).where(and3(eq4(notes.contactId, appointment.contactId), eq4(notes.profileId, userId))) : [];
         const response = await client.chat.completions.create({
           model: ADVANCED_MODEL,
           messages: [
@@ -7402,11 +7574,11 @@ Preparation: ${scheduling.preparation_notes || ""}`
               role: "user",
               content: `Meeting Details:
 Title: ${appointment.title}
-Date: ${appointment.dateTime}
-Duration: ${appointment.duration} minutes
-Notes: ${appointment.notes || "N/A"}
+Start: ${appointment.startTime}
+End: ${appointment.endTime}
+Description: ${appointment.description || "N/A"}
 
-Related Notes: ${notes2.map((n) => n.content).join("\n") || "None"}`
+Related Notes: ${relatedNotes.map((n) => n.content).join("\n") || "None"}`
             }
           ],
           response_format: { type: "json_object" },
@@ -7423,7 +7595,7 @@ Related Notes: ${notes2.map((n) => n.content).join("\n") || "None"}`
     return { error: error.message || "Unknown error" };
   }
 }
-router4.get("/health", async (req2, res) => {
+router4.get("/health", async (req, res) => {
   try {
     const response = await fetch(`${OPENCLAW_API_URL}/api/v1/health`, {
       method: "GET",
@@ -7972,9 +8144,9 @@ var analyticsEngine = new AnalyticsEngine();
 var router5 = Router5();
 router5.use(requireAuth());
 router5.use(requireEntitlement(FeatureKey.ANALYTICS));
-router5.post("/metrics", async (req2, res) => {
+router5.post("/metrics", async (req, res) => {
   try {
-    const { tenantId, metricType, metricValue, metadata } = req2.body;
+    const { tenantId, metricType, metricValue, metadata } = req.body;
     if (!tenantId || !metricType || metricValue === void 0) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -7997,10 +8169,10 @@ router5.post("/metrics", async (req2, res) => {
     });
   }
 });
-router5.get("/metrics/:tenantId", async (req2, res) => {
+router5.get("/metrics/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const { metricType, startDate, endDate } = req2.query;
+    const { tenantId } = req.params;
+    const { metricType, startDate, endDate } = req.query;
     const metrics = await analyticsEngine.getMetrics(
       tenantId,
       metricType,
@@ -8013,7 +8185,7 @@ router5.get("/metrics/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get metrics", error, {
-      endpoint: `/api/analytics/metrics/${req2.params.tenantId}`,
+      endpoint: `/api/analytics/metrics/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -8022,10 +8194,10 @@ router5.get("/metrics/:tenantId", async (req2, res) => {
     });
   }
 });
-router5.get("/summary/:tenantId", async (req2, res) => {
+router5.get("/summary/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const { startDate, endDate } = req2.query;
+    const { tenantId } = req.params;
+    const { startDate, endDate } = req.query;
     const { start, end } = startDate && endDate ? { start: new Date(startDate), end: new Date(endDate) } : getDateRange();
     const summary = await analyticsEngine.getAnalyticsSummary(tenantId, start, end);
     res.json({
@@ -8038,7 +8210,7 @@ router5.get("/summary/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get analytics summary", error, {
-      endpoint: `/api/analytics/summary/${req2.params.tenantId}`,
+      endpoint: `/api/analytics/summary/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -8047,10 +8219,10 @@ router5.get("/summary/:tenantId", async (req2, res) => {
     });
   }
 });
-router5.post("/reports", async (req2, res) => {
+router5.post("/reports", async (req, res) => {
   try {
-    const { tenantId, name, description, config, schedule, recipients, format } = req2.body;
-    const userId = req2.session?.userId;
+    const { tenantId, name, description, config, schedule, recipients, format } = req.body;
+    const userId = req.session?.userId;
     if (!tenantId || !name || !config || !schedule || !format) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -8087,9 +8259,9 @@ router5.post("/reports", async (req2, res) => {
     });
   }
 });
-router5.get("/reports/:tenantId", async (req2, res) => {
+router5.get("/reports/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const reports = await analyticsEngine.listReports(tenantId);
     res.json({
       reports,
@@ -8097,7 +8269,7 @@ router5.get("/reports/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to list reports", error, {
-      endpoint: `/api/analytics/reports/${req2.params.tenantId}`,
+      endpoint: `/api/analytics/reports/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -8106,9 +8278,9 @@ router5.get("/reports/:tenantId", async (req2, res) => {
     });
   }
 });
-router5.post("/reports/:reportId/generate", async (req2, res) => {
+router5.post("/reports/:reportId/generate", async (req, res) => {
   try {
-    const { reportId } = req2.params;
+    const { reportId } = req.params;
     const result = await analyticsEngine.generateReport(reportId);
     const contentTypes = {
       json: "application/json",
@@ -8124,7 +8296,7 @@ router5.post("/reports/:reportId/generate", async (req2, res) => {
     }
   } catch (error) {
     await errorLogger.logError("Report generation failed", error, {
-      endpoint: `/api/analytics/reports/${req2.params.reportId}/generate`,
+      endpoint: `/api/analytics/reports/${req.params.reportId}/generate`,
       method: "POST"
     });
     res.status(500).json({
@@ -8133,10 +8305,10 @@ router5.post("/reports/:reportId/generate", async (req2, res) => {
     });
   }
 });
-router5.put("/reports/:reportId", async (req2, res) => {
+router5.put("/reports/:reportId", async (req, res) => {
   try {
-    const { reportId } = req2.params;
-    const updates = req2.body;
+    const { reportId } = req.params;
+    const updates = req.body;
     const report = await analyticsEngine.updateReport(reportId, updates);
     res.json({
       message: "Report updated successfully",
@@ -8144,7 +8316,7 @@ router5.put("/reports/:reportId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Report update failed", error, {
-      endpoint: `/api/analytics/reports/${req2.params.reportId}`,
+      endpoint: `/api/analytics/reports/${req.params.reportId}`,
       method: "PUT"
     });
     res.status(500).json({
@@ -8153,9 +8325,9 @@ router5.put("/reports/:reportId", async (req2, res) => {
     });
   }
 });
-router5.delete("/reports/:reportId", async (req2, res) => {
+router5.delete("/reports/:reportId", async (req, res) => {
   try {
-    const { reportId } = req2.params;
+    const { reportId } = req.params;
     await analyticsEngine.deleteReport(reportId);
     res.json({
       message: "Report deleted successfully",
@@ -8163,7 +8335,7 @@ router5.delete("/reports/:reportId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Report deletion failed", error, {
-      endpoint: `/api/analytics/reports/${req2.params.reportId}`,
+      endpoint: `/api/analytics/reports/${req.params.reportId}`,
       method: "DELETE"
     });
     res.status(500).json({
@@ -8172,10 +8344,10 @@ router5.delete("/reports/:reportId", async (req2, res) => {
     });
   }
 });
-router5.get("/export/:tenantId", async (req2, res) => {
+router5.get("/export/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const { dataType, format } = req2.query;
+    const { tenantId } = req.params;
+    const { dataType, format } = req.query;
     if (!dataType || !format) {
       return res.status(400).json({
         error: "Missing required parameters",
@@ -8205,7 +8377,7 @@ router5.get("/export/:tenantId", async (req2, res) => {
     }
   } catch (error) {
     await errorLogger.logError("Data export failed", error, {
-      endpoint: `/api/analytics/export/${req2.params.tenantId}`,
+      endpoint: `/api/analytics/export/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -8221,10 +8393,10 @@ import { Router as Router6 } from "express";
 import crypto2 from "crypto";
 var router6 = Router6();
 router6.use(requireAuth({ checkEntitlement: false }));
-router6.post("/", async (req2, res) => {
+router6.post("/", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { name, domain, description, industry } = req2.body;
+    const userId = req.userId;
+    const { name, domain, description, industry } = req.body;
     const { data: existingCompany } = await supabase.from("companies").select("id").eq("owner_user_id", userId).single();
     if (existingCompany) {
       return res.status(400).json({ error: "User already owns a company" });
@@ -8253,9 +8425,9 @@ router6.post("/", async (req2, res) => {
     res.status(500).json({ error: "Failed to create company" });
   }
 });
-router6.get("/", async (req2, res) => {
+router6.get("/", async (req, res) => {
   try {
-    const userId = req2.userId;
+    const userId = req.userId;
     const { data: companies, error } = await supabase.from("companies").select(`
         *,
         company_users!inner(role, status)
@@ -8267,10 +8439,10 @@ router6.get("/", async (req2, res) => {
     res.status(500).json({ error: "Failed to fetch companies" });
   }
 });
-router6.get("/:companyId", async (req2, res) => {
+router6.get("/:companyId", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { companyId } = req2.params;
+    const userId = req.userId;
+    const { companyId } = req.params;
     const { data: membership } = await supabase.from("company_users").select("role").eq("company_id", companyId).eq("user_id", userId).eq("status", "active").single();
     if (!membership) {
       return res.status(403).json({ error: "Access denied" });
@@ -8283,11 +8455,11 @@ router6.get("/:companyId", async (req2, res) => {
     res.status(500).json({ error: "Failed to fetch company" });
   }
 });
-router6.put("/:companyId", async (req2, res) => {
+router6.put("/:companyId", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { companyId } = req2.params;
-    const updates = req2.body;
+    const userId = req.userId;
+    const { companyId } = req.params;
+    const updates = req.body;
     const { data: membership } = await supabase.from("company_users").select("role").eq("company_id", companyId).eq("user_id", userId).eq("status", "active").single();
     if (!membership || !["owner", "admin"].includes(membership.role)) {
       return res.status(403).json({ error: "Insufficient permissions" });
@@ -8300,10 +8472,10 @@ router6.put("/:companyId", async (req2, res) => {
     res.status(500).json({ error: "Failed to update company" });
   }
 });
-router6.get("/:companyId/users", async (req2, res) => {
+router6.get("/:companyId/users", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { companyId } = req2.params;
+    const userId = req.userId;
+    const { companyId } = req.params;
     const { data: membership } = await supabase.from("company_users").select("role").eq("company_id", companyId).eq("user_id", userId).eq("status", "active").single();
     if (!membership) {
       return res.status(403).json({ error: "Access denied" });
@@ -8326,11 +8498,11 @@ router6.get("/:companyId/users", async (req2, res) => {
     res.status(500).json({ error: "Failed to fetch company users" });
   }
 });
-router6.post("/:companyId/invitations", async (req2, res) => {
+router6.post("/:companyId/invitations", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { companyId } = req2.params;
-    const { email, role } = req2.body;
+    const userId = req.userId;
+    const { companyId } = req.params;
+    const { email, role } = req.body;
     const { data: membership } = await supabase.from("company_users").select("role").eq("company_id", companyId).eq("user_id", userId).eq("status", "active").single();
     if (!membership || !["owner", "admin"].includes(membership.role)) {
       return res.status(403).json({ error: "Insufficient permissions" });
@@ -8383,10 +8555,10 @@ router6.post("/:companyId/invitations", async (req2, res) => {
     res.status(500).json({ error: "Failed to create invitation" });
   }
 });
-router6.post("/invitations/:token/accept", async (req2, res) => {
+router6.post("/invitations/:token/accept", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { token } = req2.params;
+    const userId = req.userId;
+    const { token } = req.params;
     const { data: invitation, error: inviteError } = await supabase.from("company_invitations").select("*, companies(*)").eq("token", token).eq("status", "pending").single();
     if (inviteError || !invitation) {
       return res.status(404).json({ error: "Invalid invitation" });
@@ -8411,10 +8583,10 @@ router6.post("/invitations/:token/accept", async (req2, res) => {
     res.status(500).json({ error: "Failed to accept invitation" });
   }
 });
-router6.get("/:companyId/whitelabel", async (req2, res) => {
+router6.get("/:companyId/whitelabel", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { companyId } = req2.params;
+    const userId = req.userId;
+    const { companyId } = req.params;
     const { data: membership } = await supabase.from("company_users").select("role").eq("company_id", companyId).eq("user_id", userId).eq("status", "active").single();
     if (!membership) {
       return res.status(403).json({ error: "Access denied" });
@@ -8427,11 +8599,11 @@ router6.get("/:companyId/whitelabel", async (req2, res) => {
     res.status(500).json({ error: "Failed to fetch whitelabel config" });
   }
 });
-router6.put("/:companyId/whitelabel", async (req2, res) => {
+router6.put("/:companyId/whitelabel", async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { companyId } = req2.params;
-    const updates = req2.body;
+    const userId = req.userId;
+    const { companyId } = req.params;
+    const updates = req.body;
     const { data: membership } = await supabase.from("company_users").select("role").eq("company_id", companyId).eq("user_id", userId).eq("status", "active").single();
     if (!membership || !["owner", "admin"].includes(membership.role)) {
       return res.status(403).json({ error: "Insufficient permissions" });
@@ -8453,8 +8625,8 @@ var companies_default = router6;
 import { Router as Router7 } from "express";
 var router7 = Router7();
 var getUserOpenAI = (userId) => getUserOpenAIClient(userId);
-router7.get("/api/openai/status", requireAuth(), async (req2, res) => {
-  const userId = req2.userId;
+router7.get("/api/openai/status", requireAuth(), async (req, res) => {
+  const userId = req.userId;
   const openaiData = await getUserOpenAI(userId);
   if (!openaiData) {
     return res.json({
@@ -8484,12 +8656,12 @@ router7.get("/api/openai/status", requireAuth(), async (req2, res) => {
     });
   }
 });
-router7.post("/api/openai/smart-greeting", requireAuth(), async (req2, res) => {
-  const authReq = req2;
+router7.post("/api/openai/smart-greeting", requireAuth(), async (req, res) => {
+  const authReq = req;
   const userId = authReq.userId;
-  const sessionId = req2.body.sessionId || `session-${Date.now()}`;
+  const sessionId = req.body.sessionId || `session-${Date.now()}`;
   try {
-    const { userMetrics, timeOfDay, recentActivity } = req2.body;
+    const { userMetrics, timeOfDay, recentActivity } = req.body;
     const openaiData = await getUserOpenAI(userId);
     if (!openaiData) {
       return res.json({
@@ -8534,16 +8706,16 @@ router7.post("/api/openai/smart-greeting", requireAuth(), async (req2, res) => {
     );
     res.status(500).json({
       error: "Failed to generate smart greeting",
-      greeting: `Good ${req2.body.timeOfDay}! Your pipeline shows strong momentum.`,
+      greeting: `Good ${req.body.timeOfDay}! Your pipeline shows strong momentum.`,
       insight: "Focus on your highest-value opportunities for maximum impact."
     });
   }
 });
-router7.post("/api/openai/kpi-analysis", requireAuth(), async (req2, res) => {
-  const userId = req2.userId;
-  const sessionId = req2.body.sessionId || `session-${Date.now()}`;
+router7.post("/api/openai/kpi-analysis", requireAuth(), async (req, res) => {
+  const userId = req.userId;
+  const sessionId = req.body.sessionId || `session-${Date.now()}`;
   try {
-    const { historicalData, currentMetrics } = req2.body;
+    const { historicalData, currentMetrics } = req.body;
     const openaiData = await getUserOpenAI(userId);
     if (!openaiData) {
       return res.json({
@@ -8596,11 +8768,11 @@ router7.post("/api/openai/kpi-analysis", requireAuth(), async (req2, res) => {
     });
   }
 });
-router7.post("/api/openai/deal-intelligence", requireAuth(), async (req2, res) => {
-  const userId = req2.userId;
-  const sessionId = req2.body.sessionId || `session-${Date.now()}`;
+router7.post("/api/openai/deal-intelligence", requireAuth(), async (req, res) => {
+  const userId = req.userId;
+  const sessionId = req.body.sessionId || `session-${Date.now()}`;
   try {
-    const { dealData, contactHistory, marketContext } = req2.body;
+    const { dealData, contactHistory, marketContext } = req.body;
     const openaiData = await getUserOpenAI(userId);
     if (!openaiData) {
       return res.json({
@@ -8659,11 +8831,11 @@ router7.post("/api/openai/deal-intelligence", requireAuth(), async (req2, res) =
     });
   }
 });
-router7.post("/api/openai/business-intelligence", requireAuth(), async (req2, res) => {
-  const userId = req2.userId;
-  const sessionId = req2.body.sessionId || `session-${Date.now()}`;
+router7.post("/api/openai/business-intelligence", requireAuth(), async (req, res) => {
+  const userId = req.userId;
+  const sessionId = req.body.sessionId || `session-${Date.now()}`;
   try {
-    const { businessData, marketContext, objectives } = req2.body;
+    const { businessData, marketContext, objectives } = req.body;
     const openaiData = await getUserOpenAI(userId);
     if (!openaiData) {
       return res.json({
@@ -8788,10 +8960,10 @@ async function createResponse(userId, input, model) {
 async function getAvailableModels() {
   return RESPONSES_API_MODELS;
 }
-router8.post("/api/openai/responses", requireAuth(), async (req2, res) => {
+router8.post("/api/openai/responses", requireAuth(), async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { input, model } = req2.body;
+    const userId = req.userId;
+    const { input, model } = req.body;
     if (!input || typeof input !== "string" || input.trim().length === 0) {
       return res.status(400).json({ error: "Input string is required" });
     }
@@ -8805,7 +8977,7 @@ router8.post("/api/openai/responses", requireAuth(), async (req2, res) => {
     });
   }
 });
-router8.get("/api/openai/models", requireAuth(), async (req2, res) => {
+router8.get("/api/openai/models", requireAuth(), async (req, res) => {
   try {
     const models = await getAvailableModels();
     res.json({ models });
@@ -8814,10 +8986,10 @@ router8.get("/api/openai/models", requireAuth(), async (req2, res) => {
     res.status(500).json({ error: "Failed to fetch available models", models: RESPONSES_API_MODELS });
   }
 });
-router8.post("/api/openai/responses/stream", requireAuth(), async (req2, res) => {
+router8.post("/api/openai/responses/stream", requireAuth(), async (req, res) => {
   try {
-    const userId = req2.userId;
-    const { input, model } = req2.body;
+    const userId = req.userId;
+    const { input, model } = req.body;
     if (!input || typeof input !== "string" || input.trim().length === 0) {
       return res.status(400).json({ error: "Input string is required" });
     }
@@ -9518,12 +9690,12 @@ var DomainManager = class _DomainManager {
         method: "GET",
         rejectUnauthorized: false
       };
-      const req2 = https.request(options, (res) => {
+      const req = https.request(options, (res) => {
         const cert = res.socket.getPeerCertificate();
         resolve(cert);
       });
-      req2.on("error", reject);
-      req2.end();
+      req.on("error", reject);
+      req.end();
     });
   }
   /**
@@ -10293,9 +10465,9 @@ var domainManager = new DomainManager();
 var router9 = Router9();
 router9.use(requireAuth());
 router9.use(requireEntitlement(FeatureKey.DOMAIN_MANAGEMENT));
-router9.post("/verify", async (req2, res) => {
+router9.post("/verify", async (req, res) => {
   try {
-    const { tenantId, domain, subdomain, verificationMethod } = req2.body;
+    const { tenantId, domain, subdomain, verificationMethod } = req.body;
     if (!tenantId || !domain) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -10349,9 +10521,9 @@ router9.post("/verify", async (req2, res) => {
     });
   }
 });
-router9.get("/:domainId", async (req2, res) => {
+router9.get("/:domainId", async (req, res) => {
   try {
-    const { domainId } = req2.params;
+    const { domainId } = req.params;
     const domainConfig = await domainManager.getDomainConfig(domainId);
     res.json({
       domainConfig,
@@ -10363,7 +10535,7 @@ router9.get("/:domainId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get domain config", error, {
-      endpoint: `/api/domains/${req2.params.domainId}`,
+      endpoint: `/api/domains/${req.params.domainId}`,
       method: "GET"
     });
     res.status(404).json({
@@ -10372,9 +10544,9 @@ router9.get("/:domainId", async (req2, res) => {
     });
   }
 });
-router9.post("/:domainId/check", async (req2, res) => {
+router9.post("/:domainId/check", async (req, res) => {
   try {
-    const { domainId } = req2.params;
+    const { domainId } = req.params;
     const domainConfig = await domainManager.checkDomainVerification(domainId);
     res.json({
       domainConfig,
@@ -10384,7 +10556,7 @@ router9.post("/:domainId/check", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Domain verification check failed", error, {
-      endpoint: `/api/domains/${req2.params.domainId}/check`,
+      endpoint: `/api/domains/${req.params.domainId}/check`,
       method: "POST"
     });
     res.status(500).json({
@@ -10393,9 +10565,9 @@ router9.post("/:domainId/check", async (req2, res) => {
     });
   }
 });
-router9.get("/health/:domain", async (req2, res) => {
+router9.get("/health/:domain", async (req, res) => {
   try {
-    const { domain } = req2.params;
+    const { domain } = req.params;
     const health = await domainManager.checkDomainHealth(domain);
     res.json({
       health,
@@ -10404,7 +10576,7 @@ router9.get("/health/:domain", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Domain health check failed", error, {
-      endpoint: `/api/domains/health/${req2.params.domain}`,
+      endpoint: `/api/domains/health/${req.params.domain}`,
       method: "GET"
     });
     res.status(500).json({
@@ -10413,9 +10585,9 @@ router9.get("/health/:domain", async (req2, res) => {
     });
   }
 });
-router9.post("/:domainId/ssl/renew", async (req2, res) => {
+router9.post("/:domainId/ssl/renew", async (req, res) => {
   try {
-    const { domainId } = req2.params;
+    const { domainId } = req.params;
     await domainManager.renewSSL(domainId);
     const domainConfig = await domainManager.getDomainConfig(domainId);
     res.json({
@@ -10425,7 +10597,7 @@ router9.post("/:domainId/ssl/renew", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("SSL renewal failed", error, {
-      endpoint: `/api/domains/${req2.params.domainId}/ssl/renew`,
+      endpoint: `/api/domains/${req.params.domainId}/ssl/renew`,
       method: "POST"
     });
     res.status(500).json({
@@ -10434,10 +10606,10 @@ router9.post("/:domainId/ssl/renew", async (req2, res) => {
     });
   }
 });
-router9.put("/:domainId", async (req2, res) => {
+router9.put("/:domainId", async (req, res) => {
   try {
-    const { domainId } = req2.params;
-    const updates = req2.body;
+    const { domainId } = req.params;
+    const updates = req.body;
     const domainConfig = await domainManager.updateDomainConfig(domainId, updates);
     res.json({
       message: "Domain configuration updated",
@@ -10445,7 +10617,7 @@ router9.put("/:domainId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Domain update failed", error, {
-      endpoint: `/api/domains/${req2.params.domainId}`,
+      endpoint: `/api/domains/${req.params.domainId}`,
       method: "PUT"
     });
     res.status(500).json({
@@ -10454,9 +10626,9 @@ router9.put("/:domainId", async (req2, res) => {
     });
   }
 });
-router9.delete("/:domainId", async (req2, res) => {
+router9.delete("/:domainId", async (req, res) => {
   try {
-    const { domainId } = req2.params;
+    const { domainId } = req.params;
     await domainManager.removeDomain(domainId);
     res.json({
       message: "Domain removed successfully",
@@ -10464,7 +10636,7 @@ router9.delete("/:domainId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Domain removal failed", error, {
-      endpoint: `/api/domains/${req2.params.domainId}`,
+      endpoint: `/api/domains/${req.params.domainId}`,
       method: "DELETE"
     });
     res.status(500).json({
@@ -10473,9 +10645,9 @@ router9.delete("/:domainId", async (req2, res) => {
     });
   }
 });
-router9.get("/tenant/:tenantId", async (req2, res) => {
+router9.get("/tenant/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const domains = await domainManager.listTenantDomains(tenantId);
     res.json({
       domains,
@@ -10483,7 +10655,7 @@ router9.get("/tenant/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to list tenant domains", error, {
-      endpoint: `/api/domains/tenant/${req2.params.tenantId}`,
+      endpoint: `/api/domains/tenant/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -10492,7 +10664,7 @@ router9.get("/tenant/:tenantId", async (req2, res) => {
     });
   }
 });
-router9.post("/monitor", async (req2, res) => {
+router9.post("/monitor", async (req, res) => {
   try {
     await domainManager.monitorDomainHealth();
     res.json({
@@ -10510,9 +10682,9 @@ router9.post("/monitor", async (req2, res) => {
     });
   }
 });
-router9.post("/check-availability", async (req2, res) => {
+router9.post("/check-availability", async (req, res) => {
   try {
-    const { domain, subdomain } = req2.body;
+    const { domain, subdomain } = req.body;
     if (!domain && !subdomain) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -10542,9 +10714,9 @@ router9.post("/check-availability", async (req2, res) => {
     });
   }
 });
-router9.post("/suggest", async (req2, res) => {
+router9.post("/suggest", async (req, res) => {
   try {
-    const { domain, count: count2 } = req2.body;
+    const { domain, count: count2 } = req.body;
     if (!domain) {
       return res.status(400).json({
         error: "Domain is required"
@@ -10567,9 +10739,9 @@ router9.post("/suggest", async (req2, res) => {
     });
   }
 });
-router9.get("/validate/:domain", async (req2, res) => {
+router9.get("/validate/:domain", async (req, res) => {
   try {
-    const { domain } = req2.params;
+    const { domain } = req.params;
     const validation = await domainManager.validateDomainFormat(domain);
     const availability = await domainManager.checkDomainAvailability(validation.normalizedDomain || domain);
     res.json({
@@ -10579,7 +10751,7 @@ router9.get("/validate/:domain", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Domain validation failed", error, {
-      endpoint: `/api/domains/validate/${req2.params.domain}`,
+      endpoint: `/api/domains/validate/${req.params.domain}`,
       method: "GET"
     });
     res.status(500).json({
@@ -10588,9 +10760,9 @@ router9.get("/validate/:domain", async (req2, res) => {
     });
   }
 });
-router9.post("/provision-subdomain", async (req2, res) => {
+router9.post("/provision-subdomain", async (req, res) => {
   try {
-    const { tenantId, subdomain } = req2.body;
+    const { tenantId, subdomain } = req.body;
     if (!tenantId) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -11185,10 +11357,10 @@ var themeManager = new ThemeManager();
 var router10 = Router10();
 router10.use(requireAuth());
 router10.use(requireEntitlement(FeatureKey.WHITE_LABEL_CUSTOMIZATION));
-router10.post("/", async (req2, res) => {
+router10.post("/", async (req, res) => {
   try {
-    const { tenantId, name, description, config } = req2.body;
-    const userId = req2.session?.userId;
+    const { tenantId, name, description, config } = req.body;
+    const userId = req.session?.userId;
     if (!tenantId || !name || !config) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -11225,9 +11397,9 @@ router10.post("/", async (req2, res) => {
     });
   }
 });
-router10.get("/tenant/:tenantId", async (req2, res) => {
+router10.get("/tenant/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const themes = await themeManager.listThemes(tenantId);
     res.json({
       themes,
@@ -11235,7 +11407,7 @@ router10.get("/tenant/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to list themes", error, {
-      endpoint: `/api/themes/tenant/${req2.params.tenantId}`,
+      endpoint: `/api/themes/tenant/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -11244,9 +11416,9 @@ router10.get("/tenant/:tenantId", async (req2, res) => {
     });
   }
 });
-router10.get("/active/:tenantId", async (req2, res) => {
+router10.get("/active/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const theme = await themeManager.getActiveTheme(tenantId);
     if (!theme) {
       const defaultConfig = themeManager.getDefaultTheme();
@@ -11263,7 +11435,7 @@ router10.get("/active/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get active theme", error, {
-      endpoint: `/api/themes/active/${req2.params.tenantId}`,
+      endpoint: `/api/themes/active/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -11272,9 +11444,9 @@ router10.get("/active/:tenantId", async (req2, res) => {
     });
   }
 });
-router10.get("/:themeId", async (req2, res) => {
+router10.get("/:themeId", async (req, res) => {
   try {
-    const { themeId } = req2.params;
+    const { themeId } = req.params;
     const theme = await themeManager.getTheme(themeId);
     const css = themeManager.generateThemeCSS(theme.config);
     res.json({
@@ -11283,7 +11455,7 @@ router10.get("/:themeId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get theme", error, {
-      endpoint: `/api/themes/${req2.params.themeId}`,
+      endpoint: `/api/themes/${req.params.themeId}`,
       method: "GET"
     });
     res.status(404).json({
@@ -11292,10 +11464,10 @@ router10.get("/:themeId", async (req2, res) => {
     });
   }
 });
-router10.put("/:themeId", async (req2, res) => {
+router10.put("/:themeId", async (req, res) => {
   try {
-    const { themeId } = req2.params;
-    const updates = req2.body;
+    const { themeId } = req.params;
+    const updates = req.body;
     if (updates.config) {
       const validation = themeManager.validateThemeConfig(updates.config);
       if (!validation.valid) {
@@ -11314,7 +11486,7 @@ router10.put("/:themeId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to update theme", error, {
-      endpoint: `/api/themes/${req2.params.themeId}`,
+      endpoint: `/api/themes/${req.params.themeId}`,
       method: "PUT"
     });
     res.status(500).json({
@@ -11323,9 +11495,9 @@ router10.put("/:themeId", async (req2, res) => {
     });
   }
 });
-router10.delete("/:themeId", async (req2, res) => {
+router10.delete("/:themeId", async (req, res) => {
   try {
-    const { themeId } = req2.params;
+    const { themeId } = req.params;
     await themeManager.deleteTheme(themeId);
     res.json({
       message: "Theme deleted successfully",
@@ -11333,7 +11505,7 @@ router10.delete("/:themeId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to delete theme", error, {
-      endpoint: `/api/themes/${req2.params.themeId}`,
+      endpoint: `/api/themes/${req.params.themeId}`,
       method: "DELETE"
     });
     res.status(500).json({
@@ -11342,9 +11514,9 @@ router10.delete("/:themeId", async (req2, res) => {
     });
   }
 });
-router10.post("/:themeId/activate", async (req2, res) => {
+router10.post("/:themeId/activate", async (req, res) => {
   try {
-    const { themeId } = req2.params;
+    const { themeId } = req.params;
     const theme = await themeManager.updateTheme(themeId, { isActive: true });
     const css = themeManager.generateThemeCSS(theme.config);
     res.json({
@@ -11354,7 +11526,7 @@ router10.post("/:themeId/activate", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to activate theme", error, {
-      endpoint: `/api/themes/${req2.params.themeId}/activate`,
+      endpoint: `/api/themes/${req.params.themeId}/activate`,
       method: "POST"
     });
     res.status(500).json({
@@ -11363,11 +11535,11 @@ router10.post("/:themeId/activate", async (req2, res) => {
     });
   }
 });
-router10.post("/:themeId/clone", async (req2, res) => {
+router10.post("/:themeId/clone", async (req, res) => {
   try {
-    const { themeId } = req2.params;
-    const { name } = req2.body;
-    const userId = req2.session?.userId;
+    const { themeId } = req.params;
+    const { name } = req.body;
+    const userId = req.session?.userId;
     if (!name) {
       return res.status(400).json({
         error: "Theme name is required"
@@ -11385,7 +11557,7 @@ router10.post("/:themeId/clone", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to clone theme", error, {
-      endpoint: `/api/themes/${req2.params.themeId}/clone`,
+      endpoint: `/api/themes/${req.params.themeId}/clone`,
       method: "POST"
     });
     res.status(500).json({
@@ -11394,7 +11566,7 @@ router10.post("/:themeId/clone", async (req2, res) => {
     });
   }
 });
-router10.get("/presets/list", async (req2, res) => {
+router10.get("/presets/list", async (req, res) => {
   try {
     const presets = themeManager.getThemePresets();
     res.json({
@@ -11412,10 +11584,10 @@ router10.get("/presets/list", async (req2, res) => {
     });
   }
 });
-router10.post("/import", async (req2, res) => {
+router10.post("/import", async (req, res) => {
   try {
-    const { tenantId, themeJson } = req2.body;
-    const userId = req2.session?.userId;
+    const { tenantId, themeJson } = req.body;
+    const userId = req.session?.userId;
     if (!tenantId || !themeJson) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -11443,9 +11615,9 @@ router10.post("/import", async (req2, res) => {
     });
   }
 });
-router10.get("/:themeId/export", async (req2, res) => {
+router10.get("/:themeId/export", async (req, res) => {
   try {
-    const { themeId } = req2.params;
+    const { themeId } = req.params;
     const theme = await themeManager.getTheme(themeId);
     const themeJson = themeManager.exportTheme(theme);
     res.setHeader("Content-Type", "application/json");
@@ -11456,7 +11628,7 @@ router10.get("/:themeId/export", async (req2, res) => {
     res.send(themeJson);
   } catch (error) {
     await errorLogger.logError("Theme export failed", error, {
-      endpoint: `/api/themes/${req2.params.themeId}/export`,
+      endpoint: `/api/themes/${req.params.themeId}/export`,
       method: "GET"
     });
     res.status(404).json({
@@ -11465,9 +11637,9 @@ router10.get("/:themeId/export", async (req2, res) => {
     });
   }
 });
-router10.post("/preview", async (req2, res) => {
+router10.post("/preview", async (req, res) => {
   try {
-    const { config } = req2.body;
+    const { config } = req.body;
     if (!config) {
       return res.status(400).json({
         error: "Theme config is required"
@@ -12008,9 +12180,9 @@ var tenantProvisioner = new TenantProvisioner();
 var router11 = Router11();
 router11.use(requireAuth());
 router11.use(requireEntitlement(FeatureKey.PARTNER_ONBOARDING));
-router11.post("/create", async (req2, res) => {
+router11.post("/create", async (req, res) => {
   try {
-    const config = req2.body;
+    const config = req.body;
     if (!config.name || !config.subdomain || !config.contactEmail) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -12055,7 +12227,7 @@ router11.post("/create", async (req2, res) => {
     });
   }
 });
-router11.get("/templates", async (req2, res) => {
+router11.get("/templates", async (req, res) => {
   try {
     const templates = await tenantProvisioner.listTemplates();
     res.json({
@@ -12073,9 +12245,9 @@ router11.get("/templates", async (req2, res) => {
     });
   }
 });
-router11.post("/apply-template", async (req2, res) => {
+router11.post("/apply-template", async (req, res) => {
   try {
-    const { tenantId, templateId } = req2.body;
+    const { tenantId, templateId } = req.body;
     if (!tenantId || !templateId) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -12107,9 +12279,9 @@ router11.post("/apply-template", async (req2, res) => {
     });
   }
 });
-router11.get("/status/:tenantId", async (req2, res) => {
+router11.get("/status/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const tenant = await tenantProvisioner.getTenant(tenantId);
     const onboarding = await tenantProvisioner.getOnboardingStatus(tenantId);
     res.json({
@@ -12125,7 +12297,7 @@ router11.get("/status/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get provisioning status", error, {
-      endpoint: `/api/provisioning/status/${req2.params.tenantId}`,
+      endpoint: `/api/provisioning/status/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(404).json({
@@ -12134,9 +12306,9 @@ router11.get("/status/:tenantId", async (req2, res) => {
     });
   }
 });
-router11.post("/onboarding/step", async (req2, res) => {
+router11.post("/onboarding/step", async (req, res) => {
   try {
-    const { tenantId, stepId, completed } = req2.body;
+    const { tenantId, stepId, completed } = req.body;
     if (!tenantId || !stepId || completed === void 0) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -12167,9 +12339,9 @@ router11.post("/onboarding/step", async (req2, res) => {
     });
   }
 });
-router11.post("/complete", async (req2, res) => {
+router11.post("/complete", async (req, res) => {
   try {
-    const { tenantId } = req2.body;
+    const { tenantId } = req.body;
     if (!tenantId) {
       return res.status(400).json({
         error: "tenantId is required"
@@ -12207,9 +12379,9 @@ router11.post("/complete", async (req2, res) => {
     });
   }
 });
-router11.get("/tenants", async (req2, res) => {
+router11.get("/tenants", async (req, res) => {
   try {
-    const { status, type, parentPartnerId, page, limit } = req2.query;
+    const { status, type, parentPartnerId, page, limit } = req.query;
     const result = await tenantProvisioner.listTenants({
       status,
       type,
@@ -12229,14 +12401,14 @@ router11.get("/tenants", async (req2, res) => {
     });
   }
 });
-router11.get("/tenants/:tenantId", async (req2, res) => {
+router11.get("/tenants/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const tenant = await tenantProvisioner.getTenant(tenantId);
     res.json({ tenant });
   } catch (error) {
     await errorLogger.logError("Failed to get tenant", error, {
-      endpoint: `/api/provisioning/tenants/${req2.params.tenantId}`,
+      endpoint: `/api/provisioning/tenants/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(404).json({
@@ -12245,10 +12417,10 @@ router11.get("/tenants/:tenantId", async (req2, res) => {
     });
   }
 });
-router11.put("/tenants/:tenantId", async (req2, res) => {
+router11.put("/tenants/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const updates = req2.body;
+    const { tenantId } = req.params;
+    const updates = req.body;
     const tenant = await tenantProvisioner.updateTenant(tenantId, updates);
     res.json({
       message: "Tenant updated successfully",
@@ -12256,7 +12428,7 @@ router11.put("/tenants/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to update tenant", error, {
-      endpoint: `/api/provisioning/tenants/${req2.params.tenantId}`,
+      endpoint: `/api/provisioning/tenants/${req.params.tenantId}`,
       method: "PUT"
     });
     res.status(500).json({
@@ -12265,10 +12437,10 @@ router11.put("/tenants/:tenantId", async (req2, res) => {
     });
   }
 });
-router11.post("/tenants/:tenantId/suspend", async (req2, res) => {
+router11.post("/tenants/:tenantId/suspend", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const { reason } = req2.body;
+    const { tenantId } = req.params;
+    const { reason } = req.body;
     await tenantProvisioner.suspendTenant(tenantId, reason);
     res.json({
       message: "Tenant suspended successfully",
@@ -12276,7 +12448,7 @@ router11.post("/tenants/:tenantId/suspend", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to suspend tenant", error, {
-      endpoint: `/api/provisioning/tenants/${req2.params.tenantId}/suspend`,
+      endpoint: `/api/provisioning/tenants/${req.params.tenantId}/suspend`,
       method: "POST"
     });
     res.status(500).json({
@@ -12285,9 +12457,9 @@ router11.post("/tenants/:tenantId/suspend", async (req2, res) => {
     });
   }
 });
-router11.post("/tenants/:tenantId/activate", async (req2, res) => {
+router11.post("/tenants/:tenantId/activate", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     await tenantProvisioner.activateTenant(tenantId);
     res.json({
       message: "Tenant activated successfully",
@@ -12295,7 +12467,7 @@ router11.post("/tenants/:tenantId/activate", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to activate tenant", error, {
-      endpoint: `/api/provisioning/tenants/${req2.params.tenantId}/activate`,
+      endpoint: `/api/provisioning/tenants/${req.params.tenantId}/activate`,
       method: "POST"
     });
     res.status(500).json({
@@ -12304,9 +12476,9 @@ router11.post("/tenants/:tenantId/activate", async (req2, res) => {
     });
   }
 });
-router11.delete("/tenants/:tenantId", async (req2, res) => {
+router11.delete("/tenants/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     await tenantProvisioner.deleteTenant(tenantId);
     res.json({
       message: "Tenant deleted successfully",
@@ -12314,7 +12486,7 @@ router11.delete("/tenants/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to delete tenant", error, {
-      endpoint: `/api/provisioning/tenants/${req2.params.tenantId}`,
+      endpoint: `/api/provisioning/tenants/${req.params.tenantId}`,
       method: "DELETE"
     });
     res.status(500).json({
@@ -12717,7 +12889,7 @@ var upload = multer({
     files: 10
     // Max 10 files per request
   },
-  fileFilter: (req2, file, cb) => {
+  fileFilter: (req, file, cb) => {
     const allowedTypes = [
       "image/jpeg",
       "image/png",
@@ -12736,11 +12908,11 @@ var upload = multer({
     }
   }
 });
-router12.post("/upload", upload.array("files", 10), async (req2, res) => {
+router12.post("/upload", upload.array("files", 10), async (req, res) => {
   try {
-    const files = req2.files;
-    const { tenantId, category, optimize, generateThumbnail, metadata } = req2.body;
-    const userId = req2.session?.userId;
+    const files = req.files;
+    const { tenantId, category, optimize, generateThumbnail, metadata } = req.body;
+    const userId = req.session?.userId;
     if (!tenantId || !category) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -12810,9 +12982,9 @@ router12.post("/upload", upload.array("files", 10), async (req2, res) => {
     });
   }
 });
-router12.get("/", async (req2, res) => {
+router12.get("/", async (req, res) => {
   try {
-    const { tenantId, category, page, limit, search } = req2.query;
+    const { tenantId, category, page, limit, search } = req.query;
     if (!tenantId) {
       return res.status(400).json({
         error: "tenantId is required"
@@ -12837,14 +13009,14 @@ router12.get("/", async (req2, res) => {
     });
   }
 });
-router12.get("/:assetId", async (req2, res) => {
+router12.get("/:assetId", async (req, res) => {
   try {
-    const { assetId } = req2.params;
+    const { assetId } = req.params;
     const asset = await assetManager.getAsset(assetId);
     res.json({ asset });
   } catch (error) {
     await errorLogger.logError("Failed to get asset", error, {
-      endpoint: `/api/assets/${req2.params.assetId}`,
+      endpoint: `/api/assets/${req.params.assetId}`,
       method: "GET"
     });
     res.status(404).json({
@@ -12853,10 +13025,10 @@ router12.get("/:assetId", async (req2, res) => {
     });
   }
 });
-router12.put("/:assetId", async (req2, res) => {
+router12.put("/:assetId", async (req, res) => {
   try {
-    const { assetId } = req2.params;
-    const updates = req2.body;
+    const { assetId } = req.params;
+    const updates = req.body;
     const asset = await assetManager.updateAsset(assetId, updates);
     res.json({
       message: "Asset updated successfully",
@@ -12864,7 +13036,7 @@ router12.put("/:assetId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to update asset", error, {
-      endpoint: `/api/assets/${req2.params.assetId}`,
+      endpoint: `/api/assets/${req.params.assetId}`,
       method: "PUT"
     });
     res.status(500).json({
@@ -12873,9 +13045,9 @@ router12.put("/:assetId", async (req2, res) => {
     });
   }
 });
-router12.delete("/:assetId", async (req2, res) => {
+router12.delete("/:assetId", async (req, res) => {
   try {
-    const { assetId } = req2.params;
+    const { assetId } = req.params;
     await assetManager.deleteAsset(assetId);
     res.json({
       message: "Asset deleted successfully",
@@ -12883,7 +13055,7 @@ router12.delete("/:assetId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to delete asset", error, {
-      endpoint: `/api/assets/${req2.params.assetId}`,
+      endpoint: `/api/assets/${req.params.assetId}`,
       method: "DELETE"
     });
     res.status(500).json({
@@ -12892,9 +13064,9 @@ router12.delete("/:assetId", async (req2, res) => {
     });
   }
 });
-router12.get("/:assetId/versions", async (req2, res) => {
+router12.get("/:assetId/versions", async (req, res) => {
   try {
-    const { assetId } = req2.params;
+    const { assetId } = req.params;
     const versions = await assetManager.getAssetVersions(assetId);
     res.json({
       versions,
@@ -12903,7 +13075,7 @@ router12.get("/:assetId/versions", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get asset versions", error, {
-      endpoint: `/api/assets/${req2.params.assetId}/versions`,
+      endpoint: `/api/assets/${req.params.assetId}/versions`,
       method: "GET"
     });
     res.status(500).json({
@@ -12912,10 +13084,10 @@ router12.get("/:assetId/versions", async (req2, res) => {
     });
   }
 });
-router12.post("/:assetId/version", upload.single("file"), async (req2, res) => {
+router12.post("/:assetId/version", upload.single("file"), async (req, res) => {
   try {
-    const { assetId } = req2.params;
-    const file = req2.file;
+    const { assetId } = req.params;
+    const file = req.file;
     if (!file) {
       return res.status(400).json({
         error: "No file provided"
@@ -12932,7 +13104,7 @@ router12.post("/:assetId/version", upload.single("file"), async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to create asset version", error, {
-      endpoint: `/api/assets/${req2.params.assetId}/version`,
+      endpoint: `/api/assets/${req.params.assetId}/version`,
       method: "POST"
     });
     res.status(500).json({
@@ -12941,9 +13113,9 @@ router12.post("/:assetId/version", upload.single("file"), async (req2, res) => {
     });
   }
 });
-router12.get("/stats/:tenantId", async (req2, res) => {
+router12.get("/stats/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const stats = await assetManager.getAssetUsageStats(tenantId);
     res.json({
       stats,
@@ -12955,7 +13127,7 @@ router12.get("/stats/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to get asset stats", error, {
-      endpoint: `/api/assets/stats/${req2.params.tenantId}`,
+      endpoint: `/api/assets/stats/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -12964,10 +13136,10 @@ router12.get("/stats/:tenantId", async (req2, res) => {
     });
   }
 });
-router12.get("/search/:tenantId", async (req2, res) => {
+router12.get("/search/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const { q } = req2.query;
+    const { tenantId } = req.params;
+    const { q } = req.query;
     if (!q) {
       return res.status(400).json({
         error: "Search query (q) is required"
@@ -12981,7 +13153,7 @@ router12.get("/search/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Asset search failed", error, {
-      endpoint: `/api/assets/search/${req2.params.tenantId}`,
+      endpoint: `/api/assets/search/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -13023,9 +13195,9 @@ function listHistory(tenantId, limit = 50) {
 }
 router13.use(requireAuth());
 router13.use(requireEntitlement(FeatureKey.WHITE_LABEL_MANAGEMENT));
-router13.post("/propagate", async (req2, res) => {
+router13.post("/propagate", async (req, res) => {
   try {
-    const { tenantId, targetTenantIds, strategy = "merge" } = req2.body;
+    const { tenantId, targetTenantIds, strategy = "merge" } = req.body;
     if (!tenantId) {
       return res.status(400).json({
         error: "Missing required field",
@@ -13078,7 +13250,7 @@ router13.post("/propagate", async (req2, res) => {
         action: "propagate",
         source_tenant_id: tenantId,
         changes: mergedConfig,
-        changed_by: req2.userEmail || req2.session?.userEmail || null,
+        changed_by: req.userEmail || req.session?.userEmail || null,
         changed_at: (/* @__PURE__ */ new Date()).toISOString(),
         metadata: { strategy }
       });
@@ -13105,9 +13277,9 @@ router13.post("/propagate", async (req2, res) => {
     });
   }
 });
-router13.post("/sync", async (req2, res) => {
+router13.post("/sync", async (req, res) => {
   try {
-    const { sourceTenantId, targetTenantId, strategy = "merge" } = req2.body;
+    const { sourceTenantId, targetTenantId, strategy = "merge" } = req.body;
     if (!sourceTenantId || !targetTenantId) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -13151,7 +13323,7 @@ router13.post("/sync", async (req2, res) => {
       action: "sync",
       source_tenant_id: sourceTenantId,
       changes: mergedConfig,
-      changed_by: req2.userEmail || req2.session?.userEmail || null,
+      changed_by: req.userEmail || req.session?.userEmail || null,
       changed_at: (/* @__PURE__ */ new Date()).toISOString(),
       metadata: { strategy, sourceTenantId }
     });
@@ -13173,10 +13345,10 @@ router13.post("/sync", async (req2, res) => {
     });
   }
 });
-router13.get("/history/:tenantId", async (req2, res) => {
+router13.get("/history/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const limit = Math.min(parseInt(req2.query.limit) || 50, 200);
+    const { tenantId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const { data: history, error } = await listHistory(tenantId, limit);
     if (error) {
       throw error;
@@ -13188,7 +13360,7 @@ router13.get("/history/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to fetch white-label history", error, {
-      endpoint: `/api/whitelabel/history/${req2.params.tenantId}`,
+      endpoint: `/api/whitelabel/history/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -13197,9 +13369,9 @@ router13.get("/history/:tenantId", async (req2, res) => {
     });
   }
 });
-router13.post("/backup", async (req2, res) => {
+router13.post("/backup", async (req, res) => {
   try {
-    const { tenantId, label } = req2.body;
+    const { tenantId, label } = req.body;
     if (!tenantId) {
       return res.status(400).json({
         error: "Missing required field",
@@ -13221,7 +13393,7 @@ router13.post("/backup", async (req2, res) => {
       id: randomUUID(),
       tenantId,
       createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-      createdBy: req2.userEmail || req2.session?.userEmail || null,
+      createdBy: req.userEmail || req.session?.userEmail || null,
       label: label || null,
       config
     };
@@ -13232,7 +13404,7 @@ router13.post("/backup", async (req2, res) => {
       action: "backup",
       source_tenant_id: tenantId,
       changes: backupPayload,
-      changed_by: req2.userEmail || req2.session?.userEmail || null,
+      changed_by: req.userEmail || req.session?.userEmail || null,
       changed_at: (/* @__PURE__ */ new Date()).toISOString(),
       metadata: { filename, filePath }
     });
@@ -13256,9 +13428,9 @@ router13.post("/backup", async (req2, res) => {
     });
   }
 });
-router13.post("/restore", async (req2, res) => {
+router13.post("/restore", async (req, res) => {
   try {
-    const { tenantId, filename } = req2.body;
+    const { tenantId, filename } = req.body;
     if (!tenantId || !filename) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -13299,7 +13471,7 @@ router13.post("/restore", async (req2, res) => {
       action: "restore",
       source_tenant_id: tenantId,
       changes: config,
-      changed_by: req2.userEmail || req2.session?.userEmail || null,
+      changed_by: req.userEmail || req.session?.userEmail || null,
       changed_at: (/* @__PURE__ */ new Date()).toISOString(),
       metadata: { filename, restoredFrom: filePath }
     });
@@ -13320,9 +13492,9 @@ router13.post("/restore", async (req2, res) => {
     });
   }
 });
-router13.get("/backups/:tenantId", async (req2, res) => {
+router13.get("/backups/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
+    const { tenantId } = req.params;
     const backupDir = ensureBackupDir();
     const files = fs.readdirSync(backupDir).filter((f) => f.startsWith(`whitelabel-${tenantId}-`) && f.endsWith(".json")).map((filename) => {
       const fullPath = path.join(backupDir, filename);
@@ -13341,7 +13513,7 @@ router13.get("/backups/:tenantId", async (req2, res) => {
     });
   } catch (error) {
     await errorLogger.logError("Failed to list white-label backups", error, {
-      endpoint: `/api/whitelabel/backups/${req2.params.tenantId}`,
+      endpoint: `/api/whitelabel/backups/${req.params.tenantId}`,
       method: "GET"
     });
     res.status(500).json({
@@ -13350,10 +13522,10 @@ router13.get("/backups/:tenantId", async (req2, res) => {
     });
   }
 });
-router13.get("/stream/:tenantId", async (req2, res) => {
+router13.get("/stream/:tenantId", async (req, res) => {
   try {
-    const { tenantId } = req2.params;
-    const pollIntervalMs = parseInt(req2.query.interval || "5000", 10);
+    const { tenantId } = req.params;
+    const pollIntervalMs = parseInt(req.query.interval || "5000", 10);
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -13388,12 +13560,12 @@ router13.get("/stream/:tenantId", async (req2, res) => {
 `);
       }
     }, pollIntervalMs);
-    req2.on("close", () => {
+    req.on("close", () => {
       clearInterval(interval);
     });
   } catch (error) {
     await errorLogger.logError("White-label stream setup failed", error, {
-      endpoint: `/api/whitelabel/stream/${req2.params.tenantId}`,
+      endpoint: `/api/whitelabel/stream/${req.params.tenantId}`,
       method: "GET"
     });
     if (!res.headersSent) {
@@ -13463,7 +13635,7 @@ var messagingStats = {
 };
 function registerMessagingRoutes(app2) {
   app2.use("/api/messaging", requireAuth(), requireEntitlement(FeatureKey.TEXT_MESSAGES));
-  app2.get("/api/messaging/providers", async (req2, res) => {
+  app2.get("/api/messaging/providers", async (req, res) => {
     try {
       res.json(messageProviders);
     } catch (error) {
@@ -13471,7 +13643,7 @@ function registerMessagingRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch message providers" });
     }
   });
-  app2.get("/api/messaging/messages", async (req2, res) => {
+  app2.get("/api/messaging/messages", async (req, res) => {
     try {
       res.json(messages);
     } catch (error) {
@@ -13479,7 +13651,7 @@ function registerMessagingRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch messages" });
     }
   });
-  app2.get("/api/messaging/stats", async (req2, res) => {
+  app2.get("/api/messaging/stats", async (req, res) => {
     try {
       res.json(messagingStats);
     } catch (error) {
@@ -13487,9 +13659,9 @@ function registerMessagingRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch messaging stats" });
     }
   });
-  app2.post("/api/messaging/send", async (req2, res) => {
+  app2.post("/api/messaging/send", async (req, res) => {
     try {
-      const { content, recipient, provider } = req2.body;
+      const { content, recipient, provider } = req.body;
       if (!content || !recipient || !provider) {
         return res.status(400).json({ error: "Content, recipient, and provider are required" });
       }
@@ -13523,9 +13695,9 @@ function registerMessagingRoutes(app2) {
       res.status(500).json({ error: "Failed to send message" });
     }
   });
-  app2.get("/api/messaging/messages/:id", async (req2, res) => {
+  app2.get("/api/messaging/messages/:id", async (req, res) => {
     try {
-      const messageId = req2.params.id;
+      const messageId = req.params.id;
       const message = messages.find((m) => m.id === messageId);
       if (!message) {
         return res.status(404).json({ error: "Message not found" });
@@ -13536,10 +13708,10 @@ function registerMessagingRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch message" });
     }
   });
-  app2.put("/api/messaging/messages/:id/status", async (req2, res) => {
+  app2.put("/api/messaging/messages/:id/status", async (req, res) => {
     try {
-      const messageId = req2.params.id;
-      const { status } = req2.body;
+      const messageId = req.params.id;
+      const { status } = req.body;
       const messageIndex = messages.findIndex((m) => m.id === messageId);
       if (messageIndex === -1) {
         return res.status(404).json({ error: "Message not found" });
@@ -13592,7 +13764,7 @@ var phoneStats = {
 };
 function registerPhoneRoutes(app2) {
   app2.use("/api/phone", requireAuth(), requireEntitlement(FeatureKey.PHONE_SYSTEM));
-  app2.get("/api/phone/calls", async (req2, res) => {
+  app2.get("/api/phone/calls", async (req, res) => {
     try {
       res.json(calls);
     } catch (error) {
@@ -13600,7 +13772,7 @@ function registerPhoneRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch calls" });
     }
   });
-  app2.get("/api/phone/stats", async (req2, res) => {
+  app2.get("/api/phone/stats", async (req, res) => {
     try {
       res.json(phoneStats);
     } catch (error) {
@@ -13608,9 +13780,9 @@ function registerPhoneRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch phone stats" });
     }
   });
-  app2.post("/api/phone/calls", async (req2, res) => {
+  app2.post("/api/phone/calls", async (req, res) => {
     try {
-      const { caller, duration, status, transcript } = req2.body;
+      const { caller, duration, status, transcript } = req.body;
       if (!caller || status === void 0) {
         return res.status(400).json({ error: "Caller and status are required" });
       }
@@ -13633,9 +13805,9 @@ function registerPhoneRoutes(app2) {
       res.status(500).json({ error: "Failed to create call" });
     }
   });
-  app2.get("/api/phone/calls/:id", async (req2, res) => {
+  app2.get("/api/phone/calls/:id", async (req, res) => {
     try {
-      const callId = req2.params.id;
+      const callId = req.params.id;
       const call = calls.find((c) => c.id === callId);
       if (!call) {
         return res.status(404).json({ error: "Call not found" });
@@ -13646,9 +13818,9 @@ function registerPhoneRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch call" });
     }
   });
-  app2.put("/api/phone/calls/:id", async (req2, res) => {
+  app2.put("/api/phone/calls/:id", async (req, res) => {
     try {
-      const callId = req2.params.id;
+      const callId = req.params.id;
       const callIndex = calls.findIndex((c) => c.id === callId);
       if (callIndex === -1) {
         return res.status(404).json({ error: "Call not found" });
@@ -13664,8 +13836,8 @@ function registerPhoneRoutes(app2) {
       ];
       const updates = {};
       for (const field of allowedFields) {
-        if (field in req2.body) {
-          updates[field] = req2.body[field];
+        if (field in req.body) {
+          updates[field] = req.body[field];
         }
       }
       const updatedCall = {
@@ -13679,9 +13851,9 @@ function registerPhoneRoutes(app2) {
       res.status(500).json({ error: "Failed to update call" });
     }
   });
-  app2.post("/api/phone/calls/:id/analyze", async (req2, res) => {
+  app2.post("/api/phone/calls/:id/analyze", async (req, res) => {
     try {
-      const callId = req2.params.id;
+      const callId = req.params.id;
       const callIndex = calls.findIndex((c) => c.id === callId);
       if (callIndex === -1) {
         return res.status(404).json({ error: "Call not found" });
@@ -13711,9 +13883,9 @@ function registerPhoneRoutes(app2) {
       res.status(500).json({ error: "Failed to analyze call" });
     }
   });
-  app2.post("/api/phone/calls/start", async (req2, res) => {
+  app2.post("/api/phone/calls/start", async (req, res) => {
     try {
-      const { number, type } = req2.body;
+      const { number, type } = req.body;
       if (!number) {
         return res.status(400).json({ error: "Phone number is required" });
       }
@@ -13726,138 +13898,6 @@ function registerPhoneRoutes(app2) {
     } catch (error) {
       console.error("Error starting call:", error);
       res.status(500).json({ error: "Failed to start call" });
-    }
-  });
-}
-
-// server/routes/videos.ts
-var videoEmails = [];
-function registerVideoRoutes(app2) {
-  app2.use("/api/videos", requireAuth(), requireEntitlement(FeatureKey.VIDEO_EMAIL));
-  app2.get("/api/videos", async (req2, res) => {
-    try {
-      const userVideos = videoEmails.filter((video) => video.profileId === req2.userId);
-      res.json(userVideos);
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-      res.status(500).json({ error: "Failed to fetch videos" });
-    }
-  });
-  app2.get("/api/videos/stats", async (req2, res) => {
-    try {
-      const userVideos = videoEmails.filter((video) => video.profileId === req2.userId);
-      const stats = {
-        totalVideos: userVideos.length,
-        totalViews: userVideos.reduce((sum, video) => sum + video.analytics.views, 0),
-        averageEngagement: userVideos.length > 0 ? userVideos.reduce((sum, video) => sum + video.analytics.engagement, 0) / userVideos.length : 0,
-        conversionRate: 0.15,
-        // Mock conversion rate
-        topPerformingVideo: userVideos.length > 0 ? userVideos.reduce(
-          (top, video) => video.analytics.views > (userVideos.find((v) => v.title === top)?.analytics.views || 0) ? video.title : top,
-          userVideos[0]?.title || ""
-        ) : ""
-      };
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching video stats:", error);
-      res.status(500).json({ error: "Failed to fetch video stats" });
-    }
-  });
-  app2.post("/api/videos", async (req2, res) => {
-    try {
-      const userId = req2.userId;
-      const { title, script, recipientName, recipientEmail, company } = req2.body;
-      if (!title || !script) {
-        return res.status(400).json({ error: "Title and script are required" });
-      }
-      const newVideo = {
-        id: crypto.randomUUID(),
-        title,
-        script,
-        duration: Math.floor(script.length / 10),
-        // Rough estimate based on script length
-        thumbnail: "/api/placeholder/400/225",
-        // Placeholder thumbnail
-        status: "draft",
-        analytics: {
-          views: 0,
-          completionRate: 0,
-          engagement: 0
-        },
-        gpt5Metadata: {
-          generatedScript: false,
-          optimizationScore: 0.8,
-          suggestedImprovements: [],
-          tone: "professional",
-          targetAudience: "business"
-        },
-        recipient: recipientName && recipientEmail ? {
-          name: recipientName,
-          email: recipientEmail,
-          company: company || ""
-        } : void 0,
-        profileId: userId,
-        createdAt: /* @__PURE__ */ new Date(),
-        updatedAt: /* @__PURE__ */ new Date()
-      };
-      videoEmails.push(newVideo);
-      res.status(201).json(newVideo);
-    } catch (error) {
-      console.error("Error creating video:", error);
-      res.status(500).json({ error: "Failed to create video" });
-    }
-  });
-  app2.get("/api/videos/:id", async (req2, res) => {
-    try {
-      const videoId = req2.params.id;
-      const video = videoEmails.find((v) => v.id === videoId && v.profileId === req2.userId);
-      if (!video) {
-        return res.status(404).json({ error: "Video not found" });
-      }
-      res.json(video);
-    } catch (error) {
-      console.error("Error fetching video:", error);
-      res.status(500).json({ error: "Failed to fetch video" });
-    }
-  });
-  app2.put("/api/videos/:id", async (req2, res) => {
-    try {
-      const videoId = req2.params.id;
-      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req2.userId);
-      if (videoIndex === -1) {
-        return res.status(404).json({ error: "Video not found" });
-      }
-      const allowedFields = ["title", "script", "duration", "thumbnail", "status", "recipient"];
-      const updates = {};
-      for (const field of allowedFields) {
-        if (field in req2.body) {
-          updates[field] = req2.body[field];
-        }
-      }
-      const updatedVideo = {
-        ...videoEmails[videoIndex],
-        ...updates,
-        updatedAt: /* @__PURE__ */ new Date()
-      };
-      videoEmails[videoIndex] = updatedVideo;
-      res.json(updatedVideo);
-    } catch (error) {
-      console.error("Error updating video:", error);
-      res.status(500).json({ error: "Failed to update video" });
-    }
-  });
-  app2.delete("/api/videos/:id", async (req2, res) => {
-    try {
-      const videoId = req2.params.id;
-      const videoIndex = videoEmails.findIndex((v) => v.id === videoId && v.profileId === req2.userId);
-      if (videoIndex === -1) {
-        return res.status(404).json({ error: "Video not found" });
-      }
-      videoEmails.splice(videoIndex, 1);
-      res.json({ message: "Video deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting video:", error);
-      res.status(500).json({ error: "Failed to delete video" });
     }
   });
 }
@@ -13903,7 +13943,7 @@ var meetingStats = {
 };
 function registerAppointmentRoutes(app2) {
   app2.use("/api/appointments", requireAuth(), requireEntitlement(FeatureKey.APPOINTMENTS));
-  app2.get("/api/appointments", async (req2, res) => {
+  app2.get("/api/appointments", async (req, res) => {
     try {
       res.json(appointments2);
     } catch (error) {
@@ -13911,7 +13951,7 @@ function registerAppointmentRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch appointments" });
     }
   });
-  app2.get("/api/appointments/stats", async (req2, res) => {
+  app2.get("/api/appointments/stats", async (req, res) => {
     try {
       res.json(meetingStats);
     } catch (error) {
@@ -13919,9 +13959,9 @@ function registerAppointmentRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch appointment stats" });
     }
   });
-  app2.post("/api/appointments", async (req2, res) => {
+  app2.post("/api/appointments", async (req, res) => {
     try {
-      const { title, date, time, duration, attendees, type, priority, notes: notes2 } = req2.body;
+      const { title, date, time, duration, attendees, type, priority, notes: notes2 } = req.body;
       if (!title || !date || !time) {
         return res.status(400).json({ error: "Title, date, and time are required" });
       }
@@ -13946,9 +13986,9 @@ function registerAppointmentRoutes(app2) {
       res.status(500).json({ error: "Failed to create appointment" });
     }
   });
-  app2.get("/api/appointments/:id", async (req2, res) => {
+  app2.get("/api/appointments/:id", async (req, res) => {
     try {
-      const appointmentId = req2.params.id;
+      const appointmentId = req.params.id;
       const appointment = appointments2.find((a) => a.id === appointmentId);
       if (!appointment) {
         return res.status(404).json({ error: "Appointment not found" });
@@ -13959,16 +13999,16 @@ function registerAppointmentRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch appointment" });
     }
   });
-  app2.put("/api/appointments/:id", async (req2, res) => {
+  app2.put("/api/appointments/:id", async (req, res) => {
     try {
-      const appointmentId = req2.params.id;
+      const appointmentId = req.params.id;
       const appointmentIndex = appointments2.findIndex((a) => a.id === appointmentId);
       if (appointmentIndex === -1) {
         return res.status(404).json({ error: "Appointment not found" });
       }
       const updatedAppointment = {
         ...appointments2[appointmentIndex],
-        ...req2.body
+        ...req.body
       };
       appointments2[appointmentIndex] = updatedAppointment;
       res.json(updatedAppointment);
@@ -13977,9 +14017,9 @@ function registerAppointmentRoutes(app2) {
       res.status(500).json({ error: "Failed to update appointment" });
     }
   });
-  app2.delete("/api/appointments/:id", async (req2, res) => {
+  app2.delete("/api/appointments/:id", async (req, res) => {
     try {
-      const appointmentId = req2.params.id;
+      const appointmentId = req.params.id;
       const appointmentIndex = appointments2.findIndex((a) => a.id === appointmentId);
       if (appointmentIndex === -1) {
         return res.status(404).json({ error: "Appointment not found" });
@@ -13992,9 +14032,9 @@ function registerAppointmentRoutes(app2) {
       res.status(500).json({ error: "Failed to delete appointment" });
     }
   });
-  app2.post("/api/appointments/generate-insights", async (req2, res) => {
+  app2.post("/api/appointments/generate-insights", async (req, res) => {
     try {
-      const { title, attendees, type, duration } = req2.body;
+      const { title, attendees, type, duration } = req.body;
       const insights = {
         optimalTime: "10:00 AM",
         preparationNotes: [
@@ -14319,7 +14359,7 @@ init_db();
 init_schema();
 import { eq as eq7, desc as desc6, sql as sql6 } from "drizzle-orm";
 function registerAIPricingRoutes(app2) {
-  app2.get("/api/admin/ai-features", requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/ai-features", requireAdmin, async (req, res) => {
     try {
       const features2 = await db.select().from(aiFeatureDefinitions).orderBy(aiFeatureDefinitions.category, aiFeatureDefinitions.featureName);
       res.json({
@@ -14344,10 +14384,10 @@ function registerAIPricingRoutes(app2) {
   app2.put(
     "/api/admin/ai-features/:featureKey",
     requireAdmin,
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { featureKey } = req2.params;
-        const { baseCreditCost, minCreditCost, maxCreditCost, isActive } = req2.body;
+        const { featureKey } = req.params;
+        const { baseCreditCost, minCreditCost, maxCreditCost, isActive } = req.body;
         await AIPricingService.setFeatureBasePrice(featureKey, {
           baseCreditCost,
           minCreditCost,
@@ -14361,9 +14401,9 @@ function registerAIPricingRoutes(app2) {
       }
     }
   );
-  app2.get("/api/admin/ai-analytics", requireAdmin, async (req2, res) => {
+  app2.get("/api/admin/ai-analytics", requireAdmin, async (req, res) => {
     try {
-      const { startDate, endDate } = req2.query;
+      const { startDate, endDate } = req.query;
       const usageStats = await db.select({
         totalUsage: sql6`count(*)`,
         totalRevenue: sql6`sum(${aiFeatureUsage.creditsCharged})`,
@@ -14398,10 +14438,10 @@ function registerAIPricingRoutes(app2) {
       res.status(500).json({ success: false, error: "Failed to fetch analytics" });
     }
   });
-  app2.get("/api/reseller/ai-pricing", requireAuth(), async (req2, res) => {
+  app2.get("/api/reseller/ai-pricing", requireAuth(), async (req, res) => {
     try {
-      const userId = req2.userId;
-      const userRole = req2.user?.role || req2.session?.userRole;
+      const userId = req.userId;
+      const userRole = req.user?.role || req.session?.userRole;
       if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
@@ -14425,12 +14465,12 @@ function registerAIPricingRoutes(app2) {
   app2.put(
     "/api/reseller/ai-pricing/:featureKey",
     requireAuth(),
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const userId = req2.userId;
-        const userRole = req2.user?.role || req2.session?.userRole;
-        const { featureKey } = req2.params;
-        const { retailCreditCost, wholesaleCreditCost } = req2.body;
+        const userId = req.userId;
+        const userRole = req.user?.role || req.session?.userRole;
+        const { featureKey } = req.params;
+        const { retailCreditCost, wholesaleCreditCost } = req.body;
         if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
           return res.status(403).json({ success: false, error: "Access denied" });
         }
@@ -14458,14 +14498,14 @@ function registerAIPricingRoutes(app2) {
       }
     }
   );
-  app2.get("/api/reseller/ai-analytics", requireAuth(), async (req2, res) => {
+  app2.get("/api/reseller/ai-analytics", requireAuth(), async (req, res) => {
     try {
-      const userId = req2.userId;
-      const userRole = req2.user?.role || req2.session?.userRole;
+      const userId = req.userId;
+      const userRole = req.user?.role || req.session?.userRole;
       if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
-      const { startDate, endDate } = req2.query;
+      const { startDate, endDate } = req.query;
       const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3);
       const end = endDate ? new Date(endDate) : /* @__PURE__ */ new Date();
       const analytics = await AIPricingService.getResellerUsageAnalytics(userId, start, end);
@@ -14478,11 +14518,11 @@ function registerAIPricingRoutes(app2) {
       res.status(500).json({ success: false, error: "Failed to fetch analytics" });
     }
   });
-  app2.post("/api/reseller/purchase-credits", requireAuth(), async (req2, res) => {
+  app2.post("/api/reseller/purchase-credits", requireAuth(), async (req, res) => {
     try {
-      const userId = req2.userId;
-      const userRole = req2.user?.role || req2.session?.userRole;
-      const { creditsAmount, paymentMethodId } = req2.body;
+      const userId = req.userId;
+      const userRole = req.user?.role || req.session?.userRole;
+      const { creditsAmount, paymentMethodId } = req.body;
       if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
@@ -14504,11 +14544,11 @@ function registerAIPricingRoutes(app2) {
       res.status(500).json({ success: false, error: "Failed to purchase credits" });
     }
   });
-  app2.get("/api/ai-features", requireAuth(), async (req2, res) => {
+  app2.get("/api/ai-features", requireAuth(), async (req, res) => {
     try {
-      const userId = req2.userId;
-      const userRole = req2.user?.role || req2.session?.userRole;
-      const resellerId = req2.user?.resellerId;
+      const userId = req.userId;
+      const userRole = req.user?.role || req.session?.userRole;
+      const resellerId = req.user?.resellerId;
       const features2 = await AIPricingService.getAIFeaturesWithPricing(
         userId,
         userRole,
@@ -14530,12 +14570,12 @@ function registerAIPricingRoutes(app2) {
       res.status(500).json({ success: false, error: "Failed to fetch AI features" });
     }
   });
-  app2.get("/api/ai-features/:featureKey/cost", requireAuth(), async (req2, res) => {
+  app2.get("/api/ai-features/:featureKey/cost", requireAuth(), async (req, res) => {
     try {
-      const { featureKey } = req2.params;
-      const userId = req2.userId;
-      const userRole = req2.user?.role || req2.session?.userRole;
-      const resellerId = req2.user?.resellerId;
+      const { featureKey } = req.params;
+      const userId = req.userId;
+      const userRole = req.user?.role || req.session?.userRole;
+      const resellerId = req.user?.resellerId;
       const features2 = await AIPricingService.getAIFeaturesWithPricing(
         userId,
         userRole,
@@ -14560,12 +14600,12 @@ function registerAIPricingRoutes(app2) {
   app2.get(
     "/api/ai-features/:featureKey/check",
     requireAuth(),
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { featureKey } = req2.params;
-        const userId = req2.userId;
-        const userRole = req2.user?.role || req2.session?.userRole;
-        const resellerId = req2.user?.resellerId;
+        const { featureKey } = req.params;
+        const userId = req.userId;
+        const userRole = req.user?.role || req.session?.userRole;
+        const resellerId = req.user?.resellerId;
         const features2 = await AIPricingService.getAIFeaturesWithPricing(
           userId,
           userRole,
@@ -14594,12 +14634,12 @@ function registerAIPricingRoutes(app2) {
   app2.post(
     "/api/ai-features/:featureKey/charge",
     requireAuth(),
-    async (req2, res) => {
+    async (req, res) => {
       try {
-        const { featureKey } = req2.params;
-        const userId = req2.userId;
-        const resellerId = req2.user?.resellerId;
-        const { description, metadata, context } = req2.body;
+        const { featureKey } = req.params;
+        const userId = req.userId;
+        const resellerId = req.user?.resellerId;
+        const { description, metadata, context } = req.body;
         const result = await AIPricingService.chargeForFeature(
           userId,
           featureKey,
@@ -14629,10 +14669,10 @@ function registerAIPricingRoutes(app2) {
       }
     }
   );
-  app2.get("/api/ai-usage", requireAuth(), async (req2, res) => {
+  app2.get("/api/ai-usage", requireAuth(), async (req, res) => {
     try {
-      const userId = req2.userId;
-      const { limit = 50, offset = 0 } = req2.query;
+      const userId = req.userId;
+      const { limit = 50, offset = 0 } = req.query;
       const usage = await db.select({
         id: aiFeatureUsage.id,
         featureKey: aiFeatureUsage.featureKey,
@@ -14655,8 +14695,8 @@ function registerAIPricingRoutes(app2) {
 var createUserOpenAIClient = (userId) => getUserOpenAIClient(userId);
 function registerAIRoutes(app2) {
   const requireAITools = [requireAuth(), requireEntitlement(FeatureKey.AI_TOOLS)];
-  app2.get("/api/openai/status", requireAuth(), async (req2, res) => {
-    const userId = req2.userId;
+  app2.get("/api/openai/status", requireAuth(), async (req, res) => {
+    const userId = req.userId;
     const results = {
       openai: {
         available: false,
@@ -14732,10 +14772,10 @@ function registerAIRoutes(app2) {
   app2.post(
     "/api/ai/generate",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       try {
-        const { prompt, system, json: json2 = false, tier = "default", maxTokens = 2e3 } = req2.body || {};
+        const { prompt, system, json: json2 = false, tier = "default", maxTokens = 2e3 } = req.body || {};
         if (!prompt || typeof prompt !== "string") {
           return res.status(400).json({ error: "prompt is required" });
         }
@@ -14765,8 +14805,8 @@ Respond with valid JSON only.` : prompt }
   app2.post(
     "/api/openai/test",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       try {
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -14793,10 +14833,10 @@ Respond with valid JSON only.` : prompt }
   app2.post(
     "/api/openai/embeddings",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       try {
-        const { text: text2, model = EMBEDDING_MODEL } = req2.body;
+        const { text: text2, model = EMBEDDING_MODEL } = req.body;
         if (!text2) return res.status(400).json({ error: "Text required" });
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -14819,10 +14859,10 @@ Respond with valid JSON only.` : prompt }
   app2.post(
     "/api/openai/images/generate",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       try {
-        const { prompt, model = IMAGE_MODEL, size = "1024x1024" } = req2.body;
+        const { prompt, model = IMAGE_MODEL, size = "1024x1024" } = req.body;
         if (!prompt) return res.status(400).json({ error: "Prompt required" });
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -14841,9 +14881,9 @@ Respond with valid JSON only.` : prompt }
   app2.post(
     "/api/openai/smart-greeting",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const { userMetrics, timeOfDay } = req2.body;
+    async (req, res) => {
+      const userId = req.userId;
+      const { userMetrics, timeOfDay } = req.body;
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
         return res.json({
@@ -14886,16 +14926,12 @@ Respond with valid JSON only.` : prompt }
   app2.post(
     "/api/openai/kpi-analysis",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const { historicalData, currentMetrics } = req2.body;
+    async (req, res) => {
+      const userId = req.userId;
+      const { historicalData, currentMetrics } = req.body;
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          summary: "Configure your OpenAI API key in Settings > API Keys for KPI analysis",
-          recommendations: ["Add OpenAI API key in Settings"],
-          needsApiKey: true
-        });
+        return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
       }
       try {
         const response = await openaiData.client.chat.completions.create({
@@ -14916,24 +14952,19 @@ Respond with valid JSON only.` : prompt }
         });
         res.json(JSON.parse(response.choices[0].message.content || "{}"));
       } catch (error) {
-        res.json({ summary: "Analysis unavailable", recommendations: ["Retry"] });
+        res.status(500).json({ error: error?.message || "KPI analysis failed" });
       }
     }
   );
   app2.post(
     "/api/openai/deal-intelligence",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const { dealData, contactHistory, marketContext } = req2.body;
+    async (req, res) => {
+      const userId = req.userId;
+      const { dealData, contactHistory, marketContext } = req.body;
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          probability_score: 65,
-          risk_level: "medium",
-          recommendations: ["Configure OpenAI API key in Settings"],
-          needsApiKey: true
-        });
+        return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
       }
       try {
         const response = await openaiData.client.chat.completions.create({
@@ -14954,23 +14985,19 @@ Respond with valid JSON only.` : prompt }
         });
         res.json(JSON.parse(response.choices[0].message.content || "{}"));
       } catch (error) {
-        res.json({ probability_score: 65, risk_level: "medium", recommendations: ["Retry"] });
+        res.status(500).json({ error: error?.message || "Deal analysis failed" });
       }
     }
   );
   app2.post(
     "/api/openai/business-intelligence",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const { businessData, marketContext, objectives } = req2.body;
+    async (req, res) => {
+      const userId = req.userId;
+      const { businessData, marketContext, objectives } = req.body;
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          market_insights: ["Configure OpenAI API key in Settings"],
-          strategic_recommendations: ["Add your API key in Settings > API Keys"],
-          needsApiKey: true
-        });
+        return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
       }
       try {
         const response = await openaiData.client.chat.completions.create({
@@ -14991,29 +15018,28 @@ Respond with valid JSON only.` : prompt }
         });
         res.json(JSON.parse(response.choices[0].message.content || "{}"));
       } catch (error) {
-        res.json({ market_insights: ["Retry analysis"] });
+        res.status(500).json({ error: error?.message || "Business intelligence failed" });
       }
     }
   );
   app2.post(
     "/api/respond",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       try {
         const {
           prompt,
           imageUrl,
           schema,
           temperature = 0.4,
-          max_output_tokens = 2048,
-          forceToolName
-        } = req2.body;
+          max_output_tokens = 2048
+        } = req.body;
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
           return res.status(400).json({
             error: "No OpenAI API key configured",
-            message: "Please add your OpenAI API key in Settings > AI Keys to use AI features.",
+            message: NO_KEY_MESSAGE,
             needsApiKey: true
           });
         }
@@ -15024,9 +15050,12 @@ Respond with valid JSON only.` : prompt }
           },
           {
             role: "user",
-            content: imageUrl ? `${prompt}
+            // JSON mode requires the word "json" in the messages
+            content: (imageUrl ? `${prompt}
 
-Image URL: ${imageUrl}` : prompt
+Image URL: ${imageUrl}` : prompt) + (schema ? `
+
+Respond with valid JSON matching this schema: ${JSON.stringify(schema)}` : "")
           }
         ];
         const response = await openaiData.client.chat.completions.create({
@@ -15034,82 +15063,8 @@ Image URL: ${imageUrl}` : prompt
           messages: messages2,
           temperature,
           max_tokens: max_output_tokens,
-          response_format: schema ? { type: "json_object" } : void 0,
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "analyzeBusinessData",
-                description: "Analyze business data and provide insights",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    dataType: { type: "string" },
-                    analysisType: { type: "string" },
-                    timeRange: { type: "string" }
-                  },
-                  required: ["dataType"]
-                }
-              }
-            },
-            {
-              type: "function",
-              function: {
-                name: "generateRecommendations",
-                description: "Generate business recommendations based on data",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    context: { type: "string" },
-                    goals: { type: "array", items: { type: "string" } },
-                    constraints: { type: "array", items: { type: "string" } }
-                  }
-                }
-              }
-            }
-          ],
-          tool_choice: forceToolName ? { type: "function", function: { name: forceToolName } } : "auto"
+          response_format: schema ? { type: "json_object" } : void 0
         });
-        const toolCalls = response.choices[0].message.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (tc) => ({
-              tool_call_id: tc.id,
-              output: await executeWLTool(tc)
-            }))
-          );
-          const continuedMessages = [
-            ...messages2,
-            response.choices[0].message,
-            ...toolOutputs.map((o) => ({
-              role: "tool",
-              content: o.output,
-              tool_call_id: o.tool_call_id
-            }))
-          ];
-          const continuedResponse = await openaiData.client.chat.completions.create({
-            model: openaiData.model,
-            messages: continuedMessages,
-            temperature,
-            max_tokens: max_output_tokens,
-            response_format: schema ? { type: "json_object" } : void 0
-          });
-          return res.json({
-            output_text: continuedResponse.choices[0].message.content,
-            output: [
-              {
-                content: [
-                  {
-                    type: "output_text",
-                    text: continuedResponse.choices[0].message.content
-                  }
-                ]
-              }
-            ],
-            tool_calls: toolCalls,
-            continued: true
-          });
-        }
         res.json({
           output_text: response.choices[0].message.content,
           output: [
@@ -15137,10 +15092,10 @@ Image URL: ${imageUrl}` : prompt
   app2.post(
     "/api/stream",
     ...requireAITools,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       try {
-        const { prompt, temperature = 0.4, max_output_tokens = 2048 } = req2.body;
+        const { prompt, temperature = 0.4, max_output_tokens = 2048 } = req.body;
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
           return res.status(400).json({
@@ -15178,33 +15133,6 @@ Image URL: ${imageUrl}` : prompt
       }
     }
   );
-  async function executeWLTool(tc) {
-    const { name, arguments: args } = tc.function;
-    try {
-      if (name === "analyzeBusinessData") {
-        const { dataType, analysisType, timeRange } = args || {};
-        return JSON.stringify({
-          ok: true,
-          analysis: `Analysis of ${dataType} for ${timeRange}`,
-          insights: [`Key insight 1 for ${analysisType}`, `Key insight 2 for ${analysisType}`],
-          recommendations: [`Recommendation 1`, `Recommendation 2`]
-        });
-      }
-      if (name === "generateRecommendations") {
-        const { context, goals, constraints } = args || {};
-        return JSON.stringify({
-          ok: true,
-          recommendations: goals?.map(
-            (goal, i) => `For ${goal}: Action ${i + 1} considering ${constraints?.[i] || "no constraints"}`
-          ) || [],
-          context
-        });
-      }
-      return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
-    } catch (e) {
-      return JSON.stringify({ ok: false, error: e?.message || "Tool error" });
-    }
-  }
   console.log("\u2705 AI routes registered (user API key mode)");
 }
 
@@ -15212,11 +15140,12 @@ Image URL: ${imageUrl}` : prompt
 init_db();
 init_schema();
 import { eq as eq8, and as and7 } from "drizzle-orm";
+var SUPPORTED_PROVIDERS = ["openai", "openclaw"];
 function registerApiKeyRoutes(app2) {
   const requireApiKeyAuth = requireAuth();
-  app2.get("/api/user/api-keys", requireApiKeyAuth, async (req2, res) => {
+  app2.get("/api/user/api-keys", requireApiKeyAuth, async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -15237,18 +15166,27 @@ function registerApiKeyRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch API keys" });
     }
   });
-  app2.post("/api/user/api-keys", requireApiKeyAuth, async (req2, res) => {
+  app2.post("/api/user/api-keys", requireApiKeyAuth, async (req, res) => {
     try {
-      const userId = req2.userId;
+      const userId = req.userId;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       if (!db) {
         return res.status(503).json({ error: "Database not available" });
       }
-      const { provider, apiKey, apiKeyName, model, isDefault } = req2.body;
-      if (provider !== "openai") {
-        return res.status(400).json({ error: 'Provider must be "openai"' });
+      const { provider, apiKey, apiKeyName, model, isDefault, baseUrl } = req.body;
+      if (!SUPPORTED_PROVIDERS.includes(provider)) {
+        return res.status(400).json({ error: 'Provider must be "openai" or "openclaw"' });
+      }
+      let metadata;
+      if (provider === "openclaw" && baseUrl !== void 0) {
+        if (baseUrl && !await isSafeExternalUrl(String(baseUrl))) {
+          return res.status(400).json({
+            error: "OpenClaw base URL must be a public https URL"
+          });
+        }
+        metadata = baseUrl ? { base_url: String(baseUrl).trim() } : {};
       }
       if (!apiKey || typeof apiKey !== "string" || apiKey.trim().length < 10) {
         return res.status(400).json({ error: "API key must be at least 10 characters" });
@@ -15265,6 +15203,7 @@ function registerApiKeyRoutes(app2) {
         const [updatedKey] = await db.update(userApiKeys).set({
           apiKey: apiKey.trim(),
           ...model !== void 0 && { model: model || null },
+          ...metadata !== void 0 && { metadata },
           isActive: true,
           isDefault: true,
           updatedAt: /* @__PURE__ */ new Date()
@@ -15281,6 +15220,7 @@ function registerApiKeyRoutes(app2) {
         apiKey: apiKey.trim(),
         apiKeyName: apiKeyName || null,
         model: model || null,
+        ...metadata !== void 0 && { metadata },
         isDefault: shouldBeDefault,
         isActive: true,
         testStatus: "pending"
@@ -15297,10 +15237,10 @@ function registerApiKeyRoutes(app2) {
       res.status(500).json({ error: "Failed to add API key" });
     }
   });
-  app2.post("/api/user/api-keys/:id/test", requireApiKeyAuth, async (req2, res) => {
+  app2.post("/api/user/api-keys/:id/test", requireApiKeyAuth, async (req, res) => {
     try {
-      const userId = req2.userId;
-      const keyId = req2.params.id;
+      const userId = req.userId;
+      const keyId = req.params.id;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -15316,6 +15256,11 @@ function registerApiKeyRoutes(app2) {
       let testResult;
       if (apiKeyRecord.provider === "openai") {
         testResult = await testOpenAIKey(apiKeyRecord.apiKey);
+      } else if (apiKeyRecord.provider === "openclaw") {
+        testResult = await testOpenClawKey(
+          apiKeyRecord.apiKey,
+          apiKeyRecord.metadata?.base_url
+        );
       } else {
         return res.status(400).json({ error: "Unknown provider" });
       }
@@ -15335,17 +15280,17 @@ function registerApiKeyRoutes(app2) {
       res.status(500).json({ error: "Failed to test API key" });
     }
   });
-  app2.put("/api/user/api-keys/:id", requireApiKeyAuth, async (req2, res) => {
+  app2.put("/api/user/api-keys/:id", requireApiKeyAuth, async (req, res) => {
     try {
-      const userId = req2.userId;
-      const keyId = req2.params.id;
+      const userId = req.userId;
+      const keyId = req.params.id;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       if (!db) {
         return res.status(503).json({ error: "Database not available" });
       }
-      const { apiKeyName, model, isDefault, isActive } = req2.body;
+      const { apiKeyName, model, isDefault, isActive } = req.body;
       const existingKey = await db.query.userApiKeys.findFirst({
         where: and7(eq8(userApiKeys.id, keyId), eq8(userApiKeys.userId, userId))
       });
@@ -15380,10 +15325,10 @@ function registerApiKeyRoutes(app2) {
       res.status(500).json({ error: "Failed to update API key" });
     }
   });
-  app2.delete("/api/user/api-keys/:id", requireApiKeyAuth, async (req2, res) => {
+  app2.delete("/api/user/api-keys/:id", requireApiKeyAuth, async (req, res) => {
     try {
-      const userId = req2.userId;
-      const keyId = req2.params.id;
+      const userId = req.userId;
+      const keyId = req.params.id;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -15415,18 +15360,18 @@ function registerApiKeyRoutes(app2) {
       res.status(500).json({ error: "Failed to delete API key" });
     }
   });
-  app2.get("/api/user/api-keys/active/:provider", requireApiKeyAuth, async (req2, res) => {
+  app2.get("/api/user/api-keys/active/:provider", requireApiKeyAuth, async (req, res) => {
     try {
-      const userId = req2.userId;
-      const provider = req2.params.provider;
+      const userId = req.userId;
+      const provider = req.params.provider;
       if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
       }
       if (!db) {
         return res.status(503).json({ error: "Database not available" });
       }
-      if (provider !== "openai") {
-        return res.status(400).json({ error: 'Provider must be "openai"' });
+      if (!SUPPORTED_PROVIDERS.includes(provider)) {
+        return res.status(400).json({ error: 'Provider must be "openai" or "openclaw"' });
       }
       const activeKey = await db.query.userApiKeys.findFirst({
         where: and7(
@@ -15492,10 +15437,34 @@ async function testOpenAIKey(apiKey) {
     };
   }
 }
+async function testOpenClawKey(apiKey, baseUrl) {
+  const url = (baseUrl || process.env.OPENCLAW_API_URL || "").replace(/\/+$/, "");
+  if (!url) return { success: false, error: "No OpenClaw URL configured" };
+  if (baseUrl && !await isSafeExternalUrl(baseUrl)) {
+    return { success: false, error: "OpenClaw base URL must be a public https URL" };
+  }
+  try {
+    const response = await fetch(`${url}/api/v1/health`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      redirect: "error",
+      signal: AbortSignal.timeout(1e4)
+    });
+    return response.ok ? { success: true } : { success: false, error: `OpenClaw health check failed (${response.status})` };
+  } catch (error) {
+    return { success: false, error: error?.message || "OpenClaw health check failed" };
+  }
+}
 
 // server/services/aiToolsService.ts
 async function getOpenAIClient2() {
   return (await getUserOpenAIClient())?.client ?? null;
+}
+function sendAIError(res, error) {
+  const message = typeof error === "string" ? error : error?.message || "AI request failed";
+  if (message === NO_KEY_MESSAGE) {
+    return res.status(400).json({ success: false, error: "No OpenAI API key configured", message, needsApiKey: true });
+  }
+  return res.status(500).json({ success: false, error: message });
 }
 var aiRateLimit2 = /* @__PURE__ */ new Map();
 var AI_RATE_LIMIT_WINDOW_MS2 = 6e4;
@@ -15807,6 +15776,30 @@ async function generateMeetingNotes(meetingData) {
     600
   );
 }
+async function suggestCalendarTimes(appointments3, preferences) {
+  return callAIJson(
+    `You are a scheduling assistant. Based on the user's existing appointments and preferences, suggest meeting times. Return JSON with: optimal_times (array of strings), scheduling_tips (array of strings), conflict_warnings (array of strings), productivity_score (number 0-100 based on how well the current calendar supports focused work).`,
+    `Existing appointments: ${JSON.stringify(appointments3 || [])}. Preferences: ${JSON.stringify(preferences || {})}`,
+    DEFAULT_MODEL,
+    500
+  );
+}
+async function recommendPipelineStages(deals2, targetStage) {
+  return callAIJson(
+    `You are a sales pipeline automation expert. Assess pipeline health and recommend a stage for each deal. Return JSON with: overall_health_score (number 0-100), bottlenecks (array of strings), recommendations (array of strings), stage_recommendations (array of {dealId, currentStage, recommendedStage, auto_actions (array of strings), reasoning}). Include one stage_recommendations entry per deal, using each deal's id as dealId.`,
+    `Deals: ${JSON.stringify(deals2)}${targetStage ? `. Target stage: ${targetStage}` : ""}`,
+    DEFAULT_MODEL,
+    1200
+  );
+}
+async function processFormSubmission(formData, formType) {
+  return callAIJson(
+    `You are a lead-intake automation expert. Evaluate a ${formType} form submission. Return JSON with: lead_score (number 0-100), auto_response (a short personalised reply to the submitter), follow_up_sequence (array of next steps), segmentation ({segment, intent, interests (array)}).`,
+    `Form submission: ${JSON.stringify(formData)}`,
+    DEFAULT_MODEL,
+    600
+  );
+}
 async function suggestFollowUpTasks(completedTask, context) {
   return callAIJson(
     `You are a productivity expert. Suggest logical follow-up tasks. Return JSON with: suggested_tasks (array of {title, description, priority, estimated_time}), reasoning (string), automation_suggestions (array).`,
@@ -15916,90 +15909,81 @@ function registerAISalesToolsRoutes(app2) {
   app2.post(
     "/api/ai/sales-assistant",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded. Try again in 60 seconds." });
       }
-      const { question, context } = req2.body;
+      const { question, context } = req.body;
       if (!question) {
-        memoryService.recordObservation(userId, "error", "Missing question", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Missing question", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Question required" });
       }
       const result = await generateReasoning(question, context || {});
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, response: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({
-          success: false,
-          response: { reasoning_steps: ["Consider reviewing your pipeline data"], conclusion: "Please configure OpenAI API key for AI sales assistant." },
-          source: "fallback",
-          error: result.error
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/lead-score",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { contactData } = req2.body;
+      const { contactData } = req.body;
       if (!contactData) {
-        memoryService.recordObservation(userId, "error", "Missing contactData", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Missing contactData", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Contact data required" });
       }
       const result = await analyzeLeadScore(contactData);
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, scoring: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({
-          success: false,
-          scoring: { score: 50, rationale: "Configure OpenAI API key for AI lead scoring", buyingSignals: [], riskFactors: [], recommendedActions: ["Add OpenAI API key"], priority: "warm" },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/deal-intelligence",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { dealData, contactHistory, marketContext } = req2.body;
+      const { dealData, contactHistory, marketContext } = req.body;
       if (!dealData) {
-        memoryService.recordObservation(userId, "error", "Missing dealData", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Missing dealData", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Deal data required" });
       }
@@ -16009,183 +15993,151 @@ function registerAISalesToolsRoutes(app2) {
         marketContext
       );
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, intelligence: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({
-          success: false,
-          intelligence: { probability_score: 50, risk_level: "medium", key_factors: ["Configure OpenAI API key"], recommendations: ["Add OpenAI API key in Settings"] },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/pipeline-intelligence",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2 } = req2.body;
+      const { deals: deals2 } = req.body;
       if (!deals2) {
-        memoryService.recordObservation(userId, "error", "Missing deals data", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Missing deals data", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Deals data required" });
       }
       const result = await analyzePipelineHealth(deals2);
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, analysis: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({
-          success: false,
-          analysis: { overall_health_score: 50, healthy_deals: 0, at_risk_deals: 0, critical_deals: 0, bottlenecks: ["Configure OpenAI API key"], recommendations: ["Add OpenAI API key"] },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/deal-risk-monitor",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2 } = req2.body;
+      const { deals: deals2 } = req.body;
       if (!deals2) return res.status(400).json({ error: "Deals data required" });
       const result = await monitorDealRisk(deals2);
       if (result.success) {
         res.json({ success: true, riskAnalysis: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          riskAnalysis: { high_risk: [], medium_risk: [], low_risk: [], total_at_risk_value: 0, summary: "Configure OpenAI API key for risk analysis" },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/conversion-optimization",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2, contacts: contacts2 } = req2.body;
+      const { deals: deals2, contacts: contacts2 } = req.body;
       const result = await optimizeConversion(deals2 || [], contacts2 || []);
       if (result.success) {
         res.json({ success: true, optimization: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          optimization: { conversion_rate: 0, stage_conversion: {}, drop_off_points: [], optimization_opportunities: ["Configure OpenAI API key"], a_b_test_suggestions: [], projected_improvement: 0 },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/win-rate-intelligence",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2 } = req2.body;
+      const { deals: deals2 } = req.body;
       if (!deals2) return res.status(400).json({ error: "Deals data required" });
       const result = await analyzeWinRate(deals2);
       if (result.success) {
         res.json({ success: true, winRate: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          winRate: { overall_win_rate: 0, win_rate_by_stage: {}, win_rate_by_deal_size: {}, key_win_factors: ["Configure OpenAI API key"], key_loss_factors: [], recommendations: [], benchmark_comparison: "N/A" },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/sales-forecast",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2, period } = req2.body;
+      const { deals: deals2, period } = req.body;
       if (!deals2) return res.status(400).json({ error: "Deals data required" });
       const result = await generateSalesForecast(deals2, period || "quarter");
       if (result.success) {
         res.json({ success: true, forecast: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          forecast: { weighted_forecast: 0, best_case: 0, worst_case: 0, confidence_level: 0, period: period || "quarter", monthly_breakdown: [], key_drivers: ["Configure OpenAI API key"], risk_factors: [], recommendations: [] },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/live-deal-analysis",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2 } = req2.body;
+      const { deals: deals2 } = req.body;
       if (!deals2) return res.status(400).json({ error: "Deals data required" });
       const result = await analyzeLiveDeals(deals2);
       if (result.success) {
         res.json({ success: true, liveAnalysis: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          liveAnalysis: { hot_deals: [], warm_deals: [], cold_deals: [], immediate_actions: ["Configure OpenAI API key"], engagement_insights: {}, temperature_analysis: {}, activity_feed: [] },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/pipeline-health",
     ...requireSalesIntelligence,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2 } = req2.body;
+      const { deals: deals2 } = req.body;
       if (!deals2) return res.status(400).json({ error: "Deals data required" });
       const result = await analyzePipelineHealth(deals2);
       if (result.success) {
         res.json({ success: true, health: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          health: { overall_health_score: 50, healthy_deals: 0, at_risk_deals: 0, critical_deals: 0, bottlenecks: ["Configure OpenAI API key"], recommendations: ["Add OpenAI API key"], velocity_trend: "stable", forecast_accuracy: 0 },
-          source: "fallback"
-        });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -16198,19 +16150,19 @@ function registerAICommunicationRoutes(app2) {
   app2.post(
     "/api/ai/email/compose",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { recipientName, recipientCompany, purpose, tone, keyPoints, callToAction } = req2.body;
+      const { recipientName, recipientCompany, purpose, tone, keyPoints, callToAction } = req.body;
       if (!purpose) {
-        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Purpose required" });
       }
@@ -16222,176 +16174,176 @@ function registerAICommunicationRoutes(app2) {
         keyPoints,
         callToAction
       });
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, email: result.data, source: result.source });
       } else {
-        res.json({ success: false, email: { subject: "", body: "Configure OpenAI API key for email composition." }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/email/reply",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { originalEmail, context, tone } = req2.body;
+      const { originalEmail, context, tone } = req.body;
       if (!originalEmail) {
-        memoryService.recordObservation(userId, "error", "Original email required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Original email required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Original email required" });
       }
       const result = await generateEmailReply(originalEmail, context || "", tone);
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, reply: result.data, source: result.source });
       } else {
-        res.json({ success: false, reply: { subject: "Re:", body: "Configure OpenAI API key for email replies." }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/follow-up/generate",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { contactData, lastInteraction, purpose } = req2.body;
+      const { contactData, lastInteraction, purpose } = req.body;
       if (!purpose) {
-        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Purpose required" });
       }
       const result = await generateFollowUp(contactData || {}, lastInteraction || "No recent interaction", purpose);
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, followUp: result.data, source: result.source });
       } else {
-        res.json({ success: false, followUp: { subject: "", message: "Configure OpenAI API key.", timing: "1 day", channel: "email", urgency: "medium", personalization_tips: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/objection/handle",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { objection, productInfo, contactData } = req2.body;
+      const { objection, productInfo, contactData } = req.body;
       if (!objection) {
-        memoryService.recordObservation(userId, "error", "Objection text required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Objection text required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Objection text required" });
       }
       const result = await handleObjection(objection, productInfo || "our product", contactData);
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, response: result.data, source: result.source });
       } else {
-        res.json({ success: false, response: { understanding_statement: "", reframing_strategy: "", response_options: ["Configure OpenAI API key"], evidence_to_use: "", next_step: "", confidence_score: 0 }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/proposal/generate",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { clientName, projectDescription, budget, timeline, deliverables } = req2.body;
+      const { clientName, projectDescription, budget, timeline, deliverables } = req.body;
       if (!clientName || !projectDescription) {
-        memoryService.recordObservation(userId, "error", "Client name and project description required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Client name and project description required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Client name and project description required" });
       }
       const result = await generateProposal({ clientName, projectDescription, budget, timeline, deliverables });
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, proposal: result.data, source: result.source });
       } else {
-        res.json({ success: false, proposal: { title: "", executive_summary: "Configure OpenAI API key.", scope_of_work: "", timeline: "", pricing_structure: "", terms: "", next_steps: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/appointment/message",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { appointmentData, messageType } = req2.body;
+      const { appointmentData, messageType } = req.body;
       if (!appointmentData) {
-        memoryService.recordObservation(userId, "error", "Appointment data required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Appointment data required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Appointment data required" });
       }
       const result = await generateAppointmentMessage(appointmentData, messageType || "confirmation");
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, message: result.data, source: result.source });
       } else {
-        res.json({ success: false, message: { subject: "", body: "Configure OpenAI API key.", calendar_note: "", reminder_text: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/video/script",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { recipientName, productName, keyMessage, duration } = req2.body;
+      const { recipientName, productName, keyMessage, duration } = req.body;
       if (!productName || !keyMessage) {
-        memoryService.recordObservation(userId, "error", "Product name and key message required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Product name and key message required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Product name and key message required" });
       }
@@ -16401,60 +16353,60 @@ function registerAICommunicationRoutes(app2) {
         keyMessage,
         duration: duration || "60 seconds"
       });
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, script: result.data, source: result.source });
       } else {
-        res.json({ success: false, script: { hook: "", intro: "", main_content: "Configure OpenAI API key.", call_to_action: "", closing: "", estimated_duration: "", tips: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/sms/generate",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { purpose, contactName, context } = req2.body;
+      const { purpose, contactName, context } = req.body;
       if (!purpose) {
-        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Purpose required" });
       }
       const result = await generateSMSMessage(purpose, contactName || "", context || "");
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, sms: result.data, source: result.source });
       } else {
-        res.json({ success: false, sms: { message: "Configure OpenAI API key.", character_count: 0, follow_up_suggestion: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/voice/script",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { purpose, contactName, keyPoints, duration } = req2.body;
+      const { purpose, contactName, keyPoints, duration } = req.body;
       if (!purpose) {
-        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Purpose required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Purpose required" });
       }
@@ -16464,12 +16416,12 @@ function registerAICommunicationRoutes(app2) {
         keyPoints: keyPoints || [],
         duration: duration || "30 seconds"
       });
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
       });
       if (result.success) {
         res.json({ success: true, voiceScript: result.data, source: result.source });
       } else {
-        res.json({ success: false, voiceScript: { script: "Configure OpenAI API key.", talking_points: [], estimated_duration: "", tone_guidance: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -16482,15 +16434,15 @@ function registerAIContentRoutes(app2) {
   app2.post(
     "/api/ai/content/generate",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { type, topic, audience, tone, keywords } = req2.body;
+      const { type, topic, audience, tone, keywords } = req.body;
       if (!type || !topic) return res.status(400).json({ error: "Type and topic required" });
       const result = await generateContent({
         type,
@@ -16500,242 +16452,228 @@ function registerAIContentRoutes(app2) {
         keywords
       });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, content: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, content: { title: "", content: "Configure OpenAI API key.", meta_description: "", keywords: [], call_to_action: "", content_type: type }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/sales-page",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { productName, targetAudience, keyBenefits, price } = req2.body;
+      const { productName, targetAudience, keyBenefits, price } = req.body;
       if (!productName) return res.status(400).json({ error: "Product name required" });
       const result = await generateSalesPage({ productName, targetAudience, keyBenefits, price });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, salesPage: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, salesPage: { headline: "", subheadline: "", hero_section: "Configure OpenAI API key.", benefits: [], social_proof: "", cta: "", faq: [], guarantee: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/proposal",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { clientName, projectDescription, budget, timeline, deliverables } = req2.body;
+      const { clientName, projectDescription, budget, timeline, deliverables } = req.body;
       if (!clientName || !projectDescription) {
         return res.status(400).json({ error: "Client name and project description required" });
       }
       const result = await generateProposal({ clientName, projectDescription, budget, timeline, deliverables });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, proposal: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, proposal: { title: "", executive_summary: "Configure OpenAI API key.", scope_of_work: "", timeline: "", pricing_structure: "", terms: "", next_steps: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/offer",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { productName, targetAudience, pricePoint, uniqueValue } = req2.body;
+      const { productName, targetAudience, pricePoint, uniqueValue } = req.body;
       if (!productName) return res.status(400).json({ error: "Product name required" });
       const result = await generateOffer({ productName, targetAudience, pricePoint, uniqueValue });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, offer: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, offer: { offer_headline: "", offer_summary: "Configure OpenAI API key.", value_stack: [], bonus_items: [], urgency_element: "", guarantee: "", cta: "", price_anchor: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/social-post",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { platform, topic, tone, includeHashtags } = req2.body;
+      const { platform, topic, tone, includeHashtags } = req.body;
       if (!platform || !topic) return res.status(400).json({ error: "Platform and topic required" });
       const result = await generateSocialPost({ platform, topic, tone: tone || "professional", includeHashtags: includeHashtags !== false });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, post: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, post: { post_text: "Configure OpenAI API key.", hashtags: [], engagement_tip: "", best_posting_time: "", character_count: 0 }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/webinar-invite",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { topic, speakerName, date, duration, keyTakeaways } = req2.body;
+      const { topic, speakerName, date, duration, keyTakeaways } = req.body;
       if (!topic) return res.status(400).json({ error: "Topic required" });
       const result = await generateWebinarInvite({ topic, speakerName: speakerName || "Expert Speaker", date: date || "TBD", duration: duration || "60 minutes", keyTakeaways: keyTakeaways || [] });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, invite: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, invite: { subject_line: "", headline: "", description: "Configure OpenAI API key.", key_benefits: [], speaker_bio: "", registration_cta: "", reminder_text: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/case-study",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { clientName, challenge, solution, results } = req2.body;
+      const { clientName, challenge, solution, results } = req.body;
       if (!clientName || !challenge) return res.status(400).json({ error: "Client name and challenge required" });
       const result = await generateCaseStudy({ clientName, challenge, solution: solution || "", results: results || [] });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, caseStudy: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, caseStudy: { title: "", executive_summary: "Configure OpenAI API key.", challenge_section: "", solution_section: "", results_section: "", testimonial: "", key_metrics: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/testimonial",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { rawTestimonial, format } = req2.body;
+      const { rawTestimonial, format } = req.body;
       if (!rawTestimonial) return res.status(400).json({ error: "Testimonial text required" });
       const result = await transformTestimonial(rawTestimonial, format || "polished");
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, testimonial: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, testimonial: { polished_testimonial: rawTestimonial, short_quote: "", social_media_version: "", headline_suggestion: "", key_themes: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/business/analyze",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { businessData } = req2.body;
+      const { businessData } = req.body;
       if (!businessData) return res.status(400).json({ error: "Business data required" });
       const result = await analyzeBusiness(businessData);
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, analysis: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Failed: " + (result?.error || "endpoint error"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, analysis: { swot_analysis: { strengths: [], weaknesses: [], opportunities: [], threats: [] }, market_position: "Configure OpenAI API key.", growth_opportunities: [], risk_factors: [], strategic_recommendations: [], kpi_suggestions: [], competitive_advantages: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/content/save",
     ...requireContent,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
-      const { title, content, type, tags } = req2.body;
+      const { title, content } = req.body;
       if (!title || !content) return res.status(400).json({ error: "Title and content required" });
-      const result = {
-        success: true,
-        saved: {
-          id: `content-${Date.now()}`,
-          title,
-          content,
-          type: type || "general",
-          tags: tags || [],
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        }
-      };
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.saved), { endpoint: req2.path }).catch(() => {
-      });
-      res.json(result);
+      res.status(501).json({ success: false, error: "Saving generated content is not available yet" });
     }
   );
   console.log("\u2705 Content & Marketing Tools routes registered");
@@ -16747,205 +16685,204 @@ function registerAIProductivityRoutes(app2) {
   app2.post(
     "/api/ai/meeting/summarize",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { transcript } = req2.body;
+      const { transcript } = req.body;
       if (!transcript) {
-        memoryService.recordObservation(userId, "error", "Meeting transcript required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Meeting transcript required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Meeting transcript required" });
       }
       try {
         const result = await summarizeMeeting(transcript);
         if (result.success) {
-          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
           });
           res.json({ success: true, summary: result.data, source: result.source });
         } else {
-          res.json({ success: false, summary: { summary: "Configure OpenAI API key.", key_decisions: [], action_items: [], follow_up_tasks: [], notable_quotes: [], next_meeting_suggestion: "" }, source: "fallback" });
+          sendAIError(res, result.error);
         }
       } catch (err) {
-        memoryService.recordObservation(userId, "error", err.message, { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", err.message, { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, summary: { summary: "Configure OpenAI API key.", key_decisions: [], action_items: [], follow_up_tasks: [], notable_quotes: [], next_meeting_suggestion: "" }, source: "fallback" });
+        sendAIError(res, err);
       }
     }
   );
   app2.post(
     "/api/ai/speech/to-text",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { audioContext } = req2.body;
+      const { audioContext } = req.body;
       if (!audioContext) {
-        memoryService.recordObservation(userId, "error", "Audio context/transcript required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Audio context/transcript required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Audio context/transcript required" });
       }
       try {
         const result = await speechToTextNote(audioContext);
         if (result.success) {
-          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
           });
           res.json({ success: true, notes: result.data, source: result.source });
         } else {
-          res.json({ success: false, notes: { formatted_notes: "Configure OpenAI API key.", key_points: [], action_items: [], summary: "" }, source: "fallback" });
+          sendAIError(res, result.error);
         }
       } catch (err) {
-        memoryService.recordObservation(userId, "error", err.message, { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", err.message, { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, notes: { formatted_notes: "Configure OpenAI API key.", key_points: [], action_items: [], summary: "" }, source: "fallback" });
+        sendAIError(res, err);
       }
     }
   );
   app2.post(
     "/api/ai/task/create",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { description, context } = req2.body;
+      const { description, context } = req.body;
       if (!description) {
-        memoryService.recordObservation(userId, "error", "Task description required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Task description required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Task description required" });
       }
       try {
         const result = await createTaskFromDescription(description, context);
         if (result.success) {
-          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
           });
           res.json({ success: true, task: result.data, source: result.source });
         } else {
-          res.json({ success: false, task: { title: description, description, priority: "medium", estimated_duration: "30 min", subtasks: [], due_date_suggestion: "", category: "general" }, source: "fallback" });
+          sendAIError(res, result.error);
         }
       } catch (err) {
-        memoryService.recordObservation(userId, "error", err.message, { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", err.message, { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, task: { title: description, description, priority: "medium", estimated_duration: "30 min", subtasks: [], due_date_suggestion: "", category: "general" }, source: "fallback" });
+        sendAIError(res, err);
       }
     }
   );
   app2.post(
     "/api/ai/meeting/notes",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { meetingData } = req2.body;
+      const { meetingData } = req.body;
       if (!meetingData) {
-        memoryService.recordObservation(userId, "error", "Meeting data required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Meeting data required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Meeting data required" });
       }
       try {
         const result = await generateMeetingNotes(meetingData);
         if (result.success) {
-          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
           });
           res.json({ success: true, notes: result.data, source: result.source });
         } else {
-          res.json({ success: false, notes: { agenda_summary: "Configure OpenAI API key.", discussion_points: [], decisions_made: [], action_items: [], parking_lot: [], next_steps: "" }, source: "fallback" });
+          sendAIError(res, result.error);
         }
       } catch (err) {
-        memoryService.recordObservation(userId, "error", err.message, { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", err.message, { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, notes: { agenda_summary: "Configure OpenAI API key.", discussion_points: [], decisions_made: [], action_items: [], parking_lot: [], next_steps: "" }, source: "fallback" });
+        sendAIError(res, err);
       }
     }
   );
   app2.post(
     "/api/ai/task/follow-up-suggestions",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { completedTask, context } = req2.body;
+      const { completedTask, context } = req.body;
       if (!completedTask) {
-        memoryService.recordObservation(userId, "error", "Completed task description required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Completed task description required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Completed task description required" });
       }
       try {
         const result = await suggestFollowUpTasks(completedTask, context);
         if (result.success) {
-          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
           });
           res.json({ success: true, suggestions: result.data, source: result.source });
         } else {
-          res.json({ success: false, suggestions: { suggested_tasks: [], reasoning: "Configure OpenAI API key.", automation_suggestions: [] }, source: "fallback" });
+          sendAIError(res, result.error);
         }
       } catch (err) {
-        memoryService.recordObservation(userId, "error", err.message, { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", err.message, { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, suggestions: { suggested_tasks: [], reasoning: "Configure OpenAI API key.", automation_suggestions: [] }, source: "fallback" });
+        sendAIError(res, err);
       }
     }
   );
   app2.post(
     "/api/ai/calendar/suggest",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { appointments: appointments3, preferences } = req2.body;
-      const suggestions = {
-        optimal_times: ["Tuesday 10:00 AM", "Wednesday 2:00 PM", "Thursday 11:00 AM"],
-        scheduling_tips: [
-          "Schedule important meetings on Tuesday-Thursday for higher attendance",
-          "Leave 15-minute buffers between meetings",
-          "Block focus time in the morning"
-        ],
-        conflict_warnings: [],
-        productivity_score: 78
-      };
-      memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify({ success: true, suggestions, source: "openai" }), { endpoint: req2.path }).catch(() => {
-      });
-      res.json({ success: true, suggestions, source: "openai" });
+      const { appointments: appointments3, preferences } = req.body;
+      try {
+        const result = await suggestCalendarTimes(appointments3, preferences);
+        if (result.success) {
+          memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
+          });
+          res.json({ success: true, suggestions: result.data, source: result.source });
+        } else {
+          sendAIError(res, result.error);
+        }
+      } catch (err) {
+        sendAIError(res, err);
+      }
     }
   );
   console.log("\u2705 Meeting & Productivity Tools routes registered");
@@ -16957,186 +16894,186 @@ function registerAIAdvancedRoutes(app2) {
   app2.post(
     "/api/ai/vision/analyze",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { imageUrl, prompt } = req2.body;
+      const { imageUrl, prompt } = req.body;
       if (!imageUrl) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Image URL required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Image URL required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Image URL required" });
       }
       const result = await analyzeImage(imageUrl, prompt);
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, analysis: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": " + (result.error?.message || "unknown"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": " + (result.error?.message || "unknown"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, analysis: { analysis: "Configure OpenAI API key for vision analysis. Ensure the image URL is publicly accessible." }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/search/semantic",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { query, items } = req2.body;
+      const { query, items } = req.body;
       if (!query) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Search query required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Search query required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Search query required" });
       }
       const result = await semanticSearch(query, items || []);
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, results: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": " + (result.error?.message || "unknown"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": " + (result.error?.message || "unknown"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, results: { results: [], query_understanding: query, suggested_refinements: ["Configure OpenAI API key"] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/function/assistant",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { request, context } = req2.body;
+      const { request, context } = req.body;
       if (!request) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Request required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Request required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Request required" });
       }
       const result = await generateReasoning(request, context || {});
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, response: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": " + (result.error?.message || "unknown"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": " + (result.error?.message || "unknown"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, response: { reasoning_steps: ["Configure OpenAI API key for function assistant."], conclusion: "API key required.", confidence: 0, assumptions: [], alternative_approaches: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/reasoning/generate",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { task, data } = req2.body;
+      const { task, data } = req.body;
       if (!task) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Task description required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Task description required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Task description required" });
       }
       const result = await generateReasoning(task, data || {});
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, reasoning: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": " + (result.error?.message || "unknown"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": " + (result.error?.message || "unknown"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, reasoning: { reasoning_steps: ["Configure OpenAI API key."], conclusion: "API key required.", confidence: 0, assumptions: [], alternative_approaches: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/research/topic",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { topic, depth } = req2.body;
+      const { topic, depth } = req.body;
       if (!topic) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Topic required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Topic required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Topic required" });
       }
       const result = await researchTopic(topic, depth || "comprehensive");
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, research: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": " + (result.error?.message || "unknown"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": " + (result.error?.message || "unknown"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, research: { summary: "Configure OpenAI API key.", key_findings: [], sources_suggested: [], related_topics: [], market_implications: [], action_items: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/recommendations",
     ...requireAI,
-    async (req2, res) => {
-      const userId = req2.userId;
-      const sessionId = req2.body.sessionId || `session-${Date.now()}`;
-      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req2.body), { endpoint: req2.path }).catch(() => {
+    async (req, res) => {
+      const userId = req.userId;
+      const sessionId = req.body.sessionId || `session-${Date.now()}`;
+      memoryService.recordObservation(userId, "user_prompt", JSON.stringify(req.body), { endpoint: req.path }).catch(() => {
       });
       if (!checkAIRateLimit2(userId)) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Rate limit exceeded", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Rate limit exceeded", { endpoint: req.path }).catch(() => {
         });
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { type, data, preferences } = req2.body;
+      const { type, data, preferences } = req.body;
       if (!type) {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": Recommendation type required", { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": Recommendation type required", { endpoint: req.path }).catch(() => {
         });
         return res.status(400).json({ error: "Recommendation type required" });
       }
       const result = await generateRecommendations({ type, data: data || {}, preferences });
       if (result.success) {
-        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req2.body), JSON.stringify(result.data), { endpoint: req2.path }).catch(() => {
+        memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {
         });
         res.json({ success: true, recommendations: result.data, source: result.source });
       } else {
-        memoryService.recordObservation(userId, "error", "Error in " + req2.path + ": " + (result.error?.message || "unknown"), { endpoint: req2.path }).catch(() => {
+        memoryService.recordObservation(userId, "error", "Error in " + req.path + ": " + (result.error?.message || "unknown"), { endpoint: req.path }).catch(() => {
         });
-        res.json({ success: false, recommendations: { recommendations: [], insights: ["Configure OpenAI API key"], confidence: 0 }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -17149,168 +17086,145 @@ function registerAIAutomationRoutes(app2) {
   app2.post(
     "/api/ai/automation/workflow",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { workflowData } = req2.body;
+      const { workflowData } = req.body;
       if (!workflowData) return res.status(400).json({ error: "Workflow data required" });
       const result = await generateWorkflow(workflowData);
       if (result.success) {
         res.json({ success: true, workflow: result.data, source: result.source });
       } else {
-        res.json({ success: false, workflow: { workflow_name: "Default Workflow", trigger: "new_lead", steps: [{ action: "send_welcome_email", condition: "always", delay: "0" }], expected_outcome: "Configure OpenAI API key.", optimization_tips: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/follow-up",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { contactData, lastInteraction, purpose } = req2.body;
+      const { contactData, lastInteraction, purpose } = req.body;
       if (!contactData) return res.status(400).json({ error: "Contact data required" });
       const result = await generateFollowUp(contactData, lastInteraction || "", purpose || "follow-up");
       if (result.success) {
         res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { subject: "", message: "Configure OpenAI API key.", timing: "1 day", channel: "email", urgency: "medium", personalization_tips: [] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/appointment",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { appointmentData, messageType } = req2.body;
+      const { appointmentData, messageType } = req.body;
       if (!appointmentData) return res.status(400).json({ error: "Appointment data required" });
       const result = await generateAppointmentMessage(appointmentData, messageType || "confirmation");
       if (result.success) {
         res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { subject: "", body: "Configure OpenAI API key.", calendar_note: "", reminder_text: "" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/pipeline-stage",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { deals: deals2, targetStage } = req2.body;
-      if (!deals2) return res.status(400).json({ error: "Deals data required" });
-      const result = await analyzePipelineHealth(deals2);
+      const { deals: deals2, targetStage } = req.body;
+      if (!Array.isArray(deals2) || deals2.length === 0) {
+        return res.status(400).json({ error: "deals must be a non-empty array" });
+      }
+      const result = await recommendPipelineStages(deals2, targetStage);
       if (result.success) {
-        res.json({
-          success: true,
-          automation: {
-            ...result.data,
-            stage_recommendations: deals2.map((d) => ({
-              dealId: d.id,
-              currentStage: d.stage,
-              recommendedStage: d.probability > 70 ? "negotiation" : d.probability > 40 ? "qualification" : "prospecting",
-              auto_actions: ["Send follow-up email", "Update CRM", "Notify sales rep"]
-            }))
-          },
-          source: result.source
-        });
+        res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { stage_recommendations: [], overall_health_score: 0 }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/form-submission",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { formData, formType } = req2.body;
+      const { formData, formType } = req.body;
       if (!formData) return res.status(400).json({ error: "Form data required" });
-      const result = await generateRecommendations({
-        type: "form_submission",
-        data: { formData, formType: formType || "contact" },
-        preferences: {}
-      });
+      const result = await processFormSubmission(formData, formType || "contact");
       if (result.success) {
-        res.json({
-          success: true,
-          automation: {
-            lead_score: result.data.recommendations?.[0]?.score || 50,
-            auto_response: "Thank you for your submission! We will be in touch shortly.",
-            follow_up_sequence: ["Send welcome email", "Assign to sales rep", "Schedule follow-up call"],
-            segmentation: result.data
-          },
-          source: result.source
-        });
+        res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { lead_score: 50, auto_response: "Configure OpenAI API key.", follow_up_sequence: [], segmentation: {} }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/segment",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { contacts: contacts2, criteria } = req2.body;
+      const { contacts: contacts2, criteria } = req.body;
       if (!contacts2) return res.status(400).json({ error: "Contacts data required" });
       const result = await segmentContacts(contacts2, criteria || "engagement");
       if (result.success) {
         res.json({ success: true, segments: result.data, source: result.source });
       } else {
-        res.json({ success: false, segments: { segments: [], unsegmented_count: contacts2.length, recommendations: ["Configure OpenAI API key"] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/auto-save",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { data, type } = req2.body;
+      const { data, type } = req.body;
       if (!data || !type) return res.status(400).json({ error: "Data and type required" });
       const result = await autoSaveSuggestions(data, type);
       if (result.success) {
         res.json({ success: true, saved: result.data, source: result.source });
       } else {
-        res.json({ success: false, saved: { suggestions: [], auto_save_recommendations: ["Configure OpenAI API key"] }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
   app2.post(
     "/api/ai/automation/rules",
     ...requireAutomation,
-    async (req2, res) => {
-      const userId = req2.userId;
+    async (req, res) => {
+      const userId = req.userId;
       if (!checkAIRateLimit2(userId)) {
         return res.status(429).json({ error: "Rate limit exceeded" });
       }
-      const { context } = req2.body;
+      const { context } = req.body;
       const result = await generateAutomationRules(context || {});
       if (result.success) {
         res.json({ success: true, rules: result.data, source: result.source });
       } else {
-        res.json({ success: false, rules: { rules: [], optimization_suggestions: ["Configure OpenAI API key"], estimated_time_saved: "0 hours/week" }, source: "fallback" });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -17396,7 +17310,7 @@ async function processPayout(payoutId) {
 
 // server/routes/partners.ts
 function registerPartnersRoutes(app2) {
-  app2.get("/api/partners", requireAuth(), async (req2, res) => {
+  app2.get("/api/partners", requireAuth(), async (req, res) => {
     try {
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const allPartners = await dbConnection.select().from(partners).orderBy(desc9(partners.createdAt));
@@ -17406,9 +17320,9 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch partners" });
     }
   });
-  app2.get("/api/partners/:id", requireAuth(), async (req2, res) => {
+  app2.get("/api/partners/:id", requireAuth(), async (req, res) => {
     try {
-      const { id } = req2.params;
+      const { id } = req.params;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
       if (!partner) {
@@ -17420,9 +17334,9 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch partner" });
     }
   });
-  app2.post("/api/partners", requireAdmin, async (req2, res) => {
+  app2.post("/api/partners", requireAdmin, async (req, res) => {
     try {
-      const { name, email, company, phone, tierId, status, metadata } = req2.body;
+      const { name, email, company, phone, tierId, status, metadata } = req.body;
       if (!name || !email) {
         return res.status(400).json({ error: "Name and email are required" });
       }
@@ -17445,10 +17359,10 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to create partner" });
     }
   });
-  app2.put("/api/partners/:id", requireAuth(), async (req2, res) => {
+  app2.put("/api/partners/:id", requireAuth(), async (req, res) => {
     try {
-      const { id } = req2.params;
-      const { name, email, company, phone, tierId, status, metadata } = req2.body;
+      const { id } = req.params;
+      const { name, email, company, phone, tierId, status, metadata } = req.body;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [existing] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
       if (!existing) {
@@ -17473,9 +17387,9 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to update partner" });
     }
   });
-  app2.get("/api/partners/:id/stats", requireAuth(), async (req2, res) => {
+  app2.get("/api/partners/:id/stats", requireAuth(), async (req, res) => {
     try {
-      const { id } = req2.params;
+      const { id } = req.params;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const [partner] = await dbConnection.select().from(partners).where(eq11(partners.id, id)).limit(1);
       if (!partner) {
@@ -17502,10 +17416,10 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch partner stats" });
     }
   });
-  app2.get("/api/partners/:id/commissions", requireAuth(), async (req2, res) => {
+  app2.get("/api/partners/:id/commissions", requireAuth(), async (req, res) => {
     try {
-      const { id } = req2.params;
-      const status = req2.query.status;
+      const { id } = req.params;
+      const status = req.query.status;
       const partnerCommissions = await getPartnerCommissions(id, status);
       res.json(partnerCommissions);
     } catch (error) {
@@ -17513,9 +17427,9 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch partner commissions" });
     }
   });
-  app2.post("/api/commissions/calculate", requireAuth(), async (req2, res) => {
+  app2.post("/api/commissions/calculate", requireAuth(), async (req, res) => {
     try {
-      const { partnerId, customerId, amount, metadata } = req2.body;
+      const { partnerId, customerId, amount, metadata } = req.body;
       if (!partnerId || !customerId || !amount) {
         return res.status(400).json({ error: "partnerId, customerId, and amount are required" });
       }
@@ -17546,10 +17460,10 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to calculate commission" });
     }
   });
-  app2.get("/api/payouts", requireAuth(), async (req2, res) => {
+  app2.get("/api/payouts", requireAuth(), async (req, res) => {
     try {
-      const partnerId = req2.query.partnerId;
-      const status = req2.query.status;
+      const partnerId = req.query.partnerId;
+      const status = req.query.status;
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const conditions = [];
       if (partnerId) {
@@ -17569,9 +17483,9 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to fetch payouts" });
     }
   });
-  app2.post("/api/payouts/process", requireAdmin, async (req2, res) => {
+  app2.post("/api/payouts/process", requireAdmin, async (req, res) => {
     try {
-      const { payoutId } = req2.body;
+      const { payoutId } = req.body;
       if (!payoutId) {
         return res.status(400).json({ error: "payoutId is required" });
       }
@@ -17585,7 +17499,7 @@ function registerPartnersRoutes(app2) {
       res.status(500).json({ error: "Failed to process payout" });
     }
   });
-  app2.get("/api/revenue/analytics", requireAuth(), async (req2, res) => {
+  app2.get("/api/revenue/analytics", requireAuth(), async (req, res) => {
     try {
       const { db: dbConnection } = await Promise.resolve().then(() => (init_db(), db_exports));
       const allPartners = await dbConnection.select().from(partners);
@@ -17864,7 +17778,7 @@ async function performHealthCheck() {
     summary
   };
 }
-async function healthCheckMiddleware(req2, res) {
+async function healthCheckMiddleware(req, res) {
   try {
     const health = await performHealthCheck();
     let statusCode = 200;
@@ -17892,9 +17806,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use((_req, _res, next) => requestContext.run({}, next));
 app.use(securityHeaders);
 app.use(corsConfig);
-app.use((req2, res, next) => {
+app.use((req, res, next) => {
   const start = Date.now();
-  const path2 = req2.path;
+  const path2 = req.path;
   let capturedJsonResponse = void 0;
   const originalResJson = res.json;
   res.json = function(bodyJson, ...args) {
@@ -17904,7 +17818,7 @@ app.use((req2, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path2.startsWith("/api")) {
-      let logLine = `${req2.method} ${path2} ${res.statusCode} in ${duration}ms`;
+      let logLine = `${req.method} ${path2} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse && !path2.includes("/auth") && !path2.includes("/admin") && !path2.includes("/users")) {
         const sanitizedResponse = { ...capturedJsonResponse };
         delete sanitizedResponse.password;
@@ -17925,9 +17839,9 @@ app.use((req2, res, next) => {
 var supabaseUrl10 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
 var supabaseServiceKey2 = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 var supabaseAdmin = supabaseUrl10 && supabaseServiceKey2 ? createClient12(supabaseUrl10, supabaseServiceKey2) : null;
-app.use("/api", async (req2, res, next) => {
-  const userId = req2.session?.userId;
-  const cachedEntitlement = req2.session?.entitlement;
+app.use("/api", async (req, res, next) => {
+  const userId = req.session?.userId;
+  const cachedEntitlement = req.session?.entitlement;
   if (cachedEntitlement) {
     if (cachedEntitlement.package === "no_access") {
       return res.status(403).json({
@@ -17941,8 +17855,8 @@ app.use("/api", async (req2, res, next) => {
   if (!supabaseAdmin) return next();
   try {
     const { data } = await supabaseAdmin.from("user_entitlements").select("package").eq("user_id", userId).single();
-    if (req2.session) {
-      req2.session.entitlement = data || null;
+    if (req.session) {
+      req.session.entitlement = data || null;
     }
     if (data?.package === "no_access") {
       return res.status(403).json({
@@ -17959,8 +17873,8 @@ app.use("/api", async (req2, res, next) => {
   }
   next();
 });
-app.get("/health", (req2, res) => {
-  healthCheckMiddleware(req2, res);
+app.get("/health", (req, res) => {
+  healthCheckMiddleware(req, res);
 });
 var appReady = (async () => {
   await registerRoutes(app);
@@ -17975,8 +17889,8 @@ var appReady = (async () => {
 
 // server/netlify-api.ts
 var serverlessHandler = serverless(app, {
-  request(req2) {
-    req2.url = req2.url.replace(/^\/\.netlify\/functions\/api(?=\/|\?|$)/, "/api");
+  request(req) {
+    req.url = req.url.replace(/^\/\.netlify\/functions\/api(?=\/|\?|$)/, "/api");
   }
 });
 var handler = async (event, context) => {
