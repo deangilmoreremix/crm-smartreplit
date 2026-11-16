@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOpenAIAssistants } from '../../services/openaiAssistantsService';
+import { createConversation, sendConversationMessage } from '../../services/aiGenerate';
 import {
   User,
   Bot,
@@ -57,26 +58,14 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
     scrollToBottom();
   }, [messages]);
 
-  // Poll for updates when there's an active run
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (runId && threadId) {
-      intervalId = setInterval(() => {
-        checkRunStatus();
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [runId, threadId]);
-
+  // Chat runs on OpenAI Responses API conversations (the Assistants API was shut down 2026-08-26).
+  // A built-in assistant (assistantId prop) uses its own instructions; a custom one sends the settings form's
+  // instructions with each turn. History is kept in the conversation on OpenAI.
   const initializeThread = async () => {
     try {
       if (!threadId) {
-        const thread = await assistants.createThread();
-        setThreadId(thread.id);
+        const conversationId = await createConversation(propAssistantId || 'ai-assistant-chat');
+        setThreadId(conversationId);
 
         // Add welcome message
         setMessages((prev) => [
@@ -90,7 +79,7 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
         ]);
       }
     } catch (err) {
-      setError('Error initializing chat thread');
+      setError(err instanceof Error ? err.message : 'Error initializing chat');
       console.error(err);
     }
   };
@@ -101,35 +90,19 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
       return;
     }
 
-    setIsLoading(true);
     setError(null);
-
-    try {
-      const assistant = await assistants.createAssistant(
-        assistantName,
-        assistantInstructions,
-        selectedTools
-      );
-
-      setAssistantId(assistant.id);
-      setShowSettings(false);
-
-      // Add confirmation message
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: 'assistant-created',
-          role: 'assistant',
-          content: `I've been configured as your ${assistantName}. How can I assist you with your sales tasks?`,
-          createdAt: new Date(),
-        },
-      ]);
-    } catch (err) {
-      console.error('Error creating assistant:', err);
-      setError('Error creating assistant');
-    } finally {
-      setIsLoading(false);
-    }
+    // No server object is needed: the instructions are sent with every message of the conversation
+    setAssistantId(`custom:${assistantName}`);
+    setShowSettings(false);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: 'assistant-created',
+        role: 'assistant',
+        content: `I've been configured as your ${assistantName}. How can I assist you with your sales tasks?`,
+        createdAt: new Date(),
+      },
+    ]);
   };
 
   const scrollToBottom = () => {
@@ -139,74 +112,37 @@ const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ assistantId: propAssi
   const handleSendMessage = async () => {
     if (!input.trim() || !threadId || !assistantId) return;
 
-    // Add user message to the local state first for immediate feedback
+    const text = input;
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: text,
       createdAt: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setRunId('pending');
     setError(null);
 
     try {
-      // Send message to the thread
-      await assistants.addMessageToThread(threadId, input);
+      const reply = assistantId.startsWith('custom:')
+        ? (
+            await sendConversationMessage(threadId, text, {
+              system: `${assistantInstructions}${selectedTools.length ? `\nCapabilities requested: ${selectedTools.join(', ')}.` : ''}`,
+            })
+          ).content
+        : (await assistants.chatWithAssistant(text, assistantId, threadId)).response;
 
-      // Run the assistant
-      const run = await assistants.runAssistant(threadId, assistantId);
-      setRunId(run.id);
+      setMessages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-assistant`, role: 'assistant', content: reply, createdAt: new Date() },
+      ]);
     } catch (err) {
-      setError('Error sending message');
+      setError(err instanceof Error ? err.message : 'Error sending message');
       console.error(err);
-      setIsLoading(false);
-    }
-  };
-
-  const checkRunStatus = async () => {
-    if (!threadId || !runId) return;
-
-    try {
-      const run = await assistants.getRunStatus(threadId, runId);
-
-      if (run.status === 'completed') {
-        // Get the latest messages
-        const threadMessages = await assistants.getThreadMessages(threadId);
-
-        if (threadMessages.data.length > 0) {
-          // Convert the latest assistant message to our format
-          const latestAssistantMessage = threadMessages.data.find((m) => m.role === 'assistant');
-
-          if (latestAssistantMessage && latestAssistantMessage.content[0].type === 'text') {
-            const newMessage: Message = {
-              id: latestAssistantMessage.id,
-              role: 'assistant',
-              content: latestAssistantMessage.content[0].text.value,
-              createdAt: new Date(latestAssistantMessage.created_at * 1000),
-            };
-
-            // Check if we already have this message
-            const messageExists = messages.some((m) => m.id === newMessage.id);
-            if (!messageExists) {
-              setMessages((prev) => [...prev, newMessage]);
-            }
-          }
-        }
-
-        setRunId(null);
-        setIsLoading(false);
-      } else if (run.status === 'failed') {
-        setError('The assistant encountered an error');
-        setRunId(null);
-        setIsLoading(false);
-      }
-      // For other statuses (queued, in_progress), keep waiting
-    } catch (err) {
-      setError('Error checking message status');
-      console.error(err);
+    } finally {
       setRunId(null);
       setIsLoading(false);
     }

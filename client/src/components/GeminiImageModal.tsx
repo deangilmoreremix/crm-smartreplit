@@ -16,7 +16,7 @@ import {
   type HistoryEntry,
 } from '../lib/history';
 import { imageStorage } from '../services/imageStorageService';
-import { openaiImageService } from '../services/openaiImageService';
+import { generateImageAI } from '../services/aiGenerate';
 
 const MODEL = 'gpt-image-2.5-flare';
 
@@ -66,26 +66,23 @@ export default function GeminiImageModal({ open, onClose }: Props) {
   const [savedImages, setSavedImages] = useState<string[]>([]);
   const [storageAvailable, setStorageAvailable] = useState(false);
   const dropRef = useRef<HTMLDivElement | null>(null);
-  // Image generation via the server (user's own OpenAI key, gpt-image model).
-  // Returns the same candidates/parts shape the rest of this component reads. Seed images are not sent.
+  // Image generation via the server (OpenAI Responses API image_generation tool, user's own key).
+  // Seed images are sent as input images, so the tool edits / composes from them.
+  // Returns the same candidates/parts shape the rest of this component reads.
   const ai = useMemo(
     () => ({
       models: {
         generateContent: async (options: any) => {
-          const prompt = (options.contents || [])
+          const parts = options.contents || [];
+          const prompt = parts
             .map((part: any) => part?.text)
             .filter(Boolean)
             .join('\n');
-          const result = await openaiImageService.generateImage({ prompt });
-          let dataUrl = result.url;
-          if (!dataUrl.startsWith('data:')) {
-            const blob = await (await fetch(dataUrl)).blob();
-            dataUrl = await new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(String(reader.result));
-              reader.readAsDataURL(blob);
-            });
-          }
+          const seedImages = parts
+            .filter((part: any) => part?.inlineData?.data)
+            .map((part: any) => `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`);
+          const [dataUrl] = await generateImageAI({ prompt, images: seedImages.length ? seedImages : undefined });
+          if (!dataUrl) throw new Error('No image was generated');
           const [, mimeType = 'image/png', data = ''] = dataUrl.match(/^data:([^;]+);base64,(.*)$/) || [];
           return { candidates: [{ content: { parts: [{ inlineData: { data, mimeType } }] } }] };
         },

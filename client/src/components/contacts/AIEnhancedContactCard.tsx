@@ -108,10 +108,16 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
 
     setLocalAnalyzing(true);
     try {
-      const { content } = await generateAI({
-        json: true,
+      const { data: parsed } = await generateAI({
         system: 'You score B2B sales leads. Use only the data provided.',
-        prompt: `Score this contact's sales potential from 0 to 100 and explain briefly. Return JSON {"aiScore": number, "reasoning": string}.
+        schemaName: 'lead_score',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['aiScore', 'reasoning'],
+          properties: { aiScore: { type: 'number' }, reasoning: { type: 'string' } },
+        },
+        prompt: `Score this contact's sales potential from 0 to 100 and explain briefly.
 
 Contact: ${JSON.stringify({
           name: contact.name,
@@ -124,7 +130,7 @@ Contact: ${JSON.stringify({
           notes: contact.notes,
         })}`,
       });
-      const parsed = JSON.parse(content);
+      if (!parsed) throw new Error('AI returned no score');
       const aiScore = Math.max(0, Math.min(100, Math.round(Number(parsed.aiScore))));
       if (!Number.isFinite(aiScore)) throw new Error('AI returned no score');
 

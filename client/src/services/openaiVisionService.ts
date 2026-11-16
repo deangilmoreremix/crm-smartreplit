@@ -1,28 +1,20 @@
-import { analyzeImageAI } from './aiGenerate';
+import { analyzeImageAI, generateAI, fileToDataUrl } from './aiGenerate';
 
-// Image analysis goes through the server (POST /api/ai/vision/analyze) with the user's own OpenAI key.
-// It previously called api.openai.com from the browser with a key nothing ever set.
+// Image and document analysis through the OpenAI Responses API (POST /api/ai/generate with image or file
+// input) on the user's own OpenAI key. It previously called api.openai.com from the browser with a key
+// nothing ever set.
 export const useOpenAIVision = () => {
   const analyzeImage = async (imageUrl: string, prompt: string = "What's in this image?") => {
     const analysis = await analyzeImageAI(imageUrl, prompt);
     return analysis || 'Unable to analyze image';
   };
 
+  /** Analyse an uploaded image, or a document such as a PDF (sent as a file input). */
   const analyzeImageFile = async (file: File, prompt: string = "What's in this image?") => {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result as string;
-          const result = await analyzeImage(base64, prompt);
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const dataUrl = await fileToDataUrl(file);
+    if (file.type.startsWith('image/')) return analyzeImage(dataUrl, prompt);
+    const { content } = await generateAI({ prompt, files: [{ filename: file.name, data: dataUrl }] });
+    return content || 'Unable to analyze document';
   };
 
   // Used by VisionAnalyzerContent (it called these, but they never existed)

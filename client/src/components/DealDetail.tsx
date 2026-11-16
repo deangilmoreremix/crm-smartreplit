@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SourcesList } from './ai/SourcesList';
 import { useDealStore } from '../store/dealStore';
 import { useGemini } from '../services/geminiService';
 import { generateAI } from '../services/aiGenerate';
@@ -932,6 +933,7 @@ ${JSON.stringify({ ...deal, stageName: getStageName(deal.stage) }, null, 2)}`,
                         </ul>
                       </div>
                     )}
+                    <SourcesList sources={socialResearch.sources} />
                   </div>
                 )}
               </div>

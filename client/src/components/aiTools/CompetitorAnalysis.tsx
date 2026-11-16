@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { SourcesList } from '../ai/SourcesList';
+import type { UrlSource } from '../../services/aiGenerate';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useEnhancedGemini } from '../../services/enhancedGeminiService';
 import { aiUsageTracker } from '../../services/aiUsageTracker';
@@ -25,6 +27,7 @@ interface AnalysisResult {
   analysis: string;
   timestamp: string;
   analysisType: string;
+  sources?: UrlSource[];
 }
 
 const analysisTypeOptions = [
@@ -326,6 +329,7 @@ export default function CompetitorAnalysis() {
                     </div>
                   ))}
                 </div>
+                <SourcesList sources={analysisResult.sources} />
               </div>
 
               {/* Quick Insights */}

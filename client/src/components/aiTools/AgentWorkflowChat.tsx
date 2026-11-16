@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useOpenAIAssistants } from '../../services/openaiAssistantsService';
+import { createConversation, sendConversationMessage } from '../../services/aiGenerate';
 import {
   Bot,
   Send,
@@ -56,9 +56,18 @@ interface Message {
   createdAt: Date;
 }
 
-const AgentWorkflowChat: React.FC = () => {
-  const assistants = useOpenAIAssistants();
+const WORKFLOW_AGENT_INSTRUCTIONS = `You are an AI workflow automation agent that helps users create, manage, and execute automated business workflows.
 
+You can help with:
+- Creating multi-step automated workflows for sales, marketing, and customer service
+- Scheduling and triggering workflows based on events or time
+- Monitoring workflow execution and performance
+- Integrating with CRM data, email systems, and communication tools
+- Analyzing workflow results and suggesting optimizations
+
+When users request workflows, provide detailed step-by-step plans and ask clarifying questions to ensure the workflow meets their specific needs.`;
+
+const AgentWorkflowChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -80,26 +89,9 @@ const AgentWorkflowChat: React.FC = () => {
 
   const initializeWorkflowAgent = async () => {
     try {
-      // Create a specialized workflow agent
-      const assistant = await assistants.createAssistant(
-        'Workflow Automation Agent',
-        `You are an AI workflow automation agent that helps users create, manage, and execute automated business workflows. 
-        
-        You can help with:
-        - Creating multi-step automated workflows for sales, marketing, and customer service
-        - Scheduling and triggering workflows based on events or time
-        - Monitoring workflow execution and performance
-        - Integrating with CRM data, email systems, and communication tools
-        - Analyzing workflow results and suggesting optimizations
-        
-        When users request workflows, provide detailed step-by-step plans and ask clarifying questions to ensure the workflow meets their specific needs.`,
-        ['function_calling', 'code_interpreter']
-      );
-
-      setAssistantId(assistant.id);
-
-      const thread = await assistants.createThread();
-      setThreadId(thread.id);
+      // The workflow agent runs on an OpenAI Responses API conversation; its instructions go with each turn
+      setAssistantId('workflow-agent');
+      setThreadId(await createConversation('workflow-agent'));
 
       // Welcome message
       setMessages([
@@ -147,64 +139,24 @@ const AgentWorkflowChat: React.FC = () => {
         }
       }
 
-      // Send to AI assistant
-      await assistants.addMessageToThread(threadId, input);
-      const run = await assistants.runAssistant(threadId, assistantId);
-
-      // Poll for response
-      const response = await pollForResponse(run.id);
-      if (response) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: response.id,
-            role: 'assistant',
-            content: response.content,
-            createdAt: new Date(),
-          },
-        ]);
-      }
+      // Send to the workflow agent (conversation keeps the history)
+      const response = await sendConversationMessage(threadId, userMessage.content, {
+        system: WORKFLOW_AGENT_INSTRUCTIONS,
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: response.responseId || `${Date.now()}-assistant`,
+          role: 'assistant',
+          content: response.content,
+          createdAt: new Date(),
+        },
+      ]);
     } catch (error) {
       console.error('Error processing message:', error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const pollForResponse = async (runId: string): Promise<any> => {
-    let attempts = 0;
-    const maxAttempts = 30;
-
-    while (attempts < maxAttempts) {
-      try {
-        const run = await assistants.getRunStatus(threadId!, runId);
-
-        if (run.status === 'completed') {
-          const messages = await assistants.getThreadMessages(threadId!);
-          const latestMessage = messages.data.find((m) => m.role === 'assistant');
-
-          if (latestMessage && latestMessage.content[0].type === 'text') {
-            return {
-              id: latestMessage.id,
-              content: latestMessage.content[0].text.value,
-            };
-          }
-        } else if (run.status === 'failed') {
-          throw new Error('Assistant run failed');
-        }
-
-        // Wait for assistant run completion with polling interval
-        await new Promise((resolve) => {
-          setTimeout(() => resolve(undefined), 1000);
-        });
-        attempts++;
-      } catch (error) {
-        console.error('Error polling for response:', error);
-        break;
-      }
-    }
-
-    return null;
   };
 
   const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow | null> => {

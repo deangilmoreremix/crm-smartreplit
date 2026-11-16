@@ -1,9 +1,38 @@
 // Gemini AI service for contact research and enhancement
-import { ContactEnrichmentData } from './aiEnrichmentService';
+import { ContactEnrichmentData, aiEnrichmentService } from './aiEnrichmentService';
 import { logger } from './logger.service';
 import { aiOrchestratorService } from './aiOrchestratorService';
 import { enhancedGeminiService } from './enhancedGeminiService';
-import { generateAI } from './aiGenerate';
+import { generateAI, researchAI } from './aiGenerate';
+
+const STR = { type: 'string' };
+const LINKEDIN_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['firstName', 'lastName', 'name', 'title', 'company', 'industry', 'location', 'socialProfiles', 'bio', 'confidence'],
+  properties: {
+    firstName: STR,
+    lastName: STR,
+    name: STR,
+    title: STR,
+    company: STR,
+    industry: STR,
+    location: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['city', 'state', 'country'],
+      properties: { city: STR, state: STR, country: STR },
+    },
+    socialProfiles: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['twitter', 'website'],
+      properties: { twitter: STR, website: STR },
+    },
+    bio: STR,
+    confidence: { type: 'number' },
+  },
+};
 
 class GeminiAIService {
 
@@ -18,156 +47,53 @@ class GeminiAIService {
     }
   }
 
+  /** Live web research (OpenAI web search) for a contact by name; cited pages are in `sources`. */
   async researchContactByName(
     firstName: string,
     lastName: string,
     company?: string
   ): Promise<ContactEnrichmentData> {
-    logger.info(
-      `Researching contact with Gemini: ${firstName} ${lastName} ${company ? `at ${company}` : ''}`
-    );
-
-    const isConfigured = await this.isApiKeyConfigured();
-    if (!isConfigured) {
-      throw new Error('AI service is not available. Please check server configuration.');
-    }
-
+    logger.info(`Researching contact: ${firstName} ${lastName} ${company ? `at ${company}` : ''}`);
     try {
-      const { content } = await generateAI({
-        json: true,
-        maxTokens: 1024,
-        prompt: `Research information about a professional named ${firstName} ${lastName}${company ? ` who works at ${company}` : ''}.
-
-          Return a JSON object with the following structure:
-          {
-            "firstName": "${firstName}",
-            "lastName": "${lastName}",
-            "name": "${firstName} ${lastName}",
-            "email": "likely email",
-            "phone": "likely phone if available",
-            "title": "likely job title",
-            "company": "${company || 'company name if known'}",
-            "industry": "likely industry",
-            "location": {
-              "city": "likely city",
-              "state": "likely state",
-              "country": "likely country"
-            },
-            "socialProfiles": {
-              "linkedin": "likely LinkedIn URL",
-              "twitter": "likely Twitter URL if available",
-              "website": "likely company website"
-            },
-            "bio": "brief professional bio",
-            "confidence": "number between 40 and 85 indicating confidence level"
-          }`,
-      });
-
-      if (!content) {
-        throw new Error('Invalid response from AI');
-      }
-
-      try {
-        // Extract JSON from the response text
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON found in response');
-        }
-
-        const parsedData = JSON.parse(jsonMatch[0]);
-        logger.info(`Successfully researched contact: ${firstName} ${lastName}`);
-
-        return {
-          ...parsedData,
-          confidence: parsedData.confidence || 60,
-        };
-      } catch (parseError) {
-        logger.error('Failed to parse Gemini response', parseError as Error);
-        throw new Error('Failed to parse research response');
-      }
+      return await aiEnrichmentService.enrichContactByName(firstName, lastName, company);
     } catch (error) {
-      logger.error('Gemini research failed', error as Error);
-
-      // Return minimal data to prevent UI breakage
+      logger.error('Contact research failed', error as Error);
+      // Only the data we were given — nothing invented
       return {
         firstName,
         lastName,
         name: `${firstName} ${lastName}`,
         company: company || '',
-        confidence: 30,
-        notes: 'API research failed, showing basic information',
+        notes: `Research failed: ${error instanceof Error ? error.message : 'unknown error'}`,
       };
     }
   }
 
+  /** Live web research (OpenAI web search) for the person behind a LinkedIn URL. */
   async researchContactByLinkedIn(linkedinUrl: string): Promise<ContactEnrichmentData> {
     logger.info(`Researching LinkedIn profile: ${linkedinUrl}`);
-
-    const isConfigured = await this.isApiKeyConfigured();
-    if (!isConfigured) {
-      throw new Error('AI service is not available');
-    }
-
     try {
-      const { content } = await generateAI({
-        json: true,
-        maxTokens: 1024,
-        prompt: `Research a professional from this LinkedIn URL: ${linkedinUrl}.
-              
-              Return a JSON object with the following structure:
-              {
-                "firstName": "first name",
-                "lastName": "last name",
-                "name": "full name",
-                "email": "likely email based on name and company",
-                "title": "job title",
-                "company": "company name",
-                "industry": "industry",
-                "location": {
-                  "city": "city",
-                  "state": "state",
-                  "country": "country"
-                },
-                "socialProfiles": {
-                  "linkedin": "${linkedinUrl}",
-                  "twitter": "likely Twitter URL if available",
-                  "website": "likely company website"
-                },
-                "bio": "professional summary",
-                "confidence": "number between 50 and 90 indicating confidence level"
-              }`,
+      const { data, sources } = await researchAI({
+        schemaName: 'linkedin_research',
+        schema: LINKEDIN_SCHEMA,
+        system:
+          'You are a B2B contact research assistant with web search. Report only facts you found for the person at this LinkedIn URL; use empty strings for anything not found. Never guess emails or phone numbers.',
+        prompt: `Research the professional at this LinkedIn profile: ${linkedinUrl}`,
       });
-
-      // Extract JSON from the response text
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found in response');
-      const parsedData = JSON.parse(jsonMatch[0]);
-
+      if (!data) throw new Error('The research returned no usable result');
+      const nonEmpty = (o: Record<string, any>) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v != null));
       return {
-        ...parsedData,
-        socialProfiles: {
-          ...parsedData.socialProfiles,
-          linkedin: linkedinUrl,
-        },
-        confidence: parsedData.confidence || 75,
+        ...nonEmpty(data),
+        location: nonEmpty(data.location || {}),
+        socialProfiles: { ...nonEmpty(data.socialProfiles || {}), linkedin: linkedinUrl },
+        confidence: Number(data.confidence) || undefined,
+        sources,
       };
     } catch (error) {
       logger.error('LinkedIn profile research failed', error as Error);
-
-      // Parse username from LinkedIn URL
-      const username = linkedinUrl.split('/in/')[1]?.replace('/', '') || 'unknown';
-      const nameParts = username.split('-');
-
-      // Return minimal data to prevent UI breakage
       return {
-        firstName: nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) || 'Unknown',
-        lastName: nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || '',
-        name: `${nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) || 'Unknown'} ${nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || ''}`,
-        socialProfiles: {
-          linkedin: linkedinUrl,
-        },
-        confidence: 40,
-        notes: 'API research failed, showing basic information derived from URL',
+        socialProfiles: { linkedin: linkedinUrl },
+        notes: `Research failed: ${error instanceof Error ? error.message : 'unknown error'}`,
       };
     }
   }
@@ -415,12 +341,21 @@ ${content}`,
       ).content,
 
     analyzeSentimentRealTime: async (text: string): Promise<{ sentiment: number; emotions: string[] }> => {
-      const { content } = await generateAI({
-        json: true,
+      const { data: parsed } = await generateAI({
         maxTokens: 200,
-        prompt: `Analyze the sentiment of this text. Return JSON {"sentiment": number from -1 (very negative) to 1 (very positive), "emotions": array of up to 3 emotion words}.\n\n${text}`,
+        schemaName: 'realtime_sentiment',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['sentiment', 'emotions'],
+          properties: {
+            sentiment: { type: 'number' },
+            emotions: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        prompt: `Analyze the sentiment of this text. sentiment is from -1 (very negative) to 1 (very positive); emotions are up to 3 emotion words.\n\n${text}`,
       });
-      const parsed = JSON.parse(content);
+      if (!parsed) throw new Error('Sentiment analysis returned no result');
       return {
         sentiment: Math.max(-1, Math.min(1, Number(parsed.sentiment) || 0)),
         emotions: Array.isArray(parsed.emotions) ? parsed.emotions.map(String) : [],

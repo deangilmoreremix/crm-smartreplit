@@ -1,4 +1,35 @@
-import { generateAI } from './aiGenerate';
+import { createConversation, sendConversationMessage, listConversationMessages } from './aiGenerate';
+
+// The OpenAI Assistants API was shut down on 2026-08-26. Built-in assistants now chat through the
+// Responses API's Conversations (server routes /api/ai/conversations), so history persists between turns.
+const ASSISTANT_INSTRUCTIONS: Record<string, string> = {
+  'contact-assistant':
+    'You are a specialized AI assistant for contact management and relationship intelligence. Analyze contacts, predict engagement, draft personalized communication and track relationship health. Give actionable insights.',
+  'deal-assistant':
+    'You are a specialized AI assistant for deal management and sales intelligence. Analyze deal progression, identify risks, suggest next steps and closing strategies. Give data-driven recommendations.',
+  'task-assistant':
+    'You are a specialized AI assistant for task management and workflow automation. Prioritize tasks, suggest automations and optimize productivity. Give clear action items.',
+  'pipeline-assistant':
+    'You are a specialized AI assistant for sales pipeline management and forecasting. Analyze pipeline health, predict outcomes and suggest process improvements.',
+};
+
+const conversationKey = (assistantId: string) => `smartcrm-ai-conversation:${assistantId}`;
+
+function storedConversation(assistantId: string): string | null {
+  try {
+    return localStorage.getItem(conversationKey(assistantId));
+  } catch {
+    return null;
+  }
+}
+
+function storeConversation(assistantId: string, conversationId: string) {
+  try {
+    localStorage.setItem(conversationKey(assistantId), conversationId);
+  } catch {
+    /* storage unavailable: the conversation just isn't remembered across reloads */
+  }
+}
 
 export interface AssistantConfig {
   name: string;
@@ -36,7 +67,7 @@ export interface AssistantRun {
 
 export class OpenAIAssistantsService {
   // Assistant Management
-  // There is no server-side Assistants API; custom assistants cannot be created, read or deleted.
+  // The Assistants API was shut down; custom assistants cannot be created, read or deleted.
   async createAssistant(_config: AssistantConfig): Promise<any> {
     throw new Error('Custom OpenAI Assistants are not available; use the built-in assistants.');
   }
@@ -50,7 +81,7 @@ export class OpenAIAssistantsService {
   }
 
   async listAssistants(limit = 20) {
-    // The built-in specialist assistants (chat runs through /api/ai/generate)
+    // The built-in specialist assistants (chat runs on Responses API conversations)
     void limit;
     return {
       data: [
@@ -82,10 +113,19 @@ export class OpenAIAssistantsService {
     };
   }
 
-  async getMessages(_threadId: string, _limit = 20) {
-    // Threads are not stored server-side, so there is no message history to return
+  /** Messages of a conversation (threadId = conversation id), oldest first. */
+  async getMessages(threadId: string, limit = 20) {
+    if (!threadId) return { data: [] as ThreadMessage[] };
+    const messages = await listConversationMessages(threadId);
     return {
-      data: [],
+      data: messages.slice(-limit).map(
+        (m): ThreadMessage => ({
+          id: m.id,
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.text,
+          created_at: Math.floor(Date.now() / 1000),
+        })
+      ),
     };
   }
 
@@ -98,65 +138,42 @@ export class OpenAIAssistantsService {
     return this.chatWithAssistant(message, assistantId, threadId, metadata);
   }
 
-  // Enhanced Chat with Full Assistants API
+  /**
+   * Chat with a built-in assistant. Each assistant keeps one conversation per browser (remembered in
+   * localStorage) unless a threadId (conversation id) is passed.
+   */
   async chatWithAssistant(
     message: string,
     assistantId: string,
     threadId?: string,
     metadata?: Record<string, string>
   ): Promise<{ response: string; threadId: string; runId: string }> {
-    // /api/assistants/chat never existed; answer through the server's generation route
     void metadata;
-    const instructions: Record<string, string> = {
-      'contact-assistant': 'You are a contact management and relationship intelligence specialist.',
-      'deal-assistant': 'You are a deal progression and sales intelligence specialist.',
-      'task-assistant': 'You are a task prioritization and workflow automation specialist.',
-      'pipeline-assistant': 'You are a sales pipeline management and forecasting specialist.',
-    };
-    const { content } = await generateAI({
+    let conversationId = threadId || storedConversation(assistantId);
+    if (!conversationId) {
+      conversationId = await createConversation(assistantId);
+      storeConversation(assistantId, conversationId);
+    }
+    const result = await sendConversationMessage(conversationId, message, {
+      system: ASSISTANT_INSTRUCTIONS[assistantId] || 'You are a helpful CRM assistant.',
       tier: 'advanced',
-      system: instructions[assistantId] || 'You are a helpful CRM assistant.',
-      prompt: message,
     });
+    return { response: result.content, threadId: conversationId, runId: result.responseId || crypto.randomUUID() };
+  }
 
-    const id = threadId || crypto.randomUUID();
-    return { response: content, threadId: id, runId: crypto.randomUUID() };
+  /** Start a fresh conversation for an assistant (forget the remembered one). */
+  async resetConversation(assistantId: string): Promise<string> {
+    const conversationId = await createConversation(assistantId);
+    storeConversation(assistantId, conversationId);
+    return conversationId;
   }
 
   // Utility Functions
+  /** The built-in specialised assistants (no creation needed — they run on Conversations). */
   async createSpecializedAssistant(type: 'contact' | 'deal' | 'task' | 'pipeline') {
-    const configs = {
-      contact: {
-        name: 'Contact Intelligence Agent',
-        instructions: `You are a specialized AI assistant for contact management and relationship intelligence. 
-        You help analyze contacts, predict engagement, generate personalized communication, and track relationship health.
-        Always provide actionable insights based on contact data, interaction history, and communication patterns.`,
-        tools: [{ type: 'code_interpreter' }],
-      },
-      deal: {
-        name: 'Deal Assistant Agent',
-        instructions: `You are a specialized AI assistant for deal management and sales intelligence.
-        You help analyze deal progression, identify risks, suggest next steps, and optimize closing strategies.
-        Always provide data-driven insights and specific recommendations for deal advancement.`,
-        tools: [{ type: 'code_interpreter' }],
-      },
-      task: {
-        name: 'Task Automation Agent',
-        instructions: `You are a specialized AI assistant for task management and workflow automation.
-        You help prioritize tasks, automate routine activities, and optimize productivity workflows.
-        Always provide clear action items and automation suggestions.`,
-        tools: [{ type: 'code_interpreter' }],
-      },
-      pipeline: {
-        name: 'Pipeline Management Bot',
-        instructions: `You are a specialized AI assistant for sales pipeline management and forecasting.
-        You help analyze pipeline health, predict outcomes, and optimize sales processes.
-        Always provide strategic insights and actionable pipeline improvements.`,
-        tools: [{ type: 'code_interpreter' }],
-      },
-    };
-
-    return await this.createAssistant(configs[type]);
+    const id = `${type}-assistant`;
+    const { data } = await this.listAssistants();
+    return data.find((assistant) => assistant.id === id) || { id, name: id, instructions: ASSISTANT_INSTRUCTIONS[id] };
   }
 }
 

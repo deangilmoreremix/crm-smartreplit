@@ -1,4 +1,9 @@
-import { generateAI } from './aiGenerate';
+import {
+  createConversation,
+  sendConversationMessage,
+  listConversationMessages,
+  type ConversationMessage,
+} from './aiGenerate';
 import OpenAI from 'openai';
 
 export interface AssistantThread {
@@ -51,14 +56,15 @@ export class AssistantThreadManager {
     }
   }
 
+  /** Each entity thread is an OpenAI Responses API conversation, so context carries between turns. */
   private async createAssistantThread(
     entityType: string,
     entityId: string,
     context?: Record<string, any>
   ): Promise<AssistantThread> {
-    // There is no server-side Assistants thread API; threads are tracked locally in this manager
+    const conversationId = await createConversation(`${entityType}:${entityId}`);
     return {
-      id: crypto.randomUUID(),
+      id: conversationId,
       type: entityType as any,
       entityId,
       assistantId: this.getAssistantIdForEntity(entityType),
@@ -68,20 +74,19 @@ export class AssistantThreadManager {
     };
   }
 
+  /** Message history of a thread (conversation), oldest first. */
+  async getThreadMessages(threadId: string): Promise<ConversationMessage[]> {
+    return listConversationMessages(threadId);
+  }
+
   private async syncThreadAcrossApps(thread: AssistantThread): Promise<void> {
     // /api/remote-sync/* never existed, so there is nothing to broadcast to; threads stay local
     void thread;
   }
 
   private getAssistantIdForEntity(entityType: string): string {
-    const assistantMap = {
-      contact: process.env.VITE_CONTACT_ASSISTANT_ID,
-      deal: process.env.VITE_DEAL_ASSISTANT_ID,
-      task: process.env.VITE_TASK_ASSISTANT_ID,
-      pipeline: process.env.VITE_PIPELINE_ASSISTANT_ID,
-    };
-
-    return assistantMap[entityType as keyof typeof assistantMap] || 'default_assistant';
+    // The built-in assistants (see openaiAssistantsService); the Assistants API IDs are gone
+    return ['contact', 'deal', 'task', 'pipeline'].includes(entityType) ? `${entityType}-assistant` : 'default_assistant';
   }
 
   private async callAssistantThread(
@@ -91,17 +96,14 @@ export class AssistantThreadManager {
     context?: any
   ): Promise<any> {
     try {
-      // /api/openai/assistants/chat never existed; answer through the server's generation route
-      const { content, model } = await generateAI({
-        tier: 'advanced',
-        system: `You are a CRM assistant (${assistantId}).${context ? ` Context: ${JSON.stringify(context)}` : ''}`,
-        prompt: message,
-      });
+      const system = `You are a CRM assistant (${assistantId}).${context ? ` Context: ${JSON.stringify(context)}` : ''}`;
+      const conversationId = threadId || (await createConversation(assistantId));
+      const { content, model } = await sendConversationMessage(conversationId, message, { system, tier: 'advanced' });
 
       return {
         result: content,
         model,
-        threadId,
+        threadId: conversationId,
       };
     } catch (error) {
       console.error('Assistant thread call failed:', error);

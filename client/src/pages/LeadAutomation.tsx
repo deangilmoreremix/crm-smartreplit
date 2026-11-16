@@ -4,7 +4,7 @@ import {
   Video, MessageSquare, AlertTriangle, Activity, Brain, BarChart3,
   Sparkles, CheckCircle, Loader2,
 } from 'lucide-react';
-import { aiAutomation, aiSalesTools, aiCommunication } from '../services/aiToolsApiService';
+import { aiAutomation, aiSalesTools, aiCommunication, aiAdvanced } from '../services/aiToolsApiService';
 
 const LeadAutomation: React.FC = () => {
   const [running, setRunning] = useState<string | null>(null);
@@ -95,9 +95,6 @@ const LeadAutomation: React.FC = () => {
       setRunning(null);
     }
   };
-
-  // Need to import aiAdvanced for competitor monitoring
-  const aiAdvanced = { researchTopic: (topic: string, depth: string) => fetch('/api/ai/research/topic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic, depth }) }).then(r => r.json()) };
 
   const categories = Array.from(new Set(automations.map(a => a.category)));
 

@@ -1,6 +1,7 @@
-// AI tool helpers. These previously called Supabase edge functions that were never deployed and then
-// fell back to /api/respond; they now call the server's generation route with the user's OpenAI key.
-import { generateAI } from './aiGenerate';
+// AI tool helpers on the OpenAI Responses API (server routes, the user's own OpenAI key). These previously
+// called Supabase edge functions that were never deployed. Research helpers (market trends, competitors,
+// business analysis) use live web search and append the cited sources.
+import { generateAI, researchAI, type UrlSource } from './aiGenerate';
 
 interface ContactInfo {
   name?: string;
@@ -10,6 +11,15 @@ interface ContactInfo {
 
 const generate = async (prompt: string, tier: 'default' | 'advanced' = 'default'): Promise<string> =>
   (await generateAI({ prompt, tier })).content;
+
+const withSources = (text: string, sources: UrlSource[]) =>
+  sources.length ? `${text}\n\nSources:\n${sources.map((s) => `- ${s.title || s.url}: ${s.url}`).join('\n')}` : text;
+
+/** Web research (research features only) — returns the answer with its cited sources appended. */
+const research = async (prompt: string): Promise<string> => {
+  const { content, sources } = await researchAI({ prompt });
+  return withSources(content, sources);
+};
 
 export async function generateCallScript(
   contactInfo: ContactInfo,
@@ -27,12 +37,23 @@ export async function analyzeSentiment(text: string): Promise<{
   confidence: number;
   summary: string;
 }> {
-  const { content } = await generateAI({
-    json: true,
+  const { data } = await generateAI({
     maxTokens: 300,
-    prompt: `Analyze the sentiment of this text. Return JSON {"sentiment": "positive" | "negative" | "neutral", "confidence": number between 0 and 1, "summary": string}.\n\n${text}`,
+    schemaName: 'sentiment',
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['sentiment', 'confidence', 'summary'],
+      properties: {
+        sentiment: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
+        confidence: { type: 'number' },
+        summary: { type: 'string' },
+      },
+    },
+    prompt: `Analyze the sentiment of this text. confidence is between 0 and 1.\n\n${text}`,
   });
-  const parsed = JSON.parse(content);
+  if (!data) throw new Error('Sentiment analysis returned no result');
+  const parsed = data;
   const sentiment = ['positive', 'negative', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral';
   return {
     sentiment,
@@ -60,16 +81,14 @@ export async function generateMeetingSummary(meeting: any): Promise<string> {
 }
 
 export async function analyzeMarketTrends(market: string): Promise<string> {
-  return generate(
-    `Analyze market trends for: ${market}\n\nProvide insights on: Industry trends, Competitive landscape, Growth opportunities, Risk factors, Strategic recommendations. Note that you have no live web data.`,
-    'advanced'
+  return research(
+    `Analyze current market trends for: ${market}\n\nProvide insights on: Industry trends, Competitive landscape, Growth opportunities, Risk factors, Strategic recommendations.`
   );
 }
 
 export async function analyzeCompetitor(competitor: string): Promise<string> {
-  return generate(
-    `Provide a comprehensive competitive analysis for: ${competitor}\n\nInclude: Strengths, Weaknesses, Market position, Product offerings, Pricing strategy, Strategic moves. Note that you have no live web data.`,
-    'advanced'
+  return research(
+    `Provide a comprehensive competitive analysis for: ${competitor}\n\nInclude: Strengths, Weaknesses, Market position, Product offerings, Pricing strategy, Strategic moves.`
   );
 }
 
@@ -95,11 +114,10 @@ export async function analyzeText(text: string, analysisType: string): Promise<s
   return generate(`Analyze this text (${analysisType}):\n\n${text}`);
 }
 
-// Used by the Business Analyzer page (it called this, but it never existed)
+// Used by the Business Analyzer page (web research)
 export async function analyzeBusinessData(business: any): Promise<string> {
-  return generate(
-    `Analyze this business and give a concise report: positioning, strengths, weaknesses, opportunities, ` +
-      `marketing and sales recommendations, and next steps.\n\n${JSON.stringify(business, null, 2)}`,
-    'advanced'
+  return research(
+    `Research this business (including its website and public presence) and give a concise report: positioning, ` +
+      `strengths, weaknesses, opportunities, marketing and sales recommendations, and next steps.\n\n${JSON.stringify(business, null, 2)}`
   );
 }

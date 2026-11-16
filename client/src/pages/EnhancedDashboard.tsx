@@ -112,16 +112,40 @@ const Dashboard: React.FC = () => {
       const contactsArray = Object.values(contacts);
 
       // /api/ai/business-analyzer never existed; generate through the server with the user's OpenAI key
-      const { content } = await generateAI({
-        json: true,
+      const { data } = await generateAI({
         tier: 'advanced',
-        prompt: `Analyze this CRM data and return JSON {"recommendations": [{"id": number, "title": string, "description": string, "type": "contact" | "deal" | "task" | "general", "priority": "high" | "medium" | "low", "action": string, "entityId": string | null}]} with up to 5 items, based only on the data.
+        schemaName: 'crm_recommendations',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['recommendations'],
+          properties: {
+            recommendations: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['id', 'title', 'description', 'type', 'priority', 'action', 'entityId'],
+                properties: {
+                  id: { type: 'number' },
+                  title: { type: 'string' },
+                  description: { type: 'string' },
+                  type: { type: 'string', enum: ['contact', 'deal', 'task', 'general'] },
+                  priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+                  action: { type: 'string' },
+                  entityId: { type: ['string', 'null'] },
+                },
+              },
+            },
+          },
+        },
+        prompt: `Analyze this CRM data and give up to 5 recommendations, based only on the data.
 
 Contacts: ${JSON.stringify(contactsArray.slice(0, 50))}
 Deals: ${JSON.stringify(Object.values(deals || {}).slice(0, 50))}
 Tasks: ${JSON.stringify(Object.values(tasks || {}).slice(0, 50))}`,
       });
-      const recommendations = JSON.parse(content).recommendations || [];
+      const recommendations = data?.recommendations || [];
 
       setAiRecommendations(recommendations);
     } catch (error) {

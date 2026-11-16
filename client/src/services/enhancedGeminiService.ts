@@ -1,5 +1,5 @@
 import { supabaseAIService, type AIModelConfig } from './supabaseAIService';
-import { generateAI } from './aiGenerate';
+import { generateAI, researchAI } from './aiGenerate';
 
 interface GenerateContentRequest {
   prompt: string;
@@ -99,8 +99,8 @@ class EnhancedGeminiService {
       content: this.stripMarkdownCodeBlocks(result.content),
       model: result.model,
       usage: {
-        promptTokens: result.usage?.prompt_tokens || 0,
-        completionTokens: result.usage?.completion_tokens || 0,
+        promptTokens: result.usage?.input_tokens ?? result.usage?.prompt_tokens ?? 0,
+        completionTokens: result.usage?.output_tokens ?? result.usage?.completion_tokens ?? 0,
         totalTokens: result.usage?.total_tokens || 0,
       },
       finishReason: 'completed',
@@ -375,18 +375,18 @@ Provide insights on:
 
 Format the response as structured data.`;
 
-      const response = await this.generateContent({
-        prompt,
-        model: model || 'gpt-6.1-sol',
-        temperature: 0.5,
-        maxTokens: 2000,
-        customerId,
-        featureUsed: 'competitor_analysis',
+      // Live web research (OpenAI web search) with cited sources
+      void customerId;
+      void model;
+      const response = await researchAI({
+        prompt: `${prompt}\n\nUse current public information from the web and cite it.`,
+        maxTokens: 3000,
       });
 
       return {
         competitor: context.competitorName,
         analysis: this.stripMarkdownCodeBlocks(response.content),
+        sources: response.sources,
         timestamp: new Date().toISOString(),
         analysisType: context.analysisType,
       };
@@ -420,19 +420,46 @@ Provide analysis on:
 5. Competitive landscape shifts
 6. Recommendations for strategy`;
 
-      const response = await this.generateContent({
-        prompt,
-        model: model || 'gpt-6.1-sol',
-        temperature: 0.6,
-        maxTokens: 2000,
-        customerId,
-        featureUsed: 'market_analysis',
+      // Live web research (OpenAI web search) with cited sources
+      void customerId;
+      void model;
+      const list = { type: 'array', items: { type: 'string' } };
+      const response = await researchAI({
+        prompt: `${prompt}\n\nUse current public information from the web.`,
+        maxTokens: 3000,
+        schemaName: 'market_trends',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['summary', 'keyFindings', 'growthProjections', 'opportunities', 'risks', 'recommendations', 'metrics'],
+          properties: {
+            summary: { type: 'string' },
+            keyFindings: list,
+            growthProjections: { type: 'string' },
+            opportunities: list,
+            risks: list,
+            recommendations: list,
+            metrics: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['marketGrowth', 'marketSize', 'keyPlayers'],
+              properties: {
+                marketGrowth: { type: 'string' },
+                marketSize: { type: 'string' },
+                keyPlayers: { type: 'string' },
+              },
+            },
+          },
+        },
       });
+      if (!response.data) throw new Error('The market research returned no usable result');
 
       return {
+        ...response.data,
         industry: context.industry,
         timeframe: context.timeframe,
-        analysis: this.stripMarkdownCodeBlocks(response.content),
+        analysis: response.data.summary,
+        sources: response.sources,
         timestamp: new Date().toISOString(),
         focusAreas: context.focusAreas,
       };
@@ -477,25 +504,31 @@ Customer profile: ${JSON.stringify(context.customerProfile)}
 
 Provide a churn risk score (0-100) and specific recommendations to retain the customer.`;
 
-      const response = await this.generateContent({
+      void customerId;
+      // Structured Outputs: the score comes back as a number instead of being scraped from text
+      const { data } = await generateAI({
         prompt,
-        model: model || 'gpt-6.1-sol',
-        temperature: 0.3,
+        tier: model && /luna/i.test(model) ? 'default' : 'advanced',
         maxTokens: 1000,
-        customerId,
-        featureUsed: 'churn_prediction',
+        schemaName: 'churn_risk',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['riskScore', 'analysis', 'recommendations'],
+          properties: {
+            riskScore: { type: 'number' },
+            analysis: { type: 'string' },
+            recommendations: { type: 'array', items: { type: 'string' } },
+          },
+        },
       });
-
-      // Extract risk score from response
-      const content = this.stripMarkdownCodeBlocks(response.content);
-      const riskMatch = content.match(/risk.*?(\d+)/i);
-      const riskScore = riskMatch ? parseInt(riskMatch[1]) : 50;
+      if (!data) throw new Error('Churn prediction returned no result');
 
       return {
         customerId: context.customerId,
-        riskScore: Math.min(Math.max(riskScore, 0), 100),
-        analysis: content,
-        recommendations: content.split('recommendations:')[1] || 'Maintain regular contact',
+        riskScore: Math.min(Math.max(Math.round(Number(data.riskScore) || 0), 0), 100),
+        analysis: data.analysis,
+        recommendations: (data.recommendations || []).join('\n'),
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
@@ -518,30 +551,30 @@ Provide a churn risk score (0-100) and specific recommendations to retain the cu
 
 Text: "${text}"`;
 
-      const response = await this.generateContent({
+      void customerId;
+      void model;
+      const { data } = await generateAI({
         prompt,
-        model: model || 'gpt-6-luna',
-        temperature: 0.3,
         maxTokens: 500,
-        customerId,
-        featureUsed: 'sentiment_analysis',
+        schemaName: 'sentiment',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['sentiment', 'score', 'analysis'],
+          properties: {
+            sentiment: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
+            score: { type: 'number' },
+            analysis: { type: 'string' },
+          },
+        },
       });
-
-      const content = this.stripMarkdownCodeBlocks(response.content);
-
-      // Extract sentiment score
-      const scoreMatch = content.match(/score.*?(-?\d*\.?\d+)/i);
-      const sentimentScore = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
-
-      // Extract sentiment type
-      const sentimentMatch = content.match(/(positive|negative|neutral)/i);
-      const sentiment = sentimentMatch ? sentimentMatch[1].toLowerCase() : 'neutral';
+      if (!data) throw new Error('Sentiment analysis returned no result');
 
       return {
         text,
-        sentiment,
-        score: Math.min(Math.max(sentimentScore, -1), 1),
-        analysis: content,
+        sentiment: data.sentiment,
+        score: Math.min(Math.max(Number(data.score) || 0, -1), 1),
+        analysis: data.analysis,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {

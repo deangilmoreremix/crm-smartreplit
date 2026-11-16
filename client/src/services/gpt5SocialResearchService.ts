@@ -1,9 +1,10 @@
 /**
- * GPT-5 Social Media Research Service
- * Advanced social media discovery using GPT-5's web research capabilities
+ * Social media research.
+ * Uses the OpenAI Responses API with live web search (POST /api/ai/research) to find a contact's public
+ * profiles; results carry the source URLs the model cited. Runs on the user's own OpenAI key.
  */
 
-import { generateAI } from './aiGenerate';
+import { generateAI, researchAI, type UrlSource } from './aiGenerate';
 import { Contact } from '../types';
 
 export interface SocialPlatformProfile {
@@ -44,6 +45,8 @@ export interface SocialResearchResult {
   monitoringRecommendations: string[];
   confidenceScore: number;
   lastResearched: Date;
+  /** Web pages the research cited. */
+  sources?: UrlSource[];
 }
 
 export interface SocialMonitoringAlert {
@@ -59,49 +62,106 @@ export interface SocialMonitoringAlert {
 
 class GPT5SocialResearchService {
   /**
-   * Social research from the CRM record. The AI model cannot browse the web, so profiles are only
-   * the ones already stored on the contact (never invented); insights are generated from CRM data
-   * with the user's own OpenAI key.
+   * Find the contact's public social profiles with live web search and summarise them.
+   * Only profiles the search actually found are returned, each with its URL; sources lists the cited pages.
    */
   async researchContactSocialMedia(
     contact: Contact,
-    _platforms: string[] = [],
+    platforms: string[] = [],
     depth: 'basic' | 'comprehensive' | 'deep' = 'comprehensive'
   ): Promise<SocialResearchResult> {
-    const profiles: SocialPlatformProfile[] = Object.entries(contact.socialProfiles || {})
-      .filter(([, url]) => !!url)
-      .map(([platform, url]) => ({
-        platform,
-        username: String(url).split('/').filter(Boolean).pop() || String(url),
-        url: String(url),
-        verified: false,
-        confidence: 100,
-      }));
+    const stringList = { type: 'array', items: { type: 'string' } };
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['profiles', 'personalityInsights', 'engagementMetrics', 'professionalUpdates', 'monitoringRecommendations', 'confidenceScore'],
+      properties: {
+        profiles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['platform', 'username', 'url', 'verified', 'bio', 'confidence'],
+            properties: {
+              platform: { type: 'string' },
+              username: { type: 'string' },
+              url: { type: 'string' },
+              verified: { type: 'boolean' },
+              bio: { type: 'string' },
+              confidence: { type: 'number' },
+            },
+          },
+        },
+        personalityInsights: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['traits', 'communicationStyle', 'professionalDemeanor', 'interests', 'expertise'],
+          properties: {
+            traits: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['name', 'value'],
+                properties: { name: { type: 'string' }, value: { type: 'string' } },
+              },
+            },
+            communicationStyle: { type: 'string' },
+            professionalDemeanor: { type: 'string' },
+            interests: stringList,
+            expertise: stringList,
+          },
+        },
+        engagementMetrics: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['preferredContentTypes', 'responsePatterns'],
+          properties: { preferredContentTypes: stringList, responsePatterns: stringList },
+        },
+        professionalUpdates: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['recentJobChanges', 'companyNews', 'achievements'],
+          properties: { recentJobChanges: stringList, companyNews: stringList, achievements: stringList },
+        },
+        monitoringRecommendations: stringList,
+        confidenceScore: { type: 'number' },
+      },
+    };
 
-    const { content } = await generateAI({
-      json: true,
+    const { data, sources } = await researchAI({
       tier: depth === 'basic' ? 'default' : 'advanced',
+      schema,
+      schemaName: 'social_research',
       system:
-        'You are a sales research assistant. You cannot browse the web: base everything only on the CRM data given and say "unknown" rather than guessing facts.',
-      prompt: `Return JSON {"personalityInsights": {"traits": object of string values, "communicationStyle": string, "professionalDemeanor": string, "interests": string[], "expertise": string[]}, "engagementMetrics": {"preferredContentTypes": string[], "responsePatterns": string[]}, "monitoringRecommendations": string[], "confidenceScore": number 0-100}.
+        'You are a sales research assistant with web search. Only report profiles and facts you found on the web for this exact person, with the profile URL; never invent profiles. Use "unknown" or empty lists when nothing is found.',
+      prompt: `Find the public social media profiles${platforms.length ? ` (platforms: ${platforms.join(', ')})` : ''} and recent professional news for this person, then summarise them for a salesperson.
 
-Contact: ${JSON.stringify({
+Person: ${JSON.stringify({
         name: contact.name,
         title: contact.title,
         company: contact.company,
         industry: contact.industry,
-        notes: contact.notes,
-        tags: contact.tags,
+        email: contact.email,
         knownProfiles: contact.socialProfiles,
       })}`,
     });
-    const parsed = JSON.parse(content);
+    const parsed = data || {};
 
     return {
       contactId: contact.id,
-      profiles,
+      profiles: (parsed.profiles || [])
+        .filter((p: any) => p?.url)
+        .map((p: any) => ({
+          platform: p.platform,
+          username: p.username,
+          url: p.url,
+          verified: !!p.verified,
+          bio: p.bio || undefined,
+          confidence: Number(p.confidence) || 0,
+        })),
       personalityInsights: {
-        traits: parsed.personalityInsights?.traits || {},
+        traits: Object.fromEntries((parsed.personalityInsights?.traits || []).map((t: any) => [t.name, t.value])),
         communicationStyle: parsed.personalityInsights?.communicationStyle || 'unknown',
         professionalDemeanor: parsed.personalityInsights?.professionalDemeanor || 'unknown',
         interests: parsed.personalityInsights?.interests || [],
@@ -113,10 +173,16 @@ Contact: ${JSON.stringify({
         preferredContentTypes: parsed.engagementMetrics?.preferredContentTypes || [],
         responsePatterns: parsed.engagementMetrics?.responsePatterns || [],
       },
-      professionalUpdates: { recentJobChanges: [], companyNews: [], achievements: [], connections: [] },
+      professionalUpdates: {
+        recentJobChanges: parsed.professionalUpdates?.recentJobChanges || [],
+        companyNews: parsed.professionalUpdates?.companyNews || [],
+        achievements: parsed.professionalUpdates?.achievements || [],
+        connections: [],
+      },
       monitoringRecommendations: parsed.monitoringRecommendations || [],
       confidenceScore: Number(parsed.confidenceScore) || 0,
       lastResearched: new Date(),
+      sources,
     };
   }
 
@@ -124,13 +190,23 @@ Contact: ${JSON.stringify({
     profile: SocialPlatformProfile,
     contact: Contact
   ): Promise<{ isValid: boolean; confidence: number; reasoning: string[] }> {
-    const { content } = await generateAI({
-      json: true,
-      prompt: `Does this ${profile.platform} profile plausibly belong to this contact, judging only by the data given (no web access)? Return JSON {"isValid": boolean, "confidence": number 0-100, "reasoning": string[]}.
+    const { data: parsed } = await generateAI({
+      schemaName: 'profile_validation',
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['isValid', 'confidence', 'reasoning'],
+        properties: {
+          isValid: { type: 'boolean' },
+          confidence: { type: 'number' },
+          reasoning: { type: 'array', items: { type: 'string' } },
+        },
+      },
+      prompt: `Does this ${profile.platform} profile plausibly belong to this contact, judging by the data given? confidence is 0-100.
 Profile: ${JSON.stringify(profile)}
 Contact: ${JSON.stringify({ name: contact.name, company: contact.company, title: contact.title, email: contact.email })}`,
     });
-    const parsed = JSON.parse(content);
+    if (!parsed) throw new Error('Profile validation returned no result');
     return {
       isValid: !!parsed.isValid,
       confidence: Number(parsed.confidence) || 0,
@@ -151,7 +227,7 @@ Contact: ${JSON.stringify({ name: contact.name, company: contact.company, title:
     const { content } = await generateAI({
       json: true,
       tier: 'advanced',
-      prompt: `From this CRM data only (no web access), return JSON {"traits": object of string values, "communicationPreferences": string[], "optimalApproach": string, "riskFactors": string[], "opportunities": string[]}.
+      prompt: `From this CRM data and the known profiles, return JSON {"traits": object of string values, "communicationPreferences": string[], "optimalApproach": string, "riskFactors": string[], "opportunities": string[]}.
 Contact: ${JSON.stringify({ name: contact.name, title: contact.title, company: contact.company, industry: contact.industry, notes: contact.notes })}
 Known profiles: ${JSON.stringify(socialProfiles)}`,
     });
