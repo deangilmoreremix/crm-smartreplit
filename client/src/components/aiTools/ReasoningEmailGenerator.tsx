@@ -38,7 +38,7 @@ Please provide:
 Format the response as JSON with these keys: email, reasoning, improvements, analytics`;
 
       const response = await openAIService.generateCompletion(prompt, {
-        model: 'gpt-4',
+        model: 'gpt-6.1-sol',
         temperature: 0.7,
         maxTokens: 1000,
       });

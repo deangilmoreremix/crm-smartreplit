@@ -1,19 +1,39 @@
-import OpenAI from 'openai';
-import { useApiStore } from '../store/apiStore';
+import { generateAI } from './aiGenerate';
+
+// These helpers previously created an OpenAI client in the browser (dangerouslyAllowBrowser) from a key
+// nothing ever set. getClient() now returns a small chat.completions shim backed by the server
+// (POST /api/ai/generate), which uses the signed-in user's own OpenAI key.
+const serverChatClient = {
+  chat: {
+    completions: {
+      create: async (params: {
+        model?: string;
+        messages: Array<{ role: string; content: string }>;
+        max_tokens?: number;
+        temperature?: number;
+      }) => {
+        const system = params.messages
+          .filter((m) => m.role === 'system')
+          .map((m) => m.content)
+          .join('\n\n');
+        const prompt = params.messages
+          .filter((m) => m.role !== 'system')
+          .map((m) => m.content)
+          .join('\n\n');
+        const { content } = await generateAI({
+          prompt,
+          system: system || undefined,
+          maxTokens: params.max_tokens,
+          tier: params.model?.includes('sol') ? 'advanced' : 'default',
+        });
+        return { choices: [{ message: { content } }] };
+      },
+    },
+  },
+};
 
 export const useOpenAI = () => {
-  const { apiKeys } = useApiStore();
-
-  const getClient = () => {
-    if (!apiKeys.openai) {
-      throw new Error('OpenAI API key is not set');
-    }
-
-    return new OpenAI({
-      apiKey: apiKeys.openai,
-      dangerouslyAllowBrowser: true, // Note: In production, proxy requests through a backend
-    });
-  };
+  const getClient = () => serverChatClient;
 
   const generateEmailDraft = async (
     contactName: string,
@@ -23,7 +43,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -46,7 +66,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -76,7 +96,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-6-luna',
       messages: [
         {
           role: 'system',
@@ -99,7 +119,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-6-luna',
       messages: [
         {
           role: 'system',
@@ -131,7 +151,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -163,7 +183,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -186,7 +206,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -209,7 +229,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -236,7 +256,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-6.1-sol',
       messages: [
         {
           role: 'system',
@@ -255,7 +275,31 @@ export const useOpenAI = () => {
     return response.choices[0].message.content || 'Unable to generate visual content idea';
   };
 
+  const predictLeadScore = async (contact: any) => {
+    const client = getClient();
+
+    const response = await client.chat.completions.create({
+      model: 'gpt-6-luna',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a B2B sales analyst. Base the assessment only on the data given.',
+        },
+        {
+          role: 'user',
+          content: `Give this contact a lead score from 0 to 100, then explain the main factors and the next best action, as short Markdown.
+
+Contact: ${JSON.stringify(contact)}`,
+        },
+      ],
+      max_tokens: 500,
+    });
+
+    return response.choices[0].message.content || 'Unable to score lead';
+  };
+
   return {
+    predictLeadScore,
     generateEmailDraft,
     optimizeSubjectLine,
     analyzeSentiment,

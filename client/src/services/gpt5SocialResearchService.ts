@@ -3,9 +3,7 @@
  * Advanced social media discovery using GPT-5's web research capabilities
  */
 
-import { httpClient } from './http-client.service';
-import { logger } from './logger.service';
-import { supabaseAnonKey } from '../lib/supabase';
+import { generateAI } from './aiGenerate';
 import { Contact } from '../types';
 
 export interface SocialPlatformProfile {
@@ -60,199 +58,84 @@ export interface SocialMonitoringAlert {
 }
 
 class GPT5SocialResearchService {
-  private apiUrl: string;
-  private isMockMode = import.meta.env.DEV;
-
-  constructor() {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    this.apiUrl = supabaseUrl
-      ? `${supabaseUrl}/functions/v1/gpt5-social-research`
-      : '/api/gpt5-social-research';
-
-    // API key availability is checked server-side
-    console.log('GPT-5 Social Research Service initialized');
-  }
-
-  private generateMockSocialData(contact: Contact): SocialResearchResult {
-    const platforms = [
-      'LinkedIn',
-      'Twitter',
-      'Instagram',
-      'TikTok',
-      'YouTube',
-      'GitHub',
-      'Medium',
-      'Facebook',
-      'Snapchat',
-      'Discord',
-      'Reddit',
-      'Pinterest',
-      'Behance',
-      'Dribbble',
-      'AngelList',
-    ];
-
-    const mockProfiles: SocialPlatformProfile[] = platforms
-      .slice(0, Math.floor(Math.random() * 8) + 3)
-      .map((platform) => ({
+  /**
+   * Social research from the CRM record. The AI model cannot browse the web, so profiles are only
+   * the ones already stored on the contact (never invented); insights are generated from CRM data
+   * with the user's own OpenAI key.
+   */
+  async researchContactSocialMedia(
+    contact: Contact,
+    _platforms: string[] = [],
+    depth: 'basic' | 'comprehensive' | 'deep' = 'comprehensive'
+  ): Promise<SocialResearchResult> {
+    const profiles: SocialPlatformProfile[] = Object.entries(contact.socialProfiles || {})
+      .filter(([, url]) => !!url)
+      .map(([platform, url]) => ({
         platform,
-        username: `${contact.name.toLowerCase().replace(' ', '_')}_${platform.toLowerCase()}`,
-        url: `https://${platform.toLowerCase()}.com/${contact.name.toLowerCase().replace(' ', '_')}`,
-        verified: Math.random() > 0.7,
-        followers: Math.floor(Math.random() * 10000) + 100,
-        engagement: Math.floor(Math.random() * 100) + 10,
-        lastActivity: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        confidence: Math.floor(Math.random() * 30) + 70,
+        username: String(url).split('/').filter(Boolean).pop() || String(url),
+        url: String(url),
+        verified: false,
+        confidence: 100,
       }));
+
+    const { content } = await generateAI({
+      json: true,
+      tier: depth === 'basic' ? 'default' : 'advanced',
+      system:
+        'You are a sales research assistant. You cannot browse the web: base everything only on the CRM data given and say "unknown" rather than guessing facts.',
+      prompt: `Return JSON {"personalityInsights": {"traits": object of string values, "communicationStyle": string, "professionalDemeanor": string, "interests": string[], "expertise": string[]}, "engagementMetrics": {"preferredContentTypes": string[], "responsePatterns": string[]}, "monitoringRecommendations": string[], "confidenceScore": number 0-100}.
+
+Contact: ${JSON.stringify({
+        name: contact.name,
+        title: contact.title,
+        company: contact.company,
+        industry: contact.industry,
+        notes: contact.notes,
+        tags: contact.tags,
+        knownProfiles: contact.socialProfiles,
+      })}`,
+    });
+    const parsed = JSON.parse(content);
 
     return {
       contactId: contact.id,
-      profiles: mockProfiles,
+      profiles,
       personalityInsights: {
-        traits: {
-          'Communication Style': 'Direct and professional',
-          'Leadership Approach': 'Collaborative',
-          'Innovation Focus': 'Technology-driven',
-          'Risk Tolerance': 'Moderate',
-        },
-        communicationStyle: 'Professional, data-driven, responds well to detailed proposals',
-        professionalDemeanor: 'Confident, analytical, values efficiency',
-        interests: ['Technology', 'Innovation', 'Leadership', 'Industry Trends'],
-        expertise: ['Business Strategy', 'Team Leadership', 'Process Optimization'],
+        traits: parsed.personalityInsights?.traits || {},
+        communicationStyle: parsed.personalityInsights?.communicationStyle || 'unknown',
+        professionalDemeanor: parsed.personalityInsights?.professionalDemeanor || 'unknown',
+        interests: parsed.personalityInsights?.interests || [],
+        expertise: parsed.personalityInsights?.expertise || [],
       },
       engagementMetrics: {
-        averageEngagement: Math.floor(Math.random() * 50) + 20,
-        bestPostingTimes: ['9:00 AM', '1:00 PM', '5:00 PM'],
-        preferredContentTypes: ['Industry Insights', 'Case Studies', 'Professional Updates'],
-        responsePatterns: [
-          'Responds within 2 hours during business days',
-          'Prefers LinkedIn messaging',
-        ],
+        averageEngagement: 0,
+        bestPostingTimes: [],
+        preferredContentTypes: parsed.engagementMetrics?.preferredContentTypes || [],
+        responsePatterns: parsed.engagementMetrics?.responsePatterns || [],
       },
-      professionalUpdates: {
-        recentJobChanges: [],
-        companyNews: [
-          { title: 'Company announces Q4 growth', date: new Date(), relevance: 'high' },
-        ],
-        achievements: [
-          { title: 'Featured in industry publication', date: new Date(), platform: 'LinkedIn' },
-        ],
-        connections: [],
-      },
-      monitoringRecommendations: [
-        'Monitor for job change announcements',
-        'Track company merger/acquisition news',
-        'Watch for industry conference participation',
-      ],
-      confidenceScore: Math.floor(Math.random() * 30) + 70,
+      professionalUpdates: { recentJobChanges: [], companyNews: [], achievements: [], connections: [] },
+      monitoringRecommendations: parsed.monitoringRecommendations || [],
+      confidenceScore: Number(parsed.confidenceScore) || 0,
       lastResearched: new Date(),
     };
-  }
-
-  async researchContactSocialMedia(
-    contact: Contact,
-    platforms: string[] = [],
-    depth: 'basic' | 'comprehensive' | 'deep' = 'comprehensive'
-  ): Promise<SocialResearchResult> {
-    console.log(`Starting GPT-5 social research for contact: ${contact.name}`);
-
-    if (this.isMockMode) {
-      console.log('Using mock GPT-5 social research data');
-      return this.generateMockSocialData(contact);
-    }
-
-    try {
-      const response = await httpClient.post<SocialResearchResult>(
-        this.apiUrl,
-        {
-          contact: {
-            id: contact.id,
-            name: contact.name,
-            email: contact.email,
-            company: contact.company,
-            title: contact.title,
-            existingSocialProfiles: contact.socialProfiles,
-          },
-          researchParams: {
-            platforms:
-              platforms.length > 0
-                ? platforms
-                : [
-                    'LinkedIn',
-                    'Twitter',
-                    'Instagram',
-                    'TikTok',
-                    'YouTube',
-                    'GitHub',
-                    'Medium',
-                    'Facebook',
-                    'Snapchat',
-                    'Discord',
-                    'Reddit',
-                    'Pinterest',
-                    'Behance',
-                    'Dribbble',
-                    'AngelList',
-                  ],
-            depth,
-            includeEngagementMetrics: true,
-            includePersonalityAnalysis: true,
-            includeProfessionalUpdates: true,
-            verifyProfiles: true,
-          },
-        },
-        {
-          timeout: 60000,
-          retries: 2,
-          headers: {
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-        }
-      );
-
-      console.log(`GPT-5 social research completed for ${contact.name}`);
-      return response.data as SocialResearchResult;
-    } catch (error) {
-      console.error('GPT-5 social research failed:', error);
-      // Return mock data as fallback
-      return this.generateMockSocialData(contact);
-    }
   }
 
   async validateSocialProfile(
     profile: SocialPlatformProfile,
     contact: Contact
   ): Promise<{ isValid: boolean; confidence: number; reasoning: string[] }> {
-    console.log(`Validating ${profile.platform} profile for ${contact.name}`);
-
-    if (this.isMockMode) {
-      return {
-        isValid: Math.random() > 0.2,
-        confidence: Math.floor(Math.random() * 30) + 70,
-        reasoning: [
-          'Profile name matches contact information',
-          'Professional background aligns with contact details',
-          'Account activity indicates legitimate profile',
-        ],
-      };
-    }
-
-    try {
-      const response = await httpClient.post<{
-        isValid: boolean;
-        confidence: number;
-        reasoning: string[];
-      }>(`${this.apiUrl}/validate-profile`, { profile, contact }, { timeout: 30000 });
-
-      return response.data as { isValid: boolean; confidence: number; reasoning: string[] };
-    } catch (error) {
-      console.error('Profile validation failed:', error);
-      return {
-        isValid: true,
-        confidence: 50,
-        reasoning: ['Validation service temporarily unavailable'],
-      };
-    }
+    const { content } = await generateAI({
+      json: true,
+      prompt: `Does this ${profile.platform} profile plausibly belong to this contact, judging only by the data given (no web access)? Return JSON {"isValid": boolean, "confidence": number 0-100, "reasoning": string[]}.
+Profile: ${JSON.stringify(profile)}
+Contact: ${JSON.stringify({ name: contact.name, company: contact.company, title: contact.title, email: contact.email })}`,
+    });
+    const parsed = JSON.parse(content);
+    return {
+      isValid: !!parsed.isValid,
+      confidence: Number(parsed.confidence) || 0,
+      reasoning: Array.isArray(parsed.reasoning) ? parsed.reasoning : [],
+    };
   }
 
   async getPersonalityInsights(
@@ -265,53 +148,14 @@ class GPT5SocialResearchService {
     riskFactors: string[];
     opportunities: string[];
   }> {
-    console.log(`Generating personality insights for ${contact.name}`);
-
-    if (this.isMockMode) {
-      return {
-        traits: {
-          'Communication Style': 'Direct and concise',
-          'Decision Making': 'Data-driven',
-          'Risk Tolerance': 'Moderate to high',
-          'Leadership Style': 'Collaborative',
-        },
-        communicationPreferences: [
-          'Prefers email over phone calls',
-          'Responds well to data and metrics',
-          'Values concise, well-structured proposals',
-        ],
-        optimalApproach:
-          'Lead with quantifiable benefits, provide detailed ROI analysis, follow up with case studies',
-        riskFactors: [
-          'May delay decisions if insufficient data provided',
-          'Values long-term relationships over quick wins',
-        ],
-        opportunities: [
-          'Active on LinkedIn - good for professional outreach',
-          'Engages with industry content - share relevant insights',
-          'Recently promoted - may have new budget authority',
-        ],
-      };
-    }
-
-    try {
-      const response = await httpClient.post(
-        `${this.apiUrl}/personality-insights`,
-        { contact, socialProfiles },
-        { timeout: 45000 }
-      );
-
-      return response.data as {
-        traits: Record<string, string>;
-        communicationPreferences: string[];
-        optimalApproach: string;
-        riskFactors: string[];
-        opportunities: string[];
-      };
-    } catch (error) {
-      console.error('Personality insights generation failed:', error);
-      throw error;
-    }
+    const { content } = await generateAI({
+      json: true,
+      tier: 'advanced',
+      prompt: `From this CRM data only (no web access), return JSON {"traits": object of string values, "communicationPreferences": string[], "optimalApproach": string, "riskFactors": string[], "opportunities": string[]}.
+Contact: ${JSON.stringify({ name: contact.name, title: contact.title, company: contact.company, industry: contact.industry, notes: contact.notes })}
+Known profiles: ${JSON.stringify(socialProfiles)}`,
+    });
+    return JSON.parse(content);
   }
 
   async setupSocialMonitoring(
@@ -319,69 +163,15 @@ class GPT5SocialResearchService {
     platforms: string[],
     alertTypes: string[]
   ): Promise<{ success: boolean; monitoringId: string }> {
-    console.log(`Setting up social monitoring for contact: ${contactId}`);
-
-    if (this.isMockMode) {
-      return {
-        success: true,
-        monitoringId: `monitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      };
-    }
-
-    try {
-      const response = await httpClient.post(
-        `${this.apiUrl}/setup-monitoring`,
-        { contactId, platforms, alertTypes },
-        { timeout: 30000 }
-      );
-
-      return response.data as { success: boolean; monitoringId: string };
-    } catch (error) {
-      console.error('Social monitoring setup failed:', error);
-      throw error;
-    }
+    void contactId;
+    void platforms;
+    void alertTypes;
+    throw new Error('Social media monitoring is not available.');
   }
 
-  async getSocialMonitoringAlerts(contactId: string): Promise<SocialMonitoringAlert[]> {
-    if (this.isMockMode) {
-      return [
-        {
-          type: 'job_change',
-          contactId,
-          platform: 'LinkedIn',
-          description: 'Updated job title to Senior Director',
-          importance: 'high',
-          actionable: true,
-          suggestedActions: [
-            'Congratulate on promotion',
-            'Reassess budget authority',
-            'Update contact details',
-          ],
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        },
-        {
-          type: 'new_content',
-          contactId,
-          platform: 'Twitter',
-          description: 'Posted about industry challenges',
-          importance: 'medium',
-          actionable: true,
-          suggestedActions: ['Engage with the post', 'Share relevant solution content'],
-          timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-        },
-      ];
-    }
-
-    try {
-      const response = await httpClient.get<SocialMonitoringAlert[]>(
-        `${this.apiUrl}/monitoring-alerts/${contactId}`
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch monitoring alerts:', error);
-      return [];
-    }
+  async getSocialMonitoringAlerts(_contactId: string): Promise<SocialMonitoringAlert[]> {
+    // Social monitoring is not available; there are no alerts to report
+    return [];
   }
 
   async bulkSocialResearch(

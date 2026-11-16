@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { generateAI } from '../services/aiGenerate';
 import { Link } from 'react-router-dom';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../store/contactStore';
@@ -110,45 +111,17 @@ const Dashboard: React.FC = () => {
       // Use real AI to generate recommendations based on actual CRM data
       const contactsArray = Object.values(contacts);
 
-      const response = await fetch('/api/ai/business-analyzer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contacts: contactsArray,
-          deals: deals,
-          tasks: tasks,
-        }),
+      // /api/ai/business-analyzer never existed; generate through the server with the user's OpenAI key
+      const { content } = await generateAI({
+        json: true,
+        tier: 'advanced',
+        prompt: `Analyze this CRM data and return JSON {"recommendations": [{"id": number, "title": string, "description": string, "type": "contact" | "deal" | "task" | "general", "priority": "high" | "medium" | "low", "action": string, "entityId": string | null}]} with up to 5 items, based only on the data.
+
+Contacts: ${JSON.stringify(contactsArray.slice(0, 50))}
+Deals: ${JSON.stringify(Object.values(deals || {}).slice(0, 50))}
+Tasks: ${JSON.stringify(Object.values(tasks || {}).slice(0, 50))}`,
       });
-
-      if (!response.ok) {
-        throw new Error(`Recommendations failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Parse AI recommendations or use structured fallback
-      let recommendations = [];
-      const aiResponse = data.result || data.insights || data.content;
-
-      try {
-        const aiResult = JSON.parse(aiResponse || '{}');
-        recommendations = aiResult.recommendations || [];
-      } catch (parseError) {
-        // Create structured recommendations from AI text
-        recommendations = [
-          {
-            id: 1,
-            title: 'AI Business Analysis',
-            description: aiResponse || 'Business analysis completed',
-            type: 'general',
-            priority: 'medium',
-            action: 'Review AI insights',
-            entityId: null,
-          },
-        ];
-      }
+      const recommendations = JSON.parse(content).recommendations || [];
 
       setAiRecommendations(recommendations);
     } catch (error) {
@@ -172,25 +145,19 @@ const Dashboard: React.FC = () => {
         deals: deals,
       };
 
-      // Call the real AI sales insights API
-      const response = await fetch('/api/ai/sales-insights', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
+      // /api/ai/sales-insights never existed; generate through the server with the user's OpenAI key
+      const { content } = await generateAI({
+        tier: 'advanced',
+        prompt: `Give a short pipeline insight (3-5 sentences) with the single most important next action, based only on this data.
+
+Contacts: ${JSON.stringify(requestData.contacts.slice(0, 50))}
+Deals: ${JSON.stringify(Object.values(requestData.deals || {}).slice(0, 50))}`,
       });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setPipelineInsight(data.result || data.insights || data.content || data.message);
+      setPipelineInsight(content);
     } catch (error) {
       console.error('Error generating pipeline insight:', error);
       setPipelineInsight(
-        'Unable to generate insights at this time. Please ensure your OpenAI API key is configured and try again.'
+        `Unable to generate insights: ${error instanceof Error ? error.message : 'unknown error'}`
       );
     } finally {
       setIsAnalyzing(false);

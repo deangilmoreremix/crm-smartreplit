@@ -24,35 +24,23 @@ const AIModelUsageStats: React.FC<AIModelUsageStatsProps> = ({
 }) => {
   const { isDark } = useTheme();
 
-  // Demo data if no usage provided
-  const demoUsage: ModelUsage[] = [
-    {
-      modelId: 'gemini-2.5-flash',
-      requests: 145,
-      tokensUsed: 87500,
-      cost: 8.75,
-      avgResponseTime: 1.2,
-    },
-    {
-      modelId: 'gemma-2-9b-it',
-      requests: 89,
-      tokensUsed: 42300,
-      cost: 3.45,
-      avgResponseTime: 0.8,
-    },
-    {
-      modelId: 'gemini-2.5-flash-8b',
-      requests: 67,
-      tokensUsed: 33200,
-      cost: 2.1,
-      avgResponseTime: 0.6,
-    },
-  ];
-
-  const stats = usage.length > 0 ? usage : demoUsage;
+  // Only real usage is shown (previously fabricated demo numbers filled an empty list)
+  const stats = usage;
   const totalCost = stats.reduce((sum, stat) => sum + stat.cost, 0);
   const totalRequests = stats.reduce((sum, stat) => sum + stat.requests, 0);
   const totalTokens = stats.reduce((sum, stat) => sum + stat.tokensUsed, 0);
+
+  if (stats.length === 0) {
+    return (
+      <div
+        className={`p-6 rounded-xl border text-sm ${
+          isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-white border-gray-200 text-gray-500'
+        } ${className}`}
+      >
+        No AI model usage recorded for this {timeframe} yet.
+      </div>
+    );
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

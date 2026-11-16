@@ -1,3 +1,5 @@
+import { generateAI } from './aiGenerate';
+
 export interface GPT5Request {
   type:
     | 'email'
@@ -46,91 +48,53 @@ export interface OptimizationResult {
 }
 
 export class GPT5CommunicationService {
-  private baseUrl = '/api/gpt5';
+  // /api/gpt5/* never existed; these call the server's generation route with the user's OpenAI key.
+  // Errors are thrown to the caller instead of returning placeholder results.
 
   async generateContent(params: GPT5Request): Promise<GPT5Response> {
-    try {
-      const response = await fetch(`${this.baseUrl}/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
-
-      if (!response.ok) {
-        throw new Error(`GPT-5 API error: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('GPT-5 generation error:', error);
-      // Return fallback response
-      return {
-        content: 'AI generation temporarily unavailable. Please try again.',
-        confidence: 0,
-        suggestions: [],
-        metadata: {
-          tone: 'neutral',
-          intent: 'fallback',
-          urgency: 'low',
-        },
-      };
-    }
+    const { content } = await generateAI({
+      json: true,
+      prompt: `Write ${params.type} content. Return JSON {"content": string, "confidence": number 0-1, "suggestions": string[], "metadata": {"tone": string, "intent": string, "urgency": "low"|"medium"|"high", "sentiment": "positive"|"neutral"|"negative", "complexity": "simple"|"moderate"|"complex"}}.
+${params.context || ''}
+${params.content ? `Content: ${params.content}` : ''}
+${params.goal ? `Goal: ${params.goal}` : ''}
+${params.tone ? `Tone: ${params.tone}` : ''}
+${params.constraints?.length ? `Constraints: ${params.constraints.join(', ')}` : ''}
+${params.recipient ? `Recipient: ${JSON.stringify(params.recipient)}` : ''}`,
+    });
+    const parsed = JSON.parse(content);
+    return {
+      content: parsed.content || '',
+      confidence: Number(parsed.confidence) || 0,
+      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+      metadata: {
+        tone: parsed.metadata?.tone || params.tone || '',
+        intent: parsed.metadata?.intent || params.type,
+        urgency: parsed.metadata?.urgency || 'low',
+        sentiment: parsed.metadata?.sentiment,
+        complexity: parsed.metadata?.complexity,
+      },
+    };
   }
 
   async analyzeContent(content: string, type: string): Promise<AnalysisResult> {
-    try {
-      const response = await fetch(`${this.baseUrl}/analyze`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, type }),
-      });
+    const { content: result } = await generateAI({
+      json: true,
+      prompt: `Analyze this ${type} content. Return JSON {"sentiment": "positive"|"neutral"|"negative", "intent": string, "keywords": string[], "urgency": "low"|"medium"|"high", "suggestions": string[], "score": number 0-1}.
 
-      if (!response.ok) {
-        throw new Error(`GPT-5 analysis error: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('GPT-5 analysis error:', error);
-      return {
-        sentiment: 'neutral',
-        intent: 'unknown',
-        keywords: [],
-        urgency: 'low',
-        suggestions: [],
-        score: 0.5,
-      };
-    }
+${content}`,
+    });
+    return JSON.parse(result);
   }
 
   async optimizeContent(content: string, goal: string): Promise<OptimizationResult> {
-    try {
-      const response = await fetch(`${this.baseUrl}/optimize`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, goal }),
-      });
+    const { content: result } = await generateAI({
+      json: true,
+      prompt: `Improve this content for the goal "${goal}". Return JSON {"optimizedContent": string, "improvements": string[], "score": number 0-1, "recommendations": string[]}.
 
-      if (!response.ok) {
-        throw new Error(`GPT-5 optimization error: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('GPT-5 optimization error:', error);
-      return {
-        optimizedContent: content,
-        improvements: [],
-        score: 0.5,
-        recommendations: ['Content optimization temporarily unavailable'],
-      };
-    }
+${content}`,
+    });
+    return JSON.parse(result);
   }
 
   async generateVideoScript(params: {

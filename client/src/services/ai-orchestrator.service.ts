@@ -368,7 +368,7 @@ class AIOrchestrator {
 
       return {
         result: result.response,
-        model: 'gpt-4o-assistant-persistent',
+        model: 'gpt-6.1-sol',
         confidence: 95,
         cost: 0.003, // Slightly higher cost for persistent memory
         threadId: result.threadId,

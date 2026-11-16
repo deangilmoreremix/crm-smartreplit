@@ -28,3 +28,17 @@ export async function generateAI(options: GenerateOptions): Promise<GenerateResu
   }
   return { content: data.content || '', model: data.model, usage: data.usage };
 }
+
+/** Image analysis through the server (POST /api/ai/vision/analyze) with the user's OpenAI key. */
+export async function analyzeImageAI(imageUrl: string, prompt?: string): Promise<string> {
+  const response = await fetch('/api/ai/vision/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageUrl, prompt }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || data.error || 'Image analysis is unavailable. Check your OpenAI API key.');
+  }
+  return data.analysis?.analysis || '';
+}

@@ -1,315 +1,105 @@
 import { useState, useCallback } from 'react';
+import { generateAI } from './aiGenerate';
+import { useContactStore } from '../store/contactStore';
+import { useDealStore } from '../store/dealStore';
+import { useTaskStore } from '../store/taskStore';
 
-// Mock data for CRM functions
-const mockContacts = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john@example.com',
-    company: 'ABC Corp',
-    deal_value: 50000,
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    company: 'XYZ Inc',
-    deal_value: 75000,
-  },
-  {
-    id: '3',
-    name: 'Mike Chen',
-    email: 'mike@example.com',
-    company: 'Tech Solutions',
-    deal_value: 120000,
-  },
-];
-
-const mockDeals = [
-  {
-    id: '1',
-    title: 'ABC Corp Integration',
-    status: 'negotiation',
-    value: 50000,
-    contact: 'John Smith',
-  },
-  {
-    id: '2',
-    title: 'XYZ Software License',
-    status: 'proposal',
-    value: 75000,
-    contact: 'Sarah Johnson',
-  },
-  {
-    id: '3',
-    title: 'Tech Solutions Upgrade',
-    status: 'qualified',
-    value: 120000,
-    contact: 'Mike Chen',
-  },
-];
-
-const mockTasks = [
-  {
-    id: '1',
-    title: 'Follow up with John',
-    status: 'pending',
-    priority: 'high',
-    contact: 'John Smith',
-  },
-  {
-    id: '2',
-    title: 'Send proposal to Sarah',
-    status: 'in-progress',
-    priority: 'medium',
-    contact: 'Sarah Johnson',
-  },
-  {
-    id: '3',
-    title: 'Demo prep for Mike',
-    status: 'completed',
-    priority: 'high',
-    contact: 'Mike Chen',
-  },
-];
+/**
+ * Function-calling assistant over the user's real CRM data (contacts, deals, tasks from the stores).
+ * The model answers questions from a snapshot of that data and may request one action
+ * (createTask / scheduleFollowUp), which is executed against the task store.
+ */
 
 interface FunctionCall {
   name: string;
   arguments: any;
 }
 
-interface Message {
-  role: 'user' | 'assistant' | 'function';
+interface AssistantResult {
   content: string;
-  functionCall?: FunctionCall;
-  name?: string;
+  function_call?: FunctionCall;
 }
 
-// Available functions for the AI assistant
-const availableFunctions = {
-  searchContacts: (params: { query: string; limit?: number }) => {
-    const { query, limit = 10 } = params;
-    const filtered = mockContacts
-      .filter(
-        (contact) =>
-          contact.name.toLowerCase().includes(query.toLowerCase()) ||
-          contact.company.toLowerCase().includes(query.toLowerCase()) ||
-          contact.email.toLowerCase().includes(query.toLowerCase())
-      )
-      .slice(0, limit);
+export const functionSchemas = [
+  { name: 'searchContacts', description: 'Search contacts by name, company or email' },
+  { name: 'searchDeals', description: 'Search deals by title, stage or value' },
+  { name: 'getContactInfo', description: 'Details of a contact with related deals and tasks' },
+  { name: 'getDealInfo', description: 'Details of a deal with related contact and tasks' },
+  { name: 'createTask', description: 'Create a task' },
+  { name: 'scheduleFollowUp', description: 'Schedule a follow-up task with a contact' },
+];
 
-    return {
-      contacts: filtered,
-      count: filtered.length,
-      query,
-    };
-  },
-
-  searchDeals: (params: { query?: string; status?: string; minValue?: number; limit?: number }) => {
-    const { query, status, minValue, limit = 10 } = params;
-    let filtered = mockDeals;
-
-    if (query) {
-      filtered = filtered.filter(
-        (deal) =>
-          deal.title.toLowerCase().includes(query.toLowerCase()) ||
-          deal.contact.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-
-    if (status) {
-      filtered = filtered.filter((deal) => deal.status === status);
-    }
-
-    if (minValue) {
-      filtered = filtered.filter((deal) => deal.value >= minValue);
-    }
-
-    return {
-      deals: filtered.slice(0, limit),
-      count: filtered.length,
-      totalValue: filtered.reduce((sum, deal) => sum + deal.value, 0),
-    };
-  },
-
-  getContactInfo: (params: { contactId: string }) => {
-    const contact = mockContacts.find((c) => c.id === params.contactId);
-    if (!contact) {
-      return { error: 'Contact not found' };
-    }
-
-    const relatedDeals = mockDeals.filter((d) => d.contact === contact.name);
-    const relatedTasks = mockTasks.filter((t) => t.contact === contact.name);
-
-    return {
-      contact,
-      deals: relatedDeals,
-      tasks: relatedTasks,
-      totalDealValue: relatedDeals.reduce((sum, deal) => sum + deal.value, 0),
-    };
-  },
-
-  getDealInfo: (params: { dealId: string }) => {
-    const deal = mockDeals.find((d) => d.id === params.dealId);
-    if (!deal) {
-      return { error: 'Deal not found' };
-    }
-
-    const contact = mockContacts.find((c) => c.name === deal.contact);
-    const relatedTasks = mockTasks.filter((t) => t.contact === deal.contact);
-
-    return {
-      deal,
-      contact,
-      tasks: relatedTasks,
-    };
-  },
-
-  createTask: (params: {
-    title: string;
-    contact?: string;
-    priority?: 'low' | 'medium' | 'high';
-    dueDate?: string;
-  }) => {
-    const newTask = {
-      id: String(Date.now()),
-      title: params.title,
-      contact: params.contact || 'Unassigned',
-      priority: params.priority || 'medium',
-      status: 'pending' as const,
-      dueDate: params.dueDate,
-      createdAt: new Date().toISOString(),
-    };
-
-    return {
-      task: newTask,
-      message: `Task "${newTask.title}" created successfully`,
-    };
-  },
-
-  scheduleFollowUp: (params: { contactName: string; date: string; notes?: string }) => {
-    const followUp = {
-      id: String(Date.now()),
-      contact: params.contactName,
-      scheduledDate: params.date,
-      notes: params.notes || '',
-      type: 'follow-up',
-      status: 'scheduled',
-    };
-
-    return {
-      followUp,
-      message: `Follow-up scheduled with ${params.contactName} for ${params.date}`,
-    };
-  },
-};
+const MAX_ITEMS = 50;
 
 export function useOpenAIFunctions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { contacts } = useContactStore();
+  const { deals } = useDealStore();
+  const { tasks, addTask } = useTaskStore();
 
-  const executeFunctionCall = useCallback((functionCall: FunctionCall) => {
-    try {
-      const { name, arguments: args } = functionCall;
-
-      if (!(name in availableFunctions)) {
-        throw new Error(`Function "${name}" not found`);
+  const executeFunctionCall = useCallback(
+    (functionCall: FunctionCall) => {
+      const { name, arguments: args = {} } = functionCall;
+      if (name === 'createTask' || name === 'scheduleFollowUp') {
+        const title =
+          name === 'scheduleFollowUp'
+            ? `Follow up with ${args.contactName || args.contact || 'contact'}${args.notes ? `: ${args.notes}` : ''}`
+            : args.title || 'New task';
+        addTask({
+          title,
+          description: args.notes || args.description || '',
+          priority: ['low', 'medium', 'high'].includes(args.priority) ? args.priority : 'medium',
+          status: 'pending',
+          dueDate: args.dueDate || args.date ? new Date(args.dueDate || args.date) : undefined,
+          type: name === 'scheduleFollowUp' ? 'follow-up' : 'other',
+        } as any);
+        return { message: `Task "${title}" created` };
       }
+      throw new Error(`Function "${name}" is not available`);
+    },
+    [addTask]
+  );
 
-      const func = availableFunctions[name as keyof typeof availableFunctions];
-      const result = func(args);
-
-      return result;
-    } catch (err) {
-      console.error('Function execution error:', err);
-      throw err;
-    }
-  }, []);
-
-  const processMessage = useCallback(
+  const salesAssistantWithFunctions = useCallback(
     async (
-      messages: Message[],
-      enabledFunctions: string[] = Object.keys(availableFunctions)
-    ): Promise<string> => {
+      query: string,
+      context = '',
+      previousMessages: Array<{ role: string; content: string }> = [],
+      enabledFunctions: string[] = functionSchemas.map((f) => f.name)
+    ): Promise<AssistantResult> => {
       setIsLoading(true);
       setError(null);
-
       try {
-        // Simulate AI processing delay
-        await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
+        const snapshot = {
+          contacts: Object.values(contacts || {})
+            .slice(0, MAX_ITEMS)
+            .map((c: any) => ({ id: c.id, name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim(), company: c.company, email: c.email, title: c.title, status: c.status })),
+          deals: (deals || []).slice(0, MAX_ITEMS).map((d: any) => ({ id: d.id, title: d.title, value: d.value, stage: d.stage, probability: d.probability, contact: d.contactName || d.contact })),
+          tasks: (tasks || []).slice(0, MAX_ITEMS).map((t: any) => ({ id: t.id, title: t.title, status: t.status, priority: t.priority, dueDate: t.dueDate })),
+        };
+        const actions = enabledFunctions.filter((f) => f === 'createTask' || f === 'scheduleFollowUp');
 
-        const lastMessage = messages[messages.length - 1];
-        const userQuery = lastMessage.content.toLowerCase();
+        const { content } = await generateAI({
+          json: true,
+          system: `You are a CRM sales assistant. ${context}
+Answer only from the CRM data below; say so if the data does not contain the answer.
+${actions.length ? `You may request one action: ${actions.join(', ')}.` : 'You cannot perform actions.'}
+Respond as JSON: {"reply": string, "action": null | {"name": "createTask" | "scheduleFollowUp", "arguments": {"title"?: string, "contactName"?: string, "priority"?: "low"|"medium"|"high", "dueDate"?: "YYYY-MM-DD", "notes"?: string}}}
 
-        // Simple pattern matching to determine which function to call
-        let response = '';
-        let functionCalled = false;
+CRM data: ${JSON.stringify(snapshot)}`,
+          prompt: [...previousMessages.slice(-10).map((m) => `${m.role}: ${m.content}`), `user: ${query}`].join('\n'),
+        });
 
-        if (
-          userQuery.includes('find') ||
-          userQuery.includes('search') ||
-          userQuery.includes('show')
-        ) {
-          if (userQuery.includes('contact')) {
-            const searchResult = executeFunctionCall({
-              name: 'searchContacts',
-              arguments: { query: userQuery.split(' ').slice(-1)[0] || '', limit: 5 },
-            }) as { contacts: any[]; count: number; query: string };
-
-            response = `I found ${searchResult.count} contacts:\n\n`;
-            searchResult.contacts.forEach((contact: any) => {
-              response += `• ${contact.name} (${contact.company}) - ${contact.email}\n`;
-            });
-            functionCalled = true;
-          } else if (userQuery.includes('deal')) {
-            const searchResult = executeFunctionCall({
-              name: 'searchDeals',
-              arguments: { limit: 5 },
-            }) as { deals: any[]; count: number; totalValue: number };
-
-            response = `Here are the current deals (Total value: $${searchResult.totalValue.toLocaleString()}):\n\n`;
-            searchResult.deals.forEach((deal: any) => {
-              response += `• ${deal.title} - $${deal.value.toLocaleString()} (${deal.status})\n`;
-            });
-            functionCalled = true;
-          }
-        } else if (userQuery.includes('create') && userQuery.includes('task')) {
-          const taskTitle = userQuery.replace(/create|task|a|new/g, '').trim();
-          const createResult = executeFunctionCall({
-            name: 'createTask',
-            arguments: { title: taskTitle || 'New task', priority: 'medium' },
-          }) as { task: any; message: string };
-
-          response = createResult.message;
-          functionCalled = true;
-        } else if (userQuery.includes('follow') && userQuery.includes('up')) {
-          const scheduleResult = executeFunctionCall({
-            name: 'scheduleFollowUp',
-            arguments: {
-              contactName: 'Selected Contact',
-              date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            },
-          }) as { followUp: any; message: string };
-
-          response = scheduleResult.message;
-          functionCalled = true;
+        const parsed = JSON.parse(content);
+        let reply: string = parsed.reply || '';
+        let functionCall: FunctionCall | undefined;
+        if (parsed.action?.name && actions.includes(parsed.action.name)) {
+          functionCall = { name: parsed.action.name, arguments: parsed.action.arguments || {} };
+          const result = executeFunctionCall(functionCall);
+          reply = `${reply}\n\n${result.message}`.trim();
         }
-
-        if (!functionCalled) {
-          response = `I can help you with:
-• Searching contacts and deals
-• Creating tasks
-• Scheduling follow-ups
-• Getting contact or deal information
-
-Try asking something like:
-• "Find contacts at ABC Corp"
-• "Show me all deals"
-• "Create a task to call John"
-• "Schedule a follow-up with Sarah"`;
-        }
-
-        return response;
+        return { content: reply, function_call: functionCall };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An error occurred';
         setError(errorMessage);
@@ -318,14 +108,25 @@ Try asking something like:
         setIsLoading(false);
       }
     },
-    [executeFunctionCall]
+    [contacts, deals, tasks, executeFunctionCall]
+  );
+
+  const processMessage = useCallback(
+    async (messages: Array<{ role: string; content: string }>, enabledFunctions?: string[]) => {
+      const last = messages[messages.length - 1];
+      const result = await salesAssistantWithFunctions(last?.content || '', '', messages.slice(0, -1), enabledFunctions);
+      return result.content;
+    },
+    [salesAssistantWithFunctions]
   );
 
   return {
+    salesAssistantWithFunctions,
     processMessage,
     executeFunctionCall,
+    functionSchemas,
     isLoading,
     error,
-    availableFunctions: Object.keys(availableFunctions),
+    availableFunctions: functionSchemas.map((f) => f.name),
   };
 }

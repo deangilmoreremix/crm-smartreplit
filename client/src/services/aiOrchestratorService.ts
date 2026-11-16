@@ -51,13 +51,8 @@ class AIOrchestratorService {
 
   private initializeStats() {
     const models = [
-      'gemma-2-2b-it',
-      'gemma-2-9b-it',
-      'gemma-2-27b-it',
-      'gemini-2.5-flash',
-      'gemini-2.5-flash-8b',
-      'gpt-4o-mini',
-      'gpt-3.5-turbo',
+      'gpt-6-luna',
+      'gpt-6.1-sol',
     ];
 
     models.forEach((model) => {
@@ -197,23 +192,16 @@ class AIOrchestratorService {
       if (status.configured) {
         // If OpenAI is available, prefer it for quality tasks
         if (context.priority === 'quality' && feature === 'business_analysis') {
-          return 'gpt-4o-mini';
-        } else if (context.priority === 'cost') {
-          return 'gpt-3.5-turbo';
-        } else {
-          return 'gpt-4o-mini';
+          return 'gpt-6.1-sol';
         }
+        return 'gpt-6-luna';
       }
     } catch (error) {
       console.warn('Failed to check server availability for model selection:', error);
     }
 
-    // Default to Gemini models if OpenAI is not available or on error
-    if (context.priority === 'speed') {
-      return 'gemma-2-2b-it';
-    } else {
-      return 'gemini-2.5-flash';
-    }
+    // OpenAI is the only provider; the server reports a missing key when the call is made
+    return 'gpt-6-luna';
   }
 
   /**
@@ -593,7 +581,7 @@ class AIOrchestratorService {
     const useGPT4 =
       (dealData.deals && dealData.deals.some((deal: any) => deal.value > 100000)) ||
       taskContext.complexity === 'high';
-    const defaultModelId = useGPT4 ? 'gpt-4o-mini' : 'gemini-2.5-flash';
+    const defaultModelId = useGPT4 ? 'gpt-6.1-sol' : 'gpt-6-luna';
 
     const modelId = await this.getOptimalModel('deal_insights', {
       ...taskContext,
@@ -799,13 +787,8 @@ class AIOrchestratorService {
    */
   private estimateCost(modelId: string, tokens: number): number {
     const pricing: Record<string, number> = {
-      'gemma-2-2b-it': 0.00000035, // per token
-      'gemma-2-9b-it': 0.0000005, // per token
-      'gemma-2-27b-it': 0.00000125, // per token
-      'gemini-2.5-flash': 0.00000075, // per token
-      'gemini-2.5-flash-8b': 0.00000035, // per token
-      'gpt-4o-mini': 0.00015, // per token
-      'gpt-3.5-turbo': 0.0000015, // per token
+      'gpt-6-luna': 0.0000001, // per input token
+      'gpt-6.1-sol': 0.000002, // per input token
     };
 
     return tokens * (pricing[modelId] || 0.0000015);

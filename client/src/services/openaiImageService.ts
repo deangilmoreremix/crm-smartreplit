@@ -137,107 +137,24 @@ class OpenAIImageService {
   /**
    * Create image variation using DALL-E 2 via server endpoint
    */
+  // Image variations and edits used DALL-E 2 (shut down 2026-05-12) and have no server route.
   async createVariation(
-    imageFile: File,
-    options?: Partial<ImageGenerationOptions>
+    _imageFile: File,
+    _options?: Partial<ImageGenerationOptions>
   ): Promise<ImageGenerationResult> {
-    const serverAvailable = await this.isServerAvailable();
-    if (!serverAvailable) {
-      throw new Error(
-        'Image variation service is not available. Please check server configuration.'
-      );
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('n', String(options?.n || 1));
-      formData.append('size', options?.size || '1024x1024');
-
-      const response = await fetch('/api/openai/images/variation', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Image variation error: ${response.status} - ${errorData.error || 'Unknown error'}`
-        );
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Image variation failed');
-      }
-
-      const imageData = data.data[0];
-
-      return {
-        url: imageData.url,
-        model: 'dall-e-2',
-        size: options?.size || '1024x1024',
-        quality: 'standard',
-      };
-    } catch (error) {
-      console.error('Image variation failed:', error);
-      throw error;
-    }
+    throw new Error('Image variations are not available. Use image generation with a new prompt instead.');
   }
 
   /**
-   * Edit an image using DALL-E 2 via server endpoint
+   * Image editing is not available (see createVariation).
    */
   async editImage(
-    imageFile: File,
-    maskFile: File | undefined,
-    prompt: string,
-    options?: Partial<ImageGenerationOptions>
+    _imageFile: File,
+    _maskFile: File | undefined,
+    _prompt: string,
+    _options?: Partial<ImageGenerationOptions>
   ): Promise<ImageGenerationResult> {
-    const serverAvailable = await this.isServerAvailable();
-    if (!serverAvailable) {
-      throw new Error('Image editing service is not available. Please check server configuration.');
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      if (maskFile) {
-        formData.append('mask', maskFile);
-      }
-      formData.append('prompt', prompt);
-      formData.append('n', String(options?.n || 1));
-      formData.append('size', options?.size || '1024x1024');
-
-      const response = await fetch('/api/openai/images/edit', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Image edit error: ${response.status} - ${errorData.error || 'Unknown error'}`
-        );
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Image edit failed');
-      }
-
-      const imageData = data.data[0];
-
-      return {
-        url: imageData.url,
-        model: 'dall-e-2',
-        size: options?.size || '1024x1024',
-        quality: 'standard',
-      };
-    } catch (error) {
-      console.error('Image edit failed:', error);
-      throw error;
-    }
+    throw new Error('Image editing is not available. Use image generation with a new prompt instead.');
   }
 }
 

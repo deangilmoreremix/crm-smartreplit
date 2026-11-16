@@ -1,3 +1,5 @@
+import { generateAI } from './aiGenerate';
+
 export interface AssistantConfig {
   name: string;
   instructions: string;
@@ -34,30 +36,22 @@ export interface AssistantRun {
 
 export class OpenAIAssistantsService {
   // Assistant Management
-  async createAssistant(config: AssistantConfig) {
-    const response = await fetch('/api/assistants/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
-    });
-    return await response.json();
+  // There is no server-side Assistants API; custom assistants cannot be created, read or deleted.
+  async createAssistant(_config: AssistantConfig): Promise<any> {
+    throw new Error('Custom OpenAI Assistants are not available; use the built-in assistants.');
   }
 
-  async getAssistant(assistantId: string) {
-    const response = await fetch(`/api/assistants/${assistantId}`);
-    return await response.json();
+  async getAssistant(_assistantId: string): Promise<any> {
+    throw new Error('Custom OpenAI Assistants are not available; use the built-in assistants.');
   }
 
-  async deleteAssistant(assistantId: string) {
-    const response = await fetch(`/api/assistants/${assistantId}`, {
-      method: 'DELETE',
-    });
-    return await response.json();
+  async deleteAssistant(_assistantId: string): Promise<any> {
+    throw new Error('Custom OpenAI Assistants are not available; use the built-in assistants.');
   }
 
   async listAssistants(limit = 20) {
-    // For now, return a simulated response since we're using server-side API
-    // In production, this would call an actual backend endpoint
+    // The built-in specialist assistants (chat runs through /api/ai/generate)
+    void limit;
     return {
       data: [
         {
@@ -88,8 +82,8 @@ export class OpenAIAssistantsService {
     };
   }
 
-  async getMessages(threadId: string, limit = 20) {
-    // Simulated response for now
+  async getMessages(_threadId: string, _limit = 20) {
+    // Threads are not stored server-side, so there is no message history to return
     return {
       data: [],
     };
@@ -111,18 +105,22 @@ export class OpenAIAssistantsService {
     threadId?: string,
     metadata?: Record<string, string>
   ): Promise<{ response: string; threadId: string; runId: string }> {
-    const response = await fetch('/api/assistants/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, assistantId, threadId, metadata }),
+    // /api/assistants/chat never existed; answer through the server's generation route
+    void metadata;
+    const instructions: Record<string, string> = {
+      'contact-assistant': 'You are a contact management and relationship intelligence specialist.',
+      'deal-assistant': 'You are a deal progression and sales intelligence specialist.',
+      'task-assistant': 'You are a task prioritization and workflow automation specialist.',
+      'pipeline-assistant': 'You are a sales pipeline management and forecasting specialist.',
+    };
+    const { content } = await generateAI({
+      tier: 'advanced',
+      system: instructions[assistantId] || 'You are a helpful CRM assistant.',
+      prompt: message,
     });
 
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to chat with assistant');
-    }
-
-    return result;
+    const id = threadId || crypto.randomUUID();
+    return { response: content, threadId: id, runId: crypto.randomUUID() };
   }
 
   // Utility Functions

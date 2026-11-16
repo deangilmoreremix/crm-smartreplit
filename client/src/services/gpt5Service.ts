@@ -1,302 +1,111 @@
-// GPT-5 Enhanced Service for Dashboard Components
-// Using OpenAI's o1-preview model (GPT-5) with unified reasoning system
+// Dashboard AI service. Calls the server's OpenAI routes with the signed-in user's own key.
+// Errors are thrown to the caller (no fabricated fallback numbers).
+import { generateAI } from './aiGenerate';
+
+async function postJSON(url: string, body: unknown): Promise<any> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json().catch(() => {
+    throw new Error(`AI service returned an invalid response (${response.status})`);
+  });
+  if (!response.ok || data?.success === false) {
+    throw new Error(data?.message || data?.error || `AI request failed (${response.status})`);
+  }
+  return data;
+}
+
+async function generateJSON(prompt: string, tier: 'default' | 'advanced' = 'advanced'): Promise<any> {
+  const { content } = await generateAI({ prompt, json: true, tier });
+  return JSON.parse(content);
+}
+
 export class GPT5Service {
-private isConfigured = false;
-   private statusCheckPromise: Promise<void> | null = null;
-
-   constructor() {
-     // Don't call async code in constructor - defer to first method call
-   }
-
-  private async checkApiStatus(): Promise<void> {
-    try {
-      const response = await fetch('/api/openai/status');
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const text = await response.text();
-      // Check if response is HTML (error page) rather than JSON
-      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-        throw new Error('Backend returned HTML instead of JSON');
-      }
-      const status = JSON.parse(text);
-      this.isConfigured = status.configured;
-      console.log('GPT5Service: API status checked', status);
-    } catch (error) {
-      console.error('GPT5Service: Failed to check API status:', error);
-      this.isConfigured = false;
-    }
-  }
-
-  /**
-   * GPT-5 Expert-Level Greeting Generation
-   * Leverages unified reasoning system and advanced business intelligence
-   */
+  /** AI greeting for the dashboard (POST /api/openai/smart-greeting). */
   async generateSmartGreeting(userMetrics: any, timeOfDay: string, recentActivity: any) {
-    try {
-      const response = await fetch('/api/openai/smart-greeting', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userMetrics, timeOfDay, recentActivity }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Smart greeting error:', error);
-      return {
-        greeting: `Good ${timeOfDay}! You have ${userMetrics.totalDeals} deals worth $${userMetrics.totalValue.toLocaleString()} in your pipeline.`,
-        insight: 'Network error occurred. Please check your connection.',
-      };
-    }
+    return postJSON('/api/openai/smart-greeting', { userMetrics, timeOfDay, recentActivity });
   }
 
-  /**
-   * GPT-5 Expert-Level KPI Analysis
-   * 94.6% AIME mathematical accuracy with high reasoning effort
-   */
+  /** KPI trend analysis (POST /api/openai/kpi-analysis). */
   async analyzeKPITrends(
     historicalData: any,
     currentMetrics: any,
     chartImages: string[] = [],
     videoData: string[] = []
   ) {
-    try {
-      const response = await fetch('/api/openai/kpi-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ historicalData, currentMetrics, chartImages, videoData }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('KPI analysis error:', error);
-      return {
-        summary: 'Your KPI trends show steady performance. Network error occurred.',
-        recommendations: ['Check network connection', 'Retry analysis'],
-      };
-    }
+    return postJSON('/api/openai/kpi-analysis', { historicalData, currentMetrics, chartImages, videoData });
   }
 
-  /**
-   * GPT-5 Expert-Level Deal Intelligence Analysis
-   * Advanced reasoning with 74.9% SWE-bench coding accuracy
-   */
+  /** Deal intelligence (POST /api/openai/deal-intelligence). */
   async analyzeDealIntelligence(dealData: any, contactHistory: any, marketContext: any) {
-    try {
-      const response = await fetch('/api/openai/deal-intelligence', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ dealData, contactHistory, marketContext }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Deal intelligence error:', error);
-      return {
-        probability_score: 65,
-        risk_level: 'medium',
-        key_factors: ['Network error occurred'],
-        recommendations: ['Check connection and retry'],
-        confidence_level: 'low',
-        estimated_close_days: 30,
-        value_optimization: 0,
-      };
-    }
+    return postJSON('/api/openai/deal-intelligence', { dealData, contactHistory, marketContext });
   }
 
-  /**
-   * GPT-5 Business Intelligence Generation
-   * Expert-level strategic business analysis
-   */
+  /** Business intelligence (POST /api/openai/business-intelligence). */
   async generateBusinessIntelligence(businessData: any, marketContext: any, objectives: any) {
-    try {
-      const response = await fetch('/api/openai/business-intelligence', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ businessData, marketContext, objectives }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Business intelligence error:', error);
-      return {
-        market_insights: ['Digital transformation accelerating', 'Customer expectations rising'],
-        competitive_advantages: ['AI integration', 'Customer-centric approach'],
-        risk_factors: ['Market competition', 'Economic uncertainty'],
-        growth_opportunities: ['Market expansion', 'Product diversification'],
-        strategic_recommendations: [
-          'Invest in AI capabilities',
-          'Strengthen customer relationships',
-        ],
-      };
-    }
+    return postJSON('/api/openai/business-intelligence', { businessData, marketContext, objectives });
   }
 
-  /**
-   * GPT-5 Performance Optimization Analysis
-   * 50-80% efficiency improvement through unified reasoning
-   */
   async optimizePerformance(systemMetrics: any, userBehavior: any, businessGoals: any) {
-    try {
-      const response = await fetch('/api/openai/performance-optimization', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ systemMetrics, userBehavior, businessGoals }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Performance optimization error:', error);
-      return {
-        optimization_score: 70,
-        efficiency_gain: 40,
-        recommended_actions: ['Basic workflow improvements'],
-        expected_roi: '20% productivity gain',
-        implementation_timeline: '2-4 weeks',
-      };
-    }
+    return generateJSON(`Analyze these metrics and suggest performance optimizations. Return JSON {"optimization_score": number 0-100, "efficiency_gain": number (percent), "recommended_actions": string[], "expected_roi": string, "implementation_timeline": string}.
+System metrics: ${JSON.stringify(systemMetrics)}
+User behavior: ${JSON.stringify(userBehavior)}
+Business goals: ${JSON.stringify(businessGoals)}`);
   }
 
-  /**
-   * GPT-5 Advanced Content Generation
-   * Uses context-free grammar and reasoning effort parameters
-   */
   async generateAdvancedContent(
     contentType: string,
     parameters: any,
     reasoning_effort: 'minimal' | 'low' | 'medium' | 'high' = 'medium'
   ) {
-    try {
-      const response = await fetch('/api/openai/advanced-content', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ contentType, parameters, reasoning_effort }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Advanced content generation error:', error);
-      return {
-        content: 'AI content generation temporarily unavailable. Please try again.',
-        reasoning_quality: 'fallback',
-        confidence: 0.5,
-      };
-    }
+    const { content } = await generateAI({
+      prompt: `Create ${contentType} content with these parameters: ${JSON.stringify(parameters)}`,
+      tier: reasoning_effort === 'high' ? 'advanced' : 'default',
+    });
+    return { content };
   }
 
-  /**
-   * GPT-5 Multimodal Analysis
-   * 74.9% SWE-bench coding accuracy with image processing
-   */
-  async analyzeMultimodal(
-    textData: any,
-    images: string[] = [],
-    charts: string[] = [],
-    documents: string[] = []
-  ) {
-    try {
-      const response = await fetch('/api/openai/multimodal-analysis', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ textData, images, charts, documents }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Multimodal analysis error:', error);
-      return {
-        text_insights: ['Analysis temporarily unavailable'],
-        visual_insights: ['Image analysis not available'],
-        combined_insights: ['Multimodal analysis failed'],
-        confidence_score: 0.3,
-      };
-    }
+  /** Text analysis with optional images (images go through the vision route). */
+  async analyzeMultimodal(textData: any, images: string[] = [], charts: string[] = [], documents: string[] = []) {
+    return generateJSON(`Analyze this business data. Return JSON {"text_insights": string[], "combined_insights": string[], "confidence_score": number 0-1}.
+Text data: ${JSON.stringify(textData)}
+Documents: ${JSON.stringify(documents)}
+(${images.length + charts.length} images/charts were provided but are not analyzed here.)`);
   }
 
-  /**
-   * GPT-5 Predictive Analytics
-   * Advanced forecasting with 94.6% AIME mathematical accuracy
-   */
-  async generatePredictiveAnalytics(
-    historicalData: any,
-    forecastPeriod: number = 3,
-    analysisType: string = 'sales'
-  ) {
-    try {
-      const response = await fetch('/api/openai/predictive-analytics', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ historicalData, forecastPeriod, analysisType }),
-      });
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Predictive analytics error:', error);
-      return {
-        predictions: ['Predictive modeling temporarily unavailable'],
-        confidence_intervals: { low: 0.7, high: 0.9 },
-        key_factors: ['Historical trends', 'Market conditions'],
-        accuracy_score: 0.6,
-        forecast_period: forecastPeriod,
-      };
-    }
+  async generatePredictiveAnalytics(historicalData: any, forecastPeriod: number = 3, analysisType: string = 'sales') {
+    const result = await generateJSON(`Forecast ${analysisType} for the next ${forecastPeriod} periods from this historical data. Return JSON {"predictions": string[], "confidence_intervals": {"low": number, "high": number}, "key_factors": string[], "accuracy_score": number 0-1}.
+Data: ${JSON.stringify(historicalData)}`);
+    return { ...result, forecast_period: forecastPeriod };
   }
 
-  /**
-   * GPT-5 Strategic Planning Assistant
-   * Expert-level strategic business planning
-   */
-  async generateStrategicPlan(
-    businessContext: any,
-    goals: any,
-    constraints: any,
-    timeframe: string = '12 months'
-  ) {
-    try {
-      const response = await fetch('/api/openai/strategic-planning', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ businessContext, goals, constraints, timeframe }),
-      });
+  async generateStrategicPlan(businessContext: any, goals: any, constraints: any, timeframe: string = '12 months') {
+    return generateJSON(`Create a ${timeframe} strategic plan. Return JSON {"strategic_objectives": string[], "action_items": string[], "milestones": string[], "risk_mitigation": string[], "success_metrics": string[]}.
+Context: ${JSON.stringify(businessContext)}
+Goals: ${JSON.stringify(goals)}
+Constraints: ${JSON.stringify(constraints)}`);
+  }
 
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error('Strategic planning error:', error);
-      return {
-        strategic_objectives: ['Increase market share', 'Improve customer satisfaction'],
-        action_items: ['Conduct market research', 'Optimize operations'],
-        milestones: ['Q1: Market analysis', 'Q2: Implementation'],
-        risk_mitigation: ['Regular performance reviews', 'Contingency planning'],
-        success_metrics: ['Revenue growth', 'Customer retention'],
-      };
-    }
+  /** Sentiment per message: [{ sentiment: 'positive'|'neutral'|'negative', score: -1..1 }]. */
+  async analyzeSentiment(messages: string[]): Promise<Array<{ sentiment: string; score: number }>> {
+    const result = await generateJSON(
+      `Classify the sentiment of each message. Return JSON {"results": [{"sentiment": "positive"|"neutral"|"negative", "score": number from -1 to 1}]} with one entry per message, in order.
+Messages: ${JSON.stringify(messages)}`,
+      'default'
+    );
+    return Array.isArray(result.results) ? result.results : [];
+  }
+
+  /** Short next-step suggestions for a set of communication activities. */
+  async generateCommunicationSuggestions(activities: any[]): Promise<string[]> {
+    const result = await generateJSON(
+      `Suggest up to 3 concrete next communication steps for these recent activities. Return JSON {"suggestions": string[]}.
+Activities: ${JSON.stringify(activities.slice(0, 30))}`,
+      'default'
+    );
+    return Array.isArray(result.suggestions) ? result.suggestions : [];
   }
 }
 

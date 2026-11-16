@@ -42,7 +42,6 @@ export interface AIProvider {
 
 class AIEnrichmentService {
   private apiUrl: string;
-  private isMockMode = import.meta.env.DEV || import.meta.env.VITE_ENV === 'development';
 
   constructor() {
     // Get Supabase URL and anon key from environment
@@ -50,9 +49,9 @@ class AIEnrichmentService {
     const supabaseKey = supabaseAnonKey || '';
 
     if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase environment variables not defined, using fallback mode');
-      this.apiUrl = '/api/ai-enrichment';
-      this.isMockMode = true;
+      // There is no /api/ai-enrichment route; enrichment needs the Supabase edge function
+      console.warn('Supabase environment variables not defined; AI enrichment is unavailable');
+      this.apiUrl = '';
     } else {
       this.apiUrl = `${supabaseUrl}/functions/v1/ai-enrichment`;
       console.log('Using AI Enrichment Edge Function URL:', this.apiUrl);
@@ -65,25 +64,7 @@ class AIEnrichmentService {
   ];
 
   private hasConfiguredProviders(): boolean {
-    return this.providers.some((provider) => provider.enabled);
-  }
-
-  private generateMockData(input: any): ContactEnrichmentData {
-    return {
-      ...input,
-      confidence: 85,
-      notes: 'Mock enrichment data for development',
-      avatar: 'https://via.placeholder.com/100x100',
-      industry: 'Technology',
-      inferredPersonalityTraits: {
-        Professionalism: 'High',
-        Communication: 'Clear and direct',
-        Leadership: 'Collaborative',
-      },
-      communicationStyle: 'Professional and direct',
-      professionalDemeanor: 'Confident and approachable',
-      imageAnalysisNotes: 'Professional appearance, business attire',
-    };
+    return !!this.apiUrl && this.providers.some((provider) => provider.enabled);
   }
 
   async enrichContactByEmail(
@@ -97,7 +78,7 @@ class AIEnrichmentService {
     // Check if any providers are configured before making the request
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for email enrichment: ${email}`);
-      return this.generateMockData({ email });
+      throw new Error('AI enrichment is not available (Supabase is not configured).');
     }
 
     try {
@@ -117,7 +98,7 @@ class AIEnrichmentService {
           timeout: includeSocialResearch ? 60000 : 30000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         }
       );
@@ -126,8 +107,7 @@ class AIEnrichmentService {
       return response.data;
     } catch (error) {
       console.error('Contact enrichment by email failed', error);
-      // Return graceful fallback data instead of throwing error
-      return this.generateMockData({ email });
+      throw error;
     }
   }
 
@@ -143,7 +123,7 @@ class AIEnrichmentService {
     // Check if any providers are configured before making the request
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for name enrichment: ${firstName} ${lastName}`);
-      return this.generateMockData({ firstName, lastName, company });
+      throw new Error('AI enrichment is not available (Supabase is not configured).');
     }
 
     try {
@@ -158,7 +138,7 @@ class AIEnrichmentService {
           timeout: 30000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         }
       );
@@ -167,7 +147,7 @@ class AIEnrichmentService {
       return response.data;
     } catch (error) {
       console.error('Contact enrichment by name failed', error);
-      return this.generateMockData({ firstName, lastName, company });
+      throw error;
     }
   }
 
@@ -176,7 +156,7 @@ class AIEnrichmentService {
 
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for multimodal enrichment`);
-      return this.generateMockData({ imageUrl });
+      throw new Error('AI enrichment is not available (Supabase is not configured).');
     }
 
     try {
@@ -199,7 +179,7 @@ class AIEnrichmentService {
           timeout: 45000,
           retries: 1,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         }
       );
@@ -208,7 +188,7 @@ class AIEnrichmentService {
       return response.data;
     } catch (error) {
       console.error('Multimodal enrichment failed', error);
-      return this.generateMockData({ imageUrl });
+      throw error;
     }
   }
 
@@ -232,7 +212,7 @@ class AIEnrichmentService {
           timeout: 30000,
           retries: 2,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         }
       );
@@ -264,7 +244,7 @@ class AIEnrichmentService {
 
     if (!this.hasConfiguredProviders()) {
       console.warn(`No AI providers configured for social research enrichment`);
-      return this.generateMockData(contact);
+      throw new Error('AI enrichment is not available (Supabase is not configured).');
     }
 
     try {
@@ -306,7 +286,7 @@ class AIEnrichmentService {
           timeout: 90000,
           retries: 1,
           headers: {
-            Authorization: `Bearer ${this.isMockMode ? '' : supabaseAnonKey}`,
+            Authorization: `Bearer ${supabaseAnonKey}`,
           },
         }
       );
@@ -315,7 +295,7 @@ class AIEnrichmentService {
       return response.data;
     } catch (error) {
       console.error('Comprehensive social research failed', error);
-      return this.generateMockData(contact);
+      throw error;
     }
   }
 

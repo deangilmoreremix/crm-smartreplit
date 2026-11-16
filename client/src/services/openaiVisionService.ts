@@ -1,49 +1,11 @@
-import { useApiStore } from '../store/apiStore';
+import { analyzeImageAI } from './aiGenerate';
 
+// Image analysis goes through the server (POST /api/ai/vision/analyze) with the user's own OpenAI key.
+// It previously called api.openai.com from the browser with a key nothing ever set.
 export const useOpenAIVision = () => {
-  const { apiKeys } = useApiStore();
-
   const analyzeImage = async (imageUrl: string, prompt: string = "What's in this image?") => {
-    if (!apiKeys.openai) {
-      throw new Error('OpenAI API key is not set');
-    }
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKeys.openai}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: imageUrl,
-                  },
-                },
-              ],
-            },
-          ],
-          max_tokens: 300,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content || 'Unable to analyze image';
-    } catch (error) {
-      throw error;
-    }
+    const analysis = await analyzeImageAI(imageUrl, prompt);
+    return analysis || 'Unable to analyze image';
   };
 
   const analyzeImageFile = async (file: File, prompt: string = "What's in this image?") => {
