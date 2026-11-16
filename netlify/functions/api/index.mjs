@@ -1205,6 +1205,215 @@ function currentUserId() {
   return requestContext.getStore()?.userId;
 }
 
+// server/services/openaiResponses.ts
+function outputText(response) {
+  if (typeof response?.output_text === "string" && response.output_text) return response.output_text;
+  const parts = [];
+  for (const item of response?.output || []) {
+    if (item.type === "message") {
+      for (const c of item.content || []) if (c.type === "output_text") parts.push(c.text);
+    }
+  }
+  return parts.join("");
+}
+function extractSources(response) {
+  const seen = /* @__PURE__ */ new Map();
+  for (const item of response?.output || []) {
+    if (item.type !== "message") continue;
+    for (const c of item.content || []) {
+      for (const a of c.annotations || []) {
+        if (a.type === "url_citation" && a.url && !seen.has(a.url)) seen.set(a.url, { url: a.url, title: a.title });
+      }
+    }
+  }
+  return [...seen.values()];
+}
+function extractImages(response) {
+  return (response?.output || []).filter((item) => item.type === "image_generation_call" && item.result).map((item) => item.result);
+}
+function textFormat(json2) {
+  if (!json2) return void 0;
+  if (json2 === true) return { format: { type: "json_object" } };
+  return { format: { type: "json_schema", name: json2.name, schema: json2.schema, strict: true } };
+}
+function toResult(response, wantJson) {
+  const text2 = outputText(response);
+  let data;
+  if (wantJson && text2) {
+    try {
+      data = JSON.parse(text2);
+    } catch {
+      const match = text2.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          data = JSON.parse(match[0]);
+        } catch {
+        }
+      }
+    }
+  }
+  return {
+    id: response.id,
+    status: response.status,
+    text: text2,
+    data,
+    sources: extractSources(response),
+    images: extractImages(response),
+    usage: response.usage,
+    raw: response
+  };
+}
+async function respond(client, options) {
+  const instructions = options.json === true && !/json/i.test(`${options.instructions || ""} ${JSON.stringify(options.input)}`) ? `${options.instructions ? options.instructions + "\n" : ""}Respond with valid JSON.` : options.instructions;
+  const response = await client.responses.create({
+    model: mapLegacyModel(options.model),
+    input: options.input,
+    ...instructions ? { instructions } : {},
+    ...options.json ? { text: textFormat(options.json) } : {},
+    ...options.tools?.length ? { tools: options.tools } : {},
+    ...options.toolChoice ? { tool_choice: options.toolChoice } : {},
+    ...options.maxOutputTokens ? { max_output_tokens: options.maxOutputTokens } : {},
+    ...options.previousResponseId ? { previous_response_id: options.previousResponseId } : {},
+    ...options.conversation ? { conversation: options.conversation } : {},
+    ...options.background ? { background: true } : {},
+    ...options.include?.length ? { include: options.include } : {},
+    // Background mode and conversations need stored responses; everything else is not retained
+    store: options.store ?? Boolean(options.background || options.conversation || options.previousResponseId)
+  });
+  return toResult(response, Boolean(options.json));
+}
+var webSearchTool = (userLocation) => ({
+  type: "web_search",
+  search_context_size: "medium",
+  ...userLocation ? { user_location: { type: "approximate", ...userLocation } } : {}
+});
+async function generateImage(client, options) {
+  const input = options.inputImages?.length ? [
+    {
+      role: "user",
+      content: [
+        { type: "input_text", text: options.prompt },
+        ...options.inputImages.map((url) => ({ type: "input_image", image_url: url }))
+      ]
+    }
+  ] : options.prompt;
+  const result = await respond(client, {
+    model: options.model,
+    input,
+    tools: [
+      {
+        type: "image_generation",
+        model: IMAGE_MODEL,
+        ...options.size ? { size: options.size } : {},
+        ...options.quality ? { quality: options.quality } : {},
+        ...options.inputImages?.length ? { action: "edit" } : {}
+      }
+    ],
+    toolChoice: { type: "image_generation" }
+  });
+  if (!result.images.length) throw new Error(result.text || "No image was generated");
+  return { b64: result.images, responseId: result.id };
+}
+function contentToResponses(content) {
+  if (typeof content === "string" || content == null) return content ?? "";
+  return content.map((part) => {
+    if (part.type === "text") return { type: "input_text", text: part.text };
+    if (part.type === "image_url") {
+      const url = typeof part.image_url === "string" ? part.image_url : part.image_url?.url;
+      return { type: "input_image", image_url: url, ...part.image_url?.detail ? { detail: part.image_url.detail } : {} };
+    }
+    return part;
+  });
+}
+function chatToResponsesParams(params) {
+  const {
+    model,
+    messages: messages2 = [],
+    response_format,
+    max_tokens,
+    max_completion_tokens,
+    tools,
+    tool_choice,
+    stream
+  } = params;
+  const instructions = messages2.filter((m) => m.role === "system" || m.role === "developer").map((m) => typeof m.content === "string" ? m.content : (m.content || []).map((p) => p.text).join("\n")).join("\n\n");
+  const input = messages2.filter((m) => m.role !== "system" && m.role !== "developer").map(
+    (m) => m.role === "tool" ? { type: "function_call_output", call_id: m.tool_call_id, output: String(m.content ?? "") } : { role: m.role, content: contentToResponses(m.content) }
+  );
+  let text2;
+  if (response_format?.type === "json_object") text2 = { format: { type: "json_object" } };
+  if (response_format?.type === "json_schema") {
+    const s = response_format.json_schema || {};
+    text2 = { format: { type: "json_schema", name: s.name || "output", schema: s.schema, strict: s.strict ?? true } };
+  }
+  const needsJsonHint = text2?.format?.type === "json_object" && !/json/i.test(`${instructions} ${JSON.stringify(input)}`);
+  const maxTokens = max_completion_tokens ?? max_tokens;
+  return {
+    model: mapLegacyModel(model),
+    input: input.length ? input : "",
+    ...instructions || needsJsonHint ? { instructions: `${instructions}${needsJsonHint ? "\nRespond with valid JSON." : ""}`.trim() } : {},
+    ...text2 ? { text: text2 } : {},
+    ...maxTokens ? { max_output_tokens: maxTokens } : {},
+    ...tools?.length ? {
+      tools: tools.map(
+        (t) => t.type === "function" && t.function ? {
+          type: "function",
+          name: t.function.name,
+          description: t.function.description,
+          parameters: t.function.parameters ?? { type: "object", properties: {} },
+          strict: t.function.strict ?? false
+        } : t
+      )
+    } : {},
+    ...tool_choice ? { tool_choice: typeof tool_choice === "object" && tool_choice.function ? { type: "function", name: tool_choice.function.name } : tool_choice } : {},
+    ...stream ? { stream: true } : {},
+    store: false
+  };
+}
+function responseToChatCompletion(response) {
+  const calls2 = (response.output || []).filter((item) => item.type === "function_call");
+  const content = outputText(response);
+  return {
+    id: response.id,
+    object: "chat.completion",
+    created: response.created_at,
+    model: response.model,
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: content || null,
+          ...calls2.length ? {
+            tool_calls: calls2.map((c) => ({
+              id: c.call_id,
+              type: "function",
+              function: { name: c.name, arguments: c.arguments }
+            }))
+          } : {}
+        },
+        finish_reason: calls2.length ? "tool_calls" : response.status === "incomplete" ? "length" : "stop"
+      }
+    ],
+    usage: response.usage ? {
+      prompt_tokens: response.usage.input_tokens,
+      completion_tokens: response.usage.output_tokens,
+      total_tokens: response.usage.total_tokens
+    } : void 0
+  };
+}
+async function* responsesStreamAsChatChunks(stream) {
+  for await (const event of stream) {
+    if (event.type === "response.output_text.delta") {
+      yield { object: "chat.completion.chunk", choices: [{ index: 0, delta: { content: event.delta } }] };
+    } else if (event.type === "response.completed") {
+      yield { object: "chat.completion.chunk", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] };
+    } else if (event.type === "error" || event.type === "response.failed") {
+      throw new Error(event.message || event.response?.error?.message || "OpenAI stream failed");
+    }
+  }
+}
+
 // server/services/userOpenAI.ts
 var NO_KEY_MESSAGE = "Add your OpenAI API key in Settings \u2192 API Keys to use AI features.";
 async function getUserApiKey(userId, provider = "openai") {
@@ -1225,14 +1434,6 @@ var GPT_IMAGE_SIZES = {
   "256x256": "1024x1024",
   "512x512": "1024x1024"
 };
-function normalizeChatParams(params) {
-  const { temperature: _temperature, max_tokens, ...rest } = params;
-  return {
-    ...rest,
-    model: mapLegacyModel(rest.model),
-    ...max_tokens != null && rest.max_completion_tokens == null ? { max_completion_tokens: max_tokens } : {}
-  };
-}
 function normalizeImageParams(params) {
   const { style: _style, quality, response_format: _format, size, ...rest } = params;
   return {
@@ -1242,21 +1443,22 @@ function normalizeImageParams(params) {
     ...quality && !["hd", "standard"].includes(quality) ? { quality } : {}
   };
 }
-function wrapClient(client) {
-  const chatCreate = client.chat.completions.create.bind(client.chat.completions);
-  client.chat.completions.create = (params, options) => chatCreate(normalizeChatParams(params), options);
+function wrapClient(client, defaultModel) {
   const responsesCreate = client.responses.create.bind(client.responses);
-  client.responses.create = (params, options) => {
-    const { temperature: _temperature, ...rest } = params;
-    return responsesCreate({ ...rest, model: mapLegacyModel(rest.model) }, options);
+  const createResponse2 = (params, options) => {
+    const { temperature: _temperature, top_p: _topP, ...rest } = params;
+    return responsesCreate({ store: false, ...rest, model: mapLegacyModel(rest.model) }, options);
   };
-  const imagesGenerate = client.images.generate.bind(client.images);
-  client.images.generate = async (params, options) => {
-    const result = await imagesGenerate(normalizeImageParams(params), options);
-    for (const img of result?.data || []) {
-      if (!img.url && img.b64_json) img.url = `data:image/png;base64,${img.b64_json}`;
-    }
-    return result;
+  client.responses.create = createResponse2;
+  client.chat.completions.create = async (params, options) => {
+    const request = chatToResponsesParams(params);
+    if (request.stream) return responsesStreamAsChatChunks(await createResponse2(request, options));
+    return responseToChatCompletion(await createResponse2(request, options));
+  };
+  client.images.generate = async (params) => {
+    const { prompt, size } = normalizeImageParams(params);
+    const { b64 } = await generateImage(client, { model: defaultModel, prompt, size });
+    return { created: Math.floor(Date.now() / 1e3), data: b64.map((b) => ({ b64_json: b, url: `data:image/png;base64,${b}` })) };
   };
   return client;
 }
@@ -1265,7 +1467,7 @@ async function getUserOpenAIClient(userId = currentUserId()) {
   const keyData = await getUserApiKey(userId);
   if (!keyData) return null;
   return {
-    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey })),
+    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey }), mapLegacyModel(keyData.model)),
     model: mapLegacyModel(keyData.model)
   };
 }
@@ -14775,39 +14977,145 @@ function registerAIRoutes(app2) {
       capabilities
     });
   });
-  app2.post(
-    "/api/ai/generate",
-    ...requireAITools,
-    async (req, res) => {
-      const userId = req.userId;
-      try {
-        const { prompt, system, json: json2 = false, tier = "default", maxTokens = 2e3 } = req.body || {};
-        if (!prompt || typeof prompt !== "string") {
-          return res.status(400).json({ error: "prompt is required" });
-        }
-        const openaiData = await createUserOpenAIClient(userId);
-        if (!openaiData) {
-          return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
-        }
-        const model = tier === "advanced" ? ADVANCED_MODEL : openaiData.model;
-        const response = await openaiData.client.chat.completions.create({
-          model,
-          messages: [
-            ...system ? [{ role: "system", content: String(system) }] : [],
-            // json_object mode requires the word "json" in the messages
-            { role: "user", content: json2 ? `${prompt}
-
-Respond with valid JSON only.` : prompt }
-          ],
-          max_tokens: maxTokens,
-          ...json2 ? { response_format: { type: "json_object" } } : {}
-        });
-        res.json({ success: true, content: response.choices[0]?.message?.content || "", model, usage: response.usage });
-      } catch (error) {
-        res.status(500).json({ success: false, error: error?.message || "AI request failed" });
-      }
+  const noKey = (res) => res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+  const sendResult = (res, result, model) => res.json({
+    success: true,
+    content: result.text,
+    data: result.data,
+    sources: result.sources,
+    responseId: result.id,
+    status: result.status,
+    model,
+    usage: result.usage
+  });
+  const buildInput = (prompt, images, files) => images?.length || files?.length ? [
+    {
+      role: "user",
+      content: [
+        { type: "input_text", text: prompt },
+        ...(images || []).map((url) => ({ type: "input_image", image_url: url })),
+        ...(files || []).map(
+          (f) => f.url ? { type: "input_file", file_url: f.url } : { type: "input_file", filename: f.filename, file_data: f.data }
+        )
+      ]
     }
-  );
+  ] : prompt;
+  const runRespond = async (req, res, research) => {
+    const userId = req.userId;
+    try {
+      const {
+        prompt,
+        system,
+        json: json2 = false,
+        schema,
+        schemaName = "result",
+        tier = research ? "advanced" : "default",
+        maxTokens = research ? 4e3 : 2e3,
+        images,
+        files,
+        background = false
+      } = req.body || {};
+      if (!prompt || typeof prompt !== "string") {
+        return res.status(400).json({ error: "prompt is required" });
+      }
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const model = tier === "advanced" ? ADVANCED_MODEL : openaiData.model;
+      const result = await respond(openaiData.client, {
+        model,
+        instructions: system ? String(system) : void 0,
+        input: buildInput(prompt, images, files),
+        json: schema ? { name: String(schemaName), schema } : Boolean(json2),
+        maxOutputTokens: maxTokens,
+        // Web search is limited to research features (POST /api/ai/research)
+        ...research ? { tools: [webSearchTool()], include: ["web_search_call.action.sources"] } : {},
+        background: Boolean(background)
+      });
+      sendResult(res, result, model);
+    } catch (error) {
+      res.status(500).json({ success: false, error: error?.message || "AI request failed" });
+    }
+  };
+  app2.post("/api/ai/generate", ...requireAITools, (req, res) => runRespond(req, res, false));
+  app2.post("/api/ai/research", ...requireAITools, (req, res) => runRespond(req, res, true));
+  app2.get("/api/ai/responses/:id", ...requireAITools, async (req, res) => {
+    const userId = req.userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const response = await openaiData.client.responses.retrieve(req.params.id);
+      sendResult(res, toResult(response, Boolean(response?.text?.format && response.text.format.type !== "text")), response.model);
+    } catch (error) {
+      res.status(500).json({ success: false, error: error?.message || "Failed to fetch response" });
+    }
+  });
+  app2.post("/api/ai/image", ...requireAITools, async (req, res) => {
+    const userId = req.userId;
+    try {
+      const { prompt, size, quality, images } = req.body || {};
+      if (!prompt) return res.status(400).json({ error: "prompt is required" });
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const { b64, responseId } = await generateImage(openaiData.client, {
+        model: openaiData.model,
+        prompt: String(prompt),
+        size,
+        quality,
+        inputImages: Array.isArray(images) ? images : void 0
+      });
+      res.json({ success: true, images: b64.map((b) => `data:image/png;base64,${b}`), responseId, model: IMAGE_MODEL });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error?.message || "Image generation failed" });
+    }
+  });
+  app2.post("/api/ai/conversations", ...requireAITools, async (req, res) => {
+    const userId = req.userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const conversation = await openaiData.client.conversations.create({
+        metadata: { app: "smartcrm", ...req.body?.title ? { title: String(req.body.title).slice(0, 512) } : {} }
+      });
+      res.json({ success: true, conversationId: conversation.id });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error?.message || "Failed to create conversation" });
+    }
+  });
+  app2.post("/api/ai/conversations/:id/messages", ...requireAITools, async (req, res) => {
+    const userId = req.userId;
+    try {
+      const { message, system, tier = "default" } = req.body || {};
+      if (!message) return res.status(400).json({ error: "message is required" });
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const model = tier === "advanced" ? ADVANCED_MODEL : openaiData.model;
+      const result = await respond(openaiData.client, {
+        model,
+        instructions: system ? String(system) : void 0,
+        input: String(message),
+        conversation: req.params.id
+      });
+      sendResult(res, result, model);
+    } catch (error) {
+      res.status(500).json({ success: false, error: error?.message || "Conversation request failed" });
+    }
+  });
+  app2.get("/api/ai/conversations/:id/messages", ...requireAITools, async (req, res) => {
+    const userId = req.userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const page = await openaiData.client.conversations.items.list(req.params.id, { order: "asc", limit: 100 });
+      const messages2 = (page.data || []).filter((item) => item.type === "message").map((item) => ({
+        id: item.id,
+        role: item.role,
+        text: (item.content || []).map((c) => c.text || "").join("")
+      }));
+      res.json({ success: true, messages: messages2 });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error?.message || "Failed to load conversation" });
+    }
+  });
   app2.post(
     "/api/openai/test",
     ...requireAITools,

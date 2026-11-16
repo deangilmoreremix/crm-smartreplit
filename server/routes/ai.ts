@@ -5,6 +5,7 @@
 
 import type { Express, Request, Response } from 'express';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { respond, toResult, generateImage, webSearchTool, type RespondResult } from '../services/openaiResponses';
 import { ADVANCED_MODEL, IMAGE_MODEL, EMBEDDING_MODEL } from '../services/openaiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
@@ -99,41 +100,173 @@ export function registerAIRoutes(app: Express) {
     });
   });
 
-  // Generic text/JSON generation used by the client AI tools (replaces the former Gemini services)
-  app.post(
-    '/api/ai/generate',
-    ...requireAITools,
-    async (req: Request, res: Response) => {
-      const userId = (req as any).userId;
-      try {
-        const { prompt, system, json = false, tier = 'default', maxTokens = 2000 } = req.body || {};
-        if (!prompt || typeof prompt !== 'string') {
-          return res.status(400).json({ error: 'prompt is required' });
-        }
+  // ---- OpenAI Responses API routes (all on the user's own key) ----
 
-        const openaiData = await createUserOpenAIClient(userId);
-        if (!openaiData) {
-          return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
-        }
+  const noKey = (res: Response) =>
+    res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
 
-        const model = tier === 'advanced' ? ADVANCED_MODEL : openaiData.model;
-        const response = await openaiData.client.chat.completions.create({
-          model,
-          messages: [
-            ...(system ? [{ role: 'system' as const, content: String(system) }] : []),
-            // json_object mode requires the word "json" in the messages
-            { role: 'user' as const, content: json ? `${prompt}\n\nRespond with valid JSON only.` : prompt },
-          ],
-          max_tokens: maxTokens,
-          ...(json ? { response_format: { type: 'json_object' as const } } : {}),
-        });
+  const sendResult = (res: Response, result: RespondResult, model: string) =>
+    res.json({
+      success: true,
+      content: result.text,
+      data: result.data,
+      sources: result.sources,
+      responseId: result.id,
+      status: result.status,
+      model,
+      usage: result.usage,
+    });
 
-        res.json({ success: true, content: response.choices[0]?.message?.content || '', model, usage: response.usage });
-      } catch (error: any) {
-        res.status(500).json({ success: false, error: error?.message || 'AI request failed' });
+  /** Prompt plus optional images (URLs / data URLs) and files ({ url } or { filename, data } base64 data URL). */
+  const buildInput = (prompt: string, images?: string[], files?: Array<{ url?: string; filename?: string; data?: string }>) =>
+    images?.length || files?.length
+      ? [
+          {
+            role: 'user',
+            content: [
+              { type: 'input_text', text: prompt },
+              ...(images || []).map((url) => ({ type: 'input_image', image_url: url })),
+              ...(files || []).map((f) =>
+                f.url ? { type: 'input_file', file_url: f.url } : { type: 'input_file', filename: f.filename, file_data: f.data }
+              ),
+            ],
+          },
+        ]
+      : prompt;
+
+  /** Shared body handling for /generate and /research. */
+  const runRespond = async (req: Request, res: Response, research: boolean) => {
+    const userId = (req as any).userId;
+    try {
+      const {
+        prompt,
+        system,
+        json = false,
+        schema,
+        schemaName = 'result',
+        tier = research ? 'advanced' : 'default',
+        maxTokens = research ? 4000 : 2000,
+        images,
+        files,
+        background = false,
+      } = req.body || {};
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: 'prompt is required' });
       }
+
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+
+      const model = tier === 'advanced' ? ADVANCED_MODEL : openaiData.model;
+      const result = await respond(openaiData.client, {
+        model,
+        instructions: system ? String(system) : undefined,
+        input: buildInput(prompt, images, files),
+        json: schema ? { name: String(schemaName), schema } : Boolean(json),
+        maxOutputTokens: maxTokens,
+        // Web search is limited to research features (POST /api/ai/research)
+        ...(research ? { tools: [webSearchTool()], include: ['web_search_call.action.sources'] } : {}),
+        background: Boolean(background),
+      });
+      sendResult(res, result, model);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'AI request failed' });
     }
-  );
+  };
+
+  // Text / JSON / JSON Schema generation with optional image and file input (no web access)
+  app.post('/api/ai/generate', ...requireAITools, (req: Request, res: Response) => runRespond(req, res, false));
+
+  // Research with live web search and citations (social/contact research, enrichment, competitors, markets)
+  app.post('/api/ai/research', ...requireAITools, (req: Request, res: Response) => runRespond(req, res, true));
+
+  // Poll a background response (long research jobs exceed the function time limit)
+  app.get('/api/ai/responses/:id', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const response = await (openaiData.client.responses as any).retrieve(req.params.id);
+      sendResult(res, toResult(response, Boolean(response?.text?.format && response.text.format.type !== 'text')), response.model);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to fetch response' });
+    }
+  });
+
+  // Image generation and editing with the image_generation tool
+  app.post('/api/ai/image', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const { prompt, size, quality, images } = req.body || {};
+      if (!prompt) return res.status(400).json({ error: 'prompt is required' });
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const { b64, responseId } = await generateImage(openaiData.client, {
+        model: openaiData.model,
+        prompt: String(prompt),
+        size,
+        quality,
+        inputImages: Array.isArray(images) ? images : undefined,
+      });
+      res.json({ success: true, images: b64.map((b) => `data:image/png;base64,${b}`), responseId, model: IMAGE_MODEL });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Image generation failed' });
+    }
+  });
+
+  // Conversations (replace the retired Assistants API threads); turns are stored so context carries over
+  app.post('/api/ai/conversations', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const conversation = await (openaiData.client as any).conversations.create({
+        metadata: { app: 'smartcrm', ...(req.body?.title ? { title: String(req.body.title).slice(0, 512) } : {}) },
+      });
+      res.json({ success: true, conversationId: conversation.id });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to create conversation' });
+    }
+  });
+
+  app.post('/api/ai/conversations/:id/messages', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const { message, system, tier = 'default' } = req.body || {};
+      if (!message) return res.status(400).json({ error: 'message is required' });
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const model = tier === 'advanced' ? ADVANCED_MODEL : openaiData.model;
+      const result = await respond(openaiData.client, {
+        model,
+        instructions: system ? String(system) : undefined,
+        input: String(message),
+        conversation: req.params.id,
+      });
+      sendResult(res, result, model);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Conversation request failed' });
+    }
+  });
+
+  app.get('/api/ai/conversations/:id/messages', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const page = await (openaiData.client as any).conversations.items.list(req.params.id, { order: 'asc', limit: 100 });
+      const messages = (page.data || [])
+        .filter((item: any) => item.type === 'message')
+        .map((item: any) => ({
+          id: item.id,
+          role: item.role,
+          text: (item.content || []).map((c: any) => c.text || '').join(''),
+        }));
+      res.json({ success: true, messages });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to load conversation' });
+    }
+  });
 
   // OpenAI Test
   app.post(

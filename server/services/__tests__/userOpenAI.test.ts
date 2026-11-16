@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { findFirst, chatCreate } = vi.hoisted(() => ({ findFirst: vi.fn(), chatCreate: vi.fn() }));
+const { findFirst, chatCreate, responsesCreate } = vi.hoisted(() => ({
+  findFirst: vi.fn(),
+  chatCreate: vi.fn(),
+  responsesCreate: vi.fn(),
+}));
 vi.mock('../../db', () => ({ db: { query: { userApiKeys: { findFirst } } } }));
 vi.mock('openai', () => ({
   default: class {
     apiKey: string;
     chat = { completions: { create: chatCreate } };
-    responses = { create: vi.fn() };
+    responses = { create: responsesCreate };
     images = { generate: vi.fn() };
     constructor(options: { apiKey: string }) {
       this.apiKey = options.apiKey;
@@ -15,7 +19,7 @@ vi.mock('openai', () => ({
 }));
 
 import { mapLegacyModel, DEFAULT_MODEL, ADVANCED_MODEL, IMAGE_MODEL } from '../openaiModels';
-import { normalizeChatParams, normalizeImageParams, getUserOpenAIClient } from '../userOpenAI';
+import { normalizeImageParams, getUserOpenAIClient } from '../userOpenAI';
 import { requestContext } from '../requestContext';
 
 describe('mapLegacyModel', () => {
@@ -38,14 +42,6 @@ describe('mapLegacyModel', () => {
 });
 
 describe('request normalisation', () => {
-  it('drops temperature and renames max_tokens for chat', () => {
-    expect(normalizeChatParams({ model: 'gpt-4o-mini', temperature: 0.3, max_tokens: 100, messages: [] })).toEqual({
-      model: DEFAULT_MODEL,
-      messages: [],
-      max_completion_tokens: 100,
-    });
-  });
-
   it('uses gpt-image parameters for images', () => {
     expect(normalizeImageParams({ model: 'dall-e-3', prompt: 'x', size: '1792x1024', quality: 'hd', style: 'vivid' })).toEqual({
       model: IMAGE_MODEL,
@@ -69,11 +65,40 @@ describe('getUserOpenAIClient', () => {
     expect(result?.model).toBe(DEFAULT_MODEL);
     expect((result?.client as any).apiKey).toBe('sk-test');
 
-    await result!.client.chat.completions.create({ model: 'gpt-4o', temperature: 0.2, max_tokens: 50, messages: [] } as any);
-    expect(chatCreate).toHaveBeenCalledWith(
-      { model: ADVANCED_MODEL, messages: [], max_completion_tokens: 50 },
+    responsesCreate.mockResolvedValue({
+      id: 'resp_1',
+      model: ADVANCED_MODEL,
+      status: 'completed',
+      output: [{ type: 'message', content: [{ type: 'output_text', text: '{"ok":true}' }] }],
+      usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
+    });
+    const completion: any = await result!.client.chat.completions.create({
+      model: 'gpt-4o',
+      temperature: 0.2,
+      max_tokens: 50,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: 'Return JSON.' },
+        { role: 'user', content: 'hi' },
+      ],
+    } as any);
+
+    // Sent to /v1/responses, not chat completions
+    expect(chatCreate).not.toHaveBeenCalled();
+    expect(responsesCreate).toHaveBeenCalledWith(
+      {
+        store: false,
+        model: ADVANCED_MODEL,
+        instructions: 'Return JSON.',
+        input: [{ role: 'user', content: 'hi' }],
+        text: { format: { type: 'json_object' } },
+        max_output_tokens: 50,
+      },
       undefined
     );
+    // Returned in the chat-completion shape older code reads
+    expect(completion.choices[0].message.content).toBe('{"ok":true}');
+    expect(completion.usage).toEqual({ prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 });
   });
 
   it('defaults to the signed-in user of the current request', async () => {

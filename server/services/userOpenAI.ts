@@ -2,9 +2,9 @@
  * Per-user OpenAI clients. The app uses each user's own OpenAI key (user_api_keys, provider 'openai');
  * there is no server-wide key fallback.
  *
- * Returned clients normalise requests in one place so older call sites keep working on current models:
- * retired model IDs are mapped, max_tokens -> max_completion_tokens, temperature is dropped (rejected by
- * current reasoning models), and image requests use gpt-image parameters with url filled from b64_json.
+ * Returned clients run on the OpenAI Responses API: chat-completion calls from older code are translated to
+ * /v1/responses (retired model IDs mapped, temperature dropped, store:false), and image requests use the
+ * image_generation tool with url filled from the base64 result.
  */
 import OpenAI from 'openai';
 import { eq, and, desc } from 'drizzle-orm';
@@ -12,6 +12,12 @@ import { db } from '../db';
 import { userApiKeys } from '../../shared/schema';
 import { mapLegacyModel, IMAGE_MODEL } from './openaiModels';
 import { currentUserId } from './requestContext';
+import {
+  chatToResponsesParams,
+  responseToChatCompletion,
+  responsesStreamAsChatChunks,
+  generateImage,
+} from './openaiResponses';
 
 export const NO_KEY_MESSAGE = 'Add your OpenAI API key in Settings → API Keys to use AI features.';
 
@@ -39,17 +45,6 @@ const GPT_IMAGE_SIZES: Record<string, string> = {
   '512x512': '1024x1024',
 };
 
-export function normalizeChatParams(params: any): any {
-  const { temperature: _temperature, max_tokens, ...rest } = params;
-  return {
-    ...rest,
-    model: mapLegacyModel(rest.model),
-    ...(max_tokens != null && rest.max_completion_tokens == null
-      ? { max_completion_tokens: max_tokens }
-      : {}),
-  };
-}
-
 export function normalizeImageParams(params: any): any {
   const { style: _style, quality, response_format: _format, size, ...rest } = params;
   return {
@@ -60,24 +55,28 @@ export function normalizeImageParams(params: any): any {
   };
 }
 
-function wrapClient(client: OpenAI): OpenAI {
-  const chatCreate = client.chat.completions.create.bind(client.chat.completions);
-  (client.chat.completions as any).create = (params: any, options?: any) =>
-    chatCreate(normalizeChatParams(params), options);
-
+/**
+ * Route the SDK's chat and image calls through the Responses API so every text, vision and image request
+ * uses /v1/responses (embeddings keep their own endpoint).
+ */
+function wrapClient(client: OpenAI, defaultModel: string): OpenAI {
   const responsesCreate = client.responses.create.bind(client.responses);
-  (client.responses as any).create = (params: any, options?: any) => {
-    const { temperature: _temperature, ...rest } = params;
-    return responsesCreate({ ...rest, model: mapLegacyModel(rest.model) }, options);
+  const createResponse = (params: any, options?: any) => {
+    const { temperature: _temperature, top_p: _topP, ...rest } = params;
+    return responsesCreate({ store: false, ...rest, model: mapLegacyModel(rest.model) }, options);
+  };
+  (client.responses as any).create = createResponse;
+
+  (client.chat.completions as any).create = async (params: any, options?: any) => {
+    const request = chatToResponsesParams(params);
+    if (request.stream) return responsesStreamAsChatChunks((await createResponse(request, options)) as any);
+    return responseToChatCompletion(await createResponse(request, options));
   };
 
-  const imagesGenerate = client.images.generate.bind(client.images);
-  (client.images as any).generate = async (params: any, options?: any) => {
-    const result: any = await imagesGenerate(normalizeImageParams(params), options);
-    for (const img of result?.data || []) {
-      if (!img.url && img.b64_json) img.url = `data:image/png;base64,${img.b64_json}`;
-    }
-    return result;
+  (client.images as any).generate = async (params: any) => {
+    const { prompt, size } = normalizeImageParams(params);
+    const { b64 } = await generateImage(client, { model: defaultModel, prompt, size });
+    return { created: Math.floor(Date.now() / 1000), data: b64.map((b) => ({ b64_json: b, url: `data:image/png;base64,${b}` })) };
   };
 
   return client;
@@ -91,7 +90,7 @@ export async function getUserOpenAIClient(
   const keyData = await getUserApiKey(userId);
   if (!keyData) return null;
   return {
-    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey })),
+    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey }), mapLegacyModel(keyData.model)),
     model: mapLegacyModel(keyData.model),
   };
 }
