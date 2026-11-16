@@ -77,13 +77,64 @@ const GPT5SmartKPICards: React.FC = () => {
 
     setIsAnalyzing(true);
 
+    // Real comparison point: the deals that already existed 30 days ago (no invented history)
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const pastDeals = dealsArray.filter((d: any) => d.createdAt && new Date(d.createdAt).getTime() < cutoff);
+    const pastPipelineValue = pastDeals.reduce((sum: number, d: any) => sum + Number(d.value || 0), 0);
+    const pastWon = pastDeals.filter((d: any) => d.stage?.id === 'closed-won').length;
+    const pastWinRate = pastDeals.length > 0 ? (pastWon / pastDeals.length) * 100 : 0;
+    const pastActive = pastDeals.filter(
+      (d: any) => d.stage?.id !== 'closed-won' && d.stage?.id !== 'closed-lost'
+    );
+    const pastAvgDealSize = pastActive.length > 0 ? pastPipelineValue / pastActive.length : 0;
+    const pctChange = (current: number, past: number) =>
+      past > 0 ? Math.round(((current - past) / past) * 1000) / 10 : 0;
+    const changeOf = (current: number, past: number) => {
+      const change = pctChange(current, past);
+      return { change: Math.abs(change), changeType: (change < 0 ? 'decrease' : 'increase') as 'increase' | 'decrease' };
+    };
+
+    const buildMetrics = (insights: (string | undefined)[]): SmartKPIMetric[] => [
+      {
+        title: 'Pipeline Value',
+        value: `$${totalPipelineValue.toLocaleString()}`,
+        ...changeOf(totalPipelineValue, pastPipelineValue),
+        icon: DollarSign,
+        description: 'Total pipeline value (change vs 30 days ago)',
+        aiInsight: insights[0],
+      },
+      {
+        title: 'Win Rate',
+        value: `${winRate.toFixed(1)}%`,
+        ...changeOf(winRate, pastWinRate),
+        icon: Target,
+        description: 'Won deals / all deals',
+        aiInsight: insights[1],
+      },
+      {
+        title: 'Avg Deal Size',
+        value: `$${avgDealSize.toLocaleString()}`,
+        ...changeOf(avgDealSize, pastAvgDealSize),
+        icon: BarChart3,
+        description: 'Pipeline value / active deals',
+        aiInsight: insights[2],
+      },
+      {
+        title: 'Active Deals',
+        value: activeDeals.length.toString(),
+        ...changeOf(activeDeals.length, pastActive.length),
+        icon: Award,
+        description: 'Deals in active stages',
+        aiInsight: insights[3],
+      },
+    ];
+
     try {
-      // GPT-5 Enhanced Analysis with timeout
-      const kpiAnalysisPromise = gpt5Service.analyzeKPITrends(
+      const kpiAnalysis: any = await gpt5Service.analyzeKPITrends(
         {
-          historical_pipeline_value: totalPipelineValue * 0.85, // Simulated historical
-          historical_win_rate: winRate * 0.92,
-          historical_deals: dealsArray.length * 0.88,
+          pipeline_value_30_days_ago: pastPipelineValue,
+          win_rate_30_days_ago: pastWinRate,
+          deals_30_days_ago: pastDeals.length,
         },
         {
           current_pipeline_value: totalPipelineValue,
@@ -93,107 +144,18 @@ const GPT5SmartKPICards: React.FC = () => {
         }
       );
 
-      // Add timeout to prevent dashboard blocking
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Analysis timeout')), 3000)
-      );
-
-      const kpiAnalysis = await Promise.race([kpiAnalysisPromise, timeoutPromise]);
-
-      const smartMetrics: SmartKPIMetric[] = [
-        {
-          title: 'Pipeline Value',
-          value: `$${totalPipelineValue.toLocaleString()}`,
-          change: 15.2,
-          changeType: 'increase',
-          icon: DollarSign,
-          description: 'Total pipeline value (AI analyzed)',
-          aiInsight:
-            typeof (kpiAnalysis as any)?.summary === 'string' &&
-            (kpiAnalysis as any)?.summary?.includes('pipeline')
-              ? (kpiAnalysis as any).summary
-              : 'Strong pipeline momentum detected',
-          confidence: 0.92,
-          prediction: `Projected: $${(totalPipelineValue * 1.25).toLocaleString()}`,
-        },
-        {
-          title: 'Win Rate',
-          value: `${winRate.toFixed(1)}%`,
-          change: 8.7,
-          changeType: 'increase',
-          icon: Target,
-          description: 'AI-optimized conversion rate',
-          aiInsight: 'GPT-5 identifies strong closing patterns in current deals',
-          confidence: 0.88,
-          prediction: `Target: ${(winRate * 1.15).toFixed(1)}%`,
-        },
-        {
-          title: 'Avg Deal Size',
-          value: `$${avgDealSize.toLocaleString()}`,
-          change: 12.4,
-          changeType: 'increase',
-          icon: BarChart3,
-          description: 'Deal size trending with AI insights',
-          aiInsight: kpiAnalysis?.recommendations?.[0] || 'Focus on high-value opportunities',
-          confidence: 0.85,
-          prediction: `Growth potential: 22%`,
-        },
-        {
-          title: 'Active Deals',
-          value: activeDeals.length.toString(),
-          change: 5.3,
-          changeType: 'increase',
-          icon: Award,
-          description: 'Deals in active stages',
-          aiInsight: 'GPT-5 suggests prioritizing qualification phase deals',
-          confidence: 0.91,
-          prediction: `Projected closes: ${Math.round(activeDeals.length * (winRate / 100))}`,
-        },
-      ];
-
-      setMetrics(smartMetrics);
+      // Insights come only from the AI response (none are made up)
+      const recommendations: string[] = Array.isArray(kpiAnalysis?.recommendations)
+        ? kpiAnalysis.recommendations.map((r: any) => (typeof r === 'string' ? r : JSON.stringify(r)))
+        : [];
+      const summary = typeof kpiAnalysis?.summary === 'string' ? kpiAnalysis.summary : undefined;
+      setMetrics(buildMetrics([summary, recommendations[0], recommendations[1], recommendations[2]]));
       setLastUpdate(new Date().toLocaleTimeString());
     } catch (error) {
       console.error('GPT-5 KPI Analysis Error:', error);
-
-      // Fallback metrics without AI insights
-      const fallbackMetrics: SmartKPIMetric[] = [
-        {
-          title: 'Pipeline Value',
-          value: `$${totalPipelineValue.toLocaleString()}`,
-          change: 12.0,
-          changeType: 'increase',
-          icon: DollarSign,
-          description: 'Total pipeline value',
-          aiInsight: 'Configure OpenAI API for GPT-5 insights',
-        },
-        {
-          title: 'Win Rate',
-          value: `${winRate.toFixed(1)}%`,
-          change: 5.0,
-          changeType: 'increase',
-          icon: Target,
-          description: 'Current conversion rate',
-        },
-        {
-          title: 'Avg Deal Size',
-          value: `$${avgDealSize.toLocaleString()}`,
-          change: 8.0,
-          changeType: 'increase',
-          icon: BarChart3,
-          description: 'Average deal value',
-        },
-        {
-          title: 'Active Deals',
-          value: activeDeals.length.toString(),
-          change: 3.0,
-          changeType: 'increase',
-          icon: Award,
-          description: 'Deals in progress',
-        },
-      ];
-
-      setMetrics(fallbackMetrics);
+      const message = error instanceof Error ? error.message : 'unknown error';
+      // Metrics are still real; only the AI insight is missing
+      setMetrics(buildMetrics([`AI insights unavailable: ${message}`]));
     } finally {
       setIsAnalyzing(false);
     }

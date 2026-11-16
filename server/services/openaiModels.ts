@@ -7,6 +7,9 @@ export const DEFAULT_MODEL = 'gpt-6-luna'; // high-volume, low cost
 export const ADVANCED_MODEL = 'gpt-6.1-sol'; // complex analysis
 export const IMAGE_MODEL = 'gpt-image-2.5-flare';
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
+// Speech-to-text (Audio API; the Responses API has no transcription). Source: OpenAI speech-to-text guide,
+// which lists whisper-1 / gpt-4o-transcribe as deprecated (shutdown 2027-02-26).
+export const TRANSCRIBE_MODEL = 'gpt-transcribe';
 
 const LEGACY_DEFAULT = new Set([
   'gpt-4o-mini',

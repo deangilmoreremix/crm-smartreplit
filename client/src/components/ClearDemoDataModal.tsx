@@ -16,15 +16,14 @@ const ClearDemoDataModal = ({ isOpen, onClose }: ClearDemoDataModalProps) => {
 
   if (!isOpen) return null;
 
+  // Categories only: the exact amount of sample data depends on what is loaded, so no fixed counts are claimed
   const demoContentItems = [
-    { label: '8 sample contacts', count: 8 },
-    { label: '5 sample deals in pipeline', count: 5 },
-    { label: '12 sample tasks', count: 12 },
-    { label: '6 sample appointments', count: 6 },
-    { label: '15 sample communications', count: 15 },
-    { label: 'AI-generated insights', count: 1 },
-    { label: 'Sample activity feed', count: 1 },
-    { label: 'Demo metrics and KPIs', count: 1 },
+    { label: 'Sample contacts' },
+    { label: 'Sample deals in pipeline' },
+    { label: 'Sample tasks' },
+    { label: 'Sample appointments' },
+    { label: 'Sample communications' },
+    { label: 'Sample activity feed' },
   ];
 
   const handleClear = () => {

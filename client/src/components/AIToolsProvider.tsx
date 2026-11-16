@@ -72,6 +72,9 @@ import AgentWorkflowChat from './aiTools/AgentWorkflowChat';
 // Placeholder for ReasoningContentGenerator - assuming it exists or will be created
 import ReasoningContentGenerator from './aiTools/ReasoningContentGenerator';
 import ImageGallery from './ImageGallery';
+import SpeechToTextContent from './aiTools/SpeechToTextContent';
+import ProposalGenerator from './aiTools/ProposalGenerator';
+import StructuredDataExtraction from './aiTools/StructuredDataExtraction';
 
 export type AIToolType =
   | 'email-analysis'
@@ -182,7 +185,7 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
         return {
           title: 'Proposal Generator',
           icon: <FileText size={24} />,
-          component: null, // Placeholder, actual component not provided
+          component: <ProposalGenerator />,
         };
       case 'call-script':
         return {
@@ -285,7 +288,7 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
         return {
           title: 'Speech to Text',
           icon: <Mic size={24} />,
-          component: null, // Placeholder, actual component not provided
+          component: <SpeechToTextContent />,
         };
       case 'semantic-search':
         return {
@@ -297,7 +300,7 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
         return {
           title: 'Structured Data Extraction',
           icon: <FileJson size={24} />,
-          component: null, // Placeholder, actual component not provided
+          component: <StructuredDataExtraction />,
         };
       case 'streaming-chat':
         return {

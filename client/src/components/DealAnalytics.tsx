@@ -249,17 +249,26 @@ const DealAnalytics: React.FC = () => {
     };
   };
 
-  // Generate trend data
+  // Trend data from the real deals, grouped by the month each deal was created (last 6 months)
   const generateTrendData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const totalValue = Object.values(deals).reduce((sum, deal) => sum + deal.value, 0);
-
-    return months.map((month, index) => ({
-      month,
-      revenue: Math.floor((totalValue * (0.7 + Math.random() * 0.6)) / 6),
-      deals: Math.floor((Object.keys(deals).length * (0.8 + Math.random() * 0.4)) / 6),
-      pipeline: Math.floor((valuesByStatus.active * (0.6 + Math.random() * 0.8)) / 6),
-    }));
+    const now = new Date();
+    const dealList = Object.values(deals);
+    return Array.from({ length: 6 }, (_, i) => {
+      const start = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+      const inMonth = dealList.filter((deal) => {
+        const created = deal.createdAt ? new Date(deal.createdAt) : null;
+        return created && created >= start && created < end;
+      });
+      return {
+        month: start.toLocaleString('en-US', { month: 'short' }),
+        revenue: inMonth.filter((d) => d.stage?.id === 'closed-won').reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+        deals: inMonth.length,
+        pipeline: inMonth
+          .filter((d) => d.stage?.id !== 'closed-won' && d.stage?.id !== 'closed-lost')
+          .reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+      };
+    });
   };
 
   // Calculate conversion rates

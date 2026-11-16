@@ -117,23 +117,13 @@ export default function UserTemplateSystem() {
     }
   };
 
-  const handleDeleteTemplate = async (templateId: number) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
-
-    try {
-      // Mock delete (in production, you'd have a DELETE endpoint)
-      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
-      toast({
-        title: 'Success',
-        description: 'Template deleted successfully',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
+  const handleDeleteTemplate = async (_templateId: number) => {
+    // The server has no delete endpoint for user templates yet, so nothing is removed
+    toast({
+      title: 'Not available yet',
+      description: 'Deleting saved templates is not supported by the server yet.',
+      variant: 'destructive',
+    });
   };
 
   const applyTemplate = (template: UserTemplate) => {
@@ -418,30 +408,12 @@ export default function UserTemplateSystem() {
             </Button>
             <Button
               onClick={() => {
-                // Mock update
-                if (editingTemplate) {
-                  setTemplates((prev) =>
-                    prev.map((t) =>
-                      t.id === editingTemplate.id
-                        ? {
-                            ...t,
-                            name: formData.name,
-                            config: {
-                              role: formData.role,
-                              productTier: formData.productTier,
-                              permissions: formData.permissions,
-                            },
-                          }
-                        : t
-                    )
-                  );
-                  setEditingTemplate(null);
-                  resetForm();
-                  toast({
-                    title: 'Success',
-                    description: 'Template updated successfully',
-                  });
-                }
+                // The server has no update endpoint for user templates yet, so nothing is changed
+                toast({
+                  title: 'Not available yet',
+                  description: 'Editing saved templates is not supported by the server yet.',
+                  variant: 'destructive',
+                });
               }}
             >
               <Save className="h-4 w-4 mr-2" />

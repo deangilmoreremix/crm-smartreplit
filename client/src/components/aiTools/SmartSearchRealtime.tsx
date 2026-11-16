@@ -37,6 +37,8 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  // Why the last search used keyword matching instead of AI (shown to the user)
+  const [keywordReason, setKeywordReason] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
@@ -321,9 +323,11 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
 
         // Sort by similarity score
         results = results.sort((a, b) => b.score - a.score).slice(0, 5);
+        setKeywordReason(null);
       } else {
-        // Fallback to basic keyword search
+        // Keyword search (labelled in the UI) while the AI index is unavailable
         results = performBasicSearch(query);
+        setKeywordReason(embedData.error || 'AI search index not ready');
       }
 
       setSearchResults(results);
@@ -339,8 +343,9 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         console.error('Error performing search:', error);
       }
 
-      // Always fallback to basic search on error
+      // Keyword search on error, labelled with the reason in the UI
       const fallbackResults = performBasicSearch(query);
+      setKeywordReason(error?.message || 'AI search failed');
       setSearchResults(fallbackResults);
 
       if (onSearchResult) {
@@ -565,7 +570,12 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         {/* Search metadata */}
         <div className="bg-gray-50 p-3 rounded-lg">
           <div className="flex items-center text-xs text-gray-500">
-            {embedData.ready ? (
+            {embedData.ready && keywordReason ? (
+              <>
+                <AlertCircle size={14} className="text-amber-500 mr-1.5" />
+                <span>Keyword search results (AI unavailable: {keywordReason})</span>
+              </>
+            ) : embedData.ready ? (
               <>
                 <CheckCircle size={14} className="text-blue-500 mr-1.5" />
                 <span>
@@ -577,8 +587,8 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
               <>
                 <AlertCircle size={14} className="text-amber-500 mr-1.5" />
                 <span>
-                  Basic keyword search active ({sampleContacts.length} contacts,{' '}
-                  {sampleDeals.length} deals)
+                  Keyword search (AI unavailable: {embedData.error || 'AI search index not ready'}) (
+                  {sampleContacts.length} contacts, {sampleDeals.length} deals)
                 </span>
               </>
             )}

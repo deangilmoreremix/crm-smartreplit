@@ -3,10 +3,11 @@
  * Uses user-provided API keys from the database instead of global keys
  */
 
-import type { Express, Request, Response } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
+import { toFile } from 'openai';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
 import { respond, toResult, generateImage, webSearchTool, type RespondResult } from '../services/openaiResponses';
-import { ADVANCED_MODEL, IMAGE_MODEL, EMBEDDING_MODEL } from '../services/openaiModels';
+import { ADVANCED_MODEL, IMAGE_MODEL, EMBEDDING_MODEL, TRANSCRIBE_MODEL } from '../services/openaiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
@@ -213,6 +214,35 @@ export function registerAIRoutes(app: Express) {
       res.status(500).json({ success: false, error: error?.message || 'Image generation failed' });
     }
   });
+
+  // Speech to text (Audio API transcription). The body is the raw audio file (application/octet-stream,
+  // up to 25 MB per OpenAI; Netlify functions accept about 6 MB), with ?filename=recording.webm.
+  app.post(
+    '/api/ai/transcribe',
+    ...requireAITools,
+    express.raw({ type: () => true, limit: '25mb' }),
+    async (req: Request, res: Response) => {
+      const userId = (req as any).userId;
+      try {
+        const audio = req.body;
+        if (!Buffer.isBuffer(audio) || audio.length === 0) {
+          return res.status(400).json({ error: 'Send the audio file as the request body' });
+        }
+        const filename = String(req.query.filename || 'audio.webm').replace(/[^\w.-]/g, '_');
+        const openaiData = await createUserOpenAIClient(userId);
+        if (!openaiData) return noKey(res);
+
+        const transcription: any = await openaiData.client.audio.transcriptions.create({
+          file: await toFile(audio, filename),
+          model: TRANSCRIBE_MODEL,
+          ...(req.query.prompt ? { prompt: String(req.query.prompt) } : {}),
+        });
+        res.json({ success: true, text: transcription.text || '', model: TRANSCRIBE_MODEL });
+      } catch (error: any) {
+        res.status(500).json({ success: false, error: error?.message || 'Transcription failed' });
+      }
+    }
+  );
 
   // Conversations (replace the retired Assistants API threads); turns are stored so context carries over
   app.post('/api/ai/conversations', ...requireAITools, async (req: Request, res: Response) => {

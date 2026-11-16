@@ -1,55 +1,11 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useContactStore } from '../../store/contactStore';
+import { useTaskStore } from '../../store/taskStore';
+import { useDealStore } from '../../store/dealStore';
 import { MoreHorizontal, ArrowRight, Calendar, UserPlus, Users, Plus } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
-
-// Update taskData to include contactIds instead of direct assignee objects
-const taskData = [
-  {
-    day: 'Mon',
-    tasks: 2,
-    assigneeIds: ['1', '2'], // Contact IDs from the contact store
-  },
-  {
-    day: 'Tue',
-    tasks: 0,
-    assigneeIds: [],
-  },
-  {
-    day: 'Wed',
-    tasks: 3,
-    assigneeIds: ['3', '1', '5'],
-  },
-  {
-    day: 'Thu',
-    tasks: 1,
-    assigneeIds: ['4'],
-  },
-  {
-    day: 'Fri',
-    tasks: 4,
-    assigneeIds: ['1', '2', '3', '1'],
-  },
-  {
-    day: 'Sat',
-    tasks: 2,
-    assigneeIds: ['5', '4'],
-  },
-  {
-    day: 'Sun',
-    tasks: 1,
-    assigneeIds: ['2'],
-  },
-];
-
-const funnelData = [
-  { stage: 'Total in Pipeline', value: '350,500', color: 'bg-gray-600' },
-  { stage: 'Qualification', value: '92,350$', color: 'bg-gray-500' },
-  { stage: 'Royal Package Opportunity', value: '67,120$', color: 'bg-gray-400' },
-  { stage: 'Value Proposition', value: '28,980$', color: 'bg-gray-300' },
-];
 
 // Component to display assignee avatars
 const TaskAssignees: React.FC<{
@@ -163,22 +119,64 @@ const TasksAndFunnel: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const today = new Date().getDate();
 
-  // Mock calendar data with assignee IDs
-  const calendarData = Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-    // Randomly determine if this day has assignees
-    const hasAssignees = Math.random() > 0.65;
-    if (!hasAssignees) return { day, assigneeIds: [] };
+  // Real data: tasks from the task store (due dates, linked contacts) and deals from the deal store
+  const tasks = useTaskStore((state) => state.tasks) || [];
+  const dealsRaw = useDealStore((state) => state.deals);
+  const now = new Date();
+  const monthName = now.toLocaleString('en-US', { month: 'long' });
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
-    // Get 1-4 random assignee IDs from our contacts store
-    const contactIds = Object.keys(contacts);
-    const shuffled = [...contactIds].sort(() => 0.5 - Math.random());
-    const count = Math.floor(Math.random() * 4) + 1;
+  const tasksDueOn = (date: Date) =>
+    tasks.filter((t) => {
+      if (!t.dueDate || t.status === 'cancelled') return false;
+      const due = new Date(t.dueDate);
+      return (
+        due.getFullYear() === date.getFullYear() &&
+        due.getMonth() === date.getMonth() &&
+        due.getDate() === date.getDate()
+      );
+    });
+  const contactIdsOf = (list: typeof tasks) =>
+    Array.from(new Set(list.map((t) => t.contactId).filter(Boolean) as string[]));
 
-    return {
-      day,
-      assigneeIds: shuffled.slice(0, count),
-    };
+  const calendarData = Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => ({
+    day,
+    assigneeIds: contactIdsOf(tasksDueOn(new Date(now.getFullYear(), now.getMonth(), day))),
+  }));
+
+  // This week (Mon-Sun)
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
+  const taskData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
+    const due = tasksDueOn(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+    return { day, tasks: due.length, assigneeIds: contactIdsOf(due) };
   });
+
+  // Stage funnel from open deals: total pipeline plus the three largest stages by value
+  const dealList: any[] = Array.isArray(dealsRaw) ? dealsRaw : Object.values(dealsRaw || {});
+  const openDeals = dealList.filter((d) => !['closed-won', 'closed-lost'].includes(d.stage?.id));
+  const money = (n: number) => `$${Math.round(n).toLocaleString()}`;
+  const byStage = new Map<string, number>();
+  openDeals.forEach((d) => {
+    const stage = d.stage?.name || d.stage?.id || 'unknown';
+    byStage.set(stage, (byStage.get(stage) || 0) + (Number(d.value) || 0));
+  });
+  const shades = ['bg-gray-500', 'bg-gray-400', 'bg-gray-300'];
+  const titleCase = (stage: string) =>
+    stage
+      .split(/[-_ ]+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  const funnelData = [
+    {
+      stage: 'Total in Pipeline',
+      value: money(openDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0)),
+      color: 'bg-gray-600',
+    },
+    ...[...byStage.entries()]
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 3)
+      .map(([stage, value], i) => ({ stage: titleCase(stage), value: money(value), color: shades[i] })),
+  ];
 
   const handleAssigneeClick = (id: string) => {
     // In a real implementation, this would open the contact details modal
@@ -219,7 +217,7 @@ const TasksAndFunnel: React.FC = () => {
 
         <div className="mb-4">
           <h4 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-            October
+            {monthName}
           </h4>
           <div className="grid grid-cols-7 gap-1 text-center text-sm mb-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
@@ -272,7 +270,7 @@ const TasksAndFunnel: React.FC = () => {
           <div className={`mt-4 p-4 ${isDark ? 'bg-blue-500/10' : 'bg-blue-50'} rounded-lg`}>
             <div className="flex items-center justify-between mb-2">
               <h5 className={`font-semibold ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>
-                October {selectedDay}
+                {monthName} {selectedDay}
               </h5>
               <button
                 className={`p-1 ${isDark ? 'text-blue-400 hover:bg-blue-500/20' : 'text-blue-600 hover:bg-blue-100'} rounded`}

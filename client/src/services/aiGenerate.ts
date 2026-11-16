@@ -183,3 +183,26 @@ export async function listConversationMessages(conversationId: string): Promise<
   const data = await getJSON(`/api/ai/conversations/${encodeURIComponent(conversationId)}/messages`);
   return Array.isArray(data.messages) ? data.messages : [];
 }
+
+// ---- Speech to text (POST /api/ai/transcribe, OpenAI Audio API) ----
+
+/** Netlify functions accept request bodies up to about 6 MB (OpenAI itself allows 25 MB). */
+export const MAX_TRANSCRIBE_BYTES = 6 * 1024 * 1024;
+
+/** Transcribe an audio file or recording. The raw audio is sent as the request body. */
+export async function transcribeAudio(audio: Blob, filename = 'recording.webm', prompt?: string): Promise<string> {
+  if (audio.size > MAX_TRANSCRIBE_BYTES) {
+    throw new Error('Audio file is too large (max 6 MB). Trim the recording or upload a compressed file.');
+  }
+  const params = new URLSearchParams({ filename, ...(prompt ? { prompt } : {}) });
+  const response = await fetch(`/api/ai/transcribe?${params}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
+    body: audio,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || data.error || `Transcription failed (${response.status})`);
+  }
+  return data.text || '';
+}

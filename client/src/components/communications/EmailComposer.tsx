@@ -22,6 +22,8 @@ interface EmailComposerProps {
   isOpen?: boolean;
   onClose?: () => void;
   selectedContact?: Contact | null;
+  recipient?: Contact | null;
+  mode?: 'compose' | 'reply' | 'forward';
 }
 
 interface EmailTemplate {
@@ -46,11 +48,19 @@ interface EmailMessage {
   contactId?: string;
 }
 
-const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
+const EmailComposer: React.FC<EmailComposerProps> = ({
+  isOpen = true,
+  onClose = () => {},
+  selectedContact,
+  recipient: recipientProp,
+  mode = 'compose',
+}) => {
   const { contacts } = useContactStore();
+  const recipient = recipientProp || selectedContact || null;
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [emailData, setEmailData] = useState({
-    to: selectedContact?.email || '',
+    to: recipientProp?.email || selectedContact?.email || '',
     cc: '',
     bcc: '',
     subject: '',
@@ -67,7 +77,6 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ selectedContact }) => {
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [aiMode, setAiMode] = useState<'ai' | 'template'>('ai');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -144,13 +153,9 @@ Best regards,
         subject: emailDraft.subject,
         body: emailDraft.body,
       }));
-      setAiMode('ai');
     } catch (err) {
-      console.error('AI email generation failed, using template fallback:', err);
-      setAiMode('template');
-      const aiSubject = `Personalized outreach for ${recipient.company || 'your business'}`;
-      const aiBody = `Hi ${recipient.firstName || recipient.name.split(' ')[0]},\n\nI hope this message finds you well. I've been following ${recipient.company || 'your work'} and I'm impressed by your position as ${recipient.position || 'a leader'} in the ${recipient.industry || 'industry'}.\n\nBased on your background and ${recipient.company || 'your company'}'s focus, I believe there might be some interesting opportunities for collaboration.\n\nWould you be open to a brief conversation to explore potential synergies?\n\nBest regards,\n[Your Name]`;
-      setEmailData((prev) => ({ ...prev, subject: aiSubject, body: aiBody }));
+      console.error('AI email generation failed:', err);
+      setActionError(`AI generation unavailable: ${err instanceof Error ? err.message : 'unknown error'}`);
     } finally {
       setIsGeneratingAI(false);
     }
@@ -195,52 +200,79 @@ Best regards,
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Store the email as a communication record on the server (real persistence)
+  const recordCommunication = async (status: 'draft' | 'sent' | 'scheduled') => {
+    const contactId = recipient?.id && /^\d+$/.test(String(recipient.id)) ? Number(recipient.id) : undefined;
+    const response = await fetch('/api/communications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'email',
+        direction: 'outbound',
+        subject: emailData.subject,
+        content: emailData.body,
+        status,
+        ...(contactId ? { contactId } : {}),
+        metadata: {
+          to: emailData.to,
+          cc: emailData.cc,
+          bcc: emailData.bcc,
+          priority: emailData.priority,
+          ...(status === 'scheduled' ? { scheduledTime: emailData.scheduledTime } : {}),
+        },
+      }),
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || `Saving failed (${response.status})`);
+    }
+  };
+
   const saveDraft = async () => {
+    setActionError(null);
     try {
-      // Simulate saving draft
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await recordCommunication('draft');
       setIsDraftSaved(true);
       setTimeout(() => setIsDraftSaved(false), 2000);
     } catch (error) {
-      console.error('Failed to save draft:', error);
+      setActionError(`Failed to save draft: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
   };
 
   const sendEmail = async () => {
+    setActionError(null);
+    if (!emailData.to || !emailData.subject || !emailData.body) {
+      setActionError('Please fill in To, Subject and Message');
+      return;
+    }
     try {
-      // Validate required fields
-      if (!emailData.to || !emailData.subject || !emailData.body) {
-        alert('Please fill in all required fields');
-        return;
-      }
-
-      // Simulate sending email
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Log email activity to contact
-      if (recipient) {
-        // This would integrate with the contact store to log the email
-      }
-
+      // The app has no outgoing mail server: the message opens in the user's email client to send,
+      // and is logged on the contact as a sent communication.
+      await recordCommunication('sent');
+      const params = new URLSearchParams({ subject: emailData.subject, body: emailData.body });
+      if (emailData.cc) params.set('cc', emailData.cc);
+      if (emailData.bcc) params.set('bcc', emailData.bcc);
+      window.location.href = `mailto:${encodeURIComponent(emailData.to)}?${params.toString().replace(/\+/g, '%20')}`;
       onClose();
     } catch (error) {
-      console.error('Failed to send email:', error);
+      setActionError(`Failed to send email: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
   };
 
   const scheduleEmail = async () => {
+    setActionError(null);
     if (!emailData.scheduledTime) {
-      alert('Please select a time to schedule the email');
+      setActionError('Please select a time to schedule the email');
       return;
     }
-
     try {
-      // Simulate scheduling email
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      alert(`Email scheduled for ${new Date(emailData.scheduledTime).toLocaleString()}`);
+      await recordCommunication('scheduled');
+      alert(
+        `Saved as scheduled for ${new Date(emailData.scheduledTime).toLocaleString()}. Automatic sending is not available yet; send it from your email client at that time.`
+      );
       onClose();
     } catch (error) {
-      console.error('Failed to schedule email:', error);
+      setActionError(`Failed to schedule email: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
   };
 
@@ -299,6 +331,11 @@ Best regards,
         {/* Email Form */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           <div className="space-y-4">
+            {actionError && (
+              <div className="p-3 rounded-md border border-red-200 bg-red-50 text-sm text-red-700">
+                {actionError}
+              </div>
+            )}
             {/* Recipients */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div>
@@ -356,9 +393,7 @@ Best regards,
               >
                 <Brain size={16} className="mr-1" />
                 {isGeneratingAI ? 'Generating...' : 'AI Generate'}
-                {!isGeneratingAI && aiMode === 'template' && (
-                  <span className="ml-1.5 text-xs text-purple-500/80">(template)</span>
-                )}
+
               </button>
 
               <button

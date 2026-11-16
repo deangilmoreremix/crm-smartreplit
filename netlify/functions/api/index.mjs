@@ -1155,7 +1155,7 @@ import serverless from "serverless-http";
 // server/app.ts
 import "dotenv/config";
 import { createClient as createClient12 } from "@supabase/supabase-js";
-import express from "express";
+import express2 from "express";
 
 // server/services/userOpenAI.ts
 init_db();
@@ -1168,6 +1168,7 @@ var DEFAULT_MODEL = "gpt-6-luna";
 var ADVANCED_MODEL = "gpt-6.1-sol";
 var IMAGE_MODEL = "gpt-image-2.5-flare";
 var EMBEDDING_MODEL = "text-embedding-3-small";
+var TRANSCRIBE_MODEL = "gpt-transcribe";
 var LEGACY_DEFAULT = /* @__PURE__ */ new Set([
   "gpt-4o-mini",
   "gpt-3.5-turbo",
@@ -14903,6 +14904,8 @@ function registerAIPricingRoutes(app2) {
 }
 
 // server/routes/ai.ts
+import express from "express";
+import { toFile } from "openai";
 var createUserOpenAIClient = (userId) => getUserOpenAIClient(userId);
 function registerAIRoutes(app2) {
   const requireAITools = [requireAuth(), requireEntitlement(FeatureKey.AI_TOOLS)];
@@ -15071,6 +15074,31 @@ function registerAIRoutes(app2) {
       res.status(500).json({ success: false, error: error?.message || "Image generation failed" });
     }
   });
+  app2.post(
+    "/api/ai/transcribe",
+    ...requireAITools,
+    express.raw({ type: () => true, limit: "25mb" }),
+    async (req, res) => {
+      const userId = req.userId;
+      try {
+        const audio = req.body;
+        if (!Buffer.isBuffer(audio) || audio.length === 0) {
+          return res.status(400).json({ error: "Send the audio file as the request body" });
+        }
+        const filename = String(req.query.filename || "audio.webm").replace(/[^\w.-]/g, "_");
+        const openaiData = await createUserOpenAIClient(userId);
+        if (!openaiData) return noKey(res);
+        const transcription = await openaiData.client.audio.transcriptions.create({
+          file: await toFile(audio, filename),
+          model: TRANSCRIBE_MODEL,
+          ...req.query.prompt ? { prompt: String(req.query.prompt) } : {}
+        });
+        res.json({ success: true, text: transcription.text || "", model: TRANSCRIBE_MODEL });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error?.message || "Transcription failed" });
+      }
+    }
+  );
   app2.post("/api/ai/conversations", ...requireAITools, async (req, res) => {
     const userId = req.userId;
     try {
@@ -18143,9 +18171,9 @@ async function healthCheckMiddleware(req, res) {
 }
 
 // server/app.ts
-var app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+var app = express2();
+app.use(express2.json());
+app.use(express2.urlencoded({ extended: false }));
 app.use((_req, _res, next) => requestContext.run({}, next));
 app.use(securityHeaders);
 app.use(corsConfig);

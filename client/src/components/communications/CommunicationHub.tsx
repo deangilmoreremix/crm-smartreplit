@@ -68,63 +68,37 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
   );
   const [viewMode, setViewMode] = useState<'timeline' | 'grouped'>('timeline');
 
-  // Sample communication activities
-  const [activities] = useState<CommunicationActivity[]>([
-    {
-      id: '1',
-      type: 'email',
-      contactId: '1',
-      subject: 'Re: Enterprise Solutions Discussion',
-      content:
-        "Thank you for your interest in our enterprise solutions. I've attached the detailed proposal for your review.",
-      timestamp: new Date('2024-01-20T10:30:00'),
-      direction: 'outgoing',
-      status: 'read',
-      priority: 'high',
-    },
-    {
-      id: '2',
-      type: 'call',
-      contactId: '1',
-      content: 'Discussed pricing and implementation timeline. Follow-up meeting scheduled.',
-      timestamp: new Date('2024-01-19T14:15:00'),
-      direction: 'outgoing',
-      status: 'delivered',
-      duration: 25,
-    },
-    {
-      id: '3',
-      type: 'meeting',
-      contactId: '2',
-      subject: 'Q3 Planning Meeting',
-      content: 'Quarterly planning session to discuss marketing initiatives and budget allocation.',
-      timestamp: new Date('2024-01-18T09:00:00'),
-      direction: 'outgoing',
-      status: 'delivered',
-      duration: 60,
-    },
-    {
-      id: '4',
-      type: 'email',
-      contactId: '4',
-      subject: 'Welcome to our CRM platform',
-      content:
-        "Welcome! We're excited to have you on board. Here's everything you need to get started.",
-      timestamp: new Date('2024-01-17T16:45:00'),
-      direction: 'outgoing',
-      status: 'delivered',
-    },
-    {
-      id: '5',
-      type: 'note',
-      contactId: '3',
-      content:
-        'Contact expressed interest in upgrading to premium plan. Needs approval from finance team.',
-      timestamp: new Date('2024-01-16T11:20:00'),
-      direction: 'outgoing',
-      status: 'delivered',
-    },
-  ]);
+  // Communication history from the server (GET /api/communications)
+  const [activities, setActivities] = useState<CommunicationActivity[]>([]);
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/communications')
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        const rows: any[] = await response.json();
+        if (cancelled) return;
+        setActivities(
+          rows.map((row) => ({
+            id: String(row.id),
+            type: row.type,
+            contactId: row.contactId != null ? String(row.contactId) : '',
+            subject: row.subject || undefined,
+            content: row.content || '',
+            timestamp: new Date(row.createdAt),
+            direction: row.direction === 'inbound' ? 'incoming' : 'outgoing',
+            status: row.status || 'sent',
+            priority: row.metadata?.priority,
+            duration: row.metadata?.duration,
+            metadata: row.metadata,
+          }))
+        );
+      })
+      .catch((err) => !cancelled && setActivitiesError(err instanceof Error ? err.message : 'Failed to load'));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const contactsArray = Object.values(contacts);
 
@@ -346,6 +320,11 @@ const CommunicationHub: React.FC<CommunicationHubProps> = ({
 
       {/* Activities List */}
       <div className="flex-1 overflow-y-auto">
+        {activitiesError && (
+          <div className="m-4 p-3 rounded-md border border-red-200 bg-red-50 text-sm text-red-700">
+            Could not load communications: {activitiesError}
+          </div>
+        )}
         {filteredActivities.length === 0 ? (
           <div className="text-center py-12">
             <MessageSquare className="mx-auto h-12 w-12 text-gray-400" />
