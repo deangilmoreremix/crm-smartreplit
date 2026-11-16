@@ -23,14 +23,15 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }));
 
-vi.mock('./auth', () => ({
+vi.mock('../auth', () => ({
   requireAuth: () => (req: any, res: any, next: any) => {
-    req.session = { userId: 'test-user', userEmail: 'test@test.com' };
+    req.userId = 'test-user';
+    req.userEmail = 'test@test.com';
     next();
   },
 }));
 
-vi.mock('../middleware/entitlements', () => ({
+vi.mock('../../middleware/entitlements', () => ({
   requireEntitlement: () => (req: any, res: any, next: any) => {
     next();
   },

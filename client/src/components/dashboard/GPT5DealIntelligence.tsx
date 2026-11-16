@@ -93,9 +93,9 @@ const GPT5DealIntelligence: React.FC = () => {
               dealTitle: deal.title,
               winProbability: analysis.probability_score || deal.probability || 0,
               riskLevel: analysis.risk_level || 'medium',
-              keyFactors: analysis.key_factors || ['Stage progression', 'Contact engagement'],
-              recommendations: analysis.recommendations || ['Follow up regularly', 'Schedule demo'],
-              expectedOutcome: analysis.expected_outcome || 'Positive outlook',
+              keyFactors: analysis.key_factors || [],
+              recommendations: analysis.recommendations || [],
+              expectedOutcome: analysis.expected_outcome || '',
               confidence:
                 analysis.confidence_level === 'high'
                   ? 0.9
@@ -106,43 +106,33 @@ const GPT5DealIntelligence: React.FC = () => {
               valueOptimization: analysis.value_optimization || 0,
             } as DealIntelligence;
           } catch (error) {
+            // No made-up analysis: deals the AI could not analyse are left out
             console.error('Deal analysis error:', error);
-            // Fallback analysis
-            return {
-              dealId: deal.id.toString(),
-              dealTitle: deal.title,
-              winProbability: deal.probability || 50,
-              riskLevel: 'medium' as const,
-              keyFactors: ['Regular follow-up needed', 'Decision timeline unclear'],
-              recommendations: ['Schedule next meeting', 'Confirm budget authority'],
-              expectedOutcome: 'Requires attention',
-              confidence: 0.6,
-              timeToClose: 30,
-              valueOptimization: Number(deal.value) * 0.1,
-            };
+            return null;
           }
         })
       );
 
-      setDealIntelligence(intelligenceResults);
+      const analysed = intelligenceResults.filter((d): d is DealIntelligence => d !== null);
+      setDealIntelligence(analysed);
 
       // Generate overall insights
       const overallInsights: DealInsight[] = [
         {
           title: 'High-Priority Opportunities',
-          description: `${intelligenceResults.filter((d) => d.winProbability > 70).length} deals show strong win probability`,
+          description: `${analysed.filter((d) => d.winProbability > 70).length} deals show strong win probability`,
           priority: 'high',
           actionable: true,
         },
         {
           title: 'Risk Mitigation Required',
-          description: `${intelligenceResults.filter((d) => d.riskLevel === 'high').length} deals need immediate attention`,
+          description: `${analysed.filter((d) => d.riskLevel === 'high').length} deals need immediate attention`,
           priority: 'high',
           actionable: true,
         },
         {
           title: 'Value Optimization Potential',
-          description: `$${intelligenceResults.reduce((sum, d) => sum + d.valueOptimization, 0).toLocaleString()} in additional revenue possible`,
+          description: `$${analysed.reduce((sum, d) => sum + d.valueOptimization, 0).toLocaleString()} in additional revenue possible`,
           priority: 'medium',
           actionable: true,
         },

@@ -140,6 +140,7 @@ class GeminiAIService {
 
       // Extract JSON from the response text
       const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found in response');
       const parsedData = JSON.parse(jsonMatch[0]);
 
       return {

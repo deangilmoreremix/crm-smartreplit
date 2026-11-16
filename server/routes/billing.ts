@@ -60,16 +60,12 @@ const getSupabase = () =>
 // Pricing for OpenClaw upgrade tiers
 const upgradePricing = {
   smartcrm_bundle: {
-    get priceId() {
-      return requireEnv('STRIPE_SMARTCRM_BUNDLE_PRICE_ID');
-    },
+    priceEnv: 'STRIPE_SMARTCRM_BUNDLE_PRICE_ID',
     amount: 97,
     name: 'SmartCRM Bundle',
   },
   sales_maximizer: {
-    get priceId() {
-      return requireEnv('STRIPE_SALES_MAXIMIZER_PRICE_ID');
-    },
+    priceEnv: 'STRIPE_SALES_MAXIMIZER_PRICE_ID',
     amount: 67,
     name: 'Sales Maximizer',
   },
@@ -142,7 +138,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: upgradePricing[tierId as keyof typeof upgradePricing].priceId,
+          price: requireEnv(upgradePricing[tierId as keyof typeof upgradePricing].priceEnv),
           quantity: 1,
         },
       ],
@@ -175,10 +171,10 @@ router.post('/upgrade', async (req: Request, res: Response) => {
  */
 router.post('/webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
-  const endpointSecret = requireEnv('STRIPE_WEBHOOK_SECRET');
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   const stripeClient = await getStripe();
-  if (!stripeClient) {
+  if (!stripeClient || !endpointSecret) {
     return res.status(500).json({ error: 'Stripe not configured' });
   }
 
@@ -233,7 +229,7 @@ router.get('/plans', async (req: Request, res: Response) => {
       id: tierId,
       name: config.name,
       price: config.amount,
-      priceId: config.priceId,
+      priceId: process.env[config.priceEnv] || null,
     }));
 
     res.json({ plans });

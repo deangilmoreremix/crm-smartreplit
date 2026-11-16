@@ -88,7 +88,7 @@ __export(schema_exports, {
   workflowTriggerTypes: () => workflowTriggerTypes,
   workflows: () => workflows
 });
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, automationRules, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, insertAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
@@ -425,40 +425,42 @@ var init_schema = __esm({
     });
     aiFeatureDefinitions = pgTable("ai_feature_definitions", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      featureKey: text("feature_key").unique().notNull(),
       featureName: text("feature_name").notNull(),
-      provider: text("provider").notNull(),
-      model: text("model"),
-      pricingType: text("pricing_type").default("per_token"),
-      inputPricePerUnit: decimal("input_price_per_unit", { precision: 10, scale: 6 }),
-      outputPricePerUnit: decimal("output_price_per_unit", { precision: 10, scale: 6 }),
-      baseCost: decimal("base_cost", { precision: 10, scale: 4 }),
+      description: text("description"),
+      category: text("category"),
+      baseCreditCost: integer("base_credit_cost").notNull().default(10),
+      minCreditCost: integer("min_credit_cost").default(1),
+      maxCreditCost: integer("max_credit_cost").default(1e3),
       isActive: boolean("is_active").default(true),
-      metadata: jsonb("metadata").default({}),
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
     aiFeatureUsage = pgTable("ai_feature_usage", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: uuid("user_id").references(() => profiles.id).notNull(),
-      featureId: uuid("feature_id").references(() => aiFeatureDefinitions.id).notNull(),
-      inputTokens: integer("input_tokens").default(0),
-      outputTokens: integer("output_tokens").default(0),
-      cost: decimal("cost", { precision: 10, scale: 4 }).default("0"),
-      metadata: jsonb("metadata").default({}),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
+      resellerId: uuid("reseller_id").references(() => profiles.id),
+      featureKey: text("feature_key").notNull(),
+      creditsCharged: integer("credits_charged").notNull(),
+      creditsPaidToPlatform: integer("credits_paid_to_platform").notNull(),
+      resellerProfitCredits: integer("reseller_profit_credits").default(0),
+      context: jsonb("context").default({}),
+      createdAt: timestamp("created_at").defaultNow()
     });
-    aiResellerPricing = pgTable("ai_reseller_pricing", {
-      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      partnerId: uuid("partner_id").references(() => partners.id).notNull(),
-      featureId: uuid("feature_id").references(() => aiFeatureDefinitions.id).notNull(),
-      resellerPrice: decimal("reseller_price", { precision: 10, scale: 4 }).notNull(),
-      minimumPrice: decimal("minimum_price", { precision: 10, scale: 4 }),
-      isActive: boolean("is_active").default(true),
-      metadata: jsonb("metadata").default({}),
-      createdAt: timestamp("created_at").defaultNow(),
-      updatedAt: timestamp("updated_at").defaultNow()
-    });
+    aiResellerPricing = pgTable(
+      "ai_reseller_pricing",
+      {
+        id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+        resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
+        featureKey: text("feature_key").notNull(),
+        retailCreditCost: integer("retail_credit_cost").notNull(),
+        wholesaleCreditCost: integer("wholesale_credit_cost").notNull(),
+        isActive: boolean("is_active").default(true),
+        createdAt: timestamp("created_at").defaultNow(),
+        updatedAt: timestamp("updated_at").defaultNow()
+      },
+      (table) => [unique("unique_reseller_feature").on(table.resellerId, table.featureKey)]
+    );
     workflows = pgTable("workflows", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       name: text("name").notNull(),
@@ -745,44 +747,40 @@ var init_schema = __esm({
     });
     userCredits = pgTable("user_credits", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      userId: uuid("user_id").notNull().references(() => profiles.id),
-      tenantId: uuid("tenant_id"),
-      totalCredits: decimal("total_credits", { precision: 12, scale: 4 }).default("0"),
-      usedCredits: decimal("used_credits", { precision: 12, scale: 4 }).default("0"),
-      availableCredits: decimal("available_credits", { precision: 12, scale: 4 }).default("0"),
+      userId: text("user_id").notNull().unique(),
+      totalCredits: text("total_credits").notNull().default("0"),
+      usedCredits: text("used_credits").notNull().default("0"),
+      availableCredits: text("available_credits").notNull().default("0"),
+      lifetimePurchased: integer("lifetime_purchased").default(0),
+      lifetimeUsed: integer("lifetime_used").default(0),
       lastPurchaseAt: timestamp("last_purchase_at"),
-      version: integer("version").default(1),
-      // Optimistic locking version
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
     creditTransactions = pgTable("credit_transactions", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-      userId: uuid("user_id").notNull().references(() => profiles.id),
-      tenantId: uuid("tenant_id"),
-      type: text("type").notNull(),
+      userId: uuid("user_id").notNull(),
+      type: text("type").notNull().default("purchase"),
       // 'purchase', 'usage', 'refund', 'admin_grant'
-      amount: decimal("amount", { precision: 12, scale: 4 }).notNull(),
+      amount: text("amount").notNull().default("0"),
       // Positive for purchases/grants, negative for usage
-      description: text("description"),
-      balanceBefore: decimal("balance_before", { precision: 12, scale: 4 }),
-      balanceAfter: decimal("balance_after", { precision: 12, scale: 4 }),
+      balanceBefore: text("balance_before"),
+      balanceAfter: text("balance_after"),
+      description: text("description").notNull(),
       stripeTransactionId: text("stripe_transaction_id"),
-      // Link to Stripe if purchased
-      usageEventId: uuid("usage_event_id"),
-      // Link to usage event if deducted for usage
-      idempotencyKey: varchar("idempotency_key", { length: 64 }),
-      // For duplicate prevention
-      createdAt: timestamp("created_at").defaultNow()
+      usageEventId: text("usage_event_id"),
+      metadata: jsonb("metadata").default({}),
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
     });
     resellerCredits = pgTable("reseller_credits", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       resellerId: uuid("reseller_id").references(() => profiles.id).notNull().unique(),
-      wholesaleCreditsPurchased: integer("wholesale_credits_purchased").default(0),
-      wholesaleCreditsUsed: integer("wholesale_credits_used").default(0),
-      wholesaleCreditsAvailable: integer("wholesale_credits_available").default(0),
-      totalRevenueCents: integer("total_revenue_cents").default(0),
-      totalProfitCents: integer("total_profit_cents").default(0),
+      wholesaleCreditsPurchased: integer("wholesale_credits_purchased").notNull().default(0),
+      wholesaleCreditsUsed: integer("wholesale_credits_used").notNull().default(0),
+      wholesaleCreditsAvailable: integer("wholesale_credits_available").notNull().default(0),
+      totalRevenueCents: integer("total_revenue_cents").notNull().default(0),
+      totalProfitCents: integer("total_profit_cents").notNull().default(0),
       lastPurchaseAt: timestamp("last_purchase_at"),
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
@@ -797,7 +795,6 @@ var init_schema = __esm({
       endUserId: uuid("end_user_id").references(() => profiles.id),
       featureKey: text("feature_key"),
       description: text("description"),
-      metadata: json("metadata"),
       createdAt: timestamp("created_at").defaultNow()
     });
     insertContactSchema = createInsertSchema(contacts).omit({
@@ -4482,7 +4479,7 @@ async function getTenantId(userId) {
 }
 router2.get("/", async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4498,7 +4495,7 @@ router2.get("/", async (req, res) => {
 router2.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4517,9 +4514,12 @@ router2.get("/:id", async (req, res) => {
 router2.post("/", async (req, res) => {
   try {
     const { name, triggerType, appSlug, steps } = req.body;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (!name || !triggerType) {
+      return res.status(400).json({ error: "name and triggerType are required" });
     }
     const tenantId = await getTenantId(userId);
     const { data: workflow, error: workflowError } = await supabase.from("workflows").insert({
@@ -4554,7 +4554,7 @@ router2.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, triggerType, enabled, steps } = req.body;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4586,7 +4586,7 @@ router2.put("/:id", async (req, res) => {
 router2.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4602,7 +4602,7 @@ router2.delete("/:id", async (req, res) => {
 router2.get("/:id/runs", async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4618,7 +4618,7 @@ router2.post("/:id/run", async (req, res) => {
   try {
     const { id } = req.params;
     const { triggerData } = req.body;
-    const userId = req.user?.id;
+    const userId = req.userId;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -4664,7 +4664,7 @@ router2.post("/:id/run", async (req, res) => {
 });
 function registerWorkflowRoutes(app2) {
   console.log("Registering workflow routes at /api/workflows");
-  app2.use("/api/workflows", router2);
+  app2.use("/api/workflows", requireAuth(), router2);
 }
 
 // server/routes/billing.ts
@@ -4844,16 +4844,12 @@ var supabaseClient = null;
 var getSupabase = () => supabaseClient ??= createClient4(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 var upgradePricing = {
   smartcrm_bundle: {
-    get priceId() {
-      return requireEnv("STRIPE_SMARTCRM_BUNDLE_PRICE_ID");
-    },
+    priceEnv: "STRIPE_SMARTCRM_BUNDLE_PRICE_ID",
     amount: 97,
     name: "SmartCRM Bundle"
   },
   sales_maximizer: {
-    get priceId() {
-      return requireEnv("STRIPE_SALES_MAXIMIZER_PRICE_ID");
-    },
+    priceEnv: "STRIPE_SALES_MAXIMIZER_PRICE_ID",
     amount: 67,
     name: "Sales Maximizer"
   }
@@ -4903,7 +4899,7 @@ router3.post("/upgrade", async (req, res) => {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: upgradePricing[tierId].priceId,
+          price: requireEnv(upgradePricing[tierId].priceEnv),
           quantity: 1
         }
       ],
@@ -4930,9 +4926,9 @@ router3.post("/upgrade", async (req, res) => {
 });
 router3.post("/webhook", async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const endpointSecret = requireEnv("STRIPE_WEBHOOK_SECRET");
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
   const stripeClient = await getStripe();
-  if (!stripeClient) {
+  if (!stripeClient || !endpointSecret) {
     return res.status(500).json({ error: "Stripe not configured" });
   }
   let event;
@@ -4971,7 +4967,7 @@ router3.get("/plans", async (req, res) => {
       id: tierId,
       name: config.name,
       price: config.amount,
-      priceId: config.priceId
+      priceId: process.env[config.priceEnv] || null
     }));
     res.json({ plans });
   } catch (error) {
@@ -14358,6 +14354,15 @@ var AIPricingService = class {
 init_db();
 init_schema();
 import { eq as eq7, desc as desc6, sql as sql6 } from "drizzle-orm";
+async function getCallerRole(userId) {
+  if (!db || !userId) return "regular_user";
+  const [profile] = await db.select({ role: profiles.role }).from(profiles).where(eq7(profiles.id, userId)).limit(1);
+  const role = profile?.role ?? "regular_user";
+  return role === "wl_user" ? "whitelabel" : role;
+}
+async function getCallerResellerId(_userId) {
+  return void 0;
+}
 function registerAIPricingRoutes(app2) {
   app2.get("/api/admin/ai-features", requireAdmin, async (req, res) => {
     try {
@@ -14441,7 +14446,7 @@ function registerAIPricingRoutes(app2) {
   app2.get("/api/reseller/ai-pricing", requireAuth(), async (req, res) => {
     try {
       const userId = req.userId;
-      const userRole = req.user?.role || req.session?.userRole;
+      const userRole = await getCallerRole(userId);
       if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
@@ -14468,7 +14473,7 @@ function registerAIPricingRoutes(app2) {
     async (req, res) => {
       try {
         const userId = req.userId;
-        const userRole = req.user?.role || req.session?.userRole;
+        const userRole = await getCallerRole(userId);
         const { featureKey } = req.params;
         const { retailCreditCost, wholesaleCreditCost } = req.body;
         if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
@@ -14478,7 +14483,8 @@ function registerAIPricingRoutes(app2) {
         if (feature.length === 0) {
           return res.status(404).json({ success: false, error: "Feature not found" });
         }
-        const { minCreditCost, maxCreditCost } = feature[0];
+        const minCreditCost = feature[0].minCreditCost ?? 1;
+        const maxCreditCost = feature[0].maxCreditCost ?? 1e3;
         if (retailCreditCost < minCreditCost || retailCreditCost > maxCreditCost) {
           return res.status(400).json({
             success: false,
@@ -14501,7 +14507,7 @@ function registerAIPricingRoutes(app2) {
   app2.get("/api/reseller/ai-analytics", requireAuth(), async (req, res) => {
     try {
       const userId = req.userId;
-      const userRole = req.user?.role || req.session?.userRole;
+      const userRole = await getCallerRole(userId);
       if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
         return res.status(403).json({ success: false, error: "Access denied" });
       }
@@ -14521,7 +14527,7 @@ function registerAIPricingRoutes(app2) {
   app2.post("/api/reseller/purchase-credits", requireAuth(), async (req, res) => {
     try {
       const userId = req.userId;
-      const userRole = req.user?.role || req.session?.userRole;
+      const userRole = await getCallerRole(userId);
       const { creditsAmount, paymentMethodId } = req.body;
       if (userRole !== "whitelabel" && userRole !== "reseller" && userRole !== "super_admin") {
         return res.status(403).json({ success: false, error: "Access denied" });
@@ -14547,8 +14553,8 @@ function registerAIPricingRoutes(app2) {
   app2.get("/api/ai-features", requireAuth(), async (req, res) => {
     try {
       const userId = req.userId;
-      const userRole = req.user?.role || req.session?.userRole;
-      const resellerId = req.user?.resellerId;
+      const userRole = await getCallerRole(userId);
+      const resellerId = await getCallerResellerId(userId);
       const features2 = await AIPricingService.getAIFeaturesWithPricing(
         userId,
         userRole,
@@ -14574,8 +14580,8 @@ function registerAIPricingRoutes(app2) {
     try {
       const { featureKey } = req.params;
       const userId = req.userId;
-      const userRole = req.user?.role || req.session?.userRole;
-      const resellerId = req.user?.resellerId;
+      const userRole = await getCallerRole(userId);
+      const resellerId = await getCallerResellerId(userId);
       const features2 = await AIPricingService.getAIFeaturesWithPricing(
         userId,
         userRole,
@@ -14604,8 +14610,8 @@ function registerAIPricingRoutes(app2) {
       try {
         const { featureKey } = req.params;
         const userId = req.userId;
-        const userRole = req.user?.role || req.session?.userRole;
-        const resellerId = req.user?.resellerId;
+        const userRole = await getCallerRole(userId);
+        const resellerId = await getCallerResellerId(userId);
         const features2 = await AIPricingService.getAIFeaturesWithPricing(
           userId,
           userRole,
@@ -14638,7 +14644,7 @@ function registerAIPricingRoutes(app2) {
       try {
         const { featureKey } = req.params;
         const userId = req.userId;
-        const resellerId = req.user?.resellerId;
+        const resellerId = await getCallerResellerId(userId);
         const { description, metadata, context } = req.body;
         const result = await AIPricingService.chargeForFeature(
           userId,

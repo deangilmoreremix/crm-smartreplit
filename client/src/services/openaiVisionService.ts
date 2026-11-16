@@ -25,5 +25,19 @@ export const useOpenAIVision = () => {
     });
   };
 
-  return { analyzeImage, analyzeImageFile };
+  // Used by VisionAnalyzerContent (it called these, but they never existed)
+  const analyzeClientDocument = (imageUrl: string) =>
+    analyzeImage(
+      imageUrl,
+      'This is a client document. Extract the key information (parties, dates, amounts, terms, action items) and summarise it.'
+    );
+
+  const analyzeCompetitorVisuals = (imageUrl: string, competitorName?: string) =>
+    analyzeImage(
+      imageUrl,
+      `Analyse this competitor visual${competitorName ? ` from ${competitorName}` : ''}: messaging, positioning, design, ` +
+        'target audience, and how we could differentiate.'
+    );
+
+  return { analyzeImage, analyzeImageFile, analyzeClientDocument, analyzeCompetitorVisuals };
 };

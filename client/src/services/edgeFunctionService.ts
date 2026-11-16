@@ -94,3 +94,12 @@ export async function generateContent(prompt: string, _type: string): Promise<st
 export async function analyzeText(text: string, analysisType: string): Promise<string> {
   return generate(`Analyze this text (${analysisType}):\n\n${text}`);
 }
+
+// Used by the Business Analyzer page (it called this, but it never existed)
+export async function analyzeBusinessData(business: any): Promise<string> {
+  return generate(
+    `Analyze this business and give a concise report: positioning, strengths, weaknesses, opportunities, ` +
+      `marketing and sales recommendations, and next steps.\n\n${JSON.stringify(business, null, 2)}`,
+    'advanced'
+  );
+}
