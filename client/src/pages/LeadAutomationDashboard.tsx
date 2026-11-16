@@ -17,6 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import GlassCard from '../components/GlassCard';
+import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateAI } from '../services/aiGenerate';
 import { useContactStore } from '../hooks/useContactStore';
 import { useDealStore } from '../store/dealStore';
