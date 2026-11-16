@@ -1285,8 +1285,8 @@ var supabaseUrl = process.env.SUPABASE_URL || "";
 var serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 async function verifySupabaseToken(token) {
   if (!token || !supabaseUrl || !serviceRoleKey) return null;
-  const supabase9 = createClient(supabaseUrl, serviceRoleKey);
-  const { data, error } = await supabase9.auth.getUser(token);
+  const supabase8 = createClient(supabaseUrl, serviceRoleKey);
+  const { data, error } = await supabase8.auth.getUser(token);
   if (error || !data?.user) return null;
   return { id: data.user.id, email: data.user.email };
 }
@@ -1340,8 +1340,8 @@ async function requireAuthHandler(req2, res, next, checkEntitlement) {
     }
     if (checkEntitlement) {
       if (supabaseUrl && serviceRoleKey) {
-        const supabase9 = createClient(supabaseUrl, serviceRoleKey);
-        const { data: entitlement } = await supabase9.from("user_entitlements").select("package").eq("user_id", userId).single();
+        const supabase8 = createClient(supabaseUrl, serviceRoleKey);
+        const { data: entitlement } = await supabase8.from("user_entitlements").select("package").eq("user_id", userId).single();
         if (entitlement && entitlement.package === "no_access") {
           return res.status(403).json({
             error: "Forbidden - No subscription",
@@ -1379,10 +1379,10 @@ var requireAdmin = async (req2, res, next) => {
     if (!supabaseUrl || !serviceRoleKey) {
       return res.status(500).json({ error: "Supabase not configured" });
     }
-    const supabase9 = createClient(supabaseUrl, serviceRoleKey);
+    const supabase8 = createClient(supabaseUrl, serviceRoleKey);
     const [profileResult, entitlementResult] = await Promise.all([
-      supabase9.from("profiles").select("role, product_tier").eq("id", userId).single(),
-      userEmail ? supabase9.rpc("user_has_feature", {
+      supabase8.from("profiles").select("role, product_tier").eq("id", userId).single(),
+      userEmail ? supabase8.rpc("user_has_feature", {
         input_email: userEmail,
         input_feature_key: "admin_panel"
       }) : null
@@ -1417,8 +1417,8 @@ router.post("/invite", async (req2, res) => {
       console.error("Service role key not configured");
       return res.status(500).json({ error: "Service role key not configured" });
     }
-    const supabase9 = createClient(supabaseUrl, serviceRoleKey);
-    const { data, error } = await supabase9.auth.admin.inviteUserByEmail(email);
+    const supabase8 = createClient(supabaseUrl, serviceRoleKey);
+    const { data, error } = await supabase8.auth.admin.inviteUserByEmail(email);
     if (error) {
       console.error("Invite error:", error);
       return res.status(400).json({ error: error.message });
@@ -1441,10 +1441,10 @@ router.get("/users", async (req2, res) => {
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
     }
-    const supabase9 = createClient(supabaseUrl, serviceRoleKey);
+    const supabase8 = createClient(supabaseUrl, serviceRoleKey);
     const page = parseInt(req2.query.page) || 1;
     const perPage = parseInt(req2.query.per_page) || 50;
-    const { data, error } = await supabase9.auth.admin.listUsers({
+    const { data, error } = await supabase8.auth.admin.listUsers({
       page,
       perPage
     });
@@ -1470,8 +1470,8 @@ router.delete("/users/:id", async (req2, res) => {
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
     }
-    const supabase9 = createClient(supabaseUrl, serviceRoleKey);
-    const { error } = await supabase9.auth.admin.deleteUser(id);
+    const supabase8 = createClient(supabaseUrl, serviceRoleKey);
+    const { error } = await supabase8.auth.admin.deleteUser(id);
     if (error) {
       console.error("Delete user error:", error);
       return res.status(400).json({ error: error.message });
@@ -1492,7 +1492,7 @@ router.patch("/users/:id", async (req2, res) => {
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
     }
-    const supabase9 = createClient(supabaseUrl, serviceRoleKey);
+    const supabase8 = createClient(supabaseUrl, serviceRoleKey);
     const updateData = {};
     if (email !== void 0) updateData.email = email;
     if (phone !== void 0) updateData.phone = phone;
@@ -1500,7 +1500,7 @@ router.patch("/users/:id", async (req2, res) => {
     if (phone_confirm !== void 0) updateData.phone_confirm = phone_confirm;
     if (user_metadata !== void 0) updateData.user_metadata = user_metadata;
     if (app_metadata !== void 0) updateData.app_metadata = app_metadata;
-    const { data, error } = await supabase9.auth.admin.updateUserById(id, updateData);
+    const { data, error } = await supabase8.auth.admin.updateUserById(id, updateData);
     if (error) {
       console.error("Update user error:", error);
       return res.status(400).json({ error: error.message });
@@ -4687,14 +4687,14 @@ function requireEntitlement(featureKey) {
       if (!supabaseUrl3 || !serviceRoleKey2) {
         return res.status(500).json({ error: "Supabase not configured" });
       }
-      const supabase9 = createClient3(supabaseUrl3, serviceRoleKey2);
+      const supabase8 = createClient3(supabaseUrl3, serviceRoleKey2);
       let entitlement = null;
       if (userEmail) {
-        const { data } = await supabase9.from("user_entitlements").select("*").eq("email", userEmail).single();
+        const { data } = await supabase8.from("user_entitlements").select("*").eq("email", userEmail).single();
         entitlement = data;
       }
       if (!entitlement && userId) {
-        const { data } = await supabase9.from("user_entitlements").select("*").eq("user_id", userId).single();
+        const { data } = await supabase8.from("user_entitlements").select("*").eq("user_id", userId).single();
         entitlement = data;
       }
       if (!entitlement) {
@@ -4707,7 +4707,7 @@ function requireEntitlement(featureKey) {
           message: "Please purchase a subscription to access this feature"
         });
       }
-      const { data: hasAccess } = await supabase9.rpc("user_has_feature", {
+      const { data: hasAccess } = await supabase8.rpc("user_has_feature", {
         input_email: entitlement.email,
         input_feature_key: featureKey
       });
@@ -4840,17 +4840,20 @@ async function getStripe() {
     return null;
   }
 }
-var supabaseUrl4 = requireEnv("SUPABASE_URL");
-var supabaseServiceKey2 = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-var supabase2 = createClient4(supabaseUrl4, supabaseServiceKey2);
+var supabaseClient = null;
+var getSupabase = () => supabaseClient ??= createClient4(requireEnv("SUPABASE_URL"), requireEnv("SUPABASE_SERVICE_ROLE_KEY"));
 var upgradePricing = {
   smartcrm_bundle: {
-    priceId: requireEnv("STRIPE_SMARTCRM_BUNDLE_PRICE_ID"),
+    get priceId() {
+      return requireEnv("STRIPE_SMARTCRM_BUNDLE_PRICE_ID");
+    },
     amount: 97,
     name: "SmartCRM Bundle"
   },
   sales_maximizer: {
-    priceId: requireEnv("STRIPE_SALES_MAXIMIZER_PRICE_ID"),
+    get priceId() {
+      return requireEnv("STRIPE_SALES_MAXIMIZER_PRICE_ID");
+    },
     amount: 67,
     name: "Sales Maximizer"
   }
@@ -4858,14 +4861,14 @@ var upgradePricing = {
 router3.post("/upgrade", async (req2, res) => {
   try {
     const { tierId, currentTier } = req2.body;
-    const userId = req2.session?.userId;
+    const userId = req2.userId;
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
     }
     if (!productTiers.includes(tierId)) {
       return res.status(400).json({ error: "Invalid tier ID" });
     }
-    const { data: profile, error: profileError } = await supabase2.from("profiles").select("*").eq("id", userId).single();
+    const { data: profile, error: profileError } = await getSupabase().from("profiles").select("*").eq("id", userId).single();
     if (profileError) {
       return res.status(500).json({ error: "Failed to get user profile" });
     }
@@ -4945,7 +4948,7 @@ router3.post("/webhook", async (req2, res) => {
       if (session.metadata?.upgradeType === "openclaw") {
         const userId = session.metadata.userId;
         const tierId = session.metadata.tierId;
-        const { error } = await supabase2.from("profiles").update({
+        const { error } = await getSupabase().from("profiles").update({
           productTier: tierId,
           updatedAt: (/* @__PURE__ */ new Date()).toISOString()
         }).eq("id", userId);
@@ -7482,19 +7485,19 @@ function calculatePeriodDays(start, end) {
 }
 
 // server/services/whitelabel/analyticsEngine.ts
-var supabaseUrl5 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+var supabaseUrl4 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 var supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-var supabase3 = supabaseUrl5 && supabaseKey ? createClient5(supabaseUrl5, supabaseKey) : null;
+var supabase2 = supabaseUrl4 && supabaseKey ? createClient5(supabaseUrl4, supabaseKey) : null;
 var AnalyticsEngine = class {
   /**
    * Record metric
    */
   async recordMetric(tenantId, metricType, metricValue, metadata) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
     try {
-      const { data, error } = await supabase3.from("analytics_metrics").insert({
+      const { data, error } = await supabase2.from("analytics_metrics").insert({
         tenant_id: tenantId,
         metric_type: metricType,
         metric_value: metricValue,
@@ -7517,10 +7520,10 @@ var AnalyticsEngine = class {
    * Get metrics for tenant
    */
   async getMetrics(tenantId, metricType, startDate, endDate) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
-    let query = supabase3.from("analytics_metrics").select("*").eq("tenant_id", tenantId);
+    let query = supabase2.from("analytics_metrics").select("*").eq("tenant_id", tenantId);
     if (metricType) {
       query = query.eq("metric_type", metricType);
     }
@@ -7540,15 +7543,15 @@ var AnalyticsEngine = class {
    * Get analytics summary for tenant
    */
   async getAnalyticsSummary(tenantId, startDate, endDate) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
     const { start, end } = startDate && endDate ? { start: startDate, end: endDate } : getDateRange();
     validateTimeRange(start, end);
     try {
-      const { data: users } = await supabase3.from("profiles").select("id, created_at").eq("id", tenantId);
-      const { data: contacts2 } = await supabase3.from("contacts").select("id, created_at").eq("profile_id", tenantId);
-      const { data: deals2 } = await supabase3.from("deals").select("id, title, value, status, created_at").eq("profile_id", tenantId);
+      const { data: users } = await supabase2.from("profiles").select("id, created_at").eq("id", tenantId);
+      const { data: contacts2 } = await supabase2.from("contacts").select("id, created_at").eq("profile_id", tenantId);
+      const { data: deals2 } = await supabase2.from("deals").select("id, title, value, status, created_at").eq("profile_id", tenantId);
       const totalUsers = users?.length || 0;
       const totalContacts = contacts2?.length || 0;
       const totalDeals = deals2?.length || 0;
@@ -7619,12 +7622,12 @@ var AnalyticsEngine = class {
    * Create report
    */
   async createReport(tenantId, name, config, schedule, recipients, format, createdBy, description) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
     try {
       const nextGenerationAt = this.calculateNextGeneration(schedule);
-      const { data, error } = await supabase3.from("analytics_reports").insert({
+      const { data, error } = await supabase2.from("analytics_reports").insert({
         tenant_id: tenantId,
         name,
         description,
@@ -7653,11 +7656,11 @@ var AnalyticsEngine = class {
    * Generate report
    */
   async generateReport(reportId) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
     try {
-      const { data: reportData, error } = await supabase3.from("analytics_reports").select("*").eq("id", reportId).single();
+      const { data: reportData, error } = await supabase2.from("analytics_reports").select("*").eq("id", reportId).single();
       if (error || !reportData) {
         throw new Error("Report not found");
       }
@@ -7701,7 +7704,7 @@ var AnalyticsEngine = class {
         default:
           formattedData = { summary, metrics };
       }
-      await supabase3.from("analytics_reports").update({
+      await supabase2.from("analytics_reports").update({
         last_generated_at: (/* @__PURE__ */ new Date()).toISOString(),
         next_generation_at: this.calculateNextGeneration(report.schedule)?.toISOString()
       }).eq("id", reportId);
@@ -7720,10 +7723,10 @@ var AnalyticsEngine = class {
    * List reports for tenant
    */
   async listReports(tenantId) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase3.from("analytics_reports").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
+    const { data, error } = await supabase2.from("analytics_reports").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
     if (error) {
       throw new Error(`Failed to list reports: ${error.message}`);
     }
@@ -7733,7 +7736,7 @@ var AnalyticsEngine = class {
    * Update report
    */
   async updateReport(reportId, updates) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
     const dbUpdates = {
@@ -7748,7 +7751,7 @@ var AnalyticsEngine = class {
     }
     if (updates.recipients) dbUpdates.recipients = updates.recipients;
     if (updates.format) dbUpdates.format = updates.format;
-    const { data, error } = await supabase3.from("analytics_reports").update(dbUpdates).eq("id", reportId).select().single();
+    const { data, error } = await supabase2.from("analytics_reports").update(dbUpdates).eq("id", reportId).select().single();
     if (error) {
       throw new Error(`Failed to update report: ${error.message}`);
     }
@@ -7758,10 +7761,10 @@ var AnalyticsEngine = class {
    * Delete report
    */
   async deleteReport(reportId) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
-    const { error } = await supabase3.from("analytics_reports").delete().eq("id", reportId);
+    const { error } = await supabase2.from("analytics_reports").delete().eq("id", reportId);
     if (error) {
       throw new Error(`Failed to delete report: ${error.message}`);
     }
@@ -7824,11 +7827,11 @@ var AnalyticsEngine = class {
    * Process scheduled reports
    */
   async processScheduledReports() {
-    if (!supabase3) {
+    if (!supabase2) {
       return;
     }
     try {
-      const { data: reports, error } = await supabase3.from("analytics_reports").select("*").lte("next_generation_at", (/* @__PURE__ */ new Date()).toISOString()).neq("schedule", "manual");
+      const { data: reports, error } = await supabase2.from("analytics_reports").select("*").lte("next_generation_at", (/* @__PURE__ */ new Date()).toISOString()).neq("schedule", "manual");
       if (error) {
         throw error;
       }
@@ -7853,21 +7856,21 @@ var AnalyticsEngine = class {
    * Export data in specified format
    */
   async exportData(tenantId, dataType, format) {
-    if (!supabase3) {
+    if (!supabase2) {
       throw new Error("Supabase not configured");
     }
     try {
       let exportData = {};
       if (dataType === "contacts" || dataType === "all") {
-        const { data: contacts2 } = await supabase3.from("contacts").select("*").eq("profile_id", tenantId);
+        const { data: contacts2 } = await supabase2.from("contacts").select("*").eq("profile_id", tenantId);
         exportData.contacts = contacts2 || [];
       }
       if (dataType === "deals" || dataType === "all") {
-        const { data: deals2 } = await supabase3.from("deals").select("*").eq("profile_id", tenantId);
+        const { data: deals2 } = await supabase2.from("deals").select("*").eq("profile_id", tenantId);
         exportData.deals = deals2 || [];
       }
       if (dataType === "tasks" || dataType === "all") {
-        const { data: tasks2 } = await supabase3.from("tasks").select("*").eq("profile_id", tenantId);
+        const { data: tasks2 } = await supabase2.from("tasks").select("*").eq("profile_id", tenantId);
         exportData.tasks = tasks2 || [];
       }
       let formattedData;
@@ -9256,9 +9259,9 @@ async function withCache(key, fn, ttl = CACHE_TTL.MEDIUM) {
 }
 
 // server/services/whitelabel/domainManager.ts
-var supabaseUrl6 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+var supabaseUrl5 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 var supabaseKey2 = process.env.SUPABASE_SERVICE_ROLE_KEY;
-var supabase4 = supabaseUrl6 && supabaseKey2 ? createClient7(supabaseUrl6, supabaseKey2) : null;
+var supabase3 = supabaseUrl5 && supabaseKey2 ? createClient7(supabaseUrl5, supabaseKey2) : null;
 var DomainManager = class _DomainManager {
   platformDomain;
   constructor() {
@@ -9356,7 +9359,7 @@ var DomainManager = class _DomainManager {
    * Initiate domain verification
    */
   async initiateDomainVerification(config) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
     const verificationToken = this.generateVerificationToken(config.domain, config.tenantId);
@@ -9368,7 +9371,7 @@ var DomainManager = class _DomainManager {
       verificationToken,
       lastCheckedAt: /* @__PURE__ */ new Date()
     };
-    const { data, error } = await supabase4.from("domains").insert({
+    const { data, error } = await supabase3.from("domains").insert({
       tenant_id: domainConfig.tenantId,
       domain: domainConfig.domain,
       subdomain: domainConfig.subdomain,
@@ -9388,10 +9391,10 @@ var DomainManager = class _DomainManager {
    * Check domain verification status
    */
   async checkDomainVerification(domainId) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
-    const { data: domainData, error } = await supabase4.from("domains").select("*").eq("id", domainId).single();
+    const { data: domainData, error } = await supabase3.from("domains").select("*").eq("id", domainId).single();
     if (error || !domainData) {
       throw new Error("Domain not found");
     }
@@ -9405,7 +9408,7 @@ var DomainManager = class _DomainManager {
       verified = await this.verifyDomainDNS(domain, verificationToken, verificationMethod);
     }
     const newStatus = verified ? "active" : "verifying";
-    const { data: updated, error: updateError } = await supabase4.from("domains").update({
+    const { data: updated, error: updateError } = await supabase3.from("domains").update({
       dns_verified: verified,
       status: newStatus,
       last_checked_at: (/* @__PURE__ */ new Date()).toISOString(),
@@ -9423,24 +9426,24 @@ var DomainManager = class _DomainManager {
    * Provision SSL certificate for domain
    */
   async provisionSSL(domainId) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
     try {
-      await supabase4.from("domains").update({
+      await supabase3.from("domains").update({
         ssl_status: "provisioning",
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", domainId);
       await new Promise((resolve) => setTimeout(resolve, 2e3));
       const expiresAt = /* @__PURE__ */ new Date();
       expiresAt.setDate(expiresAt.getDate() + 90);
-      await supabase4.from("domains").update({
+      await supabase3.from("domains").update({
         ssl_status: "active",
         ssl_expires_at: expiresAt.toISOString(),
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", domainId);
     } catch (error) {
-      await supabase4.from("domains").update({
+      await supabase3.from("domains").update({
         ssl_status: "failed",
         error_message: `SSL provisioning failed: ${error.message}`,
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
@@ -9527,12 +9530,12 @@ var DomainManager = class _DomainManager {
    * Monitor domain health (scheduled task)
    */
   async monitorDomainHealth() {
-    if (!supabase4) {
+    if (!supabase3) {
       console.warn("Supabase not configured, skipping domain health monitoring");
       return;
     }
     try {
-      const { data: domains, error } = await supabase4.from("domains").select("*").in("status", ["active", "verifying"]);
+      const { data: domains, error } = await supabase3.from("domains").select("*").in("status", ["active", "verifying"]);
       if (error) {
         throw error;
       }
@@ -9557,7 +9560,7 @@ var DomainManager = class _DomainManager {
           if (health.sslExpiresIn !== void 0 && health.sslExpiresIn < 30) {
             await this.renewSSL(domainData.id);
           }
-          await supabase4.from("domains").update(updates).eq("id", domainData.id);
+          await supabase3.from("domains").update(updates).eq("id", domainData.id);
         } catch (error2) {
           console.error(`Health check failed for ${domainData.domain}:`, error2.message);
         }
@@ -9570,24 +9573,24 @@ var DomainManager = class _DomainManager {
    * Renew SSL certificate
    */
   async renewSSL(domainId) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
     try {
-      await supabase4.from("domains").update({
+      await supabase3.from("domains").update({
         ssl_status: "provisioning",
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", domainId);
       await new Promise((resolve) => setTimeout(resolve, 1e3));
       const expiresAt = /* @__PURE__ */ new Date();
       expiresAt.setDate(expiresAt.getDate() + 90);
-      await supabase4.from("domains").update({
+      await supabase3.from("domains").update({
         ssl_status: "active",
         ssl_expires_at: expiresAt.toISOString(),
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", domainId);
     } catch (error) {
-      await supabase4.from("domains").update({
+      await supabase3.from("domains").update({
         ssl_status: "failed",
         error_message: `SSL renewal failed: ${error.message}`,
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
@@ -9599,10 +9602,10 @@ var DomainManager = class _DomainManager {
    * Remove domain configuration
    */
   async removeDomain(domainId) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
-    const { error } = await supabase4.from("domains").delete().eq("id", domainId);
+    const { error } = await supabase3.from("domains").delete().eq("id", domainId);
     if (error) {
       throw new Error(`Failed to remove domain: ${error.message}`);
     }
@@ -9611,10 +9614,10 @@ var DomainManager = class _DomainManager {
    * Get domain configuration
    */
   async getDomainConfig(domainId) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase4.from("domains").select("*").eq("id", domainId).single();
+    const { data, error } = await supabase3.from("domains").select("*").eq("id", domainId).single();
     if (error || !data) {
       throw new Error("Domain not found");
     }
@@ -9624,10 +9627,10 @@ var DomainManager = class _DomainManager {
    * List domains for tenant
    */
   async listTenantDomains(tenantId) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase4.from("domains").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
+    const { data, error } = await supabase3.from("domains").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
     if (error) {
       throw new Error(`Failed to list domains: ${error.message}`);
     }
@@ -9637,7 +9640,7 @@ var DomainManager = class _DomainManager {
    * Update domain configuration
    */
   async updateDomainConfig(domainId, updates) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
     const dbUpdates = {
@@ -9648,7 +9651,7 @@ var DomainManager = class _DomainManager {
     if (updates.dnsVerified !== void 0) dbUpdates.dns_verified = updates.dnsVerified;
     if (updates.sslStatus) dbUpdates.ssl_status = updates.sslStatus;
     if (updates.errorMessage !== void 0) dbUpdates.error_message = updates.errorMessage;
-    const { data, error } = await supabase4.from("domains").update(dbUpdates).eq("id", domainId).select().single();
+    const { data, error } = await supabase3.from("domains").update(dbUpdates).eq("id", domainId).select().single();
     if (error) {
       throw new Error(`Failed to update domain: ${error.message}`);
     }
@@ -9677,10 +9680,10 @@ var DomainManager = class _DomainManager {
    * Get domain by name
    */
   async getDomainByName(domain) {
-    if (!supabase4) {
+    if (!supabase3) {
       return null;
     }
-    const { data, error } = await supabase4.from("domains").select("*").eq("domain", domain).single();
+    const { data, error } = await supabase3.from("domains").select("*").eq("domain", domain).single();
     if (error || !data) {
       return null;
     }
@@ -9981,10 +9984,10 @@ var DomainManager = class _DomainManager {
    * Check if subdomain is available (real-time)
    */
   async isSubdomainAvailable(subdomain) {
-    if (!supabase4) {
+    if (!supabase3) {
       return true;
     }
-    const { data, error } = await supabase4.from("tenants").select("id").eq("subdomain", subdomain).single();
+    const { data, error } = await supabase3.from("tenants").select("id").eq("subdomain", subdomain).single();
     return !data;
   }
   /**
@@ -10091,10 +10094,10 @@ var DomainManager = class _DomainManager {
    * Auto-provision subdomain for tenant
    */
   async provisionSubdomainForTenant(tenantId, preferredSubdomain) {
-    if (!supabase4) {
+    if (!supabase3) {
       throw new Error("Supabase not configured");
     }
-    const { data: tenant, error: tenantError } = await supabase4.from("tenants").select("name, subdomain").eq("id", tenantId).single();
+    const { data: tenant, error: tenantError } = await supabase3.from("tenants").select("name, subdomain").eq("id", tenantId).single();
     if (tenantError || !tenant) {
       throw new Error("Tenant not found");
     }
@@ -10124,7 +10127,7 @@ var DomainManager = class _DomainManager {
     });
     const dnsRecords = this.getRequiredDNSRecords(domain, domainConfig.verificationToken, "txt");
     if (!preferredSubdomain || preferredSubdomain !== subdomain) {
-      await supabase4.from("tenants").update({ subdomain, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("id", tenantId);
+      await supabase3.from("tenants").update({ subdomain, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("id", tenantId);
     }
     return {
       subdomain,
@@ -10618,9 +10621,9 @@ import { Router as Router10 } from "express";
 
 // server/services/whitelabel/themeManager.ts
 import { createClient as createClient8 } from "@supabase/supabase-js";
-var supabaseUrl7 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+var supabaseUrl6 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 var supabaseKey3 = process.env.SUPABASE_SERVICE_ROLE_KEY;
-var supabase5 = supabaseUrl7 && supabaseKey3 ? createClient8(supabaseUrl7, supabaseKey3) : null;
+var supabase4 = supabaseUrl6 && supabaseKey3 ? createClient8(supabaseUrl6, supabaseKey3) : null;
 var ThemeManager = class {
   /**
    * Get default theme configuration
@@ -10731,12 +10734,12 @@ var ThemeManager = class {
    * Create theme
    */
   async createTheme(tenantId, name, config, createdBy, description) {
-    if (!supabase5) {
+    if (!supabase4) {
       throw new Error("Supabase not configured");
     }
     try {
-      await supabase5.from("themes").update({ is_active: false }).eq("tenant_id", tenantId);
-      const { data, error } = await supabase5.from("themes").insert({
+      await supabase4.from("themes").update({ is_active: false }).eq("tenant_id", tenantId);
+      const { data, error } = await supabase4.from("themes").insert({
         tenant_id: tenantId,
         name,
         description,
@@ -10762,10 +10765,10 @@ var ThemeManager = class {
    * Get active theme for tenant
    */
   async getActiveTheme(tenantId) {
-    if (!supabase5) {
+    if (!supabase4) {
       return null;
     }
-    const { data, error } = await supabase5.from("themes").select("*").eq("tenant_id", tenantId).eq("is_active", true).single();
+    const { data, error } = await supabase4.from("themes").select("*").eq("tenant_id", tenantId).eq("is_active", true).single();
     if (error || !data) {
       return null;
     }
@@ -10775,10 +10778,10 @@ var ThemeManager = class {
    * List themes for tenant
    */
   async listThemes(tenantId) {
-    if (!supabase5) {
+    if (!supabase4) {
       return [];
     }
-    const { data, error } = await supabase5.from("themes").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
+    const { data, error } = await supabase4.from("themes").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
     if (error) {
       throw new Error(`Failed to list themes: ${error.message}`);
     }
@@ -10788,7 +10791,7 @@ var ThemeManager = class {
    * Update theme
    */
   async updateTheme(themeId, updates) {
-    if (!supabase5) {
+    if (!supabase4) {
       throw new Error("Supabase not configured");
     }
     const dbUpdates = {
@@ -10801,10 +10804,10 @@ var ThemeManager = class {
       dbUpdates.is_active = updates.isActive;
       if (updates.isActive) {
         const theme = await this.getTheme(themeId);
-        await supabase5.from("themes").update({ is_active: false }).eq("tenant_id", theme.tenantId).neq("id", themeId);
+        await supabase4.from("themes").update({ is_active: false }).eq("tenant_id", theme.tenantId).neq("id", themeId);
       }
     }
-    const { data, error } = await supabase5.from("themes").update(dbUpdates).eq("id", themeId).select().single();
+    const { data, error } = await supabase4.from("themes").update(dbUpdates).eq("id", themeId).select().single();
     if (error) {
       throw new Error(`Failed to update theme: ${error.message}`);
     }
@@ -10814,10 +10817,10 @@ var ThemeManager = class {
    * Delete theme
    */
   async deleteTheme(themeId) {
-    if (!supabase5) {
+    if (!supabase4) {
       throw new Error("Supabase not configured");
     }
-    const { error } = await supabase5.from("themes").delete().eq("id", themeId);
+    const { error } = await supabase4.from("themes").delete().eq("id", themeId);
     if (error) {
       throw new Error(`Failed to delete theme: ${error.message}`);
     }
@@ -10826,10 +10829,10 @@ var ThemeManager = class {
    * Get theme by ID
    */
   async getTheme(themeId) {
-    if (!supabase5) {
+    if (!supabase4) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase5.from("themes").select("*").eq("id", themeId).single();
+    const { data, error } = await supabase4.from("themes").select("*").eq("id", themeId).single();
     if (error || !data) {
       throw new Error("Theme not found");
     }
@@ -11036,7 +11039,7 @@ body {
    * Clone theme
    */
   async cloneTheme(themeId, newName, createdBy) {
-    if (!supabase5) {
+    if (!supabase4) {
       throw new Error("Supabase not configured");
     }
     const originalTheme = await this.getTheme(themeId);
@@ -11501,15 +11504,15 @@ import { Router as Router11 } from "express";
 
 // server/services/whitelabel/tenantProvisioner.ts
 import { createClient as createClient9 } from "@supabase/supabase-js";
-var supabaseUrl8 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+var supabaseUrl7 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 var supabaseKey4 = process.env.SUPABASE_SERVICE_ROLE_KEY;
-var supabase6 = supabaseUrl8 && supabaseKey4 ? createClient9(supabaseUrl8, supabaseKey4) : null;
+var supabase5 = supabaseUrl7 && supabaseKey4 ? createClient9(supabaseUrl7, supabaseKey4) : null;
 var TenantProvisioner = class {
   /**
    * Create new tenant with automated setup
    */
   async createTenant(config) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
     try {
@@ -11523,7 +11526,7 @@ var TenantProvisioner = class {
       } else {
         template = await this.getDefaultTemplate(config.plan);
       }
-      const { data: tenantData, error: tenantError } = await supabase6.from("tenants").insert({
+      const { data: tenantData, error: tenantError } = await supabase5.from("tenants").insert({
         name: config.name,
         subdomain: config.subdomain,
         status: config.plan === "starter" ? "trial" : "active",
@@ -11562,20 +11565,20 @@ var TenantProvisioner = class {
    * Check if subdomain is available
    */
   async isSubdomainAvailable(subdomain) {
-    if (!supabase6) {
+    if (!supabase5) {
       return true;
     }
-    const { data, error } = await supabase6.from("tenants").select("id").eq("subdomain", subdomain).single();
+    const { data, error } = await supabase5.from("tenants").select("id").eq("subdomain", subdomain).single();
     return !data;
   }
   /**
    * Get template by ID
    */
   async getTemplate(templateId) {
-    if (!supabase6) {
+    if (!supabase5) {
       return null;
     }
-    const { data, error } = await supabase6.from("tenant_templates").select("*").eq("id", templateId).single();
+    const { data, error } = await supabase5.from("tenant_templates").select("*").eq("id", templateId).single();
     if (error || !data) {
       return null;
     }
@@ -11585,10 +11588,10 @@ var TenantProvisioner = class {
    * Get default template for plan
    */
   async getDefaultTemplate(plan) {
-    if (!supabase6) {
+    if (!supabase5) {
       return null;
     }
-    const { data, error } = await supabase6.from("tenant_templates").select("*").eq("is_default", true).single();
+    const { data, error } = await supabase5.from("tenant_templates").select("*").eq("is_default", true).single();
     if (error || !data) {
       return {
         id: "default",
@@ -11607,11 +11610,11 @@ var TenantProvisioner = class {
    * Apply template to tenant
    */
   async applyTemplate(tenantId, template) {
-    if (!supabase6) {
+    if (!supabase5) {
       return;
     }
     try {
-      await supabase6.from("white_label_configs").insert({
+      await supabase5.from("white_label_configs").insert({
         tenant_id: tenantId,
         ...template.config,
         created_at: (/* @__PURE__ */ new Date()).toISOString(),
@@ -11624,7 +11627,7 @@ var TenantProvisioner = class {
           enabled,
           created_at: (/* @__PURE__ */ new Date()).toISOString()
         }));
-        await supabase6.from("tenant_features").insert(featureEntries);
+        await supabase5.from("tenant_features").insert(featureEntries);
       }
     } catch (error) {
       await errorLogger.logError("Template application failed", error, {
@@ -11638,12 +11641,12 @@ var TenantProvisioner = class {
    * Initialize onboarding for tenant
    */
   async initializeOnboarding(tenantId, steps) {
-    if (!supabase6) {
+    if (!supabase5) {
       return;
     }
     try {
       const onboardingSteps = steps.length > 0 ? steps : this.getDefaultOnboardingSteps();
-      await supabase6.from("tenant_onboarding").insert({
+      await supabase5.from("tenant_onboarding").insert({
         tenant_id: tenantId,
         current_step: 1,
         total_steps: onboardingSteps.length,
@@ -11726,7 +11729,7 @@ var TenantProvisioner = class {
    * Seed initial data for tenant
    */
   async seedInitialData(tenantId, seedData) {
-    if (!supabase6) {
+    if (!supabase5) {
       return;
     }
     try {
@@ -11737,7 +11740,7 @@ var TenantProvisioner = class {
           // Link to tenant
           created_at: (/* @__PURE__ */ new Date()).toISOString()
         }));
-        await supabase6.from("contacts").insert(contacts2);
+        await supabase5.from("contacts").insert(contacts2);
       }
       if (seedData.deals && Array.isArray(seedData.deals)) {
         const deals2 = seedData.deals.map((deal) => ({
@@ -11745,7 +11748,7 @@ var TenantProvisioner = class {
           profile_id: tenantId,
           created_at: (/* @__PURE__ */ new Date()).toISOString()
         }));
-        await supabase6.from("deals").insert(deals2);
+        await supabase5.from("deals").insert(deals2);
       }
     } catch (error) {
       await errorLogger.logWarning("Initial data seeding failed", {
@@ -11766,10 +11769,10 @@ var TenantProvisioner = class {
    * Get tenant by ID
    */
   async getTenant(tenantId) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase6.from("tenants").select("*").eq("id", tenantId).single();
+    const { data, error } = await supabase5.from("tenants").select("*").eq("id", tenantId).single();
     if (error || !data) {
       throw new Error("Tenant not found");
     }
@@ -11779,13 +11782,13 @@ var TenantProvisioner = class {
    * List tenants with filtering
    */
   async listTenants(options) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
     const page = options.page || 1;
     const limit = Math.min(options.limit || 50, 100);
     const offset = (page - 1) * limit;
-    let query = supabase6.from("tenants").select("*", { count: "exact" });
+    let query = supabase5.from("tenants").select("*", { count: "exact" });
     if (options.status) {
       query = query.eq("status", options.status);
     }
@@ -11808,7 +11811,7 @@ var TenantProvisioner = class {
    * Update tenant
    */
   async updateTenant(tenantId, updates) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
     const dbUpdates = {
@@ -11820,7 +11823,7 @@ var TenantProvisioner = class {
     if (updates.contactEmail) dbUpdates.contact_email = updates.contactEmail;
     if (updates.contactName) dbUpdates.contact_name = updates.contactName;
     if (updates.customDomain !== void 0) dbUpdates.custom_domain = updates.customDomain;
-    const { data, error } = await supabase6.from("tenants").update(dbUpdates).eq("id", tenantId).select().single();
+    const { data, error } = await supabase5.from("tenants").update(dbUpdates).eq("id", tenantId).select().single();
     if (error) {
       throw new Error(`Failed to update tenant: ${error.message}`);
     }
@@ -11830,10 +11833,10 @@ var TenantProvisioner = class {
    * Suspend tenant
    */
   async suspendTenant(tenantId, reason) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
-    await supabase6.from("tenants").update({
+    await supabase5.from("tenants").update({
       status: "suspended",
       updated_at: (/* @__PURE__ */ new Date()).toISOString()
     }).eq("id", tenantId);
@@ -11846,10 +11849,10 @@ var TenantProvisioner = class {
    * Activate tenant
    */
   async activateTenant(tenantId) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
-    await supabase6.from("tenants").update({
+    await supabase5.from("tenants").update({
       status: "active",
       updated_at: (/* @__PURE__ */ new Date()).toISOString()
     }).eq("id", tenantId);
@@ -11861,10 +11864,10 @@ var TenantProvisioner = class {
    * Delete tenant (soft delete)
    */
   async deleteTenant(tenantId) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
-    await supabase6.from("tenants").update({
+    await supabase5.from("tenants").update({
       status: "inactive",
       updated_at: (/* @__PURE__ */ new Date()).toISOString()
     }).eq("id", tenantId);
@@ -11876,10 +11879,10 @@ var TenantProvisioner = class {
    * Get onboarding status
    */
   async getOnboardingStatus(tenantId) {
-    if (!supabase6) {
+    if (!supabase5) {
       return null;
     }
-    const { data, error } = await supabase6.from("tenant_onboarding").select("*").eq("tenant_id", tenantId).single();
+    const { data, error } = await supabase5.from("tenant_onboarding").select("*").eq("tenant_id", tenantId).single();
     if (error || !data) {
       return null;
     }
@@ -11897,7 +11900,7 @@ var TenantProvisioner = class {
    * Update onboarding progress
    */
   async updateOnboardingProgress(tenantId, stepId, completed) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
     const status = await this.getOnboardingStatus(tenantId);
@@ -11906,7 +11909,7 @@ var TenantProvisioner = class {
     }
     const completedSteps = completed ? [...status.completedSteps, stepId] : status.completedSteps.filter((s) => s !== stepId);
     const allCompleted = completedSteps.length === status.totalSteps;
-    const { data, error } = await supabase6.from("tenant_onboarding").update({
+    const { data, error } = await supabase5.from("tenant_onboarding").update({
       completed_steps: completedSteps,
       current_step: completedSteps.length + 1,
       status: allCompleted ? "completed" : "in_progress",
@@ -11929,10 +11932,10 @@ var TenantProvisioner = class {
    * List available templates
    */
   async listTemplates() {
-    if (!supabase6) {
+    if (!supabase5) {
       return [];
     }
-    const { data, error } = await supabase6.from("tenant_templates").select("*").order("name");
+    const { data, error } = await supabase5.from("tenant_templates").select("*").order("name");
     if (error) {
       throw new Error(`Failed to list templates: ${error.message}`);
     }
@@ -11942,10 +11945,10 @@ var TenantProvisioner = class {
    * Create template
    */
   async createTemplate(template) {
-    if (!supabase6) {
+    if (!supabase5) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase6.from("tenant_templates").insert({
+    const { data, error } = await supabase5.from("tenant_templates").insert({
       name: template.name,
       description: template.description,
       config: template.config,
@@ -12327,9 +12330,9 @@ import { Router as Router12 } from "express";
 
 // server/services/whitelabel/assetManager.ts
 import { createClient as createClient10 } from "@supabase/supabase-js";
-var supabaseUrl9 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+var supabaseUrl8 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 var supabaseKey5 = process.env.SUPABASE_SERVICE_ROLE_KEY;
-var supabase7 = supabaseUrl9 && supabaseKey5 ? createClient10(supabaseUrl9, supabaseKey5) : null;
+var supabase6 = supabaseUrl8 && supabaseKey5 ? createClient10(supabaseUrl8, supabaseKey5) : null;
 var AssetManager = class {
   storageBucket;
   cdnUrl;
@@ -12341,13 +12344,13 @@ var AssetManager = class {
    * Upload asset to storage
    */
   async uploadAsset(file, fileName, options) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
     try {
       const fileExt = fileName.split(".").pop();
       const uniqueName = `${options.tenantId}/${options.category}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase7.storage.from(this.storageBucket).upload(uniqueName, file, {
+      const { data: uploadData, error: uploadError } = await supabase6.storage.from(this.storageBucket).upload(uniqueName, file, {
         contentType: this.getMimeType(fileName),
         cacheControl: "3600",
         upsert: false
@@ -12355,12 +12358,12 @@ var AssetManager = class {
       if (uploadError) {
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
-      const { data: urlData } = supabase7.storage.from(this.storageBucket).getPublicUrl(uniqueName);
+      const { data: urlData } = supabase6.storage.from(this.storageBucket).getPublicUrl(uniqueName);
       const url = urlData.publicUrl;
       const cdnUrl = this.cdnUrl ? `${this.cdnUrl}/${uniqueName}` : url;
       const fileSize = file.length;
       const mimeType = this.getMimeType(fileName);
-      const { data: assetData, error: dbError } = await supabase7.from("assets").insert({
+      const { data: assetData, error: dbError } = await supabase6.from("assets").insert({
         tenant_id: options.tenantId,
         name: fileName.replace(/\.[^/.]+$/, ""),
         // Remove extension
@@ -12380,7 +12383,7 @@ var AssetManager = class {
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).select().single();
       if (dbError) {
-        await supabase7.storage.from(this.storageBucket).remove([uniqueName]);
+        await supabase6.storage.from(this.storageBucket).remove([uniqueName]);
         throw new Error(`Database insert failed: ${dbError.message}`);
       }
       const asset = this.mapDatabaseToAsset(assetData);
@@ -12407,27 +12410,27 @@ var AssetManager = class {
    * Get asset by ID
    */
   async getAsset(assetId) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase7.from("assets").select("*").eq("id", assetId).single();
+    const { data, error } = await supabase6.from("assets").select("*").eq("id", assetId).single();
     if (error || !data) {
       throw new Error("Asset not found");
     }
-    await supabase7.from("assets").update({ usage_count: (data.usage_count || 0) + 1 }).eq("id", assetId);
+    await supabase6.from("assets").update({ usage_count: (data.usage_count || 0) + 1 }).eq("id", assetId);
     return this.mapDatabaseToAsset(data);
   }
   /**
    * List assets
    */
   async listAssets(options) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
     const page = options.page || 1;
     const limit = Math.min(options.limit || 50, 100);
     const offset = (page - 1) * limit;
-    let query = supabase7.from("assets").select("*", { count: "exact" }).eq("tenant_id", options.tenantId);
+    let query = supabase6.from("assets").select("*", { count: "exact" }).eq("tenant_id", options.tenantId);
     if (options.category) {
       query = query.eq("category", options.category);
     }
@@ -12447,7 +12450,7 @@ var AssetManager = class {
    * Update asset metadata
    */
   async updateAsset(assetId, updates) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
     const dbUpdates = {
@@ -12456,7 +12459,7 @@ var AssetManager = class {
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.category) dbUpdates.category = updates.category;
     if (updates.metadata) dbUpdates.metadata = updates.metadata;
-    const { data, error } = await supabase7.from("assets").update(dbUpdates).eq("id", assetId).select().single();
+    const { data, error } = await supabase6.from("assets").update(dbUpdates).eq("id", assetId).select().single();
     if (error) {
       throw new Error(`Failed to update asset: ${error.message}`);
     }
@@ -12466,20 +12469,20 @@ var AssetManager = class {
    * Delete asset
    */
   async deleteAsset(assetId) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
-    const { data: assetData, error: fetchError } = await supabase7.from("assets").select("url, tenant_id, category").eq("id", assetId).single();
+    const { data: assetData, error: fetchError } = await supabase6.from("assets").select("url, tenant_id, category").eq("id", assetId).single();
     if (fetchError || !assetData) {
       throw new Error("Asset not found");
     }
     const urlParts = assetData.url.split("/");
     const storagePath = urlParts.slice(urlParts.indexOf(this.storageBucket) + 1).join("/");
-    const { error: storageError } = await supabase7.storage.from(this.storageBucket).remove([storagePath]);
+    const { error: storageError } = await supabase6.storage.from(this.storageBucket).remove([storagePath]);
     if (storageError) {
       console.error("Failed to delete from storage:", storageError);
     }
-    const { error: dbError } = await supabase7.from("assets").delete().eq("id", assetId);
+    const { error: dbError } = await supabase6.from("assets").delete().eq("id", assetId);
     if (dbError) {
       throw new Error(`Failed to delete asset: ${dbError.message}`);
     }
@@ -12489,8 +12492,8 @@ var AssetManager = class {
    */
   async optimizeAssetAsync(assetId) {
     try {
-      if (!supabase7) return;
-      await supabase7.from("assets").update({
+      if (!supabase6) return;
+      await supabase6.from("assets").update({
         optimized: true,
         updated_at: (/* @__PURE__ */ new Date()).toISOString()
       }).eq("id", assetId);
@@ -12512,15 +12515,15 @@ var AssetManager = class {
    * Get asset versions
    */
   async getAssetVersions(assetId) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
-    const { data: asset, error: assetError } = await supabase7.from("assets").select("*").eq("id", assetId).single();
+    const { data: asset, error: assetError } = await supabase6.from("assets").select("*").eq("id", assetId).single();
     if (assetError || !asset) {
       throw new Error("Asset not found");
     }
     const parentId = asset.parent_asset_id || assetId;
-    const { data, error } = await supabase7.from("assets").select("*").or(`id.eq.${parentId},parent_asset_id.eq.${parentId}`).order("version", { ascending: false });
+    const { data, error } = await supabase6.from("assets").select("*").or(`id.eq.${parentId},parent_asset_id.eq.${parentId}`).order("version", { ascending: false });
     if (error) {
       throw new Error(`Failed to get asset versions: ${error.message}`);
     }
@@ -12530,10 +12533,10 @@ var AssetManager = class {
    * Create new asset version
    */
   async createAssetVersion(assetId, file, fileName) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
-    const { data: originalAsset, error: fetchError } = await supabase7.from("assets").select("*").eq("id", assetId).single();
+    const { data: originalAsset, error: fetchError } = await supabase6.from("assets").select("*").eq("id", assetId).single();
     if (fetchError || !originalAsset) {
       throw new Error("Original asset not found");
     }
@@ -12545,7 +12548,7 @@ var AssetManager = class {
       createdBy: originalAsset.created_by,
       metadata: originalAsset.metadata
     });
-    await supabase7.from("assets").update({
+    await supabase6.from("assets").update({
       parent_asset_id: originalAsset.parent_asset_id || assetId,
       version: latestVersion + 1
     }).eq("id", newAsset.id);
@@ -12578,10 +12581,10 @@ var AssetManager = class {
    * Get asset usage statistics
    */
   async getAssetUsageStats(tenantId) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
-    const { data: assets, error } = await supabase7.from("assets").select("*").eq("tenant_id", tenantId);
+    const { data: assets, error } = await supabase6.from("assets").select("*").eq("tenant_id", tenantId);
     if (error) {
       throw new Error(`Failed to get asset stats: ${error.message}`);
     }
@@ -12604,10 +12607,10 @@ var AssetManager = class {
    * Search assets
    */
   async searchAssets(tenantId, query) {
-    if (!supabase7) {
+    if (!supabase6) {
       throw new Error("Supabase not configured");
     }
-    const { data, error } = await supabase7.from("assets").select("*").eq("tenant_id", tenantId).or(`name.ilike.%${query}%,original_name.ilike.%${query}%`).order("created_at", { ascending: false }).limit(50);
+    const { data, error } = await supabase6.from("assets").select("*").eq("tenant_id", tenantId).or(`name.ilike.%${query}%,original_name.ilike.%${query}%`).order("created_at", { ascending: false }).limit(50);
     if (error) {
       throw new Error(`Asset search failed: ${error.message}`);
     }
@@ -12996,9 +12999,9 @@ import { randomUUID } from "crypto";
 import fs from "fs";
 import path from "path";
 var router13 = Router13();
-var supabaseUrl10 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+var supabaseUrl9 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
 var serviceRoleKey3 = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-var supabase8 = supabaseUrl10 && serviceRoleKey3 ? createClient11(supabaseUrl10, serviceRoleKey3) : null;
+var supabase7 = supabaseUrl9 && serviceRoleKey3 ? createClient11(supabaseUrl9, serviceRoleKey3) : null;
 var BACKUP_DIR = process.env.WHITELABEL_BACKUP_DIR || path.join(process.cwd(), "backups", "whitelabel");
 var ensureBackupDir = () => {
   if (!fs.existsSync(BACKUP_DIR)) {
@@ -13007,16 +13010,16 @@ var ensureBackupDir = () => {
   return BACKUP_DIR;
 };
 function getTenantConfig(tenantId) {
-  return supabase8.from("white_label_configs").select("*").eq("tenant_id", tenantId).single();
+  return supabase7.from("white_label_configs").select("*").eq("tenant_id", tenantId).single();
 }
 function getChildTenants(parentTenantId) {
-  return supabase8.from("tenants").select("id, name, subdomain, status").eq("parent_partner_id", parentTenantId);
+  return supabase7.from("tenants").select("id, name, subdomain, status").eq("parent_partner_id", parentTenantId);
 }
 function insertHistoryEntry(entry) {
-  return supabase8.from("whitelabel_settings_history").insert(entry);
+  return supabase7.from("whitelabel_settings_history").insert(entry);
 }
 function listHistory(tenantId, limit = 50) {
-  return supabase8.from("whitelabel_settings_history").select("*").eq("tenant_id", tenantId).order("changed_at", { ascending: false }).limit(limit);
+  return supabase7.from("whitelabel_settings_history").select("*").eq("tenant_id", tenantId).order("changed_at", { ascending: false }).limit(limit);
 }
 router13.use(requireAuth());
 router13.use(requireEntitlement(FeatureKey.WHITE_LABEL_MANAGEMENT));
@@ -13061,12 +13064,12 @@ router13.post("/propagate", async (req2, res) => {
         };
       }
       if (existingConfig) {
-        const { error: updateErr } = await supabase8.from("white_label_configs").update({ ...mergedConfig, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("tenant_id", targetId);
+        const { error: updateErr } = await supabase7.from("white_label_configs").update({ ...mergedConfig, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("tenant_id", targetId);
         results.push({ tenantId: targetId, status: updateErr ? "failed" : "updated", error: updateErr?.message });
       } else {
         mergedConfig.tenant_id = targetId;
         mergedConfig.id = void 0;
-        const { error: insertErr } = await supabase8.from("white_label_configs").insert(mergedConfig);
+        const { error: insertErr } = await supabase7.from("white_label_configs").insert(mergedConfig);
         results.push({ tenantId: targetId, status: insertErr ? "failed" : "created", error: insertErr?.message });
       }
       await insertHistoryEntry({
@@ -13125,7 +13128,7 @@ router13.post("/sync", async (req2, res) => {
     let mergedConfig;
     if (!targetConfig) {
       mergedConfig = { ...sourceConfig, tenant_id: targetTenantId, id: void 0 };
-      const { error: insertErr } = await supabase8.from("white_label_configs").insert(mergedConfig);
+      const { error: insertErr } = await supabase7.from("white_label_configs").insert(mergedConfig);
       if (insertErr) {
         throw insertErr;
       }
@@ -13137,7 +13140,7 @@ router13.post("/sync", async (req2, res) => {
       } else {
         mergedConfig = { ...targetConfig, ...sourceConfig, updated_at: (/* @__PURE__ */ new Date()).toISOString() };
       }
-      const { error: updateErr } = await supabase8.from("white_label_configs").update({ ...mergedConfig, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("tenant_id", targetTenantId);
+      const { error: updateErr } = await supabase7.from("white_label_configs").update({ ...mergedConfig, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("tenant_id", targetTenantId);
       if (updateErr) {
         throw updateErr;
       }
@@ -13280,12 +13283,12 @@ router13.post("/restore", async (req2, res) => {
     const config = backupPayload.config;
     const { data: existingConfig } = await getTenantConfig(tenantId);
     if (existingConfig) {
-      const { error: updateErr } = await supabase8.from("white_label_configs").update({ ...config, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("tenant_id", tenantId);
+      const { error: updateErr } = await supabase7.from("white_label_configs").update({ ...config, updated_at: (/* @__PURE__ */ new Date()).toISOString() }).eq("tenant_id", tenantId);
       if (updateErr) {
         throw updateErr;
       }
     } else {
-      const { error: insertErr } = await supabase8.from("white_label_configs").insert({ ...config, tenant_id: tenantId, id: void 0 });
+      const { error: insertErr } = await supabase7.from("white_label_configs").insert({ ...config, tenant_id: tenantId, id: void 0 });
       if (insertErr) {
         throw insertErr;
       }
@@ -13361,7 +13364,7 @@ router13.get("/stream/:tenantId", async (req2, res) => {
     let lastTimestamp = (/* @__PURE__ */ new Date()).toISOString();
     const interval = setInterval(async () => {
       try {
-        const { data: newEntries, error } = await supabase8.from("whitelabel_settings_history").select("*").eq("tenant_id", tenantId).gt("changed_at", lastTimestamp).order("changed_at", { ascending: true });
+        const { data: newEntries, error } = await supabase7.from("whitelabel_settings_history").select("*").eq("tenant_id", tenantId).gt("changed_at", lastTimestamp).order("changed_at", { ascending: true });
         if (error) {
           res.write(`data: ${JSON.stringify({ type: "error", message: error.message })}
 
@@ -17919,9 +17922,9 @@ app.use((req2, res, next) => {
   });
   next();
 });
-var supabaseUrl11 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
-var supabaseServiceKey3 = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-var supabaseAdmin = supabaseUrl11 && supabaseServiceKey3 ? createClient12(supabaseUrl11, supabaseServiceKey3) : null;
+var supabaseUrl10 = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+var supabaseServiceKey2 = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+var supabaseAdmin = supabaseUrl10 && supabaseServiceKey2 ? createClient12(supabaseUrl10, supabaseServiceKey2) : null;
 app.use("/api", async (req2, res, next) => {
   const userId = req2.session?.userId;
   const cachedEntitlement = req2.session?.entitlement;

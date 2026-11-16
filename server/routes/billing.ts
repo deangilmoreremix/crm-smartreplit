@@ -51,20 +51,25 @@ async function getStripe() {
   }
 }
 
-// Initialize Supabase
-const supabaseUrl = requireEnv('SUPABASE_URL');
-const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Configuration is read when a billing request arrives, so a missing billing variable
+// fails only billing requests instead of the whole API at import time.
+let supabaseClient: ReturnType<typeof createClient> | null = null;
+const getSupabase = () =>
+  (supabaseClient ??= createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')));
 
 // Pricing for OpenClaw upgrade tiers
 const upgradePricing = {
   smartcrm_bundle: {
-    priceId: requireEnv('STRIPE_SMARTCRM_BUNDLE_PRICE_ID'),
+    get priceId() {
+      return requireEnv('STRIPE_SMARTCRM_BUNDLE_PRICE_ID');
+    },
     amount: 97,
     name: 'SmartCRM Bundle',
   },
   sales_maximizer: {
-    priceId: requireEnv('STRIPE_SALES_MAXIMIZER_PRICE_ID'),
+    get priceId() {
+      return requireEnv('STRIPE_SALES_MAXIMIZER_PRICE_ID');
+    },
     amount: 67,
     name: 'Sales Maximizer',
   },
@@ -77,7 +82,7 @@ const upgradePricing = {
 router.post('/upgrade', async (req: Request, res: Response) => {
   try {
     const { tierId, currentTier } = req.body;
-    const userId = (req as any).session?.userId;
+    const userId = (req as any).userId;
 
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -88,7 +93,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
     }
 
     // Get user profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await getSupabase()
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -195,7 +200,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
         const tierId = session.metadata.tierId;
 
         // Update user tier in database
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('profiles')
           .update({
             productTier: tierId,
