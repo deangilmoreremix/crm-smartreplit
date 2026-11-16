@@ -89,66 +89,8 @@ export default function TextMessagingDashboard() {
   const [messageTemplates, setMessageTemplates] = useState('enabled');
   const [deliveryNotifications, setDeliveryNotifications] = useState('important');
 
-  // Mock data for when API is not available
-  const mockProviders: MessageProvider[] = [
-    {
-      id: 'twilio',
-      name: 'Twilio',
-      apiKey: '***masked***',
-      costPerMessage: 0.0075,
-      supportedFeatures: ['SMS', 'MMS', 'Voice'],
-      status: 'active',
-      deliveryRate: 0.98,
-      responseTime: 2,
-    },
-    {
-      id: 'aws-sns',
-      name: 'AWS SNS',
-      apiKey: '***masked***',
-      costPerMessage: 0.0065,
-      supportedFeatures: ['SMS'],
-      status: 'active',
-      deliveryRate: 0.95,
-      responseTime: 3,
-    },
-  ];
-
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      content: 'Thank you for your interest in our product. Would you like to schedule a demo?',
-      recipient: '+1234567890',
-      provider: 'twilio',
-      status: 'delivered',
-      sentAt: new Date().toISOString(),
-      gpt5Suggestions: ['Consider adding a specific time suggestion', 'Include a call-to-action'],
-      sentiment: 'positive',
-      priority: 'high',
-    },
-    {
-      id: '2',
-      content: 'Your order has been shipped and will arrive tomorrow.',
-      recipient: '+1987654321',
-      provider: 'aws-sns',
-      status: 'sent',
-      sentAt: new Date(Date.now() - 3600000).toISOString(),
-      sentiment: 'neutral',
-      priority: 'medium',
-    },
-  ];
-
-  const mockStats: MessagingStats = {
-    totalMessages: 245,
-    deliveredMessages: 238,
-    deliveryRate: 0.971,
-    averageResponseTime: 2.3,
-    totalCost: 1.85,
-    costPerMessage: 0.0076,
-    activeProviders: 2,
-  };
-
   const {
-    data: providers = mockProviders,
+    data: providers = [],
     isLoading: providersLoading,
     error: providersError,
   } = useQuery<MessageProvider[]>({
@@ -158,7 +100,7 @@ export default function TextMessagingDashboard() {
   });
 
   const {
-    data: messages = mockMessages,
+    data: messages = [],
     isLoading: messagesLoading,
     error: messagesError,
   } = useQuery<Message[]>({
@@ -167,27 +109,30 @@ export default function TextMessagingDashboard() {
     retry: false,
   });
 
-  const {
-    data: stats = mockStats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useQuery<MessagingStats>({
-    queryKey: ['/api/messaging/stats'],
-    refetchInterval: 30000,
-    retry: false,
-  });
+  const displayProviders = providers;
+  const displayMessages = messages;
 
-  // Use mock data if API fails
-  const displayProviders = providersError ? mockProviders : providers;
-  const displayMessages = messagesError ? mockMessages : messages;
-  const displayStats = statsError ? mockStats : stats;
+  // Stats computed from the message records and configured providers
+  const providerCost = (name: string) =>
+    displayProviders.find((p) => p.id === name || p.name === name)?.costPerMessage || 0;
+  const totalCost = displayMessages.reduce((sum, m) => sum + providerCost(m.provider), 0);
+  const deliveredCount = displayMessages.filter((m) => m.status === 'delivered').length;
+  const displayStats: MessagingStats = {
+    totalMessages: displayMessages.length,
+    deliveredMessages: deliveredCount,
+    deliveryRate: displayMessages.length > 0 ? deliveredCount / displayMessages.length : 0,
+    averageResponseTime: 0,
+    totalCost,
+    costPerMessage: displayMessages.length > 0 ? totalCost / displayMessages.length : 0,
+    activeProviders: displayProviders.filter((p) => p.status === 'active').length,
+  };
 
   const generateSmartReply = async () => {
     setIsGenerating(true);
     try {
       const response = await gpt5Communication.generateSMSReply({
         message: messageContent,
-        context: 'Customer inquiry about product demo',
+        context: 'SMS conversation with a CRM contact',
         tone: 'professional',
       });
       setGpt5Suggestions(response.suggestions);
@@ -284,24 +229,24 @@ export default function TextMessagingDashboard() {
     </Button>,
   ];
 
-  const headerStats = stats ? (
+  const headerStats = displayStats ? (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
-        <div className="text-2xl font-bold text-blue-600">{stats.totalMessages}</div>
+        <div className="text-2xl font-bold text-blue-600">{displayStats.totalMessages}</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Total Messages</div>
       </div>
       <div className="text-center">
         <div className="text-2xl font-bold text-green-600">
-          {Math.round(stats.deliveryRate * 100)}%
+          {Math.round(displayStats.deliveryRate * 100)}%
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Delivery Rate</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600">{stats.averageResponseTime}s</div>
+        <div className="text-2xl font-bold text-purple-600">—</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Response Time</div>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-orange-600">${stats.costPerMessage.toFixed(4)}</div>
+        <div className="text-2xl font-bold text-orange-600">${displayStats.costPerMessage.toFixed(4)}</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Cost per Message</div>
       </div>
     </div>
@@ -331,6 +276,12 @@ export default function TextMessagingDashboard() {
               Recent Messages
             </h3>
             <div className="space-y-4">
+              {messagesError && (
+                <p className="text-sm text-red-500">Could not load messages: {(messagesError as Error).message}</p>
+              )}
+              {!messagesError && !messagesLoading && displayMessages.length === 0 && (
+                <p className="text-sm text-gray-500">No messages yet.</p>
+              )}
               {displayMessages.map((message: Message) => (
                 <div
                   key={message.id}
@@ -366,6 +317,12 @@ export default function TextMessagingDashboard() {
         <TabsContent value="providers" className="space-y-6">
           {/* Provider Status Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {providersError && (
+              <p className="text-sm text-red-500">Could not load providers: {(providersError as Error).message}</p>
+            )}
+            {!providersError && !providersLoading && displayProviders.length === 0 && (
+              <p className="text-sm text-gray-500">No messaging providers configured.</p>
+            )}
             {displayProviders.map((provider: MessageProvider) => (
               <GlassCard key={provider.id} className="p-6">
                 <div className="flex items-center justify-between mb-4">

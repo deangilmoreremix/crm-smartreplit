@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import {
@@ -25,10 +26,10 @@ interface CallLog {
   id: string;
   contactName: string;
   phoneNumber: string;
-  direction: 'inbound' | 'outbound';
-  startTime: Date;
+  direction?: 'inbound' | 'outbound';
+  startTime?: Date;
   duration: number; // in seconds
-  status: 'completed' | 'missed' | 'voicemail';
+  status: 'completed' | 'missed' | 'voicemail' | 'ongoing';
   notes?: string;
   recordingUrl?: string;
 }
@@ -49,51 +50,24 @@ const PhoneSystem: React.FC = () => {
   const [recordingPlayback, setRecordingPlayback] = useState<string | null>(null);
   const [isPlayingRecording, setIsPlayingRecording] = useState(false);
 
-  // Call logs data
-  const [callLogs] = useState<CallLog[]>([
-    {
-      id: '1',
-      contactName: 'John Doe',
-      phoneNumber: '(555) 123-4567',
-      direction: 'outbound',
-      startTime: new Date(Date.now() - 86400000), // yesterday
-      duration: 325, // 5:25
-      status: 'completed',
-      notes: 'Discussed proposal details. Follow up next week.',
-      recordingUrl: 'https://example.com/recording1.mp3',
-    },
-    {
-      id: '2',
-      contactName: 'Sarah Williams',
-      phoneNumber: '(555) 987-6543',
-      direction: 'inbound',
-      startTime: new Date(Date.now() - 172800000), // 2 days ago
-      duration: 0,
-      status: 'missed',
-      notes: 'Left a voicemail about scheduling a demo',
-    },
-    {
-      id: '3',
-      contactName: 'Robert Johnson',
-      phoneNumber: '(555) 456-7890',
-      direction: 'outbound',
-      startTime: new Date(Date.now() - 259200000), // 3 days ago
-      duration: 183, // 3:03
-      status: 'completed',
-      recordingUrl: 'https://example.com/recording2.mp3',
-    },
-    {
-      id: '4',
-      contactName: 'Jane Smith',
-      phoneNumber: '(555) 321-7654',
-      direction: 'inbound',
-      startTime: new Date(Date.now() - 345600000), // 4 days ago
-      duration: 0,
-      status: 'voicemail',
-      notes: 'Asked about pricing options',
-      recordingUrl: 'https://example.com/voicemail1.mp3',
-    },
-  ]);
+  // Call logs from the phone API (/api/phone/calls)
+  const {
+    data: rawCalls = [],
+    isLoading: callsLoading,
+    error: callsError,
+  } = useQuery<any[]>({ queryKey: ['/api/phone/calls'], retry: false });
+  const callLogs: CallLog[] = rawCalls.map((c) => ({
+    id: String(c.id),
+    contactName: c.contactName || c.caller || 'Unknown caller',
+    phoneNumber: c.phoneNumber || c.caller || '',
+    direction: c.direction,
+    startTime: c.startTime || c.createdAt ? new Date(c.startTime || c.createdAt) : undefined,
+    duration: c.duration || 0,
+    status: c.status,
+    notes: c.notes || c.gpt5Analysis?.summary,
+    recordingUrl: c.recordingUrl || c.recording,
+  }));
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Voicemail data
   const voicemails = callLogs.filter((log) => log.status === 'voicemail');
@@ -128,23 +102,9 @@ const PhoneSystem: React.FC = () => {
     // Use the system dialer to initiate the call
     window.location.href = `tel:${dialerNumber.replace(/\D/g, '')}`;
 
-    // In a real implementation, we might also log the call attempt
-    // For the demo, we'll also show the in-app calling UI
+    // The call itself happens in the device's phone app; this page can't see its status
     setIsCallInProgress(true);
-    setCallStatus('Calling...');
-
-    // Simulate call connecting
-    setTimeout(() => {
-      setCallStatus('Connected');
-      setCallDuration(0);
-
-      // Start timer
-      const timerId = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
-
-      setCallTimer(timerId);
-    }, 2000);
+    setCallStatus('Handed off to your phone app');
   };
 
   const endCall = () => {
@@ -186,18 +146,22 @@ const PhoneSystem: React.FC = () => {
   };
 
   const playRecording = (url: string) => {
+    audioRef.current?.pause();
     if (recordingPlayback === url && isPlayingRecording) {
       setIsPlayingRecording(false);
       setRecordingPlayback(null);
     } else {
-      setRecordingPlayback(url);
-      setIsPlayingRecording(true);
-
-      // Simulate playback (in real app, would use audio player)
-      setTimeout(() => {
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      const stop = () => {
         setIsPlayingRecording(false);
         setRecordingPlayback(null);
-      }, 3000);
+      };
+      audio.onended = stop;
+      audio.onerror = stop;
+      setRecordingPlayback(url);
+      setIsPlayingRecording(true);
+      audio.play().catch(stop);
     }
   };
 
@@ -340,6 +304,14 @@ const PhoneSystem: React.FC = () => {
           </div>
 
           <div className="divide-y divide-gray-200">
+            {callsError && (
+              <div className="p-6 text-sm text-red-500">
+                Could not load call history: {(callsError as Error).message}
+              </div>
+            )}
+            {!callsError && !callsLoading && callLogs.length === 0 && (
+              <div className="p-6 text-sm text-gray-500">No calls recorded yet.</div>
+            )}
             {callLogs.map((log) => (
               <div key={log.id} className="p-6 flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -357,9 +329,11 @@ const PhoneSystem: React.FC = () => {
                   <div>
                     <div className="font-medium">{log.contactName}</div>
                     <div className="text-sm text-gray-600">{log.phoneNumber}</div>
-                    <div className="text-xs text-gray-500">
-                      {log.startTime.toLocaleDateString()} {log.startTime.toLocaleTimeString()}
-                    </div>
+                    {log.startTime && (
+                      <div className="text-xs text-gray-500">
+                        {log.startTime.toLocaleDateString()} {log.startTime.toLocaleTimeString()}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -419,10 +393,12 @@ const PhoneSystem: React.FC = () => {
                 <div key={voicemail.id} className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium">{voicemail.contactName}</div>
-                    <div className="text-sm text-gray-600">
-                      {voicemail.startTime.toLocaleDateString()}{' '}
-                      {voicemail.startTime.toLocaleTimeString()}
-                    </div>
+                    {voicemail.startTime && (
+                      <div className="text-sm text-gray-600">
+                        {voicemail.startTime.toLocaleDateString()}{' '}
+                        {voicemail.startTime.toLocaleTimeString()}
+                      </div>
+                    )}
                   </div>
                   <div className="text-sm text-gray-600 mb-2">{voicemail.phoneNumber}</div>
                   {voicemail.notes && (

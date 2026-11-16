@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PageLayout from '../components/PageLayout';
 import openAIService from '../services/openAIService';
+import { useQuery } from '@tanstack/react-query';
+import { useContactStore } from '../hooks/useContactStore';
 import {
   MessageSquare,
   Send,
@@ -55,82 +57,48 @@ const TextMessages: React.FC = () => {
   // OpenAI service for generating content
   const openai = openAIService;
 
-  // Mock contacts with message history
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      phone: '(555) 123-4567',
-      unread: 2,
-      lastMessage: "That sounds great! I'll check my calendar.",
-      lastActivity: new Date('2025-06-15T14:32:00'),
-      messages: [
-        {
-          id: 'm1',
-          sender: 'user',
-          content: 'Hi John, are you available for a quick call this week to discuss your needs?',
-          timestamp: new Date('2025-06-15T14:30:00'),
-          status: 'read',
-        },
-        {
-          id: 'm2',
-          sender: 'contact',
-          content: "That sounds great! I'll check my calendar.",
-          timestamp: new Date('2025-06-15T14:32:00'),
-          status: 'read',
-        },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      phone: '(555) 987-6543',
-      unread: 0,
-      lastMessage: "Thanks for sending the proposal. I'll review it today.",
-      lastActivity: new Date('2025-06-14T11:15:00'),
-      messages: [
-        {
-          id: 'm1',
-          sender: 'user',
-          content:
-            'Hello Jane, I just sent over the proposal we discussed. Let me know if you have any questions!',
-          timestamp: new Date('2025-06-14T11:10:00'),
-          status: 'read',
-        },
-        {
-          id: 'm2',
-          sender: 'contact',
-          content: "Thanks for sending the proposal. I'll review it today.",
-          timestamp: new Date('2025-06-14T11:15:00'),
-          status: 'read',
-        },
-      ],
-    },
-    {
-      id: '3',
-      name: 'Robert Johnson',
-      phone: '(555) 456-7890',
-      unread: 0,
-      lastMessage: 'Yes, that works for me. See you then!',
-      lastActivity: new Date('2025-06-13T16:45:00'),
-      messages: [
-        {
-          id: 'm1',
-          sender: 'user',
-          content: 'Hi Robert, are you available for a demo next Tuesday at 2pm?',
-          timestamp: new Date('2025-06-13T16:40:00'),
-          status: 'read',
-        },
-        {
-          id: 'm2',
-          sender: 'contact',
-          content: 'Yes, that works for me. See you then!',
-          timestamp: new Date('2025-06-13T16:45:00'),
-          status: 'read',
-        },
-      ],
-    },
-  ]);
+  // Contacts with a phone number from the contact store; history from /api/messaging/messages
+  const storeContacts = useContactStore((state) => state.contacts);
+  const { data: providers } = useQuery<any[]>({
+    queryKey: ['/api/messaging/providers'],
+    retry: false,
+  });
+  const {
+    data: sentMessages,
+    error: messagesError,
+    refetch: refetchMessages,
+  } = useQuery<any[]>({ queryKey: ['/api/messaging/messages'], retry: false });
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const digits = (v: string) => (v || '').replace(/\D/g, '');
+    setContacts(
+      Object.values(storeContacts as Record<string, any>)
+        .filter((c) => c.phone)
+        .map((c) => {
+          const messages: Message[] = (sentMessages || [])
+            .filter((m) => digits(m.recipient) !== '' && digits(m.recipient) === digits(c.phone))
+            .map((m) => ({
+              id: String(m.id),
+              sender: 'user' as const,
+              content: m.content,
+              timestamp: new Date(m.sentAt),
+              status: m.status,
+            }));
+          const last = messages[messages.length - 1];
+          return {
+            id: c.id,
+            name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim(),
+            phone: c.phone,
+            unread: 0,
+            lastMessage: last?.content,
+            lastActivity: last?.timestamp,
+            messages,
+          };
+        })
+    );
+  }, [storeContacts, sentMessages]);
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -197,53 +165,68 @@ const TextMessages: React.FC = () => {
       contact.phone.includes(searchText)
   );
 
-  const sendMessage = () => {
-    if (!selectedContactId || !newMessage.trim()) return;
+  const sendMessage = async () => {
+    if (!selectedContactId || !newMessage.trim() || !selectedContact) return;
 
     setIsSending(true);
+    setSendError(null);
+    const content = newMessage;
 
-    // Create new message
     const newMessageObj: Message = {
       id: `m${Date.now()}`,
       sender: 'user',
-      content: newMessage,
+      content,
       timestamp: new Date(),
       status: 'sending',
     };
-
-    // Update contacts state with the new message
-    setContacts(
-      contacts.map((contact) =>
-        contact.id === selectedContactId
-          ? {
-              ...contact,
-              messages: [...contact.messages, newMessageObj],
-              lastMessage: newMessage,
-              lastActivity: new Date(),
-            }
-          : contact
-      )
-    );
-
-    // Clear input
-    setNewMessage('');
-
-    // Simulate message delivery
-    setTimeout(() => {
+    const setStatus = (status: Message['status']) =>
       setContacts((prevContacts) =>
         prevContacts.map((contact) =>
           contact.id === selectedContactId
             ? {
                 ...contact,
                 messages: contact.messages.map((message) =>
-                  message.id === newMessageObj.id ? { ...message, status: 'delivered' } : message
+                  message.id === newMessageObj.id ? { ...message, status } : message
                 ),
               }
             : contact
         )
       );
+
+    setContacts(
+      contacts.map((contact) =>
+        contact.id === selectedContactId
+          ? {
+              ...contact,
+              messages: [...contact.messages, newMessageObj],
+              lastMessage: content,
+              lastActivity: new Date(),
+            }
+          : contact
+      )
+    );
+    setNewMessage('');
+
+    try {
+      const provider = (providers || []).find((p) => p.status === 'active');
+      if (!provider) throw new Error('No active messaging provider is configured');
+      const response = await fetch('/api/messaging/send', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, recipient: selectedContact.phone, provider: provider.id }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || data.message || `Send failed (${response.status})`);
+      }
+      await refetchMessages();
+    } catch (error) {
+      setStatus('failed');
+      setSendError(error instanceof Error ? error.message : 'Send failed');
+    } finally {
       setIsSending(false);
-    }, 1500);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -360,6 +343,14 @@ const TextMessages: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
+            {messagesError && (
+              <p className="p-4 text-sm text-red-500">
+                Could not load message history: {(messagesError as Error).message}
+              </p>
+            )}
+            {filteredContacts.length === 0 && (
+              <p className="p-4 text-sm text-gray-500">No contacts with a phone number.</p>
+            )}
             {filteredContacts.map((contact) => (
               <div
                 key={contact.id}
@@ -510,6 +501,7 @@ const TextMessages: React.FC = () => {
 
               {/* Input Area */}
               <div className="p-4 bg-white border-t border-gray-200">
+                {sendError && <p className="mb-2 text-sm text-red-500">{sendError}</p>}
                 <div className="flex items-end space-x-2">
                   <div className="flex-1">
                     <textarea

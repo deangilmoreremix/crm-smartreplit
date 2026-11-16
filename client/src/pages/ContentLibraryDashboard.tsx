@@ -16,10 +16,9 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
-import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import GlassCard from '../components/GlassCard';
-import { gpt5Communication } from '../services/gpt5CommunicationService';
+import { generateAI } from '../services/aiGenerate';
 import {
   FileText,
   Image,
@@ -83,8 +82,8 @@ interface ContentStats {
   totalEngagement: number;
   averageEngagement: number;
   topPerformingCategory: string;
-  aiOptimizationScore: number;
-  monthlyGrowth: number;
+  aiOptimizationScore: number | null;
+  monthlyGrowth: number | null;
 }
 
 export default function ContentLibraryDashboard() {
@@ -106,115 +105,34 @@ export default function ContentLibraryDashboard() {
   const [analyticsTracking, setAnalyticsTracking] = useState('detailed');
   const [storageLocation, setStorageLocation] = useState('cloud');
 
-  // Mock data
-  const mockContent: ContentItem[] = [
-    {
-      id: '1',
-      title: 'Product Launch Announcement',
-      description: 'Exciting news about our latest product features and capabilities',
-      type: 'text',
-      category: 'Announcements',
-      tags: ['product', 'launch', 'features'],
-      status: 'published',
-      createdDate: '2024-01-15',
-      lastModified: '2024-01-16',
-      author: 'Marketing Team',
-      views: 2450,
-      likes: 89,
-      shares: 34,
-      engagement: 0.78,
-      gpt5Optimization: {
-        suggestedTags: ['innovation', 'technology', 'update'],
-        predictedEngagement: 0.82,
-        contentScore: 0.85,
-        recommendations: ['Add customer testimonials', 'Include product screenshots'],
-      },
-    },
-    {
-      id: '2',
-      title: 'Customer Success Story Video',
-      description: "How our solution transformed a client's business operations",
-      type: 'video',
-      category: 'Case Studies',
-      tags: ['success', 'client', 'transformation'],
-      status: 'published',
-      createdDate: '2024-01-12',
-      lastModified: '2024-01-14',
-      author: 'Content Team',
-      views: 1890,
-      likes: 156,
-      shares: 67,
-      engagement: 0.92,
-      thumbnail: '/api/placeholder/400/225',
-      url: 'https://example.com/video1',
-    },
-    {
-      id: '3',
-      title: 'Industry Trends Report 2024',
-      description: 'Comprehensive analysis of emerging trends in our industry',
-      type: 'document',
-      category: 'Research',
-      tags: ['trends', 'analysis', 'industry'],
-      status: 'draft',
-      createdDate: '2024-01-10',
-      lastModified: '2024-01-10',
-      author: 'Research Team',
-      views: 0,
-      likes: 0,
-      shares: 0,
-      engagement: 0,
-      url: 'https://example.com/report1',
-    },
-    {
-      id: '4',
-      title: 'Brand Guidelines Infographic',
-      description: 'Visual guide for maintaining brand consistency across all materials',
-      type: 'image',
-      category: 'Branding',
-      tags: ['brand', 'guidelines', 'design'],
-      status: 'published',
-      createdDate: '2024-01-08',
-      lastModified: '2024-01-09',
-      author: 'Design Team',
-      views: 1234,
-      likes: 78,
-      shares: 23,
-      engagement: 0.65,
-      thumbnail: '/api/placeholder/400/300',
-      url: 'https://example.com/infographic1',
-    },
-  ];
+  // There is no content storage backend yet (no content table in the database), so the
+  // library starts empty instead of showing sample items.
+  const content: ContentItem[] = [];
 
-  const mockStats: ContentStats = {
-    totalContent: 156,
-    publishedContent: 89,
-    totalViews: 45670,
-    totalEngagement: 0.73,
-    averageEngagement: 0.68,
-    topPerformingCategory: 'Case Studies',
-    aiOptimizationScore: 0.84,
-    monthlyGrowth: 0.15,
+  const published = content.filter((item) => item.status === 'published');
+  const stats: ContentStats = {
+    totalContent: content.length,
+    publishedContent: published.length,
+    totalViews: content.reduce((sum, item) => sum + item.views, 0),
+    totalEngagement: content.reduce((sum, item) => sum + item.engagement, 0),
+    averageEngagement: content.length > 0 ? content.reduce((sum, item) => sum + item.engagement, 0) / content.length : 0,
+    topPerformingCategory: '',
+    aiOptimizationScore: null,
+    monthlyGrowth: null,
   };
+  const topContent = [...content].sort((a, b) => b.engagement - a.engagement).slice(0, 4);
 
-  const { data: content = mockContent, isLoading: contentLoading } = useQuery<ContentItem[]>({
-    queryKey: ['/api/content'],
-    refetchInterval: 30000,
-  });
-
-  const { data: stats = mockStats, isLoading: statsLoading } = useQuery<ContentStats>({
-    queryKey: ['/api/content/stats'],
-    refetchInterval: 30000,
-  });
-
+  const [optimization, setOptimization] = useState<string | null>(null);
   const optimizeContent = async (contentItem: ContentItem) => {
     setIsOptimizing(true);
+    setOptimization(null);
     try {
-      const result = await gpt5Communication.optimizeContent(
-        `Content: ${contentItem.title}, Description: ${contentItem.description}, Type: ${contentItem.type}, Tags: ${contentItem.tags.join(', ')}`,
-        'content-optimization'
-      );
+      const result = await generateAI({
+        prompt: `Suggest concrete improvements to this content to increase engagement.\nTitle: ${contentItem.title}\nDescription: ${contentItem.description}\nType: ${contentItem.type}\nTags: ${contentItem.tags.join(', ')}`,
+      });
+      setOptimization(result.content);
     } catch (error) {
-      console.error('Failed to optimize content:', error);
+      setOptimization(error instanceof Error ? `AI optimization unavailable: ${error.message}` : 'AI optimization unavailable');
     } finally {
       setIsOptimizing(false);
     }
@@ -262,8 +180,8 @@ export default function ContentLibraryDashboard() {
     <Button
       key="ai-optimize"
       variant="outline"
-      onClick={() => optimizeContent(mockContent[0])}
-      disabled={isOptimizing}
+      onClick={() => content[0] && optimizeContent(selectedContent || content[0])}
+      disabled={isOptimizing || content.length === 0}
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Content Optimizer'}
@@ -271,6 +189,10 @@ export default function ContentLibraryDashboard() {
   ];
 
   const headerStats = (
+    <div>
+    {optimization && (
+      <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-sm whitespace-pre-wrap">{optimization}</div>
+    )}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
         <div className="text-2xl font-bold text-blue-600">{stats.totalContent}</div>
@@ -292,6 +214,7 @@ export default function ContentLibraryDashboard() {
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Engagement</div>
       </div>
+    </div>
     </div>
   );
 
@@ -396,6 +319,9 @@ export default function ContentLibraryDashboard() {
           </GlassCard>
 
           {/* Content Grid/List */}
+          {filteredContent.length === 0 && (
+            <p className="text-sm text-gray-500">No content yet. Content storage isn't set up for this account.</p>
+          )}
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredContent.map((item) => (
@@ -574,18 +500,10 @@ export default function ContentLibraryDashboard() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth</span>
                     <span className="font-semibold text-green-600">
-                      +{Math.round(stats.monthlyGrowth * 100)}%
+                      {stats.monthlyGrowth === null ? '—' : `${Math.round(stats.monthlyGrowth * 100)}%`}
                     </span>
                   </div>
-                  <Progress value={stats.monthlyGrowth * 100} className="h-2" />
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">AI Optimization Score</span>
-                    <span className="font-semibold">
-                      {Math.round(stats.aiOptimizationScore * 100)}%
-                    </span>
-                  </div>
-                  <Progress value={stats.aiOptimizationScore * 100} className="h-2" />
+                  <Progress value={(stats.monthlyGrowth ?? 0) * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Average Engagement</span>
@@ -607,22 +525,13 @@ export default function ContentLibraryDashboard() {
               </CardHeader>
               <CardContent className="px-0 pb-0">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Customer Success Story Video</span>
-                    <span className="font-semibold">92% engagement</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Product Launch Announcement</span>
-                    <span className="font-semibold">78% engagement</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Brand Guidelines Infographic</span>
-                    <span className="font-semibold">65% engagement</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Industry Trends Report</span>
-                    <span className="font-semibold">0% engagement</span>
-                  </div>
+                  {topContent.length === 0 && <p className="text-sm text-gray-500">No content yet.</p>}
+                  {topContent.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center">
+                      <span className="text-sm">{item.title}</span>
+                      <span className="font-semibold">{Math.round(item.engagement * 100)}% engagement</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </GlassCard>

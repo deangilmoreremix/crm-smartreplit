@@ -15,10 +15,11 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
-import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import GlassCard from '../components/GlassCard';
-import { gpt5Communication } from '../services/gpt5CommunicationService';
+import { generateAI } from '../services/aiGenerate';
+import { useContactStore } from '../hooks/useContactStore';
+import { useDealStore } from '../store/dealStore';
 import {
   Users,
   Target,
@@ -75,8 +76,8 @@ interface AutomationStats {
   activeCampaigns: number;
   conversionRate: number;
   averageLeadScore: number;
-  monthlyGrowth: number;
-  aiAccuracy: number;
+  monthlyGrowth: number | null;
+  aiAccuracy: number | null;
 }
 
 export default function LeadAutomationDashboard() {
@@ -94,111 +95,62 @@ export default function LeadAutomationDashboard() {
   const [emailAutomation, setEmailAutomation] = useState('enabled');
   const [leadAssignment, setLeadAssignment] = useState('round-robin');
 
-  // Mock data
-  const mockLeads: Lead[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      email: 'sarah@techcorp.com',
-      company: 'TechCorp Inc',
-      status: 'qualified',
-      score: 85,
-      lastActivity: '2024-01-15',
-      source: 'Website',
-      tags: ['Enterprise', 'High-Value'],
-      gpt5Insights: {
-        nextAction: 'Schedule product demo',
-        priority: 'high',
-        predictedValue: 50000,
-        engagement: 0.9,
-      },
-    },
-    {
-      id: '2',
-      name: 'Mike Chen',
-      email: 'mike@startup.io',
-      company: 'Startup.io',
-      status: 'nurturing',
-      score: 65,
-      lastActivity: '2024-01-12',
-      source: 'LinkedIn',
-      tags: ['Startup', 'Early-Stage'],
-      gpt5Insights: {
-        nextAction: 'Send educational content',
-        priority: 'medium',
-        predictedValue: 15000,
-        engagement: 0.7,
-      },
-    },
-    {
-      id: '3',
-      name: 'Emily Davis',
-      email: 'emily@consulting.com',
-      company: 'Davis Consulting',
-      status: 'new',
-      score: 45,
-      lastActivity: '2024-01-10',
-      source: 'Referral',
-      tags: ['Consulting', 'Small Business'],
-    },
-  ];
+  // Leads are the CRM contacts; scores and activity come from the contact records
+  const { contacts } = useContactStore();
+  const { deals } = useDealStore();
+  const contactsArray = Object.values(contacts);
+  const toLeadStatus = (status: string): Lead['status'] => {
+    const value = String(status || '').toLowerCase();
+    if (['new', 'contacted', 'qualified', 'nurturing', 'converted', 'lost'].includes(value)) return value as Lead['status'];
+    if (value === 'customer') return 'converted';
+    if (value === 'lead' || value === 'prospect') return 'new';
+    if (value === 'churned' || value === 'inactive') return 'lost';
+    return 'contacted';
+  };
+  const leads: Lead[] = contactsArray.map((c: any) => ({
+    id: String(c.id),
+    name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim(),
+    email: c.email || '',
+    company: c.company || '',
+    status: toLeadStatus(c.status),
+    score: Math.round(c.aiScore ?? c.score ?? 0),
+    lastActivity: new Date(c.lastContacted || c.updatedAt || c.createdAt).toISOString().slice(0, 10),
+    source: c.source || (c.sources && c.sources[0]) || 'Unknown',
+    tags: c.tags || [],
+  }));
+  // No campaign backend exists yet, so there are no campaigns to show
+  const campaigns: Campaign[] = [];
 
-  const mockCampaigns: Campaign[] = [
-    {
-      id: '1',
-      name: 'Enterprise Lead Nurture',
-      status: 'active',
-      leads: 150,
-      conversionRate: 0.25,
-      budget: 5000,
-      spent: 3200,
-      channels: ['Email', 'LinkedIn', 'Webinar'],
-    },
-    {
-      id: '2',
-      name: 'SMB Awareness Campaign',
-      status: 'active',
-      leads: 300,
-      conversionRate: 0.15,
-      budget: 3000,
-      spent: 1800,
-      channels: ['Email', 'Social Media', 'Content'],
-    },
-  ];
-
-  const mockStats: AutomationStats = {
-    totalLeads: 1250,
-    activeCampaigns: 8,
-    conversionRate: 0.22,
-    averageLeadScore: 68,
-    monthlyGrowth: 0.18,
-    aiAccuracy: 0.89,
+  const DAY = 86400000;
+  const createdWithin = (c: any, from: number, to: number) => {
+    const age = Date.now() - new Date(c.createdAt).getTime();
+    return age < from * DAY && age >= to * DAY;
+  };
+  const newThis30 = contactsArray.filter((c) => createdWithin(c, 30, 0)).length;
+  const newPrev30 = contactsArray.filter((c) => createdWithin(c, 60, 30)).length;
+  const dealsArray = Object.values(deals);
+  const wonDealCount = dealsArray.filter((d) => String(d.stage) === 'closed-won').length;
+  const scoredLeads = leads.filter((l) => l.score > 0);
+  const stats: AutomationStats = {
+    totalLeads: leads.length,
+    activeCampaigns: campaigns.filter((c) => c.status === 'active').length,
+    conversionRate: leads.length > 0 ? leads.filter((l) => l.status === 'converted').length / leads.length : 0,
+    averageLeadScore: scoredLeads.length > 0 ? Math.round(scoredLeads.reduce((s, l) => s + l.score, 0) / scoredLeads.length) : 0,
+    monthlyGrowth: newPrev30 > 0 ? (newThis30 - newPrev30) / newPrev30 : null,
+    aiAccuracy: null, // no prediction tracking to measure against
   };
 
-  const { data: leads = mockLeads, isLoading: leadsLoading } = useQuery<Lead[]>({
-    queryKey: ['/api/leads'],
-    refetchInterval: 30000,
-  });
-
-  const { data: campaigns = mockCampaigns, isLoading: campaignsLoading } = useQuery<Campaign[]>({
-    queryKey: ['/api/campaigns'],
-    refetchInterval: 30000,
-  });
-
-  const { data: stats = mockStats, isLoading: statsLoading } = useQuery<AutomationStats>({
-    queryKey: ['/api/automation/stats'],
-    refetchInterval: 30000,
-  });
-
+  const [leadStrategy, setLeadStrategy] = useState<string | null>(null);
   const optimizeLeadStrategy = async (lead: Lead) => {
     setIsOptimizing(true);
+    setLeadStrategy(null);
     try {
-      const result = await gpt5Communication.optimizeContent(
-        `Lead: ${lead.name} from ${lead.company}, Score: ${lead.score}, Status: ${lead.status}, Tags: ${lead.tags.join(', ')}`,
-        'lead-nurturing'
-      );
+      const result = await generateAI({
+        prompt: `Suggest a nurturing strategy and next best action for this lead.\nName: ${lead.name}\nCompany: ${lead.company}\nScore: ${lead.score}\nStatus: ${lead.status}\nSource: ${lead.source}\nTags: ${lead.tags.join(', ')}\nWon deals in CRM overall: ${wonDealCount}`,
+      });
+      setLeadStrategy(`${lead.name}: ${result.content}`);
     } catch (error) {
-      console.error('Failed to optimize lead strategy:', error);
+      setLeadStrategy(error instanceof Error ? `AI strategy unavailable: ${error.message}` : 'AI strategy unavailable');
     } finally {
       setIsOptimizing(false);
     }
@@ -248,8 +200,11 @@ export default function LeadAutomationDashboard() {
     <Button
       key="ai-optimize"
       variant="outline"
-      onClick={() => optimizeLeadStrategy(mockLeads[0])}
-      disabled={isOptimizing}
+      onClick={() => {
+        const target = [...leads].sort((a, b) => b.score - a.score)[0];
+        if (target) optimizeLeadStrategy(target);
+      }}
+      disabled={isOptimizing || leads.length === 0}
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Lead Insights'}
@@ -257,6 +212,10 @@ export default function LeadAutomationDashboard() {
   ];
 
   const headerStats = (
+    <div>
+    {leadStrategy && (
+      <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-sm whitespace-pre-wrap">{leadStrategy}</div>
+    )}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
         <div className="text-2xl font-bold text-blue-600">{stats.totalLeads}</div>
@@ -276,6 +235,7 @@ export default function LeadAutomationDashboard() {
         <div className="text-2xl font-bold text-orange-600">{stats.averageLeadScore}</div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Avg Lead Score</div>
       </div>
+    </div>
     </div>
   );
 
@@ -347,6 +307,7 @@ export default function LeadAutomationDashboard() {
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
+                {filteredLeads.length === 0 && <p className="text-sm text-gray-500">No contacts match. Add contacts to see them here.</p>}
                 {filteredLeads.map((lead) => (
                   <GlassCard
                     key={lead.id}
@@ -406,6 +367,7 @@ export default function LeadAutomationDashboard() {
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
+                {campaigns.length === 0 && <p className="text-sm text-gray-500">No campaigns yet.</p>}
                 {campaigns.map((campaign) => (
                   <GlassCard key={campaign.id} className="p-4">
                     <div className="flex items-center justify-between">
@@ -487,18 +449,14 @@ export default function LeadAutomationDashboard() {
                   <Progress value={stats.averageLeadScore} className="h-2" />
 
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">AI Prediction Accuracy</span>
-                    <span className="font-semibold">{Math.round(stats.aiAccuracy * 100)}%</span>
-                  </div>
-                  <Progress value={stats.aiAccuracy * 100} className="h-2" />
-
-                  <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Lead Growth</span>
                     <span className="font-semibold text-green-600">
-                      +{Math.round(stats.monthlyGrowth * 100)}%
+                      {stats.monthlyGrowth === null
+                        ? 'No contacts added last month'
+                        : `${stats.monthlyGrowth >= 0 ? '+' : ''}${Math.round(stats.monthlyGrowth * 100)}%`}
                     </span>
                   </div>
-                  <Progress value={stats.monthlyGrowth * 100} className="h-2" />
+                  <Progress value={Math.max(0, Math.min(100, (stats.monthlyGrowth ?? 0) * 100))} className="h-2" />
                 </div>
               </div>
             </GlassCard>

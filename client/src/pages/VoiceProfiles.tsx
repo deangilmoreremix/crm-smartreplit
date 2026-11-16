@@ -40,27 +40,6 @@ const VoiceProfiles: React.FC = () => {
     volume: 1,
   });
 
-  // Mock data initialization
-  useEffect(() => {
-    const mockProfiles: VoiceProfile[] = [
-      {
-        id: '1',
-        name: 'Default Business Voice',
-        voice_id: 'voice-2',
-        settings: { pitch: 1, speed: 1, volume: 1 },
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        name: 'Casual Presentation',
-        voice_id: 'voice-4',
-        settings: { pitch: 1.1, speed: 0.9, volume: 1 },
-        created_at: new Date().toISOString(),
-      },
-    ];
-    setProfiles(mockProfiles);
-  }, []);
-
   useEffect(() => {
     if (editingProfile) {
       setFormName(editingProfile.name);
@@ -75,8 +54,7 @@ const VoiceProfiles: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // In a real app, this would fetch from API
-      // Using mock data from useEffect
+      // No voice-profile API exists yet; profiles live in page state only
     } catch (err) {
       console.error('Error loading voice profiles:', err);
       setError('Failed to load voice profiles');
@@ -148,16 +126,22 @@ const VoiceProfiles: React.FC = () => {
     setShowAddForm(true);
   };
 
-  const playPreview = (profileId: string) => {
-    if (playingAudio === profileId) {
-      setPlayingAudio(null);
-    } else {
-      setPlayingAudio(profileId);
-      // Simulate audio playback
-      setTimeout(() => {
-        setPlayingAudio(null);
-      }, 3000);
+  // Preview the profile's pitch/speed/volume with the browser's speech synthesis
+  const playPreview = (profile: VoiceProfile) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setError('Voice preview is not supported in this browser');
+      return;
     }
+    const settings = profile.settings || {};
+    const utterance = new SpeechSynthesisUtterance(`This is a preview of ${profile.name}.`);
+    utterance.pitch = settings.pitch ?? 1;
+    utterance.rate = settings.speed ?? 1;
+    utterance.volume = settings.volume ?? 1;
+    utterance.onend = () => setPlayingAudio(null);
+    utterance.onerror = () => setPlayingAudio(null);
+    window.speechSynthesis.cancel();
+    setPlayingAudio(profile.id);
+    window.speechSynthesis.speak(utterance);
   };
 
   const getVoiceName = (voiceId: string) => {
@@ -379,7 +363,7 @@ const VoiceProfiles: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-1">
                   <button
-                    onClick={() => playPreview(profile.id)}
+                    onClick={() => playPreview(profile)}
                     disabled={playingAudio !== null}
                     className="text-gray-400 hover:text-blue-500 disabled:opacity-50"
                     title="Preview voice"
