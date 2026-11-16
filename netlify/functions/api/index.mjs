@@ -116,7 +116,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    contacts = pgTable("contacts", {
+    contacts = pgTable("smartcrm_contacts", {
       id: serial("id").primaryKey(),
       firstName: text("first_name").notNull(),
       lastName: text("last_name").notNull(),
@@ -269,7 +269,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    entitlements = pgTable("entitlements", {
+    entitlements = pgTable("smartcrm_entitlements", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: uuid("user_id").references(() => profiles.id).notNull(),
       productTier: text("product_tier").notNull(),
@@ -298,7 +298,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    userRolesTable = pgTable("user_roles", {
+    userRolesTable = pgTable("smartcrm_user_roles", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: uuid("user_id").references(() => profiles.id).notNull(),
       roleId: uuid("role_id").references(() => roles.id).notNull(),
@@ -307,7 +307,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    appointments = pgTable("appointments", {
+    appointments = pgTable("smartcrm_appointments", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       title: text("title").notNull(),
       description: text("description"),
@@ -324,7 +324,7 @@ var init_schema = __esm({
       profileId: uuid("profile_id").references(() => profiles.id),
       contactId: integer("contact_id").references(() => contacts.id)
     });
-    notes = pgTable("notes", {
+    notes = pgTable("smartcrm_notes", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       title: text("title"),
       content: text("content").notNull(),
@@ -335,7 +335,7 @@ var init_schema = __esm({
       profileId: uuid("profile_id").references(() => profiles.id),
       contactId: integer("contact_id").references(() => contacts.id)
     });
-    communications = pgTable("communications", {
+    communications = pgTable("smartcrm_communications", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       type: text("type").notNull(),
       direction: text("direction").default("outbound"),
@@ -348,7 +348,7 @@ var init_schema = __esm({
       profileId: uuid("profile_id").references(() => profiles.id),
       contactId: integer("contact_id").references(() => contacts.id)
     });
-    documents = pgTable("documents", {
+    documents = pgTable("smartcrm_documents", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       name: text("name").notNull(),
       type: text("type").notNull(),
@@ -361,7 +361,7 @@ var init_schema = __esm({
       profileId: uuid("profile_id").references(() => profiles.id),
       contactId: integer("contact_id").references(() => contacts.id)
     });
-    aiQueries = pgTable("ai_queries", {
+    aiQueries = pgTable("smartcrm_ai_queries", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       query: text("query").notNull(),
       response: text("response"),
@@ -372,7 +372,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id)
     });
-    userAiTokens = pgTable("user_ai_tokens", {
+    userAiTokens = pgTable("smartcrm_user_ai_tokens", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       totalTokens: integer("total_tokens").default(0),
       usedTokens: integer("used_tokens").default(0),
@@ -383,7 +383,7 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id).notNull()
     });
-    tokenTransactions = pgTable("token_transactions", {
+    tokenTransactions = pgTable("smartcrm_token_transactions", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       type: text("type").notNull(),
       amount: integer("amount").notNull(),
@@ -393,7 +393,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id).notNull()
     });
-    userGeneratedImages = pgTable("user_generated_images", {
+    userGeneratedImages = pgTable("smartcrm_user_generated_images", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       prompt: text("prompt").notNull(),
       imageUrl: text("image_url"),
@@ -404,7 +404,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id).notNull()
     });
-    features = pgTable("features", {
+    features = pgTable("smartcrm_features", {
       id: serial("id").primaryKey(),
       name: text("name").notNull().unique(),
       description: text("description"),
@@ -414,7 +414,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    userFeatures = pgTable("user_features", {
+    userFeatures = pgTable("smartcrm_user_features", {
       id: serial("id").primaryKey(),
       userId: uuid("user_id").references(() => profiles.id).notNull(),
       featureId: integer("feature_id").references(() => features.id).notNull(),
@@ -423,7 +423,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    aiFeatureDefinitions = pgTable("ai_feature_definitions", {
+    aiFeatureDefinitions = pgTable("smartcrm_ai_feature_definitions", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       featureKey: text("feature_key").unique().notNull(),
       featureName: text("feature_name").notNull(),
@@ -436,7 +436,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    aiFeatureUsage = pgTable("ai_feature_usage", {
+    aiFeatureUsage = pgTable("smartcrm_ai_feature_usage", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: uuid("user_id").references(() => profiles.id).notNull(),
       resellerId: uuid("reseller_id").references(() => profiles.id),
@@ -448,7 +448,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow()
     });
     aiResellerPricing = pgTable(
-      "ai_reseller_pricing",
+      "smartcrm_ai_reseller_pricing",
       {
         id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
         resellerId: uuid("reseller_id").references(() => profiles.id).notNull(),
@@ -461,7 +461,7 @@ var init_schema = __esm({
       },
       (table) => [unique("unique_reseller_feature").on(table.resellerId, table.featureKey)]
     );
-    workflows = pgTable("workflows", {
+    workflows = pgTable("smartcrm_workflows", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       name: text("name").notNull(),
       description: text("description"),
@@ -474,7 +474,7 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id)
     });
-    workflowActions = pgTable("workflow_actions", {
+    workflowActions = pgTable("smartcrm_workflow_actions", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       workflowId: uuid("workflow_id").references(() => workflows.id).notNull(),
       sequence: integer("sequence").notNull(),
@@ -484,7 +484,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    workflowRuns = pgTable("workflow_runs", {
+    workflowRuns = pgTable("smartcrm_workflow_runs", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       workflowId: uuid("workflow_id").references(() => workflows.id).notNull(),
       status: text("status").$type().default("pending"),
@@ -496,7 +496,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    workflowRunLogs = pgTable("workflow_run_logs", {
+    workflowRunLogs = pgTable("smartcrm_workflow_run_logs", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       runId: uuid("run_id").references(() => workflowRuns.id).notNull(),
       actionSequence: integer("action_sequence"),
@@ -508,7 +508,7 @@ var init_schema = __esm({
       completedAt: timestamp("completed_at"),
       createdAt: timestamp("created_at").defaultNow()
     });
-    workflowCredits = pgTable("workflow_credits", {
+    workflowCredits = pgTable("smartcrm_workflow_credits", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       tenantId: uuid("tenant_id").references(() => profiles.id).notNull(),
       totalCredits: integer("total_credits").default(0),
@@ -518,7 +518,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    workflowTemplates = pgTable("workflow_templates", {
+    workflowTemplates = pgTable("smartcrm_workflow_templates", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       name: text("name").notNull(),
       description: text("description"),
@@ -531,7 +531,7 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id)
     });
-    objectMetadata = pgTable("object_metadata", {
+    objectMetadata = pgTable("smartcrm_object_metadata", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       name: text("name").notNull(),
       label: text("label").notNull(),
@@ -545,7 +545,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    fieldMetadata = pgTable("field_metadata", {
+    fieldMetadata = pgTable("smartcrm_field_metadata", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
       name: text("name").notNull(),
@@ -565,7 +565,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    relationMetadata = pgTable("relation_metadata", {
+    relationMetadata = pgTable("smartcrm_relation_metadata", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       sourceObjectMetadataId: uuid("source_object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
       targetObjectMetadataId: uuid("target_object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }).notNull(),
@@ -577,7 +577,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    views = pgTable("views", {
+    views = pgTable("smartcrm_views", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       objectMetadataId: uuid("object_metadata_id").references(() => objectMetadata.id, { onDelete: "cascade" }),
       name: text("name").notNull(),
@@ -595,7 +595,7 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    deals = pgTable("deals", {
+    deals = pgTable("smartcrm_deals", {
       id: serial("id").primaryKey(),
       title: text("title").notNull(),
       value: decimal("value", { precision: 10, scale: 2 }),
@@ -618,7 +618,7 @@ var init_schema = __esm({
       contactId: integer("contact_id").references(() => contacts.id),
       profileId: uuid("profile_id").references(() => profiles.id)
     });
-    tasks = pgTable("tasks", {
+    tasks = pgTable("smartcrm_tasks", {
       id: serial("id").primaryKey(),
       title: text("title").notNull(),
       description: text("description"),
@@ -717,14 +717,14 @@ var init_schema = __esm({
       createdAt: timestamp("created_at").defaultNow(),
       updatedAt: timestamp("updated_at").defaultNow()
     });
-    contactCustomFields = pgTable("contact_custom_fields", {
+    contactCustomFields = pgTable("smartcrm_contact_custom_fields", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
       fieldKey: text("field_key").notNull(),
       fieldValue: jsonb("field_value"),
       createdAt: timestamp("created_at").defaultNow()
     });
-    contactActivities = pgTable("contact_activities", {
+    contactActivities = pgTable("smartcrm_contact_activities", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
       activityType: text("activity_type").notNull(),
@@ -732,7 +732,7 @@ var init_schema = __esm({
       metadata: jsonb("metadata"),
       createdAt: timestamp("created_at").defaultNow()
     });
-    automationRules = pgTable("automation_rules", {
+    automationRules = pgTable("smartcrm_automation_rules", {
       id: serial("id").primaryKey(),
       name: text("name").notNull(),
       description: text("description"),
@@ -1541,7 +1541,7 @@ async function requireAuthHandler(req, res, next, checkEntitlement) {
     if (checkEntitlement) {
       if (supabaseUrl && serviceRoleKey) {
         const supabase8 = createClient(supabaseUrl, serviceRoleKey);
-        const { data: entitlement } = await supabase8.from("user_entitlements").select("package").eq("user_id", userId).single();
+        const { data: entitlement } = await supabase8.from("smartcrm_user_entitlements").select("package").eq("user_id", userId).single();
         if (entitlement && entitlement.package === "no_access") {
           return res.status(403).json({
             error: "Forbidden - No subscription",
@@ -1581,8 +1581,8 @@ var requireAdmin = async (req, res, next) => {
     }
     const supabase8 = createClient(supabaseUrl, serviceRoleKey);
     const [profileResult, entitlementResult] = await Promise.all([
-      supabase8.from("profiles").select("role, product_tier").eq("id", userId).single(),
-      userEmail ? supabase8.rpc("user_has_feature", {
+      supabase8.from("profiles").select("role").eq("id", userId).single(),
+      userEmail ? supabase8.rpc("smartcrm_user_has_feature", {
         input_email: userEmail,
         input_feature_key: "admin_panel"
       }) : null
@@ -4606,7 +4606,7 @@ router2.get("/", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
     const tenantId = await getTenantId(userId);
-    const { data: workflows2, error } = await supabase.from("workflows").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
+    const { data: workflows2, error } = await supabase.from("smartcrm_workflows").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false });
     if (error) throw error;
     return res.json({ workflows: workflows2 });
   } catch (error) {
@@ -4621,12 +4621,12 @@ router2.get("/:id", async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const { data: workflow, error } = await supabase.from("workflows").select("*").eq("id", id).single();
+    const { data: workflow, error } = await supabase.from("smartcrm_workflows").select("*").eq("id", id).single();
     if (error) throw error;
     if (!workflow) {
       return res.status(404).json({ error: "Workflow not found" });
     }
-    const { data: steps } = await supabase.from("workflow_actions").select("*").eq("workflow_id", id).order("order_index");
+    const { data: steps } = await supabase.from("smartcrm_workflow_actions").select("*").eq("workflow_id", id).order("order_index");
     return res.json({ workflow: { ...workflow, steps } });
   } catch (error) {
     console.error("Error fetching workflow:", error);
@@ -4644,7 +4644,7 @@ router2.post("/", async (req, res) => {
       return res.status(400).json({ error: "name and triggerType are required" });
     }
     const tenantId = await getTenantId(userId);
-    const { data: workflow, error: workflowError } = await supabase.from("workflows").insert({
+    const { data: workflow, error: workflowError } = await supabase.from("smartcrm_workflows").insert({
       name,
       trigger_type: triggerType,
       app_slug: appSlug,
@@ -4663,7 +4663,7 @@ router2.post("/", async (req, res) => {
         parent_id: step.parentId || null,
         condition: step.condition || null
       }));
-      const { error: actionsError } = await supabase.from("workflow_actions").insert(actionRecords);
+      const { error: actionsError } = await supabase.from("smartcrm_workflow_actions").insert(actionRecords);
       if (actionsError) throw actionsError;
     }
     return res.status(201).json({ workflow });
@@ -4680,14 +4680,14 @@ router2.put("/:id", async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const { data: workflow, error: workflowError } = await supabase.from("workflows").update({
+    const { data: workflow, error: workflowError } = await supabase.from("smartcrm_workflows").update({
       name,
       trigger_type: triggerType,
       enabled
     }).eq("id", id).select().single();
     if (workflowError) throw workflowError;
     if (steps) {
-      await supabase.from("workflow_actions").delete().eq("workflow_id", id);
+      await supabase.from("smartcrm_workflow_actions").delete().eq("workflow_id", id);
       const actionRecords = steps.map((step, index) => ({
         workflow_id: id,
         action_type: step.actionType,
@@ -4696,7 +4696,7 @@ router2.put("/:id", async (req, res) => {
         parent_id: step.parentId || null,
         condition: step.condition || null
       }));
-      const { error: actionsError } = await supabase.from("workflow_actions").insert(actionRecords);
+      const { error: actionsError } = await supabase.from("smartcrm_workflow_actions").insert(actionRecords);
       if (actionsError) throw actionsError;
     }
     return res.json({ workflow });
@@ -4712,8 +4712,8 @@ router2.delete("/:id", async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    await supabase.from("workflow_actions").delete().eq("workflow_id", id);
-    const { error } = await supabase.from("workflows").delete().eq("id", id);
+    await supabase.from("smartcrm_workflow_actions").delete().eq("workflow_id", id);
+    const { error } = await supabase.from("smartcrm_workflows").delete().eq("id", id);
     if (error) throw error;
     return res.status(204).send();
   } catch (error) {
@@ -4728,7 +4728,7 @@ router2.get("/:id/runs", async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const { data: runs, error } = await supabase.from("workflow_runs").select("*").eq("workflow_id", id).order("started_at", { ascending: false }).limit(50);
+    const { data: runs, error } = await supabase.from("smartcrm_workflow_runs").select("*").eq("workflow_id", id).order("started_at", { ascending: false }).limit(50);
     if (error) throw error;
     return res.json({ runs });
   } catch (error) {
@@ -4744,11 +4744,11 @@ router2.post("/:id/run", async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const { data: workflow } = await supabase.from("workflows").select("*").eq("id", id).single();
+    const { data: workflow } = await supabase.from("smartcrm_workflows").select("*").eq("id", id).single();
     if (!workflow) {
       return res.status(404).json({ error: "Workflow not found" });
     }
-    const { data: actions } = await supabase.from("workflow_actions").select("*").eq("workflow_id", id).order("order_index");
+    const { data: actions } = await supabase.from("smartcrm_workflow_actions").select("*").eq("workflow_id", id).order("order_index");
     const runId = `run_${Date.now()}`;
     const context = {
       workflowId: id,
@@ -4757,7 +4757,7 @@ router2.post("/:id/run", async (req, res) => {
       timestamp: /* @__PURE__ */ new Date(),
       variables: triggerData || {}
     };
-    const { data: run, error: runError } = await supabase.from("workflow_runs").insert({
+    const { data: run, error: runError } = await supabase.from("smartcrm_workflow_runs").insert({
       workflow_id: id,
       status: "running",
       triggered_by: triggerData || {},
@@ -4773,7 +4773,7 @@ router2.post("/:id/run", async (req, res) => {
       condition: a.condition
     }));
     const result = await workflowEngine.executeWorkflow(steps, context);
-    await supabase.from("workflow_runs").update({
+    await supabase.from("smartcrm_workflow_runs").update({
       status: result.success ? "completed" : "failed",
       completed_at: (/* @__PURE__ */ new Date()).toISOString(),
       results: result.results
@@ -4812,11 +4812,11 @@ function requireEntitlement(featureKey) {
       const supabase8 = createClient3(supabaseUrl3, serviceRoleKey2);
       let entitlement = null;
       if (userEmail) {
-        const { data } = await supabase8.from("user_entitlements").select("*").eq("email", userEmail).single();
+        const { data } = await supabase8.from("smartcrm_user_entitlements").select("*").eq("email", userEmail).single();
         entitlement = data;
       }
       if (!entitlement && userId) {
-        const { data } = await supabase8.from("user_entitlements").select("*").eq("user_id", userId).single();
+        const { data } = await supabase8.from("smartcrm_user_entitlements").select("*").eq("user_id", userId).single();
         entitlement = data;
       }
       if (!entitlement) {
@@ -4829,7 +4829,7 @@ function requireEntitlement(featureKey) {
           message: "Please purchase a subscription to access this feature"
         });
       }
-      const { data: hasAccess } = await supabase8.rpc("user_has_feature", {
+      const { data: hasAccess } = await supabase8.rpc("smartcrm_user_has_feature", {
         input_email: entitlement.email,
         input_feature_key: featureKey
       });
@@ -4986,7 +4986,7 @@ router3.post("/upgrade", async (req, res) => {
     if (!productTiers.includes(tierId)) {
       return res.status(400).json({ error: "Invalid tier ID" });
     }
-    const { data: profile, error: profileError } = await getSupabase().from("profiles").select("*").eq("id", userId).single();
+    const { data: profile, error: profileError } = await getSupabase().from("smartcrm_user_entitlements").select("product_tier").eq("user_id", userId).maybeSingle();
     if (profileError) {
       return res.status(500).json({ error: "Failed to get user profile" });
     }
@@ -5008,7 +5008,7 @@ router3.post("/upgrade", async (req, res) => {
       whitelabel: 6,
       super_admin: 7
     };
-    const currentTierLevel = tierHierarchy[profile.productTier] || 0;
+    const currentTierLevel = tierHierarchy[profile?.product_tier] || 0;
     const targetTierLevel = tierHierarchy[tierId] || 0;
     if (targetTierLevel <= currentTierLevel) {
       return res.status(400).json({ error: "User already has this tier or higher" });
@@ -7841,8 +7841,8 @@ var AnalyticsEngine = class {
     validateTimeRange(start, end);
     try {
       const { data: users } = await supabase2.from("profiles").select("id, created_at").eq("id", tenantId);
-      const { data: contacts2 } = await supabase2.from("contacts").select("id, created_at").eq("profile_id", tenantId);
-      const { data: deals2 } = await supabase2.from("deals").select("id, title, value, status, created_at").eq("profile_id", tenantId);
+      const { data: contacts2 } = await supabase2.from("smartcrm_contacts").select("id, created_at").eq("profile_id", tenantId);
+      const { data: deals2 } = await supabase2.from("smartcrm_deals").select("id, title, value, status, created_at").eq("profile_id", tenantId);
       const totalUsers = users?.length || 0;
       const totalContacts = contacts2?.length || 0;
       const totalDeals = deals2?.length || 0;
@@ -8153,15 +8153,15 @@ var AnalyticsEngine = class {
     try {
       let exportData = {};
       if (dataType === "contacts" || dataType === "all") {
-        const { data: contacts2 } = await supabase2.from("contacts").select("*").eq("profile_id", tenantId);
+        const { data: contacts2 } = await supabase2.from("smartcrm_contacts").select("*").eq("profile_id", tenantId);
         exportData.contacts = contacts2 || [];
       }
       if (dataType === "deals" || dataType === "all") {
-        const { data: deals2 } = await supabase2.from("deals").select("*").eq("profile_id", tenantId);
+        const { data: deals2 } = await supabase2.from("smartcrm_deals").select("*").eq("profile_id", tenantId);
         exportData.deals = deals2 || [];
       }
       if (dataType === "tasks" || dataType === "all") {
-        const { data: tasks2 } = await supabase2.from("tasks").select("*").eq("profile_id", tenantId);
+        const { data: tasks2 } = await supabase2.from("smartcrm_tasks").select("*").eq("profile_id", tenantId);
         exportData.tasks = tasks2 || [];
       }
       let formattedData;
@@ -12042,7 +12042,7 @@ var TenantProvisioner = class {
           // Link to tenant
           created_at: (/* @__PURE__ */ new Date()).toISOString()
         }));
-        await supabase5.from("contacts").insert(contacts2);
+        await supabase5.from("smartcrm_contacts").insert(contacts2);
       }
       if (seedData.deals && Array.isArray(seedData.deals)) {
         const deals2 = seedData.deals.map((deal) => ({
@@ -12050,7 +12050,7 @@ var TenantProvisioner = class {
           profile_id: tenantId,
           created_at: (/* @__PURE__ */ new Date()).toISOString()
         }));
-        await supabase5.from("deals").insert(deals2);
+        await supabase5.from("smartcrm_deals").insert(deals2);
       }
     } catch (error) {
       await errorLogger.logWarning("Initial data seeding failed", {
@@ -18182,7 +18182,7 @@ app.use("/api", async (req, res, next) => {
   if (!userId) return next();
   if (!supabaseAdmin) return next();
   try {
-    const { data } = await supabaseAdmin.from("user_entitlements").select("package").eq("user_id", userId).single();
+    const { data } = await supabaseAdmin.from("smartcrm_user_entitlements").select("package").eq("user_id", userId).single();
     if (req.session) {
       req.session.entitlement = data || null;
     }

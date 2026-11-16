@@ -184,13 +184,13 @@ class AnalyticsEngine {
 
       // Get contact metrics
       const { data: contacts } = await supabase
-        .from('contacts')
+        .from('smartcrm_contacts')
         .select('id, created_at')
         .eq('profile_id', tenantId);
 
       // Get deal metrics
       const { data: deals } = await supabase
-        .from('deals')
+        .from('smartcrm_deals')
         .select('id, title, value, status, created_at')
         .eq('profile_id', tenantId);
 
@@ -619,19 +619,19 @@ class AnalyticsEngine {
       // Get data based on type
       if (dataType === 'contacts' || dataType === 'all') {
         const { data: contacts } = await supabase
-          .from('contacts')
+          .from('smartcrm_contacts')
           .select('*')
           .eq('profile_id', tenantId);
         exportData.contacts = contacts || [];
       }
 
       if (dataType === 'deals' || dataType === 'all') {
-        const { data: deals } = await supabase.from('deals').select('*').eq('profile_id', tenantId);
+        const { data: deals } = await supabase.from('smartcrm_deals').select('*').eq('profile_id', tenantId);
         exportData.deals = deals || [];
       }
 
       if (dataType === 'tasks' || dataType === 'all') {
-        const { data: tasks } = await supabase.from('tasks').select('*').eq('profile_id', tenantId);
+        const { data: tasks } = await supabase.from('smartcrm_tasks').select('*').eq('profile_id', tenantId);
         exportData.tasks = tasks || [];
       }
 

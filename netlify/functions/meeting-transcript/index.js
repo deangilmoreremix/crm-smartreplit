@@ -326,7 +326,7 @@ ${aiResponse.action_items && aiResponse.action_items.length > 0
     
     // Create the note as a communication record
     const { data: noteData, error: noteError } = await supabase2
-      .from('communications')
+      .from('smartcrm_communications')
       .insert({
         customer_id: user.id, // Assuming user has a customer_id, adjust as needed
         type: 'note',
@@ -368,7 +368,7 @@ ${aiResponse.action_items && aiResponse.action_items.length > 0
         if (actionItem.assignee && actionItem.assignee !== 'unassigned') {
           // Look for contact by name (simplified - in production you'd want better matching)
           const { data: contactData, error: contactError } = await supabase2
-            .from('contacts')
+            .from('smartcrm_contacts')
             .select('id')
             .ilike('first_name', `%${actionItem.assignee.split(' ')[0]}%`)
             .limit(1);
@@ -393,7 +393,7 @@ ${aiResponse.action_items && aiResponse.action_items.length > 0
         }
         
         const { data: taskData, error: taskError } = await supabase2
-          .from('communications')
+          .from('smartcrm_communications')
           .insert({
             customer_id: user.id,
             type: 'task',
@@ -432,7 +432,7 @@ ${aiResponse.action_items && aiResponse.action_items.length > 0
         
         // Create a communication record for the follow-up meeting
         const { data: followUpData, error: followUpError } = await supabase2
-          .from('communications')
+          .from('smartcrm_communications')
           .insert({
             customer_id: user.id,
             type: 'meeting',

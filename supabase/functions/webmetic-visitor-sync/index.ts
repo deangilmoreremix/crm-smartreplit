@@ -35,7 +35,7 @@ async function findContactByEmail(
   email: string
 ) {
   const { data } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .select('id, full_name, company_name')
     .eq('email', email.toLowerCase())
     .single();
@@ -89,7 +89,7 @@ async function syncVisitorToContact(
   };
 
   const { data, error } = await supabase
-    .from('contact_activities')
+    .from('smartcrm_contact_activities')
     .insert(activityData)
     .select()
     .single();

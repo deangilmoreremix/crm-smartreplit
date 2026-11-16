@@ -38,7 +38,7 @@ export const profiles = pgTable('profiles', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const contacts = pgTable('contacts', {
+export const contacts = pgTable('smartcrm_contacts', {
   id: serial('id').primaryKey(),
   firstName: text('first_name').notNull(),
   lastName: text('last_name').notNull(),
@@ -203,7 +203,7 @@ export const whiteLabelPackages = pgTable('white_label_packages', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const entitlements = pgTable('entitlements', {
+export const entitlements = pgTable('smartcrm_entitlements', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid('user_id').references(() => profiles.id).notNull(),
   productTier: text('product_tier').notNull(),
@@ -235,7 +235,7 @@ export const permissions = pgTable('permissions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const userRolesTable = pgTable('user_roles', {
+export const userRolesTable = pgTable('smartcrm_user_roles', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid('user_id').references(() => profiles.id).notNull(),
   roleId: uuid('role_id').references(() => roles.id).notNull(),
@@ -245,7 +245,7 @@ export const userRolesTable = pgTable('user_roles', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const appointments = pgTable('appointments', {
+export const appointments = pgTable('smartcrm_appointments', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   title: text('title').notNull(),
   description: text('description'),
@@ -263,7 +263,7 @@ export const appointments = pgTable('appointments', {
   contactId: integer('contact_id').references(() => contacts.id),
 });
 
-export const notes = pgTable('notes', {
+export const notes = pgTable('smartcrm_notes', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   title: text('title'),
   content: text('content').notNull(),
@@ -275,7 +275,7 @@ export const notes = pgTable('notes', {
   contactId: integer('contact_id').references(() => contacts.id),
 });
 
-export const communications = pgTable('communications', {
+export const communications = pgTable('smartcrm_communications', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   type: text('type').notNull(),
   direction: text('direction').default('outbound'),
@@ -289,7 +289,7 @@ export const communications = pgTable('communications', {
   contactId: integer('contact_id').references(() => contacts.id),
 });
 
-export const documents = pgTable('documents', {
+export const documents = pgTable('smartcrm_documents', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   type: text('type').notNull(),
@@ -303,7 +303,7 @@ export const documents = pgTable('documents', {
   contactId: integer('contact_id').references(() => contacts.id),
 });
 
-export const aiQueries = pgTable('ai_queries', {
+export const aiQueries = pgTable('smartcrm_ai_queries', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   query: text('query').notNull(),
   response: text('response'),
@@ -315,7 +315,7 @@ export const aiQueries = pgTable('ai_queries', {
   profileId: uuid('profile_id').references(() => profiles.id),
 });
 
-export const userAiTokens = pgTable('user_ai_tokens', {
+export const userAiTokens = pgTable('smartcrm_user_ai_tokens', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   totalTokens: integer('total_tokens').default(0),
   usedTokens: integer('used_tokens').default(0),
@@ -327,7 +327,7 @@ export const userAiTokens = pgTable('user_ai_tokens', {
   profileId: uuid('profile_id').references(() => profiles.id).notNull(),
 });
 
-export const tokenTransactions = pgTable('token_transactions', {
+export const tokenTransactions = pgTable('smartcrm_token_transactions', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   type: text('type').notNull(),
   amount: integer('amount').notNull(),
@@ -338,7 +338,7 @@ export const tokenTransactions = pgTable('token_transactions', {
   profileId: uuid('profile_id').references(() => profiles.id).notNull(),
 });
 
-export const userGeneratedImages = pgTable('user_generated_images', {
+export const userGeneratedImages = pgTable('smartcrm_user_generated_images', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   prompt: text('prompt').notNull(),
   imageUrl: text('image_url'),
@@ -350,7 +350,7 @@ export const userGeneratedImages = pgTable('user_generated_images', {
   profileId: uuid('profile_id').references(() => profiles.id).notNull(),
 });
 
-export const features = pgTable('features', {
+export const features = pgTable('smartcrm_features', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   description: text('description'),
@@ -361,7 +361,7 @@ export const features = pgTable('features', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const userFeatures = pgTable('user_features', {
+export const userFeatures = pgTable('smartcrm_user_features', {
   id: serial('id').primaryKey(),
   userId: uuid('user_id').references(() => profiles.id).notNull(),
   featureId: integer('feature_id').references(() => features.id).notNull(),
@@ -371,7 +371,7 @@ export const userFeatures = pgTable('user_features', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const aiFeatureDefinitions = pgTable('ai_feature_definitions', {
+export const aiFeatureDefinitions = pgTable('smartcrm_ai_feature_definitions', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   featureKey: text('feature_key').unique().notNull(),
   featureName: text('feature_name').notNull(),
@@ -385,7 +385,7 @@ export const aiFeatureDefinitions = pgTable('ai_feature_definitions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const aiFeatureUsage = pgTable('ai_feature_usage', {
+export const aiFeatureUsage = pgTable('smartcrm_ai_feature_usage', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid('user_id').references(() => profiles.id).notNull(),
   resellerId: uuid('reseller_id').references(() => profiles.id),
@@ -398,7 +398,7 @@ export const aiFeatureUsage = pgTable('ai_feature_usage', {
 });
 
 export const aiResellerPricing = pgTable(
-  'ai_reseller_pricing',
+  'smartcrm_ai_reseller_pricing',
   {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
     resellerId: uuid('reseller_id').references(() => profiles.id).notNull(),
@@ -412,7 +412,7 @@ export const aiResellerPricing = pgTable(
   (table) => [unique('unique_reseller_feature').on(table.resellerId, table.featureKey)]
 );
 
-export const workflows = pgTable('workflows', {
+export const workflows = pgTable('smartcrm_workflows', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
@@ -426,7 +426,7 @@ export const workflows = pgTable('workflows', {
   profileId: uuid('profile_id').references(() => profiles.id),
 });
 
-export const workflowActions = pgTable('workflow_actions', {
+export const workflowActions = pgTable('smartcrm_workflow_actions', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   workflowId: uuid('workflow_id').references(() => workflows.id).notNull(),
   sequence: integer('sequence').notNull(),
@@ -437,7 +437,7 @@ export const workflowActions = pgTable('workflow_actions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const workflowRuns = pgTable('workflow_runs', {
+export const workflowRuns = pgTable('smartcrm_workflow_runs', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   workflowId: uuid('workflow_id').references(() => workflows.id).notNull(),
   status: text('status').$type<WorkflowRunStatus>().default('pending'),
@@ -450,7 +450,7 @@ export const workflowRuns = pgTable('workflow_runs', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const workflowRunLogs = pgTable('workflow_run_logs', {
+export const workflowRunLogs = pgTable('smartcrm_workflow_run_logs', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   runId: uuid('run_id').references(() => workflowRuns.id).notNull(),
   actionSequence: integer('action_sequence'),
@@ -463,7 +463,7 @@ export const workflowRunLogs = pgTable('workflow_run_logs', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const workflowCredits = pgTable('workflow_credits', {
+export const workflowCredits = pgTable('smartcrm_workflow_credits', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid('tenant_id').references(() => profiles.id).notNull(),
   totalCredits: integer('total_credits').default(0),
@@ -474,7 +474,7 @@ export const workflowCredits = pgTable('workflow_credits', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const workflowTemplates = pgTable('workflow_templates', {
+export const workflowTemplates = pgTable('smartcrm_workflow_templates', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   description: text('description'),
@@ -488,7 +488,7 @@ export const workflowTemplates = pgTable('workflow_templates', {
   profileId: uuid('profile_id').references(() => profiles.id),
 });
 
-export const objectMetadata = pgTable('object_metadata', {
+export const objectMetadata = pgTable('smartcrm_object_metadata', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
   label: text('label').notNull(),
@@ -503,7 +503,7 @@ export const objectMetadata = pgTable('object_metadata', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const fieldMetadata = pgTable('field_metadata', {
+export const fieldMetadata = pgTable('smartcrm_field_metadata', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }).notNull(),
   name: text('name').notNull(),
@@ -524,7 +524,7 @@ export const fieldMetadata = pgTable('field_metadata', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const relationMetadata = pgTable('relation_metadata', {
+export const relationMetadata = pgTable('smartcrm_relation_metadata', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   sourceObjectMetadataId: uuid('source_object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }).notNull(),
   targetObjectMetadataId: uuid('target_object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }).notNull(),
@@ -537,7 +537,7 @@ export const relationMetadata = pgTable('relation_metadata', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const views = pgTable('views', {
+export const views = pgTable('smartcrm_views', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   objectMetadataId: uuid('object_metadata_id').references(() => objectMetadata.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
@@ -556,7 +556,7 @@ export const views = pgTable('views', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const deals = pgTable('deals', {
+export const deals = pgTable('smartcrm_deals', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   value: decimal('value', { precision: 10, scale: 2 }),
@@ -580,7 +580,7 @@ export const deals = pgTable('deals', {
   profileId: uuid('profile_id').references(() => profiles.id),
 });
 
-export const tasks = pgTable('tasks', {
+export const tasks = pgTable('smartcrm_tasks', {
   id: serial('id').primaryKey(),
   title: text('title').notNull(),
   description: text('description'),
@@ -717,7 +717,7 @@ export type InsertPayout = typeof payouts.$inferInsert;
 // Restored definitions still imported by server routes/services
 // (accidentally dropped from this file in 00a8405)
 
-export const contactCustomFields = pgTable('contact_custom_fields', {
+export const contactCustomFields = pgTable('smartcrm_contact_custom_fields', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -727,7 +727,7 @@ export const contactCustomFields = pgTable('contact_custom_fields', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const contactActivities = pgTable('contact_activities', {
+export const contactActivities = pgTable('smartcrm_contact_activities', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -738,7 +738,7 @@ export const contactActivities = pgTable('contact_activities', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
-export const automationRules = pgTable('automation_rules', {
+export const automationRules = pgTable('smartcrm_automation_rules', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),

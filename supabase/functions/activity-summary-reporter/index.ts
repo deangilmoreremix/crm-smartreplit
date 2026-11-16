@@ -229,7 +229,7 @@ async function fetchActivities(
   userId: string
 ) {
   let query = supabase
-    .from('contact_activities')
+    .from('smartcrm_contact_activities')
     .select(`
       *,
       workspace_member:workspace_members(full_name)
@@ -269,7 +269,7 @@ async function getContactInfo(
 
   if (contactId) {
     const { data } = await supabase
-      .from('contacts')
+      .from('smartcrm_contacts')
       .select('full_name, company_name')
       .eq('id', contactId)
       .single();
@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
     }
     
     await supabase
-      .from('contact_activities')
+      .from('smartcrm_contact_activities')
       .insert({
         contact_id: body.contactId || null,
         company_id: body.companyId || null,

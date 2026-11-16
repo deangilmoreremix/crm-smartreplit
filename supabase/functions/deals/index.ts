@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         
         // Get deal details
         const { data: deal } = await supabase
-          .from('deals')
+          .from('smartcrm_deals')
           .select('*, pipeline_stages(*), contacts(*)')
           .eq('id', deal_id)
           .single()
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
 
         // Get similar closed-won deals for comparison
         const { data: similarDeals } = await supabase
-          .from('deals')
+          .from('smartcrm_deals')
           .select('*')
           .eq('stage_id', deal.stage_id)
           .eq('is_won', true)
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
         const prediction = JSON.parse(completion.choices[0].message.content || '{}')
 
         // Log the prediction
-        await supabase.from('contact_activities').insert({
+        await supabase.from('smartcrm_contact_activities').insert({
           contact_id: deal.contact_id,
           activity_type: 'ai_deal_prediction',
           description: `AI predicted ${Math.round(prediction.win_probability * 100)}% win probability`,
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
         const { deal_ids } = await req.json()
         
         const { data: deals } = await supabase
-          .from('deals')
+          .from('smartcrm_deals')
           .select('*, pipeline_stages(*), contacts(*)')
           .in('id', deal_ids)
 
@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
         let dealContext = ''
         if (deal_id) {
           const { data: deal } = await supabase
-            .from('deals')
+            .from('smartcrm_deals')
             .select('*, pipeline_stages(*), contacts(*)')
             .eq('id', deal_id)
             .single()
@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
       
       // Get current deal state for AI analysis
       const { data: deal } = await supabase
-        .from('deals')
+        .from('smartcrm_deals')
         .select('*, pipeline_stages(*)')
         .eq('id', deal_id)
         .single()
@@ -343,7 +343,7 @@ Deno.serve(async (req) => {
           const analysis = JSON.parse(analysisCompletion.choices[0].message.content || '{}')
 
           // Log transition analysis
-          await supabase.from('contact_activities').insert({
+          await supabase.from('smartcrm_contact_activities').insert({
             contact_id: deal.contact_id,
             activity_type: 'stage_transition_ai_analysis',
             description: `Moving to ${newStage.name} - AI recommendation: ${analysis.is_recommended ? 'Approved' : 'Review needed'}`,
@@ -356,7 +356,7 @@ Deno.serve(async (req) => {
 
       // Perform the transition
       const { data: updatedDeal } = await supabase
-        .from('deals')
+        .from('smartcrm_deals')
         .update({ stage_id: new_stage_id })
         .eq('id', deal_id)
         .eq('profile_id', user.id)
@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
       case 'GET':
         if (dealId && dealId !== 'deals') {
           const { data: deal } = await supabase
-            .from('deals')
+            .from('smartcrm_deals')
             .select('*, pipeline_stages(*), contacts(*)')
             .eq('id', dealId)
             .eq('profile_id', user.id)
@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
           })
         } else {
           const { data: deals } = await supabase
-            .from('deals')
+            .from('smartcrm_deals')
             .select('*, pipeline_stages(*), contacts(*)')
             .eq('profile_id', user.id)
             .order('created_at', { ascending: false })
@@ -395,7 +395,7 @@ Deno.serve(async (req) => {
       case 'POST':
         const newDeal = await req.json()
         const { data: deal, error: insertError } = await supabase
-          .from('deals')
+          .from('smartcrm_deals')
           .insert({
             ...newDeal,
             profile_id: user.id,
@@ -424,7 +424,7 @@ Deno.serve(async (req) => {
 
           const insights = JSON.parse(insightsCompletion.choices[0].message.content || '{}')
 
-          await supabase.from('contact_activities').insert({
+          await supabase.from('smartcrm_contact_activities').insert({
             contact_id: newDeal.contact_id,
             activity_type: 'deal_created_ai_insights',
             description: `New deal created with AI insights generated`,
@@ -442,7 +442,7 @@ Deno.serve(async (req) => {
       case 'PUT':
         const updateData = await req.json()
         const { data: updated, error: updateError } = await supabase
-          .from('deals')
+          .from('smartcrm_deals')
           .update(updateData)
           .eq('id', dealId)
           .eq('profile_id', user.id)
@@ -456,7 +456,7 @@ Deno.serve(async (req) => {
 
       case 'DELETE':
         const { error: deleteError } = await supabase
-          .from('deals')
+          .from('smartcrm_deals')
           .delete()
           .eq('id', dealId)
           .eq('profile_id', user.id)

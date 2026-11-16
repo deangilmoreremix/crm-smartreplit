@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
         
         // Search contacts with similarity (using enrichment_data for vector search)
         const { data: contacts } = await supabase
-          .from('contacts')
+          .from('smartcrm_contacts')
           .select('*')
           .or(`firstname.ilike.%${query}%,lastname.ilike.%${query}%,company.ilike.%${query}%,email.ilike.%${query}%`)
           .limit(limit)
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
         const { contact_id, question } = await req.json()
         
         const { data: contact } = await supabase
-          .from('contacts')
+          .from('smartcrm_contacts')
           .select('*')
           .eq('id', contact_id)
           .single()
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
 
         // Get contact history
         const { data: activities } = await supabase
-          .from('contact_activities')
+          .from('smartcrm_contact_activities')
           .select('*')
           .eq('contact_id', contact_id)
           .order('created_at', { ascending: false })
@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         if (contactId && contactId !== 'contacts') {
           if (action === 'activities') {
             const { data: activities, error } = await supabase
-              .from('contact_activities')
+              .from('smartcrm_contact_activities')
               .select('*')
               .eq('contact_id', contactId)
               .order('created_at', { ascending: false })
@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
             })
           } else {
             const { data: contact, error } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
           }
         } else {
           const { data: contacts, error } = await supabase
-            .from('contacts')
+            .from('smartcrm_contacts')
             .select('*')
             .order('createdat', { ascending: false })
 
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
         if (contactId && action) {
           if (action === 'enrich') {
             const { data: contact } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
             const enrichedData = JSON.parse(completion.choices[0].message.content || '{}')
 
             const { data: updated } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .update({
                 enrichment_data: enrichedData,
                 last_enriched_at: new Date().toISOString(),
@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
               .select()
               .single()
 
-            await supabase.from('contact_activities').insert({
+            await supabase.from('smartcrm_contact_activities').insert({
               contact_id: contactId,
               activity_type: 'enrichment',
               description: 'Contact data enriched with AI',
@@ -282,7 +282,7 @@ Deno.serve(async (req) => {
             })
           } else if (action === 'score') {
             const { data: contact } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
             const scoreData = JSON.parse(completion.choices[0].message.content || '{}')
 
             const { data: updated } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .update({
                 score: scoreData.score / 100,
                 ai_score_rationale: scoreData.rationale,
@@ -319,7 +319,7 @@ Deno.serve(async (req) => {
               .select()
               .single()
 
-            await supabase.from('contact_activities').insert({
+            await supabase.from('smartcrm_contact_activities').insert({
               contact_id: contactId,
               activity_type: 'scoring',
               description: `AI score calculated: ${scoreData.score}`,
@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
             const activityData = await req.json()
 
             const { data: activity } = await supabase
-              .from('contact_activities')
+              .from('smartcrm_contact_activities')
               .insert({
                 contact_id: contactId,
                 activity_type: activityData.activity_type || activityData.type,
@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
             const { message_type, context } = await req.json()
             
             const { data: contact } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -409,7 +409,7 @@ Deno.serve(async (req) => {
           }
 
           const { data: contact } = await supabase
-            .from('contacts')
+            .from('smartcrm_contacts')
             .insert(contactData)
             .select()
             .single()
@@ -432,7 +432,7 @@ Deno.serve(async (req) => {
         if (contactId && action === 'custom-fields') {
           const customFieldsData = await req.json()
 
-          await supabase.from('contact_custom_fields').delete().eq('contact_id', contactId)
+          await supabase.from('smartcrm_contact_custom_fields').delete().eq('contact_id', contactId)
 
           if (customFieldsData && Array.isArray(customFieldsData)) {
             const fieldsToInsert = customFieldsData.map((field: any) => ({
@@ -441,7 +441,7 @@ Deno.serve(async (req) => {
               field_value: field.value || field.field_value,
             }))
 
-            await supabase.from('contact_custom_fields').insert(fieldsToInsert)
+            await supabase.from('smartcrm_contact_custom_fields').insert(fieldsToInsert)
           }
 
           return new Response(JSON.stringify({ success: true }), {
@@ -469,7 +469,7 @@ Deno.serve(async (req) => {
           updateFields.updatedat = new Date().toISOString()
 
           const { data: updated } = await supabase
-            .from('contacts')
+            .from('smartcrm_contacts')
             .update(updateFields)
             .eq('id', contactId)
             .select()
@@ -481,7 +481,7 @@ Deno.serve(async (req) => {
         }
 
       case 'DELETE':
-        const { error: deleteError } = await supabase.from('contacts').delete().eq('id', contactId)
+        const { error: deleteError } = await supabase.from('smartcrm_contacts').delete().eq('id', contactId)
 
         if (deleteError) throw deleteError
         return new Response(JSON.stringify({ success: true }), {

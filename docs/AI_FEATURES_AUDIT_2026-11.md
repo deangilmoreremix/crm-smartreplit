@@ -249,6 +249,37 @@ Findings from this pass:
   `GeminiModelInfo.tsx`, `OpenAIModelInfo.tsx`, `task-router.service.ts`, `client/src/services/aiToolsService.ts`,
   `server/services/openaiResponsesService.ts`, the Netlify `openai` function.
 
+## Update — SmartCRM database tables (applied 2026-11-16)
+
+The Supabase project `bzxohkrxcwodllketcpz` is shared with other products and never had SmartCRM's own tables, so
+contacts, deals, tasks, calls, SMS, workflows, AI usage and the Twenty metadata had nowhere to be stored. They now
+exist, **prefixed `smartcrm_` and commented `SmartCRM (deangilmoreremix/crm-smartreplit): …`** so they can't be confused
+with other products' tables (`supabase/migrations/20261116020000_smartcrm_app_tables.sql`, applied via the Supabase MCP):
+
+* 33 tables: the 31 from `shared/schema.ts` (code keeps its JS names; only the SQL names changed) plus
+  `smartcrm_user_entitlements`, `smartcrm_package_features` and the function `smartcrm_user_has_feature()`.
+* Row level security on all 33 with 38 policies: users reach only their own rows (`profile_id`/`user_id = auth.uid()`,
+  or via the parent contact/workflow); catalogs are read-only; users can create only a default `regular` entitlement.
+  The server (service role / `DATABASE_URL`) is unaffected by RLS.
+* Seeds: package → feature map (74 rows), 10 AI feature definitions, the existing whitelabel customer's entitlement.
+* Names that collided with other products' tables (`notes`, `tasks`, `workflows`, `workflow_runs`, `user_roles`,
+  `user_entitlements`) are left untouched; SmartCRM uses its `smartcrm_` versions.
+* `user_api_keys` provider check now also allows `openclaw` (it only adds that value).
+
+**Entitlements bug found and fixed in code:** the unprefixed `user_entitlements` belongs to another (Clerk-based)
+product, so `user_has_feature()` failed for SmartCRM users and the Stripe/PayPal/Zaxaa webhooks wrote SmartCRM purchases
+into that product's table (and wrote `product_tier`/`role` to the shared `profiles`, which has no `product_tier`). All
+of it now reads and writes `smartcrm_user_entitlements` / `smartcrm_user_has_feature`.
+
+**Existing SmartCRM customers have no entitlement row yet** (only the one carried over). Purchases recorded from now on
+are written correctly; earlier purchases need re-granting (re-send the webhook or insert rows).
+
+Security advisor notes: `smartcrm_user_has_feature` is callable by signed-in users (intended — the app checks access
+with it); the project-wide "anonymous sign-ins enabled" warning applies to these tables as to all others.
+
+**Owner actions:** set Netlify `DATABASE_URL` to this project's Postgres connection string (rotated password) so the
+server's routes reach these tables; redeploy the changed Supabase edge functions (contacts, deals, calendar, webhooks).
+
 ## Remaining work (proposed phases)
 
 * **Phase 2 — config & deployed functions:** done in this branch except: remove duplicate function entries

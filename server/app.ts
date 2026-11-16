@@ -92,7 +92,7 @@ app.use('/api', async (req, res, next) => {
 
   try {
     const { data } = await supabaseAdmin
-      .from('user_entitlements')
+      .from('smartcrm_user_entitlements')
       .select('package')
       .eq('user_id', userId)
       .single();

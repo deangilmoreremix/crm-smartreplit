@@ -20,7 +20,7 @@ import {
 import { createInsertSchema } from 'drizzle-zod';
 import { relations } from 'drizzle-orm';
 
-const entitlements = pgTable('entitlements', {
+const entitlements = pgTable('smartcrm_entitlements', {
   id: serial('id').primaryKey(),
   userId: uuid('user_id').notNull(),
   status: text('status').notNull().default('active'),

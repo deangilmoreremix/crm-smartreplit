@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
             const reminderData = JSON.parse(reminderCompletion.choices[0].message.content || '{}')
             
             await supabase
-              .from('contact_activities')
+              .from('smartcrm_contact_activities')
               .insert({
                 contact_id: null,
                 activity_type: 'calendar_reminder_scheduled',

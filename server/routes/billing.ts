@@ -88,12 +88,12 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid tier ID' });
     }
 
-    // Get user profile
+    // Current SmartCRM tier (kept in smartcrm_user_entitlements; the shared profiles table has no tier)
     const { data: profile, error: profileError } = await getSupabase()
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+      .from('smartcrm_user_entitlements')
+      .select('product_tier')
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (profileError) {
       return res.status(500).json({ error: 'Failed to get user profile' });
@@ -121,7 +121,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       super_admin: 7,
     };
 
-    const currentTierLevel = tierHierarchy[profile.productTier as keyof typeof tierHierarchy] || 0;
+    const currentTierLevel = tierHierarchy[profile?.product_tier as keyof typeof tierHierarchy] || 0;
     const targetTierLevel = tierHierarchy[tierId as keyof typeof tierHierarchy] || 0;
 
     if (targetTierLevel <= currentTierLevel) {

@@ -39,7 +39,7 @@ async function getActivitySummary(
   
   // Get new people (contacts created in period)
   const { data: peopleData, error: peopleError } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .select('id, created_at, contact_type')
     .gte('created_at', startDate.toISOString())
     .lte('created_at', endDate.toISOString());
@@ -56,7 +56,7 @@ async function getActivitySummary(
   
   // Get opportunities (deals) created in period, grouped by stage
   const { data: dealsData, error: dealsError } = await supabase
-    .from('deals')
+    .from('smartcrm_deals')
     .select('id, stage, created_at')
     .gte('created_at', startDate.toISOString())
     .lte('created_at', endDate.toISOString());
@@ -71,7 +71,7 @@ async function getActivitySummary(
   
   // Get tasks created in period
   const { data: tasksData, error: tasksError } = await supabase
-    .from('communications')
+    .from('smartcrm_communications')
     .select('id, created_at, completed_at, metadata, subject')
     .eq('type', 'task')
     .gte('created_at', startDate.toISOString())

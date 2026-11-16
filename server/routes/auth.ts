@@ -99,7 +99,7 @@ async function requireAuthHandler(
       if (supabaseUrl && serviceRoleKey) {
         const supabase = createClient(supabaseUrl, serviceRoleKey);
         const { data: entitlement } = await supabase
-          .from('user_entitlements')
+          .from('smartcrm_user_entitlements')
           .select('package')
           .eq('user_id', userId)
           .single();
@@ -169,9 +169,9 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const [profileResult, entitlementResult] = await Promise.all([
-      supabase.from('profiles').select('role, product_tier').eq('id', userId).single(),
+      supabase.from('profiles').select('role').eq('id', userId).single(),
       userEmail
-        ? supabase.rpc('user_has_feature', {
+        ? supabase.rpc('smartcrm_user_has_feature', {
             input_email: userEmail,
             input_feature_key: 'admin_panel',
           })

@@ -101,13 +101,13 @@ export async function updateUserProductTier(
 
   try {
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from('smartcrm_user_entitlements')
       .update({
         product_tier: productTier,
         role: role,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId);
+      .eq('user_id', userId);
 
     if (updateError) {
       console.error('❌ Error updating user product tier:', updateError);
@@ -127,9 +127,12 @@ export async function updateUserProductTier(
     if (email) {
       const packageType = getPackageFromTier(productTier);
       const { error: entError } = await supabase
-        .from('user_entitlements')
+        .from('smartcrm_user_entitlements')
         .upsert({
           email,
+          user_id: userId,
+          product_tier: productTier,
+          role,
           package: packageType,
           openclaw_enabled: productTier === 'super_admin',
           admin_enabled: productTier === 'super_admin',
@@ -168,13 +171,13 @@ export async function revokeUserAccess(
 
   try {
     await supabase
-      .from('profiles')
+      .from('smartcrm_user_entitlements')
       .update({
         product_tier: null,
         role: 'regular_user',
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId);
+      .eq('user_id', userId);
 
     await supabase.auth.admin.updateUserById(userId, {
       user_metadata: {
@@ -188,9 +191,12 @@ export async function revokeUserAccess(
     // CRITICAL FIX: Update user_entitlements to no_access when subscription ends
     if (email) {
       await supabase
-        .from('user_entitlements')
+        .from('smartcrm_user_entitlements')
         .upsert({
           email,
+          user_id: userId,
+          product_tier: null,
+          role: 'regular_user',
           package: 'no_access',
           openclaw_enabled: false,
           admin_enabled: false,

@@ -34,7 +34,7 @@ async function findContactByStripeCustomerId(
   stripeCustomerId: string
 ) {
   const { data } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .select('id, email, full_name')
     .eq('stripe_customer_id', stripeCustomerId)
     .single();
@@ -101,7 +101,7 @@ async function createStripeActivity(
   };
 
   const { data, error } = await supabase
-    .from('contact_activities')
+    .from('smartcrm_contact_activities')
     .insert(activityData)
     .select()
     .single();

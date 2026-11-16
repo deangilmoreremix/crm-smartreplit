@@ -129,7 +129,7 @@ export const ContactActivityTimeline: React.FC<ContactActivityTimelineProps> = (
       if (!session) return;
 
       const { data, error } = await supabase
-        .from('contact_activities')
+        .from('smartcrm_contact_activities')
         .select(`
           *,
           workspace_member:workspace_members(full_name, avatar_url)

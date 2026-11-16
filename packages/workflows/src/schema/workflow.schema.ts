@@ -51,7 +51,7 @@ export type ActionType = (typeof actionTypes)[number];
  * workflows: Main workflow definition table
  * Stores trigger configuration and ordered list of action steps
  */
-export const workflows = pgTable('workflows', {
+export const workflows = pgTable('smartcrm_workflows', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -76,7 +76,7 @@ export const workflows = pgTable('workflows', {
  * workflow_actions: Individual actions within a workflow
  * Normalized from workflows.steps for better querying and versioning
  */
-export const workflowActions = pgTable('workflow_actions', {
+export const workflowActions = pgTable('smartcrm_workflow_actions', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -96,7 +96,7 @@ export const workflowActions = pgTable('workflow_actions', {
 /**
  * workflow_runs: Track each workflow execution instance
  */
-export const workflowRuns = pgTable('workflow_runs', {
+export const workflowRuns = pgTable('smartcrm_workflow_runs', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -116,7 +116,7 @@ export const workflowRuns = pgTable('workflow_runs', {
 /**
  * workflow_run_logs: Detailed execution logs for debugging
  */
-export const workflowRunLogs = pgTable('workflow_run_logs', {
+export const workflowRunLogs = pgTable('smartcrm_workflow_run_logs', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -134,7 +134,7 @@ export const workflowRunLogs = pgTable('workflow_run_logs', {
 /**
  * workflow_credits: Track workflow usage per tenant for billing
  */
-export const workflowCredits = pgTable('workflow_credits', {
+export const workflowCredits = pgTable('smartcrm_workflow_credits', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),
@@ -152,7 +152,7 @@ export const workflowCredits = pgTable('workflow_credits', {
 /**
  * workflow_templates: Pre-built workflow templates users can install
  */
-export const workflowTemplates = pgTable('workflow_templates', {
+export const workflowTemplates = pgTable('smartcrm_workflow_templates', {
   id: uuid('id')
     .primaryKey()
     .default(sql`gen_random_uuid()`),

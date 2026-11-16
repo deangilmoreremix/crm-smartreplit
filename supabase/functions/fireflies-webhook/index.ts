@@ -37,7 +37,7 @@ async function findOrCreateContact(
   name?: string
 ) {
   const { data: existing } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .select('id')
     .eq('email', email.toLowerCase())
     .single();
@@ -45,7 +45,7 @@ async function findOrCreateContact(
   if (existing) return existing.id;
 
   const { data, error } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .insert({
       email: email.toLowerCase(),
       full_name: name || email.split('@')[0],
@@ -93,7 +93,7 @@ async function processFirefliesTranscript(
   };
 
   const { data, error } = await supabase
-    .from('contact_activities')
+    .from('smartcrm_contact_activities')
     .insert(activityData)
     .select()
     .single();

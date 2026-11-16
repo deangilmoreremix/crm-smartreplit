@@ -47,7 +47,7 @@ async function findContactByEmail(
   email: string
 ) {
   const { data } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .select('id')
     .eq('email', email.toLowerCase())
     .single();
@@ -86,7 +86,7 @@ async function updateContactMailchimpData(
   }
 
   const { data, error } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .update(updates)
     .eq('id', contactId)
     .select()
@@ -171,7 +171,7 @@ async function createMailchimpActivity(
   };
 
   const { data, error } = await supabase
-    .from('contact_activities')
+    .from('smartcrm_contact_activities')
     .insert(activityData)
     .select()
     .single();

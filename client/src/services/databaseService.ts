@@ -90,7 +90,7 @@ class DatabaseService {
   // Contact methods
   async getContacts(userId: string): Promise<Contact[]> {
     const { data, error } = await supabase
-      .from('contacts')
+      .from('smartcrm_contacts')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -106,7 +106,7 @@ class DatabaseService {
   async createContact(
     contact: Omit<Contact, 'id' | 'created_at' | 'updated_at'>
   ): Promise<Contact | null> {
-    const { data, error } = await supabase.from('contacts').insert([contact]).select().single();
+    const { data, error } = await supabase.from('smartcrm_contacts').insert([contact]).select().single();
 
     if (error) {
       console.error('Error creating contact:', error);
@@ -118,7 +118,7 @@ class DatabaseService {
 
   async updateContact(contactId: string, updates: Partial<Contact>): Promise<Contact | null> {
     const { data, error } = await supabase
-      .from('contacts')
+      .from('smartcrm_contacts')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', contactId)
       .select()
@@ -133,7 +133,7 @@ class DatabaseService {
   }
 
   async deleteContact(contactId: string): Promise<boolean> {
-    const { error } = await supabase.from('contacts').delete().eq('id', contactId);
+    const { error } = await supabase.from('smartcrm_contacts').delete().eq('id', contactId);
 
     if (error) {
       console.error('Error deleting contact:', error);
@@ -146,7 +146,7 @@ class DatabaseService {
   // Deal methods
   async getDeals(userId: string): Promise<Deal[]> {
     const { data, error } = await supabase
-      .from('deals')
+      .from('smartcrm_deals')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -160,7 +160,7 @@ class DatabaseService {
   }
 
   async createDeal(deal: Omit<Deal, 'id' | 'created_at' | 'updated_at'>): Promise<Deal | null> {
-    const { data, error } = await supabase.from('deals').insert([deal]).select().single();
+    const { data, error } = await supabase.from('smartcrm_deals').insert([deal]).select().single();
 
     if (error) {
       console.error('Error creating deal:', error);
@@ -172,7 +172,7 @@ class DatabaseService {
 
   async updateDeal(dealId: string, updates: Partial<Deal>): Promise<Deal | null> {
     const { data, error } = await supabase
-      .from('deals')
+      .from('smartcrm_deals')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', dealId)
       .select()
@@ -187,7 +187,7 @@ class DatabaseService {
   }
 
   async deleteDeal(dealId: string): Promise<boolean> {
-    const { error } = await supabase.from('deals').delete().eq('id', dealId);
+    const { error } = await supabase.from('smartcrm_deals').delete().eq('id', dealId);
 
     if (error) {
       console.error('Error deleting deal:', error);
@@ -200,7 +200,7 @@ class DatabaseService {
   // Task methods
   async getTasks(userId: string): Promise<Task[]> {
     const { data, error } = await supabase
-      .from('tasks')
+      .from('smartcrm_tasks')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -214,7 +214,7 @@ class DatabaseService {
   }
 
   async createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at'>): Promise<Task | null> {
-    const { data, error } = await supabase.from('tasks').insert([task]).select().single();
+    const { data, error } = await supabase.from('smartcrm_tasks').insert([task]).select().single();
 
     if (error) {
       console.error('Error creating task:', error);
@@ -226,7 +226,7 @@ class DatabaseService {
 
   async updateTask(taskId: string, updates: Partial<Task>): Promise<Task | null> {
     const { data, error } = await supabase
-      .from('tasks')
+      .from('smartcrm_tasks')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', taskId)
       .select()
@@ -241,7 +241,7 @@ class DatabaseService {
   }
 
   async deleteTask(taskId: string): Promise<boolean> {
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    const { error } = await supabase.from('smartcrm_tasks').delete().eq('id', taskId);
 
     if (error) {
       console.error('Error deleting task:', error);

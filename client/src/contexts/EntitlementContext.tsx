@@ -105,7 +105,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
       setError(null);
 
       const { data, error: fetchError } = await supabase
-        .from('user_entitlements')
+        .from('smartcrm_user_entitlements')
         .select('*')
         .eq('email', user.email)
         .single();
@@ -125,7 +125,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
 
           // Create default entitlement for new user
           const { data: newEntitlement, error: insertError } = await supabase
-            .from('user_entitlements')
+            .from('smartcrm_user_entitlements')
             .insert({
               email: user.email,
               package: 'regular',

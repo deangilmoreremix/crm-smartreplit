@@ -47,7 +47,7 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
   const loadContact = async (id: number) => {
     try {
       const { data, error } = await supabase
-        .from('contacts')
+        .from('smartcrm_contacts')
         .select('*')
         .eq('id', id)
         .single();
@@ -62,7 +62,7 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
   const loadDeal = async (id: number) => {
     try {
       const { data, error } = await supabase
-        .from('deals')
+        .from('smartcrm_deals')
         .select('*')
         .eq('id', id)
         .single();
