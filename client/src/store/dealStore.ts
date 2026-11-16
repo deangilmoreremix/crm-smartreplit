@@ -101,97 +101,62 @@ interface DealStore {
   getActivePipeline: () => Pipeline | null;
 }
 
+
+// Server rows (shared/schema.ts `deals`) <-> store Deal
+const stageFor = (value: string | null | undefined): DealStage =>
+  defaultStages.find((s) => s.id === value || s.name.toLowerCase() === String(value || '').toLowerCase()) ||
+  defaultStages[0];
+
+const fromServerDeal = (row: any): Deal => ({
+  id: String(row.id),
+  title: row.title,
+  description: row.description || undefined,
+  value: Number(row.value) || 0,
+  stage: stageFor(row.stage),
+  probability: row.probability ?? 0,
+  contactId: row.contactId != null ? String(row.contactId) : '',
+  priority: 'medium',
+  daysInStage: row.daysInStage ?? 0,
+  source: 'other',
+  tags: [],
+  customFields: row.customFields || {},
+  activities: [],
+  attachments: [],
+  createdAt: new Date(row.createdAt),
+  updatedAt: new Date(row.updatedAt),
+  expectedCloseDate: row.expectedCloseDate ? new Date(row.expectedCloseDate) : undefined,
+  actualCloseDate: row.actualCloseDate ? new Date(row.actualCloseDate) : undefined,
+  currency: 'USD',
+});
+
+const toServerDeal = (deal: Partial<Deal>): Record<string, any> => {
+  const body: Record<string, any> = {};
+  if (deal.title !== undefined) body.title = deal.title;
+  if (deal.description !== undefined) body.description = deal.description;
+  if (deal.value !== undefined) body.value = String(deal.value);
+  if (deal.stage !== undefined) body.stage = deal.stage.id;
+  if (deal.probability !== undefined) body.probability = deal.probability;
+  if (deal.daysInStage !== undefined) body.daysInStage = deal.daysInStage;
+  if (deal.customFields !== undefined) body.customFields = deal.customFields;
+  if (deal.expectedCloseDate !== undefined) body.expectedCloseDate = deal.expectedCloseDate;
+  if (deal.actualCloseDate !== undefined) body.actualCloseDate = deal.actualCloseDate;
+  if (deal.contactId && /^\d+$/.test(deal.contactId)) body.contactId = Number(deal.contactId);
+  return body;
+};
+
+const apiRequest = async (url: string, init?: RequestInit) => {
+  const response = await fetch(url, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
+  return body;
+};
+
 export const useDealStore = create<DealStore>((set, get) => ({
-  // Initial state
-  deals: [
-    {
-      id: '1',
-      title: 'Enterprise Software License',
-      description: 'Annual license for enterprise software suite',
-      value: 75000,
-      stage: defaultStages[2], // negotiation
-      probability: 85,
-      contactId: '1',
-      dueDate: new Date('2024-02-15'),
-      priority: 'high',
-      daysInStage: 5,
-      source: 'referral',
-      tags: ['enterprise', 'software'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-15'),
-      currency: 'USD',
-      expectedCloseDate: new Date('2024-02-15'),
-      status: 'active',
-    },
-    {
-      id: '2',
-      title: 'Marketing Automation Platform',
-      description: 'Complete marketing automation solution',
-      value: 45000,
-      stage: defaultStages[1], // proposal
-      probability: 65,
-      contactId: '2',
-      dueDate: new Date('2024-03-01'),
-      priority: 'medium',
-      daysInStage: 12,
-      source: 'website',
-      tags: ['marketing', 'automation'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-20'),
-      currency: 'USD',
-      expectedCloseDate: new Date('2024-03-01'),
-      status: 'active',
-    },
-    {
-      id: '3',
-      title: 'CRM Integration Services',
-      description: 'Custom CRM integration and setup',
-      value: 25000,
-      stage: defaultStages[0], // qualification
-      probability: 30,
-      contactId: '3',
-      priority: 'low',
-      daysInStage: 8,
-      source: 'cold-call',
-      tags: ['crm', 'integration'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2024-01-20'),
-      updatedAt: new Date('2024-01-25'),
-      currency: 'USD',
-      expectedCloseDate: new Date('2024-04-01'),
-      status: 'active',
-    },
-    {
-      id: '4',
-      title: 'Cloud Infrastructure Setup',
-      description: 'Complete cloud migration and setup',
-      value: 120000,
-      stage: defaultStages[3], // closed-won
-      probability: 100,
-      contactId: '4',
-      priority: 'high',
-      daysInStage: 0,
-      source: 'referral',
-      tags: ['cloud', 'infrastructure'],
-      customFields: {},
-      activities: [],
-      attachments: [],
-      createdAt: new Date('2023-12-01'),
-      updatedAt: new Date('2024-01-10'),
-      closedAt: new Date('2024-01-10'),
-      actualCloseDate: new Date('2024-01-10'),
-      currency: 'USD',
-      status: 'won',
-    },
-  ],
+  // Initial state: deals are loaded from the server (GET /api/deals), not seeded with samples
+  deals: [],
 
   pipelines: {
     default: defaultPipeline,
@@ -207,21 +172,24 @@ export const useDealStore = create<DealStore>((set, get) => ({
   fetchDeals: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      set({ isLoading: false });
+      const rows = await apiRequest('/api/deals');
+      set({ deals: (Array.isArray(rows) ? rows : []).map(fromServerDeal), isLoading: false });
     } catch (error) {
-      set({ error: 'Failed to fetch deals', isLoading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch deals', isLoading: false });
     }
   },
 
   addDeal: async (dealData) => {
-    const id = `deal_${Date.now()}`;
+    const saved = await apiRequest('/api/deals', {
+      method: 'POST',
+      body: JSON.stringify(toServerDeal(dealData as Partial<Deal>)),
+    });
+    const id = String(saved.id);
     const newDeal: Deal = {
       ...dealData,
       id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: new Date(saved.createdAt || Date.now()),
+      updatedAt: new Date(saved.updatedAt || Date.now()),
       activities: [],
       attachments: [],
       customFields: dealData.customFields || {},
@@ -242,6 +210,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   updateDeal: async (id, updates) => {
+    await apiRequest(`/api/deals/${id}`, { method: 'PUT', body: JSON.stringify(toServerDeal(updates)) });
     set((state) => ({
       deals: state.deals.map((deal) =>
         deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
@@ -256,6 +225,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   deleteDeal: async (id) => {
+    await apiRequest(`/api/deals/${id}`, { method: 'DELETE' });
     set((state) => ({
       deals: state.deals.filter((deal) => deal.id !== id),
     }));
@@ -281,8 +251,7 @@ export const useDealStore = create<DealStore>((set, get) => ({
 
   // Pipeline management
   fetchPipelines: async () => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    // Pipelines are defined locally (no pipelines API); nothing to fetch
   },
 
   addPipeline: async (pipelineData) => {

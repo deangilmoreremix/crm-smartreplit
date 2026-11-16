@@ -39,6 +39,59 @@ interface AppointmentState {
   getAppointmentsForDate: (date: Date) => Appointment[];
 }
 
+
+// Server rows (shared/schema.ts `appointments`) <-> store Appointment.
+// Fields the table has no column for (type, contact name/email/phone, notes) live in `attendees[0]`.
+const fromServerAppointment = (row: any): Appointment => {
+  const meta = (Array.isArray(row.attendees) && row.attendees[0]) || {};
+  const date = new Date(row.startTime);
+  const endDate = new Date(row.endTime);
+  return {
+    id: String(row.id),
+    title: row.title,
+    contactId: row.contactId != null ? String(row.contactId) : undefined,
+    contactName: meta.name || '',
+    contactEmail: meta.email,
+    contactPhone: meta.phone,
+    date,
+    endDate,
+    duration: Math.max(0, Math.round((endDate.getTime() - date.getTime()) / 60000)),
+    type: meta.type || 'video',
+    status: row.status || 'scheduled',
+    location: row.location || undefined,
+    notes: row.description || undefined,
+    createdAt: new Date(row.createdAt),
+    updatedAt: new Date(row.updatedAt),
+  };
+};
+
+const toServerAppointment = (a: Partial<Appointment>): Record<string, any> => {
+  const body: Record<string, any> = {};
+  if (a.title !== undefined) body.title = a.title;
+  if (a.notes !== undefined) body.description = a.notes;
+  if (a.date !== undefined) body.startTime = a.date;
+  if (a.endDate !== undefined) body.endTime = a.endDate;
+  else if (a.date !== undefined && a.duration !== undefined)
+    body.endTime = new Date(new Date(a.date).getTime() + a.duration * 60000);
+  if (a.status !== undefined) body.status = a.status;
+  if (a.location !== undefined) body.location = a.location;
+  if (a.contactId && /^\d+$/.test(a.contactId)) body.contactId = Number(a.contactId);
+  if (a.contactName !== undefined || a.contactEmail !== undefined || a.type !== undefined) {
+    body.attendees = [{ name: a.contactName, email: a.contactEmail, phone: a.contactPhone, type: a.type }];
+  }
+  return body;
+};
+
+const apiRequest = async (url: string, init?: RequestInit) => {
+  const response = await fetch(url, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
+  return body;
+};
+
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   appointments: {},
   selectedAppointment: null,
@@ -50,61 +103,8 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      // Mock data - in a real app, this would be an API call
-      const mockAppointments: Appointment[] = [
-        {
-          id: '1',
-          title: 'Client Strategy Meeting',
-          contactId: '1',
-          contactName: 'John Doe',
-          contactEmail: 'john.doe@example.com',
-          contactPhone: '(555) 123-4567',
-          date: new Date(Date.now() + 86400000), // Tomorrow
-          endDate: new Date(Date.now() + 86400000 + 3600000), // 1 hour later
-          duration: 60,
-          type: 'video',
-          status: 'scheduled',
-          notes: 'Discuss Q4 strategy and upcoming product launches',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '2',
-          title: 'Product Demo',
-          contactId: '2',
-          contactName: 'Jane Smith',
-          contactEmail: 'jane.smith@example.com',
-          contactPhone: '(555) 987-6543',
-          date: new Date(Date.now() + 172800000), // Day after tomorrow
-          endDate: new Date(Date.now() + 172800000 + 1800000), // 30 minutes later
-          duration: 30,
-          type: 'video',
-          status: 'scheduled',
-          location: '',
-          notes: 'Demo the new features to potential client',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '3',
-          title: 'Office Visit',
-          contactId: '3',
-          contactName: 'Robert Johnson',
-          contactEmail: 'robert@example.com',
-          contactPhone: '(555) 456-7890',
-          date: new Date(Date.now() + 259200000), // 3 days from now
-          endDate: new Date(Date.now() + 259200000 + 5400000), // 1.5 hours later
-          duration: 90,
-          type: 'in-person',
-          status: 'scheduled',
-          location: '123 Business Ave, Suite 400',
-          notes: 'Tour of their facilities and team meeting',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-
-      const appointmentsMap = mockAppointments.reduce(
+      const rows = await apiRequest('/api/appointments');
+      const appointmentsMap = (Array.isArray(rows) ? rows : []).map(fromServerAppointment).reduce(
         (acc, appointment) => {
           acc[appointment.id] = appointment;
           return acc;
@@ -114,7 +114,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
       set({ appointments: appointmentsMap, isLoading: false });
     } catch (error) {
-      set({ error: 'Failed to fetch appointments', isLoading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch appointments', isLoading: false });
     }
   },
 
@@ -122,8 +122,19 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
+      const draft: Partial<Appointment> = {
+        ...appointmentData,
+        date: appointmentData.date || new Date(),
+        duration: appointmentData.duration || 30,
+        type: appointmentData.type || 'video',
+        status: appointmentData.status || 'scheduled',
+      };
+      const saved = await apiRequest('/api/appointments', {
+        method: 'POST',
+        body: JSON.stringify(toServerAppointment(draft)),
+      });
       const newAppointment: Appointment = {
-        id: Date.now().toString(),
+        id: String(saved.id),
         title: appointmentData.title || '',
         contactId: appointmentData.contactId,
         contactName: appointmentData.contactName || '',
@@ -150,7 +161,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         selectedSlot: null,
       });
     } catch (error) {
-      set({ error: 'Failed to create appointment', isLoading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to create appointment', isLoading: false });
     }
   },
 
@@ -164,6 +175,11 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       if (!existingAppointment) {
         throw new Error('Appointment not found');
       }
+
+      await apiRequest(`/api/appointments/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(toServerAppointment(updates)),
+      });
 
       const updatedAppointment: Appointment = {
         ...existingAppointment,
@@ -179,7 +195,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      set({ error: 'Failed to update appointment', isLoading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to update appointment', isLoading: false });
     }
   },
 
@@ -187,6 +203,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
+      await apiRequest(`/api/appointments/${id}`, { method: 'DELETE' });
       const { appointments } = get();
       const { [id]: deleted, ...remainingAppointments } = appointments;
 
@@ -196,7 +213,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      set({ error: 'Failed to delete appointment', isLoading: false });
+      set({ error: error instanceof Error ? error.message : 'Failed to delete appointment', isLoading: false });
     }
   },
 

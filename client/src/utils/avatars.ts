@@ -41,31 +41,22 @@ export const avatarCollection = {
   ],
 };
 
-// Get random avatar from specific category or all
-export const getRandomAvatar = (category?: keyof typeof avatarCollection): string => {
-  if (category && avatarCollection[category]) {
-    const categoryAvatars = avatarCollection[category];
-    return categoryAvatars[Math.floor(Math.random() * categoryAvatars.length)];
-  }
+// Neutral placeholder for people without a photo. These helpers used to hand out random stock
+// photos of strangers, which then appeared (and were saved) as if they were the contact's picture.
+export const PLACEHOLDER_AVATAR =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#e5e7eb"/>' +
+      '<circle cx="32" cy="25" r="11" fill="#9ca3af"/><path d="M12 56c2-11 10-17 20-17s18 6 20 17z" fill="#9ca3af"/></svg>'
+  );
 
-  // Get from all categories
-  const allAvatars = Object.values(avatarCollection).flat();
-  return allAvatars[Math.floor(Math.random() * allAvatars.length)];
-};
+export const getRandomAvatar = (_category?: keyof typeof avatarCollection): string => PLACEHOLDER_AVATAR;
 
-// Get avatar by index for consistent assignment
+// Same placeholder for every index (kept for callers that pass an index)
 export const getAvatarByIndex = (
-  index: number,
-  category?: keyof typeof avatarCollection
-): string => {
-  if (category && avatarCollection[category]) {
-    const categoryAvatars = avatarCollection[category];
-    return categoryAvatars[index % categoryAvatars.length];
-  }
-
-  const allAvatars = Object.values(avatarCollection).flat();
-  return allAvatars[index % allAvatars.length];
-};
+  _index: number,
+  _category?: keyof typeof avatarCollection
+): string => PLACEHOLDER_AVATAR;
 
 // Generate initials from name
 export const getInitials = (name: string): string => {

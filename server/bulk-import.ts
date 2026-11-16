@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { randomInt } from 'crypto';
 import type { Express } from 'express';
 
 interface BulkUser {
@@ -132,7 +133,7 @@ function generateTempPassword(): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   let password = '';
   for (let i = 0; i < 12; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
+    password += charset.charAt(randomInt(charset.length)); // CSPRNG (was Math.random)
   }
   return password;
 }

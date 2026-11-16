@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { Contact } from '../types/contact';
 import { logger } from '../services/logger.service';
-import { avatarCollection } from '../utils/avatars';
 import Fuse from 'fuse.js';
 
 interface ContactStore {
@@ -37,144 +36,9 @@ interface ContactStore {
   scoreContact: (id: string) => Promise<number>;
 }
 
-// Create sample contacts with enhanced data
 export const useContactStore = create<ContactStore>((set, get) => ({
-  contacts: {
-    '1': {
-      id: '1',
-      firstName: 'Jane',
-      lastName: 'Doe',
-      name: 'Jane Doe',
-      email: 'jane.doe@microsoft.com',
-      phone: '+1 (555) 123-4567',
-      company: 'Microsoft',
-      position: 'Marketing Director',
-      title: 'Marketing Director',
-      industry: 'Technology',
-      avatar: avatarCollection.women[0],
-      avatarSrc: avatarCollection.women[0],
-      status: 'prospect',
-      interestLevel: 'hot',
-      source: 'LinkedIn',
-      sources: ['LinkedIn', 'Email'],
-      tags: ['Enterprise', 'Software', 'High-Value'],
-      aiScore: 85,
-      score: 85,
-      isFavorite: true,
-      lastConnected: '2024-01-15 at 2:30 pm',
-      lastContact: new Date('2024-01-15'),
-      notes: 'Interested in enterprise solutions. Scheduled follow-up for next week.',
-      socialProfiles: {
-        linkedin: 'https://linkedin.com/in/janedoe',
-        twitter: 'https://twitter.com/janedoe',
-        website: 'https://microsoft.com',
-      },
-      customFields: {
-        'Budget Range': '$200K-$500K',
-        'Company Size': '10,000+',
-        'Decision Timeline': 'Q3 2025',
-      },
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-15'),
-    },
-    '2': {
-      id: '2',
-      firstName: 'Darlene',
-      lastName: 'Robertson',
-      name: 'Darlene Robertson',
-      email: 'darlene.r@ford.com',
-      phone: '+1 (555) 234-5678',
-      company: 'Ford Motor Company',
-      position: 'Financial Manager',
-      title: 'Financial Manager',
-      industry: 'Automotive',
-      avatar: avatarCollection.women[1],
-      avatarSrc: avatarCollection.women[1],
-      status: 'lead',
-      interestLevel: 'medium',
-      source: 'LinkedIn',
-      sources: ['LinkedIn', 'Facebook'],
-      tags: ['Finance', 'Automotive', 'F500'],
-      aiScore: 65,
-      score: 65,
-      isFavorite: true,
-      lastConnected: '2024-01-12 at 10:15 am',
-      lastContact: new Date('2024-01-12'),
-      createdAt: new Date('2024-01-05'),
-      updatedAt: new Date('2024-01-18'),
-    },
-    '3': {
-      id: '3',
-      firstName: 'Wade',
-      lastName: 'Warren',
-      name: 'Wade Warren',
-      email: 'wade.warren@zenith.com',
-      phone: '+1 (555) 345-6789',
-      company: 'Zenith Corp',
-      position: 'Operations Manager',
-      title: 'Operations Manager',
-      industry: 'Manufacturing',
-      avatar: avatarCollection.men[0],
-      avatarSrc: avatarCollection.men[0],
-      status: 'lead',
-      interestLevel: 'low',
-      source: 'Facebook',
-      sources: ['Website', 'Typeform'],
-      tags: ['Operations', 'Mid-Market'],
-      aiScore: 35,
-      score: 35,
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-20'),
-    },
-    '4': {
-      id: '4',
-      firstName: 'Jonah',
-      lastName: 'Jude',
-      name: 'Jonah Jude',
-      email: 'jonah.j@binaryit.com',
-      phone: '+1 (555) 456-7890',
-      company: 'Binary IT Solutions',
-      position: 'Web Developer',
-      title: 'Web Developer',
-      industry: 'Technology',
-      avatar: avatarCollection.tech[0],
-      avatarSrc: avatarCollection.tech[0],
-      status: 'prospect',
-      interestLevel: 'medium',
-      source: 'LinkedIn',
-      sources: ['Referral'],
-      tags: ['Technology', 'Development', 'SMB'],
-      aiScore: 90,
-      score: 90,
-      isFavorite: true,
-      createdAt: new Date('2024-01-12'),
-      updatedAt: new Date('2024-01-22'),
-    },
-    '5': {
-      id: '5',
-      firstName: 'Sarah',
-      lastName: 'Chen',
-      name: 'Sarah Chen',
-      email: 'sarah.chen@techstartup.com',
-      phone: '+1 (555) 567-8901',
-      company: 'TechStartup Inc',
-      position: 'CTO',
-      title: 'CTO',
-      industry: 'Technology',
-      avatar: avatarCollection.executives[2],
-      avatarSrc: avatarCollection.executives[2],
-      status: 'prospect',
-      interestLevel: 'hot',
-      source: 'Referral',
-      sources: ['Website', 'Email'],
-      tags: ['Executive', 'Technology', 'Startup'],
-      aiScore: 75,
-      score: 75,
-      isFavorite: true,
-      createdAt: new Date('2024-01-14'),
-      updatedAt: new Date('2024-01-25'),
-    },
-  },
+  // Contacts are loaded from the server (GET /api/contacts); no sample records are seeded
+  contacts: {},
   isLoading: false, // Start as false so dashboard renders immediately
   error: null,
   searchTerm: '',
@@ -239,8 +103,8 @@ export const useContactStore = create<ContactStore>((set, get) => ({
         includeScore: true,
       });
 
-      set({ isLoading: false, fuse });
-      logger.info('Using local contacts (not authenticated)', `${contacts.length} contacts loaded`);
+      set({ isLoading: false, fuse, error: `Could not load contacts (${response.status})` });
+      logger.warn('Contacts API returned an error', `status ${response.status}`);
     } catch (error) {
       // Fallback to local state on error
       const contacts = Object.values(get().contacts);
@@ -250,8 +114,8 @@ export const useContactStore = create<ContactStore>((set, get) => ({
         includeScore: true,
       });
 
-      set({ isLoading: false, fuse });
-      logger.warn('API unavailable, using local contacts', error as Error);
+      set({ isLoading: false, fuse, error: 'Could not load contacts' });
+      logger.warn('Contacts API unavailable', error as Error);
     }
   },
 
@@ -503,38 +367,11 @@ export const useContactStore = create<ContactStore>((set, get) => ({
     set({ selectedContacts: [] });
   },
 
-  // AI features - call real API endpoints
+  // AI features - call real API endpoints (no fabricated fallback values)
   analyzeContact: async (id: string) => {
     try {
-      const contact = get().contacts[id];
-      
-      // Simulate AI analysis with real API call
-      const response = await fetch(`/api/contacts/${id}/score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-      });
-
-      let randomScore = Math.floor(Math.random() * 30) + 70; // fallback score
-      
-      if (response.ok) {
-        const result = await response.json();
-        randomScore = Math.round((result.score || 75) * 100);
-      }
-
-      set((state) => ({
-        contacts: {
-          ...state.contacts,
-          [id]: {
-            ...state.contacts[id],
-            aiScore: randomScore,
-            score: randomScore,
-            updatedAt: new Date(),
-          },
-        },
-      }));
-
-      logger.info('Contact analyzed successfully', { contactId: id, score: randomScore });
+      const score = await get().scoreContact(id);
+      logger.info('Contact analyzed successfully', { contactId: id, score });
     } catch (error) {
       logger.error('Failed to analyze contact', error as Error);
       throw error;
@@ -543,32 +380,14 @@ export const useContactStore = create<ContactStore>((set, get) => ({
 
   enrichContact: async (id: string) => {
     try {
-      const contact = get().contacts[id];
-      
-      // Call real enrichment API
       const response = await fetch(`/api/contacts/${id}/enrich`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
-
-      let enrichmentData = {
-        industry: contact.industry || 'Technology',
-        socialProfiles: {
-          linkedin: `https://linkedin.com/in/${contact.firstName}${contact.lastName}`,
-          website: `https://${contact.company?.toLowerCase().replace(/\s+/g, '')}.com`,
-        },
-        customFields: {
-          'Company Size': '500-1000',
-          Revenue: '$10M-50M',
-        },
-      };
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.data) {
-          enrichmentData = result.data;
-        }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.data) {
+        throw new Error(result.message || result.error || `Enrichment failed (${response.status})`);
       }
 
       set((state) => ({
@@ -576,7 +395,7 @@ export const useContactStore = create<ContactStore>((set, get) => ({
           ...state.contacts,
           [id]: {
             ...state.contacts[id],
-            ...enrichmentData,
+            ...result.data,
             updatedAt: new Date(),
           },
         },
@@ -591,19 +410,17 @@ export const useContactStore = create<ContactStore>((set, get) => ({
 
   scoreContact: async (id: string) => {
     try {
-      // Call real scoring API
       const response = await fetch(`/api/contacts/${id}/score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
-
-      let score = Math.floor(Math.random() * 40) + 60; // fallback score
-      
-      if (response.ok) {
-        const result = await response.json();
-        score = Math.round((result.score || 75) * 100);
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || typeof result.score !== 'number') {
+        throw new Error(result.message || result.error || `Scoring failed (${response.status})`);
       }
+      // The server returns the AI score on a 0-100 scale
+      const score = Math.round(result.score);
 
       set((state) => ({
         contacts: {

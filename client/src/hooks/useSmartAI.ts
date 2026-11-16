@@ -8,6 +8,7 @@ import { enhancedGeminiService } from '../services/enhancedGeminiService';
 import { supabaseAIService } from '../services/supabaseAIService';
 import { aiOrchestratorService } from '../services/aiOrchestratorService';
 import { openAIService } from '../services/openAIService';
+import { generateAI } from '../services/aiGenerate';
 import { Contact } from '../types/contact';
 
 // Define types for task optimization
@@ -63,20 +64,24 @@ interface SmartBulkRequest {
 // Enhanced AI integration service mock (to be replaced with actual implementation)
 const enhancedAI = {
   scoreContact: async (contactId: string, contact: any, urgency: string = 'medium') => {
-    console.log('Scoring contact with enhancedAI', { contactId, urgency });
-
-    // Use aiOrchestratorService to select the right model
-    const result = await aiOrchestratorService.analyzeDeal(
-      { contact, priority: urgency },
-      { priority: urgency as any }
-    );
+    // Real AI score (0-100) with strict JSON Schema output
+    const result = await generateAI({
+      prompt: `Score this contact as a sales lead from 0 to 100 and explain briefly.\n\n${JSON.stringify(contact)}`,
+      schemaName: 'lead_score',
+      schema: {
+        type: 'object',
+        properties: { score: { type: 'integer' }, reasoning: { type: 'string' } },
+        required: ['score', 'reasoning'],
+        additionalProperties: false,
+      },
+    });
 
     return {
       contactId,
-      score: Math.floor(Math.random() * 100),
+      score: Math.max(0, Math.min(100, Number(result.data?.score))),
       modelUsed: result.model,
       urgency,
-      results: result.content,
+      results: result.data,
     };
   },
 
@@ -101,22 +106,24 @@ const enhancedAI = {
   },
 
   categorizeAndTag: async (contactId: string, contact: any) => {
-    console.log('Categorizing contact', contactId);
-
-    // Use Gemma for categorization (typically faster)
-    const result = await enhancedGeminiService.generateContent({
-      prompt: `Categorize this contact and suggest tags: ${JSON.stringify(contact)}`,
-      model: 'gemma-2-2b-it',
-      featureUsed: 'categorization',
+    const result = await generateAI({
+      prompt: `Categorize this CRM contact and suggest tags.\n\n${JSON.stringify(contact)}`,
+      schemaName: 'contact_categories',
+      schema: {
+        type: 'object',
+        properties: {
+          categories: { type: 'array', items: { type: 'string' } },
+          tags: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['categories', 'tags'],
+        additionalProperties: false,
+      },
     });
 
     return {
       contactId,
       modelUsed: result.model,
-      results: {
-        categories: ['lead', 'tech', 'enterprise'],
-        tags: ['follow-up', 'high-value'],
-      },
+      results: { categories: result.data?.categories || [], tags: result.data?.tags || [] },
     };
   },
 
@@ -139,7 +146,7 @@ const enhancedAI = {
   smartBulkAnalysis: async (request: SmartBulkRequest) => {
     console.log('Running bulk analysis', request);
 
-    // Simulate batch processing
+    const startedAt = Date.now();
     const results = await Promise.all(
       request.contacts.slice(0, 10).map(async ({ contactId, contact }) => {
         try {
@@ -171,30 +178,31 @@ const enhancedAI = {
         processed: results.length,
         successful: results.filter((r) => r.success).length,
         failed: results.filter((r) => !r.success).length,
-        averageCost: 0.03 * results.length,
-        totalTime: 200 * results.length,
+        totalTime: Date.now() - startedAt, // measured, in ms
       },
       results,
     };
   },
 
   smartAnalyzeContact: async (request: EnhancedAIAnalysisRequest) => {
-    console.log('Smart analyzing contact', request);
-
-    // Custom analysis
-    const result = await enhancedGeminiService.generateContent({
-      prompt: `Analyze this contact: ${JSON.stringify(request)}`,
-      model: 'gemini-2.5-flash',
-      featureUsed: 'custom-analysis',
+    const result = await generateAI({
+      prompt: `Analyze this contact and give an overall analysis plus specific insights.\n\n${JSON.stringify(request)}`,
+      schemaName: 'contact_analysis',
+      schema: {
+        type: 'object',
+        properties: {
+          analysis: { type: 'string' },
+          insights: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['analysis', 'insights'],
+        additionalProperties: false,
+      },
     });
 
     return {
       contactId: request.contactId,
       modelUsed: result.model,
-      results: {
-        analysis: 'Custom analysis completed',
-        insights: ['Insight 1', 'Insight 2'],
-      },
+      results: { analysis: result.data?.analysis || '', insights: result.data?.insights || [] },
     };
   },
 
@@ -223,36 +231,8 @@ const enhancedAI = {
         (aiOrchestratorService.getUsageStatistics().totalSuccesses || 0) /
         (aiOrchestratorService.getUsageStatistics().totalCalls || 1),
       avgResponseTime: aiOrchestratorService.getUsageStatistics().avgResponseTime || 0,
-      modelPerformance: [
-        {
-          model: 'gemini-2.5-flash',
-          successRate: 0.97,
-          avgTime: 1240,
-          avgCost: 0.0045,
-          taskTypes: ['complex_reasoning', 'content_generation', 'contact_enrichment'],
-        },
-        {
-          model: 'gemma-2-9b-it',
-          successRate: 0.94,
-          avgTime: 750,
-          avgCost: 0.0022,
-          taskTypes: ['contact_scoring', 'categorization'],
-        },
-        {
-          model: 'gemma-2-2b-it',
-          successRate: 0.89,
-          avgTime: 450,
-          avgCost: 0.0012,
-          taskTypes: ['categorization', 'basic_classification'],
-        },
-        {
-          model: 'gpt-6-luna',
-          successRate: 0.96,
-          avgTime: 820,
-          avgCost: 0.009,
-          taskTypes: ['lead_qualification', 'complex_analysis'],
-        },
-      ],
+      // Per-model statistics are not tracked; previously these were invented numbers
+      modelPerformance: [] as any[],
     };
   },
 };
@@ -268,40 +248,26 @@ const logger = {
 // Helper class for task optimization
 class TaskOptimizationHelper {
   getRecommendations(taskType: TaskType): TaskRecommendation | null {
+    // The app runs on two OpenAI models (server/services/openaiModels.ts). No accuracy or cost
+    // figures are claimed here: they are not measured.
+    const fast = (reasoning: string): TaskRecommendation => ({
+      recommendedModel: 'gpt-6-luna',
+      recommendedProvider: 'OpenAI',
+      reasoning,
+      alternativeModels: ['gpt-6.1-sol'],
+    });
+    const advanced = (reasoning: string): TaskRecommendation => ({
+      recommendedModel: 'gpt-6.1-sol',
+      recommendedProvider: 'OpenAI',
+      reasoning,
+      alternativeModels: ['gpt-6-luna'],
+    });
     const recommendations: Record<TaskType, TaskRecommendation> = {
-      contact_scoring: {
-        recommendedModel: 'gemma-2-9b-it',
-        recommendedProvider: 'Google Gemma',
-        reasoning:
-          'Great balance of accuracy and cost for contact scoring tasks. 94% accuracy at 60% the cost of larger models.',
-        alternativeModels: ['gemini-2.5-flash', 'gemma-2-27b-it'],
-        estimatedCost: 0.025,
-      },
-      categorization: {
-        recommendedModel: 'gemma-2-2b-it',
-        recommendedProvider: 'Google Gemma',
-        reasoning:
-          'Efficiently categorizes contacts with minimal processing time. Perfect for high-volume tasks with 87% accuracy.',
-        alternativeModels: ['gemini-2.5-flash-8b'],
-        estimatedCost: 0.015,
-      },
-      contact_enrichment: {
-        recommendedModel: 'gemini-2.5-flash',
-        recommendedProvider: 'Google Gemini',
-        reasoning:
-          'Higher accuracy when analyzing and enriching contact data with external information. 96% accuracy with best response quality.',
-        alternativeModels: ['gemma-2-27b-it'],
-        estimatedCost: 0.045,
-      },
-      lead_qualification: {
-        recommendedModel: 'gpt-6-luna',
-        recommendedProvider: 'OpenAI',
-        reasoning:
-          'Superior reasoning capabilities for complex lead qualification judgments. Strong accuracy on nuanced decision-making tasks.',
-        alternativeModels: ['gemini-2.5-flash'],
-        estimatedCost: 0.048,
-      },
-    };
+      contact_scoring: fast('Scoring is a high-volume task; the efficient model is used by default.'),
+      categorization: fast('Categorization and tagging are simple classification tasks.'),
+      contact_enrichment: advanced('Enrichment benefits from the stronger model and live web research.'),
+      lead_qualification: advanced('Qualification needs more nuanced reasoning.'),
+    } as Record<TaskType, TaskRecommendation>;
 
     return recommendations[taskType] || null;
   }
@@ -320,36 +286,8 @@ class TaskOptimizationHelper {
         (aiOrchestratorService.getUsageStatistics().totalSuccesses || 0) /
         (aiOrchestratorService.getUsageStatistics().totalCalls || 1),
       avgResponseTime: aiOrchestratorService.getUsageStatistics().avgResponseTime || 0,
-      modelPerformance: [
-        {
-          model: 'gemini-2.5-flash',
-          successRate: 0.97,
-          avgTime: 1240,
-          avgCost: 0.0045,
-          taskTypes: ['complex_reasoning', 'content_generation', 'contact_enrichment'],
-        },
-        {
-          model: 'gemma-2-9b-it',
-          successRate: 0.94,
-          avgTime: 750,
-          avgCost: 0.0022,
-          taskTypes: ['contact_scoring', 'categorization'],
-        },
-        {
-          model: 'gemma-2-2b-it',
-          successRate: 0.89,
-          avgTime: 450,
-          avgCost: 0.0012,
-          taskTypes: ['categorization', 'basic_classification'],
-        },
-        {
-          model: 'gpt-6-luna',
-          successRate: 0.96,
-          avgTime: 820,
-          avgCost: 0.009,
-          taskTypes: ['lead_qualification', 'complex_analysis'],
-        },
-      ],
+      // Per-model statistics are not tracked; previously these were invented numbers
+      modelPerformance: [],
     };
   }
 }

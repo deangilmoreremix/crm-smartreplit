@@ -70,7 +70,7 @@ class ContactAPIService {
     return this.isMockMode || !this.supabaseUrl || !this.supabaseKey;
   }
 
-  // Initialize local storage with sample data if needed
+  // Load locally stored records (local mode, when Supabase is not configured)
   private initializeLocalStorage(): Contact[] {
     try {
       const stored = localStorage.getItem('contacts');
@@ -81,32 +81,8 @@ class ContactAPIService {
       // If localStorage is corrupted, reset it
     }
 
-    // Default sample data
-    const sampleContacts: Contact[] = [
-      {
-        id: '1',
-        firstName: 'Jane',
-        lastName: 'Doe',
-        name: 'Jane Doe',
-        email: 'jane.doe@example.com',
-        phone: '+1 (555) 123-4567',
-        title: 'Marketing Director',
-        company: 'Acme Corp',
-        industry: 'Technology',
-        avatarSrc: '',
-        sources: ['Website'],
-        interestLevel: 'high',
-        status: 'prospect',
-        lastConnected: '2024-01-15',
-        aiScore: 85,
-        tags: ['enterprise', 'decision-maker'],
-        createdAt: '2024-01-10T10:00:00Z',
-        updatedAt: '2024-01-20T15:30:00Z',
-      },
-    ];
-
-    localStorage.setItem('contacts', JSON.stringify(sampleContacts));
-    return sampleContacts;
+    // No sample records: local mode starts empty and holds only the user's own data
+    return [];
   }
 
   // Get contacts from local storage

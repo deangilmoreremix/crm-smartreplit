@@ -29,23 +29,8 @@ export const handler = async (event: any, context: any) => {
       httpMethod === 'GET'
     ) {
       if (!supabase) {
-        const tenants = [
-          {
-            id: 'tenant_1',
-            name: 'Acme Corp',
-            subdomain: 'acme',
-            custom_domain: null,
-            status: 'active',
-            type: 'customer',
-            plan: 'enterprise',
-            contact_email: 'admin@acme.com',
-            monthly_revenue: 299,
-            user_count: 25,
-            created_at: '2024-01-15T00:00:00Z',
-            parent_partner_id: 'partner_1',
-          },
-        ];
-        return { statusCode: 200, headers, body: JSON.stringify(tenants) };
+        // No database configured: report it instead of returning made-up tenants/configs
+        return { statusCode: 503, headers, body: JSON.stringify({ error: 'White-label storage is not configured (Supabase)' }) };
       }
 
       const { data, error } = await supabase
@@ -68,12 +53,8 @@ export const handler = async (event: any, context: any) => {
       const updates = JSON.parse(body);
 
       if (!supabase) {
-        const updatedTenant = {
-          id: tenantId,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        };
-        return { statusCode: 200, headers, body: JSON.stringify(updatedTenant) };
+        // No database configured: report it instead of returning made-up tenants/configs
+        return { statusCode: 503, headers, body: JSON.stringify({ error: 'White-label storage is not configured (Supabase)' }) };
       }
 
       const { data, error } = await supabase
@@ -97,11 +78,8 @@ export const handler = async (event: any, context: any) => {
       const tenantId = pathParts[2];
 
       if (!supabase) {
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({ message: 'Tenant deleted successfully', id: tenantId }),
-        };
+        // No database configured: report it instead of returning made-up tenants/configs
+        return { statusCode: 503, headers, body: JSON.stringify({ error: 'White-label storage is not configured (Supabase)' }) };
       }
 
       const { error } = await supabase.from('tenants').delete().eq('id', tenantId);
@@ -124,26 +102,8 @@ export const handler = async (event: any, context: any) => {
       const tenantId = pathParts[2];
 
       if (!supabase) {
-        const mockConfig = {
-          id: 'config_1',
-          tenant_id: tenantId,
-          company_name: 'Demo Company',
-          logo_url: null,
-          primary_color: '#3B82F6',
-          secondary_color: '#6366F1',
-          hero_title: 'Welcome to Our Platform',
-          hero_subtitle: 'Transform your business with our solutions',
-          cta_buttons: [],
-          redirect_mappings: {},
-          show_pricing: true,
-          show_testimonials: true,
-          show_features: true,
-          support_email: 'support@demo.com',
-          support_phone: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        return { statusCode: 200, headers, body: JSON.stringify(mockConfig) };
+        // No database configured: report it instead of returning made-up tenants/configs
+        return { statusCode: 503, headers, body: JSON.stringify({ error: 'White-label storage is not configured (Supabase)' }) };
       }
 
       const { data, error } = await supabase
@@ -178,13 +138,8 @@ export const handler = async (event: any, context: any) => {
       const updates = JSON.parse(body);
 
       if (!supabase) {
-        const updatedConfig = {
-          id: 'config_1',
-          tenant_id: tenantId,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        };
-        return { statusCode: 200, headers, body: JSON.stringify(updatedConfig) };
+        // No database configured: report it instead of returning made-up tenants/configs
+        return { statusCode: 503, headers, body: JSON.stringify({ error: 'White-label storage is not configured (Supabase)' }) };
       }
 
       const { data: existingConfig } = await supabase

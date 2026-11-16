@@ -2,6 +2,8 @@ import type { Express } from 'express';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { respond } from '../services/openaiResponses';
 
 // In-memory storage for video emails (temporary until database schema is added)
 interface VideoEmail {
@@ -117,7 +119,7 @@ export function registerVideoRoutes(app: Express): void {
             ? userVideos.reduce((sum, video) => sum + video.analytics.engagement, 0) /
               userVideos.length
             : 0,
-        conversionRate: 0.15, // Mock conversion rate
+        conversionRate: null, // conversions are not tracked (was a hardcoded 15%)
         topPerformingVideo:
           userVideos.length > 0
             ? userVideos.reduce(
@@ -232,30 +234,44 @@ export function registerVideoScriptRoute(app: Express): void {
     try {
       const { recipient, purpose, tone, length } = req.body;
 
-      // Mock AI script generation
-      const mockScripts = {
-        demo: "Hello! I'm excited to show you how our solution can transform your business operations. Let me walk you through the key features that will save you time and increase productivity.",
-        welcome:
-          "Welcome to our community! I'm thrilled to have you here. Let me introduce myself and share what we can accomplish together.",
-        followup:
-          'I wanted to follow up on our previous conversation. Based on what we discussed, here are the next steps we can take to move forward.',
-        announcement:
-          "I have some exciting news to share with you. We've been working hard on improvements that I think you'll really appreciate.",
-      };
-
-      const script =
-        mockScripts[purpose as keyof typeof mockScripts] ||
-        "Hello! Thank you for your time. I'd like to discuss how we can work together to achieve your goals.";
+      // Real AI script generation with the user's OpenAI key (previously canned scripts per purpose)
+      const ai = await getUserOpenAIClient();
+      if (!ai) {
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+      }
+      const result = await respond(ai.client, {
+        model: ai.model,
+        store: false,
+        instructions:
+          'You write short, natural scripts for personal sales/marketing video messages. Write only words to be spoken.',
+        input: `Write a video message script.
+Recipient: ${recipient ? JSON.stringify(recipient) : 'not specified'}
+Purpose: ${purpose || 'general'}
+Tone: ${tone || 'friendly'}
+Target length: ${length || 'about 60 seconds'}`,
+        json: {
+          name: 'video_script',
+          schema: {
+            type: 'object',
+            properties: {
+              script: { type: 'string' },
+              suggestions: { type: 'array', items: { type: 'string' } },
+            },
+            required: ['script', 'suggestions'],
+            additionalProperties: false,
+          },
+        },
+      });
+      if (!result.data?.script) {
+        return res.status(502).json({ error: 'AI returned no script' });
+      }
+      const script: string = result.data.script;
 
       res.json({
         script,
         tone,
-        estimatedDuration: Math.ceil(script.length / 150), // Rough words per minute estimate
-        suggestions: [
-          'Add a personal touch by mentioning something specific about their business',
-          'Include a clear call-to-action at the end',
-          'Keep the script concise and engaging',
-        ],
+        estimatedDuration: Math.ceil(script.split(/\s+/).length / 150), // minutes at ~150 words/min
+        suggestions: result.data.suggestions || [],
       });
     } catch (error) {
       console.error('Error generating script:', error);

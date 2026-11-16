@@ -4,6 +4,48 @@ const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
+// Minimal Twilio REST client (the `twilio` package is not a dependency, and require() is not
+// available in the ESM function bundle). Same messages.create / messages.list shape as the SDK.
+function twilioClient(accountSid: string, authToken: string) {
+  const base = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
+  const auth = 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+  const toMessage = (m: any) => ({
+    sid: m.sid,
+    body: m.body,
+    to: m.to,
+    status: m.status,
+    price: m.price,
+    dateSent: m.date_sent,
+    dateCreated: m.date_created,
+  });
+  return {
+    messages: {
+      async create(params: { body: string; from?: string; to: string; statusCallback?: string }) {
+        const form = new URLSearchParams({ Body: params.body, To: params.to });
+        if (params.from) form.set('From', params.from);
+        if (params.statusCallback) form.set('StatusCallback', params.statusCallback);
+        const res = await fetch(base, {
+          method: 'POST',
+          headers: { Authorization: auth, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: form.toString(),
+        });
+        const data: any = await res.json();
+        if (!res.ok) throw new Error(data.message || `Twilio error ${res.status}`);
+        return toMessage(data);
+      },
+      async list(params: { limit?: number; dateSentAfter?: Date; dateSentBefore?: Date }) {
+        const query = new URLSearchParams({ PageSize: String(Math.min(1000, params.limit || 50)) });
+        if (params.dateSentAfter) query.set('DateSent>', params.dateSentAfter.toISOString().slice(0, 10));
+        if (params.dateSentBefore) query.set('DateSent<', params.dateSentBefore.toISOString().slice(0, 10));
+        const res = await fetch(`${base}?${query}`, { headers: { Authorization: auth } });
+        const data: any = await res.json();
+        if (!res.ok) throw new Error(data.message || `Twilio error ${res.status}`);
+        return (data.messages || []).map(toMessage);
+      },
+    },
+  };
+}
+
 export const handler = async (event: any, context: any) => {
   const { httpMethod, path, body, queryStringParameters } = event;
   const pathParts = path.split('/').filter(Boolean);
@@ -49,9 +91,9 @@ export const handler = async (event: any, context: any) => {
       let messageResult;
 
       if (twilioAccountSid && twilioAuthToken && twilioPhoneNumber) {
-        const twilio = require('twilio')(twilioAccountSid, twilioAuthToken);
+        const twilio = twilioClient(twilioAccountSid, twilioAuthToken);
 
-        const message = await twilio.messages.create({
+        const message: any = await twilio.messages.create({
           body: content,
           from: twilioPhoneNumber,
           to: recipient,
@@ -66,17 +108,12 @@ export const handler = async (event: any, context: any) => {
           sentAt: new Date().toISOString(),
         };
       } else {
-        messageResult = {
-          id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          status: 'sent',
-          provider: provider || 'twilio',
-          cost: 0.0075,
-          sentAt: new Date().toISOString(),
+        // Previously reported a fake "sent" message when no SMS provider was configured
+        return {
+          statusCode: 501,
+          headers,
+          body: JSON.stringify({ error: 'SMS is not configured: set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER' }),
         };
-
-        console.log(
-          `📱 SMS sent (mock): ${recipient} - "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`
-        );
       }
 
       return {
@@ -189,22 +226,31 @@ export const handler = async (event: any, context: any) => {
         endDate,
       } = queryStringParameters || {};
 
-      // Mock data for development
-      const mockMessages = [];
-      for (let i = 0; i < parseInt(limit); i++) {
-        mockMessages.push({
-          id: `msg_${Date.now()}_${i}`,
-          content: `Sample message ${i + 1}`,
-          recipient: `+1555${String(Math.floor(Math.random() * 9000000) + 1000000).padStart(7, '0')}`,
-          provider: provider || 'twilio',
-          status: status || ['sent', 'delivered', 'failed'][Math.floor(Math.random() * 3)],
-          cost: 0.0075,
-          sent_at: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-          created_at: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-        });
+      if (!twilioAccountSid || !twilioAuthToken) {
+        return { statusCode: 501, headers, body: JSON.stringify({ error: 'SMS is not configured (Twilio)' }) };
       }
+      // Real message log from Twilio (previously generated sample messages with random numbers)
+      const twilio = twilioClient(twilioAccountSid, twilioAuthToken);
+      const listed = await twilio.messages.list({
+        limit: Math.min(1000, parseInt(limit) + parseInt(offset)),
+        ...(startDate ? { dateSentAfter: new Date(startDate) } : {}),
+        ...(endDate ? { dateSentBefore: new Date(endDate) } : {}),
+      });
+      const messages = listed
+        .filter((m: any) => !status || m.status === status)
+        .slice(parseInt(offset), parseInt(offset) + parseInt(limit))
+        .map((m: any) => ({
+          id: m.sid,
+          content: m.body,
+          recipient: m.to,
+          provider: 'twilio',
+          status: m.status,
+          cost: m.price != null ? Math.abs(Number(m.price)) : null,
+          sent_at: m.dateSent ? new Date(m.dateSent).toISOString() : null,
+          created_at: m.dateCreated ? new Date(m.dateCreated).toISOString() : null,
+        }));
 
-      return { statusCode: 200, headers, body: JSON.stringify(mockMessages) };
+      return { statusCode: 200, headers, body: JSON.stringify(messages) };
     }
 
     // GET /api/messaging/stats - Get messaging statistics
@@ -216,14 +262,26 @@ export const handler = async (event: any, context: any) => {
     ) {
       const { period = '30d' } = queryStringParameters || {};
 
+      if (!twilioAccountSid || !twilioAuthToken) {
+        return { statusCode: 501, headers, body: JSON.stringify({ error: 'SMS is not configured (Twilio)' }) };
+      }
+      // Computed from the Twilio message log (previously random numbers)
+      const days = parseInt(String(period)) || 30;
+      const twilio = twilioClient(twilioAccountSid, twilioAuthToken);
+      const recent = await twilio.messages.list({
+        dateSentAfter: new Date(Date.now() - days * 86400000),
+        limit: 5000,
+      });
+      const delivered = recent.filter((m: any) => m.status === 'delivered').length;
+      const totalCost = recent.reduce((sum: number, m: any) => sum + Math.abs(Number(m.price) || 0), 0);
       const stats = {
-        totalMessages: Math.floor(Math.random() * 1000) + 500,
-        deliveredMessages: Math.floor(Math.random() * 900) + 400,
-        deliveryRate: 0.981,
-        averageResponseTime: 2.4,
-        totalCost: Math.random() * 10 + 5,
-        costPerMessage: 0.007,
-        activeProviders: 2,
+        totalMessages: recent.length,
+        deliveredMessages: delivered,
+        deliveryRate: recent.length ? delivered / recent.length : null,
+        averageResponseTime: null, // not tracked
+        totalCost,
+        costPerMessage: recent.length ? totalCost / recent.length : null,
+        activeProviders: 1,
         period,
       };
 
@@ -237,26 +295,14 @@ export const handler = async (event: any, context: any) => {
       pathParts[1] === 'providers' &&
       httpMethod === 'GET'
     ) {
+      // Only Twilio is integrated; no invented cost/delivery/latency figures
       const providers = [
         {
           id: 'twilio',
           name: 'Twilio',
           apiKey: twilioAccountSid ? 'configured' : null,
-          costPerMessage: 0.0075,
-          supportedFeatures: ['SMS', 'MMS', 'Voice'],
-          status: twilioAccountSid ? 'active' : 'inactive',
-          deliveryRate: 0.987,
-          responseTime: 2.3,
-        },
-        {
-          id: 'aws-sns',
-          name: 'AWS SNS',
-          apiKey: process.env.AWS_ACCESS_KEY_ID ? 'configured' : null,
-          costPerMessage: 0.0065,
-          supportedFeatures: ['SMS', 'Email'],
-          status: process.env.AWS_ACCESS_KEY_ID ? 'active' : 'inactive',
-          deliveryRate: 0.982,
-          responseTime: 2.8,
+          supportedFeatures: ['SMS'],
+          status: twilioAccountSid && twilioAuthToken && twilioPhoneNumber ? 'active' : 'inactive',
         },
       ];
 
@@ -308,7 +354,7 @@ export const handler = async (event: any, context: any) => {
             };
           }
 
-          const twilio = require('twilio')(twilioAccountSid, twilioAuthToken);
+          const twilio = twilioClient(twilioAccountSid, twilioAuthToken);
           const testMessage = await twilio.messages.create({
             body: 'SMS provider test message from SmartCRM',
             from: twilioPhoneNumber,
@@ -324,12 +370,10 @@ export const handler = async (event: any, context: any) => {
           break;
 
         default:
-          testResult = {
-            success: true,
-            provider,
-            messageId: `test_${Date.now()}`,
-            status: 'sent',
-            note: 'Mock test - provider not fully configured',
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: `Unsupported SMS provider: ${provider}` }),
           };
       }
 

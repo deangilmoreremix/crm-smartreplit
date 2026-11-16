@@ -321,24 +321,9 @@ class DomainManager {
         })
         .eq('id', domainId);
 
-      // In production, this would integrate with Let's Encrypt or Cloudflare
-      // For now, we'll simulate SSL provisioning
-
-      // Simulate SSL provisioning delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Update to active with expiration date (90 days from now)
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
-
-      await supabase
-        .from('domains')
-        .update({
-          ssl_status: 'active',
-          ssl_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', domainId);
+      // No certificate authority is integrated here: the hosting provider issues certificates.
+      // Record the certificate the domain actually serves (previously a fake 90-day "active" status).
+      await this.syncSSLStatus(domainId);
     } catch (error: any) {
       // Update status to failed
       await supabase
@@ -421,6 +406,37 @@ class DomainManager {
     }
 
     return health;
+  }
+
+  /**
+   * Record the TLS certificate a domain actually serves: 'active' with its real expiry when a
+   * certificate for the domain is served, otherwise 'pending' (the provider has not issued one yet).
+   */
+  private async syncSSLStatus(domainId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data: row, error } = await supabase.from('domains').select('domain').eq('id', domainId).single();
+    if (error || !row?.domain) throw new Error(`Domain not found: ${error?.message || domainId}`);
+
+    let cert: any = null;
+    try {
+      cert = await this.getSSLCertificate(row.domain);
+    } catch {
+      cert = null;
+    }
+    const names = `${cert?.subject?.CN || ''} ${cert?.subjectaltname || ''}`.toLowerCase();
+    const validTo = cert?.valid_to ? new Date(cert.valid_to) : null;
+    const coversDomain = names.includes(String(row.domain).toLowerCase());
+    const active = Boolean(validTo && validTo > new Date() && coversDomain);
+
+    await supabase
+      .from('domains')
+      .update({
+        ssl_status: active ? 'active' : 'pending',
+        ssl_expires_at: active && validTo ? validTo.toISOString() : null,
+        error_message: active ? null : 'No valid certificate is served for this domain yet',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', domainId);
   }
 
   /**
@@ -523,22 +539,8 @@ class DomainManager {
         })
         .eq('id', domainId);
 
-      // In production, integrate with Let's Encrypt or Cloudflare
-      // For now, simulate renewal
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Update to active with new expiration
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 90);
-
-      await supabase
-        .from('domains')
-        .update({
-          ssl_status: 'active',
-          ssl_expires_at: expiresAt.toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', domainId);
+      // Renewal is done by the hosting provider; record the certificate the domain now serves
+      await this.syncSSLStatus(domainId);
     } catch (error: any) {
       await supabase
         .from('domains')

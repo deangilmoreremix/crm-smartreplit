@@ -177,7 +177,7 @@ class AIOrchestrator {
         provider: provider.name,
         model: response.model || 'default',
         processingTime: Date.now() - startTime,
-        confidence: response.confidence || 85,
+        confidence: response.confidence ?? 0, // 0 = not reported (was a default of 85)
         cached: false,
         timestamp: new Date().toISOString(),
         cost: response.cost,
@@ -369,8 +369,8 @@ class AIOrchestrator {
       return {
         result: result.response,
         model: 'gpt-6.1-sol',
-        confidence: 95,
-        cost: 0.003, // Slightly higher cost for persistent memory
+        confidence: 0, // not reported by the model (was a hardcoded 95)
+        cost: undefined, // not measured (was a hardcoded 0.003)
         threadId: result.threadId,
         assistantId: result.assistantId,
         persistentMemory: result.persistentMemory,
