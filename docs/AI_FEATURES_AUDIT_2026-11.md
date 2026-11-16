@@ -206,6 +206,24 @@ Verified locally: the bundled function answers `/api/openai/status`, `/api/ai/em
    serverless functions and won't stream.
 6. Deploy from git (merge to `main`) instead of the CLI so production matches the repo.
 
+## Update — OpenAI Responses API (this branch)
+
+All OpenAI text, vision and image calls now use the **Responses API** (`/v1/responses`); embeddings keep their
+own endpoint. Background: OpenAI shut down the Assistants API on 2026-08-26, and Chat Completions no longer supports
+tool calling with reasoning on newer models.
+
+* `server/services/openaiResponses.ts` — `respond()` (instructions, `input_text`/`input_image`/`input_file`,
+  `text.format` json_object / strict json_schema, built-in tools, `conversation`, `background`, citations, images) plus
+  a compatibility layer: existing `chat.completions.create` calls (incl. streaming and vision) are translated to
+  `/v1/responses` inside the per-user client, so every route runs on Responses without per-call rewrites. The edge
+  functions' shared client does the same.
+* Data retention (owner decision): `store: false` for one-off tools; only conversations and background jobs are stored.
+* Web search (owner decision): only research features — `/api/ai/research`, research-topic, business analysis, contact
+  enrichment — use the `web_search` tool; results carry URL citations (`sources`).
+* `code_interpreter` computes sales forecasts; `image_generation` generates and edits images (`/api/ai/image`).
+* Conversations API replaces Assistants threads (`/api/ai/conversations`, `/:id/messages`).
+* Background responses + `GET /api/ai/responses/:id` polling keep long research under the function time limit.
+
 ## Update — OpenAI-only consolidation (this branch)
 
 Findings from this pass:

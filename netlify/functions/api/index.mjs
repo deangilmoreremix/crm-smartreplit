@@ -1746,8 +1746,8 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const contactId = parseInt(req.params.id);
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -1779,8 +1779,8 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
-      const [existingContact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const contactId = parseInt(req.params.id);
+      const [existingContact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!existingContact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -1788,7 +1788,7 @@ function registerCRMRoutes(app2) {
         ...req.body,
         profileId: userId,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId))).returning();
+      }).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId))).returning();
       res.json(updatedContact);
     } catch (error) {
       console.error("Error updating contact:", error);
@@ -1799,8 +1799,8 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
-      const [deletedContact] = await db2.delete(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId))).returning();
+      const contactId = parseInt(req.params.id);
+      const [deletedContact] = await db2.delete(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId))).returning();
       if (!deletedContact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -2181,8 +2181,8 @@ function registerCRMRoutes(app2) {
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.contactId);
-      const contactNotes = await db2.select().from(notes).where(and2(eq2(notes.contactId, contactId2), eq2(notes.profileId, userId))).orderBy(desc2(notes.createdAt));
+      const contactId = parseInt(req.params.contactId);
+      const contactNotes = await db2.select().from(notes).where(and2(eq2(notes.contactId, contactId), eq2(notes.profileId, userId))).orderBy(desc2(notes.createdAt));
       res.json(contactNotes);
     } catch (error) {
       console.error("Error fetching contact notes:", error);
@@ -2551,15 +2551,15 @@ function registerCRMRoutes(app2) {
   app2.post("/api/contacts/:id/enrich", requireAuth({ checkEntitlement: false }), async (req, res) => {
     const userId = req.userId;
     try {
-      const contactId2 = parseInt(req.params.id);
+      const contactId = parseInt(req.params.id);
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         memoryService.recordObservation(
           userId,
           "error",
-          `Enrichment failed: Contact ${contactId2} not found`,
-          { endpoint: "/api/contacts/:id/enrich", contactId: contactId2 }
+          `Enrichment failed: Contact ${contactId} not found`,
+          { endpoint: "/api/contacts/:id/enrich", contactId }
         ).catch(() => {
         });
         return res.status(404).json({ error: "Contact not found" });
@@ -2578,20 +2578,23 @@ Company: ${contact.company || ""}
 Industry: ${contact.industry || ""}
 Email: ${contact.email || ""}
 
+Search the web for this person and their company. Only include details you found; leave unknown fields empty.
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
-        const completion = await openai.chat.completions.create({
+        const result = await respond(openai, {
           model: ADVANCED_MODEL,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.3
+          input: prompt,
+          json: true,
+          tools: [webSearchTool()]
         });
         try {
-          enrichedData = JSON.parse(completion.choices[0].message.content || "{}");
+          if (!result.data) throw new Error("No JSON in response");
+          enrichedData = { ...result.data, sources: result.sources };
         } catch (parseError) {
           memoryService.recordObservation(
             userId,
             "error",
-            `Enrichment parsing failed for contact ${contactId2}`,
-            { endpoint: "/api/contacts/:id/enrich", contactId: contactId2, error: "JSON parse error" }
+            `Enrichment parsing failed for contact ${contactId}`,
+            { endpoint: "/api/contacts/:id/enrich", contactId, error: "JSON parse error" }
           ).catch(() => {
           });
           return res.status(500).json({ error: "Failed to parse enrichment data" });
@@ -2600,8 +2603,8 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         memoryService.recordObservation(
           userId,
           "error",
-          `Enrichment AI call failed for contact ${contactId2}: ${aiError instanceof Error ? aiError.message : "Unknown"}`,
-          { endpoint: "/api/contacts/:id/enrich", contactId: contactId2 }
+          `Enrichment AI call failed for contact ${contactId}: ${aiError instanceof Error ? aiError.message : "Unknown"}`,
+          { endpoint: "/api/contacts/:id/enrich", contactId }
         ).catch(() => {
         });
         return res.status(500).json({ error: "Enrichment failed" });
@@ -2610,9 +2613,9 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         enrichmentData: enrichedData,
         lastEnrichedAt: /* @__PURE__ */ new Date(),
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq2(contacts.id, contactId2)).returning();
+      }).where(eq2(contacts.id, contactId)).returning();
       await db2.insert(contactActivities).values({
-        contactId: contactId2,
+        contactId,
         activityType: "enrichment",
         description: "AI enrichment completed",
         metadata: { enrichedFields: Object.keys(enrichedData) }
@@ -2620,10 +2623,10 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
       memoryService.recordObservation(
         userId,
         "tool_use",
-        `Contact enrichment completed for ${contact.firstName} ${contact.lastName} (ID: ${contactId2})`,
+        `Contact enrichment completed for ${contact.firstName} ${contact.lastName} (ID: ${contactId})`,
         {
           endpoint: "contact_enrichment",
-          contactId: contactId2,
+          contactId,
           contactName: `${contact.firstName} ${contact.lastName}`,
           enrichedFields: Object.keys(enrichedData),
           fieldsCount: Object.keys(enrichedData).length,
@@ -2638,8 +2641,8 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
       memoryService.recordObservation(
         userId,
         "error",
-        `Enrichment exception for contact ${contactId}: ${error.message}`,
-        { endpoint: "/api/contacts/:id/enrich", contactId, stack: error.stack?.slice(0, 200) }
+        `Enrichment exception for contact ${req.params.id}: ${error.message}`,
+        { endpoint: "/api/contacts/:id/enrich", contactId: req.params.id, stack: error.stack?.slice(0, 200) }
       ).catch(() => {
       });
       res.status(500).json({ error: "Enrichment failed", details: error.message });
@@ -2649,12 +2652,12 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
-      const [contact] = await db2.select().from(contacts).where(eq2(contacts.id, contactId2));
+      const contactId = parseInt(req.params.id);
+      const [contact] = await db2.select().from(contacts).where(eq2(contacts.id, contactId));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
-      const history = await db2.select().from(contactActivities).where(and2(eq2(contactActivities.contactId, contactId2), eq2(contactActivities.activityType, "enrichment"))).orderBy(desc2(contactActivities.createdAt));
+      const history = await db2.select().from(contactActivities).where(and2(eq2(contactActivities.contactId, contactId), eq2(contactActivities.activityType, "enrichment"))).orderBy(desc2(contactActivities.createdAt));
       res.json(history.map((h) => ({
         timestamp: h.createdAt,
         source: "OpenAI",
@@ -2668,15 +2671,15 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
   app2.post("/api/contacts/:id/score", requireAuth({ checkEntitlement: false }), async (req, res) => {
     const userId = req.userId;
     try {
-      const contactId2 = parseInt(req.params.id);
+      const contactId = parseInt(req.params.id);
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         memoryService.recordObservation(
           userId,
           "error",
-          `Scoring failed: Contact ${contactId2} not found`,
-          { endpoint: "/api/contacts/:id/score", contactId: contactId2 }
+          `Scoring failed: Contact ${contactId} not found`,
+          { endpoint: "/api/contacts/:id/score", contactId }
         ).catch(() => {
         });
         return res.status(404).json({ error: "Contact not found" });
@@ -2708,8 +2711,8 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
           memoryService.recordObservation(
             userId,
             "error",
-            `Scoring parsing failed for contact ${contactId2}`,
-            { endpoint: "/api/contacts/:id/score", contactId: contactId2, error: "JSON parse error" }
+            `Scoring parsing failed for contact ${contactId}`,
+            { endpoint: "/api/contacts/:id/score", contactId, error: "JSON parse error" }
           ).catch(() => {
           });
           return res.status(500).json({ error: "Failed to parse scoring data" });
@@ -2718,8 +2721,8 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         memoryService.recordObservation(
           userId,
           "error",
-          `Scoring AI call failed for contact ${contactId2}: ${aiError instanceof Error ? aiError.message : "Unknown"}`,
-          { endpoint: "/api/contacts/:id/score", contactId: contactId2 }
+          `Scoring AI call failed for contact ${contactId}: ${aiError instanceof Error ? aiError.message : "Unknown"}`,
+          { endpoint: "/api/contacts/:id/score", contactId }
         ).catch(() => {
         });
         return res.status(500).json({ error: "Scoring failed" });
@@ -2728,9 +2731,9 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         score: String(scoreData.score / 100),
         aiScoreRationale: scoreData.rationale,
         updatedAt: /* @__PURE__ */ new Date()
-      }).where(eq2(contacts.id, contactId2)).returning();
+      }).where(eq2(contacts.id, contactId)).returning();
       await db2.insert(contactActivities).values({
-        contactId: contactId2,
+        contactId,
         activityType: "scoring",
         description: "AI scoring completed",
         metadata: scoreData
@@ -2738,10 +2741,10 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       memoryService.recordObservation(
         userId,
         "tool_use",
-        `Contact scoring completed for ${contact.firstName} ${contact.lastName} (ID: ${contactId2})`,
+        `Contact scoring completed for ${contact.firstName} ${contact.lastName} (ID: ${contactId})`,
         {
           endpoint: "contact_scoring",
-          contactId: contactId2,
+          contactId,
           contactName: `${contact.firstName} ${contact.lastName}`,
           score: scoreData.score,
           leadScore: scoreData.lead_score,
@@ -2763,8 +2766,8 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
       memoryService.recordObservation(
         userId,
         "error",
-        `Scoring exception for contact ${contactId}: ${error.message}`,
-        { endpoint: "/api/contacts/:id/score", contactId, stack: error.stack?.slice(0, 200) }
+        `Scoring exception for contact ${req.params.id}: ${error.message}`,
+        { endpoint: "/api/contacts/:id/score", contactId: req.params.id, stack: error.stack?.slice(0, 200) }
       ).catch(() => {
       });
       res.status(500).json({ error: "Scoring failed", details: error.message });
@@ -2792,9 +2795,9 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
+      const contactId = parseInt(req.params.id);
       const { customFields } = req.body;
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -2806,17 +2809,17 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         }
       }
       const mergedFields = { ...contact.customFields || {}, ...customFields || {} };
-      await db2.delete(contactCustomFields).where(eq2(contactCustomFields.contactId, contactId2));
+      await db2.delete(contactCustomFields).where(eq2(contactCustomFields.contactId, contactId));
       if (mergedFields && Object.keys(mergedFields).length > 0) {
         await db2.insert(contactCustomFields).values(
           Object.entries(mergedFields).map(([key, value]) => ({
-            contactId: contactId2,
+            contactId,
             fieldKey: key,
             fieldValue: value
           }))
         );
       }
-      await db2.update(contacts).set({ customFields: mergedFields }).where(eq2(contacts.id, contactId2));
+      await db2.update(contacts).set({ customFields: mergedFields }).where(eq2(contacts.id, contactId));
       res.json({ updated: true, customFields: mergedFields });
     } catch (error) {
       console.error("Error updating custom fields:", error);
@@ -2827,16 +2830,16 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
+      const contactId = parseInt(req.params.id);
       const fieldKey = req.params.key;
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
-      await db2.delete(contactCustomFields).where(and2(eq2(contactCustomFields.contactId, contactId2), eq2(contactCustomFields.fieldKey, fieldKey)));
+      await db2.delete(contactCustomFields).where(and2(eq2(contactCustomFields.contactId, contactId), eq2(contactCustomFields.fieldKey, fieldKey)));
       const updatedFields = { ...contact.customFields || {} };
       delete updatedFields[fieldKey];
-      await db2.update(contacts).set({ customFields: updatedFields }).where(eq2(contacts.id, contactId2));
+      await db2.update(contacts).set({ customFields: updatedFields }).where(eq2(contacts.id, contactId));
       res.json({ deleted: true });
     } catch (error) {
       console.error("Error deleting custom field:", error);
@@ -2847,15 +2850,15 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
+      const contactId = parseInt(req.params.id);
       const type = req.query.type;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
-      const conditions = [eq2(contactActivities.contactId, contactId2)];
+      const conditions = [eq2(contactActivities.contactId, contactId)];
       if (type) {
         conditions.push(eq2(contactActivities.activityType, type));
       }
@@ -2871,9 +2874,9 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
     try {
       const userId = req.userId;
       const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-      const contactId2 = parseInt(req.params.id);
+      const contactId = parseInt(req.params.id);
       const { activityType, description, metadata } = req.body;
-      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId2), eq2(contacts.profileId, userId)));
+      const [contact] = await db2.select().from(contacts).where(and2(eq2(contacts.id, contactId), eq2(contacts.profileId, userId)));
       if (!contact) {
         return res.status(404).json({ error: "Contact not found" });
       }
@@ -2882,7 +2885,7 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         return res.status(400).json({ error: "Invalid activity type" });
       }
       const [activity] = await db2.insert(contactActivities).values({
-        contactId: contactId2,
+        contactId,
         activityType,
         description: description || "",
         metadata: metadata || {}
@@ -4633,7 +4636,7 @@ var sendSmsAction = async (context, config) => {
   };
 };
 var createDealAction = async (context, config) => {
-  const { title, amount, stage, contactId: contactId2 } = config;
+  const { title, amount, stage, contactId } = config;
   if (!title) {
     return { success: false, error: "Missing required field: title" };
   }
@@ -4649,11 +4652,11 @@ var createContactAction = async (context, config) => {
   if (!email) {
     return { success: false, error: "Missing required field: email" };
   }
-  const contactId2 = `contact_${Date.now()}`;
+  const contactId = `contact_${Date.now()}`;
   console.log(`[Workflow ${context.workflowId}] Creating contact: ${email}`);
   return {
     success: true,
-    output: { contactId: contactId2, email, firstName, lastName }
+    output: { contactId, email, firstName, lastName }
   };
 };
 var registerAllActions = (engine) => {
@@ -6113,8 +6116,8 @@ async function executeCRMFunction(toolName, params, userId) {
         return { contacts: results, count: results.length };
       }
       case "get_contact_details": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         return contact || { error: "Contact not found" };
       }
       case "create_contact": {
@@ -6123,13 +6126,13 @@ async function executeCRMFunction(toolName, params, userId) {
         return { contact: newContact };
       }
       case "update_contact": {
-        const contactId2 = parseInt(params.contactId);
-        const [updated] = await db.update(contacts).set({ ...params.data, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
+        const contactId = parseInt(params.contactId);
+        const [updated] = await db.update(contacts).set({ ...params.data, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId))).returning();
         return updated || { error: "Contact not found" };
       }
       case "delete_contact": {
-        const contactId2 = parseInt(params.contactId);
-        await db.delete(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        await db.delete(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         return { success: true, message: "Contact deleted" };
       }
       case "list_deals": {
@@ -6516,10 +6519,10 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       // Communications
       case "list_communications": {
-        const contactId2 = parseInt(params.contactId);
+        const contactId = parseInt(params.contactId);
         const limit = params.limit || 50;
         const type = params.type;
-        let results = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))).limit(limit);
+        let results = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId), eq4(communications.profileId, userId))).limit(limit);
         if (type) results = results.filter((c) => c.type === type);
         return { communications: results, count: results.length };
       }
@@ -6536,10 +6539,10 @@ async function executeCRMFunction(toolName, params, userId) {
       // Notes
       case "list_notes": {
         const limit = params.limit || 50;
-        const contactId2 = params.contactId ? parseInt(params.contactId) : null;
+        const contactId = params.contactId ? parseInt(params.contactId) : null;
         const dealId = params.dealId ? parseInt(params.dealId) : null;
         const conditions = [eq4(notes.profileId, userId)];
-        if (contactId2) conditions.push(eq4(notes.contactId, contactId2));
+        if (contactId) conditions.push(eq4(notes.contactId, contactId));
         if (dealId) conditions.push(eq4(notes.dealId, dealId));
         const results = await db.select().from(notes).where(and3(...conditions)).limit(limit).orderBy(desc3(notes.createdAt));
         return { notes: results, count: results.length };
@@ -6561,28 +6564,28 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       // Tags
       case "add_contact_tag": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentTags = contact.tags || [];
         const newTags = [.../* @__PURE__ */ new Set([...currentTags, params.tag])];
-        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, tags: newTags };
       }
       case "remove_contact_tag": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentTags = contact.tags || [];
         const newTags = currentTags.filter((t) => t !== params.tag);
-        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ tags: newTags, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, tags: newTags };
       }
       // Engagement & Interaction History
       case "get_contact_engagement": {
-        const contactId2 = parseInt(params.contactId);
+        const contactId = parseInt(params.contactId);
         const comms = await db.select().from(communications).where(
-          and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))
+          and3(eq4(communications.contactId, contactId), eq4(communications.profileId, userId))
         );
         const emails = comms.filter((c) => c.type === "email");
         const calls2 = comms.filter((c) => c.type === "call");
@@ -6610,10 +6613,10 @@ async function executeCRMFunction(toolName, params, userId) {
         };
       }
       case "get_interaction_history": {
-        const contactId2 = parseInt(params.contactId);
+        const contactId = parseInt(params.contactId);
         const limit = params.limit || 50;
-        const comms = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))).limit(limit).orderBy(desc3(communications.sentAt), desc3(communications.createdAt));
-        const contactNotes = await db.select().from(notes).where(and3(eq4(notes.contactId, contactId2), eq4(notes.profileId, userId))).limit(limit).orderBy(desc3(notes.createdAt));
+        const comms = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId), eq4(communications.profileId, userId))).limit(limit).orderBy(desc3(communications.sentAt), desc3(communications.createdAt));
+        const contactNotes = await db.select().from(notes).where(and3(eq4(notes.contactId, contactId), eq4(notes.profileId, userId))).limit(limit).orderBy(desc3(notes.createdAt));
         const interactions = [
           ...comms.map((c) => ({
             type: "communication",
@@ -6634,14 +6637,14 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       // AI Features
       case "analyze_lead_score": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
             "error",
-            `analyze_lead_score: Contact ${contactId2} not found`,
-            { tool: "analyze_lead_score", contactId: contactId2 }
+            `analyze_lead_score: Contact ${contactId} not found`,
+            { tool: "analyze_lead_score", contactId }
           ).catch(() => {
           });
           return { error: "Contact not found" };
@@ -6652,7 +6655,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "system_event",
             "analyze_lead_score: OpenAI not configured",
-            { tool: "analyze_lead_score", contactId: contactId2 }
+            { tool: "analyze_lead_score", contactId }
           ).catch(() => {
           });
           return { error: NO_KEY_MESSAGE };
@@ -6681,7 +6684,7 @@ async function executeCRMFunction(toolName, params, userId) {
             `Lead score analysis for ${contact.firstName} ${contact.lastName}: score=${result.score}`,
             {
               tool: "analyze_lead_score",
-              contactId: contactId2,
+              contactId,
               contactName: `${contact.firstName} ${contact.lastName}`,
               score: result.score,
               strengthsCount: result.strengths?.length || 0,
@@ -6695,7 +6698,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "error",
             `analyze_lead_score failed: ${error instanceof Error ? error.message : String(error)}`,
-            { tool: "analyze_lead_score", contactId: contactId2 }
+            { tool: "analyze_lead_score", contactId }
           ).catch(() => {
           });
           return {
@@ -6705,26 +6708,26 @@ async function executeCRMFunction(toolName, params, userId) {
         }
       }
       case "generate_personalization": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
             "error",
-            `generate_personalization: Contact ${contactId2} not found`,
-            { tool: "generate_personalization", contactId: contactId2 }
+            `generate_personalization: Contact ${contactId} not found`,
+            { tool: "generate_personalization", contactId }
           ).catch(() => {
           });
           return { error: "Contact not found" };
         }
-        const comms = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId2), eq4(communications.profileId, userId))).limit(10);
+        const comms = await db.select().from(communications).where(and3(eq4(communications.contactId, contactId), eq4(communications.profileId, userId))).limit(10);
         const client = await getOpenAIClient();
         if (!client) {
           memoryService.recordObservation(
             userId,
             "system_event",
             "generate_personalization: OpenAI not configured",
-            { tool: "generate_personalization", contactId: contactId2 }
+            { tool: "generate_personalization", contactId }
           ).catch(() => {
           });
           return { error: NO_KEY_MESSAGE };
@@ -6756,7 +6759,7 @@ async function executeCRMFunction(toolName, params, userId) {
             `Personalization generated for ${contact.firstName} ${contact.lastName}`,
             {
               tool: "generate_personalization",
-              contactId: contactId2,
+              contactId,
               recommendationsCount: result.recommendations?.length || 0,
               talkingPointsCount: result.talkingPoints?.length || 0
             }
@@ -6768,7 +6771,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "error",
             `generate_personalization failed: ${error instanceof Error ? error.message : String(error)}`,
-            { tool: "generate_personalization", contactId: contactId2 }
+            { tool: "generate_personalization", contactId }
           ).catch(() => {
           });
           return {
@@ -6778,12 +6781,12 @@ async function executeCRMFunction(toolName, params, userId) {
         }
       }
       case "enrich_contact": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) {
-          memoryService.recordObservation(userId, "error", `enrich_contact: Contact ${contactId2} not found`, {
+          memoryService.recordObservation(userId, "error", `enrich_contact: Contact ${contactId} not found`, {
             tool: "enrich_contact",
-            contactId: contactId2
+            contactId
           }).catch(() => {
           });
           return { error: "Contact not found" };
@@ -6792,7 +6795,7 @@ async function executeCRMFunction(toolName, params, userId) {
         if (!client) {
           memoryService.recordObservation(userId, "system_event", "enrich_contact: OpenAI not configured", {
             tool: "enrich_contact",
-            contactId: contactId2
+            contactId
           }).catch(() => {
           });
           return { error: NO_KEY_MESSAGE };
@@ -6821,7 +6824,7 @@ async function executeCRMFunction(toolName, params, userId) {
             `Contact enrichment via OpenClaw: ${contact.firstName} ${contact.lastName}`,
             {
               tool: "enrich_contact",
-              contactId: contactId2,
+              contactId,
               confidence: result.confidence,
               suggestedFieldsCount: Object.keys(result.suggestedFields || {}).length,
               hasSocialProfiles: !!result.socialProfiles,
@@ -6835,7 +6838,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "error",
             `enrich_contact failed: ${error instanceof Error ? error.message : String(error)}`,
-            { tool: "enrich_contact", contactId: contactId2 }
+            { tool: "enrich_contact", contactId }
           ).catch(() => {
           });
           return {
@@ -6845,14 +6848,14 @@ async function executeCRMFunction(toolName, params, userId) {
         }
       }
       case "social_media_research": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
             "error",
-            `social_media_research: Contact ${contactId2} not found`,
-            { tool: "social_media_research", contactId: contactId2 }
+            `social_media_research: Contact ${contactId} not found`,
+            { tool: "social_media_research", contactId }
           ).catch(() => {
           });
           return { error: "Contact not found" };
@@ -6863,7 +6866,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "system_event",
             "social_media_research: OpenAI not configured",
-            { tool: "social_media_research", contactId: contactId2 }
+            { tool: "social_media_research", contactId }
           ).catch(() => {
           });
           return { error: NO_KEY_MESSAGE };
@@ -6893,7 +6896,7 @@ async function executeCRMFunction(toolName, params, userId) {
             `Social media research for ${contact.firstName} ${contact.lastName} on ${platforms.join(", ")}`,
             {
               tool: "social_media_research",
-              contactId: contactId2,
+              contactId,
               platforms: platforms.join(", "),
               profilesFound: result.profiles?.length || 0,
               hasPersonalityInsights: !!result.personalityInsights,
@@ -6907,7 +6910,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "error",
             `social_media_research failed: ${error instanceof Error ? error.message : String(error)}`,
-            { tool: "social_media_research", contactId: contactId2 }
+            { tool: "social_media_research", contactId }
           ).catch(() => {
           });
           return {
@@ -6981,14 +6984,14 @@ async function executeCRMFunction(toolName, params, userId) {
         }
       }
       case "generate_email_draft": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) {
           memoryService.recordObservation(
             userId,
             "error",
-            `generate_email_draft: Contact ${contactId2} not found`,
-            { tool: "generate_email_draft", contactId: contactId2 }
+            `generate_email_draft: Contact ${contactId} not found`,
+            { tool: "generate_email_draft", contactId }
           ).catch(() => {
           });
           return { error: "Contact not found" };
@@ -7001,7 +7004,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "system_event",
             "generate_email_draft: OpenAI not configured",
-            { tool: "generate_email_draft", contactId: contactId2, purpose }
+            { tool: "generate_email_draft", contactId, purpose }
           ).catch(() => {
           });
           return { error: NO_KEY_MESSAGE };
@@ -7030,7 +7033,7 @@ async function executeCRMFunction(toolName, params, userId) {
             `Email draft generated for ${contact.name}: ${result.subject?.slice(0, 50) || "No subject"}`,
             {
               tool: "generate_email_draft",
-              contactId: contactId2,
+              contactId,
               purpose,
               hasSubject: !!result.subject,
               hasBody: !!result.body,
@@ -7044,7 +7047,7 @@ async function executeCRMFunction(toolName, params, userId) {
             userId,
             "error",
             `generate_email_draft failed: ${error instanceof Error ? error.message : String(error)}`,
-            { tool: "generate_email_draft", contactId: contactId2, purpose }
+            { tool: "generate_email_draft", contactId, purpose }
           ).catch(() => {
           });
           return {
@@ -7086,9 +7089,9 @@ async function executeCRMFunction(toolName, params, userId) {
         const results = [];
         let successCount = 0;
         let errorCount = 0;
-        for (const contactId2 of contactIds) {
+        for (const contactId of contactIds) {
           try {
-            const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+            const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
             if (contact) {
               try {
                 const response = await client.chat.completions.create({
@@ -7105,23 +7108,23 @@ async function executeCRMFunction(toolName, params, userId) {
                   max_tokens: 300
                 });
                 const result = safeJsonParse(response.choices[0].message.content || "{}");
-                results.push({ contactId: contactId2, contactName: contact.name, ...result });
+                results.push({ contactId, contactName: contact.name, ...result });
                 successCount++;
               } catch (e) {
                 errorCount++;
                 results.push({
-                  contactId: contactId2,
+                  contactId,
                   contactName: contact.name,
                   error: e instanceof Error ? e.message : "Analysis failed"
                 });
               }
             } else {
               errorCount++;
-              results.push({ contactId: contactId2, error: "Contact not found" });
+              results.push({ contactId, error: "Contact not found" });
             }
           } catch (e) {
             errorCount++;
-            results.push({ contactId: contactId2, error: e instanceof Error ? e.message : "Processing error" });
+            results.push({ contactId, error: e instanceof Error ? e.message : "Processing error" });
           }
         }
         memoryService.recordObservation(
@@ -7350,55 +7353,55 @@ async function executeCRMFunction(toolName, params, userId) {
       }
       // Contact Customization
       case "toggle_favorite": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentFav = contact.isFavorite || false;
-        const [updated] = await db.update(contacts).set({ isFavorite: !currentFav, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ isFavorite: !currentFav, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, isFavorite: !currentFav };
       }
       case "add_custom_field": {
-        const contactId2 = parseInt(params.contactId);
+        const contactId = parseInt(params.contactId);
         if (!params.key || !params.value) return { error: "Key and value are required" };
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentFields = contact.customFields || {};
         const updatedFields = { ...currentFields, [params.key]: params.value };
-        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, customFields: updatedFields };
       }
       case "remove_custom_field": {
-        const contactId2 = parseInt(params.contactId);
+        const contactId = parseInt(params.contactId);
         if (!params.key) return { error: "Key is required" };
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const currentFields = contact.customFields || {};
         const { [params.key]: _, ...updatedFields } = currentFields;
-        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId))).returning();
+        const [updated] = await db.update(contacts).set({ customFields: updatedFields, updatedAt: /* @__PURE__ */ new Date() }).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId))).returning();
         return { contact: updated, customFields: updatedFields };
       }
       // Social Monitoring
       case "setup_social_monitoring": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         const platforms = params.platforms ? params.platforms.split(",").map((p) => p.trim()) : ["LinkedIn", "Twitter"];
         const alertTypes = params.alertTypes ? params.alertTypes.split(",").map((a) => a.trim()) : ["job_change", "new_content", "engagement"];
         return {
           success: true,
-          contactId: contactId2,
+          contactId,
           platforms,
           alertTypes,
-          monitoringId: `mon_${contactId2}_${Date.now()}`,
+          monitoringId: `mon_${contactId}_${Date.now()}`,
           message: `Monitoring set up for ${contact.name} on ${platforms.join(", ")}`
         };
       }
       case "get_social_alerts": {
-        const contactId2 = parseInt(params.contactId);
-        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId2), eq4(contacts.profileId, userId)));
+        const contactId = parseInt(params.contactId);
+        const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, contactId), eq4(contacts.profileId, userId)));
         if (!contact) return { error: "Contact not found" };
         return {
-          contactId: contactId2,
+          contactId,
           contactName: contact.name,
           alerts: [],
           message: "Social monitoring alerts retrieved. Configure monitoring first via setup_social_monitoring."
@@ -7656,7 +7659,7 @@ Input data: ${JSON.stringify(input)}`;
       }
       // AI Calendar
       case "get_calendar_ai_suggestions": {
-        const contactId2 = params.contactId;
+        const contactId = params.contactId;
         const context = params.context || "";
         let suggestions = {
           recommended_times: [],
@@ -7666,8 +7669,8 @@ Input data: ${JSON.stringify(input)}`;
         const client = await getOpenAIClient();
         if (!client) return { error: NO_KEY_MESSAGE };
         let contactInfo = "";
-        if (contactId2) {
-          const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, parseInt(contactId2)), eq4(contacts.profileId, userId)));
+        if (contactId) {
+          const [contact] = await db.select().from(contacts).where(and3(eq4(contacts.id, parseInt(contactId)), eq4(contacts.profileId, userId)));
           if (contact) {
             contactInfo = `Contact: ${contact.firstName} ${contact.lastName} (${contact.email})`;
           }
@@ -15858,6 +15861,35 @@ async function callAIJson(systemPrompt, userPrompt, model = DEFAULT_MODEL, maxTo
     return { success: false, error: error.message, source: "fallback" };
   }
 }
+async function callAIWithTools(systemPrompt, userPrompt, tools, model = ADVANCED_MODEL, maxTokens = 4e3) {
+  const client = await getOpenAIClient2();
+  if (!client) return { success: false, error: NO_KEY_MESSAGE, source: "fallback" };
+  try {
+    const result = await respond(client, {
+      model,
+      instructions: systemPrompt,
+      input: userPrompt,
+      json: true,
+      tools,
+      maxOutputTokens: maxTokens
+    });
+    if (!result.data) return { success: false, error: "The AI response was not valid JSON", source: "fallback" };
+    return {
+      success: true,
+      data: { ...result.data, ...result.sources.length ? { sources: result.sources } : {} },
+      source: "openai",
+      usage: result.usage ? {
+        promptTokens: result.usage.input_tokens,
+        completionTokens: result.usage.output_tokens,
+        totalTokens: result.usage.total_tokens
+      } : void 0
+    };
+  } catch (error) {
+    console.error("AI call error:", error.message);
+    return { success: false, error: error.message, source: "fallback" };
+  }
+}
+var CODE_INTERPRETER = { type: "code_interpreter", container: { type: "auto" } };
 async function analyzeLeadScore(contactData) {
   return callAIJson(
     `You are an expert sales analyst. Analyze the contact data and provide a lead score (0-100) with detailed rationale. Consider: engagement level, company fit, deal history, response patterns, and buying signals. Return JSON with: score (number), rationale (string), buyingSignals (array), riskFactors (array), recommendedActions (array), priority (hot/warm/cold).`,
@@ -15907,11 +15939,10 @@ async function analyzeWinRate(deals2) {
   );
 }
 async function generateSalesForecast(deals2, period = "quarter") {
-  return callAIJson(
-    `You are a sales forecasting expert. Generate AI-powered forecast and return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
+  return callAIWithTools(
+    `You are a sales forecasting expert. Use the python tool to compute the weighted forecast (value \xD7 probability), best and worst case from the deal data. Return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
     `Generate ${period} sales forecast for: ${JSON.stringify(deals2)}`,
-    DEFAULT_MODEL,
-    800
+    [CODE_INTERPRETER]
   );
 }
 async function analyzeLiveDeals(deals2) {
@@ -16051,11 +16082,10 @@ async function transformTestimonial(rawTestimonial, format = "polished") {
   );
 }
 async function analyzeBusiness(businessData) {
-  return callAIJson(
-    `You are a senior business consultant. Provide comprehensive business analysis. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
+  return callAIWithTools(
+    `You are a senior business consultant. Use web search to check the business's website, market and competitors. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
     `Analyze this business: ${JSON.stringify(businessData)}`,
-    DEFAULT_MODEL,
-    1e3
+    [webSearchTool()]
   );
 }
 async function summarizeMeeting(transcript) {
@@ -16165,11 +16195,10 @@ async function generateRecommendations(context) {
   );
 }
 async function researchTopic(topic, depth = "comprehensive") {
-  return callAIJson(
-    `You are an AI research assistant. Conduct thorough research. Return JSON with: summary (string), key_findings (array), sources_suggested (array), related_topics (array), market_implications (array), action_items (string).`,
+  return callAIWithTools(
+    `You are an AI research assistant. Search the web and base findings on current sources. Return JSON with: summary (string), key_findings (array), sources_suggested (array of URLs you used), related_topics (array), market_implications (array), action_items (string).`,
     `Research topic: "${topic}". Depth: ${depth}`,
-    DEFAULT_MODEL,
-    800
+    [webSearchTool()]
   );
 }
 async function generateReasoning(task, data) {

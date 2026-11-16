@@ -9,6 +9,7 @@ import type { Response } from 'express';
 import { memoryService } from '../memory';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from './userOpenAI';
 import { DEFAULT_MODEL, ADVANCED_MODEL } from './openaiModels';
+import { respond, webSearchTool } from './openaiResponses';
 
 // OpenAI client for the signed-in user of the current request (their own key; no server fallback)
 async function getOpenAIClient(): Promise<OpenAI | null> {
@@ -138,6 +139,49 @@ async function callAIJson(
 }
 
 /**
+ * JSON call on the Responses API with built-in tools (web_search for research features,
+ * code_interpreter for numeric analysis). Web-search citations are returned in data.sources.
+ */
+async function callAIWithTools(
+  systemPrompt: string,
+  userPrompt: string,
+  tools: any[],
+  model: string = ADVANCED_MODEL,
+  maxTokens: number = 4000
+): Promise<AIResult> {
+  const client = await getOpenAIClient();
+  if (!client) return { success: false, error: NO_KEY_MESSAGE, source: 'fallback' };
+  try {
+    const result = await respond(client, {
+      model,
+      instructions: systemPrompt,
+      input: userPrompt,
+      json: true,
+      tools,
+      maxOutputTokens: maxTokens,
+    });
+    if (!result.data) return { success: false, error: 'The AI response was not valid JSON', source: 'fallback' };
+    return {
+      success: true,
+      data: { ...result.data, ...(result.sources.length ? { sources: result.sources } : {}) },
+      source: 'openai',
+      usage: result.usage
+        ? {
+            promptTokens: result.usage.input_tokens,
+            completionTokens: result.usage.output_tokens,
+            totalTokens: result.usage.total_tokens,
+          }
+        : undefined,
+    };
+  } catch (error: any) {
+    console.error('AI call error:', error.message);
+    return { success: false, error: error.message, source: 'fallback' };
+  }
+}
+
+const CODE_INTERPRETER = { type: 'code_interpreter', container: { type: 'auto' } };
+
+/**
  * Core AI call with text response
  */
 async function callAIText(
@@ -238,11 +282,11 @@ export async function analyzeWinRate(deals: any[]): Promise<AIResult> {
 }
 
 export async function generateSalesForecast(deals: any[], period: string = 'quarter'): Promise<AIResult> {
-  return callAIJson(
-    `You are a sales forecasting expert. Generate AI-powered forecast and return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
+  // Numbers are computed with code_interpreter rather than estimated in text
+  return callAIWithTools(
+    `You are a sales forecasting expert. Use the python tool to compute the weighted forecast (value × probability), best and worst case from the deal data. Return JSON with: weighted_forecast (number), best_case (number), worst_case (number), confidence_level (number), period (string), monthly_breakdown (array of {month, forecast, probability}), key_drivers (array), risk_factors (array), recommendations (array).`,
     `Generate ${period} sales forecast for: ${JSON.stringify(deals)}`,
-    DEFAULT_MODEL,
-    800
+    [CODE_INTERPRETER]
   );
 }
 
@@ -463,11 +507,11 @@ export async function transformTestimonial(rawTestimonial: string, format: strin
 }
 
 export async function analyzeBusiness(businessData: any): Promise<AIResult> {
-  return callAIJson(
-    `You are a senior business consultant. Provide comprehensive business analysis. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
+  // Research feature: web search for the business's current market and competitors
+  return callAIWithTools(
+    `You are a senior business consultant. Use web search to check the business's website, market and competitors. Return JSON with: swot_analysis (object with strengths/weaknesses/opportunities/threats), market_position (string), growth_opportunities (array), risk_factors (array), strategic_recommendations (array), kpi_suggestions (array), competitive_advantages (array).`,
     `Analyze this business: ${JSON.stringify(businessData)}`,
-    DEFAULT_MODEL,
-    1000
+    [webSearchTool()]
   );
 }
 
@@ -603,11 +647,11 @@ export async function generateRecommendations(context: {
 }
 
 export async function researchTopic(topic: string, depth: string = 'comprehensive'): Promise<AIResult> {
-  return callAIJson(
-    `You are an AI research assistant. Conduct thorough research. Return JSON with: summary (string), key_findings (array), sources_suggested (array), related_topics (array), market_implications (array), action_items (string).`,
+  // Research feature: live web search with citations
+  return callAIWithTools(
+    `You are an AI research assistant. Search the web and base findings on current sources. Return JSON with: summary (string), key_findings (array), sources_suggested (array of URLs you used), related_topics (array), market_implications (array), action_items (string).`,
     `Research topic: "${topic}". Depth: ${depth}`,
-    DEFAULT_MODEL,
-    800
+    [webSearchTool()]
   );
 }
 
