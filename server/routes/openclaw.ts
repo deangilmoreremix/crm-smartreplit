@@ -10,6 +10,7 @@ import {
   appointments,
   communications,
   notes,
+  automationRules,
   insertContactSchema,
   insertDealSchema,
   insertTaskSchema,
@@ -23,6 +24,8 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import { memoryService } from '../memory';
+import { listVideosForUser, createVideoForUser } from './videos';
+import { isSafeExternalUrl } from '../services/safeUrl';
 
 const router = Router();
 
@@ -41,10 +44,17 @@ router.use((req, res, next) => {
 const OPENCLAW_API_URL = process.env.OPENCLAW_API_URL || 'http://localhost:3001';
 const OPENCLAW_API_KEY = process.env.OPENCLAW_API_KEY || '';
 
+// Optional comma-separated allowlist for per-user OpenClaw base URLs (exact hostnames)
+const OPENCLAW_ALLOWED_HOSTS = (process.env.OPENCLAW_ALLOWED_HOSTS || '')
+  .split(',')
+  .map((h) => h.trim())
+  .filter(Boolean);
+
 /**
  * Get the effective OpenClaw API key and base URL for a given user.
- * Priority: per-user key from user_api_keys > server-level env var
- * Priority for base URL: per-user baseUrl from user_api_keys > OPENCLAW_API_URL
+ * Per-user settings live in user_api_keys as the provider='openclaw' row
+ * (api_key = key, metadata.base_url = optional self-hosted URL); server env vars are the fallback.
+ * A per-user base URL is used only if it is https and resolves to public addresses (SSRF guard).
  */
 async function getOpenClawConfigForUser(
   userId: string
@@ -56,15 +66,22 @@ async function getOpenClawConfigForUser(
     if (supabase && userId) {
       const { data } = await supabase
         .from('user_api_keys')
-        .select('openclaw_api_key, openclaw_base_url')
+        .select('api_key, metadata')
         .eq('user_id', userId)
-        .single();
+        .eq('provider', 'openclaw')
+        .eq('is_active', true)
+        .maybeSingle();
 
-      if (data?.openclaw_api_key) {
-        apiKey = data.openclaw_api_key;
+      if (data?.api_key) {
+        apiKey = data.api_key;
       }
-      if (data?.openclaw_base_url) {
-        baseUrl = data.openclaw_base_url;
+      const userBaseUrl = (data?.metadata as any)?.base_url;
+      if (userBaseUrl) {
+        if (await isSafeExternalUrl(userBaseUrl, { allowedHosts: OPENCLAW_ALLOWED_HOSTS })) {
+          baseUrl = userBaseUrl.replace(/\/+$/, '');
+        } else {
+          console.warn('Ignoring unsafe per-user OpenClaw base URL; using server default');
+        }
       }
     }
   } catch (err) {
@@ -552,8 +569,8 @@ const crmTools = [
   // Image Generation
   {
     name: 'generate_image',
-    description: 'Generate an image using AI (DALL-E or Gemini)',
-    parameters: { prompt: 'string', size: 'string?', style: 'string?' },
+    description: 'Generate an image with OpenAI (size: 1024x1024, 1536x1024 or 1024x1536)',
+    parameters: { prompt: 'string', size: 'string?' },
     category: 'ai',
   },
   // Video/Demo
@@ -679,6 +696,7 @@ router.post('/chat', async (req, res) => {
       `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: 'POST',
+        redirect: 'error', // never follow redirects from a (possibly user-supplied) base URL
         headers: {
           'Content-Type': 'application/json',
           ...(effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}),
@@ -739,6 +757,7 @@ router.post('/chat/stream', async (req, res) => {
       `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: 'POST',
+        redirect: 'error', // never follow redirects from a (possibly user-supplied) base URL
         headers: {
           'Content-Type': 'application/json',
           ...(effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}),
@@ -766,8 +785,8 @@ router.post('/chat/stream', async (req, res) => {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      res.write(`data: ${chunk}\n\n`);
+      // Upstream already sends SSE frames ("data: ...\n\n"); pass them through unchanged
+      res.write(decoder.decode(value, { stream: true }));
     }
 
     res.end();
@@ -1033,7 +1052,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       case 'cancel_appointment': {
-        const appointmentId = parseInt(params.appointmentId);
+        const appointmentId = String(params.appointmentId); // appointments.id is a UUID
         await db!
           .delete(appointments)
           .where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId)));
@@ -2707,50 +2726,21 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
       // Video Management
       case 'list_videos': {
+        if (!userId) return { error: 'Authentication required' };
         const limit = params.limit || 20;
-        const videoRes = await fetch(
-          `${process.env.CRM_BASE_URL || 'http://localhost:3000'}/api/videos`,
-          {
-            headers: {
-              Authorization: req.headers.authorization || '',
-              Cookie: req.headers.cookie || '',
-            },
-          }
-        );
-
-        if (!videoRes.ok) {
-          return { videos: [], count: 0 };
-        }
-
-        const videos = await videoRes.json();
+        const videos = listVideosForUser(userId);
         return { videos: videos.slice(0, limit), count: videos.length };
       }
 
       case 'create_video': {
-        const videoRes = await fetch(
-          `${process.env.CRM_BASE_URL || 'http://localhost:3000'}/api/videos`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: req.headers.authorization || '',
-              Cookie: req.headers.cookie || '',
-            },
-            body: JSON.stringify({
-              title: params.title,
-              script: params.script,
-              recipient: params.recipientEmail
-                ? { email: params.recipientEmail, name: params.recipientName }
-                : undefined,
-            }),
-          }
-        );
-
-        if (!videoRes.ok) {
-          return { error: 'Failed to create video' };
-        }
-
-        const video = await videoRes.json();
+        if (!userId) return { error: 'Authentication required' };
+        if (!params.title || !params.script) return { error: 'title and script are required' };
+        const video = createVideoForUser(userId, {
+          title: params.title,
+          script: params.script,
+          recipientName: params.recipientName,
+          recipientEmail: params.recipientEmail,
+        });
         return { video };
       }
 
@@ -3079,7 +3069,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           .select()
           .from(appointments)
           .where(
-            and(eq(appointments.id, parseInt(appointmentId)), eq(appointments.profileId, userId))
+            and(eq(appointments.id, String(appointmentId)), eq(appointments.profileId, userId))
           );
 
         if (!appointment) return { error: 'Appointment not found' };
@@ -3087,13 +3077,13 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const client = await getOpenAIClient();
         if (!client) return { error: NO_KEY_MESSAGE };
 
-        // Get related notes and communications
-        const notes = await db!
-          .select()
-          .from(notes)
-          .where(
-            and(eq(notes.appointmentId, parseInt(appointmentId)), eq(notes.profileId, userId))
-          );
+        // Related notes: notes have no appointment link, so use the appointment's contact
+        const relatedNotes = appointment.contactId
+          ? await db!
+              .select()
+              .from(notes)
+              .where(and(eq(notes.contactId, appointment.contactId), eq(notes.profileId, userId)))
+          : [];
 
         const response = await client.chat.completions.create({
           model: ADVANCED_MODEL,
@@ -3105,7 +3095,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             },
             {
               role: 'user',
-              content: `Meeting Details:\nTitle: ${appointment.title}\nDate: ${appointment.dateTime}\nDuration: ${appointment.duration} minutes\nNotes: ${appointment.notes || 'N/A'}\n\nRelated Notes: ${notes.map((n) => n.content).join('\n') || 'None'}`,
+              content: `Meeting Details:\nTitle: ${appointment.title}\nStart: ${appointment.startTime}\nEnd: ${appointment.endTime}\nDescription: ${appointment.description || 'N/A'}\n\nRelated Notes: ${relatedNotes.map((n) => n.content).join('\n') || 'None'}`,
             },
           ],
           response_format: { type: 'json_object' },

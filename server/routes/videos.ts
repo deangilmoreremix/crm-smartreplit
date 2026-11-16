@@ -44,6 +44,51 @@ const videoStats = {
   topPerformingVideo: '',
 };
 
+export function listVideosForUser(userId: string): VideoEmail[] {
+  return videoEmails.filter((video) => video.profileId === userId);
+}
+
+export function createVideoForUser(
+  userId: string,
+  input: { title: string; script: string; recipientName?: string; recipientEmail?: string; company?: string }
+): VideoEmail {
+  const { title, script, recipientName, recipientEmail, company } = input;
+  const newVideo: VideoEmail = {
+    id: crypto.randomUUID(),
+    title,
+    script,
+    duration: Math.floor(script.length / 10), // Rough estimate based on script length
+    thumbnail: '/api/placeholder/400/225', // Placeholder thumbnail
+    status: 'draft',
+    analytics: {
+      views: 0,
+      completionRate: 0,
+      engagement: 0,
+    },
+    gpt5Metadata: {
+      generatedScript: false,
+      optimizationScore: 0.8,
+      suggestedImprovements: [],
+      tone: 'professional',
+      targetAudience: 'business',
+    },
+    recipient:
+      recipientName && recipientEmail
+        ? {
+            name: recipientName,
+            email: recipientEmail,
+            company: company || '',
+          }
+        : undefined,
+    profileId: userId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  videoEmails.push(newVideo);
+  return newVideo;
+}
+
 export function registerVideoRoutes(app: Express): void {
   // Protect all video routes: require auth + video_email entitlement
   app.use('/api/videos', requireAuth(), requireEntitlement(FeatureKey.VIDEO_EMAIL));
@@ -52,8 +97,7 @@ export function registerVideoRoutes(app: Express): void {
   app.get('/api/videos', async (req, res) => {
     try {
       // Filter videos by user
-      const userVideos = videoEmails.filter((video) => video.profileId === (req as any).userId);
-      res.json(userVideos);
+      res.json(listVideosForUser((req as any).userId));
     } catch (error) {
       console.error('Error fetching videos:', error);
       res.status(500).json({ error: 'Failed to fetch videos' });
@@ -104,39 +148,7 @@ export function registerVideoRoutes(app: Express): void {
         return res.status(400).json({ error: 'Title and script are required' });
       }
 
-      const newVideo: VideoEmail = {
-        id: crypto.randomUUID(),
-        title,
-        script,
-        duration: Math.floor(script.length / 10), // Rough estimate based on script length
-        thumbnail: '/api/placeholder/400/225', // Placeholder thumbnail
-        status: 'draft',
-        analytics: {
-          views: 0,
-          completionRate: 0,
-          engagement: 0,
-        },
-        gpt5Metadata: {
-          generatedScript: false,
-          optimizationScore: 0.8,
-          suggestedImprovements: [],
-          tone: 'professional',
-          targetAudience: 'business',
-        },
-        recipient:
-          recipientName && recipientEmail
-            ? {
-                name: recipientName,
-                email: recipientEmail,
-                company: company || '',
-              }
-            : undefined,
-        profileId: userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      videoEmails.push(newVideo);
+      const newVideo = createVideoForUser(userId, { title, script, recipientName, recipientEmail, company });
       res.status(201).json(newVideo);
     } catch (error) {
       console.error('Error creating video:', error);

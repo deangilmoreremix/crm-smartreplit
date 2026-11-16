@@ -1,6 +1,6 @@
 /**
  * User API Keys Routes
- * CRUD operations for user-provided OpenAI API keys
+ * CRUD operations for user-provided OpenAI and OpenClaw API keys
  */
 
 import type { Express, Request, Response } from 'express';
@@ -9,6 +9,10 @@ import { db } from '../db';
 import { userApiKeys } from '../../shared/schema';
 import { requireAuth } from './auth';
 import { DEFAULT_MODEL } from '../services/openaiModels';
+import { isSafeExternalUrl } from '../services/safeUrl';
+
+// openai: the user's own key for all AI features; openclaw: key + optional base URL (metadata.base_url)
+const SUPPORTED_PROVIDERS = ['openai', 'openclaw'];
 
 // Google AI interface for testing
 interface GoogleAIResponse {
@@ -64,11 +68,22 @@ export function registerApiKeyRoutes(app: Express) {
         return res.status(503).json({ error: 'Database not available' });
       }
 
-      const { provider, apiKey, apiKeyName, model, isDefault } = req.body;
+      const { provider, apiKey, apiKeyName, model, isDefault, baseUrl } = req.body;
 
       // Validate provider
-      if (provider !== 'openai') {
-        return res.status(400).json({ error: 'Provider must be "openai"' });
+      if (!SUPPORTED_PROVIDERS.includes(provider)) {
+        return res.status(400).json({ error: 'Provider must be "openai" or "openclaw"' });
+      }
+
+      // OpenClaw may point at a self-hosted instance; the URL must be safe for the server to call
+      let metadata: Record<string, any> | undefined;
+      if (provider === 'openclaw' && baseUrl !== undefined) {
+        if (baseUrl && !(await isSafeExternalUrl(String(baseUrl)))) {
+          return res.status(400).json({
+            error: 'OpenClaw base URL must be a public https URL',
+          });
+        }
+        metadata = baseUrl ? { base_url: String(baseUrl).trim() } : {};
       }
 
       // Validate API key format
@@ -95,6 +110,7 @@ export function registerApiKeyRoutes(app: Express) {
           .set({
             apiKey: apiKey.trim(),
             ...(model !== undefined && { model: model || null }),
+            ...(metadata !== undefined && { metadata }),
             isActive: true,
             isDefault: true,
             updatedAt: new Date(),
@@ -123,6 +139,7 @@ export function registerApiKeyRoutes(app: Express) {
           apiKey: apiKey.trim(),
           apiKeyName: apiKeyName || null,
           model: model || null,
+          ...(metadata !== undefined && { metadata }),
           isDefault: shouldBeDefault,
           isActive: true,
           testStatus: 'pending',
@@ -169,6 +186,11 @@ export function registerApiKeyRoutes(app: Express) {
 
       if (apiKeyRecord.provider === 'openai') {
         testResult = await testOpenAIKey(apiKeyRecord.apiKey);
+      } else if (apiKeyRecord.provider === 'openclaw') {
+        testResult = await testOpenClawKey(
+          apiKeyRecord.apiKey,
+          (apiKeyRecord.metadata as any)?.base_url
+        );
       } else {
         return res.status(400).json({ error: 'Unknown provider' });
       }
@@ -323,8 +345,8 @@ export function registerApiKeyRoutes(app: Express) {
         return res.status(503).json({ error: 'Database not available' });
       }
 
-      if (provider !== 'openai') {
-        return res.status(400).json({ error: 'Provider must be "openai"' });
+      if (!SUPPORTED_PROVIDERS.includes(provider)) {
+        return res.status(400).json({ error: 'Provider must be "openai" or "openclaw"' });
       }
 
       // Get the default active key for this provider
@@ -404,3 +426,26 @@ async function testOpenAIKey(apiKey: string): Promise<{ success: boolean; error?
   }
 }
 
+// Helper: Test an OpenClaw key against its health endpoint (per-user base URL or OPENCLAW_API_URL)
+async function testOpenClawKey(
+  apiKey: string,
+  baseUrl?: string
+): Promise<{ success: boolean; error?: string }> {
+  const url = (baseUrl || process.env.OPENCLAW_API_URL || '').replace(/\/+$/, '');
+  if (!url) return { success: false, error: 'No OpenClaw URL configured' };
+  if (baseUrl && !(await isSafeExternalUrl(baseUrl))) {
+    return { success: false, error: 'OpenClaw base URL must be a public https URL' };
+  }
+  try {
+    const response = await fetch(`${url}/api/v1/health`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      redirect: 'error',
+      signal: AbortSignal.timeout(10000),
+    });
+    return response.ok
+      ? { success: true }
+      : { success: false, error: `OpenClaw health check failed (${response.status})` };
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'OpenClaw health check failed' };
+  }
+}

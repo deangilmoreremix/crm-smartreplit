@@ -281,11 +281,7 @@ export function registerAIRoutes(app: Express) {
 
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          summary: 'Configure your OpenAI API key in Settings > API Keys for KPI analysis',
-          recommendations: ['Add OpenAI API key in Settings'],
-          needsApiKey: true,
-        });
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
       }
 
       try {
@@ -308,7 +304,7 @@ export function registerAIRoutes(app: Express) {
         });
         res.json(JSON.parse(response.choices[0].message.content || '{}'));
       } catch (error) {
-        res.json({ summary: 'Analysis unavailable', recommendations: ['Retry'] });
+        res.status(500).json({ error: (error as any)?.message || 'KPI analysis failed' });
       }
     }
   );
@@ -323,12 +319,7 @@ export function registerAIRoutes(app: Express) {
 
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          probability_score: 65,
-          risk_level: 'medium',
-          recommendations: ['Configure OpenAI API key in Settings'],
-          needsApiKey: true,
-        });
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
       }
 
       try {
@@ -351,7 +342,7 @@ export function registerAIRoutes(app: Express) {
         });
         res.json(JSON.parse(response.choices[0].message.content || '{}'));
       } catch (error) {
-        res.json({ probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] });
+        res.status(500).json({ error: (error as any)?.message || 'Deal analysis failed' });
       }
     }
   );
@@ -366,11 +357,7 @@ export function registerAIRoutes(app: Express) {
 
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          market_insights: ['Configure OpenAI API key in Settings'],
-          strategic_recommendations: ['Add your API key in Settings > API Keys'],
-          needsApiKey: true,
-        });
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
       }
 
       try {
@@ -393,7 +380,7 @@ export function registerAIRoutes(app: Express) {
         });
         res.json(JSON.parse(response.choices[0].message.content || '{}'));
       } catch (error) {
-        res.json({ market_insights: ['Retry analysis'] });
+        res.status(500).json({ error: (error as any)?.message || 'Business intelligence failed' });
       }
     }
   );
@@ -411,14 +398,13 @@ export function registerAIRoutes(app: Express) {
           schema,
           temperature = 0.4,
           max_output_tokens = 2048,
-          forceToolName,
         } = req.body;
 
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
           return res.status(400).json({
             error: 'No OpenAI API key configured',
-            message: 'Please add your OpenAI API key in Settings > AI Keys to use AI features.',
+            message: NO_KEY_MESSAGE,
             needsApiKey: true,
           });
         }
@@ -430,7 +416,10 @@ export function registerAIRoutes(app: Express) {
           },
           {
             role: 'user',
-            content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
+            // JSON mode requires the word "json" in the messages
+            content:
+              (imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt) +
+              (schema ? `\n\nRespond with valid JSON matching this schema: ${JSON.stringify(schema)}` : ''),
           },
         ];
 
@@ -440,88 +429,7 @@ export function registerAIRoutes(app: Express) {
           temperature,
           max_tokens: max_output_tokens,
           response_format: schema ? { type: 'json_object' } : undefined,
-          tools: [
-            {
-              type: 'function',
-              function: {
-                name: 'analyzeBusinessData',
-                description: 'Analyze business data and provide insights',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    dataType: { type: 'string' },
-                    analysisType: { type: 'string' },
-                    timeRange: { type: 'string' },
-                  },
-                  required: ['dataType'],
-                },
-              },
-            },
-            {
-              type: 'function',
-              function: {
-                name: 'generateRecommendations',
-                description: 'Generate business recommendations based on data',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    context: { type: 'string' },
-                    goals: { type: 'array', items: { type: 'string' } },
-                    constraints: { type: 'array', items: { type: 'string' } },
-                  },
-                },
-              },
-            },
-          ],
-          tool_choice: forceToolName
-            ? { type: 'function', function: { name: forceToolName } }
-            : 'auto',
         });
-
-        // Handle tool calls
-        const toolCalls = response.choices[0].message.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (tc: any) => ({
-              tool_call_id: tc.id,
-              output: await executeWLTool(tc),
-            }))
-          );
-
-          const continuedMessages = [
-            ...messages,
-            response.choices[0].message,
-            ...toolOutputs.map((o) => ({
-              role: 'tool' as const,
-              content: o.output,
-              tool_call_id: o.tool_call_id,
-            })),
-          ];
-
-          const continuedResponse = await openaiData.client.chat.completions.create({
-            model: openaiData.model,
-            messages: continuedMessages,
-            temperature,
-            max_tokens: max_output_tokens,
-            response_format: schema ? { type: 'json_object' } : undefined,
-          });
-
-          return res.json({
-            output_text: continuedResponse.choices[0].message.content,
-            output: [
-              {
-                content: [
-                  {
-                    type: 'output_text',
-                    text: continuedResponse.choices[0].message.content,
-                  },
-                ],
-              },
-            ],
-            tool_calls: toolCalls,
-            continued: true,
-          });
-        }
 
         res.json({
           output_text: response.choices[0].message.content,
@@ -594,37 +502,6 @@ export function registerAIRoutes(app: Express) {
       }
     }
   );
-
-  // Tool execution function for WL apps
-  async function executeWLTool(tc: any): Promise<string> {
-    const { name, arguments: args } = tc.function;
-    try {
-      if (name === 'analyzeBusinessData') {
-        const { dataType, analysisType, timeRange } = args || {};
-        return JSON.stringify({
-          ok: true,
-          analysis: `Analysis of ${dataType} for ${timeRange}`,
-          insights: [`Key insight 1 for ${analysisType}`, `Key insight 2 for ${analysisType}`],
-          recommendations: [`Recommendation 1`, `Recommendation 2`],
-        });
-      }
-      if (name === 'generateRecommendations') {
-        const { context, goals, constraints } = args || {};
-        return JSON.stringify({
-          ok: true,
-          recommendations:
-            goals?.map(
-              (goal: string, i: number) =>
-                `For ${goal}: Action ${i + 1} considering ${constraints?.[i] || 'no constraints'}`
-            ) || [],
-          context: context,
-        });
-      }
-      return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
-    } catch (e: any) {
-      return JSON.stringify({ ok: false, error: e?.message || 'Tool error' });
-    }
-  }
 
   console.log('✅ AI routes registered (user API key mode)');
 }

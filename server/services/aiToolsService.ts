@@ -5,6 +5,7 @@
  */
 
 import OpenAI from 'openai';
+import type { Response } from 'express';
 import { memoryService } from '../memory';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from './userOpenAI';
 import { DEFAULT_MODEL, ADVANCED_MODEL } from './openaiModels';
@@ -12,6 +13,20 @@ import { DEFAULT_MODEL, ADVANCED_MODEL } from './openaiModels';
 // OpenAI client for the signed-in user of the current request (their own key; no server fallback)
 async function getOpenAIClient(): Promise<OpenAI | null> {
   return (await getUserOpenAIClient())?.client ?? null;
+}
+
+/**
+ * Send a failed AI result: 400 with needsApiKey when the user has no OpenAI key, otherwise 500.
+ */
+export function sendAIError(res: Response, error: unknown) {
+  const message =
+    typeof error === 'string' ? error : (error as any)?.message || 'AI request failed';
+  if (message === NO_KEY_MESSAGE) {
+    return res
+      .status(400)
+      .json({ success: false, error: 'No OpenAI API key configured', message, needsApiKey: true });
+  }
+  return res.status(500).json({ success: false, error: message });
 }
 
 // Rate limiting (shared across all AI tools)
@@ -491,6 +506,33 @@ export async function generateMeetingNotes(meetingData: any): Promise<AIResult> 
   return callAIJson(
     `You are a meeting notes expert. Generate comprehensive meeting notes. Return JSON with: agenda_summary (string), discussion_points (array), decisions_made (array), action_items (array of {task, owner, deadline}), parking_lot (array), next_steps (string).`,
     `Generate meeting notes for: ${JSON.stringify(meetingData)}`,
+    DEFAULT_MODEL,
+    600
+  );
+}
+
+export async function suggestCalendarTimes(appointments: any[], preferences: any): Promise<AIResult> {
+  return callAIJson(
+    `You are a scheduling assistant. Based on the user's existing appointments and preferences, suggest meeting times. Return JSON with: optimal_times (array of strings), scheduling_tips (array of strings), conflict_warnings (array of strings), productivity_score (number 0-100 based on how well the current calendar supports focused work).`,
+    `Existing appointments: ${JSON.stringify(appointments || [])}. Preferences: ${JSON.stringify(preferences || {})}`,
+    DEFAULT_MODEL,
+    500
+  );
+}
+
+export async function recommendPipelineStages(deals: any[], targetStage?: string): Promise<AIResult> {
+  return callAIJson(
+    `You are a sales pipeline automation expert. Assess pipeline health and recommend a stage for each deal. Return JSON with: overall_health_score (number 0-100), bottlenecks (array of strings), recommendations (array of strings), stage_recommendations (array of {dealId, currentStage, recommendedStage, auto_actions (array of strings), reasoning}). Include one stage_recommendations entry per deal, using each deal's id as dealId.`,
+    `Deals: ${JSON.stringify(deals)}${targetStage ? `. Target stage: ${targetStage}` : ''}`,
+    DEFAULT_MODEL,
+    1200
+  );
+}
+
+export async function processFormSubmission(formData: any, formType: string): Promise<AIResult> {
+  return callAIJson(
+    `You are a lead-intake automation expert. Evaluate a ${formType} form submission. Return JSON with: lead_score (number 0-100), auto_response (a short personalised reply to the submitter), follow_up_sequence (array of next steps), segmentation ({segment, intent, interests (array)}).`,
+    `Form submission: ${JSON.stringify(formData)}`,
     DEFAULT_MODEL,
     600
   );

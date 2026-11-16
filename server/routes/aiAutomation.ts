@@ -10,6 +10,7 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import * as aiService from '../services/aiToolsService';
+import { sendAIError } from '../services/aiToolsService';
 
 export function registerAIAutomationRoutes(app: Express): void {
   const requireAutomation = [requireAuth(), requireEntitlement(FeatureKey.LEAD_AUTOMATION)];
@@ -31,7 +32,7 @@ export function registerAIAutomationRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, workflow: result.data, source: result.source });
       } else {
-        res.json({ success: false, workflow: { workflow_name: 'Default Workflow', trigger: 'new_lead', steps: [{ action: 'send_welcome_email', condition: 'always', delay: '0' }], expected_outcome: 'Configure OpenAI API key.', optimization_tips: [] }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -53,7 +54,7 @@ export function registerAIAutomationRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { subject: '', message: 'Configure OpenAI API key.', timing: '1 day', channel: 'email', urgency: 'medium', personalization_tips: [] }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -75,7 +76,7 @@ export function registerAIAutomationRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { subject: '', body: 'Configure OpenAI API key.', calendar_note: '', reminder_text: '' }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -91,25 +92,15 @@ export function registerAIAutomationRoutes(app: Express): void {
       }
 
       const { deals, targetStage } = req.body;
-      if (!deals) return res.status(400).json({ error: 'Deals data required' });
+      if (!Array.isArray(deals) || deals.length === 0) {
+        return res.status(400).json({ error: 'deals must be a non-empty array' });
+      }
 
-      const result = await aiService.analyzePipelineHealth(deals);
+      const result = await aiService.recommendPipelineStages(deals, targetStage);
       if (result.success) {
-        res.json({
-          success: true,
-          automation: {
-            ...result.data,
-            stage_recommendations: deals.map((d: any) => ({
-              dealId: d.id,
-              currentStage: d.stage,
-              recommendedStage: d.probability > 70 ? 'negotiation' : d.probability > 40 ? 'qualification' : 'prospecting',
-              auto_actions: ['Send follow-up email', 'Update CRM', 'Notify sales rep'],
-            })),
-          },
-          source: result.source,
-        });
+        res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { stage_recommendations: [], overall_health_score: 0 }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -127,25 +118,11 @@ export function registerAIAutomationRoutes(app: Express): void {
       const { formData, formType } = req.body;
       if (!formData) return res.status(400).json({ error: 'Form data required' });
 
-      const result = await aiService.generateRecommendations({
-        type: 'form_submission',
-        data: { formData, formType: formType || 'contact' },
-        preferences: {},
-      });
-
+      const result = await aiService.processFormSubmission(formData, formType || 'contact');
       if (result.success) {
-        res.json({
-          success: true,
-          automation: {
-            lead_score: result.data.recommendations?.[0]?.score || 50,
-            auto_response: 'Thank you for your submission! We will be in touch shortly.',
-            follow_up_sequence: ['Send welcome email', 'Assign to sales rep', 'Schedule follow-up call'],
-            segmentation: result.data,
-          },
-          source: result.source,
-        });
+        res.json({ success: true, automation: result.data, source: result.source });
       } else {
-        res.json({ success: false, automation: { lead_score: 50, auto_response: 'Configure OpenAI API key.', follow_up_sequence: [], segmentation: {} }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -167,7 +144,7 @@ export function registerAIAutomationRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, segments: result.data, source: result.source });
       } else {
-        res.json({ success: false, segments: { segments: [], unsegmented_count: contacts.length, recommendations: ['Configure OpenAI API key'] }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -189,7 +166,7 @@ export function registerAIAutomationRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, saved: result.data, source: result.source });
       } else {
-        res.json({ success: false, saved: { suggestions: [], auto_save_recommendations: ['Configure OpenAI API key'] }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -210,7 +187,7 @@ export function registerAIAutomationRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, rules: result.data, source: result.source });
       } else {
-        res.json({ success: false, rules: { rules: [], optimization_suggestions: ['Configure OpenAI API key'], estimated_time_saved: '0 hours/week' }, source: 'fallback' });
+        sendAIError(res, result.error);
       }
     }
   );
