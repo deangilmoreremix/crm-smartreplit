@@ -3,6 +3,15 @@ import express from 'express';
 import request from 'supertest';
 import { registerWorkflowRoutes } from '../workflows';
 
+// requireAuth() sets req.userId; in these tests a preceding middleware supplies req.user
+vi.mock('../auth', () => ({
+  requireAuth: () => (req: any, res: any, next: any) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    req.userId = req.user.id;
+    next();
+  },
+}));
+
 vi.mock('../../supabase', () => ({
   supabase: {
     from: vi.fn(() => ({
@@ -66,13 +75,24 @@ describe('Workflow Routes', () => {
       };
 
       const { supabase } = await import('../../supabase');
-      (supabase.from as any).mockReturnValue({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: mockWorkflow, error: null }),
-          })),
-        })),
-      });
+      (supabase.from as any).mockImplementation((table: string) =>
+        table === 'profiles'
+          ? {
+              // getTenantId() looks up the caller's tenant first
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  single: vi.fn().mockResolvedValue({ data: { tenant_id: 'tenant-1' }, error: null }),
+                })),
+              })),
+            }
+          : {
+              insert: vi.fn(() => ({
+                select: vi.fn(() => ({
+                  single: vi.fn().mockResolvedValue({ data: mockWorkflow, error: null }),
+                })),
+              })),
+            }
+      );
 
       const response = await request(app).post('/api/workflows').send({
         name: 'Test Workflow',

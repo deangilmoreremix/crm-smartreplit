@@ -6,9 +6,11 @@
  *
  * New Features Available:
  * - DynamicFieldRenderer: Renders fields based on metadata types
- * - KanbanBoard/KanbanColumn/KanbanCard: Drag-and-drop Kanban views
+ * - KanbanBoard/KanbanColumn/KanbanCard: Kanban views
  * - ViewSwitcher: Toggle between table/kanban/calendar views
  * - FilterBuilder: Advanced filtering UI
+ *
+ * Used by the "Board" tab on the Contacts and Pipeline pages (components/twenty/).
  *
  * Schema Enhancements (in packages/shared/schema.ts):
  * - customFields: JSONB for custom field data on contacts/deals/tasks
@@ -19,12 +21,12 @@
  * - workflows: Automation engine
  */
 
-export { DynamicFieldRenderer } from '../packages/ui/src/components/DynamicFieldRenderer';
-export { KanbanBoard } from '../packages/ui/src/components/KanbanBoard';
-export { KanbanColumn } from '../packages/ui/src/components/KanbanColumn';
-export { KanbanCard } from '../packages/ui/src/components/KanbanCard';
-export { ViewSwitcher } from '../packages/ui/src/components/ViewSwitcher';
-export { FilterBuilder } from '../packages/ui/src/components/FilterBuilder';
+export { DynamicFieldRenderer } from '@crm/ui/components/DynamicFieldRenderer';
+export { KanbanBoard } from '@crm/ui/components/KanbanBoard';
+export { KanbanColumn } from '@crm/ui/components/KanbanColumn';
+export { KanbanCard } from '@crm/ui/components/KanbanCard';
+export { ViewSwitcher } from '@crm/ui/components/ViewSwitcher';
+export { FilterBuilder } from '@crm/ui/components/FilterBuilder';
 
 // Re-export shared types
 export type {
@@ -39,12 +41,8 @@ export type {
   WorkflowRun,
   Role,
   Permission,
-} from '../packages/shared/schema';
+} from '../../packages/shared/schema';
 
-export type {
-  KanbanColumnData,
-  KanbanCardData,
-  FilterCondition,
-  ViewFilter,
-  ViewSort,
-} from '../packages/shared/types';
+export type { KanbanColumnData, KanbanCardData } from '@crm/ui/components/KanbanBoard';
+
+export type { FilterCondition, ViewFilter, ViewSort } from '../../packages/shared/types';

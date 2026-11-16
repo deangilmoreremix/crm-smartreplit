@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid, pgEnum, unique } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 
@@ -373,15 +373,14 @@ export const userFeatures = pgTable('user_features', {
 
 export const aiFeatureDefinitions = pgTable('ai_feature_definitions', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  featureKey: text('feature_key').unique().notNull(),
   featureName: text('feature_name').notNull(),
-  provider: text('provider').notNull(),
-  model: text('model'),
-  pricingType: text('pricing_type').default('per_token'),
-  inputPricePerUnit: decimal('input_price_per_unit', { precision: 10, scale: 6 }),
-  outputPricePerUnit: decimal('output_price_per_unit', { precision: 10, scale: 6 }),
-  baseCost: decimal('base_cost', { precision: 10, scale: 4 }),
+  description: text('description'),
+  category: text('category'),
+  baseCreditCost: integer('base_credit_cost').notNull().default(10),
+  minCreditCost: integer('min_credit_cost').default(1),
+  maxCreditCost: integer('max_credit_cost').default(1000),
   isActive: boolean('is_active').default(true),
-  metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -389,26 +388,29 @@ export const aiFeatureDefinitions = pgTable('ai_feature_definitions', {
 export const aiFeatureUsage = pgTable('ai_feature_usage', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid('user_id').references(() => profiles.id).notNull(),
-  featureId: uuid('feature_id').references(() => aiFeatureDefinitions.id).notNull(),
-  inputTokens: integer('input_tokens').default(0),
-  outputTokens: integer('output_tokens').default(0),
-  cost: decimal('cost', { precision: 10, scale: 4 }).default('0'),
-  metadata: jsonb('metadata').default({}),
+  resellerId: uuid('reseller_id').references(() => profiles.id),
+  featureKey: text('feature_key').notNull(),
+  creditsCharged: integer('credits_charged').notNull(),
+  creditsPaidToPlatform: integer('credits_paid_to_platform').notNull(),
+  resellerProfitCredits: integer('reseller_profit_credits').default(0),
+  context: jsonb('context').default({}),
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const aiResellerPricing = pgTable('ai_reseller_pricing', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  partnerId: uuid('partner_id').references(() => partners.id).notNull(),
-  featureId: uuid('feature_id').references(() => aiFeatureDefinitions.id).notNull(),
-  resellerPrice: decimal('reseller_price', { precision: 10, scale: 4 }).notNull(),
-  minimumPrice: decimal('minimum_price', { precision: 10, scale: 4 }),
-  isActive: boolean('is_active').default(true),
-  metadata: jsonb('metadata').default({}),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-});
+export const aiResellerPricing = pgTable(
+  'ai_reseller_pricing',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    resellerId: uuid('reseller_id').references(() => profiles.id).notNull(),
+    featureKey: text('feature_key').notNull(),
+    retailCreditCost: integer('retail_credit_cost').notNull(),
+    wholesaleCreditCost: integer('wholesale_credit_cost').notNull(),
+    isActive: boolean('is_active').default(true),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (table) => [unique('unique_reseller_feature').on(table.resellerId, table.featureKey)]
+);
 
 export const workflows = pgTable('workflows', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -708,6 +710,7 @@ export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
 export type AIFeatureUsage = typeof aiFeatureUsage.$inferSelect;
 export type InsertAIFeatureUsage = typeof aiFeatureUsage.$inferInsert;
+export type InsertResellerCreditTransaction = typeof resellerCreditTransactions.$inferInsert;
 export type InsertCommission = typeof commissions.$inferInsert;
 export type InsertPayout = typeof payouts.$inferInsert;
 
@@ -748,63 +751,51 @@ export const automationRules = pgTable('automation_rules', {
 });
 
 export const userCredits = pgTable('user_credits', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => profiles.id),
-  tenantId: uuid('tenant_id'),
-  totalCredits: decimal('total_credits', { precision: 12, scale: 4 }).default('0'),
-  usedCredits: decimal('used_credits', { precision: 12, scale: 4 }).default('0'),
-  availableCredits: decimal('available_credits', { precision: 12, scale: 4 }).default('0'),
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: text('user_id').notNull().unique(),
+  totalCredits: text('total_credits').notNull().default('0'),
+  usedCredits: text('used_credits').notNull().default('0'),
+  availableCredits: text('available_credits').notNull().default('0'),
+  lifetimePurchased: integer('lifetime_purchased').default(0),
+  lifetimeUsed: integer('lifetime_used').default(0),
   lastPurchaseAt: timestamp('last_purchase_at'),
-  version: integer('version').default(1), // Optimistic locking version
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const creditTransactions = pgTable('credit_transactions', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => profiles.id),
-  tenantId: uuid('tenant_id'),
-  type: text('type').notNull(), // 'purchase', 'usage', 'refund', 'admin_grant'
-  amount: decimal('amount', { precision: 12, scale: 4 }).notNull(), // Positive for purchases/grants, negative for usage
-  description: text('description'),
-  balanceBefore: decimal('balance_before', { precision: 12, scale: 4 }),
-  balanceAfter: decimal('balance_after', { precision: 12, scale: 4 }),
-  stripeTransactionId: text('stripe_transaction_id'), // Link to Stripe if purchased
-  usageEventId: uuid('usage_event_id'), // Link to usage event if deducted for usage
-  idempotencyKey: varchar('idempotency_key', { length: 64 }), // For duplicate prevention
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid('user_id').notNull(),
+  type: text('type').notNull().default('purchase'), // 'purchase', 'usage', 'refund', 'admin_grant'
+  amount: text('amount').notNull().default('0'), // Positive for purchases/grants, negative for usage
+  balanceBefore: text('balance_before'),
+  balanceAfter: text('balance_after'),
+  description: text('description').notNull(),
+  stripeTransactionId: text('stripe_transaction_id'),
+  usageEventId: text('usage_event_id'),
+  metadata: jsonb('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const resellerCredits = pgTable('reseller_credits', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   resellerId: uuid('reseller_id')
     .references(() => profiles.id)
     .notNull()
     .unique(),
-  wholesaleCreditsPurchased: integer('wholesale_credits_purchased').default(0),
-  wholesaleCreditsUsed: integer('wholesale_credits_used').default(0),
-  wholesaleCreditsAvailable: integer('wholesale_credits_available').default(0),
-  totalRevenueCents: integer('total_revenue_cents').default(0),
-  totalProfitCents: integer('total_profit_cents').default(0),
+  wholesaleCreditsPurchased: integer('wholesale_credits_purchased').notNull().default(0),
+  wholesaleCreditsUsed: integer('wholesale_credits_used').notNull().default(0),
+  wholesaleCreditsAvailable: integer('wholesale_credits_available').notNull().default(0),
+  totalRevenueCents: integer('total_revenue_cents').notNull().default(0),
+  totalProfitCents: integer('total_profit_cents').notNull().default(0),
   lastPurchaseAt: timestamp('last_purchase_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const resellerCreditTransactions = pgTable('reseller_credit_transactions', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   resellerId: uuid('reseller_id')
     .references(() => profiles.id)
     .notNull(),
@@ -814,7 +805,6 @@ export const resellerCreditTransactions = pgTable('reseller_credit_transactions'
   endUserId: uuid('end_user_id').references(() => profiles.id),
   featureKey: text('feature_key'),
   description: text('description'),
-  metadata: json('metadata'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../supabase';
+import { requireAuth } from './auth';
 import { workflowEngine } from '@smartcrm/workflows';
 import { registerAllTriggers, registerAllActions } from '@smartcrm/workflows';
 
@@ -51,7 +52,7 @@ async function getTenantId(userId: string): Promise<string> {
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -74,7 +75,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -106,9 +107,12 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { name, triggerType, appSlug, steps } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!name || !triggerType) {
+      return res.status(400).json({ error: 'name and triggerType are required' });
     }
 
     const tenantId = await getTenantId(userId);
@@ -155,7 +159,7 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, triggerType, enabled, steps } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -200,7 +204,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -219,7 +223,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.get('/:id/runs', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -243,7 +247,7 @@ router.post('/:id/run', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { triggerData } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -311,7 +315,7 @@ router.post('/:id/run', async (req: Request, res: Response) => {
 
 export function registerWorkflowRoutes(app: any): void {
   console.log('Registering workflow routes at /api/workflows');
-  app.use('/api/workflows', router);
+  app.use('/api/workflows', requireAuth(), router);
 }
 
 export default router;
