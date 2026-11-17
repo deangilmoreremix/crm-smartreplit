@@ -16,24 +16,26 @@ const AISalesForecast: React.FC = () => {
   const { isDark } = useTheme();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
-  const { loading, forecast, getForecast } = useSalesForecast();
+  const { loading, error, forecast, getForecast } = useSalesForecast();
 
   const dealsArray = Object.values(deals);
   const activeDeals = dealsArray.filter(d => !['closed-won', 'closed-lost'].includes(String(d.stage)));
   const totalPipelineValue = activeDeals.reduce((s, d) => s + d.value, 0);
   const weightedForecast = activeDeals.reduce((s, d) => s + d.value * (d.probability / 100), 0);
-  const bestCase = totalPipelineValue * 0.8;
-  const worstCase = totalPipelineValue * 0.3;
 
   useEffect(() => {
     if (activeDeals.length > 0) getForecast(activeDeals, 'quarter');
   }, []);
 
   const forecastData = forecast || {};
-  const aiWeighted = forecastData.weighted_forecast || weightedForecast;
-  const aiBest = forecastData.best_case || bestCase;
-  const aiWorst = forecastData.worst_case || worstCase;
-  const confidence = forecastData.confidence_level || 85;
+  // Only what the AI returned; without it, the weighted pipeline (probability x value) from the deals themselves
+  const aiWeighted = typeof forecastData.weighted_forecast === 'number' ? forecastData.weighted_forecast : weightedForecast;
+  const aiBest: number | null = typeof forecastData.best_case === 'number' ? forecastData.best_case : null;
+  const aiWorst: number | null = typeof forecastData.worst_case === 'number' ? forecastData.worst_case : null;
+  const rawConfidence = typeof forecastData.confidence_level === 'number' ? forecastData.confidence_level : null;
+  // The AI may report 0-1 or 0-100
+  const confidence: number | null =
+    rawConfidence === null ? null : Math.round(rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence);
   const monthlyBreakdown = forecastData.monthly_breakdown || [];
   const keyDrivers = forecastData.key_drivers || [];
   const riskFactors = forecastData.risk_factors || [];
@@ -41,8 +43,10 @@ const AISalesForecast: React.FC = () => {
 
   const topContacts = Object.values(contacts).slice(0, 6);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+  const formatCurrency = (value: number | null) =>
+    value === null
+      ? '--'
+      : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
@@ -55,6 +59,7 @@ const AISalesForecast: React.FC = () => {
   };
 
   const getRiskLevel = (riskFactors: string[]) => {
+    if (!forecast) return '--';
     if (riskFactors.length === 0) return 'Low';
     if (riskFactors.length <= 2) return 'Medium';
     return 'High';
@@ -76,6 +81,13 @@ const AISalesForecast: React.FC = () => {
       actions={forecast && <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700"><Sparkles className="h-3 w-3 mr-1" />AI-Powered</span>}
     >
       <div className="space-y-8">
+        {error && (
+          <div role="alert" className={`p-4 rounded-xl text-sm ${isDark ? 'bg-red-900/20 text-red-300 border border-red-800' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            AI forecast unavailable: {error}
+          </div>
+        )}
+        {loading && <p role="status" className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Generating AI forecast...</p>}
+
         {/* Forecast KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <GlassCard className="p-6">
@@ -85,7 +97,7 @@ const AISalesForecast: React.FC = () => {
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(aiWeighted)}</h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>AI Forecast</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>{forecast ? 'AI Forecast' : 'Weighted Pipeline'}</p>
             </div>
           </GlassCard>
 
@@ -96,7 +108,7 @@ const AISalesForecast: React.FC = () => {
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(aiBest)}</h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Optimistic Scenario</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>{aiBest === null ? 'Needs the AI forecast' : 'Optimistic Scenario'}</p>
             </div>
           </GlassCard>
 
@@ -107,17 +119,17 @@ const AISalesForecast: React.FC = () => {
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(aiWorst)}</h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Worst Case</p>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>{aiWorst === null ? 'Needs the AI forecast' : 'Worst Case'}</p>
             </div>
           </GlassCard>
 
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg"><Zap className="h-6 w-6 text-white" /></div>
-              <div className="flex items-center text-purple-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">{confidence}%</span></div>
+              <div className="flex items-center text-purple-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">{confidence === null ? '--' : `${confidence}%`}</span></div>
             </div>
             <div className="space-y-2">
-              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{getConfidenceGrade(confidence)}</h3>
+              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{confidence === null ? '--' : getConfidenceGrade(confidence)}</h3>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>AI Confidence</p>
             </div>
           </GlassCard>
@@ -135,11 +147,11 @@ const AISalesForecast: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Q1 Forecast</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Active Pipeline</h3>
                 <PieChart className="h-5 w-5 text-blue-500" />
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{formatCurrency(aiWeighted * 0.4)}</p>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>High confidence prediction</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{formatCurrency(totalPipelineValue)}</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{activeDeals.length} active deals</p>
             </div>
 
             <div className={`p-6 rounded-xl ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}>
@@ -148,7 +160,7 @@ const AISalesForecast: React.FC = () => {
                 <TrendingUp className="h-5 w-5 text-green-500" />
               </div>
                <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{computeTrend()}</p>
-               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Vs. last quarter</p>
+               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>First to last forecast month</p>
             </div>
 
               <div className={`p-6 rounded-xl ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
@@ -157,7 +169,7 @@ const AISalesForecast: React.FC = () => {
                   <Target className="h-5 w-5 text-purple-500" />
                 </div>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{getRiskLevel(riskFactors)}</p>
-                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Strong pipeline health</p>
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{forecast ? `${riskFactors.length} risk factor(s) flagged` : 'Needs the AI forecast'}</p>
               </div>
           </div>
         </GlassCard>

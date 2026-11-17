@@ -36,17 +36,30 @@ import {
 } from 'recharts';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '@/hooks/useContactStore';
-import { aiPredictiveAnalytics } from '../../services/ai-predictive-analytics.service';
+import { gpt5Service } from '../../services/gpt5Service';
 
 interface DealIntelligence {
   dealId: string;
   winProbability: number;
-  predictedValue: number;
-  timeToClose: number;
-  riskFactors: string[];
+  riskLevel: string | null;
+  keyFactors: string[];
   recommendations: string[];
-  confidence: number;
+  estimatedCloseDays: number | null;
+  // Reported by the AI as a percentage when it gave a number; null when it gave none
+  confidence: number | null;
 }
+
+const MAX_ANALYZED_DEALS = 5;
+
+// The model may answer on a 0-1 or 0-100 scale
+const toPercent = (value: unknown): number | null => {
+  const n = typeof value === 'string' ? Number(value) : value;
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  return Math.max(0, Math.min(100, n <= 1 ? n * 100 : n));
+};
+
+const toStringList = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))) : [];
 
 interface DealStageMetrics {
   stage: string;
@@ -64,6 +77,7 @@ const DealIntelligenceDashboard: React.FC = () => {
   const [dealIntelligence, setDealIntelligence] = useState<DealIntelligence[]>([]);
   const [stageMetrics, setStageMetrics] = useState<DealStageMetrics[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Calculate deal stage metrics
   useEffect(() => {
@@ -103,33 +117,49 @@ const DealIntelligenceDashboard: React.FC = () => {
     setStageMetrics(metrics);
   }, [deals]);
 
-  // Generate AI-powered deal intelligence
+  // Real deal analysis from POST /api/openai/deal-intelligence, one open deal at a time
   const analyzeDeals = async () => {
     setIsAnalyzing(true);
+    setAnalysisError(null);
+    const intelligence: DealIntelligence[] = [];
     try {
-      const dealsArray = Object.values(deals);
-      const intelligence: DealIntelligence[] = [];
+      const openDeals = Object.values(deals)
+        .filter((deal) => !/^closed/.test(String(deal.stage)))
+        .slice(0, MAX_ANALYZED_DEALS);
+      if (openDeals.length === 0) throw new Error('There are no open deals to analyze.');
 
-      for (const deal of dealsArray.slice(0, 5)) {
-        // Analyze first 5 deals for demo
-        // Use AI predictive analytics to generate insights
-        const prediction = await aiPredictiveAnalytics.predictDealOutcome(deal.id);
-
+      for (const deal of openDeals) {
+        const contact = contacts[deal.contactId];
+        const result = await gpt5Service.analyzeDealIntelligence(
+          {
+            title: deal.title,
+            value: deal.value,
+            stage: deal.stage,
+            probability: deal.probability,
+            daysInStage: deal.daysInStage,
+            priority: deal.priority,
+            expectedCloseDate: deal.expectedCloseDate,
+          },
+          contact ? { name: contact.name, company: contact.company, status: contact.status } : {},
+          {}
+        );
+        const probability = toPercent(result?.probability_score);
+        if (probability === null) throw new Error(`The AI returned no probability for "${deal.title}"`);
+        const closeDays = Number(result?.estimated_close_days);
         intelligence.push({
           dealId: deal.id,
-          winProbability: prediction ? prediction.value : deal.probability ?? 50,
-          predictedValue: prediction?.predictedValue ?? deal.value,
-          timeToClose: prediction?.timeToClose ?? deal.daysInStage ?? 30,
-          riskFactors: prediction?.riskFactors?.length ? prediction.riskFactors : (deal.notes ? ['Review deal notes for context'] : []),
-          recommendations: prediction?.recommendations?.length ? prediction.recommendations : ['Follow up with contact', 'Review proposal'],
-          confidence: prediction ? 0.9 : 0.6,
+          winProbability: probability,
+          riskLevel: typeof result?.risk_level === 'string' ? result.risk_level : null,
+          keyFactors: toStringList(result?.key_factors),
+          recommendations: toStringList(result?.recommendations),
+          estimatedCloseDays: Number.isFinite(closeDays) ? Math.round(closeDays) : null,
+          confidence: toPercent(result?.confidence_level),
         });
       }
-
-      setDealIntelligence(intelligence);
     } catch (error) {
-      console.error('Failed to analyze deals:', error);
+      setAnalysisError(error instanceof Error ? error.message : 'Deal analysis failed');
     } finally {
+      setDealIntelligence(intelligence);
       setIsAnalyzing(false);
     }
   };
@@ -177,7 +207,13 @@ const DealIntelligenceDashboard: React.FC = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      {analysisError && (
+        <div role="alert" className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          {analysisError}
+        </div>
+      )}
+
+      <Tabs value="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Pipeline Overview</TabsTrigger>
           <TabsTrigger value="intelligence">AI Intelligence</TabsTrigger>
@@ -348,31 +384,35 @@ const DealIntelligenceDashboard: React.FC = () => {
                                 : 'destructive'
                           }
                         >
-                          {intelligence.winProbability.toFixed(0)}% win rate
+                          {intelligence.winProbability.toFixed(0)}% win probability
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Predicted Value
-                          </p>
-                          <p className="text-lg font-semibold">
-                            ${intelligence.predictedValue.toLocaleString()}
-                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Deal Value</p>
+                          <p className="text-lg font-semibold">${deal.value.toLocaleString()}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Time to Close</p>
-                          <p className="text-lg font-semibold">{intelligence.timeToClose} days</p>
+                          <p className="text-lg font-semibold">
+                            {intelligence.estimatedCloseDays === null ? '--' : `${intelligence.estimatedCloseDays} days`}
+                          </p>
                         </div>
                       </div>
 
-                      {intelligence.riskFactors.length > 0 && (
+                      {intelligence.riskLevel && (
+                        <p className="text-sm">
+                          <span className="font-medium">Risk level:</span> {intelligence.riskLevel}
+                        </p>
+                      )}
+
+                      {intelligence.keyFactors.length > 0 && (
                         <div>
-                          <p className="text-sm font-medium mb-2">Risk Factors</p>
+                          <p className="text-sm font-medium mb-2">Key Factors</p>
                           <div className="flex flex-wrap gap-2">
-                            {intelligence.riskFactors.map((factor, index) => (
+                            {intelligence.keyFactors.map((factor, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {factor}
                               </Badge>
@@ -403,9 +443,11 @@ const DealIntelligenceDashboard: React.FC = () => {
                           <RiskIcon
                             className={`w-4 h-4 ${getRiskColor(intelligence.winProbability)}`}
                           />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {intelligence.confidence.toFixed(0)}% confidence
-                          </span>
+                          {intelligence.confidence !== null && (
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {intelligence.confidence.toFixed(0)}% confidence
+                            </span>
+                          )}
                         </div>
                         <Button variant="outline" size="sm">
                           View Details

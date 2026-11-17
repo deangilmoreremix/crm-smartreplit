@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import {
   Brain,
@@ -12,7 +12,7 @@ import {
   Users,
   Calendar,
 } from 'lucide-react';
-import { gpt5Service } from '../../services/gpt5Service';
+import { generateAI } from '../../services/aiGenerate';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
 import { useTaskStore } from '../../store/taskStore';
@@ -27,12 +27,35 @@ interface AnalyticsInsight {
 }
 
 interface BusinessIntelligence {
-  marketInsights: string[];
-  competitiveAdvantages: string[];
-  riskFactors: string[];
   growthOpportunities: string[];
   strategicRecommendations: string[];
 }
+
+const ANALYSIS_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['insights', 'growthOpportunities', 'strategicRecommendations'],
+  properties: {
+    insights: {
+      type: 'array',
+      description: 'Up to 4 insights, each grounded in the metrics provided',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['title', 'insight', 'confidence', 'priority', 'recommendations'],
+        properties: {
+          title: { type: 'string' },
+          insight: { type: 'string', description: 'What the numbers show; cite the provided metrics' },
+          confidence: { type: 'number', description: 'Your confidence from 0 to 1 given how much data was provided' },
+          priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+          recommendations: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+    growthOpportunities: { type: 'array', items: { type: 'string' } },
+    strategicRecommendations: { type: 'array', items: { type: 'string' } },
+  },
+} as const;
 
 const GPT5AnalyticsPanel: React.FC = () => {
   const { isDark } = useTheme();
@@ -46,7 +69,7 @@ const GPT5AnalyticsPanel: React.FC = () => {
   const [businessIntelligence, setBusinessIntelligence] = useState<BusinessIntelligence | null>(
     null
   );
-  const [kpiAnalysis, setKpiAnalysis] = useState<any>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [lastAnalysis, setLastAnalysis] = useState<string>('');
 
   // Calculate comprehensive metrics
@@ -121,135 +144,50 @@ const GPT5AnalyticsPanel: React.FC = () => {
     };
   };
 
-  // GPT-5 Advanced Analytics
+  // AI analysis of the real CRM metrics (POST /api/ai/generate with the user's own key)
   const runGPT5Analysis = async () => {
     if (Object.keys(deals).length === 0) return;
 
     setIsAnalyzing(true);
+    setAnalysisError(null);
     try {
-      const metrics = calculateAdvancedMetrics();
+      const { recentDeals, topIndustries, ...rest } = calculateAdvancedMetrics();
+      const result = await generateAI({
+        system:
+          'You are a sales analyst. Use only the CRM metrics provided. Do not invent numbers, benchmarks or trends that are not in the data; if the data is too thin for an insight, say so.',
+        prompt: `CRM metrics: ${JSON.stringify({ ...rest, dealsCreatedLast30Days: recentDeals.length, contactsByIndustry: topIndustries })}`,
+        schema: ANALYSIS_SCHEMA as unknown as Record<string, unknown>,
+        schemaName: 'crm_analytics',
+        tier: 'advanced',
+      });
+      const data = result.data;
+      if (!data || !Array.isArray(data.insights)) throw new Error('The AI response had no insights');
 
-      // GPT-5 KPI Analysis with multimodal capabilities
-      const kpiResult = await gpt5Service.analyzeKPITrends(
-        {
-          historical: metrics,
-          timeframe: '30days',
-          industry: 'sales_enablement',
-        },
-        {
-          current: metrics,
-          benchmarks: {
-            winRate: 25, // Industry average
-            avgDealSize: 50000,
-            salesVelocity: 10,
-          },
-        },
-        [], // No chart images for now
-        [] // No video data
+      setAnalyticsInsights(
+        data.insights.map((i: any) => ({
+          title: String(i.title || ''),
+          insight: String(i.insight || ''),
+          confidence: Math.max(0, Math.min(1, Number(i.confidence) || 0)),
+          priority: ['high', 'medium', 'low'].includes(i.priority) ? i.priority : 'medium',
+          actionable: true,
+          recommendations: Array.isArray(i.recommendations) ? i.recommendations.map(String) : [],
+        }))
       );
-
-      if (kpiResult) {
-        setKpiAnalysis(kpiResult);
-      }
-
-      // GPT-5 Business Intelligence Analysis
-      const businessResult = await gpt5Service.generateBusinessIntelligence(
-        {
-          salesData: metrics,
-          marketPosition: 'growing',
-          customerSegments: Object.keys(metrics.topIndustries),
-        },
-        {
-          industry: 'CRM_SaaS',
-          competition: 'high',
-          marketTrends: ['AI_integration', 'automation', 'mobile_first'],
-        },
-        ['revenue_growth', 'market_expansion', 'customer_retention']
-      );
-
-      if (businessResult && typeof businessResult === 'object') {
-        setBusinessIntelligence({
-          marketInsights: Array.isArray(businessResult.market_insights)
-            ? businessResult.market_insights
-            : [],
-          competitiveAdvantages: Array.isArray(businessResult.competitive_advantages)
-            ? businessResult.competitive_advantages
-            : [],
-          riskFactors: Array.isArray(businessResult.risk_factors)
-            ? businessResult.risk_factors
-            : [],
-          growthOpportunities: Array.isArray(businessResult.growth_opportunities)
-            ? businessResult.growth_opportunities
-            : [],
-          strategicRecommendations: Array.isArray(businessResult.strategic_recommendations)
-            ? businessResult.strategic_recommendations
-            : [],
-        });
-      }
-
-      // Generate actionable insights
-      const insights: AnalyticsInsight[] = [
-        {
-          title: 'Pipeline Health Analysis',
-          insight:
-            typeof kpiResult?.summary === 'string'
-              ? kpiResult.summary
-              : 'Your pipeline shows strong momentum with balanced deal stages.',
-          confidence: 0.92,
-          priority: 'high',
-          actionable: true,
-          recommendations: kpiResult?.recommendations || [
-            'Focus on deal acceleration',
-            'Improve qualification process',
-          ],
-        },
-        {
-          title: 'Revenue Forecasting',
-          insight: `Based on GPT-5 analysis, projected monthly revenue: $${(metrics.totalValue * 0.3).toLocaleString()}`,
-          confidence: 0.88,
-          priority: 'high',
-          actionable: true,
-          recommendations: ['Review high-value opportunities', 'Accelerate closing timeline'],
-        },
-        {
-          title: 'Customer Segmentation Insights',
-          insight: `Top performing industry: ${Object.keys(metrics.topIndustries)[0] || 'Technology'} with highest conversion rates`,
-          confidence: 0.85,
-          priority: 'medium',
-          actionable: true,
-          recommendations: ['Double down on top industry', 'Create targeted campaigns'],
-        },
-      ];
-
-      setAnalyticsInsights(insights);
+      setBusinessIntelligence({
+        growthOpportunities: Array.isArray(data.growthOpportunities) ? data.growthOpportunities.map(String) : [],
+        strategicRecommendations: Array.isArray(data.strategicRecommendations)
+          ? data.strategicRecommendations.map(String)
+          : [],
+      });
       setLastAnalysis(new Date().toLocaleTimeString());
     } catch (error) {
-      console.error('GPT-5 Analytics Error:', error);
-      // Fallback analytics
-      const metrics = calculateAdvancedMetrics();
-      setAnalyticsInsights([
-        {
-          title: 'Basic Pipeline Analysis',
-          insight: `You have ${metrics.activeDeals} active deals worth $${metrics.totalValue.toLocaleString()}`,
-          confidence: 0.75,
-          priority: 'medium',
-          actionable: true,
-          recommendations: ['Review deal progression', 'Update deal stages'],
-        },
-      ]);
+      setAnalyticsInsights([]);
+      setBusinessIntelligence(null);
+      setAnalysisError(error instanceof Error ? error.message : 'Analysis failed');
     } finally {
       setIsAnalyzing(false);
     }
   };
-
-  // Auto-refresh analytics
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      runGPT5Analysis();
-    }, 2000); // Delay to allow data loading
-
-    return () => clearTimeout(timer);
-  }, [deals, contacts, tasks]);
 
   const metrics = calculateAdvancedMetrics();
 
@@ -284,6 +222,15 @@ const GPT5AnalyticsPanel: React.FC = () => {
                 Last updated: {lastAnalysis}
               </span>
             )}
+
+            <button
+              type="button"
+              onClick={runGPT5Analysis}
+              disabled={isAnalyzing || Object.keys(deals).length === 0}
+              className={`px-3 py-1 rounded-md text-sm ${isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-600 text-white'} disabled:opacity-50`}
+            >
+              Run analysis
+            </button>
 
             {isAnalyzing && (
               <div className="flex items-center gap-2">
@@ -363,6 +310,15 @@ const GPT5AnalyticsPanel: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {analysisError && (
+        <div
+          role="alert"
+          className={`p-3 rounded-lg text-sm ${isDark ? 'bg-red-500/10 text-red-300' : 'bg-red-50 text-red-700'}`}
+        >
+          {analysisError}
+        </div>
+      )}
 
       {/* GPT-5 Insights */}
       {analyticsInsights.length > 0 && (
@@ -475,13 +431,7 @@ const GPT5AnalyticsPanel: React.FC = () => {
                       <div
                         className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-purple-300' : 'bg-purple-500'}`}
                       />
-                      {typeof opp === 'string'
-                        ? opp
-                        : typeof opp === 'object' && opp.description
-                          ? opp.description
-                          : typeof opp === 'object' && opp.action
-                            ? opp.action
-                            : 'Growth opportunity identified'}
+                      {opp}
                     </li>
                   ))}
               </ul>
@@ -501,13 +451,7 @@ const GPT5AnalyticsPanel: React.FC = () => {
                       <div
                         className={`w-1.5 h-1.5 rounded-full ${isDark ? 'bg-purple-300' : 'bg-purple-500'}`}
                       />
-                      {typeof rec === 'string'
-                        ? rec
-                        : typeof rec === 'object' && rec.description
-                          ? rec.description
-                          : typeof rec === 'object' && rec.action
-                            ? rec.action
-                            : 'Strategic recommendation available'}
+                      {rec}
                     </li>
                   ))}
               </ul>
