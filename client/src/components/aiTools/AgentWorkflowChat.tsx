@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createConversation, sendConversationMessage } from '../../services/aiGenerate';
+import { createConversation, generateAI, sendConversationMessage } from '../../services/aiGenerate';
 import {
   Bot,
   Send,
@@ -66,6 +66,28 @@ You can help with:
 
 When users request workflows, provide detailed step-by-step plans and ask clarifying questions to ensure the workflow meets their specific needs.`;
 
+const WORKFLOW_PLAN_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['name', 'steps'],
+  properties: {
+    name: { type: 'string', description: 'Short workflow name' },
+    steps: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'action', 'description'],
+        properties: {
+          name: { type: 'string' },
+          action: { type: 'string', description: 'Short snake_case action, e.g. query_crm, send_email, create_task' },
+          description: { type: 'string' },
+        },
+      },
+    },
+  },
+} as const;
+
 const AgentWorkflowChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -131,10 +153,21 @@ const AgentWorkflowChat: React.FC = () => {
         input.toLowerCase().includes('create workflow') ||
         input.toLowerCase().includes('build workflow')
       ) {
-        const workflow = await generateWorkflowFromPrompt(input);
-        if (workflow) {
+        try {
+          const workflow = await generateWorkflowFromPrompt(input);
           setWorkflows((prev) => [...prev, workflow]);
           setActiveWorkflow(workflow);
+        } catch (planError) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `${Date.now()}-plan-error`,
+              role: 'assistant',
+              content: `I couldn't generate the workflow plan: ${planError instanceof Error ? planError.message : 'unknown error'}`,
+              createdAt: new Date(),
+            },
+          ]);
+          return;
         }
       }
 
@@ -153,89 +186,46 @@ const AgentWorkflowChat: React.FC = () => {
       ]);
     } catch (error) {
       console.error('Error processing message:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-error`,
+          role: 'assistant',
+          content: error instanceof Error ? error.message : 'The AI request failed',
+          createdAt: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow | null> => {
-    try {
-      // Simple workflow generation based on prompt keywords
-      const workflowId = `workflow_${Date.now()}`;
-      const workflow: AgentWorkflow = {
-        id: workflowId,
-        name: extractWorkflowName(prompt),
-        description: prompt,
-        steps: generateStepsFromPrompt(prompt),
-        status: 'draft',
-        trigger: 'manual',
-        createdAt: new Date(),
-        runCount: 0,
-      };
+  // The plan is written by the AI from the user's request (no canned templates)
+  const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow> => {
+    const { data } = await generateAI({
+      system: WORKFLOW_AGENT_INSTRUCTIONS,
+      prompt: `Design a workflow plan of 3 to 7 steps for this request:\n${prompt}`,
+      schema: WORKFLOW_PLAN_SCHEMA as unknown as Record<string, unknown>,
+      schemaName: 'workflow_plan',
+    });
+    if (!data?.steps?.length) throw new Error('The AI returned no workflow steps');
 
-      return workflow;
-    } catch (error) {
-      console.error('Error generating workflow:', error);
-      return null;
-    }
-  };
-
-  const extractWorkflowName = (prompt: string): string => {
-    if (prompt.toLowerCase().includes('lead')) return 'Lead Nurturing Workflow';
-    if (prompt.toLowerCase().includes('follow')) return 'Follow-up Automation';
-    if (prompt.toLowerCase().includes('email')) return 'Email Campaign Workflow';
-    if (prompt.toLowerCase().includes('onboard')) return 'Customer Onboarding';
-    if (prompt.toLowerCase().includes('sales')) return 'Sales Pipeline Automation';
-    return 'Custom Workflow';
-  };
-
-  const generateStepsFromPrompt = (prompt: string): WorkflowStep[] => {
-    const steps: WorkflowStep[] = [];
-
-    if (prompt.toLowerCase().includes('lead')) {
-      steps.push(
-        {
-          id: 'step_1',
-          name: 'Identify New Leads',
-          action: 'query_crm',
-          parameters: { filter: 'new_leads', timeframe: '24h' },
-          status: 'pending',
-        },
-        {
-          id: 'step_2',
-          name: 'Send Welcome Email',
-          action: 'send_email',
-          parameters: { template: 'welcome', personalized: true },
-          status: 'pending',
-        },
-        {
-          id: 'step_3',
-          name: 'Schedule Follow-up',
-          action: 'create_task',
-          parameters: { type: 'follow_up', delay: '3_days' },
-          status: 'pending',
-        }
-      );
-    } else if (prompt.toLowerCase().includes('follow')) {
-      steps.push(
-        {
-          id: 'step_1',
-          name: 'Check Deal Status',
-          action: 'query_deals',
-          parameters: { status: 'proposal_sent' },
-          status: 'pending',
-        },
-        {
-          id: 'step_2',
-          name: 'Send Follow-up',
-          action: 'send_email',
-          parameters: { template: 'follow_up', timing: 'after_3_days' },
-          status: 'pending',
-        }
-      );
-    }
-
-    return steps;
+    return {
+      id: `workflow_${Date.now()}`,
+      name: String(data.name || 'Workflow'),
+      description: prompt,
+      steps: data.steps.map((step: any, index: number) => ({
+        id: `step_${index + 1}`,
+        name: String(step.name),
+        action: String(step.action),
+        parameters: { description: String(step.description || '') },
+        status: 'pending' as const,
+      })),
+      status: 'draft',
+      trigger: 'manual',
+      createdAt: new Date(),
+      runCount: 0,
+    };
   };
 
   const getStatusIcon = (status: string) => {
