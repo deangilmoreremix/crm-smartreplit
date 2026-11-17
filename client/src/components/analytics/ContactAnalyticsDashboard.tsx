@@ -119,13 +119,17 @@ const ContactAnalyticsDashboard: React.FC = () => {
       .map(([name, count]) => ({ name, count }));
 
     // Calculate lead score distribution from actual contact scores
-    const scoredContacts = contactsArray.filter((c) => typeof c.score === 'number');
+    // Scores are 0-100 (the store maps the saved 0-1 score to aiScore; older records may only have score)
+    const scores = contactsArray
+      .map((c: any) => (typeof c.aiScore === 'number' ? c.aiScore : typeof c.score === 'number' ? c.score : null))
+      .filter((n): n is number => n !== null);
+    const between = (lo: number, hi: number) => scores.filter((n) => n > lo && n <= hi).length;
     const leadScoreDistribution = [
-      { range: '0-20', count: scoredContacts.filter((c) => (c.score || 0) <= 0.2).length },
-      { range: '21-40', count: scoredContacts.filter((c) => (c.score || 0) > 0.2 && (c.score || 0) <= 0.4).length },
-      { range: '41-60', count: scoredContacts.filter((c) => (c.score || 0) > 0.4 && (c.score || 0) <= 0.6).length },
-      { range: '61-80', count: scoredContacts.filter((c) => (c.score || 0) > 0.6 && (c.score || 0) <= 0.8).length },
-      { range: '81-100', count: scoredContacts.filter((c) => (c.score || 0) > 0.8).length },
+      { range: '0-20', count: scores.filter((n) => n <= 20).length },
+      { range: '21-40', count: between(20, 40) },
+      { range: '41-60', count: between(40, 60) },
+      { range: '61-80', count: between(60, 80) },
+      { range: '81-100', count: scores.filter((n) => n > 80).length },
     ];
 
     // Calculate conversion rates from deals data
