@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 interface ApiStore {
   apiKeys: {
@@ -9,23 +8,24 @@ interface ApiStore {
   setApiKey: (service: 'openai' | 'google', key: string) => void;
 }
 
-export const useApiStore = create<ApiStore>()(
-  persist(
-    (set) => ({
+// API keys live on the server (user_api_keys). This store is in-memory only: never persist keys
+// to browser storage.
+try {
+  localStorage.removeItem('ai-tools-api-keys');
+} catch {
+  // storage unavailable
+}
+
+export const useApiStore = create<ApiStore>()((set) => ({
+  apiKeys: {
+    openai: '',
+    google: '',
+  },
+  setApiKey: (service, key) =>
+    set((state) => ({
       apiKeys: {
-        openai: '',
-        google: '',
+        ...state.apiKeys,
+        [service]: key,
       },
-      setApiKey: (service, key) =>
-        set((state) => ({
-          apiKeys: {
-            ...state.apiKeys,
-            [service]: key,
-          },
-        })),
-    }),
-    {
-      name: 'ai-tools-api-keys',
-    }
-  )
-);
+    })),
+}));

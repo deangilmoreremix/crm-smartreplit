@@ -217,7 +217,7 @@ const GPT5FeatureStatus: React.FC = () => {
         >
           {apiKeyStatus === 'configured'
             ? 'All GPT-5 features are operational with expert-level capabilities'
-            : 'Configure VITE_OPENAI_API_KEY to enable GPT-5 enhanced features'}
+            : 'Add your OpenAI API key in Settings → API Keys'}
         </p>
       </div>
 

@@ -5,37 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useContactStore } from '../../hooks/useContactStore';
 import { useDealStore } from '../../store/dealStore';
-
-// Simple OpenClaw service implementation
-class OpenClawService {
-  private baseUrl: string;
-  private apiKey: string;
-
-  constructor(config: { baseUrl: string; apiKey: string }) {
-    this.baseUrl = config.baseUrl;
-    this.apiKey = config.apiKey;
-  }
-
-  async chat({ message, context }: { message: string; context: any }) {
-    const response = await fetch(`${this.baseUrl}/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify({
-        message,
-        context,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenClaw API error: ${response.status}`);
-    }
-
-    return await response.json();
-  }
-}
+import { api } from '../../services/unifiedApiClient';
 
 interface OpenClawChatWidgetProps {
   className?: string;
@@ -64,14 +34,6 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Initialize OpenClaw service
-  const openClawService = React.useMemo(() => {
-    return new OpenClawService({
-      baseUrl: process.env.REACT_APP_OPENCLAW_API_URL || 'https://api.openclaw.com',
-      apiKey: process.env.REACT_APP_OPENCLAW_API_KEY || '',
-    });
-  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,15 +81,29 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
         currentView: 'dashboard',
       };
 
-      const response = await openClawService.chat({
-        message: userMessage.content,
-        context,
-      });
+      // Server-side proxy (/api/openclaw/chat) authenticates the user and holds their OpenClaw key
+      const history = messages
+        .filter((m) => m.id !== 'welcome')
+        .map((m) => ({ role: m.role, content: m.content }));
+      const response = await api.post<any>(
+        '/api/openclaw/chat',
+        { message: userMessage.content, history, context },
+        { timeout: 60000 }
+      );
+      if (!response.success) {
+        throw new Error(response.error || 'OpenClaw request failed');
+      }
+      const data = response.data;
+      const reply: string | undefined =
+        data?.response ?? data?.message ?? data?.choices?.[0]?.message?.content;
+      if (typeof reply !== 'string' || !reply) {
+        throw new Error('OpenClaw returned no reply');
+      }
 
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.response,
+        content: reply,
         timestamp: new Date(),
       };
 
@@ -137,7 +113,7 @@ export const OpenClawChatWidget: React.FC<OpenClawChatWidgetProps> = ({ classNam
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        content: `OpenClaw request failed: ${error instanceof Error ? error.message : String(error)}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
