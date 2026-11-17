@@ -307,6 +307,22 @@ Shared UI bugs found and fixed while testing the page in a browser:
 
 Not fixed (reported): the Twenty workflow stack cannot back this. `packages/workflows` action executors only log and return success, and `/api/workflows` writes columns that `smartcrm_workflows` does not have. `client/src/pages/LeadAutomation.tsx` (unrouted) still uses hardcoded sample data.
 
+## Update — Phase 3: remaining fake AI and fake metrics removed
+
+A survey of everything reachable from `client/src/App.tsx` found fake AI output and fake numbers still being shown. Each item below now uses real data or a real call, shows the real error message, or was removed:
+
+* **Server:** `/api/openai/{smart-greeting,kpi-analysis,deal-intelligence,business-intelligence}` returned invented greetings, a 65% win probability and generic advice when the user had no key or the call failed. They now return 400 `needsApiKey` or 500 with the real error.
+* **Keys out of the browser:** `AIProviderSettingsModal`, `AIProviderSettings`, `AIConfigurationStatusWidget` and `apiStore` kept API keys in localStorage (XOR "encryption"); the OpenClaw chat widget sent a browser-held key. Status now comes from the server-backed `useAIApiKeys`; nothing reads or writes `smartcrm_api_keys`; the dead browser-key `openAIResponsesService` was deleted.
+* **Bulk analysis:** "Immediate/Overnight Bulk Analysis" faked completion with timers and called OpenAI from the browser with an empty key. It is now a real job runner (`scoreContact` per contact, 3 at a time, real progress, per-contact errors, cancel). The overnight option was removed.
+* **Fake AI output:** GTM recommendations (fixed confidences), subject lines (invented open rates), sales insights/forecast tools (fed hardcoded sample contacts), smart-search "AI suggestions", contact analytics ("Analyze (AI)" ran heuristics with invented scores/predicted value), GPT-5 analytics panel (fixed confidences, canned fallbacks), AI sales forecast (0.8/0.3 × pipeline, default confidence 85), AI insights panel (static "+23%" copy), deal intelligence dashboard (called a method that did not exist), workflow agent chat (fake "run" and keyword-template plans; plans are now AI-written), live deal analysis (cosmetic progress bar).
+* **Fake metrics:** KPI/deal-analytics trend badges (literal +12%/+8%/...), `MetricsCards` (entirely hardcoded), recent activity and interaction history (invented deals), admin analytics (247 users, 15,234 API calls...), system overview stats, fake calendars, fake form-submit success, a 2-second fake "delivered" status in Communication Hub. Trends are now computed from real timestamps (30 days vs the 30 before) and hidden when there is no prior data.
+
+Not changed (reported):
+* Pages whose backends do not exist and show empty states: Billing/credits, Forms, Invoicing, Circle Prospecting, Voice Profiles, admin Feature Management (separate feature builds).
+* Workflow engine actions (`packages/workflows/src/actions`) only log and report success; no screen can run them.
+* Unreachable files that still contain fake data: `RemoteDealsWithAssistant`, `LiveGoalExecution`, `TaskIntelligenceDashboard`, `useEmailAI`, `ai-integration.service`, `ai-task-queue.service`, `analyticsStore`, `EnhancedContacts` (random "AI scoring"), `ResponseIntelligence`, `SentimentMonitor`, `SmartEmailOptimizer`, and others (about 35 files).
+* The Contact analytics "Lead Scoring"/"Insights" tabs and the Deal analytics tabs still show static "Coming Soon / In Development" placeholders.
+
 ## Remaining work (proposed phases)
 
 * **Phase 2 — config & deployed functions:** done in this branch except: remove duplicate function entries
