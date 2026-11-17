@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { generateAI } from '../../services/aiGenerate';
 import { useDealStore } from '../../store/dealStore';
 import { Deal } from '../../types';
@@ -53,8 +53,6 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({ deal: dealProp, onA
   const [error, setError] = useState<string | null>(null);
   // Using server-side OpenAI service for production-ready AI analysis
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [progressText, setProgressText] = useState('');
-  const [progress, setProgress] = useState(0);
   const [analysisResults, setAnalysisResults] = useState<{
     winProbability: number;
     riskLevel: 'low' | 'medium' | 'high';
@@ -65,43 +63,11 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({ deal: dealProp, onA
     competitivePosition: string;
   } | null>(null);
 
-  const progressSteps = [
-    'Analyzing deal attributes...',
-    'Assessing win probability...',
-    'Identifying risk factors...',
-    'Evaluating competitive position...',
-    'Generating timeline estimates...',
-    'Determining next steps...',
-    'Finalizing analysis...',
-  ];
-
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const runProgressSimulation = () => {
-    let step = 0;
-    setProgressText(progressSteps[0]);
-    setProgress(0);
-
-    progressIntervalRef.current = setInterval(() => {
-      if (step < progressSteps.length - 1) {
-        step++;
-        setProgressText(progressSteps[step]);
-        setProgress(Math.min((step / (progressSteps.length - 1)) * 100, 100));
-      } else {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
-        setProgress(100);
-      }
-    }, 1000);
-  };
-
   const runAnalysis = async () => {
     if (!deal) return;
     setIsAnalyzing(true);
     setAnalysisResults(null);
     setError(null);
-    runProgressSimulation();
 
     try {
       // Use real AI analysis for production
@@ -140,23 +106,9 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({ deal: dealProp, onA
       // No made-up analysis: show the real error
       setError(err instanceof Error ? err.message : 'AI analysis failed');
     } finally {
-      // Clear the interval if it's still running
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
       setIsAnalyzing(false);
-      setProgress(100);
     }
   };
-
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, []);
 
   if (!deal) {
     return (
@@ -279,21 +231,9 @@ const LiveDealAnalysis: React.FC<LiveDealAnalysisProps> = ({ deal: dealProp, onA
           <div className="space-y-4">
             <div className="text-center">
               <RefreshCw size={24} className="mx-auto text-indigo-600 mb-2 animate-spin" />
-              <p className="text-sm font-medium text-gray-700">{progressText}</p>
+              <p className="text-sm font-medium text-gray-700">Analyzing deal...</p>
             </div>
 
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <motion.div
-                className="bg-indigo-600 h-2.5 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5 }}
-              ></motion.div>
-            </div>
-
-            <div className="text-center text-xs text-gray-500">
-              Using Gemini 2.5 Pro for in-depth analysis
-            </div>
           </div>
         )}
 

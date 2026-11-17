@@ -11,44 +11,61 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 import { useNavigation } from '../../contexts/NavigationContext';
+import { useDealStore } from '../../store/dealStore';
+import { dealPeriodChanges, formatChange } from '../../utils/periodTrend';
 
 const MetricsCards: React.FC = () => {
   const { isDark } = useTheme();
   const { navigateToFeature } = useNavigation();
+  const { deals } = useDealStore();
+
+  const dealsArray = Object.values(deals);
+  const openDeals = dealsArray.filter(
+    (d) => String(d.stage) !== 'closed-won' && String(d.stage) !== 'closed-lost'
+  );
+  const wonCount = dealsArray.filter((d) => String(d.stage) === 'closed-won').length;
+  const pipelineValue = openDeals.reduce((sum, d) => sum + d.value, 0);
+  const avgDealSize = openDeals.length > 0 ? pipelineValue / openDeals.length : 0;
+  // Last 30 days vs the previous 30, from real timestamps; null hides the badge
+  const changes = dealPeriodChanges(dealsArray);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
 
   const kpis = [
     {
       title: 'Active Deals',
-      value: '34',
-      change: '+12%',
-      trend: 'up',
+      value: openDeals.length.toString(),
+      change: formatChange(changes.newDeals),
       icon: Target,
       color: 'from-blue-500 to-cyan-500',
       feature: 'pipeline-section',
     },
     {
       title: 'Pipeline Value',
-      value: '$247K',
-      change: '+8%',
-      trend: 'up',
+      value: formatCurrency(pipelineValue),
+      change: formatChange(changes.newPipelineValue),
       icon: DollarSign,
       color: 'from-green-500 to-emerald-500',
       feature: 'pipeline-section',
     },
     {
       title: 'Won Deals',
-      value: '20',
-      change: '+15%',
-      trend: 'up',
+      value: wonCount.toString(),
+      change: formatChange(changes.wonDeals),
       icon: Award,
       color: 'from-purple-500 to-pink-500',
       feature: 'analytics-section',
     },
     {
       title: 'Avg Deal Size',
-      value: '$12.3K',
-      change: '-3%',
-      trend: 'down',
+      value: formatCurrency(avgDealSize),
+      change: formatChange(changes.avgNewDealSize),
       icon: BarChart3,
       color: 'from-orange-500 to-red-500',
       feature: 'analytics-section',
@@ -67,16 +84,19 @@ const MetricsCards: React.FC = () => {
             <div className={`p-3 rounded-xl bg-gradient-to-r ${kpi.color} shadow-lg`}>
               <kpi.icon className="h-6 w-6 text-white" />
             </div>
-            <div
-              className={`flex items-center ${kpi.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
-            >
-              {kpi.trend === 'up' ? (
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 mr-1" />
-              )}
-              <span className="text-sm font-medium">{kpi.change}</span>
-            </div>
+            {kpi.change && (
+              <div
+                title="Last 30 days vs the previous 30 days, by deal created / closed date"
+                className={`flex items-center ${kpi.change.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
+              >
+                {kpi.change.trend === 'up' ? (
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                ) : (
+                  <ArrowDownRight className="h-4 w-4 mr-1" />
+                )}
+                <span className="text-sm font-medium">{kpi.change.text}</span>
+              </div>
+            )}
           </div>
           <div className="space-y-1">
             <h3

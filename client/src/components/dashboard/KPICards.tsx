@@ -15,6 +15,7 @@ import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
+import { dealPeriodChanges, formatChange } from '../../utils/periodTrend';
 
 interface KPIMetric {
   title: string;
@@ -88,6 +89,8 @@ const KPICards: React.FC = () => {
   };
 
   const metrics = calculateMetrics();
+  // Last 30 days vs the previous 30, from real timestamps; null hides the badge
+  const changes = dealPeriodChanges(Object.values(deals));
 
   // Format currency values
   const formatCurrency = (value: number) => {
@@ -139,8 +142,7 @@ const KPICards: React.FC = () => {
     {
       title: 'Active Deals',
       value: metrics.totalActiveDeals.toString(),
-      change: '+12%',
-      trend: 'up',
+      change: formatChange(changes.newDeals),
       icon: Target,
       color: 'from-blue-500 to-cyan-500',
       feature: 'pipeline-section',
@@ -158,8 +160,7 @@ const KPICards: React.FC = () => {
     {
       title: 'Pipeline Value',
       value: formatCurrency(metrics.totalValue),
-      change: '+8%',
-      trend: 'up',
+      change: formatChange(changes.newPipelineValue),
       icon: DollarSign,
       color: 'from-green-500 to-emerald-500',
       feature: 'pipeline-section',
@@ -174,8 +175,7 @@ const KPICards: React.FC = () => {
     {
       title: 'Won Deals',
       value: metrics.wonDeals.toString(),
-      change: '+15%',
-      trend: 'up',
+      change: formatChange(changes.wonDeals),
       icon: Award,
       color: 'from-purple-500 to-pink-500',
       feature: 'pipeline-section',
@@ -193,8 +193,7 @@ const KPICards: React.FC = () => {
     {
       title: 'Avg Deal Size',
       value: formatCurrency(metrics.avgDealSize),
-      change: '-3%',
-      trend: 'down',
+      change: formatChange(changes.avgNewDealSize),
       icon: BarChart3,
       color: 'from-orange-500 to-red-500',
       feature: 'analytics-section',
@@ -220,16 +219,19 @@ const KPICards: React.FC = () => {
             <div className={`p-3 rounded-xl bg-gradient-to-r ${kpi.color} shadow-lg`}>
               <kpi.icon className="h-6 w-6 text-white" />
             </div>
-            <div
-              className={`flex items-center ${kpi.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
-            >
-              {kpi.trend === 'up' ? (
-                <ArrowUpRight className="h-4 w-4 mr-1" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 mr-1" />
-              )}
-              <span className="text-sm font-medium">{kpi.change}</span>
-            </div>
+            {kpi.change && (
+              <div
+                title="Last 30 days vs the previous 30 days, by deal created / closed date"
+                className={`flex items-center ${kpi.change.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}
+              >
+                {kpi.change.trend === 'up' ? (
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                ) : (
+                  <ArrowDownRight className="h-4 w-4 mr-1" />
+                )}
+                <span className="text-sm font-medium">{kpi.change.text}</span>
+              </div>
+            )}
           </div>
           <div className="space-y-3">
             {kpi.renderContent && <div>{kpi.renderContent()}</div>}

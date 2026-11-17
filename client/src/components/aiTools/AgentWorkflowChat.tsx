@@ -9,7 +9,6 @@ import {
   X,
   Save,
   Zap,
-  PlayCircle,
   PauseCircle,
   StopCircle,
   CheckCircle,
@@ -239,63 +238,6 @@ const AgentWorkflowChat: React.FC = () => {
     return steps;
   };
 
-  const executeWorkflow = async (workflow: AgentWorkflow) => {
-    setWorkflows((prev) =>
-      prev.map((w) => (w.id === workflow.id ? { ...w, status: 'active', lastRun: new Date() } : w))
-    );
-
-    // Simulate workflow execution
-    for (const step of workflow.steps) {
-      setWorkflows((prev) =>
-        prev.map((w) =>
-          w.id === workflow.id
-            ? {
-                ...w,
-                steps: w.steps.map((s) => (s.id === step.id ? { ...s, status: 'running' } : s)),
-              }
-            : w
-        )
-      );
-
-      // Execute step with processing delay
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(undefined), 1500);
-      });
-
-      setWorkflows((prev) =>
-        prev.map((w) =>
-          w.id === workflow.id
-            ? {
-                ...w,
-                steps: w.steps.map((s) =>
-                  s.id === step.id
-                    ? { ...s, status: 'completed', result: `${step.name} completed successfully` }
-                    : s
-                ),
-              }
-            : w
-        )
-      );
-    }
-
-    setWorkflows((prev) =>
-      prev.map((w) =>
-        w.id === workflow.id ? { ...w, status: 'completed', runCount: w.runCount + 1 } : w
-      )
-    );
-
-    // Add completion message
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `completion_${Date.now()}`,
-        role: 'system',
-        content: `✅ Workflow "${workflow.name}" completed successfully! All ${workflow.steps.length} steps executed.`,
-        createdAt: new Date(),
-      },
-    ]);
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -479,26 +421,8 @@ const AgentWorkflowChat: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="flex space-x-2">
-                    {workflow.status === 'draft' && (
-                      <button
-                        onClick={() => executeWorkflow(workflow)}
-                        className="flex-1 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        <PlayCircle className="h-3 w-3 inline mr-1" />
-                        Run
-                      </button>
-                    )}
-                    {workflow.status === 'active' && (
-                      <button className="flex-1 px-2 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700">
-                        <PauseCircle className="h-3 w-3 inline mr-1" />
-                        Pause
-                      </button>
-                    )}
-                  </div>
-
                   <div className="mt-2 text-xs text-gray-500">
-                    Runs: {workflow.runCount} | Created: {workflow.createdAt.toLocaleDateString()}
+                    Created: {workflow.createdAt.toLocaleDateString()}
                   </div>
                 </div>
               ))}

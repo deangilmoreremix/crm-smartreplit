@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useContactStore } from '../../store/contactStore';
+import { useDealStore } from '../../store/dealStore';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, ArrowRight } from 'lucide-react';
 import Avatar from '../ui/Avatar';
@@ -9,75 +10,45 @@ import { getInitials } from '../../utils/avatars';
 const InteractionHistory: React.FC = () => {
   const { isDark } = useTheme();
   const { contacts } = useContactStore();
+  const { deals } = useDealStore();
   const navigate = useNavigate();
 
-  // Updated interactions with contactIds instead of direct participant arrays
-  const interactions = [
-    {
-      id: 1,
-      type: 'Royal Package Opportunity',
-      value: '11,250$',
-      date: 'Oct 12',
-      status: 'active',
-      bgColor: 'bg-blue-500',
-      textColor: 'text-white',
-      participantIds: ['1', '2', '3'], // Contact IDs from the contact store
-    },
-    {
-      id: 2,
-      type: 'Third Deal Most Useful',
-      value: '21,300$',
-      date: 'Oct 9',
-      status: 'success',
-      bgColor: 'bg-teal-500',
-      textColor: 'text-white',
-      participantIds: ['2', '3', '1', '4'],
-    },
-    {
-      id: 3,
-      type: 'Absolute Success Deal',
-      value: '2,100$',
-      date: 'Oct 12',
-      status: 'pending',
-      bgColor: 'bg-black',
-      textColor: 'text-white',
-      participantIds: ['5', '2', '3'],
-    },
-    {
-      id: 4,
-      type: 'Royal Package Opportunity',
-      value: '4,160$',
-      date: 'Oct 11',
-      status: 'warning',
-      bgColor: 'bg-yellow-400',
-      textColor: 'text-black',
-      participantIds: ['1', '2'],
-    },
-    {
-      id: 5,
-      type: 'Adaptive Business Services',
-      value: '3,140$',
-      date: 'Oct 7',
-      status: 'success',
-      bgColor: 'bg-gray-300',
-      textColor: 'text-black',
-      participantIds: ['3', '5'],
-    },
-    {
-      id: 6,
-      type: 'Second deal Common Service',
-      value: '12,350$',
-      date: 'Oct 5',
-      status: 'active',
-      bgColor: 'bg-gray-300',
-      textColor: 'text-black',
-      participantIds: ['1', '2', '3'],
-    },
-  ];
+  // Real deals, most recently updated first
+  const stageStyle = (stage: string) => {
+    switch (stage) {
+      case 'closed-won':
+        return { bgColor: 'bg-teal-500', textColor: 'text-white' };
+      case 'negotiation':
+        return { bgColor: 'bg-blue-500', textColor: 'text-white' };
+      case 'proposal':
+        return { bgColor: 'bg-yellow-400', textColor: 'text-black' };
+      default:
+        return { bgColor: 'bg-gray-300', textColor: 'text-black' };
+    }
+  };
 
-  const handleInteractionClick = (interactionId: number) => {
-    // Navigate to the detailed view of the interaction
-    navigate(`/interactions/${interactionId}`);
+  const interactions = Object.values(deals)
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 6)
+    .map((deal) => ({
+      id: deal.id,
+      type: deal.title,
+      value: new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(deal.value),
+      date: new Date(deal.updatedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      ...stageStyle(String(deal.stage)),
+      participantIds: [deal.contactId],
+    }));
+
+  const handleInteractionClick = (dealId: string) => {
+    navigate(`/deals/${dealId}`);
   };
 
   return (
@@ -99,6 +70,12 @@ const InteractionHistory: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {interactions.length === 0 && (
+        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          No deals yet. Deal activity will appear here.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {interactions.map((interaction) => (
