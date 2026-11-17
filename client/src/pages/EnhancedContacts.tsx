@@ -61,6 +61,7 @@ const Contacts: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const openai = useOpenAI();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [bulkResult, setBulkResult] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -557,6 +558,7 @@ const Contacts: React.FC = () => {
             <span className="text-blue-700 font-medium">
               {selectedContacts.length} contacts selected
             </span>
+            {bulkResult && <span className="ml-4 text-sm text-gray-700">{bulkResult}</span>}
             <button
               onClick={handleSelectAll}
               className="ml-4 text-sm text-blue-600 hover:text-blue-800"
@@ -575,15 +577,17 @@ const Contacts: React.FC = () => {
                   try {
                     const { batchAPIService } =
                       await import('../services/openai-batch-api.service');
-                    await batchAPIService.enrichContactsBulk(
-                      selectedContacts,
-                      ['contact_scoring'],
-                      { processingMode: 'immediate' }
+                    const job = await batchAPIService.enrichContactsBulk(selectedContacts);
+                    setBulkResult(
+                      `${job.completedCount} of ${job.itemCount} contacts scored.` +
+                        job.failed.map((f) => ` Contact ${f.contactId}: ${f.message}.`).join('')
                     );
-                    setSelectedContacts([]);
-                    setShowBulkActions(false);
+                    if (job.failed.length === 0) {
+                      setSelectedContacts([]);
+                      setShowBulkActions(false);
+                    }
                   } catch (error) {
-                    console.error('Immediate analysis failed:', error);
+                    setBulkResult(error instanceof Error ? error.message : String(error));
                   } finally {
                     setIsAnalyzing(false);
                   }
@@ -592,32 +596,6 @@ const Contacts: React.FC = () => {
               >
                 <Zap size={14} className="mr-1" />
                 Immediate
-              </button>
-              <button
-                onClick={async () => {
-                  if (selectedContacts.length === 0) return;
-                  setIsAnalyzing(true);
-
-                  try {
-                    const { batchAPIService } =
-                      await import('../services/openai-batch-api.service');
-                    await batchAPIService.enrichContactsBulk(
-                      selectedContacts,
-                      ['contact_scoring'],
-                      { processingMode: 'overnight' }
-                    );
-                    setSelectedContacts([]);
-                    setShowBulkActions(false);
-                  } catch (error) {
-                    console.error('Overnight analysis failed:', error);
-                  } finally {
-                    setIsAnalyzing(false);
-                  }
-                }}
-                className="inline-flex items-center px-2 py-1.5 bg-green-600 text-white text-xs rounded-md hover:bg-green-700"
-              >
-                <Layers size={14} className="mr-1" />
-                Overnight (50% off)
               </button>
             </div>
             <button className="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50">

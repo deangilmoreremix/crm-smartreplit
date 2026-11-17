@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSmartAI, useTaskOptimization } from '../../hooks/useSmartAI';
 import { ModernButton } from '../ui/ModernButton';
 import { GlassCard } from '../ui/GlassCard';
 import { Contact } from '../../types/contact';
+import { batchAPIService, BatchJob } from '../../services/openai-batch-api.service';
 import {
   Brain,
   Zap,
@@ -53,6 +54,15 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
     analysisType: 'contact_scoring' as const,
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [bulkJob, setBulkJob] = useState<BatchJob | null>(null);
+
+  useEffect(
+    () =>
+      batchAPIService.subscribe((jobs) =>
+        setBulkJob((prev) => (prev ? (jobs.find((j) => j.id === prev.id) ?? prev) : prev))
+      ),
+    []
+  );
 
   const handleSingleAnalysis = async () => {
     if (!contact) return;
@@ -373,36 +383,18 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
             </div>
           </div>
 
-          {/* Estimated Metrics */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-3 bg-blue-50 rounded-lg text-center">
-              <DollarSign className="w-4 h-4 text-blue-600 mx-auto mb-1" />
-              <div className="text-sm font-medium text-blue-900">Est. Cost</div>
-              <div className="text-xs text-blue-700">${(contacts.length * 0.05).toFixed(2)}</div>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg text-center">
-              <Clock className="w-4 h-4 text-green-600 mx-auto mb-1" />
-              <div className="text-sm font-medium text-green-900">Est. Time</div>
-              <div className="text-xs text-green-700">{Math.ceil(contacts.length / 10)}s</div>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-lg text-center">
-              <Brain className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-              <div className="text-sm font-medium text-purple-900">Auto Model</div>
-              <div className="text-xs text-purple-700">Optimized</div>
-            </div>
-          </div>
-
           <div className="flex flex-col space-y-3 mt-6">
             <ModernButton
               onClick={async () => {
                 setIsProcessing(true);
-                const { batchAPIService } = await import('../../services/openai-batch-api.service');
-                await batchAPIService.enrichContactsBulk(
-                  contacts.map((c) => c.id),
-                  [bulkSettings.analysisType],
-                  { processingMode: 'immediate' }
-                );
-                setIsProcessing(false);
+                try {
+                  await batchAPIService.enrichContactsBulk(
+                    contacts.map((c) => c.id),
+                    { onStart: setBulkJob }
+                  );
+                } finally {
+                  setIsProcessing(false);
+                }
               }}
               loading={isProcessing}
               className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600"
@@ -414,29 +406,43 @@ export const SmartAIControls: React.FC<SmartAIControlsProps> = ({
                   : `Immediate Bulk Analysis (${contacts.length} contacts)`}
               </span>
             </ModernButton>
-
-            <ModernButton
-              onClick={async () => {
-                setIsProcessing(true);
-                const { batchAPIService } = await import('../../services/openai-batch-api.service');
-                await batchAPIService.enrichContactsBulk(
-                  contacts.map((c) => c.id),
-                  [bulkSettings.analysisType],
-                  { processingMode: 'overnight' }
-                );
-                setIsProcessing(false);
-              }}
-              loading={isProcessing}
-              className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-green-600 to-blue-600"
-            >
-              <Layers className="w-4 h-4" />
-              <span>
-                {isProcessing
-                  ? `Queueing ${contacts.length} contacts...`
-                  : `Overnight Batch Analysis (50% off - ${contacts.length} contacts)`}
-              </span>
-            </ModernButton>
+            {isProcessing && bulkJob && (
+              <button
+                onClick={() => batchAPIService.cancelBatchJob(bulkJob.id)}
+                className="text-sm text-gray-600 hover:text-gray-900 underline"
+              >
+                Cancel
+              </button>
+            )}
           </div>
+
+          {bulkJob && (
+            <div className="mt-4 text-sm text-gray-700 space-y-2" data-testid="bulk-job-status">
+              <div>
+                {bulkJob.completedCount} of {bulkJob.itemCount} scored
+                {bulkJob.failed.length > 0 && `, ${bulkJob.failed.length} failed`}
+                {bulkJob.status === 'cancelled' && ' (cancelled)'}
+              </div>
+              {bulkJob.failed.length > 0 && (
+                <ul className="text-red-600 space-y-1">
+                  {bulkJob.failed.map((f) => (
+                    <li key={f.contactId}>
+                      Contact {f.contactId}: {f.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {bulkJob.results.length > 0 && (
+                <ul className="space-y-1">
+                  {bulkJob.results.map((r) => (
+                    <li key={r.contactId}>
+                      Contact {r.contactId}: {r.score} ({r.priority}) - {r.rationale}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </GlassCard>
       )}
 
