@@ -23,6 +23,9 @@ export const EdgeZones: React.FC = () => {
                   : 'bg-transparent'
               }`}
               style={{
+                // Drops are detected from the zone's geometry, so the strips must not swallow clicks within
+                // 100px of the screen edges
+                pointerEvents: 'none',
                 [zone.position]: 0,
                 width: zone.position === 'top' || zone.position === 'bottom' ? '100%' : '100px',
                 height: zone.position === 'left' || zone.position === 'right' ? '100%' : '100px',

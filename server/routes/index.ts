@@ -31,6 +31,7 @@ import { registerAIProductivityRoutes } from './aiProductivity';
 import { registerAIAdvancedRoutes } from './aiAdvanced';
 import { registerAIAutomationRoutes } from './aiAutomation';
 import { registerPartnersRoutes } from './partners';
+import { registerLeadAutomationRoutes } from './leadAutomation';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -146,4 +147,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register partners routes
   console.log('Registering partners routes');
   registerPartnersRoutes(app);
+
+  // Register lead automation routes (settings, scoring, campaigns)
+  console.log('Registering lead automation routes');
+  registerLeadAutomationRoutes(app);
 }

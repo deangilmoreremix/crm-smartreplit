@@ -16,6 +16,10 @@ port = 8888
 [functions]
 node_bundler = "esbuild"
 
+# Daily: create the CRM tasks for lead automation campaign steps that are due
+[functions."lead-automation-tick"]
+schedule = "@daily"
+
 # Express API (server/netlify-api.ts) — must come before the SPA fallback,
 # because Netlify applies the first matching rule
 [[redirects]]

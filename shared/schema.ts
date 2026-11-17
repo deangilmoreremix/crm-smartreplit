@@ -55,7 +55,7 @@ export const contacts = pgTable('smartcrm_contacts', {
   tags: text('tags').array(),
   notes: text('notes'),
   status: text('status').default('active'),
-  score: decimal('score', { precision: 3, scale: 2 }).default('0.50'),
+  score: decimal('score', { precision: 3, scale: 2 }), // 0-1; null until the contact is scored
   healthScore: integer('health_score'),
   enrichmentData: jsonb('enrichment_data'),
   lastEnrichedAt: timestamp('last_enriched_at', { withTimezone: true }),
@@ -749,6 +749,56 @@ export const automationRules = pgTable('smartcrm_automation_rules', {
   updatedAt: timestamp('updated_at').defaultNow(),
   profileId: uuid('profile_id').references(() => profiles.id),
 });
+
+// Lead Automation (campaigns, enrollments, per-user settings). Steps create CRM tasks; nothing is sent automatically.
+export type CampaignStep = { day: number; channel: 'email' | 'call' | 'sms' | 'task'; title: string; message: string };
+export type CampaignAudience = { statuses?: string[]; sources?: string[]; tags?: string[] };
+
+export const leadAutomationSettings = pgTable('smartcrm_lead_automation_settings', {
+  profileId: uuid('profile_id')
+    .primaryKey()
+    .references(() => profiles.id),
+  scoringModel: text('scoring_model').default('ai-powered').notNull(),
+  qualificationThreshold: integer('qualification_threshold').default(70).notNull(),
+  createFollowupTasks: boolean('create_followup_tasks').default(true).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const campaigns = pgTable('smartcrm_campaigns', {
+  id: uuid('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  profileId: uuid('profile_id')
+    .references(() => profiles.id)
+    .notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  audience: jsonb('audience').$type<CampaignAudience>().default({}),
+  steps: jsonb('steps').$type<CampaignStep[]>().default([]),
+  status: text('status').default('active').notNull(), // active | paused | completed
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const campaignEnrollments = pgTable(
+  'smartcrm_campaign_enrollments',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    campaignId: uuid('campaign_id')
+      .references(() => campaigns.id, { onDelete: 'cascade' })
+      .notNull(),
+    contactId: integer('contact_id')
+      .references(() => contacts.id, { onDelete: 'cascade' })
+      .notNull(),
+    nextStep: integer('next_step').default(0).notNull(),
+    nextDueAt: timestamp('next_due_at'),
+    status: text('status').default('active').notNull(), // active | done
+    enrolledAt: timestamp('enrolled_at').defaultNow(),
+  },
+  (table) => [unique('smartcrm_campaign_enrollment_unique').on(table.campaignId, table.contactId)]
+);
 
 export const userCredits = pgTable('user_credits', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),

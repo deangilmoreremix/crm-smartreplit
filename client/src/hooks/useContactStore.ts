@@ -77,6 +77,8 @@ export const useContactStore = create<ContactStore>((set, get) => ({
             notes: contact.notes || '',
             source: contact.source || 'Website',
             sources: contact.sources || [contact.source || 'Website'],
+            // The API stores the lead score as 0-1 (null until scored); the UI uses 0-100
+            aiScore: contact.score != null && contact.score !== '' ? Math.round(Number(contact.score) * 100) : undefined,
             createdAt: contact.createdAt ? new Date(contact.createdAt) : new Date(),
             updatedAt: contact.updatedAt ? new Date(contact.updatedAt) : new Date(),
           };

@@ -26,6 +26,8 @@ __export(schema_exports, {
   automationRules: () => automationRules,
   billingCycles: () => billingCycles,
   billingNotifications: () => billingNotifications,
+  campaignEnrollments: () => campaignEnrollments,
+  campaigns: () => campaigns,
   commissions: () => commissions,
   communications: () => communications,
   contactActivities: () => contactActivities,
@@ -46,6 +48,7 @@ __export(schema_exports, {
   insertDocumentSchema: () => insertDocumentSchema,
   insertNoteSchema: () => insertNoteSchema,
   insertTaskSchema: () => insertTaskSchema,
+  leadAutomationSettings: () => leadAutomationSettings,
   notes: () => notes,
   objectMetadata: () => objectMetadata,
   partnerCustomers: () => partnerCustomers,
@@ -91,7 +94,7 @@ __export(schema_exports, {
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, jsonb, json, varchar, uuid, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
-var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, automationRules, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, insertAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
+var userRoles, productTiers, fieldTypes, viewTypes, workflowTriggerTypes, workflowRunStatus, actionTypes, profiles, contacts, partners, partnerTiers, partnerMetrics, partnerCustomers, commissions, payouts, featurePackages, tenantConfigs, userWLSettings, partnerWLConfigs, whiteLabelPackages, entitlements, roles, permissions, userRolesTable, appointments, notes, communications, documents, aiQueries, userAiTokens, tokenTransactions, userGeneratedImages, features, userFeatures, aiFeatureDefinitions, aiFeatureUsage, aiResellerPricing, workflows, workflowActions, workflowRuns, workflowRunLogs, workflowCredits, workflowTemplates, objectMetadata, fieldMetadata, relationMetadata, views, deals, tasks, billingCycles, usageEvents, userUsageLimits, billingNotifications, usagePlans, userApiKeys, contactCustomFields, contactActivities, automationRules, leadAutomationSettings, campaigns, campaignEnrollments, userCredits, creditTransactions, resellerCredits, resellerCreditTransactions, insertContactSchema, insertDealSchema, insertTaskSchema, insertAppointmentSchema, insertCommunicationSchema, insertNoteSchema, updateNoteSchema, insertDocumentSchema;
 var init_schema = __esm({
   "shared/schema.ts"() {
     "use strict";
@@ -133,7 +136,8 @@ var init_schema = __esm({
       tags: text("tags").array(),
       notes: text("notes"),
       status: text("status").default("active"),
-      score: decimal("score", { precision: 3, scale: 2 }).default("0.50"),
+      score: decimal("score", { precision: 3, scale: 2 }),
+      // 0-1; null until the contact is scored
       healthScore: integer("health_score"),
       enrichmentData: jsonb("enrichment_data"),
       lastEnrichedAt: timestamp("last_enriched_at", { withTimezone: true }),
@@ -745,6 +749,39 @@ var init_schema = __esm({
       updatedAt: timestamp("updated_at").defaultNow(),
       profileId: uuid("profile_id").references(() => profiles.id)
     });
+    leadAutomationSettings = pgTable("smartcrm_lead_automation_settings", {
+      profileId: uuid("profile_id").primaryKey().references(() => profiles.id),
+      scoringModel: text("scoring_model").default("ai-powered").notNull(),
+      qualificationThreshold: integer("qualification_threshold").default(70).notNull(),
+      createFollowupTasks: boolean("create_followup_tasks").default(true).notNull(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    campaigns = pgTable("smartcrm_campaigns", {
+      id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+      profileId: uuid("profile_id").references(() => profiles.id).notNull(),
+      name: text("name").notNull(),
+      description: text("description"),
+      audience: jsonb("audience").$type().default({}),
+      steps: jsonb("steps").$type().default([]),
+      status: text("status").default("active").notNull(),
+      // active | paused | completed
+      createdAt: timestamp("created_at").defaultNow(),
+      updatedAt: timestamp("updated_at").defaultNow()
+    });
+    campaignEnrollments = pgTable(
+      "smartcrm_campaign_enrollments",
+      {
+        id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+        campaignId: uuid("campaign_id").references(() => campaigns.id, { onDelete: "cascade" }).notNull(),
+        contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }).notNull(),
+        nextStep: integer("next_step").default(0).notNull(),
+        nextDueAt: timestamp("next_due_at"),
+        status: text("status").default("active").notNull(),
+        // active | done
+        enrolledAt: timestamp("enrolled_at").defaultNow()
+      },
+      (table) => [unique("smartcrm_campaign_enrollment_unique").on(table.campaignId, table.contactId)]
+    );
     userCredits = pgTable("user_credits", {
       id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: text("user_id").notNull().unique(),
@@ -15456,7 +15493,7 @@ function registerApiKeyRoutes(app2) {
       }
       const keys = await db.query.userApiKeys.findMany({
         where: eq10(userApiKeys.userId, userId),
-        orderBy: (userApiKeys2, { desc: desc12 }) => [desc12(userApiKeys2.createdAt)]
+        orderBy: (userApiKeys2, { desc: desc13 }) => [desc13(userApiKeys2.createdAt)]
       });
       const maskedKeys = keys.map((key) => ({
         ...key,
@@ -17876,6 +17913,401 @@ function registerPartnersRoutes(app2) {
   });
 }
 
+// server/routes/leadAutomation.ts
+import { and as and14, eq as eq15 } from "drizzle-orm";
+init_db();
+init_schema();
+
+// server/services/leadAutomation.ts
+init_db();
+init_schema();
+import { and as and13, desc as desc12, eq as eq14, inArray, lte, sql as sql10 } from "drizzle-orm";
+var DAY_MS = 864e5;
+var NO_QUALIFY_STATUSES = ["qualified", "converted", "customer", "lost", "churned", "inactive"];
+var DEFAULT_SETTINGS = {
+  scoringModel: "ai-powered",
+  qualificationThreshold: 70,
+  createFollowupTasks: true
+};
+var SCORING_MODELS = ["ai-powered", "rule-based", "hybrid"];
+function parseSettings(body) {
+  const value = { ...DEFAULT_SETTINGS };
+  if (body?.scoringModel !== void 0) {
+    if (!SCORING_MODELS.includes(body.scoringModel)) return { error: "Invalid scoringModel" };
+    value.scoringModel = body.scoringModel;
+  }
+  if (body?.qualificationThreshold !== void 0) {
+    const n = Number(body.qualificationThreshold);
+    if (!Number.isInteger(n) || n < 0 || n > 100) return { error: "qualificationThreshold must be 0-100" };
+    value.qualificationThreshold = n;
+  }
+  if (body?.createFollowupTasks !== void 0) {
+    if (typeof body.createFollowupTasks !== "boolean") return { error: "createFollowupTasks must be a boolean" };
+    value.createFollowupTasks = body.createFollowupTasks;
+  }
+  return { value };
+}
+async function getSettings(profileId) {
+  const [row] = await db.select().from(leadAutomationSettings).where(eq14(leadAutomationSettings.profileId, profileId));
+  if (!row) return { ...DEFAULT_SETTINGS };
+  return {
+    scoringModel: row.scoringModel,
+    qualificationThreshold: row.qualificationThreshold,
+    createFollowupTasks: row.createFollowupTasks
+  };
+}
+async function saveSettings(profileId, settings) {
+  await db.insert(leadAutomationSettings).values({ profileId, ...settings }).onConflictDoUpdate({
+    target: leadAutomationSettings.profileId,
+    set: { ...settings, updatedAt: /* @__PURE__ */ new Date() }
+  });
+  return settings;
+}
+var priorityFor = (score) => score >= 70 ? "hot" : score >= 40 ? "warm" : "cold";
+function ruleBasedScore(contact, dealCount, now = /* @__PURE__ */ new Date()) {
+  const reasons = [];
+  let score = 0;
+  const add = (points, ok, label) => {
+    if (ok) {
+      score += points;
+      reasons.push(`+${points} ${label}`);
+    }
+  };
+  add(20, Boolean(contact.email), "has an email");
+  add(10, Boolean(contact.phone), "has a phone number");
+  add(15, Boolean(contact.company), "has a company");
+  add(5, Boolean(contact.industry), "industry known");
+  add(10, Array.isArray(contact.tags) && contact.tags.length > 0, "is tagged");
+  const updated = contact.updatedAt ? new Date(contact.updatedAt).getTime() : 0;
+  const ageDays = updated ? (now.getTime() - updated) / DAY_MS : Infinity;
+  add(20, ageDays <= 14, "active in the last 14 days");
+  add(10, ageDays > 14 && ageDays <= 60, "active in the last 60 days");
+  add(Math.min(20, dealCount * 10), dealCount > 0, `${dealCount} deal(s) in the CRM`);
+  score = Math.min(100, score);
+  return {
+    score,
+    priority: priorityFor(score),
+    rationale: reasons.length ? `Rule-based score: ${reasons.join(", ")}.` : "Rule-based score: no scoring signals on this contact."
+  };
+}
+function blendScores(rule, ai) {
+  const score = Math.round((rule.score + ai.score) / 2);
+  return { score, priority: priorityFor(score), rationale: `Average of rule-based (${rule.score}) and AI (${ai.score}) scores. ${ai.rationale}` };
+}
+var canAutoQualify = (status) => !NO_QUALIFY_STATUSES.includes(String(status || "").toLowerCase());
+async function persistScore(profileId, contact, result, method, threshold) {
+  const qualified = result.score >= threshold && canAutoQualify(contact.status);
+  await db.update(contacts).set({
+    score: (result.score / 100).toFixed(2),
+    ...qualified ? { status: "qualified" } : {},
+    updatedAt: /* @__PURE__ */ new Date()
+  }).where(and13(eq14(contacts.id, contact.id), eq14(contacts.profileId, profileId)));
+  await db.insert(contactActivities).values({
+    contactId: contact.id,
+    activityType: "scoring",
+    description: `Lead scored ${result.score}/100 (${method})${qualified ? " and marked qualified" : ""}`,
+    metadata: { ...result, method }
+  });
+  return { ...result, method, qualified };
+}
+async function countDeals(profileId, contactId) {
+  const [row] = await db.select({ n: sql10`count(*)::int` }).from(deals).where(and13(eq14(deals.contactId, contactId), eq14(deals.profileId, profileId)));
+  return row?.n ?? 0;
+}
+var CHANNELS = ["email", "call", "sms", "task"];
+function parseCampaign(body) {
+  const name = typeof body?.name === "string" ? body.name.trim() : "";
+  if (!name || name.length > 120) return { error: "name is required (max 120 characters)" };
+  const stepsIn = body?.steps;
+  if (!Array.isArray(stepsIn) || stepsIn.length === 0 || stepsIn.length > 20) {
+    return { error: "steps must be a list of 1 to 20 steps" };
+  }
+  const steps = [];
+  for (const s of stepsIn) {
+    const day = Number(s?.day);
+    const title = typeof s?.title === "string" ? s.title.trim() : "";
+    const message = typeof s?.message === "string" ? s.message.trim() : "";
+    if (!Number.isInteger(day) || day < 0 || day > 365) return { error: "each step needs a day between 0 and 365" };
+    if (!title || title.length > 160) return { error: "each step needs a title (max 160 characters)" };
+    if (!CHANNELS.includes(s?.channel)) return { error: `step channel must be one of ${CHANNELS.join(", ")}` };
+    steps.push({ day, channel: s.channel, title, message: message.slice(0, 4e3) });
+  }
+  steps.sort((a, b) => a.day - b.day);
+  const list = (v) => Array.isArray(v) ? v.filter((x) => typeof x === "string" && x).slice(0, 50) : void 0;
+  const audience = {
+    statuses: list(body?.audience?.statuses),
+    sources: list(body?.audience?.sources),
+    tags: list(body?.audience?.tags)
+  };
+  return {
+    value: { name, description: typeof body?.description === "string" ? body.description.slice(0, 1e3) : void 0, audience, steps }
+  };
+}
+function contactMatchesAudience(contact, audience) {
+  const lower = (v) => String(v ?? "").toLowerCase();
+  if (audience.statuses?.length && !audience.statuses.map(lower).includes(lower(contact.status))) return false;
+  if (audience.sources?.length && !audience.sources.map(lower).includes(lower(contact.source))) return false;
+  if (audience.tags?.length) {
+    const tags = (Array.isArray(contact.tags) ? contact.tags : []).map(lower);
+    if (!audience.tags.some((t) => tags.includes(lower(t)))) return false;
+  }
+  return true;
+}
+var stepDueAt = (enrolledAt, steps, index) => index < steps.length ? new Date(enrolledAt.getTime() + steps[index].day * DAY_MS) : null;
+async function createCampaign(profileId, input) {
+  const [campaign] = await db.insert(campaigns).values({ profileId, name: input.name, description: input.description, audience: input.audience, steps: input.steps, status: "active" }).returning();
+  const owned = await db.select().from(contacts).where(eq14(contacts.profileId, profileId));
+  const matching = owned.filter((c) => contactMatchesAudience(c, input.audience));
+  const now = /* @__PURE__ */ new Date();
+  if (matching.length) {
+    await db.insert(campaignEnrollments).values(
+      matching.map((c) => ({
+        campaignId: campaign.id,
+        contactId: c.id,
+        nextStep: 0,
+        nextDueAt: stepDueAt(now, input.steps, 0),
+        enrolledAt: now
+      }))
+    ).onConflictDoNothing();
+  }
+  const tasksCreated = await processDueSteps(profileId, campaign.id);
+  return { campaign, enrolled: matching.length, tasksCreated };
+}
+async function listCampaigns(profileId) {
+  const rows = await db.select().from(campaigns).where(eq14(campaigns.profileId, profileId)).orderBy(desc12(campaigns.createdAt));
+  if (!rows.length) return [];
+  const stats = await db.select({
+    campaignId: campaignEnrollments.campaignId,
+    leads: sql10`count(*)::int`,
+    converted: sql10`(count(*) filter (where lower(${contacts.status}) in ('converted', 'customer')))::int`
+  }).from(campaignEnrollments).innerJoin(contacts, eq14(contacts.id, campaignEnrollments.contactId)).where(
+    inArray(
+      campaignEnrollments.campaignId,
+      rows.map((r) => r.id)
+    )
+  ).groupBy(campaignEnrollments.campaignId);
+  const byId = new Map(stats.map((s) => [s.campaignId, s]));
+  return rows.map((c) => {
+    const s = byId.get(c.id);
+    const leads = s?.leads ?? 0;
+    return { ...c, leads, converted: s?.converted ?? 0, conversionRate: leads ? (s?.converted ?? 0) / leads : null };
+  });
+}
+async function getCampaign(profileId, id) {
+  const [campaign] = await db.select().from(campaigns).where(and13(eq14(campaigns.id, id), eq14(campaigns.profileId, profileId)));
+  if (!campaign) return null;
+  const enrollments = await db.select({
+    id: campaignEnrollments.id,
+    contactId: campaignEnrollments.contactId,
+    firstName: contacts.firstName,
+    lastName: contacts.lastName,
+    nextStep: campaignEnrollments.nextStep,
+    nextDueAt: campaignEnrollments.nextDueAt,
+    status: campaignEnrollments.status
+  }).from(campaignEnrollments).innerJoin(contacts, eq14(contacts.id, campaignEnrollments.contactId)).where(eq14(campaignEnrollments.campaignId, id));
+  return { campaign, enrollments };
+}
+async function processDueSteps(profileId, campaignId, now = /* @__PURE__ */ new Date()) {
+  const due = await db.select({ enrollment: campaignEnrollments, campaign: campaigns, contact: contacts }).from(campaignEnrollments).innerJoin(campaigns, eq14(campaigns.id, campaignEnrollments.campaignId)).innerJoin(contacts, eq14(contacts.id, campaignEnrollments.contactId)).where(
+    and13(
+      eq14(campaignEnrollments.status, "active"),
+      eq14(campaigns.status, "active"),
+      lte(campaignEnrollments.nextDueAt, now),
+      ...profileId ? [eq14(campaigns.profileId, profileId)] : [],
+      ...campaignId ? [eq14(campaigns.id, campaignId)] : []
+    )
+  ).limit(500);
+  const settingsCache = /* @__PURE__ */ new Map();
+  let created = 0;
+  const touchedCampaigns = /* @__PURE__ */ new Set();
+  for (const { enrollment, campaign, contact } of due) {
+    let settings = settingsCache.get(campaign.profileId);
+    if (!settings) {
+      settings = await getSettings(campaign.profileId);
+      settingsCache.set(campaign.profileId, settings);
+    }
+    if (!settings.createFollowupTasks) continue;
+    const steps = campaign.steps || [];
+    const step = steps[enrollment.nextStep];
+    const nextIndex = enrollment.nextStep + 1;
+    if (step) {
+      const name = `${contact.firstName} ${contact.lastName}`.trim();
+      await db.insert(tasks).values({
+        title: `[${campaign.name}] ${step.title} \u2014 ${name}`,
+        description: step.message || null,
+        priority: "medium",
+        dueDate: enrollment.nextDueAt ?? now,
+        contactId: contact.id,
+        profileId: campaign.profileId,
+        customFields: { campaignId: campaign.id, step: enrollment.nextStep, channel: step.channel }
+      });
+      created++;
+    }
+    const nextDue = stepDueAt(enrollment.enrolledAt ?? now, steps, nextIndex);
+    await db.update(campaignEnrollments).set({ nextStep: nextIndex, nextDueAt: nextDue, status: nextDue ? "active" : "done" }).where(eq14(campaignEnrollments.id, enrollment.id));
+    touchedCampaigns.add(campaign.id);
+  }
+  for (const id of touchedCampaigns) {
+    const [row] = await db.select({ n: sql10`count(*)::int` }).from(campaignEnrollments).where(and13(eq14(campaignEnrollments.campaignId, id), eq14(campaignEnrollments.status, "active")));
+    if ((row?.n ?? 0) === 0) {
+      await db.update(campaigns).set({ status: "completed", updatedAt: /* @__PURE__ */ new Date() }).where(and13(eq14(campaigns.id, id), eq14(campaigns.status, "active")));
+    }
+  }
+  return created;
+}
+async function updateCampaign(profileId, id, body) {
+  const set = { updatedAt: /* @__PURE__ */ new Date() };
+  if (body?.status !== void 0) {
+    if (!["active", "paused"].includes(body.status)) return { error: "status must be active or paused" };
+    set.status = body.status;
+  }
+  if (body?.name !== void 0) {
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    if (!name || name.length > 120) return { error: "name must be 1-120 characters" };
+    set.name = name;
+  }
+  const [row] = await db.update(campaigns).set(set).where(and13(eq14(campaigns.id, id), eq14(campaigns.profileId, profileId))).returning();
+  return { campaign: row ?? null };
+}
+async function deleteCampaign(profileId, id) {
+  const rows = await db.delete(campaigns).where(and13(eq14(campaigns.id, id), eq14(campaigns.profileId, profileId))).returning({ id: campaigns.id });
+  return rows.length > 0;
+}
+
+// server/routes/leadAutomation.ts
+var noDb3 = (res) => res.status(503).json({ error: "Database not configured" });
+function registerLeadAutomationRoutes(app2) {
+  app2.use("/api/lead-automation", requireAuth(), requireEntitlement(FeatureKey.LEAD_AUTOMATION));
+  app2.get("/api/lead-automation/settings", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      res.json(await getSettings(req.userId));
+    } catch (error) {
+      console.error("Error loading lead automation settings:", error);
+      res.status(500).json({ error: "Failed to load settings" });
+    }
+  });
+  app2.put("/api/lead-automation/settings", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      const userId = req.userId;
+      const current = await getSettings(userId);
+      const parsed = parseSettings({ ...current, ...req.body });
+      if ("error" in parsed) return res.status(400).json({ error: parsed.error });
+      res.json(await saveSettings(userId, parsed.value));
+    } catch (error) {
+      console.error("Error saving lead automation settings:", error);
+      res.status(500).json({ error: "Failed to save settings" });
+    }
+  });
+  app2.post("/api/lead-automation/score/:contactId", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      const userId = req.userId;
+      const contactId = parseInt(req.params.contactId, 10);
+      if (!Number.isInteger(contactId)) return res.status(400).json({ error: "Invalid contact id" });
+      const [contact] = await db.select().from(contacts).where(and14(eq15(contacts.id, contactId), eq15(contacts.profileId, userId)));
+      if (!contact) return res.status(404).json({ error: "Contact not found" });
+      const settings = await getSettings(userId);
+      const dealCount = await countDeals(userId, contactId);
+      const rule = ruleBasedScore(contact, dealCount);
+      let result = rule;
+      if (settings.scoringModel !== "rule-based") {
+        if (!checkAIRateLimit2(userId)) return res.status(429).json({ error: "Rate limit exceeded" });
+        const ai = await analyzeLeadScore({
+          name: `${contact.firstName} ${contact.lastName}`.trim(),
+          email: contact.email,
+          company: contact.company,
+          industry: contact.industry,
+          status: contact.status,
+          source: contact.source,
+          tags: contact.tags,
+          dealCount,
+          lastUpdated: contact.updatedAt
+        });
+        if (!ai.success) return sendAIError(res, ai.error);
+        const score = Math.max(0, Math.min(100, Math.round(Number(ai.data?.score))));
+        if (!Number.isFinite(score)) return res.status(502).json({ error: "The AI response had no score" });
+        const aiResult = {
+          score,
+          priority: ["hot", "warm", "cold"].includes(ai.data?.priority) ? ai.data.priority : priorityFor(score),
+          rationale: String(ai.data?.rationale || "")
+        };
+        result = settings.scoringModel === "hybrid" ? blendScores(rule, aiResult) : aiResult;
+      }
+      const saved = await persistScore(userId, contact, result, settings.scoringModel, settings.qualificationThreshold);
+      res.json({ contactId, ...saved });
+    } catch (error) {
+      console.error("Error scoring lead:", error);
+      res.status(500).json({ error: error?.message || "Failed to score lead" });
+    }
+  });
+  app2.get("/api/lead-automation/campaigns", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      res.json(await listCampaigns(req.userId));
+    } catch (error) {
+      console.error("Error listing campaigns:", error);
+      res.status(500).json({ error: "Failed to load campaigns" });
+    }
+  });
+  app2.post("/api/lead-automation/campaigns", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      const parsed = parseCampaign(req.body);
+      if ("error" in parsed) return res.status(400).json({ error: parsed.error });
+      res.status(201).json(await createCampaign(req.userId, parsed.value));
+    } catch (error) {
+      console.error("Error creating campaign:", error);
+      res.status(500).json({ error: "Failed to create campaign" });
+    }
+  });
+  app2.get("/api/lead-automation/campaigns/:id", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      const found = await getCampaign(req.userId, req.params.id);
+      if (!found) return res.status(404).json({ error: "Campaign not found" });
+      res.json(found);
+    } catch (error) {
+      console.error("Error loading campaign:", error);
+      res.status(500).json({ error: "Failed to load campaign" });
+    }
+  });
+  app2.put("/api/lead-automation/campaigns/:id", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      const result = await updateCampaign(req.userId, req.params.id, req.body);
+      if ("error" in result) return res.status(400).json({ error: result.error });
+      if (!result.campaign) return res.status(404).json({ error: "Campaign not found" });
+      res.json(result.campaign);
+    } catch (error) {
+      console.error("Error updating campaign:", error);
+      res.status(500).json({ error: "Failed to update campaign" });
+    }
+  });
+  app2.delete("/api/lead-automation/campaigns/:id", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      if (!await deleteCampaign(req.userId, req.params.id)) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      res.status(500).json({ error: "Failed to delete campaign" });
+    }
+  });
+  app2.post("/api/lead-automation/process", async (req, res) => {
+    try {
+      if (!db) return noDb3(res);
+      res.json({ tasksCreated: await processDueSteps(req.userId) });
+    } catch (error) {
+      console.error("Error processing campaign steps:", error);
+      res.status(500).json({ error: "Failed to process campaign steps" });
+    }
+  });
+}
+
 // server/routes/index.ts
 async function registerRoutes(app2) {
   console.log("Registering auth routes at /api/auth");
@@ -17933,6 +18365,8 @@ async function registerRoutes(app2) {
   registerAIAutomationRoutes(app2);
   console.log("Registering partners routes");
   registerPartnersRoutes(app2);
+  console.log("Registering lead automation routes");
+  registerLeadAutomationRoutes(app2);
 }
 
 // server/log.ts

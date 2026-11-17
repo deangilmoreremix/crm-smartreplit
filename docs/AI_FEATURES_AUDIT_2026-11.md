@@ -280,6 +280,33 @@ with it); the project-wide "anonymous sign-ins enabled" warning applies to these
 **Owner actions:** set Netlify `DATABASE_URL` to this project's Postgres connection string (rotated password) so the
 server's routes reach these tables; redeploy the changed Supabase edge functions (contacts, deals, calendar, webhooks).
 
+## Update — Lead Automation page (/lead-automation)
+
+Every control on the page now works against a real endpoint, or was removed:
+
+| Control | Now |
+|---|---|
+| Leads list and counters | `/api/contacts`; the page now loads contacts itself (it used to show 0 unless another page had loaded them) |
+| Calculate Lead Score | `POST /api/lead-automation/score/:id`: AI, rule-based or hybrid (per Settings); saves the score, logs an activity, marks the contact qualified at the threshold |
+| Create AI Sequence | AI writes steps with a strict JSON schema (`/api/ai/generate`); editable preview; "Save as campaign" |
+| Create Campaign | dialog with audience filters (status, source, tags), steps editor and "Generate steps with AI" |
+| Campaigns tab | list with real lead and conversion numbers; pause/resume, details, delete. Budget/spent bars removed (not measurable) |
+| Settings | saved per user (`smartcrm_lead_automation_settings`). "Lead Assignment" removed (no team model); "Email Automation" became "Create follow-up tasks automatically" |
+| Analytics funnel | counts real contacts by status. It was hardcoded (1,250 / 950 / 425 / 275) |
+| Lead details AI insights | "Get AI insights" button (next action and priority); the fabricated predicted value was dropped |
+
+Campaign steps create tasks in `smartcrm_tasks` (due on the step's day); nothing is sent to contacts automatically. Tasks are created when a campaign is created, when the page opens, and by a daily Netlify scheduled function (`lead-automation-tick`, needs `DATABASE_URL`).
+
+New tables (labelled `smartcrm_`, RLS on): `smartcrm_lead_automation_settings`, `smartcrm_campaigns`, `smartcrm_campaign_enrollments`. `smartcrm_contacts.score` no longer defaults to 0.50, so an unscored contact has no score. The contact store now maps the saved score (0-1) to `aiScore` (0-100), which every contact view already expects.
+
+Shared UI bugs found and fixed while testing the page in a browser:
+* `Dialog` rendered a second overlay on top of its own content, so every dialog was blurred and blocked clicks.
+* `EdgeZones` (the navbar drop strips) covered 100px along every screen edge and swallowed clicks; they now ignore pointer events.
+* `SelectValue` ignored its children, so a select showed the raw value instead of a label.
+* `LeadAutomationDashboard` crashed on load (`CardHeader is not defined`; also on `main`).
+
+Not fixed (reported): the Twenty workflow stack cannot back this. `packages/workflows` action executors only log and return success, and `/api/workflows` writes columns that `smartcrm_workflows` does not have. `client/src/pages/LeadAutomation.tsx` (unrouted) still uses hardcoded sample data.
+
 ## Remaining work (proposed phases)
 
 * **Phase 2 — config & deployed functions:** done in this branch except: remove duplicate function entries

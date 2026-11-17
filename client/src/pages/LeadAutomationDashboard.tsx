@@ -21,6 +21,26 @@ import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { generateAI } from '../services/aiGenerate';
 import { useContactStore } from '../hooks/useContactStore';
 import { useDealStore } from '../store/dealStore';
+import CampaignDialog from '../components/leadAutomation/CampaignDialog';
+import StepsEditor from '../components/leadAutomation/StepsEditor';
+import {
+  deleteCampaign,
+  getCampaign,
+  getSettings,
+  listCampaigns,
+  normalizeSteps,
+  NeedsApiKeyError,
+  processDueSteps,
+  saveSettings,
+  scoreContact,
+  setCampaignStatus,
+  STEP_SCHEMA,
+  type CampaignDetails,
+  type CampaignStep,
+  type CampaignSummary,
+  type LeadAutomationSettings,
+  type ScoreResult,
+} from '../services/leadAutomationApi';
 import {
   Users,
   Target,
@@ -41,6 +61,7 @@ import {
   Activity,
   CheckCircle,
   Clock,
+  Trash2,
 } from 'lucide-react';
 
 interface Lead {
@@ -53,23 +74,6 @@ interface Lead {
   lastActivity: string;
   source: string;
   tags: string[];
-  gpt5Insights?: {
-    nextAction: string;
-    priority: 'high' | 'medium' | 'low';
-    predictedValue: number;
-    engagement: number;
-  };
-}
-
-interface Campaign {
-  id: string;
-  name: string;
-  status: 'active' | 'paused' | 'completed';
-  leads: number;
-  conversionRate: number;
-  budget: number;
-  spent: number;
-  channels: string[];
 }
 
 interface AutomationStats {
@@ -78,26 +82,45 @@ interface AutomationStats {
   conversionRate: number;
   averageLeadScore: number;
   monthlyGrowth: number | null;
-  aiAccuracy: number | null;
 }
 
 export default function LeadAutomationDashboard() {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('leads');
   const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [campaignDraft, setCampaignDraft] = useState<{ name?: string; description?: string; steps?: CampaignStep[] } | undefined>();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
-  const [engagementLevel, setEngagementLevel] = useState('high');
+  const [notice, setNotice] = useState<{ kind: 'success' | 'error'; text: string } | null>(null);
+  // Campaigns
+  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+  const [campaignsError, setCampaignsError] = useState<string | null>(null);
+  const [campaignDetails, setCampaignDetails] = useState<CampaignDetails | null>(null);
+  // Lead scoring
+  const [scoreContactId, setScoreContactId] = useState('');
+  const [scoring, setScoring] = useState(false);
+  const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null);
+  const [scoreError, setScoreError] = useState<string | null>(null);
+  // Sequence generator
   const [sequenceType, setSequenceType] = useState('nurture');
-  const [scoringModel, setScoringModel] = useState('ai-powered');
-  const [qualificationThreshold, setQualificationThreshold] = useState('70');
-  const [emailAutomation, setEmailAutomation] = useState('enabled');
-  const [leadAssignment, setLeadAssignment] = useState('round-robin');
+  const [sequenceName, setSequenceName] = useState('');
+  const [sequenceAudience, setSequenceAudience] = useState('');
+  const [sequenceSteps, setSequenceSteps] = useState<CampaignStep[]>([]);
+  const [generatingSequence, setGeneratingSequence] = useState(false);
+  const [sequenceError, setSequenceError] = useState<string | null>(null);
+  // Settings
+  const [settings, setSettings] = useState<LeadAutomationSettings | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  // Per-lead AI insights
+  const [insights, setInsights] = useState<Record<string, { nextAction: string; priority: string }>>({});
+  const [loadingInsightsFor, setLoadingInsightsFor] = useState<string | null>(null);
 
   // Leads are the CRM contacts; scores and activity come from the contact records
-  const { contacts } = useContactStore();
+  const { contacts, fetchContacts } = useContactStore();
   const { deals } = useDealStore();
   const contactsArray = Object.values(contacts);
   const toLeadStatus = (status: string): Lead['status'] => {
@@ -119,8 +142,6 @@ export default function LeadAutomationDashboard() {
     source: c.source || (c.sources && c.sources[0]) || 'Unknown',
     tags: c.tags || [],
   }));
-  // No campaign backend exists yet, so there are no campaigns to show
-  const campaigns: Campaign[] = [];
 
   const DAY = 86400000;
   const createdWithin = (c: any, from: number, to: number) => {
@@ -138,7 +159,6 @@ export default function LeadAutomationDashboard() {
     conversionRate: leads.length > 0 ? leads.filter((l) => l.status === 'converted').length / leads.length : 0,
     averageLeadScore: scoredLeads.length > 0 ? Math.round(scoredLeads.reduce((s, l) => s + l.score, 0) / scoredLeads.length) : 0,
     monthlyGrowth: newPrev30 > 0 ? (newThis30 - newPrev30) / newPrev30 : null,
-    aiAccuracy: null, // no prediction tracking to measure against
   };
 
   const [leadStrategy, setLeadStrategy] = useState<string | null>(null);
@@ -154,6 +174,147 @@ export default function LeadAutomationDashboard() {
       setLeadStrategy(error instanceof Error ? `AI strategy unavailable: ${error.message}` : 'AI strategy unavailable');
     } finally {
       setIsOptimizing(false);
+    }
+  };
+
+  const errorText = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
+
+  const loadCampaigns = async () => {
+    try {
+      setCampaigns(await listCampaigns());
+      setCampaignsError(null);
+    } catch (e) {
+      setCampaignsError(errorText(e, 'Could not load campaigns'));
+    } finally {
+      setCampaignsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // The contact store is only filled by other pages, so load the contacts this page lists
+    fetchContacts();
+    // Create the tasks for any campaign steps that came due, then load campaigns and settings
+    processDueSteps().catch(() => {}).finally(loadCampaigns);
+    getSettings()
+      .then(setSettings)
+      .catch((e) => setSettingsError(errorText(e, 'Could not load settings')));
+  }, []);
+
+  const sourceOptions = Array.from(new Set(leads.map((l) => l.source))).sort();
+  const funnel: Array<[string, Lead['status']]> = [
+    ['New', 'new'],
+    ['Contacted', 'contacted'],
+    ['Qualified', 'qualified'],
+    ['Nurturing', 'nurturing'],
+    ['Converted', 'converted'],
+    ['Lost', 'lost'],
+  ];
+
+  const runScore = async () => {
+    if (!scoreContactId) return;
+    setScoring(true);
+    setScoreError(null);
+    setScoreResult(null);
+    try {
+      setScoreResult(await scoreContact(scoreContactId));
+      await fetchContacts();
+    } catch (e) {
+      setScoreError(errorText(e, 'Could not score this lead'));
+    } finally {
+      setScoring(false);
+    }
+  };
+
+  const sequenceLabels: Record<string, string> = { nurture: 'nurture', followup: 'follow-up', reengagement: 're-engagement' };
+  const generateSequence = async () => {
+    if (!sequenceName.trim() && !sequenceAudience.trim()) {
+      setSequenceError('Enter a sequence name or describe the target audience first.');
+      return;
+    }
+    setGeneratingSequence(true);
+    setSequenceError(null);
+    try {
+      const result = await generateAI({
+        system: 'You design lead-nurturing sequences for a CRM. Each step becomes a task for a salesperson, so write the exact message to send.',
+        prompt: `Create a 4-6 step ${sequenceLabels[sequenceType] || 'nurture'} sequence.\nName: ${sequenceName || 'Untitled'}\nTarget audience: ${sequenceAudience || 'Not specified'}\nUse a mix of channels and spread the steps over about 2 weeks.`,
+        schema: STEP_SCHEMA as unknown as Record<string, unknown>,
+        schemaName: 'sequence_steps',
+      });
+      const steps = normalizeSteps(result.data?.steps);
+      if (!steps.length) throw new Error('The AI did not return any steps. Try again.');
+      setSequenceSteps(steps);
+    } catch (e) {
+      setSequenceError(errorText(e, 'Could not generate the sequence'));
+    } finally {
+      setGeneratingSequence(false);
+    }
+  };
+
+  const saveSequenceAsCampaign = () => {
+    setCampaignDraft({ name: sequenceName, description: sequenceAudience, steps: sequenceSteps });
+    setShowCampaignModal(true);
+  };
+
+  const toggleCampaign = async (campaign: CampaignSummary) => {
+    try {
+      await setCampaignStatus(campaign.id, campaign.status === 'active' ? 'paused' : 'active');
+      await loadCampaigns();
+    } catch (e) {
+      setNotice({ kind: 'error', text: errorText(e, 'Could not update the campaign') });
+    }
+  };
+
+  const removeCampaign = async (campaign: CampaignSummary) => {
+    if (!window.confirm(`Delete "${campaign.name}"? Tasks already created are kept.`)) return;
+    try {
+      await deleteCampaign(campaign.id);
+      await loadCampaigns();
+    } catch (e) {
+      setNotice({ kind: 'error', text: errorText(e, 'Could not delete the campaign') });
+    }
+  };
+
+  const openCampaign = async (campaign: CampaignSummary) => {
+    try {
+      setCampaignDetails(await getCampaign(campaign.id));
+    } catch (e) {
+      setNotice({ kind: 'error', text: errorText(e, 'Could not load the campaign') });
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!settings) return;
+    setSavingSettings(true);
+    try {
+      setSettings(await saveSettings(settings));
+      setNotice({ kind: 'success', text: 'Settings saved.' });
+    } catch (e) {
+      setNotice({ kind: 'error', text: errorText(e, 'Could not save settings') });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const getLeadInsights = async (lead: Lead) => {
+    setLoadingInsightsFor(lead.id);
+    try {
+      const result = await generateAI({
+        system: 'You are a sales coach. Use only the facts given.',
+        prompt: `What is the next best action for this lead, and how urgent is it?\nName: ${lead.name}\nCompany: ${lead.company}\nScore: ${lead.score}\nStatus: ${lead.status}\nSource: ${lead.source}\nTags: ${lead.tags.join(', ')}`,
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['nextAction', 'priority'],
+          properties: { nextAction: { type: 'string' }, priority: { type: 'string', enum: ['high', 'medium', 'low'] } },
+        },
+        schemaName: 'lead_insights',
+      });
+      if (!result.data?.nextAction) throw new Error('The AI response was incomplete.');
+      setInsights((prev) => ({ ...prev, [lead.id]: { nextAction: result.data.nextAction, priority: result.data.priority } }));
+    } catch (e) {
+      setNotice({ kind: 'error', text: errorText(e, 'Could not get AI insights') });
+    } finally {
+      setLoadingInsightsFor(null);
     }
   };
 
@@ -192,7 +353,10 @@ export default function LeadAutomationDashboard() {
   const actionButtons = [
     <Button
       key="create-campaign"
-      onClick={() => setShowCampaignModal(true)}
+      onClick={() => {
+        setCampaignDraft(undefined);
+        setShowCampaignModal(true);
+      }}
       className="bg-green-600 hover:bg-green-700"
     >
       <Plus className="h-4 w-4 mr-2" />
@@ -214,6 +378,14 @@ export default function LeadAutomationDashboard() {
 
   const headerStats = (
     <div>
+    {notice && (
+      <div
+        role="status"
+        className={`mt-4 p-3 rounded-lg text-sm ${notice.kind === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}
+      >
+        {notice.text}
+      </div>
+    )}
     {leadStrategy && (
       <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-sm whitespace-pre-wrap">{leadStrategy}</div>
     )}
@@ -289,10 +461,11 @@ export default function LeadAutomationDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Sources</SelectItem>
-                  <SelectItem value="Website">Website</SelectItem>
-                  <SelectItem value="LinkedIn">LinkedIn</SelectItem>
-                  <SelectItem value="Referral">Referral</SelectItem>
-                  <SelectItem value="Social Media">Social Media</SelectItem>
+                  {sourceOptions.map((source) => (
+                    <SelectItem key={source} value={source}>
+                      {source}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -343,7 +516,7 @@ export default function LeadAutomationDashboard() {
                           <div className="font-semibold">{lead.score}/100</div>
                           <div className="text-sm text-gray-500">{lead.source}</div>
                         </div>
-                        {lead.gpt5Insights && (
+                        {insights[lead.id] && (
                           <div className="flex items-center gap-1">
                             <Sparkles className="h-4 w-4 text-purple-500" />
                             <span className="text-xs text-purple-600">AI</span>
@@ -363,15 +536,19 @@ export default function LeadAutomationDashboard() {
             <div className="px-0 pt-0 pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Active Campaigns
+                Campaigns
               </h3>
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
-                {campaigns.length === 0 && <p className="text-sm text-gray-500">No campaigns yet.</p>}
+                {campaignsLoading && <p className="text-sm text-gray-500">Loading campaigns...</p>}
+                {campaignsError && <p className="text-sm text-red-600">{campaignsError}</p>}
+                {!campaignsLoading && !campaignsError && campaigns.length === 0 && (
+                  <p className="text-sm text-gray-500">No campaigns yet. Use Create Campaign to start one.</p>
+                )}
                 {campaigns.map((campaign) => (
                   <GlassCard key={campaign.id} className="p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between" data-testid="campaign-card">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-medium">{campaign.name}</h3>
@@ -379,13 +556,16 @@ export default function LeadAutomationDashboard() {
                             className={
                               campaign.status === 'active'
                                 ? 'bg-green-100 text-green-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                                : campaign.status === 'completed'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800'
                             }
                           >
                             {campaign.status}
                           </Badge>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        {campaign.description && <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{campaign.description}</p>}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Leads:</span>
                             <span className="font-medium ml-1">{campaign.leads}</span>
@@ -393,35 +573,26 @@ export default function LeadAutomationDashboard() {
                           <div>
                             <span className="text-gray-600 dark:text-gray-400">Conversion:</span>
                             <span className="font-medium ml-1">
-                              {Math.round(campaign.conversionRate * 100)}%
+                              {campaign.conversionRate === null ? '—' : `${Math.round(campaign.conversionRate * 100)}%`}
                             </span>
                           </div>
                           <div>
-                            <span className="text-gray-600 dark:text-gray-400">Budget:</span>
-                            <span className="font-medium ml-1">${campaign.budget}</span>
+                            <span className="text-gray-600 dark:text-gray-400">Steps:</span>
+                            <span className="font-medium ml-1">{campaign.steps.length}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600 dark:text-gray-400">Spent:</span>
-                            <span className="font-medium ml-1">${campaign.spent}</span>
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                            <span>Budget Used</span>
-                            <span>{Math.round((campaign.spent / campaign.budget) * 100)}%</span>
-                          </div>
-                          <Progress
-                            value={(campaign.spent / campaign.budget) * 100}
-                            className="h-2"
-                          />
                         </div>
                       </div>
                       <div className="flex gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => openCampaign(campaign)} aria-label={`View ${campaign.name}`}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Settings className="h-4 w-4" />
+                        {campaign.status !== 'completed' && (
+                          <Button variant="outline" size="sm" onClick={() => toggleCampaign(campaign)} aria-label={campaign.status === 'active' ? `Pause ${campaign.name}` : `Resume ${campaign.name}`}>
+                            {campaign.status === 'active' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => removeCampaign(campaign)} aria-label={`Delete ${campaign.name}`}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -471,22 +642,12 @@ export default function LeadAutomationDashboard() {
               </div>
               <div className="px-0 pb-0">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">New Leads</span>
-                    <span className="font-semibold">1,250</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Contacted</span>
-                    <span className="font-semibold">950</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Qualified</span>
-                    <span className="font-semibold">425</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Converted</span>
-                    <span className="font-semibold">275</span>
-                  </div>
+                  {funnel.map(([label, status]) => (
+                    <div key={status} className="flex justify-between items-center">
+                      <span className="text-sm">{label}</span>
+                      <span className="font-semibold">{leads.filter((l) => l.status === status).length}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </GlassCard>
@@ -505,30 +666,47 @@ export default function LeadAutomationDashboard() {
               <CardContent className="px-0 pb-0">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="lead-name">Lead Name</Label>
-                    <Input id="lead-name" placeholder="Enter lead name" defaultValue="John Smith" />
-                  </div>
-                  <div>
-                    <Label htmlFor="company">Company</Label>
-                    <Input id="company" placeholder="Enter company" defaultValue="TechCorp Inc" />
-                  </div>
-                  <div>
-                    <Label htmlFor="engagement">Engagement Level</Label>
-                    <Select value={engagementLevel} onValueChange={setEngagementLevel}>
-                      <SelectTrigger>
-                        <SelectValue />
+                    <Label htmlFor="score-contact">Contact</Label>
+                    <Select value={scoreContactId} onValueChange={setScoreContactId}>
+                      <SelectTrigger id="score-contact" aria-label="Contact to score">
+                        <SelectValue placeholder={leads.length ? 'Choose a contact' : 'No contacts yet'}>
+                          {(() => {
+                            const chosen = leads.find((l) => l.id === scoreContactId);
+                            return chosen ? `${chosen.name || chosen.email}${chosen.company ? ` — ${chosen.company}` : ''}` : undefined;
+                          })()}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
+                        {leads.map((lead) => (
+                          <SelectItem key={lead.id} value={lead.id}>
+                            {lead.name || lead.email}
+                            {lead.company ? ` — ${lead.company}` : ''}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button className="w-full">
+                  {settings && (
+                    <p className="text-xs text-gray-500">
+                      Model: {settings.scoringModel}. A score of {settings.qualificationThreshold}+ marks the contact as qualified (change in Settings).
+                    </p>
+                  )}
+                  <Button className="w-full" onClick={runScore} disabled={!scoreContactId || scoring}>
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Calculate Lead Score
+                    {scoring ? 'Scoring...' : 'Calculate Lead Score'}
                   </Button>
+                  {scoreError && <p className="text-sm text-red-600" role="alert">{scoreError}</p>}
+                  {scoreResult && (
+                    <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 text-sm space-y-1" data-testid="score-result">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold">{scoreResult.score}/100</span>
+                        <Badge className={getPriorityColor(scoreResult.priority === 'hot' ? 'high' : scoreResult.priority === 'warm' ? 'medium' : 'low')}>{scoreResult.priority}</Badge>
+                        {scoreResult.qualified && <Badge className="bg-green-100 text-green-800">marked qualified</Badge>}
+                      </div>
+                      <p className="whitespace-pre-wrap">{scoreResult.rationale}</p>
+                      <p className="text-xs text-gray-500">Method: {scoreResult.method}. The score was saved to the contact.</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </GlassCard>
@@ -545,7 +723,7 @@ export default function LeadAutomationDashboard() {
                   <div>
                     <Label htmlFor="sequence-type">Sequence Type</Label>
                     <Select value={sequenceType} onValueChange={setSequenceType}>
-                      <SelectTrigger>
+                      <SelectTrigger id="sequence-type">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -557,7 +735,7 @@ export default function LeadAutomationDashboard() {
                   </div>
                   <div>
                     <Label htmlFor="sequence-name">Sequence Name</Label>
-                    <Input id="sequence-name" placeholder="Enter sequence name" />
+                    <Input id="sequence-name" placeholder="Enter sequence name" value={sequenceName} onChange={(e) => setSequenceName(e.target.value)} />
                   </div>
                   <div>
                     <Label htmlFor="target-audience">Target Audience</Label>
@@ -565,12 +743,24 @@ export default function LeadAutomationDashboard() {
                       id="target-audience"
                       placeholder="Describe target audience..."
                       rows={3}
+                      value={sequenceAudience}
+                      onChange={(e) => setSequenceAudience(e.target.value)}
                     />
                   </div>
-                  <Button className="w-full" variant="outline">
+                  <Button className="w-full" variant="outline" onClick={generateSequence} disabled={generatingSequence}>
                     <Play className="h-4 w-4 mr-2" />
-                    Create AI Sequence
+                    {generatingSequence ? 'Generating...' : 'Create AI Sequence'}
                   </Button>
+                  {sequenceError && <p className="text-sm text-red-600" role="alert">{sequenceError}</p>}
+                  {sequenceSteps.length > 0 && (
+                    <div className="space-y-3" data-testid="sequence-preview">
+                      <p className="text-sm font-medium">Generated steps (edit as needed)</p>
+                      <StepsEditor steps={sequenceSteps} onChange={setSequenceSteps} />
+                      <Button className="w-full" onClick={saveSequenceAsCampaign}>
+                        Save as campaign
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </GlassCard>
@@ -583,63 +773,58 @@ export default function LeadAutomationDashboard() {
               <CardTitle>Lead Automation Settings</CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Lead Scoring Model</Label>
-                  <Select value={scoringModel} onValueChange={setScoringModel}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ai-powered">AI-Powered</SelectItem>
-                      <SelectItem value="rule-based">Rule-Based</SelectItem>
-                      <SelectItem value="hybrid">Hybrid</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {settingsError && <p className="text-sm text-red-600 mb-4">{settingsError}</p>}
+              {!settings && !settingsError && <p className="text-sm text-gray-500">Loading settings...</p>}
+              {settings && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="scoring-model">Lead Scoring Model</Label>
+                      <Select value={settings.scoringModel} onValueChange={(v) => setSettings({ ...settings, scoringModel: v as LeadAutomationSettings['scoringModel'] })}>
+                        <SelectTrigger id="scoring-model">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ai-powered">AI-Powered</SelectItem>
+                          <SelectItem value="rule-based">Rule-Based</SelectItem>
+                          <SelectItem value="hybrid">Hybrid (average of both)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">Rule-based scoring uses the contact record only and needs no OpenAI key.</p>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Auto-qualification Threshold</Label>
-                  <Select value={qualificationThreshold} onValueChange={setQualificationThreshold}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="50">50 points</SelectItem>
-                      <SelectItem value="60">60 points</SelectItem>
-                      <SelectItem value="70">70 points</SelectItem>
-                      <SelectItem value="80">80 points</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="qualification-threshold">Auto-qualification Threshold (0-100)</Label>
+                      <Input
+                        id="qualification-threshold"
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={settings.qualificationThreshold}
+                        onChange={(e) => setSettings({ ...settings, qualificationThreshold: Number(e.target.value) })}
+                      />
+                      <p className="text-xs text-gray-500">When a lead scores at or above this, its status is set to qualified.</p>
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Email Automation</Label>
-                  <Select value={emailAutomation} onValueChange={setEmailAutomation}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="enabled">Enabled</SelectItem>
-                      <SelectItem value="disabled">Disabled</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <div className="space-y-2">
+                      <Label htmlFor="followup-tasks">Create follow-up tasks automatically</Label>
+                      <Select value={settings.createFollowupTasks ? 'enabled' : 'disabled'} onValueChange={(v) => setSettings({ ...settings, createFollowupTasks: v === 'enabled' })}>
+                        <SelectTrigger id="followup-tasks">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="enabled">Enabled</SelectItem>
+                          <SelectItem value="disabled">Disabled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">When on, each campaign step becomes a task on its day. Nothing is sent to contacts automatically.</p>
+                    </div>
+                  </div>
+                  <Button onClick={handleSaveSettings} disabled={savingSettings}>
+                    {savingSettings ? 'Saving...' : 'Save settings'}
+                  </Button>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Lead Assignment</Label>
-                  <Select value={leadAssignment} onValueChange={setLeadAssignment}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="round-robin">Round Robin</SelectItem>
-                      <SelectItem value="workload">Workload Based</SelectItem>
-                      <SelectItem value="territory">Territory Based</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              )}
             </CardContent>
           </GlassCard>
         </TabsContent>
@@ -711,41 +896,76 @@ export default function LeadAutomationDashboard() {
                 </div>
               </div>
 
-              {selectedLead.gpt5Insights && (
-                <div>
-                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-500" />
-                    AI Insights
-                  </Label>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <div className="text-sm text-purple-800 dark:text-purple-200">
-                        <strong>Next Action:</strong> {selectedLead.gpt5Insights.nextAction}
-                      </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-500" />
+                  AI Insights
+                </Label>
+                {insights[selectedLead.id] ? (
+                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-sm text-purple-800 dark:text-purple-200 space-y-2">
+                    <div>
+                      <strong>Next Action:</strong> {insights[selectedLead.id].nextAction}
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <div className="text-sm text-blue-800 dark:text-blue-200">
-                          <strong>Priority:</strong>
-                          <Badge
-                            className={`ml-2 ${getPriorityColor(selectedLead.gpt5Insights.priority)}`}
-                          >
-                            {selectedLead.gpt5Insights.priority}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <div className="text-sm text-green-800 dark:text-green-200">
-                          <strong>Predicted Value:</strong> $
-                          {selectedLead.gpt5Insights.predictedValue.toLocaleString()}
-                        </div>
-                      </div>
+                    <div>
+                      <strong>Priority:</strong>
+                      <Badge className={`ml-2 ${getPriorityColor(insights[selectedLead.id].priority)}`}>{insights[selectedLead.id].priority}</Badge>
                     </div>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => getLeadInsights(selectedLead)} disabled={loadingInsightsFor === selectedLead.id}>
+                    {loadingInsightsFor === selectedLead.id ? 'Analyzing...' : 'Get AI insights'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <CampaignDialog
+        open={showCampaignModal}
+        onOpenChange={setShowCampaignModal}
+        contacts={contactsArray as any[]}
+        initial={campaignDraft}
+        onCreated={async ({ name, enrolled, tasksCreated }) => {
+          setNotice({ kind: 'success', text: `Campaign "${name}" created: ${enrolled} contact(s) enrolled, ${tasksCreated} task(s) created.` });
+          setActiveTab('campaigns');
+          await loadCampaigns();
+        }}
+      />
+
+      {campaignDetails && (
+        <Dialog open onOpenChange={() => setCampaignDetails(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{campaignDetails.campaign.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2 text-sm">
+              <div>
+                <div className="font-medium mb-1">Steps</div>
+                <ol className="list-decimal ml-5 space-y-2">
+                  {campaignDetails.campaign.steps.map((step, i) => (
+                    <li key={i}>
+                      <span className="font-medium">Day {step.day} · {step.channel} · {step.title}</span>
+                      {step.message && <div className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{step.message}</div>}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div>
+                <div className="font-medium mb-1">Contacts ({campaignDetails.enrollments.length})</div>
+                {campaignDetails.enrollments.length === 0 && <p className="text-gray-500">No contacts matched this audience.</p>}
+                <ul className="space-y-1">
+                  {campaignDetails.enrollments.map((e) => (
+                    <li key={e.id} className="flex justify-between">
+                      <span>{`${e.firstName} ${e.lastName}`.trim()}</span>
+                      <span className="text-gray-500">
+                        {e.status === 'done' ? 'finished' : `step ${e.nextStep + 1} due ${e.nextDueAt ? new Date(e.nextDueAt).toLocaleDateString() : '—'}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
