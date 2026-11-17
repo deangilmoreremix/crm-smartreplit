@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import * as edgeFunctionService from '../../services/edgeFunctionService';
 import StructuredAIResult from '../shared/StructuredAIResult';
+import { useContactStore } from '../../hooks/useContactStore';
+import { useDealStore } from '../../store/dealStore';
 import {
   Brain,
   BarChart3,
@@ -14,37 +16,62 @@ import {
   Users,
 } from 'lucide-react';
 
+const MAX_ITEMS = 50;
+
+const toTime = (v: any) => {
+  const t = v ? new Date(v).getTime() : 0;
+  return Number.isNaN(t) ? 0 : t;
+};
+
+const stageName = (stage: any): string =>
+  typeof stage === 'string' ? stage : (stage?.name ?? stage?.id ?? 'unknown');
+
+const stageKey = (stage: any): string => stageName(stage).toLowerCase().replace(/[\s_]/g, '-');
+
 const SalesInsightsContent: React.FC = () => {
+  const { contacts: contactsRaw } = useContactStore();
+  const { deals: dealsRaw } = useDealStore();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showDataDetails, setShowDataDetails] = useState(false);
 
+  // The user's real records, most recently updated first, capped to keep the AI payload small
+  const allContacts = Object.values(contactsRaw || {}) as any[];
+  const allDeals = Object.values(dealsRaw || {}) as any[];
+  const contacts = [...allContacts]
+    .sort((a, b) => toTime(b.updatedAt) - toTime(a.updatedAt))
+    .slice(0, MAX_ITEMS)
+    .map((c) => ({
+      name: c.name || `${c.firstName || ''} ${c.lastName || ''}`.trim(),
+      company: c.company || '',
+      status: c.status,
+      score: c.score ?? c.aiScore,
+    }));
+  const deals = [...allDeals]
+    .sort((a, b) => toTime(b.updatedAt) - toTime(a.updatedAt))
+    .slice(0, MAX_ITEMS)
+    .map((d) => ({
+      title: d.title,
+      value: Number(d.value) || 0,
+      stage: stageName(d.stage),
+      probability: d.probability,
+    }));
+
+  const hasData = contacts.length > 0 || deals.length > 0;
+  const pipelineValue = allDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+  const scores = allContacts.map((c) => c.score ?? c.aiScore).filter((n) => typeof n === 'number');
+  const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  const won = allDeals.filter((d) => stageKey(d.stage) === 'closed-won').length;
+  const lost = allDeals.filter((d) => stageKey(d.stage) === 'closed-lost').length;
+  const winRate = won + lost > 0 ? Math.round((won / (won + lost)) * 100) : null;
+
   const handleGenerateInsights = async () => {
+    if (!hasData) return;
     setIsLoading(true);
     setError(null);
 
     try {
-      // Use real contact and deal data from stores for analysis
-      const contacts = [
-        { name: 'John Doe', company: 'Acme Inc', status: 'customer' as const, score: 85 },
-        { name: 'Jane Smith', company: 'Globex Corp', status: 'lead' as const, score: 65 },
-        { name: 'Robert Johnson', company: 'Initech', status: 'prospect' as const, score: 75 },
-        {
-          name: 'Sarah Williams',
-          company: 'Umbrella Corp',
-          status: 'customer' as const,
-          score: 90,
-        },
-      ];
-
-      const deals = [
-        { title: 'Enterprise License', value: 50000, stage: 'negotiation', probability: 0.7 },
-        { title: 'Software Renewal', value: 25000, stage: 'closed-won', probability: 1.0 },
-        { title: 'Premium Support', value: 15000, stage: 'proposal', probability: 0.5 },
-        { title: 'Implementation Services', value: 30000, stage: 'initial', probability: 0.3 },
-      ];
-
       const result = await edgeFunctionService.generateSalesInsights(contacts, deals);
       setResult(result);
     } catch (err) {
@@ -114,96 +141,81 @@ const SalesInsightsContent: React.FC = () => {
                 <Users className="h-4 w-4 text-blue-600" />
                 <span className="text-sm text-gray-600">Contacts</span>
               </div>
-              <div className="text-xl font-semibold text-gray-900">4</div>
+              <div className="text-xl font-semibold text-gray-900">{allContacts.length}</div>
             </div>
             <div className="bg-white p-3 rounded-lg border">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-green-600" />
                 <span className="text-sm text-gray-600">Pipeline Value</span>
               </div>
-              <div className="text-xl font-semibold text-gray-900">$120K</div>
+              <div className="text-xl font-semibold text-gray-900">${pipelineValue.toLocaleString()}</div>
             </div>
             <div className="bg-white p-3 rounded-lg border">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-purple-600" />
                 <span className="text-sm text-gray-600">Avg Score</span>
               </div>
-              <div className="text-xl font-semibold text-gray-900">79</div>
+              <div className="text-xl font-semibold text-gray-900">{avgScore ?? 'N/A'}</div>
             </div>
             <div className="bg-white p-3 rounded-lg border">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-orange-600" />
                 <span className="text-sm text-gray-600">Win Rate</span>
               </div>
-              <div className="text-xl font-semibold text-gray-900">63%</div>
+              <div className="text-xl font-semibold text-gray-900">{winRate !== null ? `${winRate}%` : 'N/A'}</div>
             </div>
           </div>
 
           {showDataDetails && (
             <div className="mt-4 grid md:grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
-                <h5 className="font-medium text-gray-700 mb-2">Active Contacts (4)</h5>
+                <h5 className="font-medium text-gray-700 mb-2">Contacts ({contacts.length})</h5>
                 <div className="space-y-1">
-                  <div className="flex justify-between p-2 bg-white rounded border">
-                    <span>John Doe (Acme Inc)</span>
-                    <span className="text-green-600 font-medium">Score: 85</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-white rounded border">
-                    <span>Jane Smith (Globex Corp)</span>
-                    <span className="text-yellow-600 font-medium">Score: 65</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-white rounded border">
-                    <span>Robert Johnson (Initech)</span>
-                    <span className="text-blue-600 font-medium">Score: 75</span>
-                  </div>
-                  <div className="flex justify-between p-2 bg-white rounded border">
-                    <span>Sarah Williams (Umbrella Corp)</span>
-                    <span className="text-green-600 font-medium">Score: 90</span>
-                  </div>
+                  {contacts.map((c, i) => (
+                    <div key={i} className="flex justify-between p-2 bg-white rounded border">
+                      <span>
+                        {c.name}
+                        {c.company ? ` (${c.company})` : ''}
+                      </span>
+                      {typeof c.score === 'number' && (
+                        <span className="text-blue-600 font-medium">Score: {c.score}</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <h5 className="font-medium text-gray-700 mb-2">Pipeline Deals (4)</h5>
+                <h5 className="font-medium text-gray-700 mb-2">Pipeline Deals ({deals.length})</h5>
                 <div className="space-y-1">
-                  <div className="p-2 bg-white rounded border">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Enterprise License</span>
-                      <span className="text-green-600">$50,000</span>
+                  {deals.map((d, i) => (
+                    <div key={i} className="p-2 bg-white rounded border">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{d.title}</span>
+                        <span className="text-green-600">${d.value.toLocaleString()}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {d.stage}
+                        {typeof d.probability === 'number' ? ` • ${d.probability}% probability` : ''}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">Negotiation • 70% probability</div>
-                  </div>
-                  <div className="p-2 bg-white rounded border">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Software Renewal</span>
-                      <span className="text-green-600">$25,000</span>
-                    </div>
-                    <div className="text-xs text-gray-500">Closed Won • 100% probability</div>
-                  </div>
-                  <div className="p-2 bg-white rounded border">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Premium Support</span>
-                      <span className="text-blue-600">$15,000</span>
-                    </div>
-                    <div className="text-xs text-gray-500">Proposal • 50% probability</div>
-                  </div>
-                  <div className="p-2 bg-white rounded border">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Implementation Services</span>
-                      <span className="text-orange-600">$30,000</span>
-                    </div>
-                    <div className="text-xs text-gray-500">Initial • 30% probability</div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
         </div>
 
+        {!hasData && (
+          <p className="text-sm text-gray-500 mb-4">
+            No contacts or deals yet. Add some to your CRM to generate pipeline insights.
+          </p>
+        )}
+
         {/* Generate Button */}
         <button
           onClick={handleGenerateInsights}
-          disabled={isLoading}
+          disabled={isLoading || !hasData}
           className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
         >
           {isLoading ? (
@@ -232,7 +244,7 @@ const SalesInsightsContent: React.FC = () => {
       )}
 
       {/* Results Display */}
-      {result && <StructuredAIResult result={result} title="Sales Pipeline Intelligence Report" />}
+      {result && <StructuredAIResult data={result} title="Sales Pipeline Intelligence Report" />}
     </div>
   );
 };

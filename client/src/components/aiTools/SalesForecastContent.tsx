@@ -2,9 +2,35 @@ import React, { useState } from 'react';
 import * as edgeFunctionService from '../../services/edgeFunctionService';
 import { copyToClipboard, saveToFile, generateFilename } from '../../services/openaiStreamService';
 import AIToolContent from '../shared/AIToolContent';
+import { useDealStore } from '../../store/dealStore';
 import { BarChart3, PieChart, Copy, Check, Save, AlertCircle } from 'lucide-react';
 
+const MAX_DEALS = 50;
+
+const toTime = (v: any) => {
+  const t = v ? new Date(v).getTime() : 0;
+  return Number.isNaN(t) ? 0 : t;
+};
+
 const SalesForecastContent: React.FC = () => {
+  const { deals: dealsRaw } = useDealStore();
+  // The user's real deals, most recently updated first, capped to keep the AI payload small
+  const allDeals = Object.values(dealsRaw || {}) as any[];
+  const deals = [...allDeals]
+    .sort((a, b) => toTime(b.updatedAt) - toTime(a.updatedAt))
+    .slice(0, MAX_DEALS)
+    .map((d) => ({
+      title: d.title,
+      value: Number(d.value) || 0,
+      stage: typeof d.stage === 'string' ? d.stage : (d.stage?.name ?? d.stage?.id ?? 'unknown'),
+      probability: d.probability,
+    }));
+  const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
+  const weightedValue = deals.reduce(
+    (sum, d) => (typeof d.probability === 'number' ? sum + (d.value * d.probability) / 100 : sum),
+    0
+  );
+
   const [formData, setFormData] = useState({
     timeframe: 'Q3 2023',
   });
@@ -44,19 +70,12 @@ const SalesForecastContent: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (deals.length === 0) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const deals = [
-        { title: 'Enterprise License', value: 75000, stage: 'negotiation', probability: 0.7 },
-        { title: 'Support Contract', value: 25000, stage: 'proposal', probability: 0.5 },
-        { title: 'Software Renewal', value: 45000, stage: 'closed-won', probability: 1.0 },
-        { title: 'Cloud Migration', value: 95000, stage: 'initial', probability: 0.3 },
-        { title: 'Consulting Services', value: 50000, stage: 'negotiation', probability: 0.6 },
-      ];
-
       const resultText = await edgeFunctionService.generateSalesForecast(deals, formData.timeframe);
       setResult(resultText);
     } catch (err) {
@@ -99,20 +118,28 @@ const SalesForecastContent: React.FC = () => {
           </p>
 
           <div className="bg-gray-50 p-4 rounded-md mb-6">
-            <h4 className="font-medium text-gray-700 mb-2">
-              Sample Pipeline Data (For Demonstration)
-            </h4>
-            <p className="text-sm text-gray-600 mb-2">This forecast will analyze:</p>
-            <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 mb-2">
-              <li>Enterprise License: $75,000 (Negotiation, 70% probability)</li>
-              <li>Support Contract: $25,000 (Proposal, 50% probability)</li>
-              <li>Software Renewal: $45,000 (Closed-won, 100% probability)</li>
-              <li>Cloud Migration: $95,000 (Initial, 30% probability)</li>
-              <li>Consulting Services: $50,000 (Negotiation, 60% probability)</li>
-            </ul>
-            <p className="text-sm text-gray-600 italic">
-              Total pipeline: $290,000 (Weighted: $164,000)
-            </p>
+            <h4 className="font-medium text-gray-700 mb-2">Your Pipeline Data</h4>
+            {deals.length === 0 ? (
+              <p className="text-sm text-gray-600">
+                No deals yet. Add deals to your pipeline to generate a forecast.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 mb-2">This forecast will analyze:</p>
+                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 mb-2">
+                  {deals.map((d, i) => (
+                    <li key={i}>
+                      {d.title}: ${d.value.toLocaleString()} ({d.stage}
+                      {typeof d.probability === 'number' ? `, ${d.probability}% probability` : ''})
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-gray-600 italic">
+                  Total pipeline: ${totalValue.toLocaleString()} (Weighted: $
+                  {Math.round(weightedValue).toLocaleString()})
+                </p>
+              </>
+            )}
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -136,7 +163,7 @@ const SalesForecastContent: React.FC = () => {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || deals.length === 0}
               className="w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-md transition-colors disabled:bg-blue-300"
             >
               {isLoading ? (
