@@ -105,10 +105,36 @@ const CommunicationHub: React.FC = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
 
+    if (messageType !== 'sms') {
+      setError(`Sending ${messageType} messages is not available from this view`);
+      return;
+    }
+    if (!selectedContact.phone) {
+      setError('Selected contact has no phone number');
+      return;
+    }
+
     setIsSending(true);
+    setError(null);
     try {
+      const response = await fetch('/api/messaging/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          content: newMessage,
+          recipient: selectedContact.phone,
+          provider: 'twilio',
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      // Status comes from the server; a message is never marked delivered without a real signal.
+      const saved = await response.json();
+
       const message: Message = {
-        id: Date.now().toString(),
+        id: saved.id ?? Date.now().toString(),
         contactId: selectedContact.id,
         contactName: selectedContact.name,
         contactPhone: selectedContact.phone,
@@ -116,7 +142,7 @@ const CommunicationHub: React.FC = () => {
         content: newMessage,
         direction: 'outbound',
         timestamp: new Date(),
-        status: 'sent',
+        status: saved.status,
       };
 
       setMessages([...messages, message]);
@@ -128,13 +154,6 @@ const CommunicationHub: React.FC = () => {
           contact.id === selectedContact.id ? { ...contact, lastMessage: new Date() } : contact
         )
       );
-
-      // Simulate message delivery
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((msg) => (msg.id === message.id ? { ...msg, status: 'delivered' } : msg))
-        );
-      }, 2000);
     } catch (err) {
       setError('Failed to send message');
     } finally {

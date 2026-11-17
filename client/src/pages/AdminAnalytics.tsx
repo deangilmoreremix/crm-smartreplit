@@ -1,43 +1,39 @@
-import React from 'react';
-import { BarChart3, TrendingUp, Users, Activity, Database, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { BarChart3, Users, Activity, Database, Clock } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const AdminAnalytics: React.FC = () => {
   const { isDark } = useTheme();
 
+  const [totalUsers, setTotalUsers] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/admin/stats', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data && typeof data.totalUsers === 'number') {
+          setTotalUsers(data.totalUsers);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Only total users has a real source (/api/admin/stats). The server tracks no sessions,
+  // API call counts or response times, so those are shown as unavailable rather than invented.
   const metrics = [
     {
       title: 'Total Users',
-      value: '247',
-      change: '+12%',
-      trend: 'up',
+      value: totalUsers === null ? 'Unavailable' : totalUsers.toLocaleString(),
       icon: Users,
       color: 'blue',
     },
-    {
-      title: 'Active Sessions',
-      value: '89',
-      change: '+5%',
-      trend: 'up',
-      icon: Activity,
-      color: 'green',
-    },
-    {
-      title: 'API Calls Today',
-      value: '15,234',
-      change: '+8%',
-      trend: 'up',
-      icon: Database,
-      color: 'purple',
-    },
-    {
-      title: 'Avg Response Time',
-      value: '124ms',
-      change: '-3%',
-      trend: 'down',
-      icon: Clock,
-      color: 'green',
-    },
+    { title: 'Active Sessions', value: 'Unavailable', icon: Activity, color: 'green' },
+    { title: 'API Calls Today', value: 'Unavailable', icon: Database, color: 'purple' },
+    { title: 'Avg Response Time', value: 'Unavailable', icon: Clock, color: 'green' },
   ];
 
   return (
@@ -50,7 +46,7 @@ const AdminAnalytics: React.FC = () => {
               System Analytics
             </h1>
             <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Real-time system metrics and usage statistics
+              System metrics and usage statistics
             </p>
           </div>
         </div>
@@ -78,14 +74,6 @@ const AdminAnalytics: React.FC = () => {
                           : 'text-gray-600'
                   }`}
                 />
-                <div
-                  className={`flex items-center text-sm font-medium ${
-                    metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  {metric.change}
-                </div>
               </div>
               <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 {metric.title}
@@ -107,7 +95,7 @@ const AdminAnalytics: React.FC = () => {
         </h2>
         <div className="h-64 flex items-center justify-center">
           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Analytics charts will be displayed here
+            Usage analytics are not available yet
           </p>
         </div>
       </div>

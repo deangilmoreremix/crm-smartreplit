@@ -199,12 +199,7 @@ export const TaskCalendar: React.FC = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  // Mock calendars data for now
-  const calendars = [
-    { id: 'default', name: 'Default', color: '#3174ad', isVisible: true },
-    { id: 'personal', name: 'Personal', color: '#10b981', isVisible: true },
-    { id: 'work', name: 'Work', color: '#f59e0b', isVisible: true },
-  ];
+  const calendars = [{ id: 'default', name: 'Default', color: '#3174ad', isVisible: true }];
 
   const [visibleCalendars, setVisibleCalendars] = useState<string[]>(
     calendars.filter((cal) => cal.isVisible).map((cal) => cal.id)
