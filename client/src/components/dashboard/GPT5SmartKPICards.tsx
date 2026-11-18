@@ -42,13 +42,11 @@ const GPT5SmartKPICards: React.FC = () => {
     const contactsArray = Object.values(contacts);
 
     // Base calculations
-    const totalPipelineValue = dealsArray.reduce(
-      (sum: number, deal) => sum + Number(deal.value || 0),
-      0
-    );
     const activeDeals = dealsArray.filter(
       (d) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost'
     );
+    // Pipeline value counts open deals only (closed deals are not pipeline), as the deal store does
+    const totalPipelineValue = activeDeals.reduce((sum: number, deal) => sum + Number(deal.value || 0), 0);
     const wonDeals = dealsArray.filter((d) => d.stage.id === 'closed-won');
     const winRate = dealsArray.length > 0 ? (wonDeals.length / dealsArray.length) * 100 : 0;
     const avgDealSize = activeDeals.length > 0 ? totalPipelineValue / activeDeals.length : 0;
@@ -80,12 +78,12 @@ const GPT5SmartKPICards: React.FC = () => {
     // Real comparison point: the deals that already existed 30 days ago (no invented history)
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const pastDeals = dealsArray.filter((d: any) => d.createdAt && new Date(d.createdAt).getTime() < cutoff);
-    const pastPipelineValue = pastDeals.reduce((sum: number, d: any) => sum + Number(d.value || 0), 0);
     const pastWon = pastDeals.filter((d: any) => d.stage?.id === 'closed-won').length;
     const pastWinRate = pastDeals.length > 0 ? (pastWon / pastDeals.length) * 100 : 0;
     const pastActive = pastDeals.filter(
       (d: any) => d.stage?.id !== 'closed-won' && d.stage?.id !== 'closed-lost'
     );
+    const pastPipelineValue = pastActive.reduce((sum: number, d: any) => sum + Number(d.value || 0), 0);
     const pastAvgDealSize = pastActive.length > 0 ? pastPipelineValue / pastActive.length : 0;
     const pctChange = (current: number, past: number) =>
       past > 0 ? Math.round(((current - past) / past) * 1000) / 10 : 0;
@@ -100,7 +98,7 @@ const GPT5SmartKPICards: React.FC = () => {
         value: `$${totalPipelineValue.toLocaleString()}`,
         ...changeOf(totalPipelineValue, pastPipelineValue),
         icon: DollarSign,
-        description: 'Total pipeline value (change vs 30 days ago)',
+        description: 'Open deals value (change vs 30 days ago)',
         aiInsight: insights[0],
       },
       {
@@ -116,7 +114,7 @@ const GPT5SmartKPICards: React.FC = () => {
         value: `$${avgDealSize.toLocaleString()}`,
         ...changeOf(avgDealSize, pastAvgDealSize),
         icon: BarChart3,
-        description: 'Pipeline value / active deals',
+        description: 'Open pipeline value / open deals',
         aiInsight: insights[2],
       },
       {
