@@ -1186,6 +1186,15 @@ var init_creditService = __esm({
   }
 });
 
+// server/polyfills.ts
+if (typeof globalThis.WebSocket === "undefined") {
+  globalThis.WebSocket = class UnavailableWebSocket {
+    constructor() {
+      throw new Error("WebSocket is not available in this runtime; Supabase realtime is not supported on the server");
+    }
+  };
+}
+
 // server/netlify-api.ts
 import serverless from "serverless-http";
 
@@ -8781,6 +8790,8 @@ var companies_default = router6;
 import { Router as Router7 } from "express";
 var router7 = Router7();
 var getUserOpenAI = (userId) => getUserOpenAIClient(userId);
+var needsApiKey = (res) => res.status(400).json({ success: false, error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+var aiFailed = (res, what, error) => res.status(500).json({ success: false, error: `Failed to ${what}`, message: error instanceof Error ? error.message : String(error) });
 router7.get("/api/openai/status", requireAuth(), async (req, res) => {
   const userId = req.userId;
   const openaiData = await getUserOpenAI(userId);
@@ -8819,14 +8830,7 @@ router7.post("/api/openai/smart-greeting", requireAuth(), async (req, res) => {
   try {
     const { userMetrics, timeOfDay, recentActivity } = req.body;
     const openaiData = await getUserOpenAI(userId);
-    if (!openaiData) {
-      return res.json({
-        greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
-        insight: userMetrics?.totalValue > 5e4 ? "Strong momentum" : "Growing steadily",
-        source: "fallback",
-        needsApiKey: true
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
       messages: [
@@ -8860,11 +8864,7 @@ router7.post("/api/openai/smart-greeting", requireAuth(), async (req, res) => {
       `Smart greeting generation failed: ${error instanceof Error ? error.message : String(error)}`,
       { endpoint: "smart-greeting", sessionId }
     );
-    res.status(500).json({
-      error: "Failed to generate smart greeting",
-      greeting: `Good ${req.body.timeOfDay}! Your pipeline shows strong momentum.`,
-      insight: "Focus on your highest-value opportunities for maximum impact."
-    });
+    aiFailed(res, "generate smart greeting", error);
   }
 });
 router7.post("/api/openai/kpi-analysis", requireAuth(), async (req, res) => {
@@ -8873,13 +8873,7 @@ router7.post("/api/openai/kpi-analysis", requireAuth(), async (req, res) => {
   try {
     const { historicalData, currentMetrics } = req.body;
     const openaiData = await getUserOpenAI(userId);
-    if (!openaiData) {
-      return res.json({
-        summary: "Configure your OpenAI API key in Settings > API Keys",
-        recommendations: ["Add OpenAI API key in Settings"],
-        needsApiKey: true
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
       messages: [
@@ -8913,15 +8907,7 @@ router7.post("/api/openai/kpi-analysis", requireAuth(), async (req, res) => {
       `KPI analysis failed: ${error instanceof Error ? error.message : String(error)}`,
       { endpoint: "kpi-analysis", sessionId }
     );
-    res.status(500).json({
-      error: "Failed to analyze KPIs",
-      summary: "Your KPI trends show steady performance with opportunities for optimization.",
-      recommendations: [
-        "Focus on pipeline velocity",
-        "Optimize conversion rates",
-        "Scale successful strategies"
-      ]
-    });
+    aiFailed(res, "analyze KPIs", error);
   }
 });
 router7.post("/api/openai/deal-intelligence", requireAuth(), async (req, res) => {
@@ -8930,14 +8916,7 @@ router7.post("/api/openai/deal-intelligence", requireAuth(), async (req, res) =>
   try {
     const { dealData, contactHistory, marketContext } = req.body;
     const openaiData = await getUserOpenAI(userId);
-    if (!openaiData) {
-      return res.json({
-        probability_score: 65,
-        risk_level: "medium",
-        recommendations: ["Configure OpenAI API key in Settings"],
-        needsApiKey: true
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
       messages: [
@@ -8971,20 +8950,7 @@ router7.post("/api/openai/deal-intelligence", requireAuth(), async (req, res) =>
       `Deal intelligence analysis failed: ${error instanceof Error ? error.message : String(error)}`,
       { endpoint: "deal-intelligence", sessionId }
     );
-    res.status(500).json({
-      error: "Failed to analyze deal",
-      probability_score: 65,
-      risk_level: "medium",
-      key_factors: ["Follow-up frequency", "Decision timeline", "Budget confirmation"],
-      recommendations: [
-        "Schedule decision-maker meeting",
-        "Confirm budget authority",
-        "Present clear ROI"
-      ],
-      confidence_level: "medium",
-      estimated_close_days: 30,
-      value_optimization: 0
-    });
+    aiFailed(res, "analyze deal", error);
   }
 });
 router7.post("/api/openai/business-intelligence", requireAuth(), async (req, res) => {
@@ -8993,13 +8959,7 @@ router7.post("/api/openai/business-intelligence", requireAuth(), async (req, res
   try {
     const { businessData, marketContext, objectives } = req.body;
     const openaiData = await getUserOpenAI(userId);
-    if (!openaiData) {
-      return res.json({
-        market_insights: ["Configure OpenAI API key in Settings"],
-        strategic_recommendations: ["Add your API key in Settings > API Keys"],
-        needsApiKey: true
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
       messages: [
@@ -9033,14 +8993,7 @@ router7.post("/api/openai/business-intelligence", requireAuth(), async (req, res
       `Business intelligence generation failed: ${error instanceof Error ? error.message : String(error)}`,
       { endpoint: "business-intelligence", sessionId }
     );
-    res.status(500).json({
-      error: "Failed to generate business intelligence",
-      market_insights: ["Digital transformation accelerating", "Customer expectations rising"],
-      competitive_advantages: ["AI integration", "Customer-centric approach"],
-      risk_factors: ["Market competition", "Economic uncertainty"],
-      growth_opportunities: ["Market expansion", "Product diversification"],
-      strategic_recommendations: ["Invest in AI capabilities", "Strengthen customer relationships"]
-    });
+    aiFailed(res, "generate business intelligence", error);
   }
 });
 var openai_default = router7;

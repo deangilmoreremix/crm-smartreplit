@@ -4,6 +4,15 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// server/polyfills.ts
+if (typeof globalThis.WebSocket === "undefined") {
+  globalThis.WebSocket = class UnavailableWebSocket {
+    constructor() {
+      throw new Error("WebSocket is not available in this runtime; Supabase realtime is not supported on the server");
+    }
+  };
+}
+
 // server/db.ts
 import { drizzle } from "drizzle-orm/postgres-js";
 import { Pool } from "pg";
