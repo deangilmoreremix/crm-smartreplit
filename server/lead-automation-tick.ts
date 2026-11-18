@@ -2,6 +2,7 @@
  * Netlify scheduled function (daily, see netlify.toml): creates the CRM tasks for every
  * lead automation campaign step that is due, for all users.
  */
+import './polyfills'; // must be first: Node 20 has no global WebSocket (see polyfills.ts)
 import { db } from './db';
 import { processDueSteps } from './services/leadAutomation';
 

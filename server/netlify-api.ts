@@ -2,6 +2,7 @@
  * Netlify Function entry for the Express API.
  * netlify.toml rewrites /api/* to this function; requests keep their original /api/... path.
  */
+import './polyfills'; // must be first: Node 20 has no global WebSocket (see polyfills.ts)
 import serverless from 'serverless-http';
 import { app, appReady } from './app';
 
