@@ -10,6 +10,7 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import * as aiService from '../services/aiToolsService';
+import { sendAIError } from '../services/aiToolsService';
 import { memoryService } from '../memory';
 
 export function registerAICommunicationRoutes(app: Express): void {
@@ -49,7 +50,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, email: result.data, source: result.source });
        } else {
-         res.json({ success: false, email: { subject: '', body: 'Configure OpenAI API key for email composition.' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -80,7 +81,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, reply: result.data, source: result.source });
        } else {
-         res.json({ success: false, reply: { subject: 'Re:', body: 'Configure OpenAI API key for email replies.' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -111,7 +112,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, followUp: result.data, source: result.source });
        } else {
-         res.json({ success: false, followUp: { subject: '', message: 'Configure OpenAI API key.', timing: '1 day', channel: 'email', urgency: 'medium', personalization_tips: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -142,7 +143,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, response: result.data, source: result.source });
        } else {
-         res.json({ success: false, response: { understanding_statement: '', reframing_strategy: '', response_options: ['Configure OpenAI API key'], evidence_to_use: '', next_step: '', confidence_score: 0 }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -173,7 +174,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, proposal: result.data, source: result.source });
        } else {
-         res.json({ success: false, proposal: { title: '', executive_summary: 'Configure OpenAI API key.', scope_of_work: '', timeline: '', pricing_structure: '', terms: '', next_steps: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -204,7 +205,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, message: result.data, source: result.source });
        } else {
-         res.json({ success: false, message: { subject: '', body: 'Configure OpenAI API key.', calendar_note: '', reminder_text: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -240,7 +241,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, script: result.data, source: result.source });
        } else {
-         res.json({ success: false, script: { hook: '', intro: '', main_content: 'Configure OpenAI API key.', call_to_action: '', closing: '', estimated_duration: '', tips: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -271,7 +272,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, sms: result.data, source: result.source });
        } else {
-         res.json({ success: false, sms: { message: 'Configure OpenAI API key.', character_count: 0, follow_up_suggestion: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -307,7 +308,7 @@ export function registerAICommunicationRoutes(app: Express): void {
        if (result.success) {
          res.json({ success: true, voiceScript: result.data, source: result.source });
        } else {
-         res.json({ success: false, voiceScript: { script: 'Configure OpenAI API key.', talking_points: [], estimated_duration: '', tone_guidance: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );

@@ -27,25 +27,33 @@ const EmbeddableDashboard: React.FC<EmbeddableDashboardProps> = ({
     fetchDashboardData();
   }, [apiUrl, tenantId]);
 
+  // Metrics computed from the user's real deals and contacts (GET {apiUrl}/deals and /contacts)
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would fetch from your API
-      // For demo purposes, we'll use mock data
-      const mockData = {
-        totalDeals: 47,
-        totalValue: 1250000,
-        activeContacts: 234,
-        conversionRate: 23.5,
-      };
+      setError(null);
+      const query = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
+      const [dealsRes, contactsRes] = await Promise.all([
+        fetch(`${apiUrl}/deals${query}`),
+        fetch(`${apiUrl}/contacts${query}`),
+      ]);
+      if (!dealsRes.ok || !contactsRes.ok) {
+        throw new Error(`Request failed (${dealsRes.ok ? contactsRes.status : dealsRes.status})`);
+      }
+      const dealList: any[] = await dealsRes.json();
+      const contactList: any[] = await contactsRes.json();
 
-      // Simulate API delay
-      setTimeout(() => {
-        setMetrics(mockData);
-        setLoading(false);
-      }, 1000);
+      const closed = dealList.filter((d) => ['closed-won', 'closed-lost', 'won', 'lost'].includes(d.stage));
+      const won = closed.filter((d) => d.stage === 'closed-won' || d.stage === 'won');
+      setMetrics({
+        totalDeals: dealList.length,
+        totalValue: dealList.reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+        activeContacts: contactList.filter((c) => (c.status || 'active') !== 'inactive').length,
+        conversionRate: closed.length ? Math.round((won.length / closed.length) * 1000) / 10 : 0,
+      });
     } catch (err) {
-      setError('Failed to load dashboard data');
+      setError(`Failed to load dashboard data: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
       setLoading(false);
     }
   };

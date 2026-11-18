@@ -7,7 +7,7 @@ import { useContactStore } from '../../store/contactStore';
 import { aiEnrichmentService } from '../../services/aiEnrichmentService';
 import { cacheService } from '../../services/cache.service';
 import { httpClient } from '../../services/http-client.service';
-import { OpenClawService } from '@crm/openclaw-api';
+import { generateAI, analyzeImageAI } from '../../services/aiGenerate';
 import GeminiImageModal from '../GeminiImageModal';
 import {
   Edit,
@@ -95,14 +95,6 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
   // Connect to AI services - using stubs for now
   const { updateContact } = useContactStore();
 
-  // Initialize OpenClaw service
-  const openClawService = React.useMemo(() => {
-    return new OpenClawService({
-      baseUrl: process.env.REACT_APP_OPENCLAW_API_URL || 'https://api.openclaw.com',
-      apiKey: process.env.REACT_APP_OPENCLAW_API_KEY || '',
-    });
-  }, []);
-
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) {
       return;
@@ -116,60 +108,40 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
 
     setLocalAnalyzing(true);
     try {
-      // Use OpenClaw API for contact enrichment
-      const enrichmentResult = await openClawService.enrichContact({
-        contactId: contact.id,
-        data: {
-          name: contact.name,
-          email: contact.email,
-          phone: contact.phone,
-          company: contact.company,
+      const { data: parsed } = await generateAI({
+        system: 'You score B2B sales leads. Use only the data provided.',
+        schemaName: 'lead_score',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['aiScore', 'reasoning'],
+          properties: { aiScore: { type: 'number' }, reasoning: { type: 'string' } },
         },
+        prompt: `Score this contact's sales potential from 0 to 100 and explain briefly.
+
+Contact: ${JSON.stringify({
+          name: contact.name,
+          title: contact.title,
+          company: contact.company,
+          industry: contact.industry,
+          status: contact.status,
+          interestLevel: contact.interestLevel,
+          lastContact: contact.lastContact,
+          notes: contact.notes,
+        })}`,
       });
+      if (!parsed) throw new Error('AI returned no score');
+      const aiScore = Math.max(0, Math.min(100, Math.round(Number(parsed.aiScore))));
+      if (!Number.isFinite(aiScore)) throw new Error('AI returned no score');
 
-      // Extract AI score from enriched data
-      const aiScore = enrichmentResult.enrichedData?.aiScore || Math.floor(Math.random() * 40) + 60;
-
-      // Update the contact with enriched data
-      const updateData: any = {
+      await updateContact(contact.id, {
         aiScore,
         notes: contact.notes
-          ? `${contact.notes}\n\nOpenClaw Analysis: ${enrichmentResult.enrichedData?.aiScore ? `AI Score: ${aiScore}` : 'Analysis completed'}`
-          : `OpenClaw Analysis: ${enrichmentResult.enrichedData?.aiScore ? `AI Score: ${aiScore}` : 'Analysis completed'}`,
-      };
-
-      // Add enriched data if available
-      if (enrichmentResult.enrichedData) {
-        if (enrichmentResult.enrichedData.linkedinUrl) {
-          updateData.linkedinUrl = enrichmentResult.enrichedData.linkedinUrl;
-        }
-        if (enrichmentResult.enrichedData.jobTitle) {
-          updateData.jobTitle = enrichmentResult.enrichedData.jobTitle;
-        }
-        if (enrichmentResult.enrichedData.location) {
-          updateData.location = enrichmentResult.enrichedData.location;
-        }
-        if (enrichmentResult.enrichedData.industry) {
-          updateData.industry = enrichmentResult.enrichedData.industry;
-        }
-      }
-
-      await updateContact(contact.id, updateData);
+          ? `${contact.notes}\n\nAI Analysis (score ${aiScore}): ${parsed.reasoning || ''}`
+          : `AI Analysis (score ${aiScore}): ${parsed.reasoning || ''}`,
+      } as any);
     } catch (error) {
-      console.error('OpenClaw analysis failed:', error);
-      // Fallback to local AI analysis
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const newScore = Math.floor(Math.random() * 40) + 60;
-        await updateContact(contact.id, {
-          aiScore: newScore,
-          notes: contact.notes
-            ? `${contact.notes}\n\nFallback AI Analysis: Analysis completed with score ${newScore}`
-            : `Fallback AI Analysis: Analysis completed with score ${newScore}`,
-        });
-      } catch (fallbackError) {
-        console.error('Fallback analysis also failed:', fallbackError);
-      }
+      console.error('AI contact analysis failed:', error);
     } finally {
       setLocalAnalyzing(false);
     }
@@ -183,28 +155,21 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
     setExplanationError(null);
 
     try {
-      // Simulate explanation fetching
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const score = contact.aiScore;
-      let explanation = '';
-
-      if (score >= 80) {
-        explanation =
-          'High conversion potential based on engagement patterns, company size, and expressed interest level.';
-      } else if (score >= 60) {
-        explanation =
-          'Good engagement potential with positive interaction history and suitable company profile.';
-      } else if (score >= 40) {
-        explanation =
-          'Moderate interest level with some engagement indicators but requires nurturing.';
-      } else {
-        explanation = 'Lower priority contact with limited engagement or qualification indicators.';
-      }
-
-      setScoreExplanation(explanation);
+      const { content } = await generateAI({
+        maxTokens: 300,
+        prompt: `In 2-3 sentences, explain why this contact has an AI lead score of ${contact.aiScore}/100, based only on: ${JSON.stringify({
+          title: contact.title,
+          company: contact.company,
+          industry: contact.industry,
+          status: contact.status,
+          interestLevel: contact.interestLevel,
+          lastContact: contact.lastContact,
+        })}`,
+      });
+      setScoreExplanation(content);
     } catch (err) {
       console.error('Failed to fetch score explanation:', err);
-      setExplanationError('Failed to fetch explanation.');
+      setExplanationError(err instanceof Error ? err.message : 'Failed to fetch explanation.');
     } finally {
       setIsFetchingExplanation(false);
     }
@@ -218,48 +183,24 @@ export const AIEnhancedContactCard: React.FC<AIEnhancedContactCardProps> = ({
     setIsMultimodalEnriching(true);
     try {
       if (contact.avatarSrc) {
-        // Use OpenClaw for multimodal enrichment
-        const enrichmentResult = await openClawService.enrichContact({
-          contactId: contact.id,
-          data: {
-            name: contact.name,
-            email: contact.email,
-            phone: contact.phone,
-            company: contact.company,
-            avatarSrc: contact.avatarSrc,
-          },
-        });
-
-        const enrichedData: any = {};
-
-        // Add personality traits from OpenClaw
-        if (enrichmentResult.enrichedData) {
-          enrichedData.inferredPersonalityTraits = 'Professional, analytical, detail-oriented'; // Default, could be enhanced
-          enrichedData.communicationStyle = 'Direct and concise';
-          enrichedData.professionalDemeanor = 'Confident and approachable';
-          enrichedData.imageAnalysisNotes =
-            'Professional headshot, formal attire, confident expression';
-        }
-
-        await updateContact(contact.id, enrichedData);
+        const analysis = await analyzeImageAI(
+          contact.avatarSrc,
+          'This is a professional profile photo. Return JSON only: {"inferredPersonalityTraits": string, "communicationStyle": string, "professionalDemeanor": string, "imageAnalysisNotes": string}. Base it only on what is visible and keep it cautious.'
+        );
+        const json = analysis.match(/\{[\s\S]*\}/);
+        if (!json) throw new Error('Image analysis returned no structured result');
+        const parsed = JSON.parse(json[0]);
+        await updateContact(contact.id, {
+          inferredPersonalityTraits: parsed.inferredPersonalityTraits,
+          communicationStyle: parsed.communicationStyle,
+          professionalDemeanor: parsed.professionalDemeanor,
+          imageAnalysisNotes: parsed.imageAnalysisNotes,
+        } as any);
       } else {
         console.warn('No avatar source found for multimodal enrichment.');
       }
     } catch (error) {
-      console.error('OpenClaw multimodal enrichment failed:', error);
-      // Fallback to simulated enrichment
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        const enrichedData = {
-          inferredPersonalityTraits: 'Professional, analytical, detail-oriented',
-          communicationStyle: 'Direct and concise',
-          professionalDemeanor: 'Confident and approachable',
-          imageAnalysisNotes: 'Professional headshot, formal attire, confident expression',
-        };
-        await updateContact(contact.id, enrichedData);
-      } catch (fallbackError) {
-        console.error('Fallback multimodal enrichment also failed:', fallbackError);
-      }
+      console.error('Image-based enrichment failed:', error);
     } finally {
       setIsMultimodalEnriching(false);
     }

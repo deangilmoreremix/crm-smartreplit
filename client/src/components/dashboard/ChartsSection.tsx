@@ -103,33 +103,53 @@ const ChartsSection: React.FC = () => {
     );
   };
 
-  // Sample data for performance chart
-  const performanceData = [
-    { name: 'Jan', revenue: 12000, deals: 8 },
-    { name: 'Feb', revenue: 15000, deals: 10 },
-    { name: 'Mar', revenue: 18000, deals: 12 },
-    { name: 'Apr', revenue: 16000, deals: 9 },
-    { name: 'May', revenue: 21000, deals: 15 },
-    { name: 'Jun', revenue: 19000, deals: 14 },
-  ];
+  // Chart data computed from the real deals in the deal store
+  const dealList: any[] = Object.values(deals);
+  const now = new Date();
 
-  // Sample data for pipeline chart
-  const pipelineData = [
-    { name: 'Leads', value: 120 },
-    { name: 'Qualified', value: 85 },
-    { name: 'Proposal', value: 60 },
-    { name: 'Negotiation', value: 40 },
-    { name: 'Closed', value: 30 },
-  ];
+  // Revenue (won value) and new deals per month, last 6 months, by deal creation date
+  const performanceData = Array.from({ length: 6 }, (_, i) => {
+    const start = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+    const inMonth = dealList.filter((deal) => {
+      const created = deal.createdAt ? new Date(deal.createdAt) : null;
+      return created && created >= start && created < end;
+    });
+    return {
+      name: start.toLocaleString('en-US', { month: 'short' }),
+      revenue: inMonth
+        .filter((deal) => deal.stage?.id === 'closed-won')
+        .reduce((sum, deal) => sum + (Number(deal.value) || 0), 0),
+      deals: inMonth.length,
+    };
+  });
 
-  // Sample data for breakdown chart
-  const breakdownData = [
-    { name: 'Software', value: 45 },
-    { name: 'Services', value: 25 },
-    { name: 'Hardware', value: 15 },
-    { name: 'Training', value: 10 },
-    { name: 'Other', value: 5 },
-  ];
+  // Number of deals in each stage
+  const stageCounts = new Map<string, number>();
+  dealList.forEach((deal) => {
+    const stage = String(deal.stage?.name || deal.stage?.id || 'unknown');
+    stageCounts.set(stage, (stageCounts.get(stage) || 0) + 1);
+  });
+  const pipelineData = [...stageCounts.entries()].map(([stage, value]) => ({
+    name: stage
+      .split(/[-_ ]+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' '),
+    value,
+  }));
+
+  // Share of deal value by the linked contact's industry (percent)
+  const industryValue = new Map<string, number>();
+  dealList.forEach((deal) => {
+    const industry = (contacts as any)[deal.contactId]?.industry || 'Unspecified';
+    industryValue.set(industry, (industryValue.get(industry) || 0) + (Number(deal.value) || 0));
+  });
+  const totalDealValue = [...industryValue.values()].reduce((sum, v) => sum + v, 0);
+  const breakdownData = totalDealValue
+    ? [...industryValue.entries()]
+        .sort((x, y) => y[1] - x[1])
+        .map(([name, value]) => ({ name, value: Math.round((value / totalDealValue) * 100) }))
+    : [];
 
   // Colors for pie charts
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#83a6ed'];

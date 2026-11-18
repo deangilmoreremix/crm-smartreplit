@@ -12,7 +12,8 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["../shared/*"],
+      "@crm/ui/*": ["../packages/ui/src/*"]
     },
     "types": ["vite/client"]
   },

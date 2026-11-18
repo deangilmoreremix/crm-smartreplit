@@ -171,17 +171,9 @@ const RealTimeFormValidation: React.FC<RealTimeFormValidationProps> = ({
       return;
     }
 
+    // Validation passed. This component has no backend to submit to, so nothing is sent.
     setFormErrors([]);
-
-    // In a real app, submit the form data to your backend
-    await new Promise((resolve) => {
-      setTimeout(() => resolve(undefined), 1000);
-    });
-
-    // Reset form after successful submission
-    setFields(fields.map((field) => ({ ...field, value: '', validation: undefined })));
     setIsSubmitting(false);
-    alert('Form submitted successfully!');
   };
 
   // Create a status indicator for the field

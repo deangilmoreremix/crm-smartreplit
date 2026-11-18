@@ -26,30 +26,50 @@ const ConnectionQuality: React.FC = () => {
   useEffect(() => {
     if (!peer || !isInCall) return;
 
+    // Real WebRTC statistics from the peer's RTCPeerConnection (simple-peer exposes it as _pc)
+    let lastBytes = 0;
+    let lastTimestamp = 0;
     const statsInterval = setInterval(async () => {
       try {
-        // Get WebRTC stats (this is a simplified version)
-        // In a real implementation, you'd use peer._pc.getStats()
-
-        // Simulate realistic connection stats for demo
-        const simulatedStats: ConnectionStats = {
-          bitrate: Math.floor(800 + Math.random() * 400), // 800-1200 kbps
-          packetsLost: Math.floor(Math.random() * 5), // 0-5 packets
-          rtt: Math.floor(50 + Math.random() * 100), // 50-150ms
-          jitter: Math.floor(Math.random() * 20), // 0-20ms
-          quality: 'good',
-        };
-
-        // Determine quality based on stats
-        if (simulatedStats.rtt > 200 || simulatedStats.packetsLost > 10) {
-          simulatedStats.quality = 'poor';
-        } else if (simulatedStats.rtt > 100 || simulatedStats.packetsLost > 3) {
-          simulatedStats.quality = 'good';
-        } else {
-          simulatedStats.quality = 'excellent';
+        const pc: RTCPeerConnection | undefined = (peer as any)._pc;
+        if (!pc || typeof pc.getStats !== 'function') {
+          setStats((prev) => ({ ...prev, quality: 'disconnected' }));
+          return;
         }
+        const report = await pc.getStats();
+        let rtt = 0;
+        let packetsLost = 0;
+        let jitter = 0;
+        let bytes = 0;
+        let timestamp = 0;
+        report.forEach((entry: any) => {
+          if (entry.type === 'candidate-pair' && entry.state === 'succeeded' && entry.currentRoundTripTime != null) {
+            rtt = Math.round(entry.currentRoundTripTime * 1000);
+          }
+          if (entry.type === 'inbound-rtp' && !entry.isRemote) {
+            packetsLost += entry.packetsLost || 0;
+            jitter = Math.max(jitter, Math.round((entry.jitter || 0) * 1000));
+            bytes += entry.bytesReceived || 0;
+            timestamp = entry.timestamp;
+          }
+        });
+        const bitrate =
+          lastTimestamp && timestamp > lastTimestamp
+            ? Math.round(((bytes - lastBytes) * 8) / (timestamp - lastTimestamp)) // kbps (bits per ms)
+            : 0;
+        lastBytes = bytes;
+        lastTimestamp = timestamp;
 
-        setStats(simulatedStats);
+        const quality: ConnectionStats['quality'] =
+          pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed'
+            ? 'disconnected'
+            : rtt > 200 || packetsLost > 10
+              ? 'poor'
+              : rtt > 100 || packetsLost > 3
+                ? 'good'
+                : 'excellent';
+
+        setStats({ bitrate, packetsLost, rtt, jitter, quality });
       } catch (error) {
         console.error('Error getting connection stats:', error);
         setStats((prev) => ({ ...prev, quality: 'disconnected' }));

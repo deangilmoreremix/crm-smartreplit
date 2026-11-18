@@ -16,10 +16,11 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useTheme } from '../contexts/ThemeContext';
-import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import GlassCard from '../components/GlassCard';
-import { gpt5Communication } from '../services/gpt5CommunicationService';
+import { generateAI } from '../services/aiGenerate';
+import { useDealStore } from '../store/dealStore';
+import { useContactStore } from '../hooks/useContactStore';
 import {
   BarChart3,
   TrendingUp,
@@ -83,9 +84,9 @@ interface BusinessStats {
   totalCustomers: number;
   averageOrderValue: number;
   conversionRate: number;
-  customerRetention: number;
-  monthlyGrowth: number;
-  aiAccuracy: number;
+  customerRetention: number | null;
+  monthlyGrowth: number | null;
+  aiAccuracy: number | null;
   insightsGenerated: number;
 }
 
@@ -102,181 +103,103 @@ export default function BusinessAnalyzerDashboard() {
   const [dataSources, setDataSources] = useState('all');
   const [reportFormat, setReportFormat] = useState('interactive');
 
-  // Mock data
-  const mockMetrics: BusinessMetric[] = [
-    {
-      id: '1',
-      name: 'Monthly Revenue',
-      value: 125000,
-      change: 12.5,
-      trend: 'up',
-      category: 'revenue',
-      period: 'This Month',
-    },
-    {
-      id: '2',
-      name: 'Active Customers',
-      value: 2847,
-      change: 8.3,
-      trend: 'up',
-      category: 'customers',
-      period: 'This Month',
-    },
-    {
-      id: '3',
-      name: 'Conversion Rate',
-      value: 3.2,
-      change: -2.1,
-      trend: 'down',
-      category: 'marketing',
-      period: 'This Month',
-    },
-    {
-      id: '4',
-      name: 'Average Order Value',
-      value: 89.5,
-      change: 5.7,
-      trend: 'up',
-      category: 'revenue',
-      period: 'This Month',
-    },
-    {
-      id: '5',
-      name: 'Customer Retention',
-      value: 78.4,
-      change: 3.2,
-      trend: 'up',
-      category: 'customers',
-      period: 'This Month',
-    },
-    {
-      id: '6',
-      name: 'Operational Efficiency',
-      value: 92.1,
-      change: 1.8,
-      trend: 'up',
-      category: 'operations',
-      period: 'This Month',
-    },
+  // Business data computed from CRM records (deals and contacts)
+  const { deals } = useDealStore();
+  const { contacts } = useContactStore();
+  const dealsArray = Object.values(deals);
+  const contactsArray = Object.values(contacts);
+  const DAY = 86400000;
+  const now = Date.now();
+  const wonDeals = dealsArray.filter((d) => String(d.stage) === 'closed-won');
+  const closeTime = (d: any) => new Date(d.actualCloseDate || d.closedAt || d.updatedAt || d.createdAt).getTime();
+  const inWindow = (time: number, fromDaysAgo: number, toDaysAgo: number) =>
+    now - time < fromDaysAgo * DAY && now - time >= toDaysAgo * DAY;
+  const pctChange = (current: number, previous: number) =>
+    previous > 0 ? Math.round(((current - previous) / previous) * 1000) / 10 : 0;
+  const trendOf = (change: number): 'up' | 'down' | 'stable' => (change > 0 ? 'up' : change < 0 ? 'down' : 'stable');
+
+  const revenue30 = wonDeals.filter((d) => inWindow(closeTime(d), 30, 0)).reduce((s, d) => s + d.value, 0);
+  const revenuePrev30 = wonDeals.filter((d) => inWindow(closeTime(d), 60, 30)).reduce((s, d) => s + d.value, 0);
+  const contacts30 = contactsArray.filter((c: any) => c.createdAt && inWindow(new Date(c.createdAt).getTime(), 30, 0)).length;
+  const contactsPrev30 = contactsArray.filter((c: any) => c.createdAt && inWindow(new Date(c.createdAt).getTime(), 60, 30)).length;
+  const won30 = wonDeals.filter((d) => inWindow(closeTime(d), 30, 0)).length;
+  const wonPrev30 = wonDeals.filter((d) => inWindow(closeTime(d), 60, 30)).length;
+  const openPipeline = dealsArray
+    .filter((d) => !['closed-won', 'closed-lost'].includes(String(d.stage)))
+    .reduce((s, d) => s + d.value, 0);
+
+  const metrics: BusinessMetric[] = [
+    { id: 'revenue', name: 'Won Revenue (30 days)', value: revenue30, change: pctChange(revenue30, revenuePrev30), trend: trendOf(revenue30 - revenuePrev30), category: 'revenue', period: 'Last 30 days' },
+    { id: 'contacts', name: 'New Contacts (30 days)', value: contacts30, change: pctChange(contacts30, contactsPrev30), trend: trendOf(contacts30 - contactsPrev30), category: 'customers', period: 'Last 30 days' },
+    { id: 'won', name: 'Deals Won (30 days)', value: won30, change: pctChange(won30, wonPrev30), trend: trendOf(won30 - wonPrev30), category: 'operations', period: 'Last 30 days' },
+    { id: 'pipeline', name: 'Open Pipeline Value', value: openPipeline, change: 0, trend: 'stable', category: 'revenue', period: 'Current' },
   ];
 
-  const mockInsights: Insight[] = [
-    {
-      id: '1',
-      title: 'Revenue Growth Opportunity',
-      description:
-        'Customer segment analysis shows 15% potential revenue increase through targeted upsell campaigns',
-      impact: 'high',
-      confidence: 0.89,
-      category: 'Revenue',
-      recommendation: 'Implement personalized upsell recommendations based on purchase history',
-      gpt5Analysis: {
-        reasoning: 'Based on customer behavior patterns and market trends',
-        dataPoints: [
-          'Purchase frequency increased 23%',
-          'Average cart value up 12%',
-          'Customer lifetime value improved',
-        ],
-        predictedOutcome: 'Expected 15-20% revenue increase within 3 months',
-      },
-    },
-    {
-      id: '2',
-      title: 'Customer Churn Risk',
-      description: 'Early warning system detected 45 customers showing churn indicators',
-      impact: 'high',
-      confidence: 0.76,
-      category: 'Retention',
-      recommendation: 'Send personalized retention offers to at-risk customers',
-      gpt5Analysis: {
-        reasoning: 'Pattern recognition in customer engagement metrics',
-        dataPoints: [
-          'Login frequency decreased 40%',
-          'Support tickets increased 25%',
-          'Feature usage dropped',
-        ],
-        predictedOutcome: 'Can reduce churn by 30% with immediate intervention',
-      },
-    },
-    {
-      id: '3',
-      title: 'Market Trend Opportunity',
-      description: 'AI detected emerging demand for sustainable products in your market',
-      impact: 'medium',
-      confidence: 0.68,
-      category: 'Market',
-      recommendation: 'Consider expanding product line to include eco-friendly options',
-      gpt5Analysis: {
-        reasoning: 'Cross-industry data analysis and consumer sentiment tracking',
-        dataPoints: [
-          'Competitor sustainability initiatives up 45%',
-          'Consumer surveys show 62% interest',
-          'Market research indicates 28% growth potential',
-        ],
-        predictedOutcome: 'Potential market share increase of 12-15%',
-      },
-    },
-  ];
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [insightError, setInsightError] = useState<string | null>(null);
+  // No report generator exists yet; reports appear here once one does
+  const reports: Report[] = [];
 
-  const mockReports: Report[] = [
-    {
-      id: '1',
-      title: 'Q4 Performance Analysis',
-      type: 'performance',
-      status: 'ready',
-      createdDate: '2024-01-15',
-      data: {},
-    },
-    {
-      id: '2',
-      title: '2025 Revenue Forecast',
-      type: 'forecast',
-      status: 'ready',
-      createdDate: '2024-01-12',
-      data: {},
-    },
-  ];
-
-  const mockStats: BusinessStats = {
-    totalRevenue: 1850000,
-    totalCustomers: 2847,
-    averageOrderValue: 89.5,
-    conversionRate: 3.2,
-    customerRetention: 78.4,
-    monthlyGrowth: 12.5,
-    aiAccuracy: 0.87,
-    insightsGenerated: 156,
+  const totalRevenue = wonDeals.reduce((s, d) => s + d.value, 0);
+  const stats: BusinessStats = {
+    totalRevenue,
+    totalCustomers: contactsArray.length,
+    averageOrderValue: wonDeals.length > 0 ? Math.round(totalRevenue / wonDeals.length) : 0,
+    conversionRate: dealsArray.length > 0 ? wonDeals.length / dealsArray.length : 0,
+    customerRetention: null, // needs repeat-purchase data the CRM doesn't track
+    monthlyGrowth: revenuePrev30 > 0 ? pctChange(revenue30, revenuePrev30) : null,
+    aiAccuracy: null, // no prediction tracking to measure against
+    insightsGenerated: insights.length,
   };
 
-  const { data: metrics = mockMetrics, isLoading: metricsLoading } = useQuery<BusinessMetric[]>({
-    queryKey: ['/api/business/metrics'],
-    refetchInterval: 30000,
-  });
+  // Won revenue grouped by deal source
+  const revenueBySource = Object.entries(
+    wonDeals.reduce<Record<string, number>>((acc, d: any) => {
+      const source = d.source || 'other';
+      acc[source] = (acc[source] || 0) + d.value;
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1] - a[1]);
 
-  const { data: insights = mockInsights, isLoading: insightsLoading } = useQuery<Insight[]>({
-    queryKey: ['/api/business/insights'],
-    refetchInterval: 30000,
-  });
-
-  const { data: reports = mockReports, isLoading: reportsLoading } = useQuery<Report[]>({
-    queryKey: ['/api/business/reports'],
-    refetchInterval: 30000,
-  });
-
-  const { data: stats = mockStats, isLoading: statsLoading } = useQuery<BusinessStats>({
-    queryKey: ['/api/business/stats'],
-    refetchInterval: 30000,
-  });
-
-  const generateInsight = async (metric: BusinessMetric) => {
+  const generateInsight = async () => {
     setIsAnalyzing(true);
+    setInsightError(null);
     try {
-      const result = await gpt5Communication.optimizeContent(
-        `Business Metric: ${metric.name}, Value: ${metric.value}, Change: ${metric.change}%, Trend: ${metric.trend}, Category: ${metric.category}`,
-        'business-analysis'
+      const result = await generateAI({
+        prompt: `Analyze these business metrics from a CRM and give 3-5 actionable insights. Only use the numbers provided.\n${JSON.stringify({ metrics, stats: { ...stats, conversionRate: Math.round(stats.conversionRate * 1000) / 10 }, revenueBySource })}`,
+        schemaName: 'business_insights',
+        schema: {
+          type: 'object',
+          properties: {
+            insights: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  description: { type: 'string' },
+                  impact: { type: 'string', enum: ['high', 'medium', 'low'] },
+                  confidence: { type: 'number' },
+                  category: { type: 'string' },
+                  recommendation: { type: 'string' },
+                },
+                required: ['title', 'description', 'impact', 'confidence', 'category', 'recommendation'],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ['insights'],
+          additionalProperties: false,
+        },
+      });
+      setInsights(
+        (result.data?.insights || []).map((insight: Omit<Insight, 'id'>, index: number) => ({
+          ...insight,
+          id: `insight-${Date.now()}-${index}`,
+        }))
       );
     } catch (error) {
-      console.error('Failed to generate business insight:', error);
+      setInsightError(error instanceof Error ? error.message : 'AI insights are unavailable');
     } finally {
       setIsAnalyzing(false);
     }
@@ -318,7 +241,7 @@ export default function BusinessAnalyzerDashboard() {
     <Button
       key="ai-analysis"
       variant="outline"
-      onClick={() => generateInsight(mockMetrics[0])}
+      onClick={generateInsight}
       disabled={isAnalyzing}
     >
       <Sparkles className="h-4 w-4 mr-2" />
@@ -457,6 +380,11 @@ export default function BusinessAnalyzerDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
+                {insights.length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    {insightError || 'Click "AI Business Insights" to analyze your CRM numbers.'}
+                  </p>
+                )}
                 {insights.map((insight) => (
                   <GlassCard
                     key={insight.id}
@@ -514,27 +442,22 @@ export default function BusinessAnalyzerDashboard() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Monthly Growth Rate</span>
-                    <span className="font-semibold text-green-600">+{stats.monthlyGrowth}%</span>
+                    <span className="font-semibold text-green-600">
+                      {stats.monthlyGrowth === null ? 'No prior-month revenue' : `${stats.monthlyGrowth > 0 ? '+' : ''}${stats.monthlyGrowth}%`}
+                    </span>
                   </div>
-                  <Progress value={stats.monthlyGrowth} className="h-2" />
+                  <Progress value={Math.max(0, Math.min(100, stats.monthlyGrowth ?? 0))} className="h-2" />
 
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">AI Prediction Accuracy</span>
-                    <span className="font-semibold">{Math.round(stats.aiAccuracy * 100)}%</span>
+                    <span className="text-sm">Deal Conversion Rate</span>
+                    <span className="font-semibold">{Math.round(stats.conversionRate * 100)}%</span>
                   </div>
-                  <Progress value={stats.aiAccuracy * 100} className="h-2" />
+                  <Progress value={stats.conversionRate * 100} className="h-2" />
 
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Customer Retention Rate</span>
-                    <span className="font-semibold">{stats.customerRetention}%</span>
+                    <span className="text-sm">Average Won Deal Value</span>
+                    <span className="font-semibold">${stats.averageOrderValue.toLocaleString()}</span>
                   </div>
-                  <Progress value={stats.customerRetention} className="h-2" />
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Average Order Value</span>
-                    <span className="font-semibold">${stats.averageOrderValue}</span>
-                  </div>
-                  <Progress value={(stats.averageOrderValue / 150) * 100} className="h-2" />
                 </div>
               </CardContent>
             </GlassCard>
@@ -543,27 +466,20 @@ export default function BusinessAnalyzerDashboard() {
               <CardHeader className="px-0 pt-0">
                 <CardTitle className="flex items-center gap-2">
                   <PieChart className="h-5 w-5" />
-                  Revenue Breakdown
+                  Won Revenue by Source
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-0 pb-0">
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Product Sales</span>
-                    <span className="font-semibold">$1,250,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Services</span>
-                    <span className="font-semibold">$425,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Subscriptions</span>
-                    <span className="font-semibold">$180,000</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Other Revenue</span>
-                    <span className="font-semibold">$95,000</span>
-                  </div>
+                  {revenueBySource.length === 0 && (
+                    <p className="text-sm text-gray-500">No won deals yet.</p>
+                  )}
+                  {revenueBySource.map(([source, value]) => (
+                    <div key={source} className="flex justify-between items-center">
+                      <span className="text-sm capitalize">{source.replace('-', ' ')}</span>
+                      <span className="font-semibold">${value.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </GlassCard>
@@ -580,6 +496,7 @@ export default function BusinessAnalyzerDashboard() {
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="space-y-4">
+                {reports.length === 0 && <p className="text-sm text-gray-500">No reports yet.</p>}
                 {reports.map((report) => (
                   <GlassCard key={report.id} className="p-4">
                     <div className="flex items-center justify-between">

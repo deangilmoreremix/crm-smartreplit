@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SourcesList } from '../ai/SourcesList';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../contexts/ThemeContext';
 import { enhancedGeminiService } from '../../services/enhancedGeminiService';
@@ -587,6 +588,7 @@ ${analysis.recommendations?.map((rec: string, index: number) => `${index + 1}. $
                 </ul>
               </motion.div>
             )}
+            <SourcesList sources={analysis.sources} />
           </motion.div>
         )}
       </AnimatePresence>

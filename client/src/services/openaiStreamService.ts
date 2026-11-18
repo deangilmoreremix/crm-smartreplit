@@ -1,78 +1,30 @@
-import { useApiStore } from '../store/apiStore';
-import { useState } from 'react';
+import { generateAI } from './aiGenerate';
+
+// Chat goes through the server (POST /api/ai/generate) with the user's own OpenAI key. It previously
+// streamed from api.openai.com in the browser with a key nothing ever set. The server response is not
+// streamed: the full reply is delivered as a single chunk/token.
+const tierFor = (model: string): 'default' | 'advanced' =>
+  /sol|^gpt-4o$|^gpt-4$|^gpt-4\.1$|^o3$/.test(model) ? 'advanced' : 'default';
 
 export const useOpenAIStream = () => {
-  const { apiKeys } = useApiStore();
-
   const streamChat = async (
     messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
     onChunk: (chunk: string) => void,
     onComplete: () => void,
     onError: (error: Error) => void,
-    model: string = 'gpt-4o'
+    model: string = 'gpt-6-luna'
   ) => {
-    if (!apiKeys.openai) {
-      onError(new Error('OpenAI API key is not set'));
-      return;
-    }
-
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKeys.openai}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: true,
-          max_tokens: 1000,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get response reader');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              onComplete();
-              return;
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                onChunk(content);
-              }
-            } catch (e) {
-              // Ignore parsing errors for incomplete chunks
-            }
-          }
-        }
-      }
-
+      const system = messages
+        .filter((m) => m.role === 'system')
+        .map((m) => m.content)
+        .join('\n\n');
+      const prompt = messages
+        .filter((m) => m.role !== 'system')
+        .map((m) => `${m.role}: ${m.content}`)
+        .join('\n\n');
+      const { content } = await generateAI({ prompt, system: system || undefined, tier: tierFor(model), maxTokens: 1000 });
+      if (content) onChunk(content);
       onComplete();
     } catch (error) {
       onError(error as Error);
@@ -83,78 +35,16 @@ export const useOpenAIStream = () => {
     userMessage: string,
     systemPrompt: string,
     onToken: (token: string) => void,
-    model: string = 'gpt-4o'
+    model: string = 'gpt-6-luna'
   ): Promise<string> => {
-    if (!apiKeys.openai) {
-      throw new Error('OpenAI API key is not set');
-    }
-
-    const fullContent: string[] = [];
-
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKeys.openai}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage },
-          ],
-          stream: true,
-          max_tokens: 2000,
-          temperature: 0.7,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get response reader');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return fullContent.join('');
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                fullContent.push(content);
-                onToken(content);
-              }
-            } catch (e) {
-              // Ignore parsing errors for incomplete chunks
-            }
-          }
-        }
-      }
-
-      return fullContent.join('');
-    } catch (error) {
-      throw error;
-    }
+    const { content } = await generateAI({
+      prompt: userMessage,
+      system: systemPrompt,
+      tier: tierFor(model),
+      maxTokens: 2000,
+    });
+    if (content) onToken(content);
+    return content;
   };
 
   return { streamChat, streamChatCompletion };

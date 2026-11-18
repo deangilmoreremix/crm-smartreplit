@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Goal } from '../types/goals';
 import {
   Clock,
@@ -37,13 +37,7 @@ const InteractiveGoalCard: React.FC<InteractiveGoalCardProps> = ({
   showExpandedDetails = false,
   onToggleDetails,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [liveMetrics, setLiveMetrics] = useState({
-    estimatedValue: parseInt(goal.roi.replace(/[^0-9]/g, '')) * 1000 || 25000,
-    timeToComplete: parseInt(goal.estimatedSetupTime.replace(/[^0-9]/g, '')) || 15,
-    confidence: goal.priority === 'High' ? 95 : goal.priority === 'Medium' ? 85 : 75,
-    agentsRequired: goal.agentsRequired.length || 3,
-  });
+  const agentCount = goal.agentsRequired.length;
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -90,44 +84,12 @@ const InteractiveGoalCard: React.FC<InteractiveGoalCardProps> = ({
     }
   };
 
-  // Calculate estimated value based on goal properties
-  const getEstimatedValue = (): string => {
-    const baseValue = parseInt(goal.roi.replace(/[^0-9]/g, '')) || 300;
-    const multiplier = goal.priority === 'High' ? 10000 : goal.priority === 'Medium' ? 5000 : 2000;
-    const complexity =
-      goal.complexity === 'Advanced' ? 1.5 : goal.complexity === 'Intermediate' ? 1.2 : 1.0;
-
-    const estimatedValue = baseValue * multiplier * complexity;
-
-    if (estimatedValue >= 1000000) {
-      return `$${(estimatedValue / 1000000).toFixed(1)}M`;
-    } else if (estimatedValue >= 1000) {
-      return `$${(estimatedValue / 1000).toFixed(0)}K`;
-    }
-    return `$${estimatedValue.toLocaleString()}`;
-  };
-
-  // Simulate live metrics updates in real mode
-  useEffect(() => {
-    if (realMode && isHovered) {
-      const interval = setInterval(() => {
-        setLiveMetrics((prev) => ({
-          ...prev,
-          estimatedValue: prev.estimatedValue + Math.floor(Math.random() * 500 - 250),
-          confidence: Math.min(99, Math.max(70, prev.confidence + Math.random() * 2 - 1)),
-        }));
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [realMode, isHovered]);
 
   return (
     <div
       className={`relative group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] ${
         isExecuting ? 'ring-2 ring-blue-500 animate-pulse' : ''
       } ${isCompleted ? 'ring-2 ring-green-500' : ''}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header with Category Badge and Priority */}
       <div className="relative overflow-hidden">
@@ -203,10 +165,10 @@ const InteractiveGoalCard: React.FC<InteractiveGoalCardProps> = ({
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              Estimated Value
+              Expected ROI
             </div>
             <div className="font-semibold text-green-600 dark:text-green-400 text-sm">
-              {getEstimatedValue()}
+              {goal.roi}
             </div>
           </div>
 
@@ -216,38 +178,21 @@ const InteractiveGoalCard: React.FC<InteractiveGoalCardProps> = ({
               Agents
             </div>
             <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
-              {liveMetrics.agentsRequired}
+              {agentCount}
             </div>
           </div>
 
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
             <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-1">
               <Star className="h-3 w-3 mr-1" />
-              Success Rate
+              Complexity
             </div>
             <div className="font-semibold text-blue-600 dark:text-blue-400 text-sm">
-              {liveMetrics.confidence}%
+              {goal.complexity}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Real Mode Live Metrics */}
-      {realMode && isHovered && (
-        <div className="px-6 pb-4">
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-3 border border-green-200 dark:border-green-700/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center text-green-700 dark:text-green-300 text-xs">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
-                Live AI Metrics
-              </div>
-              <div className="text-green-600 dark:text-green-400 font-semibold text-sm">
-                ${liveMetrics.estimatedValue.toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Action Buttons */}
       <div className="px-6 pb-6">

@@ -9,6 +9,7 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import * as aiService from '../services/aiToolsService';
+import { sendAIError } from '../services/aiToolsService';
 import { memoryService } from '../memory';
 
 export function registerAIAdvancedRoutes(app: Express): void {
@@ -40,7 +41,7 @@ export function registerAIAdvancedRoutes(app: Express): void {
          res.json({ success: true, analysis: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': ' + (result.error?.message || 'unknown'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, analysis: { analysis: 'Configure OpenAI API key for vision analysis. Ensure the image URL is publicly accessible.' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -71,7 +72,7 @@ export function registerAIAdvancedRoutes(app: Express): void {
          res.json({ success: true, results: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': ' + (result.error?.message || 'unknown'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, results: { results: [], query_understanding: query, suggested_refinements: ['Configure OpenAI API key'] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -102,7 +103,7 @@ export function registerAIAdvancedRoutes(app: Express): void {
          res.json({ success: true, response: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': ' + (result.error?.message || 'unknown'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, response: { reasoning_steps: ['Configure OpenAI API key for function assistant.'], conclusion: 'API key required.', confidence: 0, assumptions: [], alternative_approaches: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -133,7 +134,7 @@ export function registerAIAdvancedRoutes(app: Express): void {
          res.json({ success: true, reasoning: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': ' + (result.error?.message || 'unknown'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, reasoning: { reasoning_steps: ['Configure OpenAI API key.'], conclusion: 'API key required.', confidence: 0, assumptions: [], alternative_approaches: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -164,7 +165,7 @@ export function registerAIAdvancedRoutes(app: Express): void {
          res.json({ success: true, research: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': ' + (result.error?.message || 'unknown'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, research: { summary: 'Configure OpenAI API key.', key_findings: [], sources_suggested: [], related_topics: [], market_implications: [], action_items: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -195,7 +196,7 @@ export function registerAIAdvancedRoutes(app: Express): void {
          res.json({ success: true, recommendations: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Error in ' + req.path + ': ' + (result.error?.message || 'unknown'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, recommendations: { recommendations: [], insights: ['Configure OpenAI API key'], confidence: 0 }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
    );

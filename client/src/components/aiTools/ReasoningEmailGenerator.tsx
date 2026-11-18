@@ -11,7 +11,7 @@ import {
   Zap,
   CheckCircle,
 } from 'lucide-react';
-import { openAIService } from '../../services/openAIService';
+import { generateAI } from '../../services/aiGenerate';
 
 const ReasoningEmailGenerator: React.FC = () => {
   const { isDark } = useTheme();
@@ -19,79 +19,62 @@ const ReasoningEmailGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateEmail = async () => {
     if (!input.trim()) return;
 
     setIsGenerating(true);
+    setError(null);
+    setResult(null);
 
     try {
-      const prompt = `Generate a professional email with detailed reasoning for: ${input}
+      // Strict JSON Schema so the result always has this shape (no parsing fallbacks)
+      const { data } = await generateAI({
+        prompt: `Generate a professional email with detailed reasoning for: ${input}
 
-Please provide:
-1. A complete email with subject line
-2. Step-by-step reasoning for each decision
-3. Psychological insights behind the approach
-4. Suggestions for improvement
-5. Analytics scores (sentiment, formality, persuasiveness, clarity)
-
-Format the response as JSON with these keys: email, reasoning, improvements, analytics`;
-
-      const response = await openAIService.generateCompletion(prompt, {
-        model: 'gpt-4',
-        temperature: 0.7,
-        maxTokens: 1000,
-      });
-
-      try {
-        const parsed = JSON.parse(response.content);
-        setResult(parsed);
-      } catch (parseError) {
-        // Fallback if JSON parsing fails
-        setResult({
-          email: response.content,
-          reasoning: {
-            strategy: 'AI-generated professional approach',
-            tone: 'Contextually appropriate',
-            psychology: 'Focuses on building rapport and clear communication',
-            structure: 'Logical flow with clear purpose',
+Provide: a complete email with subject line; the reasoning (strategy, tone, psychology, structure);
+suggestions for improvement; and your own 0-100 assessment of the email's sentiment, formality,
+persuasiveness and clarity.`,
+        schemaName: 'reasoning_email',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['email', 'reasoning', 'improvements', 'analytics'],
+          properties: {
+            email: { type: 'string' },
+            reasoning: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['strategy', 'tone', 'psychology', 'structure'],
+              properties: {
+                strategy: { type: 'string' },
+                tone: { type: 'string' },
+                psychology: { type: 'string' },
+                structure: { type: 'string' },
+              },
+            },
+            improvements: { type: 'array', items: { type: 'string' } },
+            analytics: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['sentiment', 'formality', 'persuasiveness', 'clarity'],
+              properties: {
+                sentiment: { type: 'integer' },
+                formality: { type: 'integer' },
+                persuasiveness: { type: 'integer' },
+                clarity: { type: 'integer' },
+              },
+            },
           },
-          improvements: [
-            'Review for personalization opportunities',
-            'Consider adding specific metrics or examples',
-            'Adjust tone based on recipient relationship',
-          ],
-          analytics: {
-            sentiment: 85,
-            formality: 75,
-            persuasiveness: 80,
-            clarity: 90,
-          },
-        });
-      }
-    } catch (error) {
-      console.error('Error generating email:', error);
-      // Fallback result
-      setResult({
-        email: `Subject: Follow-up on ${input}\n\nI wanted to reach out regarding ${input}. Based on our previous interactions, I believe this could be valuable for your business.\n\nWould you be available for a brief call to discuss this further?\n\nBest regards`,
-        reasoning: {
-          strategy: 'Direct and professional approach',
-          tone: 'Business-appropriate',
-          psychology: 'Builds on existing relationship',
-          structure: 'Clear and concise',
         },
-        improvements: [
-          'Add specific details about the value proposition',
-          'Include a concrete next step',
-          "Personalize based on recipient's interests",
-        ],
-        analytics: {
-          sentiment: 80,
-          formality: 85,
-          persuasiveness: 75,
-          clarity: 90,
-        },
+        tier: 'advanced',
       });
+      if (!data) throw new Error('The AI returned no email');
+      setResult(data);
+    } catch (err) {
+      console.error('Error generating email:', err);
+      setError(err instanceof Error ? err.message : 'Email generation failed');
     } finally {
       setIsGenerating(false);
     }
@@ -162,6 +145,12 @@ Format the response as JSON with these keys: email, reasoning, improvements, ana
           )}
         </button>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+          AI email generation unavailable: {error}
+        </div>
+      )}
 
       {result && (
         <div className={`mt-8 p-6 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>

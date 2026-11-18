@@ -110,108 +110,36 @@ export default function VoiceProfilesDashboard() {
   const [languageDetection, setLanguageDetection] = useState('auto');
   const [voiceStorage, setVoiceStorage] = useState('cloud');
 
-  // Mock data
-  const mockProfiles: VoiceProfile[] = [
-    {
-      id: '1',
-      name: 'Professional Male',
-      description:
-        'Clear, confident voice perfect for business presentations and corporate communications',
-      voiceType: 'male',
-      language: 'English',
-      accent: 'American',
-      age: 'Adult',
-      personality: 'Professional',
-      useCase: 'Business Presentations',
-      status: 'active',
-      createdDate: '2024-01-15',
-      lastUsed: '2024-01-20',
-      usageCount: 245,
-      quality: 0.92,
-      gpt5Optimization: {
-        voiceClarity: 0.95,
-        naturalness: 0.88,
-        emotionalRange: 0.82,
-        languageAccuracy: 0.96,
-        recommendations: [
-          'Slightly increase warmth for better engagement',
-          'Consider adding more dynamic intonation',
-        ],
-      },
-    },
-    {
-      id: '2',
-      name: 'Friendly Female',
-      description: 'Warm, approachable voice ideal for customer service and educational content',
-      voiceType: 'female',
-      language: 'English',
-      accent: 'British',
-      age: 'Adult',
-      personality: 'Friendly',
-      useCase: 'Customer Service',
-      status: 'active',
-      createdDate: '2024-01-12',
-      lastUsed: '2024-01-19',
-      usageCount: 189,
-      quality: 0.89,
-      gpt5Optimization: {
-        voiceClarity: 0.91,
-        naturalness: 0.94,
-        emotionalRange: 0.89,
-        languageAccuracy: 0.93,
-        recommendations: [
-          'Excellent naturalness score',
-          'Consider adding more authoritative tone for leadership content',
-        ],
-      },
-    },
-    {
-      id: '3',
-      name: 'Youthful Neutral',
-      description: 'Modern, energetic voice suitable for tech tutorials and social media content',
-      voiceType: 'neutral',
-      language: 'English',
-      accent: 'Australian',
-      age: 'Young Adult',
-      personality: 'Energetic',
-      useCase: 'Tech Tutorials',
-      status: 'training',
-      createdDate: '2024-01-10',
-      lastUsed: '2024-01-18',
-      usageCount: 67,
-      quality: 0.78,
-      gpt5Optimization: {
-        voiceClarity: 0.85,
-        naturalness: 0.76,
-        emotionalRange: 0.91,
-        languageAccuracy: 0.88,
-        recommendations: [
-          'Training in progress - naturalness improving',
-          'Focus on clarity for technical terms',
-        ],
-      },
-    },
-  ];
-
-  const mockStats: VoiceStats = {
-    totalProfiles: 12,
-    activeProfiles: 8,
-    totalUsage: 3456,
-    averageQuality: 0.87,
-    mostUsedProfile: 'Professional Male',
-    monthlyGrowth: 0.23,
-    aiOptimizationScore: 0.91,
-    languageSupport: 15,
+  // /api/voice/* has no server route yet: show an empty state instead of demo profiles/stats
+  const emptyStats: VoiceStats = {
+    totalProfiles: 0,
+    activeProfiles: 0,
+    totalUsage: 0,
+    averageQuality: 0,
+    mostUsedProfile: '-',
+    monthlyGrowth: 0,
+    aiOptimizationScore: 0,
+    languageSupport: 0,
   };
 
-  const { data: profiles = mockProfiles, isLoading: profilesLoading } = useQuery<VoiceProfile[]>({
+  const {
+    data: profiles = [],
+    isLoading: profilesLoading,
+    isError: profilesError,
+  } = useQuery<VoiceProfile[]>({
     queryKey: ['/api/voice/profiles'],
     refetchInterval: 30000,
+    retry: false,
   });
 
-  const { data: stats = mockStats, isLoading: statsLoading } = useQuery<VoiceStats>({
+  const {
+    data: stats = emptyStats,
+    isLoading: statsLoading,
+    isError: statsError,
+  } = useQuery<VoiceStats>({
     queryKey: ['/api/voice/stats'],
     refetchInterval: 30000,
+    retry: false,
   });
 
   const optimizeVoiceProfile = async (profile: VoiceProfile) => {
@@ -266,8 +194,8 @@ export default function VoiceProfilesDashboard() {
     <Button
       key="ai-optimize"
       variant="outline"
-      onClick={() => optimizeVoiceProfile(mockProfiles[0])}
-      disabled={isOptimizing}
+      onClick={() => profiles[0] && optimizeVoiceProfile(profiles[0])}
+      disabled={isOptimizing || profiles.length === 0}
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isOptimizing ? 'Optimizing...' : 'AI Voice Optimization'}
@@ -319,6 +247,11 @@ export default function VoiceProfilesDashboard() {
       actionButtons={actionButtons}
       headerStats={headerStats}
     >
+      {(profilesError || statsError) && (
+        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+          Voice profiles are not available yet: the voice service is not set up.
+        </div>
+      )}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profiles">Voice Profiles</TabsTrigger>

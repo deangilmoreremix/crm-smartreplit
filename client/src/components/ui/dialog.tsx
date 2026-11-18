@@ -32,13 +32,8 @@ const Dialog: React.FC<DialogProps> = ({ open: controlledOpen, onOpenChange: con
 
   return (
     <DialogContext.Provider value={{ open, onOpenChange }}>
+      {/* The overlay is rendered by DialogContent; a second one here sat on top of the content, blurring it and blocking clicks */}
       {children}
-      {open && createPortal(
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm">
-          <div className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]" />
-        </div>,
-        document.body
-      )}
     </DialogContext.Provider>
   );
 };

@@ -5,6 +5,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
+import { requestContext } from '../services/requestContext';
 
 const router = Router();
 
@@ -15,6 +16,20 @@ const serviceRoleKey =
 
 export interface RequireAuthOptions {
   checkEntitlement?: boolean;
+}
+
+/**
+ * Verify a Supabase access token (sent by the client as a Bearer token).
+ * Returns the user, or null if the token is missing/invalid or Supabase is not configured.
+ */
+export async function verifySupabaseToken(
+  token: string
+): Promise<{ id: string; email?: string } | null> {
+  if (!token || !supabaseUrl || !serviceRoleKey) return null;
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) return null;
+  return { id: data.user.id, email: data.user.email };
 }
 
 function isRequireAuthOptions(arg: any): arg is RequireAuthOptions {
@@ -57,6 +72,15 @@ async function requireAuthHandler(
           };
         }
       }
+
+      if (!userId && authHeader?.startsWith('Bearer ')) {
+        const user = await verifySupabaseToken(authHeader.substring(7));
+        if (user) {
+          userId = user.id;
+          userEmail = user.email;
+          isAuthenticated = true;
+        }
+      }
     }
 
     if (!userId) {
@@ -65,6 +89,8 @@ async function requireAuthHandler(
 
     (req as any).userId = userId;
     (req as any).isAuthenticated = isAuthenticated;
+    const ctx = requestContext.getStore();
+    if (ctx) ctx.userId = userId;
     if (userEmail) {
       (req as any).userEmail = userEmail;
     }
@@ -73,7 +99,7 @@ async function requireAuthHandler(
       if (supabaseUrl && serviceRoleKey) {
         const supabase = createClient(supabaseUrl, serviceRoleKey);
         const { data: entitlement } = await supabase
-          .from('user_entitlements')
+          .from('smartcrm_user_entitlements')
           .select('package')
           .eq('user_id', userId)
           .single();
@@ -122,8 +148,15 @@ export const requireAuth = (options?: RequireAuthOptions | Request) => {
  */
 export const requireAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req.session as any)?.userId;
-    const userEmail = (req.session as any)?.userEmail;
+    let userId = (req as any).userId ?? (req.session as any)?.userId;
+    let userEmail = (req as any).userEmail ?? (req.session as any)?.userEmail;
+
+    const authHeader = req.headers.authorization;
+    if (!userId && authHeader?.startsWith('Bearer ')) {
+      const user = await verifySupabaseToken(authHeader.substring(7));
+      userId = user?.id;
+      userEmail = user?.email;
+    }
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
@@ -136,9 +169,9 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const [profileResult, entitlementResult] = await Promise.all([
-      supabase.from('profiles').select('role, product_tier').eq('id', userId).single(),
+      supabase.from('profiles').select('role').eq('id', userId).single(),
       userEmail
-        ? supabase.rpc('user_has_feature', {
+        ? supabase.rpc('smartcrm_user_has_feature', {
             input_email: userEmail,
             input_feature_key: 'admin_panel',
           })

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { generateAI } from '../services/aiGenerate';
 import {
   Email,
   EmailTemplate,
@@ -406,31 +407,49 @@ export const useCommunicationStore = create<CommunicationStore>()(
 
       // AI suggestions
       generateAISuggestions: async (emailId) => {
-        // Mock AI suggestions - in real app, this would call an AI service
-        const suggestions: AISuggestion[] = [
-          {
-            id: crypto.randomUUID(),
-            type: 'subject',
-            suggestion: 'Add personalization to increase open rates',
-            confidence: 0.85,
-            reasoning: 'Emails with personalized subjects have 26% higher open rates',
-            applied: false,
-          },
-          {
-            id: crypto.randomUUID(),
-            type: 'timing',
-            suggestion: 'Send on Tuesday at 2 PM for optimal engagement',
-            confidence: 0.92,
-            reasoning: "Based on recipient's past engagement patterns",
-            applied: false,
-          },
-        ];
-
+        // Real AI suggestions for this email (previously two hardcoded suggestions with invented statistics)
         const email = get().getEmail(emailId);
-        if (email) {
-          get().updateEmail(emailId, { aiSuggestions: suggestions });
-        }
+        if (!email) throw new Error('Email not found');
 
+        const result = await generateAI({
+          prompt: `Suggest concrete improvements to this sales email. Do not invent statistics.
+Subject: ${email.subject}
+Body:
+${email.content || ''}`,
+          schemaName: 'email_suggestions',
+          schema: {
+            type: 'object',
+            properties: {
+              suggestions: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    type: { type: 'string', enum: ['subject', 'content', 'timing', 'recipient', 'template'] },
+                    suggestion: { type: 'string' },
+                    confidence: { type: 'number' },
+                    reasoning: { type: 'string' },
+                  },
+                  required: ['type', 'suggestion', 'confidence', 'reasoning'],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ['suggestions'],
+            additionalProperties: false,
+          },
+        });
+
+        const suggestions: AISuggestion[] = (result.data?.suggestions || []).map((item: any) => ({
+          id: crypto.randomUUID(),
+          type: item.type,
+          suggestion: item.suggestion,
+          confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)),
+          reasoning: item.reasoning,
+          applied: false,
+        }));
+
+        get().updateEmail(emailId, { aiSuggestions: suggestions });
         return suggestions;
       },
 

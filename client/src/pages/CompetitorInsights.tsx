@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDealStore } from '../store/dealStore';
@@ -6,6 +6,8 @@ import { useContactStore } from '../hooks/useContactStore';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
 import Avatar from '../components/ui/Avatar';
+import { researchAI, type UrlSource } from '../services/aiGenerate';
+import { SourcesList } from '../components/ai/SourcesList';
 import {
   Shield,
   TrendingUp,
@@ -27,25 +29,105 @@ const CompetitorInsights: React.FC = () => {
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
 
-  // Mock competitor data
-  const competitors = [
-    { name: 'Salesforce', marketShare: 23, winRate: 65, avgDealSize: 85000, threat: 'High' },
-    { name: 'HubSpot', marketShare: 18, winRate: 58, avgDealSize: 42000, threat: 'Medium' },
-    { name: 'Pipedrive', marketShare: 12, winRate: 52, avgDealSize: 28000, threat: 'Low' },
-    {
-      name: 'Microsoft Dynamics',
-      marketShare: 15,
-      winRate: 61,
-      avgDealSize: 78000,
-      threat: 'High',
-    },
-  ];
+  // Competitor research (web search with sources; user's OpenAI key)
+  interface CompetitorProfile {
+    name: string;
+    marketPosition: string;
+    pricing: string;
+    strengths: string[];
+    weaknesses: string[];
+    threat: 'High' | 'Medium' | 'Low';
+  }
+  const [competitorNames, setCompetitorNames] = useState('');
+  const [competitors, setCompetitors] = useState<CompetitorProfile[]>([]);
+  const [strategies, setStrategies] = useState<Array<{ strategy: string; rationale: string }>>([]);
+  const [sources, setSources] = useState<UrlSource[]>([]);
+  const [researching, setResearching] = useState(false);
+  const [researchError, setResearchError] = useState<string | null>(null);
 
-  // Calculate competitive metrics
+  // Competitive metrics from CRM deals
   const dealsArray = Object.values(deals);
-  const competitiveDeals = dealsArray.filter((d) => Math.random() > 0.6); // Mock competitive deals
-  const ourWinRate = 68; // Mock win rate
+  // Deals marked as competitive: customFields.competitor set, or tagged competitor/competitive
+  const dealCompetitor = (d: any): string | null =>
+    (d.customFields && (d.customFields.competitor || d.customFields.competitors)) ||
+    ((d.tags || []).some((t: string) => /competit/i.test(t)) ? 'Competitor' : null);
+  const competitiveDeals = dealsArray.filter(
+    (d) => dealCompetitor(d) && !['closed-won', 'closed-lost'].includes(String(d.stage))
+  );
+  const wonCount = dealsArray.filter((d) => String(d.stage) === 'closed-won').length;
+  const lostDeals = dealsArray.filter((d) => String(d.stage) === 'closed-lost');
+  const closedCount = wonCount + lostDeals.length;
+  const ourWinRate = closedCount > 0 ? Math.round((wonCount / closedCount) * 100) : null;
+  const highThreatDeals = competitiveDeals.filter((d) => d.probability < 40).length;
+  const lossReasons = Object.entries(
+    lostDeals.reduce<Record<string, number>>((acc, d) => {
+      const reason = (d.lostReason || '').trim() || 'No reason recorded';
+      acc[reason] = (acc[reason] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([reason, count]) => ({ reason, count, percentage: Math.round((count / lostDeals.length) * 100) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
   const topContacts = Object.values(contacts).slice(0, 6);
+
+  const researchCompetitors = async () => {
+    const names = competitorNames
+      .split(',')
+      .map((n) => n.trim())
+      .filter(Boolean);
+    if (names.length === 0) {
+      setResearchError('Enter at least one competitor name.');
+      return;
+    }
+    setResearching(true);
+    setResearchError(null);
+    try {
+      const result = await researchAI({
+        prompt: `Research these competitors using current web sources: ${names.join(', ')}. For each, describe market position, pricing, strengths, weaknesses and how much of a threat they are to a CRM/sales software vendor. Then suggest competitive strategies.`,
+        schemaName: 'competitor_research',
+        schema: {
+          type: 'object',
+          properties: {
+            competitors: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  marketPosition: { type: 'string' },
+                  pricing: { type: 'string' },
+                  strengths: { type: 'array', items: { type: 'string' } },
+                  weaknesses: { type: 'array', items: { type: 'string' } },
+                  threat: { type: 'string', enum: ['High', 'Medium', 'Low'] },
+                },
+                required: ['name', 'marketPosition', 'pricing', 'strengths', 'weaknesses', 'threat'],
+                additionalProperties: false,
+              },
+            },
+            strategies: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: { strategy: { type: 'string' }, rationale: { type: 'string' } },
+                required: ['strategy', 'rationale'],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ['competitors', 'strategies'],
+          additionalProperties: false,
+        },
+      });
+      setCompetitors(result.data?.competitors || []);
+      setStrategies(result.data?.strategies || []);
+      setSources(result.sources);
+    } catch (error) {
+      setResearchError(error instanceof Error ? error.message : 'Competitor research is unavailable');
+    } finally {
+      setResearching(false);
+    }
+  };
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -96,12 +178,12 @@ const CompetitorInsights: React.FC = () => {
               </div>
               <div className="flex items-center text-blue-400">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">+3.2%</span>
+                <span className="text-sm font-medium">{closedCount} closed</span>
               </div>
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {ourWinRate}%
+                {ourWinRate !== null ? `${ourWinRate}%` : '—'}
               </h3>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
                 Our Win Rate
@@ -136,15 +218,15 @@ const CompetitorInsights: React.FC = () => {
               </div>
               <div className="flex items-center text-purple-400">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">Growing</span>
+                <span className="text-sm font-medium">Researched</span>
               </div>
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                12%
+                {competitors.length}
               </h3>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
-                Market Share
+                Competitors Profiled
               </p>
             </div>
           </GlassCard>
@@ -160,9 +242,9 @@ const CompetitorInsights: React.FC = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>3</h3>
+              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{highThreatDeals}</h3>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
-                High Threat Deals
+                Competitive Deals Under 40%
               </p>
             </div>
           </GlassCard>
@@ -177,11 +259,27 @@ const CompetitorInsights: React.FC = () => {
               <BarChart3 className="h-5 w-5 mr-2 text-blue-500" />
               Competitive Landscape Analysis
             </h2>
-            <ModernButton variant="glass" size="sm">
+            <ModernButton variant="glass" size="sm" onClick={researchCompetitors} disabled={researching}>
               <Search className="h-4 w-4 mr-2" />
-              Research Tools
+              {researching ? 'Researching…' : 'Research'}
             </ModernButton>
           </div>
+
+          <input
+            type="text"
+            value={competitorNames}
+            onChange={(e) => setCompetitorNames(e.target.value)}
+            placeholder="Competitor names, comma separated (e.g. Salesforce, HubSpot)"
+            className={`w-full mb-4 px-3 py-2 rounded-lg border text-sm ${
+              isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'
+            }`}
+          />
+          {researchError && <p className="text-sm text-red-500 mb-4">{researchError}</p>}
+          {competitors.length === 0 && !researchError && (
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Enter competitor names and run research to see live web findings.
+            </p>
+          )}
 
           <div className="space-y-4">
             {competitors.map((competitor, index) => (
@@ -213,25 +311,18 @@ const CompetitorInsights: React.FC = () => {
                         {competitor.name}
                       </h3>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {competitor.marketShare}% market share
+                        {competitor.marketPosition}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-6">
-                    <div className="text-center">
-                      <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {competitor.winRate}%
+                    <div className="text-right max-w-xs">
+                      <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{competitor.pricing}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Strengths: {competitor.strengths.join(', ') || '—'}
                       </p>
                       <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Win Rate
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {formatCurrency(competitor.avgDealSize)}
-                      </p>
-                      <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Avg Deal
+                        Weaknesses: {competitor.weaknesses.join(', ') || '—'}
                       </p>
                     </div>
                     <span
@@ -250,6 +341,7 @@ const CompetitorInsights: React.FC = () => {
               </div>
             ))}
           </div>
+          <SourcesList sources={sources} />
         </GlassCard>
 
         {/* Competitive Deals Monitor */}
@@ -267,6 +359,11 @@ const CompetitorInsights: React.FC = () => {
           </div>
 
           <div className="space-y-4">
+            {competitiveDeals.length === 0 && (
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                No open deals are marked as competitive. Tag a deal "competitive" or set its competitor field.
+              </p>
+            )}
             {competitiveDeals.slice(0, 5).map((deal) => (
               <div
                 key={deal.id}
@@ -284,7 +381,7 @@ const CompetitorInsights: React.FC = () => {
                     </p>
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {getContactInfo(deal.contactId).name} • vs.{' '}
-                      {competitors[Math.floor(Math.random() * competitors.length)].name}
+                      {dealCompetitor(deal)}
                     </p>
                   </div>
                 </div>
@@ -302,7 +399,7 @@ const CompetitorInsights: React.FC = () => {
                             : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {deal.probability}% vs competitor
+                      {deal.probability}% probability
                     </span>
                   </div>
                 </div>
@@ -319,17 +416,15 @@ const CompetitorInsights: React.FC = () => {
                 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}
               >
                 <Award className="h-5 w-5 mr-2 text-yellow-500" />
-                Win/Loss Analysis
+                Loss Reasons
               </h2>
             </div>
 
             <div className="space-y-4">
-              {[
-                { reason: 'Better pricing strategy', wins: 12, percentage: 35 },
-                { reason: 'Superior product features', wins: 8, percentage: 24 },
-                { reason: 'Faster implementation', wins: 7, percentage: 21 },
-                { reason: 'Stronger relationships', wins: 6, percentage: 18 },
-              ].map((item, index) => (
+              {lossReasons.length === 0 && (
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No lost deals yet.</p>
+              )}
+              {lossReasons.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex-1">
                     <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -346,9 +441,9 @@ const CompetitorInsights: React.FC = () => {
                   </div>
                   <div className="ml-4 text-right">
                     <p className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {item.wins}
+                      {item.count}
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>wins</p>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>lost</p>
                   </div>
                 </div>
               ))}
@@ -366,20 +461,12 @@ const CompetitorInsights: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {[
-                { strategy: 'Price Aggressively', effectiveness: 'High', impact: '+15%' },
-                { strategy: 'Highlight Unique Features', effectiveness: 'Medium', impact: '+8%' },
-                {
-                  strategy: 'Leverage Customer Success Stories',
-                  effectiveness: 'High',
-                  impact: '+12%',
-                },
-                {
-                  strategy: 'Accelerate Implementation Timeline',
-                  effectiveness: 'Medium',
-                  impact: '+6%',
-                },
-              ].map((item, index) => (
+              {strategies.length === 0 && (
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Run competitor research to get strategy suggestions.
+                </p>
+              )}
+              {strategies.map((item, index) => (
                 <div
                   key={index}
                   className={`p-4 rounded-lg ${
@@ -394,23 +481,8 @@ const CompetitorInsights: React.FC = () => {
                     >
                       {item.strategy}
                     </h3>
-                    <span
-                      className={`text-sm font-semibold ${
-                        item.effectiveness === 'High' ? 'text-green-500' : 'text-yellow-500'
-                      }`}
-                    >
-                      {item.impact}
-                    </span>
                   </div>
-                  <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      item.effectiveness === 'High'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}
-                  >
-                    {item.effectiveness} Effectiveness
-                  </span>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{item.rationale}</p>
                 </div>
               ))}
             </div>

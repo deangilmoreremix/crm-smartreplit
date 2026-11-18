@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PageLayout from '../components/PageLayout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
+import { generateAI } from '../services/aiGenerate';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModernButton } from '../components/ui/ModernButton';
@@ -27,6 +28,9 @@ const RevenueIntelligence: React.FC = () => {
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
 
+  const formatMoney = (value: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+
   // Calculate revenue metrics
   const dealsArray = Object.values(deals);
   const wonDeals = dealsArray.filter((d) => String(d.stage) === 'closed-won');
@@ -40,7 +44,126 @@ const RevenueIntelligence: React.FC = () => {
     0
   );
   const avgDealSize = wonDeals.length > 0 ? totalRevenue / wonDeals.length : 0;
-  const revenueGrowth = 15.3; // Mock growth percentage
+
+  // Date a won deal closed (falls back to its last update)
+  const closeDate = (d: any) => new Date(d.actualCloseDate || d.closedAt || d.updatedAt || d.createdAt);
+  const DAY = 86400000;
+  const now = Date.now();
+  const wonBetween = (fromDaysAgo: number, toDaysAgo: number) =>
+    wonDeals
+      .filter((d) => {
+        const age = (now - closeDate(d).getTime()) / DAY;
+        return age < fromDaysAgo && age >= toDaysAgo;
+      })
+      .reduce((sum, d) => sum + d.value, 0);
+
+  // Year-over-year growth of won revenue (null when there is no prior-year revenue to compare)
+  const lastYearRevenue = wonBetween(365, 0);
+  const priorYearRevenue = wonBetween(730, 365);
+  const revenueGrowth =
+    priorYearRevenue > 0 ? ((lastYearRevenue - priorYearRevenue) / priorYearRevenue) * 100 : null;
+  const growthLabel =
+    revenueGrowth === null ? '—' : `${revenueGrowth >= 0 ? '+' : ''}${revenueGrowth.toFixed(1)}%`;
+
+  // Current and previous calendar quarter
+  const today = new Date();
+  const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
+  const prevQuarterStart = new Date(quarterStart.getFullYear(), quarterStart.getMonth() - 3, 1);
+  const quarterRevenue = wonDeals.filter((d) => closeDate(d) >= quarterStart).reduce((s, d) => s + d.value, 0);
+  const prevQuarterRevenue = wonDeals
+    .filter((d) => closeDate(d) >= prevQuarterStart && closeDate(d) < quarterStart)
+    .reduce((s, d) => s + d.value, 0);
+  const quarterChange =
+    prevQuarterRevenue > 0
+      ? `${quarterRevenue >= prevQuarterRevenue ? '+' : ''}${(((quarterRevenue - prevQuarterRevenue) / prevQuarterRevenue) * 100).toFixed(0)}% vs last quarter`
+      : 'No won revenue last quarter';
+  const last30Revenue = wonBetween(30, 0);
+
+  // Current metrics computed from CRM records
+  const contactCount = Object.keys(contacts).length;
+  const conversionRate = dealsArray.length > 0 ? (wonDeals.length / dealsArray.length) * 100 : 0;
+  const cycleDays = wonDeals.map((d) => (closeDate(d).getTime() - new Date(d.createdAt).getTime()) / DAY);
+  const avgCycleDays = cycleDays.length > 0 ? cycleDays.reduce((a, b) => a + b, 0) / cycleDays.length : null;
+  const currentMetrics = [
+    { metric: 'Revenue per Contact', value: contactCount > 0 ? formatMoney(totalRevenue / contactCount) : '—' },
+    { metric: 'Average Won Deal Size', value: wonDeals.length > 0 ? formatMoney(avgDealSize) : '—' },
+    { metric: 'Deal Conversion Rate', value: dealsArray.length > 0 ? `${conversionRate.toFixed(1)}%` : '—' },
+    { metric: 'Average Sales Cycle', value: avgCycleDays !== null ? `${Math.round(avgCycleDays)} days` : '—' },
+  ];
+
+  // Forecast: probability-weighted value of open deals by expected close quarter
+  const quarterKey = (date: Date) => `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`;
+  const forecastBuckets = new Map<string, { forecast: number; probabilities: number[]; order: number }>();
+  activeDeals.forEach((d) => {
+    const expected = d.expectedCloseDate ? new Date(d.expectedCloseDate) : null;
+    const key = expected ? quarterKey(expected) : 'No close date';
+    const order = expected
+      ? expected.getFullYear() * 4 + Math.floor(expected.getMonth() / 3)
+      : Number.MAX_SAFE_INTEGER;
+    const bucket = forecastBuckets.get(key) || { forecast: 0, probabilities: [], order };
+    bucket.forecast += d.value * (d.probability / 100);
+    bucket.probabilities.push(d.probability);
+    forecastBuckets.set(key, bucket);
+  });
+  const forecastPeriods = [...forecastBuckets.entries()]
+    .sort((a, b) => a[1].order - b[1].order)
+    .slice(0, 4)
+    .map(([period, b]) => ({
+      period,
+      forecast: b.forecast,
+      confidence: `${Math.round(b.probabilities.reduce((x, y) => x + y, 0) / b.probabilities.length)}% avg probability`,
+      deals: b.probabilities.length,
+    }));
+
+  // AI insights on demand (user's OpenAI key)
+  const [insights, setInsights] = useState<Array<{ insight: string; type: string; value: string }>>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const generateInsights = async () => {
+    setInsightsLoading(true);
+    setInsightsError(null);
+    try {
+      const result = await generateAI({
+        prompt: `Give 4 concise revenue insights for this CRM pipeline. Only use the numbers provided.\n${JSON.stringify({
+          totalWonRevenue: totalRevenue,
+          wonDeals: wonDeals.length,
+          openDeals: activeDeals.length,
+          weightedPipeline: Math.round(projectedRevenue),
+          averageWonDealSize: Math.round(avgDealSize),
+          conversionRatePercent: Number(conversionRate.toFixed(1)),
+          averageSalesCycleDays: avgCycleDays !== null ? Math.round(avgCycleDays) : null,
+          revenueThisQuarter: quarterRevenue,
+          revenueLastQuarter: prevQuarterRevenue,
+        })}`,
+        schemaName: 'revenue_insights',
+        schema: {
+          type: 'object',
+          properties: {
+            insights: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  insight: { type: 'string' },
+                  type: { type: 'string', enum: ['positive', 'opportunity', 'improvement'] },
+                  value: { type: 'string' },
+                },
+                required: ['insight', 'type', 'value'],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ['insights'],
+          additionalProperties: false,
+        },
+      });
+      setInsights(result.data?.insights || []);
+    } catch (error) {
+      setInsightsError(error instanceof Error ? error.message : 'AI insights are unavailable');
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   // Get top revenue contributors
   const topContacts = Object.values(contacts).slice(0, 6);
@@ -100,7 +223,7 @@ const RevenueIntelligence: React.FC = () => {
               </div>
               <div className="flex items-center text-green-400">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">+{revenueGrowth}%</span>
+                <span className="text-sm font-medium">{growthLabel} YoY</span>
               </div>
             </div>
             <div className="space-y-2">
@@ -120,7 +243,7 @@ const RevenueIntelligence: React.FC = () => {
               </div>
               <div className="flex items-center text-blue-400">
                 <Brain className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">AI Forecast</span>
+                <span className="text-sm font-medium">Weighted</span>
               </div>
             </div>
             <div className="space-y-2">
@@ -140,7 +263,7 @@ const RevenueIntelligence: React.FC = () => {
               </div>
               <div className="flex items-center text-purple-400">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">+8.2%</span>
+                <span className="text-sm font-medium">{wonDeals.length} won</span>
               </div>
             </div>
             <div className="space-y-2">
@@ -160,15 +283,15 @@ const RevenueIntelligence: React.FC = () => {
               </div>
               <div className="flex items-center text-orange-400">
                 <Trophy className="h-4 w-4 mr-1" />
-                <span className="text-sm font-medium">Target</span>
+                <span className="text-sm font-medium">Last 30 days</span>
               </div>
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                125%
+                {formatCurrency(last30Revenue)}
               </h3>
               <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
-                Goal Achievement
+                Won Revenue (30 days)
               </p>
             </div>
           </GlassCard>
@@ -185,7 +308,7 @@ const RevenueIntelligence: React.FC = () => {
             </h2>
             <ModernButton variant="glass" size="sm">
               <Calendar className="h-4 w-4 mr-2" />
-              Last 12 Months
+              Won Deals
             </ModernButton>
           </div>
 
@@ -195,14 +318,14 @@ const RevenueIntelligence: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Q4 Performance
+                  This Quarter
                 </h3>
                 <TrendingUp className="h-5 w-5 text-green-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                {formatCurrency(totalRevenue * 0.35)}
+                {formatCurrency(quarterRevenue)}
               </p>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>+22% vs Q3</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{quarterChange}</p>
             </div>
 
             <div
@@ -210,15 +333,15 @@ const RevenueIntelligence: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Monthly Recurring
+                  Last Quarter
                 </h3>
                 <PieChart className="h-5 w-5 text-blue-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                {formatCurrency(totalRevenue * 0.15)}
+                {formatCurrency(prevQuarterRevenue)}
               </p>
               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Subscription revenue
+                Won revenue
               </p>
             </div>
 
@@ -232,10 +355,10 @@ const RevenueIntelligence: React.FC = () => {
                 <Target className="h-5 w-5 text-purple-500" />
               </div>
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>
-                +{revenueGrowth}%
+                {growthLabel}
               </p>
               <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Year over year
+                {revenueGrowth === null ? 'Needs a year of won deals to compare' : 'Year over year (won revenue)'}
               </p>
             </div>
           </div>
@@ -273,7 +396,7 @@ const RevenueIntelligence: React.FC = () => {
                     </p>
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {getContactInfo(deal.contactId).name} • Closed{' '}
-                      {Math.floor(Math.random() * 30) + 1} days ago
+                      {Math.max(0, Math.floor((now - closeDate(deal).getTime()) / DAY))} days ago
                     </p>
                   </div>
                 </div>
@@ -305,24 +428,18 @@ const RevenueIntelligence: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {[
-                {
-                  insight: 'Enterprise deals show 35% higher close rates',
-                  type: 'opportunity',
-                  value: '+$180K potential',
-                },
-                { insight: 'Q1 pipeline is 120% of target', type: 'positive', value: 'On track' },
-                {
-                  insight: 'Average sales cycle decreased by 8 days',
-                  type: 'improvement',
-                  value: 'Velocity up',
-                },
-                {
-                  insight: 'Upsell opportunities identified in 12 accounts',
-                  type: 'opportunity',
-                  value: '+$95K potential',
-                },
-              ].map((item, index) => (
+              {insights.length === 0 && (
+                <div className="space-y-3">
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {insightsError || 'Generate AI insights from your current revenue numbers.'}
+                  </p>
+                  <ModernButton variant="outline" size="sm" onClick={generateInsights} disabled={insightsLoading}>
+                    <Brain className="h-4 w-4 mr-2" />
+                    {insightsLoading ? 'Analyzing…' : 'Generate insights'}
+                  </ModernButton>
+                </div>
+              )}
+              {insights.map((item, index) => (
                 <div
                   key={index}
                   className={`p-4 rounded-lg ${
@@ -378,46 +495,12 @@ const RevenueIntelligence: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {[
-                { metric: 'Revenue per Lead', current: '$850', target: '$1,200', progress: 71 },
-                {
-                  metric: 'Customer Lifetime Value',
-                  current: '$45K',
-                  target: '$60K',
-                  progress: 75,
-                },
-                { metric: 'Sales Conversion Rate', current: '18%', target: '25%', progress: 72 },
-                {
-                  metric: 'Average Deal Velocity',
-                  current: '45 days',
-                  target: '35 days',
-                  progress: 78,
-                },
-              ].map((item, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
-                    >
-                      {item.metric}
-                    </span>
-                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {item.current} / {item.target}
-                    </span>
-                  </div>
-                  <div
-                    className={`w-full bg-gray-200 rounded-full h-2 ${isDark ? 'bg-gray-700' : ''}`}
-                  >
-                    <div
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between">
-                    <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      {item.progress}% of target
-                    </span>
-                  </div>
+              {currentMetrics.map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {item.metric}
+                  </span>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.value}</span>
                 </div>
               ))}
             </div>
@@ -436,32 +519,10 @@ const RevenueIntelligence: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[
-              {
-                period: 'Q1 2024',
-                forecast: projectedRevenue * 0.25,
-                confidence: '95%',
-                trend: '+12%',
-              },
-              {
-                period: 'Q2 2024',
-                forecast: projectedRevenue * 0.28,
-                confidence: '88%',
-                trend: '+15%',
-              },
-              {
-                period: 'Q3 2024',
-                forecast: projectedRevenue * 0.22,
-                confidence: '76%',
-                trend: '+8%',
-              },
-              {
-                period: 'Q4 2024',
-                forecast: projectedRevenue * 0.25,
-                confidence: '65%',
-                trend: '+18%',
-              },
-            ].map((item, index) => (
+            {forecastPeriods.length === 0 && (
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No open deals to forecast.</p>
+            )}
+            {forecastPeriods.map((item, index) => (
               <div
                 key={index}
                 className={`p-4 rounded-lg text-center ${
@@ -476,7 +537,7 @@ const RevenueIntelligence: React.FC = () => {
                 </p>
                 <div className="flex justify-between text-xs">
                   <span className="text-blue-500">{item.confidence}</span>
-                  <span className="text-green-500">{item.trend}</span>
+                  <span className="text-green-500">{item.deals} deals</span>
                 </div>
               </div>
             ))}

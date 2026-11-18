@@ -55,13 +55,44 @@ const LiveDealAnalysis: React.FC = () => {
   const warmDeals = analysis?.warm_deals || activeDeals.filter((d) => d.probability >= 40 && d.probability <= 70);
   const coldDeals = analysis?.cold_deals || activeDeals.filter((d) => d.probability < 40);
   const immediateActions = analysis?.immediate_actions || [];
-  const engagementInsights = analysis?.engagement_insights || {
-    email_opens: '89%',
-    response_rate: '34%',
-    meeting_acceptance: '76%',
-    proposal_views: '92%',
+  // The AI's activity_feed invents timestamps (the CRM has no activity log), so the live list below
+  // always shows the real open deals with their last-updated time instead.
+  const activityFeed: any[] = [];
+
+  // Engagement metrics computed from the deal records (the CRM has no email-open tracking)
+  const DAY = 86400000;
+  const now = Date.now();
+  const sinceLabel = (date: any) => {
+    if (!date) return 'unknown';
+    const hours = Math.max(0, Math.floor((now - new Date(date).getTime()) / 3600000));
+    return hours < 48 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
   };
-  const activityFeed = analysis?.activity_feed || [];
+  const updatedThisWeek = activeDeals.filter((d) => now - new Date(d.updatedAt).getTime() <= 7 * DAY).length;
+  const overdueFollowUps = activeDeals.filter((d) => d.nextFollowUp && new Date(d.nextFollowUp).getTime() < now).length;
+  const avgProbability =
+    activeDeals.length > 0 ? Math.round(activeDeals.reduce((s, d) => s + (d.probability || 0), 0) / activeDeals.length) : 0;
+  const engagementMetrics = [
+    { metric: 'Deals Updated (7 days)', value: String(updatedThisWeek), icon: '🔄' },
+    { metric: 'Overdue Follow-ups', value: String(overdueFollowUps), icon: '⏰' },
+    { metric: 'Avg Win Probability', value: `${avgProbability}%`, icon: '🎯' },
+    { metric: 'Open Deals', value: String(activeDeals.length), icon: '📄' },
+  ];
+
+  // Action items: open deals with a scheduled follow-up, soonest first
+  const contactName = (deal: any) => {
+    const contact: any = deal.contactId ? (contacts as any)[deal.contactId] : null;
+    return contact?.name || (contact ? `${contact.firstName || ''} ${contact.lastName || ''}`.trim() : '') || deal.contactName || 'Unknown';
+  };
+  const actionItems = activeDeals
+    .filter((d) => d.nextFollowUp)
+    .sort((a, b) => new Date(a.nextFollowUp as any).getTime() - new Date(b.nextFollowUp as any).getTime())
+    .slice(0, 5)
+    .map((d) => {
+      const days = Math.floor((new Date(d.nextFollowUp as any).getTime() - now) / DAY);
+      const urgency = days < 0 ? `Overdue by ${-days} day${-days === 1 ? '' : 's'}` : days === 0 ? 'Due today' : `Due in ${days} day${days === 1 ? '' : 's'}`;
+      const priority = days < 0 ? 'High' : days <= 1 ? 'Medium' : 'Low';
+      return { priority, action: `Follow up on ${d.title}`, contact: contactName(d), urgency };
+    });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -290,7 +321,7 @@ const LiveDealAnalysis: React.FC = () => {
                     <div>
                       <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>{deal.title}</p>
                       <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {(deal as any).contactName || 'Unknown'} • Last activity: {Math.floor(Math.random() * 5) + 1}h ago
+                        {contactName(deal)} • Last updated: {sinceLabel(deal.updatedAt)}
                       </p>
                     </div>
                   </div>
@@ -313,21 +344,15 @@ const LiveDealAnalysis: React.FC = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
               <BarChart3 className="h-5 w-5 mr-2 text-purple-500" />
-              Real-time Engagement Insights
+              Pipeline Engagement
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { metric: 'Email Opens', value: typeof engagementInsights === 'object' ? engagementInsights.email_opens || '89%' : '89%', change: '+12%', icon: '📧' },
-              { metric: 'Response Rate', value: typeof engagementInsights === 'object' ? engagementInsights.response_rate || '34%' : '34%', change: '+8%', icon: '💬' },
-              { metric: 'Meeting Acceptance', value: typeof engagementInsights === 'object' ? engagementInsights.meeting_acceptance || '76%' : '76%', change: '+15%', icon: '📅' },
-              { metric: 'Proposal Views', value: typeof engagementInsights === 'object' ? engagementInsights.proposal_views || '92%' : '92%', change: '+5%', icon: '📄' },
-            ].map((item, index) => (
+            {engagementMetrics.map((item, index) => (
               <div key={index} className={`p-4 rounded-lg ${isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl">{item.icon}</span>
-                  <span className="text-xs text-green-500">{item.change}</span>
                 </div>
                 <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.value}</p>
                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{item.metric}</p>
@@ -346,12 +371,12 @@ const LiveDealAnalysis: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {[
-              { priority: 'High', action: 'Follow up on Enterprise Software License deal', contact: 'Jane Doe', urgency: 'Overdue by 2 days' },
-              { priority: 'Medium', action: 'Send proposal for CRM Integration Services', contact: 'Wade Warren', urgency: 'Due today' },
-              { priority: 'High', action: 'Schedule demo for Marketing Automation Platform', contact: 'Darlene Robertson', urgency: 'Due tomorrow' },
-              { priority: 'Low', action: 'Research competitor pricing for Cloud Infrastructure', contact: 'Sarah Johnson', urgency: 'Due in 3 days' },
-            ].map((item, index) => (
+            {actionItems.length === 0 && (
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                No follow-ups scheduled on open deals.
+              </p>
+            )}
+            {actionItems.map((item, index) => (
               <div key={index} className={`flex items-center justify-between p-4 rounded-xl ${isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50 border border-gray-200'}`}>
                 <div className="flex items-center space-x-3">
                   <div className={`w-2 h-8 rounded-full ${item.priority === 'High' ? 'bg-red-500' : item.priority === 'Medium' ? 'bg-yellow-500' : 'bg-green-500'}`} />

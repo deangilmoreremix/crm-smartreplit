@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { generateAI } from '../services/aiGenerate';
+import { useContactStore } from '../hooks/useContactStore';
+import { useDealStore } from './dealStore';
 import { devtools } from 'zustand/middleware';
 import {
   AIAutomationRule,
@@ -132,11 +135,11 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       workflows: [],
       workflowExecutions: [],
       models: [],
-      activeModel: 'gpt-4',
+      activeModel: 'gpt-6-luna',
       suggestions: [],
       pendingSuggestions: 0,
       enrichmentRequests: [],
-      enrichmentCredits: 1000,
+      enrichmentCredits: 0, // no credit system: previously 1000 invented credits
       settings: [],
       loading: {
         rules: false,
@@ -190,32 +193,13 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         }));
       },
 
-      executeAutomationRule: async (id, context = {}) => {
+      executeAutomationRule: async (id, _context = {}) => {
         const rule = get().automationRules.find((r) => r.id === id);
         if (!rule) return false;
-
-        try {
-          // Simulate rule execution
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          set((state) => ({
-            automationRules: state.automationRules.map((r) =>
-              r.id === id
-                ? {
-                    ...r,
-                    lastExecuted: new Date(),
-                    executionCount: r.executionCount + 1,
-                    successRate: (r.successRate * r.executionCount + 1) / (r.executionCount + 1),
-                  }
-                : r
-            ),
-          }));
-
-          return true;
-        } catch (error) {
-          console.error('Rule execution failed:', error);
-          return false;
-        }
+        // There is no automation engine behind these client-side rules; previously this waited
+        // a second and recorded a fake successful run
+        console.warn(`Automation rule "${rule.name}" was not run: rule execution is not available yet`);
+        return false;
       },
 
       // AI Insights Actions
@@ -225,104 +209,78 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         }));
 
         try {
-          // Simulate AI insight generation
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          const contacts = Object.values(useContactStore.getState().contacts || {}).slice(0, 50);
+          const deals = Object.values(useDealStore.getState().deals || {}).slice(0, 50);
+          if (contacts.length === 0 && deals.length === 0) {
+            set((state) => ({ insights: [], newInsights: 0, loading: { ...state.loading, insights: false } }));
+            return;
+          }
 
-          const mockInsights: AIInsight[] = [
-            {
-              id: `insight_${Date.now()}_1`,
-              type: 'opportunity',
-              title: 'High-Value Lead Identified',
-              description:
-                'Contact John Smith shows strong buying signals based on recent interactions.',
-              confidence: 0.85,
-              impact: 'high',
-              category: 'sales',
-              data: {
-                metrics: { engagement_score: 92, deal_probability: 0.78 },
-                trends: [],
-                predictions: [],
-                recommendations: [
-                  'Schedule a demo call within 48 hours',
-                  'Send personalized proposal with enterprise features',
-                  'Involve technical team for solution architecture discussion',
-                ],
-              },
-              actionable: true,
-              deadline: new Date(Date.now() + 48 * 60 * 60 * 1000),
-              relatedEntities: [{ type: 'contact', id: 'contact_1', name: 'John Smith' }],
-              tags: ['high-priority', 'enterprise', 'demo-ready'],
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              status: 'new',
-            },
-            {
-              id: `insight_${Date.now()}_2`,
-              type: 'risk',
-              title: 'Deal at Risk of Churning',
-              description: 'TechCorp deal shows declining engagement and delayed responses.',
-              confidence: 0.72,
-              impact: 'critical',
-              category: 'sales',
-              data: {
-                metrics: { engagement_score: 34, response_time: 120 },
-                trends: [],
-                predictions: [],
-                recommendations: [
-                  'Immediate executive outreach required',
-                  'Schedule relationship review meeting',
-                  'Provide additional value demonstration',
-                ],
-              },
-              actionable: true,
-              deadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              relatedEntities: [
-                { type: 'deal', id: 'deal_1', name: 'TechCorp Enterprise License' },
-              ],
-              tags: ['at-risk', 'urgent', 'executive-attention'],
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              status: 'new',
-            },
-            {
-              id: `insight_${Date.now()}_3`,
-              type: 'prediction',
-              title: 'Q4 Revenue Forecast Update',
-              description: 'Based on current pipeline, Q4 revenue likely to exceed target by 15%.',
-              confidence: 0.91,
-              impact: 'medium',
-              category: 'finance',
-              data: {
-                metrics: { current_pipeline: 2400000, forecasted_close: 0.65 },
-                trends: [],
-                predictions: [
-                  {
-                    metric: 'Q4 Revenue',
-                    currentValue: 1800000,
-                    predictedValue: 2070000,
-                    confidence: 0.91,
-                    timeframe: 'End of Q4',
-                    factors: ['Strong pipeline', 'High close rates', 'Large deal momentum'],
+          const result = await generateAI({
+            prompt: `Find the most important sales insights in this CRM data. Only refer to records that appear below, by their id.
+Contacts: ${JSON.stringify(contacts.map((c: any) => ({ id: c.id, name: c.name, company: c.company, status: c.status, aiScore: c.aiScore, lastConnected: c.lastConnected })))}
+Deals: ${JSON.stringify(deals.map((d: any) => ({ id: d.id, title: d.title, value: d.value, stage: d.stage, probability: d.probability, dueDate: d.dueDate })))}`,
+            schemaName: 'crm_insights',
+            schema: {
+              type: 'object',
+              properties: {
+                insights: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string', enum: ['opportunity', 'risk', 'prediction', 'recommendation', 'anomaly'] },
+                      title: { type: 'string' },
+                      description: { type: 'string' },
+                      confidence: { type: 'number' },
+                      impact: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+                      category: { type: 'string', enum: ['sales', 'marketing', 'customer_service', 'operations', 'finance'] },
+                      recommendations: { type: 'array', items: { type: 'string' } },
+                      relatedEntities: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            type: { type: 'string', enum: ['contact', 'deal'] },
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                          },
+                          required: ['type', 'id', 'name'],
+                          additionalProperties: false,
+                        },
+                      },
+                    },
+                    required: ['type', 'title', 'description', 'confidence', 'impact', 'category', 'recommendations', 'relatedEntities'],
+                    additionalProperties: false,
                   },
-                ],
-                recommendations: [
-                  'Prepare for higher capacity needs',
-                  'Consider accelerating Q1 planning',
-                  'Review compensation plans for over-achievement',
-                ],
+                },
               },
-              actionable: true,
-              relatedEntities: [],
-              tags: ['forecast', 'positive', 'planning'],
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              status: 'new',
+              required: ['insights'],
+              additionalProperties: false,
             },
-          ];
+          });
+
+          const now = new Date();
+          const insights: AIInsight[] = (result.data?.insights || []).map((item: any, index: number) => ({
+            id: `insight_${now.getTime()}_${index}`,
+            type: item.type,
+            title: item.title,
+            description: item.description,
+            confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)),
+            impact: item.impact,
+            category: item.category,
+            data: { metrics: {}, trends: [], predictions: [], recommendations: item.recommendations || [] },
+            actionable: (item.recommendations || []).length > 0,
+            relatedEntities: item.relatedEntities || [],
+            tags: [],
+            createdAt: now,
+            updatedAt: now,
+            status: 'new',
+          }));
 
           set((state) => ({
-            insights: [...mockInsights, ...state.insights],
-            newInsights: state.newInsights + mockInsights.length,
+            insights,
+            newInsights: insights.length,
             loading: { ...state.loading, insights: false },
           }));
         } catch (error) {
@@ -428,29 +386,17 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
           workflowExecutions: [...state.workflowExecutions, execution],
         }));
 
-        try {
-          // Simulate workflow execution
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-
-          set((state) => ({
-            workflowExecutions: state.workflowExecutions.map((exec) =>
-              exec.id === executionId
-                ? { ...exec, status: 'completed', endTime: new Date(), duration: 3000 }
-                : exec
-            ),
-          }));
-
-          return executionId;
-        } catch (error) {
-          set((state) => ({
-            workflowExecutions: state.workflowExecutions.map((exec) =>
-              exec.id === executionId
-                ? { ...exec, status: 'failed', endTime: new Date(), error: error.message }
-                : exec
-            ),
-          }));
-          throw error;
-        }
+        // There is no executor for these client-side workflows; previously a 3-second timer marked
+        // every run "completed"
+        const message = 'Workflow execution is not available yet';
+        set((state) => ({
+          workflowExecutions: state.workflowExecutions.map((exec) =>
+            exec.id === executionId
+              ? { ...exec, status: 'failed', endTime: new Date(), error: message }
+              : exec
+          ),
+        }));
+        throw new Error(message);
       },
 
       pauseWorkflow: (executionId) => {
@@ -484,60 +430,53 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         }));
 
         try {
-          // Simulate AI suggestion generation
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          const result = await generateAI({
+            prompt: `Suggest the next best CRM actions for this ${context.entityType}.
+Context: ${JSON.stringify(context)}`,
+            schemaName: 'crm_suggestions',
+            schema: {
+              type: 'object',
+              properties: {
+                suggestions: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string', enum: ['email_reply', 'task_creation', 'deal_action', 'contact_update', 'meeting_scheduling'] },
+                      title: { type: 'string' },
+                      description: { type: 'string' },
+                      preview: { type: 'string' },
+                      confidence: { type: 'number' },
+                      reasoning: { type: 'string' },
+                    },
+                    required: ['type', 'title', 'description', 'preview', 'confidence', 'reasoning'],
+                    additionalProperties: false,
+                  },
+                },
+              },
+              required: ['suggestions'],
+              additionalProperties: false,
+            },
+          });
 
-          const mockSuggestions: SmartSuggestion[] = [
-            {
-              id: `suggestion_${Date.now()}_1`,
-              type: 'email_reply',
-              title: 'Suggested Email Response',
-              description: 'AI-generated response to customer inquiry about pricing.',
-              context,
-              action: {
-                type: 'send_email',
-                config: {
-                  subject: 'Re: Pricing Information Request',
-                  body: 'Thank you for your interest in our solution...',
-                },
-                preview:
-                  'Thank you for your interest in our solution. Based on your requirements...',
-              },
-              confidence: 0.87,
-              reasoning: 'Based on similar successful interactions and customer profile analysis.',
-              aiModel: 'gpt-4',
-              createdAt: new Date(),
-              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-              status: 'pending',
-            },
-            {
-              id: `suggestion_${Date.now()}_2`,
-              type: 'task_creation',
-              title: 'Follow-up Task Recommended',
-              description: 'Create a follow-up task based on meeting outcomes.',
-              context,
-              action: {
-                type: 'create_task',
-                config: {
-                  title: 'Send technical proposal to John Smith',
-                  description: 'Based on demo feedback, prepare technical proposal...',
-                  priority: 'high',
-                  dueDate: new Date(Date.now() + 48 * 60 * 60 * 1000),
-                },
-              },
-              confidence: 0.92,
-              reasoning:
-                'Meeting notes indicate technical requirements discussion and next steps agreement.',
-              aiModel: 'gpt-4',
-              createdAt: new Date(),
-              expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
-              status: 'pending',
-            },
-          ];
+          const now = new Date();
+          const suggestions: SmartSuggestion[] = (result.data?.suggestions || []).map((item: any, index: number) => ({
+            id: `suggestion_${now.getTime()}_${index}`,
+            type: item.type,
+            title: item.title,
+            description: item.description,
+            context,
+            action: { type: item.type, config: {}, preview: item.preview },
+            confidence: Math.max(0, Math.min(1, Number(item.confidence) || 0)),
+            reasoning: item.reasoning,
+            aiModel: result.model,
+            createdAt: now,
+            status: 'pending',
+          }));
 
           set((state) => ({
-            suggestions: [...mockSuggestions, ...state.suggestions],
-            pendingSuggestions: state.pendingSuggestions + mockSuggestions.length,
+            suggestions: [...suggestions, ...state.suggestions],
+            pendingSuggestions: state.pendingSuggestions + suggestions.length,
             loading: { ...state.loading, suggestions: false },
           }));
         } catch (error) {
@@ -553,9 +492,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         if (!suggestion) return;
 
         try {
-          // Simulate executing the suggestion
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
+          // Records the user's choice (the suggestion itself is carried out by the user)
           set((state) => ({
             suggestions: state.suggestions.map((s) =>
               s.id === id ? { ...s, status: 'accepted' } : s
@@ -597,36 +534,39 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         }));
 
         try {
-          // Simulate enrichment processing
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          if (request.entityType !== 'contact') {
+            throw new Error(`Enrichment for ${request.entityType} records is not available yet`);
+          }
+          // Real enrichment: the server researches the contact with web search
+          const response = await fetch(`/api/contacts/${request.entityId}/enrich`, { method: 'POST' });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok || !body.data) {
+            throw new Error(body.message || body.error || `Enrichment failed (${response.status})`);
+          }
+          const now = new Date();
+          const results = Object.entries(body.data)
+            .filter(([field]) => field !== 'sources')
+            .filter(([field]) => !request.requestedFields?.length || request.requestedFields.includes(field))
+            .map(([field, value]) => ({
+              field,
+              value,
+              confidence: 0, // the AI does not report a per-field confidence
+              source: 'openai_web_search',
+              lastUpdated: now,
+              verified: false,
+            }));
 
           set((state) => ({
             enrichmentRequests: state.enrichmentRequests.map((req) =>
               req.id === enrichmentRequest.id
-                ? {
-                    ...req,
-                    status: 'completed',
-                    completedAt: new Date(),
-                    results: [
-                      {
-                        field: 'company_size',
-                        value: '500-1000',
-                        confidence: 0.92,
-                        source: 'clearbit',
-                        lastUpdated: new Date(),
-                        verified: false,
-                      },
-                    ],
-                    cost: 2,
-                  }
+                ? { ...req, status: 'completed', completedAt: now, results }
                 : req
             ),
-            enrichmentCredits: state.enrichmentCredits - 2,
             loading: { ...state.loading, enrichment: false },
           }));
 
           return enrichmentRequest.id;
-        } catch (error) {
+        } catch (error: any) {
           set((state) => ({
             enrichmentRequests: state.enrichmentRequests.map((req) =>
               req.id === enrichmentRequest.id
@@ -645,13 +585,9 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         return request;
       },
 
-      purchaseEnrichmentCredits: async (amount) => {
-        // Simulate credit purchase
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        set((state) => ({
-          enrichmentCredits: state.enrichmentCredits + amount,
-        }));
+      purchaseEnrichmentCredits: async (_amount) => {
+        // No credit purchase exists here; previously this added credits without any payment
+        throw new Error('Buying enrichment credits is not available');
       },
 
       // AI Models Actions
@@ -691,10 +627,11 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         const model = get().models.find((m) => m.id === id);
         if (!model) throw new Error('Model not found');
 
-        // Simulate model testing
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        return `Test response from ${model.name}: This is a simulated response to: "${prompt}"`;
+        const result = await generateAI({
+          prompt,
+          tier: /sol|advanced/i.test(`${model.id} ${model.name}`) ? 'advanced' : 'default',
+        });
+        return result.content;
       },
 
       // Settings Actions
@@ -739,7 +676,10 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
         return {
           totalRules: automationRules.length,
           activeRules,
-          executionsToday: Math.floor(totalExecutions * 0.1), // Mock daily executions
+          // Rules last run today (per-run history is not stored)
+          executionsToday: automationRules.filter(
+            (rule) => rule.lastExecuted && new Date(rule.lastExecuted).toDateString() === new Date().toDateString()
+          ).length,
           successRate,
           topPerformingRules: automationRules
             .sort((a, b) => b.successRate - a.successRate)

@@ -367,7 +367,7 @@ class TenantProvisioner {
           created_at: new Date().toISOString(),
         }));
 
-        await supabase.from('contacts').insert(contacts);
+        await supabase.from('smartcrm_contacts').insert(contacts);
       }
 
       // Seed sample deals if specified
@@ -378,7 +378,7 @@ class TenantProvisioner {
           created_at: new Date().toISOString(),
         }));
 
-        await supabase.from('deals').insert(deals);
+        await supabase.from('smartcrm_deals').insert(deals);
       }
     } catch (error: any) {
       await errorLogger.logWarning('Initial data seeding failed', {

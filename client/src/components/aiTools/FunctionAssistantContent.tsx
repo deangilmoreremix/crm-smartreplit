@@ -110,7 +110,8 @@ const FunctionAssistantContent: React.FC = () => {
       const response = await functionService.salesAssistantWithFunctions(
         input.trim(),
         "You have access to this user's CRM data through functions.",
-        previousMessages
+        previousMessages,
+        enabledFunctions
       );
 
       // Process function calls that might have happened

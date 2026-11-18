@@ -150,7 +150,7 @@ export async function triggerWorkflowsForEvent(event: WorkflowEvent): Promise<vo
   const { supabase } = await import('../supabase');
 
   const { data: workflows, error } = await supabase
-    .from('workflows')
+    .from('smartcrm_workflows')
     .select('*')
     .eq('trigger_type', event.type)
     .eq('enabled', true)
@@ -163,7 +163,7 @@ export async function triggerWorkflowsForEvent(event: WorkflowEvent): Promise<vo
 
   for (const workflow of workflows || []) {
     const { data: actions } = await supabase
-      .from('workflow_actions')
+      .from('smartcrm_workflow_actions')
       .select('*')
       .eq('workflow_id', workflow.id)
       .order('order_index');
@@ -181,7 +181,7 @@ export async function triggerWorkflowsForEvent(event: WorkflowEvent): Promise<vo
       variables: event.data || {},
     };
 
-    await supabase.from('workflow_runs').insert({
+    await supabase.from('smartcrm_workflow_runs').insert({
       workflow_id: workflow.id,
       status: 'pending',
       triggered_by: { eventType: event.type, recordId: event.recordId },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useOpenAIAssistants } from '../../services/openaiAssistantsService';
+import { createConversation, generateAI, sendConversationMessage } from '../../services/aiGenerate';
 import {
   Bot,
   Send,
@@ -9,7 +9,6 @@ import {
   X,
   Save,
   Zap,
-  PlayCircle,
   PauseCircle,
   StopCircle,
   CheckCircle,
@@ -56,9 +55,40 @@ interface Message {
   createdAt: Date;
 }
 
-const AgentWorkflowChat: React.FC = () => {
-  const assistants = useOpenAIAssistants();
+const WORKFLOW_AGENT_INSTRUCTIONS = `You are an AI workflow automation agent that helps users create, manage, and execute automated business workflows.
 
+You can help with:
+- Creating multi-step automated workflows for sales, marketing, and customer service
+- Scheduling and triggering workflows based on events or time
+- Monitoring workflow execution and performance
+- Integrating with CRM data, email systems, and communication tools
+- Analyzing workflow results and suggesting optimizations
+
+When users request workflows, provide detailed step-by-step plans and ask clarifying questions to ensure the workflow meets their specific needs.`;
+
+const WORKFLOW_PLAN_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['name', 'steps'],
+  properties: {
+    name: { type: 'string', description: 'Short workflow name' },
+    steps: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['name', 'action', 'description'],
+        properties: {
+          name: { type: 'string' },
+          action: { type: 'string', description: 'Short snake_case action, e.g. query_crm, send_email, create_task' },
+          description: { type: 'string' },
+        },
+      },
+    },
+  },
+} as const;
+
+const AgentWorkflowChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -80,26 +110,9 @@ const AgentWorkflowChat: React.FC = () => {
 
   const initializeWorkflowAgent = async () => {
     try {
-      // Create a specialized workflow agent
-      const assistant = await assistants.createAssistant(
-        'Workflow Automation Agent',
-        `You are an AI workflow automation agent that helps users create, manage, and execute automated business workflows. 
-        
-        You can help with:
-        - Creating multi-step automated workflows for sales, marketing, and customer service
-        - Scheduling and triggering workflows based on events or time
-        - Monitoring workflow execution and performance
-        - Integrating with CRM data, email systems, and communication tools
-        - Analyzing workflow results and suggesting optimizations
-        
-        When users request workflows, provide detailed step-by-step plans and ask clarifying questions to ensure the workflow meets their specific needs.`,
-        ['function_calling', 'code_interpreter']
-      );
-
-      setAssistantId(assistant.id);
-
-      const thread = await assistants.createThread();
-      setThreadId(thread.id);
+      // The workflow agent runs on an OpenAI Responses API conversation; its instructions go with each turn
+      setAssistantId('workflow-agent');
+      setThreadId(await createConversation('workflow-agent'));
 
       // Welcome message
       setMessages([
@@ -140,208 +153,79 @@ const AgentWorkflowChat: React.FC = () => {
         input.toLowerCase().includes('create workflow') ||
         input.toLowerCase().includes('build workflow')
       ) {
-        const workflow = await generateWorkflowFromPrompt(input);
-        if (workflow) {
+        try {
+          const workflow = await generateWorkflowFromPrompt(input);
           setWorkflows((prev) => [...prev, workflow]);
           setActiveWorkflow(workflow);
+        } catch (planError) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `${Date.now()}-plan-error`,
+              role: 'assistant',
+              content: `I couldn't generate the workflow plan: ${planError instanceof Error ? planError.message : 'unknown error'}`,
+              createdAt: new Date(),
+            },
+          ]);
+          return;
         }
       }
 
-      // Send to AI assistant
-      await assistants.addMessageToThread(threadId, input);
-      const run = await assistants.runAssistant(threadId, assistantId);
-
-      // Poll for response
-      const response = await pollForResponse(run.id);
-      if (response) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: response.id,
-            role: 'assistant',
-            content: response.content,
-            createdAt: new Date(),
-          },
-        ]);
-      }
+      // Send to the workflow agent (conversation keeps the history)
+      const response = await sendConversationMessage(threadId, userMessage.content, {
+        system: WORKFLOW_AGENT_INSTRUCTIONS,
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: response.responseId || `${Date.now()}-assistant`,
+          role: 'assistant',
+          content: response.content,
+          createdAt: new Date(),
+        },
+      ]);
     } catch (error) {
       console.error('Error processing message:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-error`,
+          role: 'assistant',
+          content: error instanceof Error ? error.message : 'The AI request failed',
+          createdAt: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const pollForResponse = async (runId: string): Promise<any> => {
-    let attempts = 0;
-    const maxAttempts = 30;
+  // The plan is written by the AI from the user's request (no canned templates)
+  const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow> => {
+    const { data } = await generateAI({
+      system: WORKFLOW_AGENT_INSTRUCTIONS,
+      prompt: `Design a workflow plan of 3 to 7 steps for this request:\n${prompt}`,
+      schema: WORKFLOW_PLAN_SCHEMA as unknown as Record<string, unknown>,
+      schemaName: 'workflow_plan',
+    });
+    if (!data?.steps?.length) throw new Error('The AI returned no workflow steps');
 
-    while (attempts < maxAttempts) {
-      try {
-        const run = await assistants.getRunStatus(threadId!, runId);
-
-        if (run.status === 'completed') {
-          const messages = await assistants.getThreadMessages(threadId!);
-          const latestMessage = messages.data.find((m) => m.role === 'assistant');
-
-          if (latestMessage && latestMessage.content[0].type === 'text') {
-            return {
-              id: latestMessage.id,
-              content: latestMessage.content[0].text.value,
-            };
-          }
-        } else if (run.status === 'failed') {
-          throw new Error('Assistant run failed');
-        }
-
-        // Wait for assistant run completion with polling interval
-        await new Promise((resolve) => {
-          setTimeout(() => resolve(undefined), 1000);
-        });
-        attempts++;
-      } catch (error) {
-        console.error('Error polling for response:', error);
-        break;
-      }
-    }
-
-    return null;
-  };
-
-  const generateWorkflowFromPrompt = async (prompt: string): Promise<AgentWorkflow | null> => {
-    try {
-      // Simple workflow generation based on prompt keywords
-      const workflowId = `workflow_${Date.now()}`;
-      const workflow: AgentWorkflow = {
-        id: workflowId,
-        name: extractWorkflowName(prompt),
-        description: prompt,
-        steps: generateStepsFromPrompt(prompt),
-        status: 'draft',
-        trigger: 'manual',
-        createdAt: new Date(),
-        runCount: 0,
-      };
-
-      return workflow;
-    } catch (error) {
-      console.error('Error generating workflow:', error);
-      return null;
-    }
-  };
-
-  const extractWorkflowName = (prompt: string): string => {
-    if (prompt.toLowerCase().includes('lead')) return 'Lead Nurturing Workflow';
-    if (prompt.toLowerCase().includes('follow')) return 'Follow-up Automation';
-    if (prompt.toLowerCase().includes('email')) return 'Email Campaign Workflow';
-    if (prompt.toLowerCase().includes('onboard')) return 'Customer Onboarding';
-    if (prompt.toLowerCase().includes('sales')) return 'Sales Pipeline Automation';
-    return 'Custom Workflow';
-  };
-
-  const generateStepsFromPrompt = (prompt: string): WorkflowStep[] => {
-    const steps: WorkflowStep[] = [];
-
-    if (prompt.toLowerCase().includes('lead')) {
-      steps.push(
-        {
-          id: 'step_1',
-          name: 'Identify New Leads',
-          action: 'query_crm',
-          parameters: { filter: 'new_leads', timeframe: '24h' },
-          status: 'pending',
-        },
-        {
-          id: 'step_2',
-          name: 'Send Welcome Email',
-          action: 'send_email',
-          parameters: { template: 'welcome', personalized: true },
-          status: 'pending',
-        },
-        {
-          id: 'step_3',
-          name: 'Schedule Follow-up',
-          action: 'create_task',
-          parameters: { type: 'follow_up', delay: '3_days' },
-          status: 'pending',
-        }
-      );
-    } else if (prompt.toLowerCase().includes('follow')) {
-      steps.push(
-        {
-          id: 'step_1',
-          name: 'Check Deal Status',
-          action: 'query_deals',
-          parameters: { status: 'proposal_sent' },
-          status: 'pending',
-        },
-        {
-          id: 'step_2',
-          name: 'Send Follow-up',
-          action: 'send_email',
-          parameters: { template: 'follow_up', timing: 'after_3_days' },
-          status: 'pending',
-        }
-      );
-    }
-
-    return steps;
-  };
-
-  const executeWorkflow = async (workflow: AgentWorkflow) => {
-    setWorkflows((prev) =>
-      prev.map((w) => (w.id === workflow.id ? { ...w, status: 'active', lastRun: new Date() } : w))
-    );
-
-    // Simulate workflow execution
-    for (const step of workflow.steps) {
-      setWorkflows((prev) =>
-        prev.map((w) =>
-          w.id === workflow.id
-            ? {
-                ...w,
-                steps: w.steps.map((s) => (s.id === step.id ? { ...s, status: 'running' } : s)),
-              }
-            : w
-        )
-      );
-
-      // Execute step with processing delay
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(undefined), 1500);
-      });
-
-      setWorkflows((prev) =>
-        prev.map((w) =>
-          w.id === workflow.id
-            ? {
-                ...w,
-                steps: w.steps.map((s) =>
-                  s.id === step.id
-                    ? { ...s, status: 'completed', result: `${step.name} completed successfully` }
-                    : s
-                ),
-              }
-            : w
-        )
-      );
-    }
-
-    setWorkflows((prev) =>
-      prev.map((w) =>
-        w.id === workflow.id ? { ...w, status: 'completed', runCount: w.runCount + 1 } : w
-      )
-    );
-
-    // Add completion message
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `completion_${Date.now()}`,
-        role: 'system',
-        content: `✅ Workflow "${workflow.name}" completed successfully! All ${workflow.steps.length} steps executed.`,
-        createdAt: new Date(),
-      },
-    ]);
+    return {
+      id: `workflow_${Date.now()}`,
+      name: String(data.name || 'Workflow'),
+      description: prompt,
+      steps: data.steps.map((step: any, index: number) => ({
+        id: `step_${index + 1}`,
+        name: String(step.name),
+        action: String(step.action),
+        parameters: { description: String(step.description || '') },
+        status: 'pending' as const,
+      })),
+      status: 'draft',
+      trigger: 'manual',
+      createdAt: new Date(),
+      runCount: 0,
+    };
   };
 
   const getStatusIcon = (status: string) => {
@@ -527,26 +411,8 @@ const AgentWorkflowChat: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="flex space-x-2">
-                    {workflow.status === 'draft' && (
-                      <button
-                        onClick={() => executeWorkflow(workflow)}
-                        className="flex-1 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        <PlayCircle className="h-3 w-3 inline mr-1" />
-                        Run
-                      </button>
-                    )}
-                    {workflow.status === 'active' && (
-                      <button className="flex-1 px-2 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700">
-                        <PauseCircle className="h-3 w-3 inline mr-1" />
-                        Pause
-                      </button>
-                    )}
-                  </div>
-
                   <div className="mt-2 text-xs text-gray-500">
-                    Runs: {workflow.runCount} | Created: {workflow.createdAt.toLocaleDateString()}
+                    Created: {workflow.createdAt.toLocaleDateString()}
                   </div>
                 </div>
               ))}

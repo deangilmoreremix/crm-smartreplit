@@ -41,7 +41,6 @@ const VideoCallPreviewWidget = React.memo(() => {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [callDuration] = useState(127); // Sample duration
   const [isExpanded, setIsExpanded] = useState(false);
   const [isGroupCallSetup, setIsGroupCallSetup] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
@@ -53,20 +52,14 @@ const VideoCallPreviewWidget = React.memo(() => {
   // Show preview widget only when not in an actual call
   if (currentCall || callStatus !== 'idle') return null;
 
-  // Sample participant data
+  // Preview shows a real contact (the first selected one, else the first contact); no call is active here
+  const previewContact: any =
+    (selectedContacts.length && (contacts as any)[selectedContacts[0]]) || Object.values(contacts)[0];
   const sampleParticipant = {
-    id: '1',
-    name: 'Jane Doe',
-    email: 'jane.doe@microsoft.com',
-    avatar:
-      'https://images.pexels.com/photos/3763188/pexels-photo-3763188.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-  };
-
-  // Format call duration
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    name: previewContact
+      ? previewContact.name || `${previewContact.firstName || ''} ${previewContact.lastName || ''}`.trim() || 'Contact'
+      : 'No contacts yet',
+    avatar: previewContact?.avatarSrc || previewContact?.avatar || '',
   };
 
   // Get contacts for contact list
@@ -432,7 +425,7 @@ const VideoCallPreviewWidget = React.memo(() => {
             <div className="absolute top-2 right-2 flex items-center space-x-1">
               <div className="w-2 h-2 rounded-full bg-green-400"></div>
               <span className="text-xs text-white bg-black/50 px-1 rounded">
-                {formatDuration(callDuration)}
+                Ready
               </span>
             </div>
           </div>
@@ -456,7 +449,7 @@ const VideoCallPreviewWidget = React.memo(() => {
                     className="mx-auto mb-3"
                   />
                   <p className="text-white font-medium">{sampleParticipant.name}</p>
-                  <p className="text-white/70 text-sm">Connected</p>
+                  <p className="text-white/70 text-sm">Not in a call</p>
                 </div>
 
                 {/* Video overlay */}
@@ -500,7 +493,7 @@ const VideoCallPreviewWidget = React.memo(() => {
 
                   {/* Call Duration */}
                   <div className="bg-black/50 rounded-full px-3 py-1">
-                    <span className="text-white text-xs">{formatDuration(callDuration)}</span>
+                    <span className="text-white text-xs">Ready</span>
                   </div>
                 </div>
 

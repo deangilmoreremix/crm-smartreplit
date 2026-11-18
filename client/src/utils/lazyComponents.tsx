@@ -3,7 +3,6 @@ import { lazy } from 'react';
 // Lazy load page components for better performance
 export const Dashboard = lazy(() => import('../pages/Dashboard'));
 export const Contacts = lazy(() => import('../pages/Contacts'));
-export const Analytics = lazy(() => import('../pages/Analytics'));
 export const AnalyticsDashboard = lazy(() => import('../pages/AnalyticsDashboard'));
 export const AITools = lazy(() => import('../pages/AITools'));
 export const LiveDealAnalysis = lazy(() => import('../pages/LiveDealAnalysis'));
@@ -49,7 +48,6 @@ export const withSuspense = (Component: React.ComponentType<any>, fallback?: Rea
 // Preload functions for critical routes
 export const preloadDashboard = () => import('../pages/Dashboard');
 export const preloadContacts = () => import('../pages/Contacts');
-export const preloadAnalytics = () => import('../pages/Analytics');
 
 // Preload on app initialization for better UX
 if (typeof window !== 'undefined') {

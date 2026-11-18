@@ -38,15 +38,16 @@ import {
 import { useContactStore } from '@/hooks/useContactStore';
 import { useDealStore } from '../../store/dealStore';
 import { aiIntelligenceEngine } from '../../services/ai-intelligence-engine.service';
+import { scoreContact, NeedsApiKeyError, type ScoreResult } from '../../services/leadAutomationApi';
 
 interface ContactIntelligence {
   contactId: string;
-  enrichmentScore: number;
   leadScore: number;
+  priority: ScoreResult['priority'];
+  rationale: string;
   engagementLevel: 'high' | 'medium' | 'low';
   riskFactors: string[];
   recommendations: string[];
-  predictedValue: number;
   lastActivity: string;
   socialProfiles: Array<{
     platform: string;
@@ -65,9 +66,20 @@ interface ContactAnalytics {
   conversionRates: Array<{ stage: string; rate: number }>;
 }
 
+const SCORE_CONCURRENCY = 3;
+
+type EngagementLevel = ContactIntelligence['engagementLevel'];
+
+// Engagement level from how recently the contact was touched (last contact, else last update)
+const getEngagementLevel = (contact: { lastContact?: any; updatedAt?: any }): EngagementLevel => {
+  const last = contact.lastContact || contact.updatedAt;
+  const days = last ? (Date.now() - new Date(last).getTime()) / (1000 * 60 * 60 * 24) : Infinity;
+  return days < 7 ? 'high' : days < 30 ? 'medium' : 'low';
+};
+
 const ContactAnalyticsDashboard: React.FC = () => {
   const { isDark } = useTheme();
-  const { contacts } = useContactStore();
+  const { contacts, fetchContacts } = useContactStore();
   const { deals } = useDealStore();
 
   const [contactIntelligence, setContactIntelligence] = useState<ContactIntelligence[]>([]);
@@ -75,6 +87,8 @@ const ContactAnalyticsDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [analyzeErrors, setAnalyzeErrors] = useState<string[]>([]);
 
   // Calculate contact analytics
   useEffect(() => {
@@ -105,13 +119,17 @@ const ContactAnalyticsDashboard: React.FC = () => {
       .map(([name, count]) => ({ name, count }));
 
     // Calculate lead score distribution from actual contact scores
-    const scoredContacts = contactsArray.filter((c) => typeof c.score === 'number');
+    // Scores are 0-100 (the store maps the saved 0-1 score to aiScore; older records may only have score)
+    const scores = contactsArray
+      .map((c: any) => (typeof c.aiScore === 'number' ? c.aiScore : typeof c.score === 'number' ? c.score : null))
+      .filter((n): n is number => n !== null);
+    const between = (lo: number, hi: number) => scores.filter((n) => n > lo && n <= hi).length;
     const leadScoreDistribution = [
-      { range: '0-20', count: scoredContacts.filter((c) => (c.score || 0) <= 0.2).length },
-      { range: '21-40', count: scoredContacts.filter((c) => (c.score || 0) > 0.2 && (c.score || 0) <= 0.4).length },
-      { range: '41-60', count: scoredContacts.filter((c) => (c.score || 0) > 0.4 && (c.score || 0) <= 0.6).length },
-      { range: '61-80', count: scoredContacts.filter((c) => (c.score || 0) > 0.6 && (c.score || 0) <= 0.8).length },
-      { range: '81-100', count: scoredContacts.filter((c) => (c.score || 0) > 0.8).length },
+      { range: '0-20', count: scores.filter((n) => n <= 20).length },
+      { range: '21-40', count: between(20, 40) },
+      { range: '41-60', count: between(40, 60) },
+      { range: '61-80', count: between(60, 80) },
+      { range: '81-100', count: scores.filter((n) => n > 80).length },
     ];
 
     // Calculate conversion rates from deals data
@@ -150,58 +168,78 @@ const ContactAnalyticsDashboard: React.FC = () => {
     });
   }, [contacts, deals]);
 
-  // Generate AI-powered contact intelligence
+  // Score every contact with the server's lead scoring (saves the score), then refresh the store
   const analyzeContacts = async () => {
+    const contactsArray = Object.values(contacts);
+    if (contactsArray.length === 0) {
+      setAnalyzeErrors(['There are no contacts to analyze.']);
+      return;
+    }
     setIsAnalyzing(true);
-    try {
-      const contactsArray = Object.values(contacts);
-      const intelligence: ContactIntelligence[] = [];
+    setAnalyzeErrors([]);
+    setProgress({ done: 0, total: contactsArray.length });
+    const intelligence: ContactIntelligence[] = [];
+    const errors: string[] = [];
+    let next = 0;
+    let done = 0;
+    let stop = false;
 
-      for (const contact of contactsArray.slice(0, 8)) {
-        // Analyze first 8 contacts for demo
-        const enrichmentScore = contact.enrichmentData ? 85 : Math.round((contact.socialProfiles ? 60 : 40) + (contact.tags?.length || 0) * 5 + (contact.customFields ? 10 : 0));
-        const leadScore = contact.score ? Math.round((contact.score || 0) * 100) : (contact.aiScore || 50);
-        const lastActivityDate = contact.lastContact ? new Date(contact.lastContact) : new Date(contact.updatedAt);
-        const daysSinceActivity = (Date.now() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24);
-        const engagementLevel = daysSinceActivity < 7 ? 'high' : daysSinceActivity < 30 ? 'medium' : 'low';
-        const hasNotes = contact.notes && contact.notes.length > 0;
-        const hasEmail = !!contact.email;
-        const hasPhone = !!contact.phone;
-        const riskFactors = [
-          ...(!hasEmail ? ['Missing email'] : []),
-          ...(!hasPhone ? ['Missing phone'] : []),
-          ...(!hasNotes ? ['No interaction notes'] : []),
-          ...(daysSinceActivity > 30 ? ['Long inactivity period'] : []),
-        ].slice(0, 3);
-        const recommendations = [
-          ...(!hasEmail ? ['Collect email address'] : []),
-          ...(!hasPhone ? ['Collect phone number'] : []),
-          ...(daysSinceActivity > 14 ? ['Schedule follow-up'] : []),
-          ...(leadScore > 70 ? ['Prioritize for outreach'] : ['Nurture with content']),
-        ].slice(0, 3);
-
-        intelligence.push({
-          contactId: contact.id,
-          enrichmentScore: Math.min(100, enrichmentScore),
-          leadScore: Math.min(100, Math.max(0, leadScore)),
-          engagementLevel,
-          riskFactors,
-          recommendations,
-          predictedValue: Math.round((contact.aiScore || 50) * 600 + 10000),
-          lastActivity: lastActivityDate.toISOString(),
-          socialProfiles: Object.entries(contact.socialProfiles || {}).map(([platform, url]) => ({
-            platform: platform.charAt(0).toUpperCase() + platform.slice(1),
-            url: url as string,
-            verified: !!url,
-          })),
-        });
+    const worker = async () => {
+      while (!stop && next < contactsArray.length) {
+        const contact = contactsArray[next++];
+        try {
+          const result = await scoreContact(contact.id);
+          const lastActivityDate = contact.lastContact ? new Date(contact.lastContact) : new Date(contact.updatedAt);
+          const daysSinceActivity = (Date.now() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24);
+          const hasNotes = contact.notes && contact.notes.length > 0;
+          const hasEmail = !!contact.email;
+          const hasPhone = !!contact.phone;
+          intelligence.push({
+            contactId: contact.id,
+            leadScore: result.score,
+            priority: result.priority,
+            rationale: result.rationale,
+            engagementLevel: getEngagementLevel(contact),
+            riskFactors: [
+              ...(!hasEmail ? ['Missing email'] : []),
+              ...(!hasPhone ? ['Missing phone'] : []),
+              ...(!hasNotes ? ['No interaction notes'] : []),
+              ...(daysSinceActivity > 30 ? ['Long inactivity period'] : []),
+            ].slice(0, 3),
+            recommendations: [
+              ...(!hasEmail ? ['Collect email address'] : []),
+              ...(!hasPhone ? ['Collect phone number'] : []),
+              ...(daysSinceActivity > 14 ? ['Schedule follow-up'] : []),
+            ].slice(0, 3),
+            lastActivity: lastActivityDate.toISOString(),
+            socialProfiles: Object.entries(contact.socialProfiles || {}).map(([platform, url]) => ({
+              platform: platform.charAt(0).toUpperCase() + platform.slice(1),
+              url: url as string,
+              verified: !!url,
+            })),
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Scoring failed';
+          errors.push(`${contact.name || contact.email || contact.id}: ${message}`);
+          // A missing API key fails every contact the same way; stop instead of repeating it
+          if (error instanceof NeedsApiKeyError) stop = true;
+        } finally {
+          done += 1;
+          setProgress({ done, total: contactsArray.length });
+        }
       }
+    };
 
+    try {
+      await Promise.all(Array.from({ length: SCORE_CONCURRENCY }, worker));
       setContactIntelligence(intelligence);
+      setAnalyzeErrors(errors);
+      if (intelligence.length > 0) await fetchContacts();
     } catch (error) {
-      console.error('Failed to analyze contacts:', error);
+      setAnalyzeErrors([error instanceof Error ? error.message : 'Analysis failed']);
     } finally {
       setIsAnalyzing(false);
+      setProgress(null);
     }
   };
 
@@ -227,11 +265,11 @@ const ContactAnalyticsDashboard: React.FC = () => {
 
   const conversionChartData = analytics?.conversionRates || [];
 
-  const engagementData = [
-    { level: 'High', count: Math.floor((analytics?.totalContacts || 0) * 0.3), color: '#10b981' },
-    { level: 'Medium', count: Math.floor((analytics?.totalContacts || 0) * 0.5), color: '#f59e0b' },
-    { level: 'Low', count: Math.floor((analytics?.totalContacts || 0) * 0.2), color: '#ef4444' },
-  ];
+  const engagementData = (['high', 'medium', 'low'] as const).map((level) => ({
+    level: level.charAt(0).toUpperCase() + level.slice(1),
+    count: Object.values(contacts).filter((c) => getEngagementLevel(c) === level).length,
+    color: level === 'high' ? '#10b981' : level === 'medium' ? '#f59e0b' : '#ef4444',
+  }));
 
   const getEngagementColor = (level: string) => {
     switch (level) {
@@ -265,11 +303,24 @@ const ContactAnalyticsDashboard: React.FC = () => {
           className="flex items-center space-x-2"
         >
           <Brain className="w-4 h-4" />
-          <span>{isAnalyzing ? 'Analyzing...' : 'Analyze Contacts'}</span>
+          <span>
+            {isAnalyzing
+              ? `Scoring ${progress?.done ?? 0}/${progress?.total ?? 0}...`
+              : 'Analyze Contacts'}
+          </span>
         </Button>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      {analyzeErrors.length > 0 && (
+        <div role="alert" className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          {analyzeErrors.slice(0, 5).map((message, i) => (
+            <p key={i}>{message}</p>
+          ))}
+          {analyzeErrors.length > 5 && <p>and {analyzeErrors.length - 5} more</p>}
+        </div>
+      )}
+
+      <Tabs value="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="intelligence">AI Intelligence</TabsTrigger>
@@ -363,6 +414,23 @@ const ContactAnalyticsDashboard: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Engagement Levels</CardTitle>
+              <CardDescription>Contacts by recency of last contact (high under 7 days, medium under 30)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-6" data-testid="engagement-levels">
+                {engagementData.map((entry) => (
+                  <div key={entry.level} className="text-center">
+                    <div className="text-2xl font-bold" style={{ color: entry.color }}>{entry.count}</div>
+                    <p className="text-xs text-muted-foreground">{entry.level}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Conversion Funnel */}
           <Card>
@@ -467,17 +535,15 @@ const ContactAnalyticsDashboard: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Predicted Value
+                            Priority
                           </p>
-                          <p className="text-lg font-semibold">
-                            ${intelligence.predictedValue.toLocaleString()}
-                          </p>
+                          <p className="text-lg font-semibold capitalize">{intelligence.priority}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Enrichment Score
+                            Why this score
                           </p>
-                          <p className="text-lg font-semibold">{intelligence.enrichmentScore}%</p>
+                          <p className="text-sm">{intelligence.rationale}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Last Activity</p>

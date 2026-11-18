@@ -9,7 +9,7 @@ const https = require('https');
 const { parse } = require('url');
 
 const projectId = 'bzxohkrxcwodllketcpz';
-const serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6eG9oa3J4Y3dvZGxsa2V0Y3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg2NjM4NSwiZXhwIjoyMDg5NDQyMzg1fQ.S5HmTONnamT169WYF0riSphXij-Mwtk7D3pphfSrCFE';
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const sql = \`${sql.replace(/`/g, '\\`')}\`;
 

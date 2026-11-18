@@ -3,8 +3,6 @@ export { useContactStore } from './useContactStore';
 export { useDarkMode } from './useDarkMode';
 export { useToast } from './use-toast';
 export { useAdvancedAI } from './useAdvancedAI';
-export { useEmailAI } from './useEmailAI';
-export { useIntegration } from './useIntegration';
 export { useSmartAI } from './useSmartAI';
 export { useUniversalRemoteIntegration } from './useUniversalRemoteIntegration';
 export { useVoiceAgent } from './useVoiceAgent';

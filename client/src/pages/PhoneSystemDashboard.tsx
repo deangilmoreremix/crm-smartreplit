@@ -19,7 +19,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import CommunicationDashboard from '../components/CommunicationDashboard';
 import GlassCard from '../components/GlassCard';
-import { gpt5Communication } from '../services/gpt5CommunicationService';
 import {
   Phone,
   Mic,
@@ -67,15 +66,6 @@ interface Call {
   };
 }
 
-interface PhoneStats {
-  totalCalls: number;
-  answeredCalls: number;
-  averageCallDuration: number;
-  callQuality: number;
-  customerSatisfaction: number;
-  aiAccuracy: number;
-}
-
 export default function PhoneSystemDashboard() {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('calls');
@@ -116,74 +106,45 @@ export default function PhoneSystemDashboard() {
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Mock data for when API is not available
-  const mockCalls: Call[] = [
-    {
-      id: '1',
-      caller: '+1 (555) 123-4567',
-      duration: 245,
-      status: 'completed',
-      sentiment: 'positive',
-      transcript:
-        "Hello, I'm calling about your product demo. I'm very interested in learning more about your CRM solution.",
-      recording: '/api/recordings/call-1.mp3',
-      gpt5Analysis: {
-        summary:
-          'Prospect is interested in product demo and wants to learn more about CRM capabilities.',
-        keyPoints: ['Interested in product demo', 'Needs more information about CRM features'],
-        actionItems: ['Schedule product demo', 'Send additional product information'],
-        sentimentScore: 0.85,
-      },
-    },
-    {
-      id: '2',
-      caller: '+1 (555) 987-6543',
-      duration: 0,
-      status: 'missed',
-      sentiment: 'neutral',
-    },
-  ];
-
-  const mockStats: PhoneStats = {
-    totalCalls: 47,
-    answeredCalls: 42,
-    averageCallDuration: 185,
-    callQuality: 0.92,
-    customerSatisfaction: 0.88,
-    aiAccuracy: 0.94,
-  };
-
   const {
-    data: calls = mockCalls,
+    data: calls = [],
     isLoading: callsLoading,
     error: callsError,
+    refetch: refetchCalls,
   } = useQuery<Call[]>({
     queryKey: ['/api/phone/calls'],
     refetchInterval: 30000,
     retry: false,
   });
 
-  const {
-    data: stats = mockStats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useQuery<PhoneStats>({
-    queryKey: ['/api/phone/stats'],
-    refetchInterval: 30000,
-    retry: false,
-  });
-
-  // Use mock data if API fails
-  const displayCalls = callsError ? mockCalls : calls;
-  const displayStats = statsError ? mockStats : stats;
+  // Stats are computed from the call records themselves
+  const displayCalls = calls;
+  const answered = displayCalls.filter((c) => c.status === 'completed');
+  const sentimentScores = displayCalls
+    .map((c: any) => c.gpt5Analysis?.sentimentScore)
+    .filter((v: any): v is number => typeof v === 'number');
+  const displayStats = {
+    totalCalls: displayCalls.length,
+    answeredCalls: answered.length,
+    averageCallDuration:
+      answered.length > 0 ? Math.round(answered.reduce((sum, c) => sum + (c.duration || 0), 0) / answered.length / 60) : 0,
+    averageSentiment:
+      sentimentScores.length > 0 ? sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length : null,
+  };
+  const stats = displayStats;
 
   const analyzeCall = async (call: Call) => {
     if (!call.transcript) return;
 
     setIsAnalyzing(true);
     try {
-      const analysis = await gpt5Communication.analyzeContent(call.transcript, 'call-transcript');
-      // In real implementation, this would update the call record
+      // Server analyzes the transcript with the user's OpenAI key and saves it on the call
+      const response = await fetch(`/api/phone/calls/${call.id}/analyze`, { method: 'POST' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || data.error || 'Call analysis failed');
+      }
+      await refetchCalls();
     } catch (error) {
       console.error('Failed to analyze call:', error);
     } finally {
@@ -485,7 +446,7 @@ export default function PhoneSystemDashboard() {
       </div>
       <div className="text-center">
         <div className="text-2xl font-bold text-green-600">
-          {Math.round((displayStats.answeredCalls / displayStats.totalCalls) * 100)}%
+          {displayStats.totalCalls > 0 ? Math.round((displayStats.answeredCalls / displayStats.totalCalls) * 100) : 0}%
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Answer Rate</div>
       </div>
@@ -497,9 +458,9 @@ export default function PhoneSystemDashboard() {
       </div>
       <div className="text-center">
         <div className="text-2xl font-bold text-orange-600">
-          {Math.round(displayStats.customerSatisfaction * 100)}%
+          {displayStats.averageSentiment === null ? '—' : `${Math.round(displayStats.averageSentiment * 100)}%`}
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">Satisfaction</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">Avg Sentiment</div>
       </div>
     </div>
   ) : null;
@@ -532,6 +493,10 @@ export default function PhoneSystemDashboard() {
             </div>
             <div className="px-0 pb-0">
               <div className="space-y-4">
+                {callsError && <p className="text-sm text-red-500">Could not load calls: {(callsError as Error).message}</p>}
+                {!callsError && !callsLoading && displayCalls.length === 0 && (
+                  <p className="text-sm text-gray-500">No calls yet.</p>
+                )}
                 {displayCalls.map((call: Call) => (
                   <GlassCard
                     key={call.id}
@@ -789,28 +754,23 @@ export default function PhoneSystemDashboard() {
               <div className="px-0 pb-0">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Call Quality Score</span>
+                    <span className="text-sm">Answer Rate</span>
                     <span className="font-semibold">
-                      {Math.round(displayStats.callQuality * 100)}%
+                      {displayStats.totalCalls > 0 ? Math.round((displayStats.answeredCalls / displayStats.totalCalls) * 100) : 0}%
                     </span>
                   </div>
-                   <Progress value={displayStats.callQuality * 100} className="h-2" />
+                  <Progress
+                    value={displayStats.totalCalls > 0 ? (displayStats.answeredCalls / displayStats.totalCalls) * 100 : 0}
+                    className="h-2"
+                  />
 
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">AI Analysis Accuracy</span>
+                    <span className="text-sm">Average Sentiment (analyzed calls)</span>
                     <span className="font-semibold">
-                      {Math.round(displayStats.aiAccuracy * 100)}%
+                      {displayStats.averageSentiment === null ? 'No analyzed calls' : `${Math.round(displayStats.averageSentiment * 100)}%`}
                     </span>
                   </div>
-                  <Progress value={displayStats.aiAccuracy * 100} className="h-2" />
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Customer Satisfaction</span>
-                    <span className="font-semibold">
-                      {Math.round(displayStats.customerSatisfaction * 100)}%
-                    </span>
-                  </div>
-                  <Progress value={displayStats.customerSatisfaction * 100} className="h-2" />
+                  <Progress value={(displayStats.averageSentiment ?? 0) * 100} className="h-2" />
                 </div>
               </div>
             </GlassCard>

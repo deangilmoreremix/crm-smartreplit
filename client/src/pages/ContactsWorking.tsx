@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import ModuleFederationContacts from '../components/ModuleFederationContacts';
 import GTMIntegration from '../components/GTMIntegration';
+import ContactsBoard from '../components/twenty/ContactsBoard';
 
 const ContactsWorking: React.FC = () => {
   const { isDark } = useTheme();
@@ -9,6 +10,7 @@ const ContactsWorking: React.FC = () => {
 
   const tabs = [
     { id: 'contacts', label: 'Contacts', icon: '👥' },
+    { id: 'board', label: 'Board', icon: '🗂️' },
     { id: 'analytics', label: 'AI Analytics', icon: '📊' },
   ];
 
@@ -46,6 +48,8 @@ const ContactsWorking: React.FC = () => {
             <ModuleFederationContacts showHeader={false} />
           </div>
         )}
+
+        {activeTab === 'board' && <ContactsBoard />}
 
         {activeTab === 'analytics' && (
           <div className="h-full overflow-y-auto p-6">

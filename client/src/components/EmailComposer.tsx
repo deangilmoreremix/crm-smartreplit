@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { generateAI } from '../services/aiGenerate';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -54,6 +55,7 @@ export default function EmailComposer({
   const [tagInput, setTagInput] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   useEffect(() => {
@@ -151,36 +153,52 @@ export default function EmailComposer({
   const handleGenerateAI = async () => {
     setIsGeneratingAI(true);
     try {
-      // Mock AI suggestions
-      const suggestions = [
-        {
-          type: 'subject',
-          suggestion: 'Personalize subject line with recipient name',
-          action: () => setFormData((prev) => ({ ...prev, subject: `Hi [Name], ${prev.subject}` })),
-        },
-        {
-          type: 'content',
-          suggestion: 'Add a clear call-to-action',
-          action: () =>
-            setFormData((prev) => ({
-              ...prev,
-              content:
-                prev.content +
-                '\n\nWould you like to schedule a quick 15-minute call to discuss this further?',
-            })),
-        },
-        {
-          type: 'timing',
-          suggestion: 'Send on Tuesday at 2 PM for better engagement',
-          action: () => {
-            const tuesday2PM = new Date();
-            tuesday2PM.setDate(tuesday2PM.getDate() + ((2 - tuesday2PM.getDay() + 7) % 7));
-            tuesday2PM.setHours(14, 0, 0, 0);
-            setFormData((prev) => ({ ...prev, scheduledAt: tuesday2PM }));
+      // Real AI review of the current draft (structured output)
+      setAiError(null);
+      const { data } = await generateAI({
+        prompt: `Review this email draft and suggest up to 3 concrete improvements. For "subject" or "content" suggestions give the full improved text in "replacement"; for "timing" give an ISO 8601 send time in "replacement" or null.
+To: ${formData.toAddresses.join(', ') || '(not set)'}
+Subject: ${formData.subject || '(empty)'}
+Body:
+${formData.content || '(empty)'}`,
+        schemaName: 'email_suggestions',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['suggestions'],
+          properties: {
+            suggestions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['type', 'suggestion', 'replacement'],
+                properties: {
+                  type: { type: 'string', enum: ['subject', 'content', 'timing'] },
+                  suggestion: { type: 'string' },
+                  replacement: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+                },
+              },
+            },
           },
         },
-      ];
+      });
+      const suggestions = (data?.suggestions || []).map((item: any) => ({
+        type: item.type,
+        suggestion: item.suggestion,
+        action: () => {
+          if (!item.replacement) return;
+          if (item.type === 'subject') setFormData((prev) => ({ ...prev, subject: item.replacement }));
+          if (item.type === 'content') setFormData((prev) => ({ ...prev, content: item.replacement }));
+          if (item.type === 'timing') {
+            const when = new Date(item.replacement);
+            if (!isNaN(when.getTime())) setFormData((prev) => ({ ...prev, scheduledAt: when }));
+          }
+        },
+      }));
       setAiSuggestions(suggestions);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'AI suggestions failed');
     } finally {
       setIsGeneratingAI(false);
     }
@@ -469,6 +487,11 @@ export default function EmailComposer({
               </Button>
             </div>
 
+            {aiError && (
+              <div className="p-3 rounded-md border border-red-200 bg-red-50 text-sm text-red-700">
+                AI suggestions unavailable: {aiError}
+              </div>
+            )}
             {aiSuggestions.length > 0 && (
               <div className="space-y-3">
                 {aiSuggestions.map((suggestion, index) => (

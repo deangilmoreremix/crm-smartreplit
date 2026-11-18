@@ -1,4 +1,5 @@
 import { Goal, ExecutionStep, GoalExecutionResult } from '../types/goals';
+import { generateAI } from './aiGenerate';
 // import { openAIService } from './openAIService';
 // import { enhancedGeminiService } from './enhancedGeminiService';
 // import { useApiStore } from '../store/apiStore';
@@ -141,10 +142,6 @@ class ComposioService {
           onProgress(steps[steps.length - 1]);
         }
 
-        // Add realistic delay for demo mode
-        if (!context.realMode) {
-          await this.delay(500 + Math.random() * 1000);
-        }
       }
 
       const executionTime = Date.now() - startTime;
@@ -217,21 +214,16 @@ class ComposioService {
       let result: any;
       let thinking: string;
 
-      // Execute based on agent model preference
-      if (agent.model === 'openai') {
-        result = await this.executeWithOpenAI(step, goal, context, agent);
-      } else {
-        result = await this.executeWithGemini(step, goal, context, agent);
-      }
-
-      thinking = this.generateAgentThinking(step, goal, agent);
+      // Every agent step is a real OpenAI call (Responses API via the server, user's own key)
+      result = await this.executeWithAI(step, goal, context, agent);
+      thinking = result.reasoning;
 
       return {
         success: true,
         data: result,
         duration: Date.now() - startTime,
         thinking,
-        toolsUsed: goal.toolsNeeded.slice(0, 2), // Simulate tool usage
+        toolsUsed: [], // no external tools are executed
       };
     } catch (error) {
       return {
@@ -244,95 +236,53 @@ class ComposioService {
     }
   }
 
-  private async executeWithOpenAI(
+  private async executeWithAI(
     step: ExecutionStep,
     goal: Goal,
     context: ExecutionContext,
     agent: AgentConfig
-  ): Promise<any> {
-    // In a real implementation, this would call OpenAI API
-    // For now, simulate realistic agent behavior
-    await this.delay(context.realMode ? 2000 : 500);
-
-    return {
-      analysis: `${agent.name} completed analysis for ${goal.title}`,
-      insights: this.generateMockInsights(goal, agent),
-      confidence: 0.85 + Math.random() * 0.1,
-      recommendations: [
-        `Optimize ${goal.category.toLowerCase()} strategy`,
-        'Implement tracking metrics',
-      ],
-    };
-  }
-
-  private async executeWithGemini(
-    step: ExecutionStep,
-    goal: Goal,
-    context: ExecutionContext,
-    agent: AgentConfig
-  ): Promise<any> {
-    // In a real implementation, this would call Gemini API
-    await this.delay(context.realMode ? 1500 : 400);
-
-    return {
-      analysis: `${agent.name} processed ${goal.title} requirements`,
-      creativeSolutions: this.generateCreativeSolutions(goal, agent),
-      confidence: 0.8 + Math.random() * 0.15,
-      nextSteps: [`Implement ${goal.category} automation`, 'Monitor performance metrics'],
-    };
-  }
-
-  private generateAgentThinking(step: ExecutionStep, goal: Goal, agent: AgentConfig): string {
-    const thoughts = [
-      `Analyzing ${goal.title} requirements...`,
-      `Processing ${goal.category} data patterns...`,
-      `Evaluating ${goal.complexity} complexity factors...`,
-      `Optimizing for ${goal.businessImpact}...`,
-      `Calculating ROI potential: ${goal.roi}...`,
-      `Implementing ${agent.capabilities.join(', ')} strategies...`,
-    ];
-
-    return thoughts[Math.floor(Math.random() * thoughts.length)];
-  }
-
-  private generateMockInsights(goal: Goal, agent: AgentConfig): string[] {
-    return [
-      `${goal.priority} priority goal with ${goal.complexity} complexity`,
-      `Estimated ${goal.estimatedSetupTime} setup time required`,
-      `${agent.name} recommends ${goal.toolsNeeded[0]} integration`,
-    ];
-  }
-
-  private generateCreativeSolutions(goal: Goal, agent: AgentConfig): string[] {
-    return [
-      `Innovative approach to ${goal.category} optimization`,
-      `Creative automation for ${goal.businessImpact}`,
-      `Novel integration pattern with ${goal.toolsNeeded.join(' and ')}`,
-    ];
+  ): Promise<{ analysis: string; reasoning: string; insights: string[]; recommendations: string[] }> {
+    const result = await generateAI({
+      system: `You are the "${agent.name}" agent of a CRM. Capabilities: ${agent.capabilities.join(', ')}.`,
+      prompt: `Goal: ${goal.title} (${goal.category}). ${goal.description || ''}
+Step: ${step.name}.
+Success metrics: ${(goal.successMetrics || []).join(', ')}.
+Context: ${JSON.stringify(context).slice(0, 4000)}
+Analyse this step for the goal and give concrete insights and recommendations.`,
+      schemaName: 'agent_step',
+      schema: {
+        type: 'object',
+        properties: {
+          analysis: { type: 'string' },
+          reasoning: { type: 'string' },
+          insights: { type: 'array', items: { type: 'string' } },
+          recommendations: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['analysis', 'reasoning', 'insights', 'recommendations'],
+        additionalProperties: false,
+      },
+    });
+    if (!result.data) throw new Error('The AI response was not valid JSON');
+    return result.data;
   }
 
   private generateInsights(goal: Goal, steps: ExecutionStep[]): string[] {
+    const completed = steps.filter((s) => s.status === 'completed');
     return [
-      `Goal execution completed with ${steps.filter((s) => s.status === 'completed').length}/${steps.length} successful steps`,
-      `Average agent confidence: ${(Math.random() * 20 + 80).toFixed(1)}%`,
-      `Estimated business impact: ${goal.businessImpact}`,
-      `ROI projection: ${goal.roi}`,
+      `Goal execution completed with ${completed.length}/${steps.length} successful steps`,
+      ...completed.flatMap((s) => (s.result?.insights as string[]) || []),
     ];
   }
 
-  private generateRecommendations(goal: Goal, steps: ExecutionStep[]): string[] {
-    return [
-      `Monitor ${goal.successMetrics[0]} for 30 days`,
-      `Implement tracking for ${goal.category} metrics`,
-      `Consider scaling to related ${goal.category} goals`,
-    ];
+  private generateRecommendations(_goal: Goal, steps: ExecutionStep[]): string[] {
+    return steps
+      .filter((s) => s.status === 'completed')
+      .flatMap((s) => (s.result?.recommendations as string[]) || []);
   }
 
-  private getNextRecommendations(goal: Goal): string[] {
-    return [
-      `goal-${goal.category}-advanced-${Math.random().toString(36).substr(2, 5)}`,
-      `goal-automation-${goal.category}-${Math.random().toString(36).substr(2, 5)}`,
-    ];
+  private getNextRecommendations(_goal: Goal): string[] {
+    // Previously random goal ids; there is no recommendation source for follow-up goals
+    return [];
   }
 
   private generateCrmUpdates(goal: Goal, steps: ExecutionStep[]): any[] {
@@ -351,10 +301,6 @@ class ComposioService {
         },
       },
     ];
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // Public methods for agent management

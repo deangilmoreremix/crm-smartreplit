@@ -1,9 +1,20 @@
 import { supabaseAIService } from './supabaseAIService';
+import { generateImageAI, fileToDataUrl } from './aiGenerate';
+
+// Images use the OpenAI Responses API image_generation tool (POST /api/ai/image), which also edits
+// existing images. gpt-image sizes: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait).
+const GPT_IMAGE_SIZES: Record<string, string> = {
+  '1792x1024': '1536x1024',
+  '1024x1792': '1024x1536',
+  '256x256': '1024x1024',
+  '512x512': '1024x1024',
+};
+const toGptImageSize = (size?: string) => (size ? GPT_IMAGE_SIZES[size] || size : '1024x1024');
 
 interface ImageGenerationOptions {
   prompt: string;
-  model?: 'dall-e-2' | 'dall-e-3';
-  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792';
+  model?: 'gpt-image-2.5-flare' | 'dall-e-2' | 'dall-e-3'; // all generate with gpt-image-2.5-flare
+  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792' | '1536x1024' | '1024x1536';
   quality?: 'standard' | 'hd';
   style?: 'vivid' | 'natural';
   n?: number;
@@ -20,73 +31,18 @@ interface ImageGenerationResult {
 }
 
 class OpenAIImageService {
-  private baseUrl: string = 'https://api.openai.com/v1';
 
-  constructor(apiKey?: string) {
-    // API key is now handled server-side only
-    // Client no longer needs direct access to sensitive keys
-  }
-
-  /**
-   * Check if server-side API is available
-   */
-  private async isServerAvailable(): Promise<boolean> {
-    try {
-      const response = await fetch('/api/openai/status');
-      const data = await response.json();
-      return data.configured === true;
-    } catch (error) {
-      console.warn('Failed to check server availability:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Generate an image using DALL-E via server endpoint
-   */
+  /** Generate an image (image_generation tool on the user's OpenAI key; the server reports a missing key). */
   async generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
-    const serverAvailable = await this.isServerAvailable();
-    if (!serverAvailable) {
-      throw new Error(
-        'Image generation service is not available. Please check server configuration.'
-      );
-    }
-
     try {
-      const response = await fetch('/api/openai/images/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: options.prompt,
-          model: options.model || 'dall-e-3',
-          size: options.size || '1024x1024',
-          quality: options.quality || 'standard',
-          style: options.style || 'vivid',
-          n: options.n || 1,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Image generation error: ${response.status} - ${errorData.error || 'Unknown error'}`
-        );
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Image generation failed');
-      }
-
-      const imageData = data.data[0];
+      const size = toGptImageSize(options.size);
+      const [url] = await generateImageAI({ prompt: options.prompt, size });
+      if (!url) throw new Error('No image was generated');
 
       const result: ImageGenerationResult = {
-        url: imageData.url,
-        revised_prompt: imageData.revised_prompt,
-        model: options.model || 'dall-e-3',
-        size: options.size || '1024x1024',
+        url,
+        model: 'gpt-image-2.5-flare',
+        size,
         quality: options.quality || 'standard',
         style: options.style,
       };
@@ -99,7 +55,7 @@ class OpenAIImageService {
             model_id: result.model,
             feature_used: 'image-generation',
             tokens_used: 1, // Count as 1 token for image generation
-            cost: this.calculateImageCost(result.model, result.size),
+            cost: 0, // billed to the user's own OpenAI account
             response_time_ms: 0,
             success: true,
           });
@@ -115,80 +71,23 @@ class OpenAIImageService {
     }
   }
 
-  /**
-   * Calculate approximate cost for image generation
-   */
-  private calculateImageCost(model: string, size: string): number {
-    // Approximate costs based on OpenAI pricing (as of 2024)
-    const costs: Record<string, Record<string, number>> = {
-      'dall-e-2': {
-        '256x256': 0.016,
-        '512x512': 0.018,
-        '1024x1024': 0.02,
-      },
-      'dall-e-3': {
-        '1024x1024': 0.04, // Standard quality
-        '1792x1024': 0.08,
-        '1024x1792': 0.08,
-      },
-    };
-
-    return costs[model]?.[size] || 0.04; // Default to DALL-E 3 standard cost
+  /** Create a variation of an image (image_generation tool with the image as input). */
+  async createVariation(imageFile: File, options?: Partial<ImageGenerationOptions>): Promise<ImageGenerationResult> {
+    const size = toGptImageSize(options?.size);
+    const [url] = await generateImageAI({
+      prompt:
+        options?.prompt ||
+        'Create a variation of this image: keep the subject, composition and style recognisable but produce a fresh rendition.',
+      size,
+      images: [await fileToDataUrl(imageFile)],
+    });
+    if (!url) throw new Error('No image was generated');
+    return { url, model: 'gpt-image-2.5-flare', size, quality: options?.quality || 'standard' };
   }
 
   /**
-   * Create image variation using DALL-E 2 via server endpoint
-   */
-  async createVariation(
-    imageFile: File,
-    options?: Partial<ImageGenerationOptions>
-  ): Promise<ImageGenerationResult> {
-    const serverAvailable = await this.isServerAvailable();
-    if (!serverAvailable) {
-      throw new Error(
-        'Image variation service is not available. Please check server configuration.'
-      );
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('n', String(options?.n || 1));
-      formData.append('size', options?.size || '1024x1024');
-
-      const response = await fetch('/api/openai/images/variation', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Image variation error: ${response.status} - ${errorData.error || 'Unknown error'}`
-        );
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Image variation failed');
-      }
-
-      const imageData = data.data[0];
-
-      return {
-        url: imageData.url,
-        model: 'dall-e-2',
-        size: options?.size || '1024x1024',
-        quality: 'standard',
-      };
-    } catch (error) {
-      console.error('Image variation failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Edit an image using DALL-E 2 via server endpoint
+   * Edit an image from a prompt. A mask, if given, is sent as a second image with an instruction
+   * to change only the masked (transparent) area.
    */
   async editImage(
     imageFile: File,
@@ -196,50 +95,18 @@ class OpenAIImageService {
     prompt: string,
     options?: Partial<ImageGenerationOptions>
   ): Promise<ImageGenerationResult> {
-    const serverAvailable = await this.isServerAvailable();
-    if (!serverAvailable) {
-      throw new Error('Image editing service is not available. Please check server configuration.');
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      if (maskFile) {
-        formData.append('mask', maskFile);
-      }
-      formData.append('prompt', prompt);
-      formData.append('n', String(options?.n || 1));
-      formData.append('size', options?.size || '1024x1024');
-
-      const response = await fetch('/api/openai/images/edit', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Image edit error: ${response.status} - ${errorData.error || 'Unknown error'}`
-        );
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Image edit failed');
-      }
-
-      const imageData = data.data[0];
-
-      return {
-        url: imageData.url,
-        model: 'dall-e-2',
-        size: options?.size || '1024x1024',
-        quality: 'standard',
-      };
-    } catch (error) {
-      console.error('Image edit failed:', error);
-      throw error;
-    }
+    const size = toGptImageSize(options?.size);
+    const images = [await fileToDataUrl(imageFile)];
+    if (maskFile) images.push(await fileToDataUrl(maskFile));
+    const [url] = await generateImageAI({
+      prompt: maskFile
+        ? `${prompt}\n\nThe second image is a mask: change only the transparent area of the first image.`
+        : prompt,
+      size,
+      images,
+    });
+    if (!url) throw new Error('No image was generated');
+    return { url, model: 'gpt-image-2.5-flare', size, quality: options?.quality || 'standard' };
   }
 }
 
@@ -287,7 +154,7 @@ export const useOpenAIImage = () => {
       size,
       quality,
       style,
-      model: 'dall-e-3',
+      model: 'gpt-image-2.5-flare',
     });
 
     return {

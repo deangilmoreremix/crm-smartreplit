@@ -74,7 +74,7 @@ interface VideoStats {
   totalVideos: number;
   totalViews: number;
   averageEngagement: number;
-  conversionRate: number;
+  conversionRate: number | null;
   topPerformingVideo: string;
 }
 
@@ -101,66 +101,8 @@ export default function VideoEmailDashboard() {
   const [autoSaveInterval, setAutoSaveInterval] = useState('30');
   const [aiOptimizationLevel, setAiOptimizationLevel] = useState('balanced');
 
-  // Mock data for when API is not available
-  const mockVideos: VideoEmail[] = [
-    {
-      id: '1',
-      title: 'Product Demo for Acme Corp',
-      script: 'Welcome to our product demo...',
-      duration: 120,
-      thumbnail: '/api/placeholder/320/180',
-      status: 'ready',
-      analytics: {
-        views: 45,
-        completionRate: 0.85,
-        engagement: 0.78,
-        sentDate: '2024-01-15T10:00:00Z',
-      },
-      gpt5Metadata: {
-        generatedScript: true,
-        optimizationScore: 0.92,
-        suggestedImprovements: ['Add more visuals', 'Include pricing info'],
-        tone: 'professional',
-        targetAudience: 'enterprise',
-      },
-      recipient: {
-        name: 'John Smith',
-        email: 'john@acme.com',
-        company: 'Acme Corp',
-      },
-    },
-    {
-      id: '2',
-      title: 'Welcome Message for New Clients',
-      script: 'Thank you for choosing our services...',
-      duration: 90,
-      thumbnail: '/api/placeholder/320/180',
-      status: 'processing',
-      analytics: {
-        views: 0,
-        completionRate: 0,
-        engagement: 0,
-      },
-      gpt5Metadata: {
-        generatedScript: true,
-        optimizationScore: 0.88,
-        suggestedImprovements: ['Personalize greeting'],
-        tone: 'friendly',
-        targetAudience: 'small business',
-      },
-    },
-  ];
-
-  const mockStats: VideoStats = {
-    totalVideos: 2,
-    totalViews: 45,
-    averageEngagement: 0.78,
-    conversionRate: 0.15,
-    topPerformingVideo: 'Product Demo for Acme Corp',
-  };
-
   const {
-    data: videos = mockVideos,
+    data: videos = [],
     isLoading: videosLoading,
     error: videosError,
   } = useQuery<VideoEmail[]>({
@@ -169,19 +111,19 @@ export default function VideoEmailDashboard() {
     retry: false,
   });
 
-  const {
-    data: stats = mockStats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useQuery<VideoStats>({
-    queryKey: ['/api/videos/stats'],
-    refetchInterval: 30000,
-    retry: false,
-  });
-
-  // Use mock data if API fails
-  const displayVideos = videosError ? mockVideos : videos;
-  const displayStats = statsError ? mockStats : stats;
+  // Stats computed from the user's video records (no conversion tracking exists yet)
+  const displayVideos = videos;
+  const topVideo = [...displayVideos].sort((a, b) => (b.analytics?.views || 0) - (a.analytics?.views || 0))[0];
+  const displayStats: VideoStats = {
+    totalVideos: displayVideos.length,
+    totalViews: displayVideos.reduce((sum, v) => sum + (v.analytics?.views || 0), 0),
+    averageEngagement:
+      displayVideos.length > 0
+        ? displayVideos.reduce((sum, v) => sum + (v.analytics?.engagement || 0), 0) / displayVideos.length
+        : 0,
+    conversionRate: null,
+    topPerformingVideo: topVideo?.title || '',
+  };
 
   const generateVideoScript = async (params: ScriptGenerationParams) => {
     setIsGeneratingScript(true);
@@ -313,7 +255,7 @@ export default function VideoEmailDashboard() {
     </Button>,
   ];
 
-  const headerStats = stats ? (
+  const headerStats = displayStats ? (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
       <div className="text-center">
         <div className="text-2xl font-bold text-blue-600">{displayStats.totalVideos}</div>
@@ -333,7 +275,7 @@ export default function VideoEmailDashboard() {
       </div>
       <div className="text-center">
         <div className="text-2xl font-bold text-orange-600">
-          {Math.round(displayStats.conversionRate * 100)}%
+          {displayStats.conversionRate === null ? '—' : `${Math.round(displayStats.conversionRate * 100)}%`}
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</div>
       </div>
@@ -359,6 +301,10 @@ export default function VideoEmailDashboard() {
         <TabsContent value="videos" className="space-y-6">
           {/* Video Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {videosError && <p className="text-sm text-red-500">Could not load videos: {(videosError as Error).message}</p>}
+            {!videosError && !videosLoading && displayVideos.length === 0 && (
+              <p className="text-sm text-gray-500">No video emails yet.</p>
+            )}
             {displayVideos.map((video: VideoEmail) => (
               <Card
                 key={video.id}
@@ -474,12 +420,12 @@ export default function VideoEmailDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          {statsLoading ? (
+          {videosLoading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <p className="mt-4 text-gray-600 dark:text-gray-400">Loading analytics...</p>
             </div>
-          ) : stats ? (
+          ) : displayStats ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <GlassCard className="p-6">
                 <h3
@@ -510,7 +456,7 @@ export default function VideoEmailDashboard() {
                       Conversion Rate
                     </span>
                     <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {Math.round(displayStats.conversionRate * 100)}%
+                      {displayStats.conversionRate === null ? '—' : `${Math.round(displayStats.conversionRate * 100)}%`}
                     </span>
                   </div>
                 </div>
@@ -525,7 +471,7 @@ export default function VideoEmailDashboard() {
                 </h3>
                 <div className="space-y-3">
                   <h4 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {displayStats.topPerformingVideo}
+                    {displayStats.topPerformingVideo || 'No videos yet'}
                   </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">

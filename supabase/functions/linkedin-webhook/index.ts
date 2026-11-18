@@ -157,7 +157,7 @@ async function updateContactLinkedInData(
   if (industryName) updates.industry = industryName;
 
   const { data, error } = await supabase
-    .from('contacts')
+    .from('smartcrm_contacts')
     .update(updates)
     .eq('id', contactId)
     .select()
@@ -209,7 +209,7 @@ async function createLinkedInActivity(
   };
 
   const { data, error } = await supabase
-    .from('contact_activities')
+    .from('smartcrm_contact_activities')
     .insert(activityData)
     .select()
     .single();
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
 
     // Find contact by LinkedIn ID
     const { data: contacts } = await supabase
-      .from('contacts')
+      .from('smartcrm_contacts')
       .select('id')
       .like('linkedinUrl', `%${linkedinId}`)
       .limit(1);

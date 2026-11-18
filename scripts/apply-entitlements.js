@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 const { Client } = pg;
 
 const client = new Client({
-  connectionString: 'postgresql://postgres:VideoRemix2026@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres',
+  connectionString: process.env.DATABASE_URL,
   family: 4, // Force IPv4
   ssl: { rejectUnauthorized: false },
 });

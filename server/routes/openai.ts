@@ -4,35 +4,21 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
 import { memoryService } from '../memory';
 import { requireAuth } from './auth';
 
 const router = Router();
 
-// Helper: Get user's OpenAI client
-async function getUserOpenAI(userId: string): Promise<{ client: any; model: string } | null> {
-  if (!db) return null;
+// Helper: Get user's OpenAI client (their own key)
+const getUserOpenAI = (userId: string) => getUserOpenAIClient(userId);
 
-  const keyRecord = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, 'openai'),
-      eq(userApiKeys.isActive, true)
-    ),
-    orderBy: (userApiKeys, { desc }) => [desc(userApiKeys.isDefault)],
-  });
-
-  if (!keyRecord) return null;
-
-  const OpenAI = (await import('openai')).default;
-  return {
-    client: new OpenAI({ apiKey: keyRecord.apiKey }),
-    model: keyRecord.model || 'gpt-4o-mini',
-  };
-}
+// No key or a failed call is reported as an error. These routes never return canned greetings, scores or
+// recommendations: the client shows the message instead.
+const needsApiKey = (res: Response) =>
+  res.status(400).json({ success: false, error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+const aiFailed = (res: Response, what: string, error: unknown) =>
+  res.status(500).json({ success: false, error: `Failed to ${what}`, message: error instanceof Error ? error.message : String(error) });
 
 // Check API key status - uses user's key
 router.get('/api/openai/status', requireAuth(), async (req: Request, res: Response) => {
@@ -79,14 +65,7 @@ router.post('/api/openai/smart-greeting', requireAuth(), async (req: Request, re
     const { userMetrics, timeOfDay, recentActivity } = req.body;
     const openaiData = await getUserOpenAI(userId);
 
-    if (!openaiData) {
-      return res.json({
-        greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
-        insight: userMetrics?.totalValue > 50000 ? 'Strong momentum' : 'Growing steadily',
-        source: 'fallback',
-        needsApiKey: true,
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
 
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
@@ -127,11 +106,7 @@ router.post('/api/openai/smart-greeting', requireAuth(), async (req: Request, re
       { endpoint: 'smart-greeting', sessionId }
     );
 
-    res.status(500).json({
-      error: 'Failed to generate smart greeting',
-      greeting: `Good ${req.body.timeOfDay}! Your pipeline shows strong momentum.`,
-      insight: 'Focus on your highest-value opportunities for maximum impact.',
-    });
+    aiFailed(res, 'generate smart greeting', error);
   }
 });
 
@@ -144,13 +119,7 @@ router.post('/api/openai/kpi-analysis', requireAuth(), async (req: Request, res:
     const { historicalData, currentMetrics } = req.body;
     const openaiData = await getUserOpenAI(userId);
 
-    if (!openaiData) {
-      return res.json({
-        summary: 'Configure your OpenAI API key in Settings > API Keys',
-        recommendations: ['Add OpenAI API key in Settings'],
-        needsApiKey: true,
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
 
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
@@ -191,15 +160,7 @@ router.post('/api/openai/kpi-analysis', requireAuth(), async (req: Request, res:
       { endpoint: 'kpi-analysis', sessionId }
     );
 
-    res.status(500).json({
-      error: 'Failed to analyze KPIs',
-      summary: 'Your KPI trends show steady performance with opportunities for optimization.',
-      recommendations: [
-        'Focus on pipeline velocity',
-        'Optimize conversion rates',
-        'Scale successful strategies',
-      ],
-    });
+    aiFailed(res, 'analyze KPIs', error);
   }
 });
 
@@ -212,14 +173,7 @@ router.post('/api/openai/deal-intelligence', requireAuth(), async (req: Request,
     const { dealData, contactHistory, marketContext } = req.body;
     const openaiData = await getUserOpenAI(userId);
 
-    if (!openaiData) {
-      return res.json({
-        probability_score: 65,
-        risk_level: 'medium',
-        recommendations: ['Configure OpenAI API key in Settings'],
-        needsApiKey: true,
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
 
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
@@ -260,20 +214,7 @@ router.post('/api/openai/deal-intelligence', requireAuth(), async (req: Request,
       { endpoint: 'deal-intelligence', sessionId }
     );
 
-    res.status(500).json({
-      error: 'Failed to analyze deal',
-      probability_score: 65,
-      risk_level: 'medium',
-      key_factors: ['Follow-up frequency', 'Decision timeline', 'Budget confirmation'],
-      recommendations: [
-        'Schedule decision-maker meeting',
-        'Confirm budget authority',
-        'Present clear ROI',
-      ],
-      confidence_level: 'medium',
-      estimated_close_days: 30,
-      value_optimization: 0,
-    });
+    aiFailed(res, 'analyze deal', error);
   }
 });
 
@@ -286,13 +227,7 @@ router.post('/api/openai/business-intelligence', requireAuth(), async (req: Requ
     const { businessData, marketContext, objectives } = req.body;
     const openaiData = await getUserOpenAI(userId);
 
-    if (!openaiData) {
-      return res.json({
-        market_insights: ['Configure OpenAI API key in Settings'],
-        strategic_recommendations: ['Add your API key in Settings > API Keys'],
-        needsApiKey: true,
-      });
-    }
+    if (!openaiData) return needsApiKey(res);
 
     const response = await openaiData.client.chat.completions.create({
       model: openaiData.model,
@@ -333,14 +268,7 @@ router.post('/api/openai/business-intelligence', requireAuth(), async (req: Requ
       { endpoint: 'business-intelligence', sessionId }
     );
 
-    res.status(500).json({
-      error: 'Failed to generate business intelligence',
-      market_insights: ['Digital transformation accelerating', 'Customer expectations rising'],
-      competitive_advantages: ['AI integration', 'Customer-centric approach'],
-      risk_factors: ['Market competition', 'Economic uncertainty'],
-      growth_opportunities: ['Market expansion', 'Product diversification'],
-      strategic_recommendations: ['Invest in AI capabilities', 'Strengthen customer relationships'],
-    });
+    aiFailed(res, 'generate business intelligence', error);
   }
 });
 

@@ -51,20 +51,21 @@ async function getStripe() {
   }
 }
 
-// Initialize Supabase
-const supabaseUrl = requireEnv('SUPABASE_URL');
-const supabaseServiceKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Configuration is read when a billing request arrives, so a missing billing variable
+// fails only billing requests instead of the whole API at import time.
+let supabaseClient: ReturnType<typeof createClient> | null = null;
+const getSupabase = () =>
+  (supabaseClient ??= createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY')));
 
 // Pricing for OpenClaw upgrade tiers
 const upgradePricing = {
   smartcrm_bundle: {
-    priceId: requireEnv('STRIPE_SMARTCRM_BUNDLE_PRICE_ID'),
+    priceEnv: 'STRIPE_SMARTCRM_BUNDLE_PRICE_ID',
     amount: 97,
     name: 'SmartCRM Bundle',
   },
   sales_maximizer: {
-    priceId: requireEnv('STRIPE_SALES_MAXIMIZER_PRICE_ID'),
+    priceEnv: 'STRIPE_SALES_MAXIMIZER_PRICE_ID',
     amount: 67,
     name: 'Sales Maximizer',
   },
@@ -77,7 +78,7 @@ const upgradePricing = {
 router.post('/upgrade', async (req: Request, res: Response) => {
   try {
     const { tierId, currentTier } = req.body;
-    const userId = (req as any).session?.userId;
+    const userId = (req as any).userId;
 
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -87,12 +88,12 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid tier ID' });
     }
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    // Current SmartCRM tier (kept in smartcrm_user_entitlements; the shared profiles table has no tier)
+    const { data: profile, error: profileError } = await getSupabase()
+      .from('smartcrm_user_entitlements')
+      .select('product_tier')
+      .eq('user_id', userId)
+      .maybeSingle();
 
     if (profileError) {
       return res.status(500).json({ error: 'Failed to get user profile' });
@@ -120,7 +121,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       super_admin: 7,
     };
 
-    const currentTierLevel = tierHierarchy[profile.productTier as keyof typeof tierHierarchy] || 0;
+    const currentTierLevel = tierHierarchy[profile?.product_tier as keyof typeof tierHierarchy] || 0;
     const targetTierLevel = tierHierarchy[tierId as keyof typeof tierHierarchy] || 0;
 
     if (targetTierLevel <= currentTierLevel) {
@@ -137,7 +138,7 @@ router.post('/upgrade', async (req: Request, res: Response) => {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: upgradePricing[tierId as keyof typeof upgradePricing].priceId,
+          price: requireEnv(upgradePricing[tierId as keyof typeof upgradePricing].priceEnv),
           quantity: 1,
         },
       ],
@@ -170,10 +171,10 @@ router.post('/upgrade', async (req: Request, res: Response) => {
  */
 router.post('/webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
-  const endpointSecret = requireEnv('STRIPE_WEBHOOK_SECRET');
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   const stripeClient = await getStripe();
-  if (!stripeClient) {
+  if (!stripeClient || !endpointSecret) {
     return res.status(500).json({ error: 'Stripe not configured' });
   }
 
@@ -195,7 +196,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
         const tierId = session.metadata.tierId;
 
         // Update user tier in database
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('profiles')
           .update({
             productTier: tierId,
@@ -228,7 +229,7 @@ router.get('/plans', async (req: Request, res: Response) => {
       id: tierId,
       name: config.name,
       price: config.amount,
-      priceId: config.priceId,
+      priceId: process.env[config.priceEnv] || null,
     }));
 
     res.json({ plans });

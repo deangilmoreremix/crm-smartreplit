@@ -10,8 +10,9 @@ const DemoDataContext = createContext<DemoDataContextType | undefined>(undefined
 
 export const DemoDataProvider = ({ children }: { children: ReactNode }) => {
   const [showDemoData, setShowDemoData] = useState(() => {
+    // Demo data is off unless the user explicitly turned it back on
     const stored = localStorage.getItem('smartcrm_show_demo_data');
-    return stored !== null ? stored === 'true' : true;
+    return stored === 'true';
   });
 
   useEffect(() => {

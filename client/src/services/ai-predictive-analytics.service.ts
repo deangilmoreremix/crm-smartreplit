@@ -149,11 +149,13 @@ class AIPredictiveAnalyticsService {
       return cached;
     }
 
-    // Generate historical data points (mock for now)
+    // Historical metric data is not recorded yet, so no trends are reported (previously random series)
     const historicalData = this.generateHistoricalData(contact, timeframe, metrics);
 
-    // Analyze trends
-    const trends = metrics.map((metric) => this.analyzeSingleTrend(metric, historicalData[metric]));
+    // Analyze trends (only for metrics that have data)
+    const trends = metrics
+      .filter((metric) => historicalData[metric]?.length > 1)
+      .map((metric) => this.analyzeSingleTrend(metric, historicalData[metric]));
 
     // Detect seasonality
     const seasonality = this.detectSeasonality(historicalData);
@@ -283,36 +285,31 @@ class AIPredictiveAnalyticsService {
     confidence: number;
     factors: string[];
   }> {
-    // Analyze company and industry factors
-    const industryAverage = this.getIndustryAverageDealSize(contact.industry);
+    // Estimate only from the user's own previous deal values (previously from invented
+    // "industry averages"); without history there is no estimate
+    const previous = (context?.previousDeals || []).filter((v) => typeof v === 'number' && v > 0);
+    if (previous.length === 0) {
+      return {
+        estimatedDealSize: 0,
+        range: { min: 0, max: 0 },
+        confidence: 0,
+        factors: ['No previous deal values to estimate from'],
+      };
+    }
+
     const companyFactors = this.analyzeCompanyFactors(contact);
     const titleFactors = this.analyzeTitleFactors(contact.title);
-
-    // Calculate estimated deal size
-    let estimatedDealSize = industryAverage;
-    estimatedDealSize *= companyFactors.multiplier;
-    estimatedDealSize *= titleFactors.multiplier;
-
-    // Determine range
-    const variance = estimatedDealSize * 0.4; // 40% variance
-    const range = {
-      min: Math.max(0, estimatedDealSize - variance),
-      max: estimatedDealSize + variance,
-    };
+    const average = previous.reduce((sum, v) => sum + v, 0) / previous.length;
+    const estimatedDealSize = average * companyFactors.multiplier * titleFactors.multiplier;
 
     return {
       estimatedDealSize: Math.round(estimatedDealSize),
-      range: {
-        min: Math.round(range.min),
-        max: Math.round(range.max),
-      },
-      confidence: this.calculateDealSizeConfidence(contact, context),
+      range: { min: Math.round(Math.min(...previous)), max: Math.round(Math.max(...previous)) },
+      confidence: Math.min(90, previous.length * 10),
       factors: [
-        `Industry average: $${industryAverage.toLocaleString()}`,
+        `Average of ${previous.length} previous deal(s): $${Math.round(average).toLocaleString()}`,
         `Company factor: ${companyFactors.description}`,
         `Title influence: ${titleFactors.description}`,
-        'Historical deal patterns',
-        'Market conditions',
       ],
     };
   }
@@ -469,8 +466,8 @@ class AIPredictiveAnalyticsService {
         id: 'conversion_model_v1',
         name: 'Conversion Probability Model',
         type: 'conversion',
-        accuracy: 85,
-        lastTrained: new Date().toISOString(),
+        accuracy: 0, // not measured (rule-based estimator)
+        lastTrained: '',
         features: [
           'ai_score',
           'interest_level',
@@ -478,25 +475,25 @@ class AIPredictiveAnalyticsService {
           'engagement_history',
           'source_quality',
         ],
-        performance: { precision: 0.82, recall: 0.78, f1Score: 0.8 },
+        performance: { precision: 0, recall: 0, f1Score: 0 }, // not measured
       },
       {
         id: 'response_time_model_v1',
         name: 'Response Time Prediction Model',
         type: 'response_time',
-        accuracy: 78,
-        lastTrained: new Date().toISOString(),
+        accuracy: 0, // not measured (rule-based estimator)
+        lastTrained: '',
         features: ['interest_level', 'engagement_history', 'title_seniority', 'industry'],
-        performance: { precision: 0.75, recall: 0.72, f1Score: 0.74 },
+        performance: { precision: 0, recall: 0, f1Score: 0 }, // not measured
       },
       {
         id: 'deal_size_model_v1',
         name: 'Deal Size Estimation Model',
         type: 'deal_size',
-        accuracy: 82,
-        lastTrained: new Date().toISOString(),
+        accuracy: 0, // not measured (rule-based estimator)
+        lastTrained: '',
         features: ['company_size', 'title_seniority', 'industry', 'ai_score'],
-        performance: { precision: 0.8, recall: 0.77, f1Score: 0.79 },
+        performance: { precision: 0, recall: 0, f1Score: 0 }, // not measured
       },
     ];
 
@@ -580,20 +577,9 @@ class AIPredictiveAnalyticsService {
     return data;
   }
 
-  private generateMetricHistory(contact: Contact, metric: string, timeframe: string): any[] {
-    // Generate mock time series data
-    const points = timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 180;
-    const data = [];
-
-    for (let i = 0; i < points; i++) {
-      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-      data.push({
-        date: date.toISOString().split('T')[0],
-        value: Math.random() * 100 + Math.sin(i / 10) * 20,
-      });
-    }
-
-    return data.reverse();
+  private generateMetricHistory(_contact: Contact, _metric: string, _timeframe: string): any[] {
+    // No per-contact metric history is stored; return none rather than invented values
+    return [];
   }
 
   private analyzeSingleTrend(metric: string, data: any[]): TrendAnalysis['trends'][0] {
@@ -619,10 +605,11 @@ class AIPredictiveAnalyticsService {
 
   private detectSeasonality(data: Record<string, any[]>): TrendAnalysis['seasonality'] {
     // Simple seasonality detection
+    const hasData = Object.values(data).some((series) => series.length > 1);
     return {
-      detected: Math.random() > 0.7,
-      pattern: 'Weekly pattern detected',
-      confidence: 75,
+      detected: false,
+      pattern: hasData ? 'No seasonality analysis available' : 'Not enough history to detect seasonality',
+      confidence: 0,
     };
   }
 
@@ -726,25 +713,28 @@ class AIPredictiveAnalyticsService {
     model: PredictiveModel,
     features: Record<string, number>
   ): number {
-    // Calculate confidence based on model accuracy and feature completeness
+    // These are rule-based estimates, not trained models: confidence reflects only how many
+    // input fields the contact actually has (no claimed model accuracy)
     const featureCompleteness =
-      Object.values(features).filter((v) => v !== 0).length / Object.keys(features).length;
-    return Math.round(model.accuracy * featureCompleteness);
+      Object.values(features).filter((v) => v !== 0).length / Math.max(1, Object.keys(features).length);
+    return Math.round(100 * featureCompleteness);
   }
 
   private generateReasoning(model: PredictiveModel, factors: any[]): string[] {
     return [
-      `Based on ${model.name} analysis`,
-      `Using ${factors.length} key factors`,
-      `Model accuracy: ${model.accuracy}%`,
+      `Rule-based estimate (${model.name}) from the contact's CRM fields`,
+      `Using ${factors.length} factors`,
     ];
   }
 
   private analyzeFactors(contact: Contact, model: PredictiveModel): Prediction['factors'] {
+    // Factors come from the contact's actual features and the rule weights (previously random)
+    const features = this.extractFeatures(contact, model.features);
+    const weights = this.getModelWeights(model);
     return model.features.map((feature) => ({
       factor: feature,
-      impact: Math.random() * 2 - 1, // -1 to 1
-      weight: Math.random(), // 0 to 1
+      impact: Math.max(-1, Math.min(1, (features[feature] || 0) * (weights[feature] || 0))),
+      weight: weights[feature] || 0,
     }));
   }
 
@@ -771,65 +761,45 @@ class AIPredictiveAnalyticsService {
 
   getModelPerformance(): Record<string, any> {
     const models = Array.from(this.models.values());
+    // Rule-based estimators: accuracy has never been measured, so none is reported
     return {
       totalModels: models.length,
-      avgAccuracy: models.reduce((sum, m) => sum + m.accuracy, 0) / models.length,
+      avgAccuracy: null,
       modelBreakdown: models.map((m) => ({
         name: m.name,
         type: m.type,
-        accuracy: m.accuracy,
-        lastTrained: m.lastTrained,
+        accuracy: null,
+        lastTrained: null,
       })),
     };
   }
 
   // Response time prediction helpers
-  private getHistoricalResponseData(contact: Contact, type: string): any[] {
-    // Mock historical response data
-    return [
-      { date: '2024-01-20', responseTime: 4.5 },
-      { date: '2024-01-18', responseTime: 2.1 },
-      { date: '2024-01-15', responseTime: 6.8 },
-    ];
+  private getHistoricalResponseData(_contact: Contact, _type: string): any[] {
+    // Response history is not recorded; no invented data points
+    return [];
   }
 
   private calculateAverageResponseTime(data: any[]): number {
-    if (data.length === 0) return 24; // Default 24 hours
+    // 0 means "unknown": there is no response history to average
+    if (data.length === 0) return 0;
     return data.reduce((sum, d) => sum + d.responseTime, 0) / data.length;
   }
 
-  private determineOptimalSendTime(contact: Contact, data: any[]): string {
-    // Analyze data to determine optimal send time
-    return 'Tuesday-Thursday 2-4 PM';
+  private determineOptimalSendTime(_contact: Contact, _data: any[]): string {
+    // Send-time analysis needs response history, which is not recorded
+    return 'Not enough response history';
   }
 
-  private getResponseTimeFactors(contact: Contact, type: string): string[] {
-    return [
-      'Historical response patterns',
-      'Industry communication norms',
-      'Contact seniority level',
-      'Communication channel preference',
-    ];
+  private getResponseTimeFactors(_contact: Contact, type: string): string[] {
+    return [`Channel: ${type}`, 'No response history recorded for this contact'];
   }
 
   private calculateResponseTimeConfidence(data: any[]): number {
-    // Calculate confidence based on data quality and quantity
-    return Math.min(95, 60 + data.length * 5);
+    // No data, no confidence
+    return data.length === 0 ? 0 : Math.min(95, data.length * 10);
   }
 
-  // Deal size prediction helpers
-  private getIndustryAverageDealSize(industry?: string): number {
-    const averages: Record<string, number> = {
-      Technology: 75000,
-      Healthcare: 95000,
-      Finance: 120000,
-      Manufacturing: 85000,
-      Retail: 45000,
-      Education: 65000,
-    };
-
-    return averages[industry || 'Technology'] || 65000;
-  }
 
   private analyzeCompanyFactors(contact: Contact): { multiplier: number; description: string } {
     if (!contact.company) return { multiplier: 1.0, description: 'Standard company size' };
@@ -861,16 +831,6 @@ class AIPredictiveAnalyticsService {
     return { multiplier: 0.9, description: 'Individual contributor' };
   }
 
-  private calculateDealSizeConfidence(contact: Contact, context?: any): number {
-    let confidence = 70; // Base confidence
-
-    if (contact.industry) confidence += 10;
-    if (contact.title) confidence += 10;
-    if (contact.company) confidence += 10;
-    if (context?.previousDeals?.length > 0) confidence += 15;
-
-    return Math.min(95, confidence);
-  }
 
   private calculateConfidence(contact: Contact, factors: string[]): number {
     let confidence = 60; // Base confidence

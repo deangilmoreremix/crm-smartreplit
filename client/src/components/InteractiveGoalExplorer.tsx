@@ -62,7 +62,8 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   const [selectedComplexity, setSelectedComplexity] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [executingGoals, setExecutingGoals] = useState<Set<string>>(new Set());
-  const [executionProgress, setExecutionProgress] = useState<Record<string, number>>({});
+  // Per-goal progress is not tracked (execution is a single AI request in GoalExecutionModal)
+  const [executionProgress] = useState<Record<string, number>>({});
   const [completedGoals, setCompletedGoals] = useState<Set<string>>(new Set());
   const [executingGoal, setExecutingGoal] = useState<Goal | null>(null);
   const [showExecutionModal, setShowExecutionModal] = useState(false);
@@ -74,29 +75,20 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   const [liveStats, setLiveStats] = useState({
     totalGoals: allGoals.length,
     completedToday: 0,
-    valueGenerated: 0,
     activeAgents: 0,
     executingNow: 0,
-    systemHealth: 98.7,
   });
 
   // Update live stats based on execution state
   useEffect(() => {
-    const valuePerGoal = 500000; // Base value per goal
-    const agentsPerGoal = 3; // Average agents per goal
-
     setLiveStats((prev) => ({
       ...prev,
       executingNow: executingGoals.size,
       completedToday: completedGoals.size,
-      valueGenerated:
-        completedGoals.size * valuePerGoal +
-        Array.from(executingGoals).reduce((sum, goalId) => {
-          const progress = executionProgress[goalId] || 0;
-          return sum + (valuePerGoal * progress) / 100;
-        }, 0),
-      activeAgents: executingGoals.size * agentsPerGoal,
-      systemHealth: Math.min(99.9, 98.7 + Math.random() * 1.2),
+      // Agents required by the goals that are running right now
+      activeAgents: allGoals
+        .filter((goal) => executingGoals.has(goal.id))
+        .reduce((sum, goal) => sum + goal.agentsRequired.length, 0),
     }));
   }, [executingGoals.size, completedGoals.size, executionProgress]);
 
@@ -166,30 +158,6 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
 
     if (!executingGoals.has(goal.id)) {
       setExecutingGoals((prev) => new Set([...Array.from(prev), goal.id]));
-      setExecutionProgress((prev) => ({ ...prev, [goal.id]: 0 }));
-
-      // Simulate execution progress
-      const progressInterval = setInterval(
-        () => {
-          setExecutionProgress((prev) => {
-            const currentProgress = prev[goal.id] || 0;
-            const newProgress = Math.min(100, currentProgress + Math.random() * 15 + 5);
-
-            if (newProgress >= 100) {
-              clearInterval(progressInterval);
-              setExecutingGoals((prevSet) => {
-                const newSet = new Set(prevSet);
-                newSet.delete(goal.id);
-                return newSet;
-              });
-              setCompletedGoals((prevSet) => new Set([...Array.from(prevSet), goal.id]));
-            }
-
-            return { ...prev, [goal.id]: newProgress };
-          });
-        },
-        realMode ? 2000 : 500
-      );
     }
   };
 
@@ -211,6 +179,13 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
   };
 
   const handleCloseModal = () => {
+    if (executingGoal) {
+      setExecutingGoals((prev) => {
+        const next = new Set(prev);
+        next.delete(executingGoal.id);
+        return next;
+      });
+    }
     setShowExecutionModal(false);
     setExecutingGoal(null);
   };
@@ -252,15 +227,6 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
     }
   };
 
-  // Format currency values
-  const formatCurrency = (value: number): string => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}K`;
-    }
-    return `$${value.toFixed(0)}`;
-  };
 
   return (
     <div className="space-y-8">
@@ -299,13 +265,13 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
           {/* Value Generated */}
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-4 text-center border border-purple-200/50 dark:border-purple-700/50">
             <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-              {formatCurrency(liveStats.valueGenerated)}
+              {liveStats.totalGoals}
             </div>
             <div className="text-sm font-medium text-purple-700 dark:text-purple-300">
-              Value Generated
+              Goals Available
             </div>
             <div className="text-xs text-purple-500 dark:text-purple-400">
-              Business impact today
+              In the goal library
             </div>
           </div>
 
@@ -323,10 +289,10 @@ const InteractiveGoalExplorer: React.FC<InteractiveGoalExplorerProps> = ({
           {/* System Health */}
           <div className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 rounded-xl p-4 text-center border border-teal-200/50 dark:border-teal-700/50">
             <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">
-              {liveStats.systemHealth.toFixed(1)}%
+              {liveStats.executingNow}
             </div>
             <div className="text-sm font-medium text-teal-700 dark:text-teal-300">
-              System Health
+              Running Now
             </div>
             <div className="text-xs text-teal-500 dark:text-teal-400">
               <div className="flex items-center justify-center gap-1">

@@ -1,58 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Bot, Key, CheckCircle, AlertCircle, Settings, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAIConfiguration } from '../../contexts/AIConfigurationContext';
+import { useAIApiKeys } from '../../hooks/useAIApiKeys';
 
 interface AIConfigurationStatusWidgetProps {
   className?: string;
 }
 
-const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = ({ className }) => {
+const AIConfigurationStatus: React.FC<AIConfigurationStatusWidgetProps> = ({ className }) => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const { openAIProviderModal } = useAIConfiguration();
-  const [configuredProviders, setConfiguredProviders] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadConfigurationStatus();
-    // Listen for storage changes (when user adds/removes keys)
-    window.addEventListener('storage', loadConfigurationStatus);
-    return () => window.removeEventListener('storage', loadConfigurationStatus);
-  }, []);
-
-  const loadConfigurationStatus = () => {
-    try {
-      const stored = localStorage.getItem('smartcrm_api_keys');
-      if (stored) {
-        const keys = JSON.parse(stored);
-        const providers = keys.map((k: any) => k.providerId);
-        setConfiguredProviders(providers);
-      } else {
-        setConfiguredProviders([]);
-      }
-    } catch (error) {
-      console.error('Failed to load AI configuration:', error);
-      setConfiguredProviders([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { apiConfig, isLoading, error } = useAIApiKeys();
+  // Status only: whether a key exists, never the key itself
+  const configuredProviders = (['openai', 'openclaw'] as const).filter(
+    (id) => !!apiConfig[id]?.apiKey
+  );
 
   const getProviderDisplayName = (providerId: string): string => {
     const names: Record<string, string> = {
       openai: 'OpenAI',
-      openrouter: 'OpenRouter',
-      anthropic: 'Anthropic',
-      google: 'Google AI',
-      groq: 'Groq',
-      together: 'Together AI',
-      cohere: 'Cohere',
-      mistral: 'Mistral',
-      deepinfra: 'DeepInfra',
-      fireworks: 'Fireworks',
-      perplexity: 'Perplexity',
+      openclaw: 'OpenClaw',
     };
     return names[providerId] || providerId;
   };
@@ -60,10 +30,7 @@ const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = 
   const getProviderColor = (providerId: string): string => {
     const colors: Record<string, string> = {
       openai: 'text-green-600',
-      openrouter: 'text-purple-600',
-      anthropic: 'text-orange-600',
-      google: 'text-blue-600',
-      groq: 'text-red-600',
+      openclaw: 'text-blue-600',
     };
     return colors[providerId] || 'text-gray-600';
   };
@@ -100,6 +67,8 @@ const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = 
           Settings
         </button>
       </div>
+
+      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
 
       {!hasAnyKeys ? (
         <div className="text-center py-4">
@@ -157,6 +126,12 @@ const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = 
       )}
     </div>
   );
+};
+
+// Remount when the settings dialog opens/closes so the status is re-fetched after a save
+const AIConfigurationStatusWidget: React.FC<AIConfigurationStatusWidgetProps> = (props) => {
+  const { showAIProviderModal } = useAIConfiguration();
+  return <AIConfigurationStatus key={String(showAIProviderModal)} {...props} />;
 };
 
 export default AIConfigurationStatusWidget;

@@ -6,7 +6,6 @@ import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
 import { Deal } from '../../types/deal';
 import { useAITools } from '../../components/AIToolsProvider';
-import { useVideoCall } from '../../contexts/VideoCallContext';
 import { useAIConfiguration } from '../../contexts/AIConfigurationContext';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
@@ -16,7 +15,6 @@ const QuickActions = () => {
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
   const { openTool } = useAITools();
-  const { initiateCall } = useVideoCall();
   const { openAIProviderModal } = useAIConfiguration();
   const navigate = useNavigate();
 
@@ -97,15 +95,8 @@ const QuickActions = () => {
         openTool('email-composer');
         break;
       case 'videoCall':
-        // Start video call interface
-        // For quick action, we'll open the video call interface
-        // In a real app, you might show a contact picker first
-        const dummyRecipient = {
-          id: 'demo',
-          name: 'Demo Call',
-          email: 'demo@example.com',
-        };
-        initiateCall(dummyRecipient, 'video');
+        // Calls go to a real contact: open Contacts to pick who to call (no placeholder recipient)
+        navigate('/contacts');
         break;
       case 'aiSettings':
         // Open AI provider settings modal

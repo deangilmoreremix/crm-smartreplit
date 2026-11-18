@@ -6,6 +6,7 @@ import { useDealStore } from '../store/dealStore';
 import { useContactStore } from '../hooks/useContactStore';
 import ModuleFederationPipeline from '../components/ModuleFederationPipeline';
 import GTMIntegration from '../components/GTMIntegration';
+import DealsBoard from '../components/twenty/DealsBoard';
 
 const PipelinePage: React.FC = () => {
   const { isDark } = useTheme();
@@ -15,6 +16,7 @@ const PipelinePage: React.FC = () => {
 
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: '📊' },
+    { id: 'board', label: 'Board', icon: '🗂️' },
     { id: 'analytics', label: 'AI Analytics', icon: '🤖' },
   ];
 
@@ -54,6 +56,8 @@ const PipelinePage: React.FC = () => {
             <ModuleFederationPipeline showHeader={false} />
           </div>
         )}
+
+        {activeTab === 'board' && <DealsBoard />}
 
         {activeTab === 'analytics' && (
           <div className="h-full overflow-y-auto p-6">

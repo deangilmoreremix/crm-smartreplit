@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Brain, Zap, RefreshCw, TrendingUp, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAITools } from '../../components/AIToolsProvider';
 import { useDealStore } from '../../store/dealStore';
 import { useContactStore } from '../../store/contactStore';
-import { geminiService } from '../../services/geminiService';
+import { useAIApiKeys } from '../../hooks/useAIApiKeys';
+import { generateAI } from '../../services/aiGenerate';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
 
@@ -18,144 +19,103 @@ interface Insight {
   relatedContacts?: Array<{ id: string; name: string; avatar?: string }>;
 }
 
+const INSIGHTS_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['insights'],
+  properties: {
+    insights: {
+      type: 'array',
+      description: 'Exactly three insights about the pipeline, one per type',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['type', 'title', 'description'],
+        properties: {
+          type: { type: 'string', enum: ['success', 'warning', 'insight'] },
+          title: { type: 'string' },
+          description: { type: 'string', description: 'One or two sentences that cite numbers from the provided data' },
+        },
+      },
+    },
+  },
+} as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isOpen = (stage: unknown) => stage !== 'closed-won' && stage !== 'closed-lost';
+
 const AIInsightsPanel = () => {
   const { isDark } = useTheme();
   const { openTool } = useAITools();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
+  const { apiConfig, isLoading: keysLoading } = useAIApiKeys();
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [apiKeysConfigured, setApiKeysConfigured] = useState(true);
+  const [aiInsights, setAiInsights] = useState<Insight[] | null>(null);
 
-  // Create initial insights with the three required categories
-  const createDefaultInsights = (): Insight[] => {
-    // Get contacts for the insights
-    const activeDeals = Object.values(deals).filter(
-      (deal) => deal.stage !== 'closed-won' && deal.stage !== 'closed-lost'
-    );
+  const apiKeysConfigured = keysLoading || !!apiConfig.openai.apiKey;
 
-    // High value deals
+  const styleFor = (type: Insight['type']) =>
+    type === 'success'
+      ? { icon: CheckCircle, color: isDark ? 'text-green-400' : 'text-green-600', bgColor: isDark ? 'bg-green-500/20' : 'bg-green-100' }
+      : type === 'warning'
+        ? { icon: AlertTriangle, color: isDark ? 'text-orange-400' : 'text-orange-600', bgColor: isDark ? 'bg-orange-500/20' : 'bg-orange-100' }
+        : { icon: TrendingUp, color: isDark ? 'text-blue-400' : 'text-blue-600', bgColor: isDark ? 'bg-blue-500/20' : 'bg-blue-100' };
+
+  const contactsFor = (list: Array<{ contactId: string }>) =>
+    list
+      .map((deal) => {
+        const contact = contacts[deal.contactId];
+        return contact ? { id: contact.id, name: contact.name, avatar: contact.avatar } : null;
+      })
+      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
+
+  // Counts computed from the deals in the store; nothing here is an AI result or a trend claim
+  const createComputedInsights = (): Insight[] => {
+    const activeDeals = Object.values(deals).filter((deal) => isOpen(deal.stage));
+    const pipelineValue = activeDeals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
     const highValueDeals = activeDeals.filter((deal) => deal.value > 50000);
-    const highValueContacts = highValueDeals
-      .map((deal) => {
-        const contact = contacts[deal.contactId];
-        return contact
-          ? {
-              id: contact.id,
-              name: contact.name,
-              avatar: contact.avatar,
-            }
-          : null;
-      })
-      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
-
-    // Stalled deals
-    const stalledDeals = activeDeals.filter((deal) => deal.daysInStage && deal.daysInStage > 10);
-    const stalledContacts = stalledDeals
-      .map((deal) => {
-        const contact = contacts[deal.contactId];
-        return contact
-          ? {
-              id: contact.id,
-              name: contact.name,
-              avatar: contact.avatar,
-            }
-          : null;
-      })
-      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
-
-    // High probability deals
+    const daysStalled = (deal: (typeof activeDeals)[number]) =>
+      deal.daysInStage ?? (deal.updatedAt ? Math.floor((Date.now() - new Date(deal.updatedAt).getTime()) / DAY_MS) : 0);
+    const stalledDeals = activeDeals.filter((deal) => daysStalled(deal) > 10);
     const highProbDeals = activeDeals.filter((deal) => deal.probability > 70);
-    const highProbContacts = highProbDeals
-      .map((deal) => {
-        const contact = contacts[deal.contactId];
-        return contact
-          ? {
-              id: contact.id,
-              name: contact.name,
-              avatar: contact.avatar,
-            }
-          : null;
-      })
-      .filter(Boolean) as Array<{ id: string; name: string; avatar?: string }>;
 
     return [
       {
         type: 'success',
-        title: 'Pipeline Health Strong',
-        description:
-          'Your pipeline velocity has increased 23% this month with high-quality leads entering the qualification stage.',
-        icon: CheckCircle,
-        color: isDark ? 'text-green-400' : 'text-green-600',
-        bgColor: isDark ? 'bg-green-500/20' : 'bg-green-100',
-        relatedContacts: highValueContacts,
+        title: 'Open Pipeline',
+        description: `${activeDeals.length} open deals worth $${pipelineValue.toLocaleString()}; ${highValueDeals.length} over $50,000.`,
+        ...styleFor('success'),
+        relatedContacts: contactsFor(highValueDeals),
       },
       {
         type: 'warning',
-        title: 'Deal Risk Alert',
-        description: `${stalledDeals.length} high-value deals show stagnation in negotiation stage. Consider immediate follow-up actions.`,
-        icon: AlertTriangle,
-        color: isDark ? 'text-orange-400' : 'text-orange-600',
-        bgColor: isDark ? 'bg-orange-500/20' : 'bg-orange-100',
-        relatedContacts: stalledContacts,
+        title: 'Stalled Deals',
+        description: `${stalledDeals.length} open deals have been in their stage for more than 10 days.`,
+        ...styleFor('warning'),
+        relatedContacts: contactsFor(stalledDeals),
       },
       {
         type: 'insight',
-        title: 'Conversion Opportunity',
-        description: `AI identified ${highProbDeals.length} prospects with 85%+ closing probability. Prioritize these for immediate attention.`,
-        icon: TrendingUp,
-        color: isDark ? 'text-blue-400' : 'text-blue-600',
-        bgColor: isDark ? 'bg-blue-500/20' : 'bg-blue-100',
-        relatedContacts: highProbContacts,
+        title: 'High-Probability Deals',
+        description: `${highProbDeals.length} open deals are above 70% probability.`,
+        ...styleFor('insight'),
+        relatedContacts: contactsFor(highProbDeals),
       },
     ];
   };
 
-  const [insights, setInsights] = useState<Insight[]>(createDefaultInsights());
-
-  // DISABLED: Using demo data only, no API calls
-  // useEffect(() => {
-  //   // Generate initial insights when component mounts
-  //   generateInitialInsights();
-  // }, []);
-
-  // When theme changes, regenerate default insights to update colors
-  useEffect(() => {
-    setInsights(createDefaultInsights());
-  }, [isDark]);
-
-  const generateInitialInsights = async () => {
-    // Only generate if we have enough data
-    if (Object.keys(deals).length < 2 || Object.keys(contacts).length < 2) {
-      return;
-    }
-
-    if (!geminiService.isApiKeyConfigured()) {
-      setApiKeysConfigured(false);
-      return;
-    }
-
-    try {
-      await generateRealInsights();
-    } catch (error) {
-      console.error('Failed to generate initial insights:', error);
-      setApiKeysConfigured(false);
-      // Don't set error state for initial load failures
-    }
-  };
+  const insights = aiInsights ?? createComputedInsights();
 
   const generateInsights = async () => {
     setIsGenerating(true);
     setError(null);
-
     try {
       await generateRealInsights();
-    } catch (error) {
-      console.error('Failed to generate insights:', error);
-      // Set a more user-friendly error message
-      setError('Unable to generate AI insights at this time. Please try again later.');
-      setApiKeysConfigured(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate insights');
     } finally {
       setIsGenerating(false);
     }
@@ -198,73 +158,46 @@ const AIInsightsPanel = () => {
   };
 
   const generateRealInsights = async () => {
-    if (!geminiService.isApiKeyConfigured()) {
-      setError(
-        'Gemini API key is not configured. Please add VITE_GOOGLE_AI_API_KEY to your environment.'
-      );
-      setApiKeysConfigured(false);
-      return;
-    }
-
-    // Convert to arrays for analysis
     const dealsArray = Object.values(deals);
     const contactsArray = Object.values(contacts);
+    if (dealsArray.length === 0) {
+      throw new Error('Add deals to your pipeline before generating insights.');
+    }
 
-    // Prepare pipeline data for analysis
+    const openDeals = dealsArray.filter((d) => isOpen(d.stage));
     const pipelineData = {
       deals: dealsArray.map((deal) => ({
-        id: deal.id,
         title: deal.title,
         value: deal.value,
         stage: deal.stage,
         probability: deal.probability,
         daysInStage: deal.daysInStage,
         priority: deal.priority,
-        contactId: deal.contactId,
-      })),
-      contacts: contactsArray.map((contact) => ({
-        id: contact.id,
-        name: contact.name,
-        company: contact.company,
-        status: contact.status,
-        source: contact.source,
-        tags: contact.tags,
       })),
       summary: {
-        activeDealCount: dealsArray.filter(
-          (d) => d.stage !== 'closed-won' && d.stage !== 'closed-lost'
-        ).length,
-        totalPipelineValue: dealsArray
-          .filter((d) => d.stage !== 'closed-won' && d.stage !== 'closed-lost')
-          .reduce((sum, deal) => sum + deal.value, 0),
-        avgDealSize:
-          dealsArray.length > 0
-            ? dealsArray.reduce((sum, deal) => sum + deal.value, 0) / dealsArray.length
-            : 0,
+        openDealCount: openDeals.length,
+        openPipelineValue: openDeals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0),
+        contactCount: contactsArray.length,
         hotLeadsCount: contactsArray.filter((c) => c.status === 'hot').length,
       },
     };
 
-    try {
-      // Use geminiService to analyze pipeline health
-      const response = await geminiService.generatePersonalizedMessage(pipelineData, 'email');
+    const result = await generateAI({
+      system:
+        'You are a sales pipeline analyst. Use only the data provided and cite its numbers. Do not state trends, percentages or comparisons to earlier periods that are not in the data.',
+      prompt: `Give exactly three insights (one success, one warning, one insight) about this pipeline: ${JSON.stringify(pipelineData)}`,
+      schema: INSIGHTS_SCHEMA as unknown as Record<string, unknown>,
+      schemaName: 'pipeline_insights',
+    });
+    const items = result.data?.insights;
+    if (!Array.isArray(items) || items.length === 0) throw new Error('The AI response had no insights');
 
-      // Reset API keys configured flag if we got a successful result
-      setApiKeysConfigured(true);
-
-      // Get default insights
-      const defaultInsights = createDefaultInsights();
-
-      // For now, keep the default insights since the service doesn't have pipeline analysis
-      if (response) {
-        setInsights(defaultInsights);
-      }
-    } catch (error) {
-      console.error('Error generating insights:', error);
-      // Set a more user-friendly error message
-      setError('Unable to generate AI insights at this time. Please try again later.');
-      setApiKeysConfigured(false);
-    }
+    setAiInsights(
+      items.map((item: any) => {
+        const type: Insight['type'] = ['success', 'warning', 'insight'].includes(item.type) ? item.type : 'insight';
+        return { type, title: String(item.title || ''), description: String(item.description || ''), ...styleFor(type) };
+      })
+    );
   };
 
   return (
@@ -279,9 +212,11 @@ const AIInsightsPanel = () => {
               AI Pipeline Intelligence
             </h2>
             <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              {apiKeysConfigured
-                ? 'Real-time insights powered by AI'
-                : 'Configure API keys to enable AI features'}
+              {aiInsights
+                ? 'AI insights generated from your pipeline'
+                : apiKeysConfigured
+                  ? 'Pipeline counts from your deals. Generate AI insights on demand.'
+                  : 'Add your OpenAI API key in Settings to enable AI insights'}
             </p>
           </div>
         </div>
@@ -302,7 +237,7 @@ const AIInsightsPanel = () => {
       </div>
 
       {error && (
-        <div className={`p-4 mb-4 rounded-lg ${isDark ? 'bg-red-500/10' : 'bg-red-50'}`}>
+        <div role="alert" className={`p-4 mb-4 rounded-lg ${isDark ? 'bg-red-500/10' : 'bg-red-50'}`}>
           <div className="flex items-start">
             <Info className={`h-5 w-5 mt-0.5 ${isDark ? 'text-red-400' : 'text-red-500'}`} />
             <div className="ml-3">
@@ -310,9 +245,7 @@ const AIInsightsPanel = () => {
                 AI Service Unavailable
               </h3>
               <p className={`mt-1 text-sm ${isDark ? 'text-red-300' : 'text-red-700'}`}>
-                {error.includes('API key')
-                  ? 'Please configure your AI API keys in the .env file to enable AI insights.'
-                  : error}
+                {error}
               </p>
             </div>
           </div>

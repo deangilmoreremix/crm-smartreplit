@@ -16,6 +16,15 @@ import { eq, count, sql } from 'drizzle-orm';
 import { profiles } from '../../shared/schema';
 
 // Admin stats endpoint
+// Sends a Supabase Auth password-reset ("set your password") email. Throws if Supabase is not configured.
+async function sendPasswordSetupEmail(email: string) {
+  if (!supabase) throw new Error('Supabase is not configured');
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.SITE_URL || 'https://smart-crm.videoremix.io'}/auth/callback?setup=true`,
+  });
+  if (error) throw new Error(error.message);
+}
+
 export function registerAdminRoutes(app: Express): void {
   // GET /api/admin/stats - Get system statistics
   app.get('/api/admin/stats', adminRateLimit, requireAdmin, async (req: any, res) => {
@@ -33,14 +42,11 @@ export function registerAdminRoutes(app: Express): void {
         .where(sql`${profiles.role} IN ('super_admin', 'admin')`);
       const adminUsers = adminUsersResult[0]?.count || 0;
 
-      // Get system health (mock for now - could be based on service checks)
-      const systemHealth = 98; // Percentage
-
-      // Get alerts count (mock for now - could be based on error logs)
-      const alerts = Math.floor(Math.random() * 5); // 0-4 random alerts
-
-      // Get active sessions (mock - would need session tracking)
-      const activeSessions = Math.floor(totalUsers * 0.3); // Assume 30% are active
+      // Not tracked: no health checks, alert log or session tracking exist, so report null
+      // instead of invented numbers (previously 98%, random alerts and 30% of users)
+      const systemHealth = null;
+      const alerts = null;
+      const activeSessions = null;
 
       res.json({
         totalUsers,
@@ -135,13 +141,13 @@ export function registerAdminRoutes(app: Express): void {
           })
           .returning();
 
-        // TODO: Send invitation email via Supabase Auth
-        // This would typically trigger a Supabase Auth invite
-
+        // No invitation email is sent here (the profile is created without a Supabase Auth user),
+        // so don't claim one was; use /api/admin/send-password-setup once the auth user exists.
         res.json({
           success: true,
           user: newUser[0],
-          message: 'User invitation sent successfully',
+          invitationSent: false,
+          message: 'User created (no invitation email was sent)',
         });
       } catch (error) {
         console.error('Failed to invite user:', error);
@@ -317,10 +323,10 @@ export function registerAdminRoutes(app: Express): void {
           return res.status(400).json({ error: 'Email is required' });
         }
 
-        // TODO: Implement password setup email sending
-        // This would typically use Supabase Auth admin API to send password reset
-
-        console.log(`Password setup email requested for: ${email}`);
+        if (!supabase) {
+          return res.status(501).json({ error: 'Email sending is not configured (Supabase)' });
+        }
+        await sendPasswordSetupEmail(email);
 
         res.json({
           success: true,
@@ -347,14 +353,15 @@ export function registerAdminRoutes(app: Express): void {
           return res.status(400).json({ error: 'Emails array is required' });
         }
 
-        // TODO: Implement bulk password setup email sending
+        if (!supabase) {
+          return res.status(501).json({ error: 'Email sending is not configured (Supabase)' });
+        }
         let sent = 0;
         let failed = 0;
 
         for (const email of emails) {
           try {
-            // Simulate sending email
-            console.log(`Bulk password setup email sent to: ${email}`);
+            await sendPasswordSetupEmail(email);
             sent++;
           } catch (error) {
             console.error(`Failed to send to ${email}:`, error);
@@ -363,7 +370,7 @@ export function registerAdminRoutes(app: Express): void {
         }
 
         res.json({
-          success: true,
+          success: failed === 0,
           sent,
           failed,
           message: `Bulk password setup emails processed: ${sent} sent, ${failed} failed`,
@@ -491,10 +498,15 @@ export function registerAdminRoutes(app: Express): void {
         .from(profiles)
         .where(sql`${profiles.createdAt} > ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)}`);
 
-      // Mock additional stats for demo
-      const activeUsers24h = Math.floor(totalUsers[0]?.count * 0.3) || 0;
-      const activeUsers7d = Math.floor(totalUsers[0]?.count * 0.6) || 0;
-      const newUsersToday = Math.floor(recentUsers[0]?.count * 0.1) || 0;
+      const todayUsers = await db
+        .select({ count: count() })
+        .from(profiles)
+        .where(sql`${profiles.createdAt} > ${new Date(Date.now() - 24 * 60 * 60 * 1000)}`);
+
+      // Activity is not tracked, so active-user counts are null (previously 30%/60% of all users)
+      const activeUsers24h = null;
+      const activeUsers7d = null;
+      const newUsersToday = todayUsers[0]?.count || 0;
 
       res.json({
         totalUsers: totalUsers[0]?.count || 0,
@@ -520,21 +532,21 @@ export function registerAdminRoutes(app: Express): void {
       const testQuery = await db.select({ count: count() }).from(profiles);
       const queryTime = Date.now() - startTime;
 
-      // Mock health metrics
+      // Only measured values; untracked metrics are null (previously hardcoded/random)
       const health = {
         database: {
           status: 'healthy',
           responseTime: queryTime,
-          connectionCount: 1, // Mock
-          activeConnections: 1, // Mock
+          connectionCount: null,
+          activeConnections: null,
         },
         system: {
           uptime: process.uptime(),
           memoryUsage: process.memoryUsage(),
-          cpuUsage: 0.15, // Mock
+          cpuUsage: process.cpuUsage(),
         },
-        lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Mock: 24h ago
-        alerts: Math.floor(Math.random() * 3), // 0-2 random alerts
+        lastBackup: null,
+        alerts: null,
         timestamp: new Date().toISOString(),
       };
 
@@ -554,45 +566,17 @@ export function registerAdminRoutes(app: Express): void {
       const { page = 1, limit = 50, action, userId, dateFrom, dateTo } = req.query;
       const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-      // Mock audit logs for demo (in production, you'd have a proper audit table)
-      const mockAuditLogs = [
-        {
-          id: 1,
-          adminId: 'admin-1',
-          adminEmail: 'admin@company.com',
-          action: 'USER_CREATE',
-          targetUserId: 'user-123',
-          targetUserEmail: 'newuser@company.com',
-          details: { role: 'regular_user', productTier: 'smartcrm' },
-          ipAddress: '192.168.1.100',
-          createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 min ago
-        },
-        {
-          id: 2,
-          adminId: 'admin-1',
-          adminEmail: 'admin@company.com',
-          action: 'BULK_IMPORT',
-          targetUserId: null,
-          targetUserEmail: null,
-          details: { imported: 25, failed: 2 },
-          ipAddress: '192.168.1.100',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-        },
-        {
-          id: 3,
-          adminId: 'admin-1',
-          adminEmail: 'admin@company.com',
-          action: 'USER_UPDATE',
-          targetUserId: 'user-456',
-          targetUserEmail: 'existing@company.com',
-          details: { field: 'productTier', oldValue: 'smartcrm', newValue: 'sales_maximizer' },
-          ipAddress: '192.168.1.100',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-        },
-      ];
+      // Audit events are only written to the server log (middleware/auditLog.ts); there is no
+      // audit table, so return no entries instead of sample ones
+      const auditLogs: Array<{
+        action: string;
+        targetUserId: string | null;
+        createdAt: string;
+        [key: string]: unknown;
+      }> = [];
 
       // Apply filters
-      let filteredLogs = mockAuditLogs;
+      let filteredLogs = auditLogs;
       if (action) {
         filteredLogs = filteredLogs.filter((log) => log.action === action);
       }
@@ -619,6 +603,7 @@ export function registerAdminRoutes(app: Express): void {
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         totalPages: Math.ceil(filteredLogs.length / parseInt(limit as string)),
+        persisted: false,
       });
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
@@ -640,20 +625,8 @@ export function registerAdminRoutes(app: Express): void {
           return res.status(400).json({ error: 'Name and config are required' });
         }
 
-        // Mock template creation (in production, save to database)
-        const template = {
-          id: Date.now(),
-          name,
-          config,
-          createdBy: req.user.id,
-          createdAt: new Date().toISOString(),
-        };
-
-        res.json({
-          success: true,
-          template,
-          message: 'User template created successfully',
-        });
+        // No templates table exists; don't report a save that never happened
+        return res.status(501).json({ error: 'User templates are not implemented (no storage)' });
       } catch (error) {
         console.error('Failed to create user template:', error);
         res.status(500).json({ error: 'Failed to create user template' });
@@ -664,42 +637,8 @@ export function registerAdminRoutes(app: Express): void {
   // GET /api/admin/user-templates - Get user templates
   app.get('/api/admin/user-templates', adminRateLimit, requireAdmin, async (req: any, res) => {
     try {
-      // Mock templates (in production, fetch from database)
-      const templates = [
-        {
-          id: 1,
-          name: 'Sales Representative',
-          config: {
-            role: 'wl_user',
-            productTier: 'sales_maximizer',
-            permissions: ['contacts.create', 'deals.create', 'analytics.view'],
-          },
-          createdBy: 'admin-1',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-        },
-        {
-          id: 2,
-          name: 'Marketing Manager',
-          config: {
-            role: 'wl_user',
-            productTier: 'ai_communication',
-            permissions: ['contacts.create', 'campaigns.create', 'analytics.view'],
-          },
-          createdBy: 'admin-1',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-        },
-        {
-          id: 3,
-          name: 'Basic User',
-          config: {
-            role: 'regular_user',
-            productTier: 'smartcrm',
-            permissions: ['contacts.view', 'tasks.create'],
-          },
-          createdBy: 'admin-1',
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-        },
-      ];
+      // No templates table exists, so there are no saved templates (previously sample ones)
+      const templates: unknown[] = [];
 
       res.json({
         success: true,
@@ -724,21 +663,10 @@ export function registerAdminRoutes(app: Express): void {
           return res.status(400).json({ error: 'Action type and config are required' });
         }
 
-        // Mock automated action setup (in production, save to database)
-        const automatedAction = {
-          id: Date.now(),
-          actionType, // 'suspend_inactive', 'upgrade_trials', 'send_reminders'
-          config,
-          createdBy: req.user.id,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-        };
-
-        res.json({
-          success: true,
-          action: automatedAction,
-          message: `Automated ${actionType} action configured successfully`,
-        });
+        // Nothing stores or runs automated actions; don't report one as configured
+        return res
+          .status(501)
+          .json({ error: `Automated ${actionType} actions are not implemented` });
       } catch (error) {
         console.error('Failed to setup automated action:', error);
         res.status(500).json({ error: 'Failed to setup automated action' });

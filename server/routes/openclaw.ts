@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { DEFAULT_MODEL, ADVANCED_MODEL, IMAGE_MODEL } from '../services/openaiModels';
 import { eq, and, or, like, desc, asc } from 'drizzle-orm';
 import { db, isDbAvailable } from '../db';
 import {
@@ -8,6 +10,7 @@ import {
   appointments,
   communications,
   notes,
+  automationRules,
   insertContactSchema,
   insertDealSchema,
   insertTaskSchema,
@@ -21,6 +24,8 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import { memoryService } from '../memory';
+import { listVideosForUser, createVideoForUser } from './videos';
+import { isSafeExternalUrl } from '../services/safeUrl';
 
 const router = Router();
 
@@ -39,10 +44,17 @@ router.use((req, res, next) => {
 const OPENCLAW_API_URL = process.env.OPENCLAW_API_URL || 'http://localhost:3001';
 const OPENCLAW_API_KEY = process.env.OPENCLAW_API_KEY || '';
 
+// Optional comma-separated allowlist for per-user OpenClaw base URLs (exact hostnames)
+const OPENCLAW_ALLOWED_HOSTS = (process.env.OPENCLAW_ALLOWED_HOSTS || '')
+  .split(',')
+  .map((h) => h.trim())
+  .filter(Boolean);
+
 /**
  * Get the effective OpenClaw API key and base URL for a given user.
- * Priority: per-user key from user_api_keys > server-level env var
- * Priority for base URL: per-user baseUrl from user_api_keys > OPENCLAW_API_URL
+ * Per-user settings live in user_api_keys as the provider='openclaw' row
+ * (api_key = key, metadata.base_url = optional self-hosted URL); server env vars are the fallback.
+ * A per-user base URL is used only if it is https and resolves to public addresses (SSRF guard).
  */
 async function getOpenClawConfigForUser(
   userId: string
@@ -54,15 +66,22 @@ async function getOpenClawConfigForUser(
     if (supabase && userId) {
       const { data } = await supabase
         .from('user_api_keys')
-        .select('openclaw_api_key, openclaw_base_url')
+        .select('api_key, metadata')
         .eq('user_id', userId)
-        .single();
+        .eq('provider', 'openclaw')
+        .eq('is_active', true)
+        .maybeSingle();
 
-      if (data?.openclaw_api_key) {
-        apiKey = data.openclaw_api_key;
+      if (data?.api_key) {
+        apiKey = data.api_key;
       }
-      if (data?.openclaw_base_url) {
-        baseUrl = data.openclaw_base_url;
+      const userBaseUrl = (data?.metadata as any)?.base_url;
+      if (userBaseUrl) {
+        if (await isSafeExternalUrl(userBaseUrl, { allowedHosts: OPENCLAW_ALLOWED_HOSTS })) {
+          baseUrl = userBaseUrl.replace(/\/+$/, '');
+        } else {
+          console.warn('Ignoring unsafe per-user OpenClaw base URL; using server default');
+        }
       }
     }
   } catch (err) {
@@ -72,15 +91,9 @@ async function getOpenClawConfigForUser(
   return { apiKey, baseUrl };
 }
 
-// Cached OpenAI client
-let openaiClient: OpenAI | null = null;
-function getOpenAIClient(): OpenAI | null {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  if (!openaiClient) {
-    openaiClient = new OpenAI({ apiKey });
-  }
-  return openaiClient;
+// OpenAI client for the signed-in user of the current request (their own key; no server fallback)
+async function getOpenAIClient(): Promise<OpenAI | null> {
+  return (await getUserOpenAIClient())?.client ?? null;
 }
 
 // Rate limiting for AI tools (simple in-memory)
@@ -556,8 +569,8 @@ const crmTools = [
   // Image Generation
   {
     name: 'generate_image',
-    description: 'Generate an image using AI (DALL-E or Gemini)',
-    parameters: { prompt: 'string', size: 'string?', style: 'string?' },
+    description: 'Generate an image with OpenAI (size: 1024x1024, 1536x1024 or 1024x1536)',
+    parameters: { prompt: 'string', size: 'string?' },
     category: 'ai',
   },
   // Video/Demo
@@ -683,6 +696,7 @@ router.post('/chat', async (req, res) => {
       `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: 'POST',
+        redirect: 'error', // never follow redirects from a (possibly user-supplied) base URL
         headers: {
           'Content-Type': 'application/json',
           ...(effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}),
@@ -743,6 +757,7 @@ router.post('/chat/stream', async (req, res) => {
       `${effectiveBaseUrl}/api/v1/chat/completions`,
       {
         method: 'POST',
+        redirect: 'error', // never follow redirects from a (possibly user-supplied) base URL
         headers: {
           'Content-Type': 'application/json',
           ...(effectiveApiKey ? { Authorization: `Bearer ${effectiveApiKey}` } : {}),
@@ -770,8 +785,8 @@ router.post('/chat/stream', async (req, res) => {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      res.write(`data: ${chunk}\n\n`);
+      // Upstream already sends SSE frames ("data: ...\n\n"); pass them through unchanged
+      res.write(decoder.decode(value, { stream: true }));
     }
 
     res.end();
@@ -1037,7 +1052,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
       }
 
       case 'cancel_appointment': {
-        const appointmentId = parseInt(params.appointmentId);
+        const appointmentId = String(params.appointmentId); // appointments.id is a UUID
         await db!
           .delete(appointments)
           .where(and(eq(appointments.id, appointmentId), eq(appointments.profileId, userId)));
@@ -1169,14 +1184,11 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
         if (!entity) return { error: `${params.entityType} not found` };
 
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) return { error: 'OpenAI API key not configured' };
-
-        const OpenAI = (await import('openai')).default;
-        const openaiClient = new OpenAI({ apiKey });
+        const openaiClient = await getOpenAIClient();
+        if (!openaiClient) return { error: NO_KEY_MESSAGE };
 
         const response = await openaiClient.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: DEFAULT_MODEL,
           messages: [
             {
               role: 'system',
@@ -1587,7 +1599,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           return { error: 'Contact not found' };
         }
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(
@@ -1597,12 +1609,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               { tool: 'analyze_lead_score', contactId }
             )
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: 'system',
@@ -1681,7 +1693,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           .where(and(eq(communications.contactId, contactId), eq(communications.profileId, userId)))
           .limit(10);
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(
@@ -1691,7 +1703,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               { tool: 'generate_personalization', contactId }
             )
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         const previousInteractions = comms.map(
@@ -1700,7 +1712,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: 'system',
@@ -1768,7 +1780,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           return { error: 'Contact not found' };
         }
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(userId, 'system_event', 'enrich_contact: OpenAI not configured', {
@@ -1776,12 +1788,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               contactId,
             })
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: 'system',
@@ -1853,7 +1865,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           return { error: 'Contact not found' };
         }
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(
@@ -1863,7 +1875,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               { tool: 'social_media_research', contactId }
             )
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         const platforms = params.platforms
@@ -1872,7 +1884,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: 'system',
@@ -1935,19 +1947,19 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           return { error: 'Text is required for sentiment analysis' };
         }
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(userId, 'system_event', 'analyze_sentiment: OpenAI not configured', {
               tool: 'analyze_sentiment',
             })
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: DEFAULT_MODEL,
             messages: [
               {
                 role: 'system',
@@ -2022,7 +2034,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const purpose = params.purpose || 'follow-up';
         const context = params.context || '';
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(
@@ -2032,12 +2044,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               { tool: 'generate_email_draft', contactId, purpose }
             )
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: 'system',
@@ -2116,7 +2128,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           return { error: 'Maximum 50 contacts per bulk analysis' };
         }
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(
@@ -2126,7 +2138,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               { tool: 'bulk_analyze_contacts', contactIdsCount: contactIds.length }
             )
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         const results = [];
@@ -2143,7 +2155,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             if (contact) {
               try {
                 const response = await client.chat.completions.create({
-                  model: 'gpt-4o-mini',
+                  model: DEFAULT_MODEL,
                   messages: [
                     {
                       role: 'system',
@@ -2319,7 +2331,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           contact = found;
         }
 
-        const client = getOpenAIClient();
+        const client = await getOpenAIClient();
         if (!client) {
           memoryService
             .recordObservation(userId, 'system_event', 'analyze_deal: OpenAI not configured', {
@@ -2328,12 +2340,12 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
               dealName: deal.name,
             })
             .catch(() => {});
-          return { error: 'OpenAI API key not configured' };
+          return { error: NO_KEY_MESSAGE };
         }
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               {
                 role: 'system',
@@ -2659,15 +2671,15 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const prompt = params.prompt;
         if (!prompt) return { error: 'Prompt is required for image generation' };
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
 
         const size = params.size || '1024x1024';
-        const validSizes = ['256x256', '512x512', '1024x1024', '1792x1024', '1024x1792'];
+        const validSizes = ['1024x1024', '1536x1024', '1024x1536'];
         const imageSize = validSizes.includes(size) ? size : '1024x1024';
 
         const response = await client.images.generate({
-          model: 'dall-e-3',
+          model: IMAGE_MODEL,
           prompt,
           size: imageSize as any,
           n: 1,
@@ -2678,7 +2690,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             url: img.url,
             revisedPrompt: img.revised_prompt,
           })),
-          model: 'dall-e-3',
+          model: IMAGE_MODEL,
           size: imageSize,
         };
       }
@@ -2688,11 +2700,11 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         const productName = params.productName;
         if (!productName) return { error: 'Product name is required' };
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
 
         const response = await client.chat.completions.create({
-          model: 'gpt-4o',
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: 'system',
@@ -2714,50 +2726,21 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
       // Video Management
       case 'list_videos': {
+        if (!userId) return { error: 'Authentication required' };
         const limit = params.limit || 20;
-        const videoRes = await fetch(
-          `${process.env.CRM_BASE_URL || 'http://localhost:3000'}/api/videos`,
-          {
-            headers: {
-              Authorization: req.headers.authorization || '',
-              Cookie: req.headers.cookie || '',
-            },
-          }
-        );
-
-        if (!videoRes.ok) {
-          return { videos: [], count: 0 };
-        }
-
-        const videos = await videoRes.json();
+        const videos = listVideosForUser(userId);
         return { videos: videos.slice(0, limit), count: videos.length };
       }
 
       case 'create_video': {
-        const videoRes = await fetch(
-          `${process.env.CRM_BASE_URL || 'http://localhost:3000'}/api/videos`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: req.headers.authorization || '',
-              Cookie: req.headers.cookie || '',
-            },
-            body: JSON.stringify({
-              title: params.title,
-              script: params.script,
-              recipient: params.recipientEmail
-                ? { email: params.recipientEmail, name: params.recipientName }
-                : undefined,
-            }),
-          }
-        );
-
-        if (!videoRes.ok) {
-          return { error: 'Failed to create video' };
-        }
-
-        const video = await videoRes.json();
+        if (!userId) return { error: 'Authentication required' };
+        if (!params.title || !params.script) return { error: 'title and script are required' };
+        const video = createVideoForUser(userId, {
+          title: params.title,
+          script: params.script,
+          recipientName: params.recipientName,
+          recipientEmail: params.recipientEmail,
+        });
         return { video };
       }
 
@@ -2864,15 +2847,15 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         if (execError) return { error: 'Failed to create execution', details: execError.message };
 
         // Execute the agent (using OpenAI for now)
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
 
         const systemPrompt = agent.system_prompt || `You are a helpful AI agent.`;
         const userPrompt = `Task: ${task}\n\nInput data: ${JSON.stringify(input)}`;
 
         try {
           const response = await client.chat.completions.create({
-            model: 'gpt-4o',
+            model: ADVANCED_MODEL,
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt },
@@ -2888,7 +2871,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             .from('agent_executions')
             .update({
               status: 'completed',
-              output_data: { result: output, model: 'gpt-4o' },
+              output_data: { result: output, model: ADVANCED_MODEL },
               completed_at: new Date().toISOString(),
             })
             .eq('id', execution.id);
@@ -2971,8 +2954,8 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           optimal_days: [],
         };
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
 
         // Get relevant contact if provided
         let contactInfo = '';
@@ -2987,7 +2970,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         const response = await client.chat.completions.create({
-          model: 'gpt-4o',
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: 'system',
@@ -3016,8 +2999,8 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
         if (!title) return { error: 'Meeting title is required' };
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
 
         // Get contacts for the meeting
         const contactInfo: any[] = [];
@@ -3037,7 +3020,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
 
         // Find optimal meeting time
         const response = await client.chat.completions.create({
-          model: 'gpt-4o',
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: 'system',
@@ -3086,24 +3069,24 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           .select()
           .from(appointments)
           .where(
-            and(eq(appointments.id, parseInt(appointmentId)), eq(appointments.profileId, userId))
+            and(eq(appointments.id, String(appointmentId)), eq(appointments.profileId, userId))
           );
 
         if (!appointment) return { error: 'Appointment not found' };
 
-        const client = getOpenAIClient();
-        if (!client) return { error: 'OpenAI API key not configured' };
+        const client = await getOpenAIClient();
+        if (!client) return { error: NO_KEY_MESSAGE };
 
-        // Get related notes and communications
-        const notes = await db!
-          .select()
-          .from(notes)
-          .where(
-            and(eq(notes.appointmentId, parseInt(appointmentId)), eq(notes.profileId, userId))
-          );
+        // Related notes: notes have no appointment link, so use the appointment's contact
+        const relatedNotes = appointment.contactId
+          ? await db!
+              .select()
+              .from(notes)
+              .where(and(eq(notes.contactId, appointment.contactId), eq(notes.profileId, userId)))
+          : [];
 
         const response = await client.chat.completions.create({
-          model: 'gpt-4o',
+          model: ADVANCED_MODEL,
           messages: [
             {
               role: 'system',
@@ -3112,7 +3095,7 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
             },
             {
               role: 'user',
-              content: `Meeting Details:\nTitle: ${appointment.title}\nDate: ${appointment.dateTime}\nDuration: ${appointment.duration} minutes\nNotes: ${appointment.notes || 'N/A'}\n\nRelated Notes: ${notes.map((n) => n.content).join('\n') || 'None'}`,
+              content: `Meeting Details:\nTitle: ${appointment.title}\nStart: ${appointment.startTime}\nEnd: ${appointment.endTime}\nDescription: ${appointment.description || 'N/A'}\n\nRelated Notes: ${relatedNotes.map((n) => n.content).join('\n') || 'None'}`,
             },
           ],
           response_format: { type: 'json_object' },

@@ -1,3 +1,4 @@
+import os from 'os';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
 export interface HealthCheck {
@@ -177,7 +178,7 @@ function checkMemory(): HealthCheck {
 function checkSystem(): HealthCheck {
   const uptime = process.uptime();
   const uptimeHours = Math.round(uptime / 3600);
-  const loadAverage = process.platform === 'linux' ? require('os').loadavg() : [0, 0, 0];
+  const loadAverage = process.platform === 'linux' ? os.loadavg() : [0, 0, 0];
 
   return {
     name: 'system',

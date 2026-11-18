@@ -1,4 +1,7 @@
  import type { Express } from 'express';
+  import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+  import { ADVANCED_MODEL } from '../services/openaiModels';
+  import { respond, webSearchTool } from '../services/openaiResponses';
   import { eq, and, desc, sql } from 'drizzle-orm';
   import {
     contacts,
@@ -1245,7 +1248,6 @@
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
-        const { OpenAI } = await import('openai');
 
         // Verify contact exists and belongs to user
         const [contact] = await db
@@ -1266,7 +1268,11 @@
 
         let enrichedData;
         try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+          const openaiData = await getUserOpenAIClient(userId);
+          if (!openaiData) {
+            return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+          }
+          const openai = openaiData.client;
           const prompt = `Enrich this contact's information with additional professional details:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ''}
@@ -1274,16 +1280,20 @@ Company: ${contact.company || ''}
 Industry: ${contact.industry || ''}
 Email: ${contact.email || ''}
 
+Search the web for this person and their company. Only include details you found; leave unknown fields empty.
 Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
-          const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
+          // Research feature: Responses API with live web search; citations saved with the data
+          const result = await respond(openai, {
+            model: ADVANCED_MODEL,
+            input: prompt,
+            json: true,
+            tools: [webSearchTool()],
           });
 
           try {
-            enrichedData = JSON.parse(completion.choices[0].message.content || '{}');
+            if (!result.data) throw new Error('No JSON in response');
+            enrichedData = { ...result.data, sources: result.sources };
           } catch (parseError) {
             memoryService.recordObservation(
               userId,
@@ -1345,8 +1355,8 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         memoryService.recordObservation(
           userId,
           'error',
-          `Enrichment exception for contact ${contactId}: ${error.message}`,
-          { endpoint: '/api/contacts/:id/enrich', contactId, stack: error.stack?.slice(0, 200) }
+          `Enrichment exception for contact ${req.params.id}: ${error.message}`,
+          { endpoint: '/api/contacts/:id/enrich', contactId: req.params.id, stack: error.stack?.slice(0, 200) }
         ).catch(() => {});
         
         res.status(500).json({ error: 'Enrichment failed', details: error.message });
@@ -1390,7 +1400,6 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
         const contactId = parseInt(req.params.id);
 
         const { db } = await import('../db');
-        const { OpenAI } = await import('openai');
 
         const [contact] = await db
           .select()
@@ -1410,7 +1419,11 @@ Return as JSON with keys: companySize, industry, socialProfiles, insights`;
 
         let scoreData;
         try {
-          const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+          const openaiData = await getUserOpenAIClient(userId);
+          if (!openaiData) {
+            return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+          }
+          const openai = openaiData.client;
           const prompt = `Score this contact's sales potential on a scale of 0-100:
 Name: ${contact.firstName} ${contact.lastName}
 Title: ${contact.title || ''}
@@ -1422,7 +1435,7 @@ Notes: ${contact.notes || ''}
 Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
 
           const completion = await openai.chat.completions.create({
-            model: 'gpt-4',
+            model: ADVANCED_MODEL,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.3,
           });
@@ -1497,8 +1510,8 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         memoryService.recordObservation(
           userId,
           'error',
-          `Scoring exception for contact ${contactId}: ${error.message}`,
-          { endpoint: '/api/contacts/:id/score', contactId, stack: error.stack?.slice(0, 200) }
+          `Scoring exception for contact ${req.params.id}: ${error.message}`,
+          { endpoint: '/api/contacts/:id/score', contactId: req.params.id, stack: error.stack?.slice(0, 200) }
         ).catch(() => {});
         
         res.status(500).json({ error: 'Scoring failed', details: error.message });

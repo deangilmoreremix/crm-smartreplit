@@ -23,14 +23,16 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }));
 
-vi.mock('./auth', () => ({
+vi.mock('../auth', () => ({
   requireAuth: () => (req: any, res: any, next: any) => {
-    req.session = { userId: 'test-user', userEmail: 'test@test.com' };
+    if (req.headers['x-test-no-user']) return next();
+    req.userId = 'test-user';
+    req.userEmail = 'test@test.com';
     next();
   },
 }));
 
-vi.mock('../middleware/entitlements', () => ({
+vi.mock('../../middleware/entitlements', () => ({
   requireEntitlement: () => (req: any, res: any, next: any) => {
     next();
   },
@@ -65,20 +67,13 @@ describe('Billing Routes', () => {
 
       const response = await request(unauthApp)
         .post('/api/billing/upgrade')
+        .set('x-test-no-user', '1')
         .send({ tierId: 'smartcrm_bundle' });
 
       expect(response.status).toBe(401);
     });
 
     it('returns 400 for invalid tier ID', async () => {
-      mockSupabaseClient.from.mockReturnValueOnce({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { productTier: 'regular' }, error: null }),
-          })),
-        })),
-      });
-
       const app = express();
       app.use(express.json());
       app.use('/api/billing', billingRoutes);
@@ -95,7 +90,7 @@ describe('Billing Routes', () => {
       mockSupabaseClient.from.mockReturnValueOnce({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { productTier: 'smartcrm_bundle' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { product_tier: 'smartcrm_bundle' }, error: null }),
           })),
         })),
       });
@@ -116,7 +111,7 @@ describe('Billing Routes', () => {
       mockSupabaseClient.from.mockReturnValueOnce({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn().mockResolvedValue({ data: { productTier: 'regular', email: 'test@test.com' }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { product_tier: 'regular', email: 'test@test.com' }, error: null }),
           })),
         })),
       });

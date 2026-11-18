@@ -178,23 +178,6 @@ export default function RevenueSharingDashboard() {
     }
   };
 
-  // Sample chart data - Enhanced with more realistic data
-  const revenueData = [
-    { month: 'Jan', revenue: 42000, commissions: 8400, customers: 28 },
-    { month: 'Feb', revenue: 48000, commissions: 9600, customers: 32 },
-    { month: 'Mar', revenue: 52000, commissions: 10400, customers: 35 },
-    { month: 'Apr', revenue: 58000, commissions: 11600, customers: 41 },
-    { month: 'May', revenue: 65000, commissions: 13000, customers: 48 },
-    { month: 'Jun', revenue: 72000, commissions: 14400, customers: 52 },
-  ];
-
-  const tierDistribution = [
-    { name: 'Bronze', value: 40, color: '#CD7F32' },
-    { name: 'Silver', value: 35, color: '#C0C0C0' },
-    { name: 'Gold', value: 20, color: '#FFD700' },
-    { name: 'Platinum', value: 5, color: '#E5E4E2' },
-  ];
-
   if (analyticsLoading || partnersLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -206,24 +189,60 @@ export default function RevenueSharingDashboard() {
     );
   }
 
-  // Use real data from database if available, fallback to sample data for demonstration
-  const currentAnalytics = analytics || {
-    totalRevenue: 485000,
-    totalCommissions: 97000,
-    totalPartners: 24,
-    activePartners: 22,
-    totalCustomers: 156,
-    averageCommissionRate: 0.2,
-    monthlyGrowth: 0.12,
-    topPerformingTier: 'gold',
+  // Real data only: zeros until the analytics API returns data (no sample figures)
+  const currentAnalytics: RevenueAnalytics = analytics || {
+    totalRevenue: 0,
+    totalCommissions: 0,
+    totalPartners: 0,
+    activePartners: 0,
+    totalCustomers: 0,
+    averageCommissionRate: 0,
+    monthlyGrowth: 0,
+    topPerformingTier: '',
     metrics: {
-      revenue: { current: 485000, previousMonth: 445000, growth: 0.09 },
-      commissions: { current: 97000, previousMonth: 89000, growth: 0.09 },
-      partners: { current: 24, previousMonth: 23, growth: 0.04 },
+      revenue: { current: 0, previousMonth: 0, growth: 0 },
+      commissions: { current: 0, previousMonth: 0, growth: 0 },
+      partners: { current: 0, previousMonth: 0, growth: 0 },
     },
   };
 
   const currentPartners = partners || [];
+
+  // Chart data from the analytics API (previous vs current month); empty when there is none
+  const revenueData = analytics
+    ? [
+        {
+          month: 'Last month',
+          revenue: analytics.metrics.revenue.previousMonth,
+          commissions: analytics.metrics.commissions.previousMonth,
+          customers: undefined as number | undefined,
+        },
+        {
+          month: 'This month',
+          revenue: analytics.metrics.revenue.current,
+          commissions: analytics.metrics.commissions.current,
+          customers: analytics.totalCustomers,
+        },
+      ]
+    : [];
+
+  // Tier distribution from the real partner list (percent of partners per tier)
+  const tierColors: Record<string, string> = {
+    bronze: '#CD7F32',
+    silver: '#C0C0C0',
+    gold: '#FFD700',
+    platinum: '#E5E4E2',
+  };
+  const tierCounts = currentPartners.reduce<Record<string, number>>((acc, partner) => {
+    const tier = (partner.tier || 'unknown').toLowerCase();
+    acc[tier] = (acc[tier] || 0) + 1;
+    return acc;
+  }, {});
+  const tierDistribution = Object.entries(tierCounts).map(([tier, count]) => ({
+    name: tier.charAt(0).toUpperCase() + tier.slice(1),
+    value: Math.round((count / currentPartners.length) * 100),
+    color: tierColors[tier] || '#9CA3AF',
+  }));
 
   return (
     <div className="h-full bg-gray-50 dark:bg-gray-900">
@@ -308,7 +327,7 @@ export default function RevenueSharingDashboard() {
                       Total Revenue
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      ${currentAnalytics.totalRevenue?.toLocaleString() || '485,000'}
+                      ${(currentAnalytics.totalRevenue || 0).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -322,7 +341,7 @@ export default function RevenueSharingDashboard() {
                       Total Commissions
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      ${currentAnalytics.totalCommissions?.toLocaleString() || '97,000'}
+                      ${(currentAnalytics.totalCommissions || 0).toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -336,7 +355,7 @@ export default function RevenueSharingDashboard() {
                       Active Partners
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {currentAnalytics.activePartners || 22}
+                      {currentAnalytics.activePartners || 0}
                     </p>
                   </div>
                 </div>
@@ -350,7 +369,7 @@ export default function RevenueSharingDashboard() {
                       Growth Rate
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      +{((currentAnalytics.monthlyGrowth || 0.12) * 100).toFixed(0)}%
+                      +{((currentAnalytics.monthlyGrowth || 0) * 100).toFixed(0)}%
                     </p>
                   </div>
                 </div>

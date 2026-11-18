@@ -10,6 +10,7 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import * as aiService from '../services/aiToolsService';
+import { sendAIError } from '../services/aiToolsService';
 import { memoryService } from '../memory';
 
 export function registerAISalesToolsRoutes(app: Express): void {
@@ -44,12 +45,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
          res.json({ success: true, response: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({
-           success: false,
-           response: { reasoning_steps: ['Consider reviewing your pipeline data'], conclusion: 'Please configure OpenAI API key for AI sales assistant.' },
-           source: 'fallback',
-           error: result.error,
-         });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -80,11 +76,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
          res.json({ success: true, scoring: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({
-           success: false,
-           scoring: { score: 50, rationale: 'Configure OpenAI API key for AI lead scoring', buyingSignals: [], riskFactors: [], recommendedActions: ['Add OpenAI API key'], priority: 'warm' },
-           source: 'fallback',
-         });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -119,11 +111,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
          res.json({ success: true, intelligence: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({
-           success: false,
-           intelligence: { probability_score: 50, risk_level: 'medium', key_factors: ['Configure OpenAI API key'], recommendations: ['Add OpenAI API key in Settings'] },
-           source: 'fallback',
-         });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -154,11 +142,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
          res.json({ success: true, analysis: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({
-           success: false,
-           analysis: { overall_health_score: 50, healthy_deals: 0, at_risk_deals: 0, critical_deals: 0, bottlenecks: ['Configure OpenAI API key'], recommendations: ['Add OpenAI API key'] },
-           source: 'fallback',
-         });
+         sendAIError(res, result.error);
        }
      }
    );
@@ -180,11 +164,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, riskAnalysis: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          riskAnalysis: { high_risk: [], medium_risk: [], low_risk: [], total_at_risk_value: 0, summary: 'Configure OpenAI API key for risk analysis' },
-          source: 'fallback',
-        });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -205,11 +185,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, optimization: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          optimization: { conversion_rate: 0, stage_conversion: {}, drop_off_points: [], optimization_opportunities: ['Configure OpenAI API key'], a_b_test_suggestions: [], projected_improvement: 0 },
-          source: 'fallback',
-        });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -231,11 +207,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, winRate: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          winRate: { overall_win_rate: 0, win_rate_by_stage: {}, win_rate_by_deal_size: {}, key_win_factors: ['Configure OpenAI API key'], key_loss_factors: [], recommendations: [], benchmark_comparison: 'N/A' },
-          source: 'fallback',
-        });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -257,11 +229,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, forecast: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          forecast: { weighted_forecast: 0, best_case: 0, worst_case: 0, confidence_level: 0, period: period || 'quarter', monthly_breakdown: [], key_drivers: ['Configure OpenAI API key'], risk_factors: [], recommendations: [] },
-          source: 'fallback',
-        });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -283,11 +251,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, liveAnalysis: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          liveAnalysis: { hot_deals: [], warm_deals: [], cold_deals: [], immediate_actions: ['Configure OpenAI API key'], engagement_insights: {}, temperature_analysis: {}, activity_feed: [] },
-          source: 'fallback',
-        });
+        sendAIError(res, result.error);
       }
     }
   );
@@ -309,11 +273,7 @@ export function registerAISalesToolsRoutes(app: Express): void {
       if (result.success) {
         res.json({ success: true, health: result.data, source: result.source });
       } else {
-        res.json({
-          success: false,
-          health: { overall_health_score: 50, healthy_deals: 0, at_risk_deals: 0, critical_deals: 0, bottlenecks: ['Configure OpenAI API key'], recommendations: ['Add OpenAI API key'], velocity_trend: 'stable', forecast_accuracy: 0 },
-          source: 'fallback',
-        });
+        sendAIError(res, result.error);
       }
     }
   );

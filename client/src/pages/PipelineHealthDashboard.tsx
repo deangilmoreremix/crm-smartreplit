@@ -45,6 +45,14 @@ const PipelineHealthDashboard: React.FC = () => {
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
+  // Average probability of the contact's active deals
+  const contactHealth = (contactId: string | number) => {
+    const contactDeals = activeDeals.filter((d) => String(d.contactId) === String(contactId));
+    if (contactDeals.length === 0) return 'No active deals';
+    const avg = Math.round(contactDeals.reduce((sum, d) => sum + (d.probability || 0), 0) / contactDeals.length);
+    return `Avg deal probability: ${avg}%`;
+  };
+
   const getContactInfo = (contactId: number | string | null) => {
     if (!contactId) return { name: 'Unknown Contact', initials: 'UC' };
     const contact = contacts[contactId];
@@ -210,7 +218,7 @@ const PipelineHealthDashboard: React.FC = () => {
                     <p className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{`${contact.firstName} ${contact.lastName}`}</p>
                     <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{contact.company || 'No company'}</p>
                     <div className="flex items-center mt-1">
-                      <Badge variant="secondary" className="text-xs">Health: {Math.floor(Math.random() * 40) + 60}%</Badge>
+                      <Badge variant="secondary" className="text-xs">{contactHealth(contact.id)}</Badge>
                     </div>
                   </div>
                 </div>

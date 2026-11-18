@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { DEFAULT_MODEL, ADVANCED_MODEL } from '../services/openaiModels';
 import { requireAuth } from './auth';
 
 const router = Router();
@@ -16,61 +15,20 @@ interface ResponsesModel {
 
 const RESPONSES_API_MODELS: ResponsesModel[] = [
   {
-    id: 'gpt-4.1',
-    name: 'GPT-4.1',
-    description: 'Most capable GPT-4.1 model for complex reasoning, coding, and instruction-following',
-    pricing: '$2.00 / $8.00 per 1M tokens',
+    id: DEFAULT_MODEL,
+    name: 'GPT-6 Luna',
+    description: 'Efficient model for high-volume, everyday tasks',
+    pricing: '$0.10 / $0.50 per 1M tokens',
     contextLength: '1M tokens',
   },
   {
-    id: 'gpt-4.1-mini',
-    name: 'GPT-4.1 Mini',
-    description: 'Balanced GPT-4.1 model optimized for speed and cost-efficiency',
-    pricing: '$0.40 / $1.60 per 1M tokens',
-    contextLength: '1M tokens',
-  },
-  {
-    id: 'gpt-4.1-nano',
-    name: 'GPT-4.1 Nano',
-    description: 'Fastest, most affordable GPT-4.1 model for lightweight tasks and high throughput',
-    pricing: '$0.10 / $0.40 per 1M tokens',
-    contextLength: '1M tokens',
-  },
-  {
-    id: 'o3',
-    name: 'o3',
-    description: 'Advanced reasoning model with extended thinking for math, science, and complex problem-solving',
-    pricing: '$2.00 / $8.00 per 1M tokens',
-    contextLength: '200K tokens',
-  },
-  {
-    id: 'o4-mini',
-    name: 'o4-mini',
-    description: 'Fast, cost-efficient reasoning model ideal for coding, math, and agentic tasks at scale',
-    pricing: '$0.60 / $2.40 per 1M tokens',
-    contextLength: '200K tokens',
+    id: ADVANCED_MODEL,
+    name: 'GPT-6.1 Sol',
+    description: 'Near-flagship model for complex analysis and reasoning',
+    pricing: '$2.00 / $10.00 per 1M tokens',
+    contextLength: '1.05M tokens',
   },
 ];
-
-async function getUserOpenAIResponses(userId: string): Promise<{ apiKey: string; model: string } | null> {
-  if (!db) return null;
-
-  const keyRecord = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, 'openai'),
-      eq(userApiKeys.isActive, true)
-    ),
-    orderBy: (userApiKeys, { desc }) => [desc(userApiKeys.isDefault)],
-  });
-
-  if (!keyRecord || !keyRecord.apiKey) return null;
-
-  return {
-    apiKey: keyRecord.apiKey,
-    model: keyRecord.model || 'gpt-4.1',
-  };
-}
 
 function extractResponseText(response: any): string {
   try {
@@ -101,14 +59,13 @@ function extractResponseText(response: any): string {
 }
 
 export async function createResponse(userId: string, input: string, model?: string): Promise<any> {
-  const userKeyData = await getUserOpenAIResponses(userId);
+  const userKeyData = await getUserOpenAIClient(userId);
   if (!userKeyData) {
-    throw new Error('No active OpenAI API key configured. Add your key in Settings > API Keys.');
+    throw new Error(NO_KEY_MESSAGE);
   }
 
-  const selectedModel = model || userKeyData.model || 'gpt-4.1';
-  const OpenAI = (await import('openai')).default;
-  const openai = new OpenAI({ apiKey: userKeyData.apiKey });
+  const selectedModel = model || userKeyData.model;
+  const openai = userKeyData.client;
 
   try {
     const response = await openai.responses.create({
@@ -173,16 +130,13 @@ router.post('/api/openai/responses/stream', requireAuth(), async (req: Request, 
       return res.status(400).json({ error: 'Input string is required' });
     }
 
-    const userKeyData = await getUserOpenAIResponses(userId);
+    const userKeyData = await getUserOpenAIClient(userId);
     if (!userKeyData) {
-      return res.status(400).json({
-        error: 'No active OpenAI API key configured. Add your key in Settings > API Keys.',
-      });
+      return res.status(400).json({ error: NO_KEY_MESSAGE, needsApiKey: true });
     }
 
-    const selectedModel = model || userKeyData.model || 'gpt-4.1';
-    const OpenAI = (await import('openai')).default;
-    const openai = new OpenAI({ apiKey: userKeyData.apiKey });
+    const selectedModel = model || userKeyData.model;
+    const openai = userKeyData.client;
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');

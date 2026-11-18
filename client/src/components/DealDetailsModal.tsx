@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SourcesList } from './ai/SourcesList';
 import {
   X,
   Edit,
@@ -352,6 +353,7 @@ const DealDetailsModal: React.FC<DealDetailsModalProps> = ({ deal, isOpen, onClo
                   </ul>
                 </div>
               )}
+              <SourcesList sources={socialResearch.sources} />
             </div>
           ) : (
             // Original Deal Info Content

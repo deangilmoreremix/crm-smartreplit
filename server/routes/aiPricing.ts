@@ -1,9 +1,33 @@
 import type { Express, Request, Response } from 'express';
-import { requireAuth, requireAdmin, requireRole } from './auth.js';
+import { requireAuth, requireAdmin } from './auth.js';
 import { AIPricingService } from '../services/aiPricingService.js';
 import { db } from '../db.js';
-import { aiFeatureDefinitions, aiResellerPricing, aiFeatureUsage } from '../../shared/schema.js';
+import { aiFeatureDefinitions, aiResellerPricing, aiFeatureUsage, profiles } from '../../shared/schema.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
+
+/**
+ * The caller's role from profiles.role. requireAuth() verifies the Supabase token but does not
+ * load the profile, and there are no server sessions, so req.user / req.session never carried it.
+ * The white-label role is stored as 'wl_user'; the pricing code expects 'whitelabel'.
+ */
+async function getCallerRole(userId: string): Promise<string> {
+  if (!db || !userId) return 'regular_user';
+  const [profile] = await db
+    .select({ role: profiles.role })
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
+  const role = profile?.role ?? 'regular_user';
+  return role === 'wl_user' ? 'whitelabel' : role;
+}
+
+/**
+ * The reseller whose pricing applies to the caller. profiles has no reseller link in the live
+ * database yet, so platform pricing applies to everyone (same behaviour as before).
+ */
+async function getCallerResellerId(_userId: string): Promise<string | undefined> {
+  return undefined;
+}
 
 export function registerAIPricingRoutes(app: Express): void {
   // ==========================================================================
@@ -128,7 +152,7 @@ export function registerAIPricingRoutes(app: Express): void {
   app.get('/api/reseller/ai-pricing', requireAuth(), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const userRole = req.user?.role || req.session?.userRole;
+      const userRole = await getCallerRole(userId);
 
       // Only whitelabel/reseller users can access this
       if (userRole !== 'whitelabel' && userRole !== 'reseller' && userRole !== 'super_admin') {
@@ -162,7 +186,7 @@ export function registerAIPricingRoutes(app: Express): void {
     async (req: Request, res: Response) => {
       try {
         const userId = (req as any).userId;
-        const userRole = req.user?.role || req.session?.userRole;
+        const userRole = await getCallerRole(userId);
         const { featureKey } = req.params;
         const { retailCreditCost, wholesaleCreditCost } = req.body;
 
@@ -182,7 +206,8 @@ export function registerAIPricingRoutes(app: Express): void {
           return res.status(404).json({ success: false, error: 'Feature not found' });
         }
 
-        const { minCreditCost, maxCreditCost } = feature[0];
+        const minCreditCost = feature[0].minCreditCost ?? 1;
+        const maxCreditCost = feature[0].maxCreditCost ?? 1000;
 
         if (retailCreditCost < minCreditCost || retailCreditCost > maxCreditCost) {
           return res.status(400).json({
@@ -210,7 +235,7 @@ export function registerAIPricingRoutes(app: Express): void {
   app.get('/api/reseller/ai-analytics', requireAuth(), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const userRole = req.user?.role || req.session?.userRole;
+      const userRole = await getCallerRole(userId);
 
       if (userRole !== 'whitelabel' && userRole !== 'reseller' && userRole !== 'super_admin') {
         return res.status(403).json({ success: false, error: 'Access denied' });
@@ -239,7 +264,7 @@ export function registerAIPricingRoutes(app: Express): void {
   app.post('/api/reseller/purchase-credits', requireAuth(), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const userRole = req.user?.role || req.session?.userRole;
+      const userRole = await getCallerRole(userId);
       const { creditsAmount, paymentMethodId } = req.body;
 
       if (userRole !== 'whitelabel' && userRole !== 'reseller' && userRole !== 'super_admin') {
@@ -280,8 +305,8 @@ export function registerAIPricingRoutes(app: Express): void {
   app.get('/api/ai-features', requireAuth(), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
-      const userRole = req.user?.role || req.session?.userRole;
-      const resellerId = req.user?.resellerId;
+      const userRole = await getCallerRole(userId);
+      const resellerId = await getCallerResellerId(userId);
 
       const features = await AIPricingService.getAIFeaturesWithPricing(
         userId,
@@ -310,8 +335,8 @@ export function registerAIPricingRoutes(app: Express): void {
     try {
       const { featureKey } = req.params;
       const userId = (req as any).userId;
-      const userRole = req.user?.role || req.session?.userRole;
-      const resellerId = req.user?.resellerId;
+      const userRole = await getCallerRole(userId);
+      const resellerId = await getCallerResellerId(userId);
 
       const features = await AIPricingService.getAIFeaturesWithPricing(
         userId,
@@ -346,8 +371,8 @@ export function registerAIPricingRoutes(app: Express): void {
       try {
         const { featureKey } = req.params;
         const userId = (req as any).userId;
-        const userRole = req.user?.role || req.session?.userRole;
-        const resellerId = req.user?.resellerId;
+        const userRole = await getCallerRole(userId);
+        const resellerId = await getCallerResellerId(userId);
 
         const features = await AIPricingService.getAIFeaturesWithPricing(
           userId,
@@ -388,7 +413,7 @@ export function registerAIPricingRoutes(app: Express): void {
       try {
         const { featureKey } = req.params;
         const userId = (req as any).userId;
-        const resellerId = req.user?.resellerId;
+        const resellerId = await getCallerResellerId(userId);
         const { description, metadata, context } = req.body;
 
         const result = await AIPricingService.chargeForFeature(

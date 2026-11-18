@@ -1,7 +1,25 @@
 import React, { useState } from 'react';
-import * as edgeFunctionService from '../../services/edgeFunctionService';
+import { generateAI } from '../../services/aiGenerate';
 import StructuredAIResult from '../shared/StructuredAIResult';
-import { Target, CheckCircle, AlertCircle, ArrowRight, Key, Loader2, Mail } from 'lucide-react';
+import { Target, AlertCircle, ArrowRight, Loader2, Mail } from 'lucide-react';
+
+const SUBJECT_SCHEMA = {
+  type: 'object',
+  properties: {
+    subjects: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { text: { type: 'string' }, rationale: { type: 'string' } },
+        required: ['text', 'rationale'],
+        additionalProperties: false,
+      },
+    },
+    bestSendTime: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+  },
+  required: ['subjects', 'bestSendTime'],
+  additionalProperties: false,
+};
 
 const SubjectLineContent: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -13,8 +31,6 @@ const SubjectLineContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   // Purpose options for email
   const purposeOptions = [
@@ -56,81 +72,33 @@ const SubjectLineContent: React.FC = () => {
     setError(null);
 
     try {
-      // Pass the API key if provided by user, otherwise the server will use its own
-      const options = apiKey ? { apiKey } : undefined;
+      const { data } = await generateAI({
+        system:
+          'You are an email marketing copywriter. Write subject lines only from the details given. ' +
+          'Do not predict open rates or invent statistics.',
+        prompt:
+          `Write 5 distinct email subject lines.\nPurpose: ${formData.purpose}\n` +
+          `Target audience: ${formData.audience}\nKey message: ${formData.keyMessage}\n` +
+          'For each, give a one-sentence rationale. Set bestSendTime to a short send-time suggestion ' +
+          'with reasoning, or null if you have no grounded recommendation.',
+        schema: SUBJECT_SCHEMA,
+        schemaName: 'subject_lines',
+        json: true,
+      });
 
-      // Using the market trends function to simulate subject line generation
-      const result = await edgeFunctionService.analyzeMarketTrends(
-        formData.keyMessage,
-        formData.audience,
-        formData.purpose,
-        options
-      );
+      const subjects: { text: string; rationale: string }[] = data?.subjects || [];
+      if (subjects.length === 0) throw new Error('The AI returned no subject lines. Please try again.');
 
-      // Format the result as subject line suggestions
-      const formattedResult = `# Email Subject Line Suggestions
-
-Based on your inputs:
-- Purpose: ${formData.purpose}
-- Target Audience: ${formData.audience}
-- Key Message: ${formData.keyMessage}
-
-## Top Subject Line Options:
-
-1. "${formData.purpose === 'introduction' ? 'Introducing' : 'New:'} ${formData.keyMessage} for ${formData.audience}"
-   - Estimated Open Rate: 32.5%
-   - Best Send Time: Tuesday morning
-   - Why It Works: Direct and clearly communicates value proposition
-
-2. "How ${formData.audience} are ${formData.purpose === 'follow-up' ? 'improving' : 'revolutionizing'} ${formData.keyMessage}"
-   - Estimated Open Rate: 28.7%
-   - Best Send Time: Wednesday afternoon
-   - Why It Works: Creates curiosity and speaks to industry trends
-
-3. "${formData.audience}: ${formData.keyMessage} ${formData.purpose === 'invitation' ? 'Invitation' : 'Opportunity'}"
-   - Estimated Open Rate: 27.3%
-   - Best Send Time: Thursday morning
-   - Why It Works: Personalized to audience and creates urgency
-
-4. "Quick question about ${formData.keyMessage} for your ${formData.audience} team"
-   - Estimated Open Rate: 35.1%
-   - Best Send Time: Monday afternoon
-   - Why It Works: Conversational and creates curiosity
-
-5. "${formData.purpose === 'request' ? 'Request:' : ''} ${formData.keyMessage} - ${formData.purpose === 'promotion' ? 'Special offer' : 'Key insights'} for ${formData.audience}"
-   - Estimated Open Rate: 29.8%
-   - Best Send Time: Friday morning
-   - Why It Works: Clear value proposition with specificity
-
-## Email Body Optimization Tips:
-- Ensure the email content delivers on the subject line's promise
-- Personalize the opening paragraph
-- Keep paragraphs short and scannable
-- Include a clear call-to-action
-- Optimize for mobile viewing`;
-
-      setResult(formattedResult);
-      setShowApiKeyInput(false);
+      const lines = subjects.map((s, i) => `${i + 1}. "${s.text}"\n   - Why It Works: ${s.rationale}`);
+      const sendTime = data?.bestSendTime ? `\n\n## Suggested Send Time\n${data.bestSendTime}` : '';
+      setResult(`# Email Subject Line Suggestions\n\n## Subject Line Options:\n\n${lines.join('\n\n')}${sendTime}`);
     } catch (err) {
       console.error('Error generating subject lines:', err);
-
-      // Check for specific OpenAI API key errors and provide appropriate guidance
-      if (err instanceof Error) {
-        if (
-          err.message.includes('OpenAI API Key is not defined') ||
-          err.message.includes('OpenAI API Key is not configured') ||
-          err.message.includes('OPENAI_API_KEY is not set')
-        ) {
-          setError(
-            'OpenAI API Key is not configured. Please enter your API key below to use this feature.'
-          );
-          setShowApiKeyInput(true);
-        } else {
-          setError(err.message || 'An error occurred while generating subject lines');
-        }
-      } else {
-        setError('An error occurred while generating subject lines');
-      }
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'An error occurred while generating subject lines'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -149,55 +117,11 @@ Based on your inputs:
               Email Subject Line Optimizer
             </h3>
             <p className="text-rose-700">
-              Generate high-converting email subject lines with performance predictions to maximize
-              open rates and engagement.
+              Generate email subject line options tailored to your purpose, audience and message.
             </p>
           </div>
         </div>
       </div>
-
-      {/* API Key Input */}
-      {showApiKeyInput && (
-        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100 mb-4">
-          <div className="flex items-start">
-            <Key className="text-yellow-600 mt-1 mr-3 h-5 w-5" />
-            <div>
-              <h3 className="font-medium text-yellow-800">API Key Required</h3>
-              <p className="text-sm text-yellow-700 mt-1 mb-3">
-                Please enter your OpenAI API key to use this feature. Your key is not stored on our
-                servers.
-              </p>
-              <div className="flex">
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your OpenAI API key"
-                  className="flex-1 p-2 border border-yellow-300 rounded-l-md focus:ring-yellow-500 focus:border-yellow-500"
-                />
-                <button
-                  onClick={() => setShowApiKeyInput(false)}
-                  className="px-3 py-2 bg-yellow-600 text-white rounded-r-md hover:bg-yellow-700"
-                >
-                  Save
-                </button>
-              </div>
-              <p className="text-xs text-yellow-600 mt-2">
-                You can get your API key from the{' '}
-                <a
-                  href="https://platform.openai.com/account/api-keys"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  OpenAI dashboard
-                </a>
-                .
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main Form Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -264,16 +188,7 @@ Based on your inputs:
           </div>
 
           <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-            <div className="flex gap-4">
-              <div className="flex items-center text-xs text-gray-500">
-                <CheckCircle className="h-3.5 w-3.5 mr-1 text-green-500" />
-                A/B testing enabled
-              </div>
-              <div className="flex items-center text-xs text-gray-500">
-                <AlertCircle className="h-3.5 w-3.5 mr-1 text-blue-500" />
-                Performance metrics included
-              </div>
-            </div>
+            <div />
             <button
               type="submit"
               disabled={
@@ -309,7 +224,7 @@ Based on your inputs:
       )}
 
       {/* Results Display */}
-      {result && <StructuredAIResult result={result} title="Email Subject Line Recommendations" />}
+      {result && <StructuredAIResult data={result} title="Email Subject Line Recommendations" />}
     </div>
   );
 };

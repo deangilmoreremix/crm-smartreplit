@@ -1,12 +1,40 @@
 // Gemini AI service for contact research and enhancement
-import { ContactEnrichmentData } from './aiEnrichmentService';
+import { ContactEnrichmentData, aiEnrichmentService } from './aiEnrichmentService';
 import { logger } from './logger.service';
 import { aiOrchestratorService } from './aiOrchestratorService';
 import { enhancedGeminiService } from './enhancedGeminiService';
+import { generateAI, researchAI } from './aiGenerate';
+
+const STR = { type: 'string' };
+const LINKEDIN_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['firstName', 'lastName', 'name', 'title', 'company', 'industry', 'location', 'socialProfiles', 'bio', 'confidence'],
+  properties: {
+    firstName: STR,
+    lastName: STR,
+    name: STR,
+    title: STR,
+    company: STR,
+    industry: STR,
+    location: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['city', 'state', 'country'],
+      properties: { city: STR, state: STR, country: STR },
+    },
+    socialProfiles: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['twitter', 'website'],
+      properties: { twitter: STR, website: STR },
+    },
+    bio: STR,
+    confidence: { type: 'number' },
+  },
+};
 
 class GeminiAIService {
-  private apiUrl = '/api/googleai';
-  private model = 'gemini-1.5-flash';
 
   async isApiKeyConfigured(): Promise<boolean> {
     try {
@@ -14,197 +42,58 @@ class GeminiAIService {
       const data = await response.json();
       return data.configured === true;
     } catch (error) {
-      console.warn('Failed to check Google AI availability:', error);
+      console.warn('Failed to check AI availability:', error);
       return false;
     }
   }
 
+  /** Live web research (OpenAI web search) for a contact by name; cited pages are in `sources`. */
   async researchContactByName(
     firstName: string,
     lastName: string,
     company?: string
   ): Promise<ContactEnrichmentData> {
-    logger.info(
-      `Researching contact with Gemini: ${firstName} ${lastName} ${company ? `at ${company}` : ''}`
-    );
-
-    const isConfigured = await this.isApiKeyConfigured();
-    if (!isConfigured) {
-      throw new Error('AI service is not available. Please check server configuration.');
-    }
-
+    logger.info(`Researching contact: ${firstName} ${lastName} ${company ? `at ${company}` : ''}`);
     try {
-      const response = await fetch(`${this.apiUrl}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: `Research information about a professional named ${firstName} ${lastName}${company ? ` who works at ${company}` : ''}.
-
-          Return a JSON object with the following structure:
-          {
-            "firstName": "${firstName}",
-            "lastName": "${lastName}",
-            "name": "${firstName} ${lastName}",
-            "email": "likely email",
-            "phone": "likely phone if available",
-            "title": "likely job title",
-            "company": "${company || 'company name if known'}",
-            "industry": "likely industry",
-            "location": {
-              "city": "likely city",
-              "state": "likely state",
-              "country": "likely country"
-            },
-            "socialProfiles": {
-              "linkedin": "likely LinkedIn URL",
-              "twitter": "likely Twitter URL if available",
-              "website": "likely company website"
-            },
-            "bio": "brief professional bio",
-            "confidence": "number between 40 and 85 indicating confidence level"
-          }`,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
-      }
-
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!content) {
-        throw new Error('Invalid response from Gemini');
-      }
-
-      try {
-        // Extract JSON from the response text
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          throw new Error('No JSON found in response');
-        }
-
-        const parsedData = JSON.parse(jsonMatch[0]);
-        logger.info(`Successfully researched contact: ${firstName} ${lastName}`);
-
-        return {
-          ...parsedData,
-          confidence: parsedData.confidence || 60,
-        };
-      } catch (parseError) {
-        logger.error('Failed to parse Gemini response', parseError as Error);
-        throw new Error('Failed to parse research response');
-      }
+      return await aiEnrichmentService.enrichContactByName(firstName, lastName, company);
     } catch (error) {
-      logger.error('Gemini research failed', error as Error);
-
-      // Return minimal data to prevent UI breakage
+      logger.error('Contact research failed', error as Error);
+      // Only the data we were given — nothing invented
       return {
         firstName,
         lastName,
         name: `${firstName} ${lastName}`,
         company: company || '',
-        confidence: 30,
-        notes: 'API research failed, showing basic information',
+        notes: `Research failed: ${error instanceof Error ? error.message : 'unknown error'}`,
       };
     }
   }
 
+  /** Live web research (OpenAI web search) for the person behind a LinkedIn URL. */
   async researchContactByLinkedIn(linkedinUrl: string): Promise<ContactEnrichmentData> {
     logger.info(`Researching LinkedIn profile: ${linkedinUrl}`);
-
-    const isConfigured = await this.isApiKeyConfigured();
-    if (!isConfigured) {
-      throw new Error('AI service is not available');
-    }
-
     try {
-      const response = await fetch(`${this.apiUrl}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Research a professional from this LinkedIn URL: ${linkedinUrl}.
-              
-              Return a JSON object with the following structure:
-              {
-                "firstName": "first name",
-                "lastName": "last name",
-                "name": "full name",
-                "email": "likely email based on name and company",
-                "title": "job title",
-                "company": "company name",
-                "industry": "industry",
-                "location": {
-                  "city": "city",
-                  "state": "state",
-                  "country": "country"
-                },
-                "socialProfiles": {
-                  "linkedin": "${linkedinUrl}",
-                  "twitter": "likely Twitter URL if available",
-                  "website": "likely company website"
-                },
-                "bio": "professional summary",
-                "confidence": "number between 50 and 90 indicating confidence level"
-              }`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            topK: 32,
-            topP: 0.8,
-            maxOutputTokens: 1024,
-          },
-        }),
+      const { data, sources } = await researchAI({
+        schemaName: 'linkedin_research',
+        schema: LINKEDIN_SCHEMA,
+        system:
+          'You are a B2B contact research assistant with web search. Report only facts you found for the person at this LinkedIn URL; use empty strings for anything not found. Never guess emails or phone numbers.',
+        prompt: `Research the professional at this LinkedIn profile: ${linkedinUrl}`,
       });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      // Extract JSON from the response text
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const parsedData = JSON.parse(jsonMatch[0]);
-
+      if (!data) throw new Error('The research returned no usable result');
+      const nonEmpty = (o: Record<string, any>) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== '' && v != null));
       return {
-        ...parsedData,
-        socialProfiles: {
-          ...parsedData.socialProfiles,
-          linkedin: linkedinUrl,
-        },
-        confidence: parsedData.confidence || 75,
+        ...nonEmpty(data),
+        location: nonEmpty(data.location || {}),
+        socialProfiles: { ...nonEmpty(data.socialProfiles || {}), linkedin: linkedinUrl },
+        confidence: Number(data.confidence) || undefined,
+        sources,
       };
     } catch (error) {
       logger.error('LinkedIn profile research failed', error as Error);
-
-      // Parse username from LinkedIn URL
-      const username = linkedinUrl.split('/in/')[1]?.replace('/', '') || 'unknown';
-      const nameParts = username.split('-');
-
-      // Return minimal data to prevent UI breakage
       return {
-        firstName: nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) || 'Unknown',
-        lastName: nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || '',
-        name: `${nameParts[0]?.charAt(0).toUpperCase() + nameParts[0]?.slice(1) || 'Unknown'} ${nameParts[1]?.charAt(0).toUpperCase() + nameParts[1]?.slice(1) || ''}`,
-        socialProfiles: {
-          linkedin: linkedinUrl,
-        },
-        confidence: 40,
-        notes: 'API research failed, showing basic information derived from URL',
+        socialProfiles: { linkedin: linkedinUrl },
+        notes: `Research failed: ${error instanceof Error ? error.message : 'unknown error'}`,
       };
     }
   }
@@ -221,39 +110,14 @@ class GeminiAIService {
     }
 
     try {
-      const response = await fetch(`${this.apiUrl}/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Generate a personalized ${messageType} message for a contact with the following information:
+      const { content } = await generateAI({
+        maxTokens: 1024,
+        prompt: `Generate a personalized ${messageType} message for a contact with the following information:
               ${JSON.stringify(contact, null, 2)}
               
               The message should be professional, concise, and tailored to their industry and role.`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.candidates[0].content.parts[0].text;
+      return content;
     } catch (error) {
       logger.error('Message generation failed', error as Error);
 
@@ -295,7 +159,7 @@ export const useGemini = () => {
         } else {
           // Return a compatible object for the old interface
           const content = await geminiService.generatePersonalizedMessage(request, 'email');
-          return { content, model: 'gemini-1.5-flash', provider: 'Google' };
+          return { content, model: 'gpt-6-luna', provider: 'OpenAI' };
         }
       } catch (error) {
         console.error('Error in useGemini.generateContent:', error);
@@ -323,8 +187,8 @@ export const useGemini = () => {
             winProbability: 65,
             potentialBlockers: [],
           },
-          model: 'gemini-1.5-flash',
-          provider: 'Google',
+          model: 'gpt-6-luna',
+          provider: 'OpenAI',
           responseTime: 1000,
           success: true,
         };
@@ -354,8 +218,8 @@ export const useGemini = () => {
             opportunities: [],
             forecastAccuracy: 80,
           },
-          model: 'gemini-1.5-flash',
-          provider: 'Google',
+          model: 'gpt-6-luna',
+          provider: 'OpenAI',
           responseTime: 1000,
           success: true,
         };
@@ -389,9 +253,9 @@ export const useGemini = () => {
     getAvailableModels: async () => {
       return [
         {
-          id: 'gemini-1.5-flash',
-          name: 'Gemini 1.5 Flash',
-          provider: 'gemini',
+          id: 'gpt-6-luna',
+          name: 'GPT-6 Luna',
+          provider: 'openai',
           capabilities: ['text-generation'],
         },
       ];
@@ -399,11 +263,114 @@ export const useGemini = () => {
 
     getRecommendedModel: async (useCase: string) => {
       return {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
-        provider: 'gemini',
+        id: 'gpt-6-luna',
+        name: 'GPT-6 Luna',
+        provider: 'openai',
       };
     },
+
+    // The methods below are used by the AI Tools components; they previously did not exist,
+    // so those tools threw "is not a function". All run on the user's OpenAI key via the server.
+
+    // Gemini-SDK-shaped shim used by AutoFormCompleter and RealTimeEmailComposer
+    getGenerativeModel: (_options?: { model?: string }) => ({
+      generateContent: async (prompt: string) => {
+        const { content } = await generateAI({ prompt, maxTokens: 2000 });
+        return { response: { text: () => content } };
+      },
+    }),
+
+    generateCustomerPersona: async (industry: string, companySize: string, painPoints: string[]) =>
+      (
+        await generateAI({
+          prompt: `Create a detailed B2B customer persona for a company in the ${industry} industry with ${companySize} employees.
+Key pain points: ${painPoints.join('; ')}.
+Include: role and responsibilities, goals, challenges, buying motivations, objections, preferred channels, and messaging tips.`,
+        })
+      ).content,
+
+    generateMeetingAgenda: async (meetingPurpose: string, attendees: string[], previousNotes?: string) =>
+      (
+        await generateAI({
+          prompt: `Create a structured meeting agenda.
+Purpose: ${meetingPurpose}
+Attendees: ${attendees.join(', ')}
+${previousNotes ? `Notes from the previous meeting: ${previousNotes}` : ''}
+Include timed agenda items, owners, desired outcomes, and follow-up actions.`,
+        })
+      ).content,
+
+    generateQuickContent: async (contentType: string, prompt: string, length: 'short' | 'medium' | 'long' = 'medium') =>
+      (
+        await generateAI({
+          prompt: `Write a ${length} ${contentType} for the following request. Return only the ${contentType} text.\n\n${prompt}`,
+          maxTokens: length === 'short' ? 400 : length === 'medium' ? 800 : 1600,
+        })
+      ).content,
+
+    generateEmailResponse: async (originalEmail: string, contactInfo: any, dealContext?: string) =>
+      (
+        await generateAI({
+          prompt: `Write a professional reply to this email.
+Original email:
+${originalEmail}
+
+Contact: ${JSON.stringify(contactInfo)}
+${dealContext ? `Deal context: ${dealContext}` : ''}
+Return only the reply, including a subject line.`,
+        })
+      ).content,
+
+    generateObjectionHandler: async (objection: string, productInfo: string) =>
+      (
+        await generateAI({
+          prompt: `A prospect raised this sales objection: "${objection}".
+Product information: ${productInfo}
+Give an empathetic acknowledgement, 2-3 response strategies with example wording, supporting proof points, and a question to move the conversation forward.`,
+        })
+      ).content,
+
+    optimizeVoiceTone: async (content: string, targetAudience: string, communicationGoal: string) =>
+      (
+        await generateAI({
+          prompt: `Rewrite the following content for this audience: ${targetAudience}. Goal: ${communicationGoal}.
+Keep the meaning, adjust tone, word choice and structure, then briefly list the key changes.
+
+${content}`,
+        })
+      ).content,
+
+    analyzeSentimentRealTime: async (text: string): Promise<{ sentiment: number; emotions: string[] }> => {
+      const { data: parsed } = await generateAI({
+        maxTokens: 200,
+        schemaName: 'realtime_sentiment',
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['sentiment', 'emotions'],
+          properties: {
+            sentiment: { type: 'number' },
+            emotions: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        prompt: `Analyze the sentiment of this text. sentiment is from -1 (very negative) to 1 (very positive); emotions are up to 3 emotion words.\n\n${text}`,
+      });
+      if (!parsed) throw new Error('Sentiment analysis returned no result');
+      return {
+        sentiment: Math.max(-1, Math.min(1, Number(parsed.sentiment) || 0)),
+        emotions: Array.isArray(parsed.emotions) ? parsed.emotions.map(String) : [],
+      };
+    },
+
+    suggestPersonalization: async (contact: any, previousInteractions: any[]) =>
+      (
+        await generateAI({
+          prompt: `Suggest how to personalize outreach to this contact.
+Contact: ${JSON.stringify(contact)}
+Previous interactions: ${JSON.stringify(previousInteractions)}
+Give talking points, topics to reference, the best channel and timing, and a sample opening line.`,
+        })
+      ).content,
 
     validateFormField: async (fieldLabel: string, fieldValue: string, context: string) => {
       try {

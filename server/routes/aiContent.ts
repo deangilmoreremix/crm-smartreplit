@@ -10,6 +10,7 @@
  import { requireEntitlement } from '../middleware/entitlements';
  import { FeatureKey } from '../types/entitlements';
  import * as aiService from '../services/aiToolsService';
+import { sendAIError } from '../services/aiToolsService';
  import { memoryService } from '../memory';
 
 export function registerAIContentRoutes(app: Express): void {
@@ -42,7 +43,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, content: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, content: { title: '', content: 'Configure OpenAI API key.', meta_description: '', keywords: [], call_to_action: '', content_type: type }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -68,7 +69,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, salesPage: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, salesPage: { headline: '', subheadline: '', hero_section: 'Configure OpenAI API key.', benefits: [], social_proof: '', cta: '', faq: [], guarantee: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -96,7 +97,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, proposal: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, proposal: { title: '', executive_summary: 'Configure OpenAI API key.', scope_of_work: '', timeline: '', pricing_structure: '', terms: '', next_steps: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -122,7 +123,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, offer: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, offer: { offer_headline: '', offer_summary: 'Configure OpenAI API key.', value_stack: [], bonus_items: [], urgency_element: '', guarantee: '', cta: '', price_anchor: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -148,7 +149,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, post: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, post: { post_text: 'Configure OpenAI API key.', hashtags: [], engagement_tip: '', best_posting_time: '', character_count: 0 }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -174,7 +175,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, invite: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, invite: { subject_line: '', headline: '', description: 'Configure OpenAI API key.', key_benefits: [], speaker_bio: '', registration_cta: '', reminder_text: '' }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -200,7 +201,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, caseStudy: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, caseStudy: { title: '', executive_summary: 'Configure OpenAI API key.', challenge_section: '', solution_section: '', results_section: '', testimonial: '', key_metrics: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -226,7 +227,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, testimonial: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, testimonial: { polished_testimonial: rawTestimonial, short_quote: '', social_media_version: '', headline_suggestion: '', key_themes: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -252,7 +253,7 @@ export function registerAIContentRoutes(app: Express): void {
          res.json({ success: true, analysis: result.data, source: result.source });
        } else {
          memoryService.recordObservation(userId, 'error', 'Failed: ' + (result?.error || 'endpoint error'), { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, analysis: { swot_analysis: { strengths: [], weaknesses: [], opportunities: [], threats: [] }, market_position: 'Configure OpenAI API key.', growth_opportunities: [], risk_factors: [], strategic_recommendations: [], kpi_suggestions: [], competitive_advantages: [] }, source: 'fallback' });
+         sendAIError(res, result.error);
        }
      }
   );
@@ -263,25 +264,13 @@ export function registerAIContentRoutes(app: Express): void {
      ...requireContent,
      async (req: Request, res: Response) => {
        const userId = (req as any).userId;
-       const sessionId = req.body.sessionId || `session-${Date.now()}`;
        memoryService.recordObservation(userId, 'user_prompt', JSON.stringify(req.body), { endpoint: req.path }).catch(() => {});
-       const { title, content, type, tags } = req.body;
+       const { title, content } = req.body;
        if (!title || !content) return res.status(400).json({ error: 'Title and content required' });
 
-       // Return success - actual DB save would use the content_items table
-       const result = {
-         success: true,
-         saved: {
-           id: `content-${Date.now()}`,
-           title,
-           content,
-           type: type || 'general',
-           tags: tags || [],
-           createdAt: new Date().toISOString(),
-         },
-       };
-       memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.saved), { endpoint: req.path }).catch(() => {});
-       res.json(result);
+       // No content storage table exists in the database yet (content_items was never created),
+       // so report that saving isn't available instead of returning a fake saved record.
+       res.status(501).json({ success: false, error: 'Saving generated content is not available yet' });
      }
   );
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { SourcesList } from './ai/SourcesList';
 import { useDealStore } from '../store/dealStore';
 import { useGemini } from '../services/geminiService';
+import { generateAI } from '../services/aiGenerate';
 import {
   X,
   Edit,
@@ -171,39 +173,20 @@ const DealDetail: React.FC<DealDetailProps> = ({ dealId, onClose }) => {
     setIsAnalyzing(true);
 
     try {
-      // In a real implementation, we would use the Gemini API
-      // For demo purposes we'll generate a simulated response
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const { content } = await generateAI({
+        tier: 'advanced',
+        system: 'You are a B2B sales strategist. Base the analysis only on the data provided; do not invent facts.',
+        prompt: `Write a strategic analysis of this deal in Markdown with sections: Win Probability Assessment, Key Strengths, Risk Factors, Recommended Actions, Timeline Analysis.
 
-      const analysis = `# Strategic Deal Analysis
-
-## Projected Win Probability: ${deal.probability || 'N/A'}%
-
-### Key Strengths:
-- Strong executive sponsor relationship
-- Clear alignment with customer's business objectives
-- Technical requirements well matched to our solution capabilities
-
-### Risk Factors:
-- Competitive pressure from ${Math.random() > 0.5 ? 'established vendors' : 'new market entrants'}
-- Budget approval process may delay decision
-- Decision committee has expanded recently
-
-### Recommended Actions:
-1. Schedule technical deep dive with IT stakeholders
-2. Develop detailed ROI analysis showing 12-month payback
-3. Identify and engage procurement team early
-4. Prepare competitive differentiation documentation
-
-### Timeline Analysis:
-- Deal has been in ${getStageName(deal.stage)} for ${deal.daysInStage || 0} days
-- Average time in this stage: 14 days
-- Recommended close date acceleration strategies available
-      `;
-
-      setDealAnalysis(analysis);
+Deal data:
+${JSON.stringify({ ...deal, stageName: getStageName(deal.stage) }, null, 2)}`,
+      });
+      setDealAnalysis(content);
     } catch (error) {
       console.error('Error generating deal analysis:', error);
+      setDealAnalysis(
+        `AI analysis unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -950,6 +933,7 @@ const DealDetail: React.FC<DealDetailProps> = ({ dealId, onClose }) => {
                         </ul>
                       </div>
                     )}
+                    <SourcesList sources={socialResearch.sources} />
                   </div>
                 )}
               </div>

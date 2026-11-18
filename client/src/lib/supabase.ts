@@ -165,21 +165,25 @@ if (supabaseIsConfigured) {
     '⚠️ Supabase not configured properly. Using fallback mode to prevent infinite retries.'
   );
 
+  // Reads return nothing; writes report that nothing was saved (they used to claim success)
+  const notConfigured = { message: 'Supabase not configured', name: 'ConfigurationError' };
+  const failed = () => Promise.resolve({ data: null, error: notConfigured });
+
   supabaseClient = {
     from: (_table: string) => ({
       select: () => Promise.resolve({ data: [], error: null }),
-      insert: () => Promise.resolve({ data: null, error: null }),
-      update: () => Promise.resolve({ data: null, error: null }),
-      delete: () => Promise.resolve({ data: null, error: null }),
-      upsert: () => Promise.resolve({ data: null, error: null }),
+      insert: failed,
+      update: failed,
+      delete: failed,
+      upsert: failed,
     }),
-    rpc: () => Promise.resolve({ data: null, error: null }),
+    rpc: failed,
     storage: {
       from: () => ({
-        upload: () => Promise.resolve({ data: null, error: null }),
-        download: () => Promise.resolve({ data: null, error: null }),
-        list: () => Promise.resolve({ data: null, error: null }),
-        remove: () => Promise.resolve({ data: null, error: null }),
+        upload: failed,
+        download: failed,
+        list: () => Promise.resolve({ data: [], error: null }),
+        remove: failed,
         getPublicUrl: () => ({ data: { publicUrl: '' } }),
       }),
     },
@@ -240,3 +244,6 @@ export const checkSupabaseConnection = async (): Promise<{
 
 // Export named exports
 export { supabaseClient as supabase, authClient as auth };
+
+// Anon/publishable key (accepts VITE_SUPABASE_ANON_KEY or VITE_SUPABASE_PUBLISHABLE_KEY)
+export { supabaseAnonKey };

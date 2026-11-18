@@ -222,6 +222,13 @@ class UnifiedApiClient {
         responseData = await response.json();
       } else {
         responseData = await response.text();
+        // An HTML page means the request never reached the API (e.g. the SPA fallback answered)
+        if (/^\s*<(!doctype|html)/i.test(responseData)) {
+          throw {
+            message: `Expected JSON from ${url} but received an HTML page; the API is not reachable`,
+            statusCode: response.status,
+          };
+        }
       }
 
       return {

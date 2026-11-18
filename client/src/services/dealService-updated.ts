@@ -75,7 +75,7 @@ class DealService {
     return this.isMockMode || !this.supabaseUrl || !this.supabaseKey;
   }
 
-  // Initialize local storage with sample data if needed
+  // Load locally stored records (local mode, when Supabase is not configured)
   private initializeLocalStorage(): Deal[] {
     try {
       const stored = localStorage.getItem('deals');
@@ -86,43 +86,8 @@ class DealService {
       // If localStorage is corrupted, reset it
     }
 
-    // Default sample data
-    const sampleDeals: Deal[] = [
-      {
-        id: '1',
-        title: 'Enterprise Software License',
-        description: 'Annual software license renewal for Microsoft Office Suite',
-        value: 125000,
-        stage: 'proposal',
-        status: 'active',
-        priority: 'high',
-        contactId: '1',
-        contactName: 'Jane Doe',
-        company: 'Microsoft',
-        assigneeId: 'user-1',
-        assigneeName: 'John Smith',
-        expectedCloseDate: '2024-02-15',
-        probability: 75,
-        aiScore: 85,
-        tags: ['enterprise', 'software', 'renewal'],
-        activities: [
-          {
-            id: 'a1',
-            type: 'meeting',
-            title: 'Initial Discovery Call',
-            description: 'Discussed requirements and budget',
-            date: '2024-01-15',
-            userId: 'user-1',
-            userName: 'John Smith',
-          },
-        ],
-        createdAt: '2024-01-10T10:00:00Z',
-        updatedAt: '2024-01-20T15:30:00Z',
-      },
-    ];
-
-    localStorage.setItem('deals', JSON.stringify(sampleDeals));
-    return sampleDeals;
+    // No sample records: local mode starts empty and holds only the user's own data
+    return [];
   }
 
   // Get deals from local storage

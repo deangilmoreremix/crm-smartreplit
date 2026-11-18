@@ -9,6 +9,7 @@ import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 import * as aiService from '../services/aiToolsService';
+import { sendAIError } from '../services/aiToolsService';
 import { memoryService } from '../memory';
 
 export function registerAIProductivityRoutes(app: Express): void {
@@ -40,11 +41,11 @@ export function registerAIProductivityRoutes(app: Express): void {
            memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
            res.json({ success: true, summary: result.data, source: result.source });
          } else {
-           res.json({ success: false, summary: { summary: 'Configure OpenAI API key.', key_decisions: [], action_items: [], follow_up_tasks: [], notable_quotes: [], next_meeting_suggestion: '' }, source: 'fallback' });
+           sendAIError(res, result.error);
          }
        } catch (err: any) {
          memoryService.recordObservation(userId, 'error', err.message, { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, summary: { summary: 'Configure OpenAI API key.', key_decisions: [], action_items: [], follow_up_tasks: [], notable_quotes: [], next_meeting_suggestion: '' }, source: 'fallback' });
+         sendAIError(res, err);
        }
      }
    );
@@ -75,11 +76,11 @@ export function registerAIProductivityRoutes(app: Express): void {
            memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
            res.json({ success: true, notes: result.data, source: result.source });
          } else {
-           res.json({ success: false, notes: { formatted_notes: 'Configure OpenAI API key.', key_points: [], action_items: [], summary: '' }, source: 'fallback' });
+           sendAIError(res, result.error);
          }
        } catch (err: any) {
          memoryService.recordObservation(userId, 'error', err.message, { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, notes: { formatted_notes: 'Configure OpenAI API key.', key_points: [], action_items: [], summary: '' }, source: 'fallback' });
+         sendAIError(res, err);
        }
      }
    );
@@ -110,11 +111,11 @@ export function registerAIProductivityRoutes(app: Express): void {
            memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
            res.json({ success: true, task: result.data, source: result.source });
          } else {
-           res.json({ success: false, task: { title: description, description, priority: 'medium', estimated_duration: '30 min', subtasks: [], due_date_suggestion: '', category: 'general' }, source: 'fallback' });
+           sendAIError(res, result.error);
          }
        } catch (err: any) {
          memoryService.recordObservation(userId, 'error', err.message, { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, task: { title: description, description, priority: 'medium', estimated_duration: '30 min', subtasks: [], due_date_suggestion: '', category: 'general' }, source: 'fallback' });
+         sendAIError(res, err);
        }
      }
    );
@@ -145,11 +146,11 @@ export function registerAIProductivityRoutes(app: Express): void {
            memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
            res.json({ success: true, notes: result.data, source: result.source });
          } else {
-           res.json({ success: false, notes: { agenda_summary: 'Configure OpenAI API key.', discussion_points: [], decisions_made: [], action_items: [], parking_lot: [], next_steps: '' }, source: 'fallback' });
+           sendAIError(res, result.error);
          }
        } catch (err: any) {
          memoryService.recordObservation(userId, 'error', err.message, { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, notes: { agenda_summary: 'Configure OpenAI API key.', discussion_points: [], decisions_made: [], action_items: [], parking_lot: [], next_steps: '' }, source: 'fallback' });
+         sendAIError(res, err);
        }
      }
    );
@@ -180,11 +181,11 @@ export function registerAIProductivityRoutes(app: Express): void {
            memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
            res.json({ success: true, suggestions: result.data, source: result.source });
          } else {
-           res.json({ success: false, suggestions: { suggested_tasks: [], reasoning: 'Configure OpenAI API key.', automation_suggestions: [] }, source: 'fallback' });
+           sendAIError(res, result.error);
          }
        } catch (err: any) {
          memoryService.recordObservation(userId, 'error', err.message, { endpoint: req.path }).catch(() => {});
-         res.json({ success: false, suggestions: { suggested_tasks: [], reasoning: 'Configure OpenAI API key.', automation_suggestions: [] }, source: 'fallback' });
+         sendAIError(res, err);
        }
      }
    );
@@ -205,20 +206,17 @@ export function registerAIProductivityRoutes(app: Express): void {
 
        const { appointments, preferences } = req.body;
 
-       // Analyze existing appointments and suggest optimal scheduling
-       const suggestions = {
-         optimal_times: ['Tuesday 10:00 AM', 'Wednesday 2:00 PM', 'Thursday 11:00 AM'],
-         scheduling_tips: [
-           'Schedule important meetings on Tuesday-Thursday for higher attendance',
-           'Leave 15-minute buffers between meetings',
-           'Block focus time in the morning',
-         ],
-         conflict_warnings: [],
-         productivity_score: 78,
-       };
-
-       memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify({ success: true, suggestions, source: 'openai' }), { endpoint: req.path }).catch(() => {});
-       res.json({ success: true, suggestions, source: 'openai' });
+       try {
+         const result = await aiService.suggestCalendarTimes(appointments, preferences);
+         if (result.success) {
+           memoryService.recordChatInteraction(userId, sessionId, JSON.stringify(req.body), JSON.stringify(result.data), { endpoint: req.path }).catch(() => {});
+           res.json({ success: true, suggestions: result.data, source: result.source });
+         } else {
+           sendAIError(res, result.error);
+         }
+       } catch (err: any) {
+         sendAIError(res, err);
+       }
      }
    );
 

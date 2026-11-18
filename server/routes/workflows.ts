@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { supabase } from '../supabase';
+import { requireAuth } from './auth';
 import { workflowEngine } from '@smartcrm/workflows';
 import { registerAllTriggers, registerAllActions } from '@smartcrm/workflows';
 
@@ -51,14 +52,14 @@ async function getTenantId(userId: string): Promise<string> {
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const tenantId = await getTenantId(userId);
     const { data: workflows, error } = await supabase
-      .from('workflows')
+      .from('smartcrm_workflows')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
@@ -74,13 +75,13 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { data: workflow, error } = await supabase
-      .from('workflows')
+      .from('smartcrm_workflows')
       .select('*')
       .eq('id', id)
       .single();
@@ -91,7 +92,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     const { data: steps } = await supabase
-      .from('workflow_actions')
+      .from('smartcrm_workflow_actions')
       .select('*')
       .eq('workflow_id', id)
       .order('order_index');
@@ -106,15 +107,18 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { name, triggerType, appSlug, steps } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!name || !triggerType) {
+      return res.status(400).json({ error: 'name and triggerType are required' });
     }
 
     const tenantId = await getTenantId(userId);
 
     const { data: workflow, error: workflowError } = await supabase
-      .from('workflows')
+      .from('smartcrm_workflows')
       .insert({
         name,
         trigger_type: triggerType,
@@ -139,7 +143,7 @@ router.post('/', async (req: Request, res: Response) => {
         condition: step.condition || null,
       }));
 
-      const { error: actionsError } = await supabase.from('workflow_actions').insert(actionRecords);
+      const { error: actionsError } = await supabase.from('smartcrm_workflow_actions').insert(actionRecords);
 
       if (actionsError) throw actionsError;
     }
@@ -155,13 +159,13 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, triggerType, enabled, steps } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { data: workflow, error: workflowError } = await supabase
-      .from('workflows')
+      .from('smartcrm_workflows')
       .update({
         name,
         trigger_type: triggerType,
@@ -174,7 +178,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (workflowError) throw workflowError;
 
     if (steps) {
-      await supabase.from('workflow_actions').delete().eq('workflow_id', id);
+      await supabase.from('smartcrm_workflow_actions').delete().eq('workflow_id', id);
 
       const actionRecords = steps.map((step: any, index: number) => ({
         workflow_id: id,
@@ -185,7 +189,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         condition: step.condition || null,
       }));
 
-      const { error: actionsError } = await supabase.from('workflow_actions').insert(actionRecords);
+      const { error: actionsError } = await supabase.from('smartcrm_workflow_actions').insert(actionRecords);
 
       if (actionsError) throw actionsError;
     }
@@ -200,13 +204,13 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    await supabase.from('workflow_actions').delete().eq('workflow_id', id);
-    const { error } = await supabase.from('workflows').delete().eq('id', id);
+    await supabase.from('smartcrm_workflow_actions').delete().eq('workflow_id', id);
+    const { error } = await supabase.from('smartcrm_workflows').delete().eq('id', id);
 
     if (error) throw error;
     return res.status(204).send();
@@ -219,13 +223,13 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.get('/:id/runs', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { data: runs, error } = await supabase
-      .from('workflow_runs')
+      .from('smartcrm_workflow_runs')
       .select('*')
       .eq('workflow_id', id)
       .order('started_at', { ascending: false })
@@ -243,19 +247,19 @@ router.post('/:id/run', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { triggerData } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { data: workflow } = await supabase.from('workflows').select('*').eq('id', id).single();
+    const { data: workflow } = await supabase.from('smartcrm_workflows').select('*').eq('id', id).single();
 
     if (!workflow) {
       return res.status(404).json({ error: 'Workflow not found' });
     }
 
     const { data: actions } = await supabase
-      .from('workflow_actions')
+      .from('smartcrm_workflow_actions')
       .select('*')
       .eq('workflow_id', id)
       .order('order_index');
@@ -270,7 +274,7 @@ router.post('/:id/run', async (req: Request, res: Response) => {
     };
 
     const { data: run, error: runError } = await supabase
-      .from('workflow_runs')
+      .from('smartcrm_workflow_runs')
       .insert({
         workflow_id: id,
         status: 'running',
@@ -294,7 +298,7 @@ router.post('/:id/run', async (req: Request, res: Response) => {
     const result = await workflowEngine.executeWorkflow(steps, context);
 
     await supabase
-      .from('workflow_runs')
+      .from('smartcrm_workflow_runs')
       .update({
         status: result.success ? 'completed' : 'failed',
         completed_at: new Date().toISOString(),
@@ -311,7 +315,7 @@ router.post('/:id/run', async (req: Request, res: Response) => {
 
 export function registerWorkflowRoutes(app: any): void {
   console.log('Registering workflow routes at /api/workflows');
-  app.use('/api/workflows', router);
+  app.use('/api/workflows', requireAuth(), router);
 }
 
 export default router;

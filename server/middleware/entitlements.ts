@@ -111,8 +111,9 @@ interface UserEntitlement {
 export function requireEntitlement(featureKey: FeatureKey) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req.session as any)?.userId;
-      const userEmail = (req.session as any)?.userEmail;
+      // requireAuth() sets these on req (session, dev bypass or Supabase token)
+      const userId = (req as any).userId ?? (req.session as any)?.userId;
+      const userEmail = (req as any).userEmail ?? (req.session as any)?.userEmail;
 
       if (!userId && !userEmail) {
         return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
@@ -129,7 +130,7 @@ export function requireEntitlement(featureKey: FeatureKey) {
 
       if (userEmail) {
         const { data } = await supabase
-          .from('user_entitlements')
+          .from('smartcrm_user_entitlements')
           .select('*')
           .eq('email', userEmail)
           .single();
@@ -138,7 +139,7 @@ export function requireEntitlement(featureKey: FeatureKey) {
 
       if (!entitlement && userId) {
         const { data } = await supabase
-          .from('user_entitlements')
+          .from('smartcrm_user_entitlements')
           .select('*')
           .eq('user_id', userId)
           .single();
@@ -162,7 +163,7 @@ export function requireEntitlement(featureKey: FeatureKey) {
       }
 
       // Check package access via user_has_feature function
-      const { data: hasAccess } = await supabase.rpc('user_has_feature', {
+      const { data: hasAccess } = await supabase.rpc('smartcrm_user_has_feature', {
         input_email: entitlement.email,
         input_feature_key: featureKey,
       });
@@ -190,8 +191,9 @@ export function requireEntitlement(featureKey: FeatureKey) {
 export function requireOneOfEntitlements(featureKeys: FeatureKey[]) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId = (req.session as any)?.userId;
-      const userEmail = (req.session as any)?.userEmail;
+      // requireAuth() sets these on req (session, dev bypass or Supabase token)
+      const userId = (req as any).userId ?? (req.session as any)?.userId;
+      const userEmail = (req as any).userEmail ?? (req.session as any)?.userEmail;
 
       if (!userId && !userEmail) {
         return res.status(401).json({ error: 'Unauthorized - Not authenticated' });
@@ -207,7 +209,7 @@ export function requireOneOfEntitlements(featureKeys: FeatureKey[]) {
 
       if (userEmail) {
         const { data } = await supabase
-          .from('user_entitlements')
+          .from('smartcrm_user_entitlements')
           .select('*')
           .eq('email', userEmail)
           .single();
@@ -216,7 +218,7 @@ export function requireOneOfEntitlements(featureKeys: FeatureKey[]) {
 
       if (!entitlement && userId) {
         const { data } = await supabase
-          .from('user_entitlements')
+          .from('smartcrm_user_entitlements')
           .select('*')
           .eq('user_id', userId)
           .single();
@@ -240,7 +242,7 @@ export function requireOneOfEntitlements(featureKeys: FeatureKey[]) {
 
       // Check if user has at least one of the required features
       const accessPromises = featureKeys.map((fk) =>
-        supabase.rpc('user_has_feature', { input_email: entitlement.email, input_feature_key: fk })
+        supabase.rpc('smartcrm_user_has_feature', { input_email: entitlement.email, input_feature_key: fk })
       );
 
       const results = await Promise.all(accessPromises);

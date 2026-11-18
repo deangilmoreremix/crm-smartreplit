@@ -93,13 +93,13 @@ git commit -m "feat: migrate database connection from Neon to Supabase PostgreSQ
 Use Netlify CLI to update the DATABASE_URL:
 
 ```bash
-netlify env:set DATABASE_URL postgresql://postgres:VideoRemix2026@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres
+netlify env:set DATABASE_URL postgresql://postgres:YOUR_DB_PASSWORD@db.bzxohkrxcwodllketcpz.supabase.co:5432/postgres
 ```
 
 - [ ] **Step 2: Set SUPABASE_SERVICE_ROLE_KEY in Netlify environment**
 
 ```bash
-netlify env:set SUPABASE_SERVICE_ROLE_KEY eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6eG9oa3J4Y3dvZGxsa2V0Y3B6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mzg2NjM4NSwiZXhwIjoyMDg5NDQyMzg1fQ.S5HmTONnamT169WYF0riSphXij-Mwtk7D3pphfSrCFE
+netlify env:set SUPABASE_SERVICE_ROLE_KEY YOUR_SERVICE_ROLE_KEY
 ```
 
 - [ ] **Step 3: Verify environment variables are set**

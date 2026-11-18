@@ -524,12 +524,22 @@ class AIIntelligenceEngine {
   }
 
   private analyzeCommunicationPatterns(history: any[]): any {
-    // Analyze communication patterns from history
+    // Derived from the actual history only (previously a fixed response rate, channel and times)
+    const channelCounts: Record<string, number> = {};
+    for (const item of history || []) {
+      const channel = item?.type || item?.channel;
+      if (channel) channelCounts[channel] = (channelCounts[channel] || 0) + 1;
+    }
+    const preferredChannel =
+      Object.entries(channelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const outbound = (history || []).filter((h) => h?.direction === 'outbound').length;
+    const inbound = (history || []).filter((h) => h?.direction === 'inbound').length;
+
     return {
-      frequency: history.length,
-      responseRate: 0.8, // Mock data
-      preferredChannel: 'email',
-      bestResponseTimes: ['Tuesday 2PM', 'Thursday 3PM'],
+      frequency: history?.length || 0,
+      responseRate: outbound > 0 ? Math.min(1, inbound / outbound) : null,
+      preferredChannel,
+      bestResponseTimes: [],
     };
   }
 

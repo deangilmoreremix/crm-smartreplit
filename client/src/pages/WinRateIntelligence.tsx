@@ -37,9 +37,27 @@ const WinRateIntelligence: React.FC = () => {
   const keyWinFactors = winRateData.key_win_factors || [];
   const keyLossFactors = winRateData.key_loss_factors || [];
   const recommendations = winRateData.recommendations || [];
-  const benchmarkComparison = winRateData.benchmark_comparison || 'Industry average: 25-35%';
+  const benchmarkComparison = winRateData.benchmark_comparison || '';
 
-  const topContacts = Object.values(contacts).slice(0, 6);
+  // Won deals that closed within 30 days of being created
+  const fastWins = dealsArray.filter((d) => {
+    if (String(d.stage) !== 'closed-won') return false;
+    const closed = d.actualCloseDate || d.closedAt;
+    if (!closed) return false;
+    return (new Date(closed).getTime() - new Date(d.createdAt).getTime()) / 86400000 <= 30;
+  }).length;
+
+  // Per-contact win rate from that contact's closed deals (contacts without closed deals are left out)
+  const topContacts = Object.values(contacts)
+    .map((contact) => {
+      const contactDeals = dealsArray.filter((d) => String(d.contactId) === String(contact.id));
+      const won = contactDeals.filter((d) => String(d.stage) === 'closed-won').length;
+      const closed = won + contactDeals.filter((d) => String(d.stage) === 'closed-lost').length;
+      return { contact, winRate: closed > 0 ? Math.round((won / closed) * 100) : null, closed };
+    })
+    .filter((c) => c.winRate !== null)
+    .sort((a, b) => (b.winRate as number) - (a.winRate as number) || b.closed - a.closed)
+    .slice(0, 6);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -60,7 +78,7 @@ const WinRateIntelligence: React.FC = () => {
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 shadow-lg"><Percent className="h-6 w-6 text-white" /></div>
-              <div className="flex items-center text-green-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">+5.2%</span></div>
+              <div className="flex items-center text-green-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">{closedDeals} closed</span></div>
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{overallWinRate.toFixed(1)}%</h3>
@@ -82,7 +100,7 @@ const WinRateIntelligence: React.FC = () => {
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg"><DollarSign className="h-6 w-6 text-white" /></div>
-              <div className="flex items-center text-purple-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">+12%</span></div>
+              <div className="flex items-center text-purple-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">{wonDeals} won</span></div>
             </div>
             <div className="space-y-2">
               <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(avgWonDealSize)}</h3>
@@ -93,11 +111,11 @@ const WinRateIntelligence: React.FC = () => {
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 shadow-lg"><Target className="h-6 w-6 text-white" /></div>
-              <div className="flex items-center text-orange-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">Goal</span></div>
+              <div className="flex items-center text-orange-400"><ArrowUpRight className="h-4 w-4 mr-1" /><span className="text-sm font-medium">Lost</span></div>
             </div>
             <div className="space-y-2">
-              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>85%</h3>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Target Win Rate</p>
+              <h3 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{lostDeals}</h3>
+              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-sm`}>Deals Lost</p>
             </div>
           </GlassCard>
         </div>
@@ -143,24 +161,24 @@ const WinRateIntelligence: React.FC = () => {
             <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center`}>
               <BarChart3 className="h-5 w-5 mr-2 text-blue-500" /> Win Rate Analysis
             </h2>
-            <ModernButton variant="glass" size="sm"><Calendar className="h-4 w-4 mr-2" />Last 30 Days</ModernButton>
+            <ModernButton variant="glass" size="sm"><Calendar className="h-4 w-4 mr-2" />All Deals</ModernButton>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={`p-6 rounded-xl ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'}`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Excellent Performance</h3>
+                <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Current Win Rate</h3>
                 <Trophy className="h-5 w-5 text-green-500" />
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{overallWinRate > 70 ? Math.floor(overallWinRate) : 75}%+</p>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{benchmarkComparison}</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{closedDeals > 0 ? `${overallWinRate.toFixed(1)}%` : 'No closed deals yet'}</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{benchmarkComparison || `${wonDeals} won of ${closedDeals} closed`}</p>
             </div>
             <div className={`p-6 rounded-xl ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>Quick Wins</h3>
                 <TrendingUp className="h-5 w-5 text-blue-500" />
               </div>
-              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{Math.floor(wonDeals * 0.3)}</p>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Fast conversion deals</p>
+              <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>{fastWins}</p>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Won within 30 days of creation</p>
             </div>
             <div className={`p-6 rounded-xl ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50 border border-purple-200'}`}>
               <div className="flex items-center justify-between mb-4">
@@ -199,14 +217,17 @@ const WinRateIntelligence: React.FC = () => {
             <ModernButton variant="outline" size="sm">View All</ModernButton>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {topContacts.map(contact => (
+            {topContacts.length === 0 && (
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No contacts with closed deals yet.</p>
+            )}
+            {topContacts.map(({ contact, winRate: contactWinRate, closed }) => (
               <div key={contact.id} className={`flex items-center space-x-3 p-4 rounded-xl ${isDark ? 'bg-white/5 hover:bg-white/10 border border-white/10' : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'} transition-all duration-200 cursor-pointer`}>
                 <Avatar src={contact.avatarSrc} size="md" fallback={getInitials(contact.name)} />
                 <div className="flex-1 min-w-0">
                   <p className={`font-medium text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{contact.name}</p>
                   <p className={`text-sm truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{contact.company || 'No company'}</p>
                   <div className="flex items-center mt-1">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">{Math.floor(Math.random() * 30) + 70}% win rate</span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">{contactWinRate}% win rate ({closed} closed)</span>
                   </div>
                 </div>
               </div>

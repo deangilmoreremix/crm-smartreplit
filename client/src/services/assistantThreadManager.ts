@@ -1,3 +1,9 @@
+import {
+  createConversation,
+  sendConversationMessage,
+  listConversationMessages,
+  type ConversationMessage,
+} from './aiGenerate';
 import OpenAI from 'openai';
 
 export interface AssistantThread {
@@ -50,35 +56,15 @@ export class AssistantThreadManager {
     }
   }
 
+  /** Each entity thread is an OpenAI Responses API conversation, so context carries between turns. */
   private async createAssistantThread(
     entityType: string,
     entityId: string,
     context?: Record<string, any>
   ): Promise<AssistantThread> {
-    // Use server-side endpoint for thread creation
-    const response = await fetch('/api/openai/assistants/threads', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        entityType,
-        entityId,
-        context,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to create assistant thread: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || 'Failed to create assistant thread');
-    }
-
+    const conversationId = await createConversation(`${entityType}:${entityId}`);
     return {
-      id: data.threadId,
+      id: conversationId,
       type: entityType as any,
       entityId,
       assistantId: this.getAssistantIdForEntity(entityType),
@@ -88,37 +74,19 @@ export class AssistantThreadManager {
     };
   }
 
-  private async syncThreadAcrossApps(thread: AssistantThread): Promise<void> {
-    // Broadcast thread updates to all remote apps
-    const remoteApps = [
-      'pipeline-intelligence',
-      'contact-analytics',
-      'deal-insights',
-      'task-automation',
-    ];
+  /** Message history of a thread (conversation), oldest first. */
+  async getThreadMessages(threadId: string): Promise<ConversationMessage[]> {
+    return listConversationMessages(threadId);
+  }
 
-    for (const app of remoteApps) {
-      try {
-        await fetch(`/api/remote-sync/${app}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ thread }),
-        });
-      } catch (error) {
-        console.warn(`Failed to sync thread to ${app}:`, error);
-      }
-    }
+  private async syncThreadAcrossApps(thread: AssistantThread): Promise<void> {
+    // /api/remote-sync/* never existed, so there is nothing to broadcast to; threads stay local
+    void thread;
   }
 
   private getAssistantIdForEntity(entityType: string): string {
-    const assistantMap = {
-      contact: process.env.VITE_CONTACT_ASSISTANT_ID,
-      deal: process.env.VITE_DEAL_ASSISTANT_ID,
-      task: process.env.VITE_TASK_ASSISTANT_ID,
-      pipeline: process.env.VITE_PIPELINE_ASSISTANT_ID,
-    };
-
-    return assistantMap[entityType as keyof typeof assistantMap] || 'default_assistant';
+    // The built-in assistants (see openaiAssistantsService); the Assistants API IDs are gone
+    return ['contact', 'deal', 'task', 'pipeline'].includes(entityType) ? `${entityType}-assistant` : 'default_assistant';
   }
 
   private async callAssistantThread(
@@ -128,34 +96,14 @@ export class AssistantThreadManager {
     context?: any
   ): Promise<any> {
     try {
-      const response = await fetch('/api/openai/assistants/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message,
-          assistantId,
-          threadId,
-          context,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Assistant chat failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Assistant chat failed');
-      }
+      const system = `You are a CRM assistant (${assistantId}).${context ? ` Context: ${JSON.stringify(context)}` : ''}`;
+      const conversationId = threadId || (await createConversation(assistantId));
+      const { content, model } = await sendConversationMessage(conversationId, message, { system, tier: 'advanced' });
 
       return {
-        result: data.response,
-        model: 'gpt-4o-assistant',
-        confidence: 90,
-        threadId: data.threadId,
-        runId: data.runId,
+        result: content,
+        model,
+        threadId: conversationId,
       };
     } catch (error) {
       console.error('Assistant thread call failed:', error);

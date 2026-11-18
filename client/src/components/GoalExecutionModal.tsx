@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Goal } from '../types/goals';
+import { generateAI } from '../services/aiGenerate';
+import { useContactStore } from '../store/contactStore';
+import { useDealStore } from '../store/dealStore';
 import {
   X,
   Play,
@@ -64,7 +67,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'System Orchestrator',
-          duration: '15s',
+          duration: '',
         },
         {
           id: '2',
@@ -73,7 +76,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Data Analyst Agent',
-          duration: '30s',
+          duration: '',
         },
         {
           id: '3',
@@ -82,7 +85,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Strategy Agent',
-          duration: '45s',
+          duration: '',
         },
         {
           id: '4',
@@ -91,7 +94,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Execution Agent',
-          duration: '60s',
+          duration: '',
         },
         {
           id: '5',
@@ -100,7 +103,7 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
           status: 'pending',
           progress: 0,
           agent: 'Analytics Agent',
-          duration: '20s',
+          duration: '',
         },
       ];
       setExecutionSteps(steps);
@@ -110,75 +113,91 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
     }
   }, [isOpen, goal]);
 
-  // Simulate execution process
-  useEffect(() => {
-    if (isExecuting && currentStep < executionSteps.length) {
-      const step = executionSteps[currentStep];
-      const interval = setInterval(
-        () => {
-          setExecutionSteps((prev) =>
-            prev.map((s, index) =>
-              index === currentStep
-                ? {
-                    ...s,
-                    status: 'running',
-                    progress: Math.min(100, s.progress + Math.random() * 20 + 5),
-                  }
-                : s
-            )
-          );
+  // Real execution: one structured OpenAI call produces concrete output for each step
+  const contactsRaw = useContactStore((state) => state.contacts);
+  const dealsRaw = useDealStore((state) => state.deals);
+  const [executionError, setExecutionError] = useState<string | null>(null);
 
-          // Update agent thinking
-          const thinkingMessages = [
-            `${step.agent} is analyzing ${goal.category.toLowerCase()} opportunities...`,
-            `Processing CRM data and external signals...`,
-            `Optimizing strategy based on ${goal.priority.toLowerCase()} priority...`,
-            `Coordinating with ${goal.agentsRequired.length} specialized agents...`,
-            `Implementing ${goal.complexity.toLowerCase()} complexity workflow...`,
-          ];
-          setAgentThinking(thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)]);
-
-          // Check if step is complete
-          if (executionSteps[currentStep]?.progress >= 100) {
-            setExecutionSteps((prev) =>
-              prev.map((s, index) =>
-                index === currentStep ? { ...s, status: 'completed', progress: 100 } : s
-              )
-            );
-            setCurrentStep((prev) => prev + 1);
-          }
+  const STEP_SCHEMA = {
+    type: 'object',
+    additionalProperties: false,
+    required: ['steps', 'summary', 'recommendations', 'estimatedValue'],
+    properties: {
+      steps: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['title', 'output'],
+          properties: { title: { type: 'string' }, output: { type: 'string' } },
         },
-        realMode ? 1500 : 800
+      },
+      summary: { type: 'string' },
+      recommendations: { type: 'array', items: { type: 'string' } },
+      estimatedValue: {
+        anyOf: [{ type: 'string' }, { type: 'null' }],
+        description: 'Only if it can be estimated from the data given; otherwise null',
+      },
+    },
+  };
+
+  const handleStartExecution = async () => {
+    setIsExecuting(true);
+    setExecutionError(null);
+    setExecutionResults(null);
+    setCurrentStep(0);
+    setAgentThinking('Working on this goal with OpenAI…');
+    setExecutionSteps((prev) => prev.map((step) => ({ ...step, status: 'running', progress: 0 })));
+    const started = Date.now();
+
+    const contactList: any[] = Array.isArray(contactsRaw) ? contactsRaw : Object.values(contactsRaw || {});
+    const dealList: any[] = Array.isArray(dealsRaw) ? dealsRaw : Object.values(dealsRaw || {});
+    const openDeals = dealList.filter((d) => !['closed-won', 'closed-lost'].includes(d.stage));
+
+    try {
+      const { data } = await generateAI({
+        prompt: `Goal: ${goal.title}
+Description: ${goal.description}
+Category: ${goal.category}; priority: ${goal.priority}; complexity: ${goal.complexity}
+Success metrics: ${(goal.successMetrics || []).join('; ')}
+CRM data: ${contactList.length} contacts, ${dealList.length} deals (${openDeals.length} open, total open value ${openDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0)}).
+
+Work through these steps and give a concrete, specific output for each (what to do, for whom, and why):
+${executionSteps.map((step, i) => `${i + 1}. ${step.title}: ${step.description}`).join('\n')}
+
+Then summarise and give recommendations. Do not invent CRM records or results.`,
+        schema: STEP_SCHEMA,
+        schemaName: 'goal_execution',
+        tier: 'advanced',
+        maxTokens: 4000,
+      });
+      if (!data || !Array.isArray(data.steps)) throw new Error('The AI returned no plan');
+
+      setExecutionSteps((prev) =>
+        prev.map((step, i) => ({
+          ...step,
+          status: 'completed',
+          progress: 100,
+          description: data.steps[i]?.output || step.description,
+        }))
       );
-
-      return () => clearInterval(interval);
-    }
-
-    // Complete execution
-    if (currentStep >= executionSteps.length && isExecuting) {
-      setIsExecuting(false);
+      setCurrentStep(executionSteps.length);
+      const seconds = Math.round((Date.now() - started) / 1000);
       setExecutionResults({
         success: true,
-        estimatedValue: `$${Math.floor(Math.random() * 50000 + 10000).toLocaleString()}`,
-        timeToComplete: `${Math.floor(Math.random() * 30 + 15)}m`,
-        efficiency: `${Math.floor(Math.random() * 20 + 80)}%`,
-        recommendations: [
-          'Continue monitoring lead engagement metrics',
-          'Expand successful automation to similar segments',
-          'Schedule follow-up optimization in 2 weeks',
-        ],
+        estimatedValue: data.estimatedValue || 'Not estimated',
+        timeToComplete: seconds >= 60 ? `${Math.floor(seconds / 60)}m ${seconds % 60}s` : `${seconds}s`,
+        efficiency: `${Math.min(data.steps.length, executionSteps.length)}/${executionSteps.length} steps`,
+        summary: data.summary,
+        recommendations: data.recommendations || [],
       });
+    } catch (err) {
+      setExecutionSteps((prev) => prev.map((step) => ({ ...step, status: 'error', progress: 0 })));
+      setExecutionError(err instanceof Error ? err.message : 'Goal execution failed');
+    } finally {
+      setIsExecuting(false);
+      setAgentThinking('');
     }
-  }, [isExecuting, currentStep, executionSteps.length, realMode, goal]);
-
-  const handleStartExecution = () => {
-    setIsExecuting(true);
-    setCurrentStep(0);
-    setExecutionSteps((prev) =>
-      prev.map((step, index) =>
-        index === 0 ? { ...step, status: 'running' } : { ...step, status: 'pending' }
-      )
-    );
   };
 
   const handlePauseExecution = () => {
@@ -328,6 +347,12 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
         </div>
 
         {/* Results Section */}
+        {executionError && (
+          <div className="mx-6 mt-4 p-3 rounded-lg border border-red-200 bg-red-50 text-sm text-red-700">
+            Goal execution failed: {executionError}
+          </div>
+        )}
+
         {executionResults && (
           <div className="p-6 border-t border-gray-200 dark:border-slate-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -351,13 +376,13 @@ const GoalExecutionModal: React.FC<GoalExecutionModalProps> = ({
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Time to Complete</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Run Time</div>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     {executionResults.timeToComplete}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Efficiency Rating</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Steps Completed</div>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
                     {executionResults.efficiency}
                   </div>

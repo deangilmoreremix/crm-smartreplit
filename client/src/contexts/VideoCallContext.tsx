@@ -584,177 +584,23 @@ export const VideoCallProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     [callStatus, getUserMedia, createPeer, cleanup]
   );
 
-  // Initiate group call
+  // Group calls need a multi-party signaling server, which is not set up. They used to simulate
+  // participants connecting and speaking; they now report that the feature is unavailable.
+  const GROUP_CALL_UNAVAILABLE = 'Group calls are not available yet: no multi-party call server is configured.';
+
   const initiateGroupCall = useCallback(
-    async (callParticipants: CallParticipant[], type: 'video' | 'audio') => {
+    async (callParticipants: CallParticipant[], _type: 'video' | 'audio') => {
       if (callParticipants.length === 0) {
         throw new Error('Cannot start a group call without participants');
       }
-
-      try {
-        setCallStatus('calling');
-        setIsGroupCall(true);
-
-        // Get real user media
-        const stream = await getUserMedia(type === 'video', true);
-
-        // Initialize participants
-        const initialParticipants = callParticipants.map((p) => ({
-          id: p.id,
-          name: p.name,
-          avatar: p.avatar,
-          stream: undefined,
-          isConnected: false,
-          isVideoEnabled: false,
-          isAudioEnabled: true,
-          isSpeaking: false,
-        }));
-
-        setParticipants(initialParticipants);
-
-        // In a real implementation, we would:
-        // 1. Connect to a signaling server
-        // 2. Create peer connections for each participant
-        // 3. Exchange SDP offers/answers and ICE candidates
-        // 4. Set up media streams
-
-        // For demo purposes, simulate connections being established
-        let connectedCount = 0;
-        const totalParticipants = callParticipants.length;
-
-        const simulateParticipantConnection = (index: number) => {
-          setTimeout(
-            () => {
-              // Simulate participant connecting
-              setParticipants((prev) => {
-                const updated = [...prev];
-
-                // Skip if already connected
-                if (updated[index]?.isConnected) return updated;
-
-                if (updated[index]) {
-                  updated[index] = {
-                    ...updated[index],
-                    isConnected: true,
-                    isVideoEnabled: Math.random() > 0.3, // 70% chance video is enabled
-                    isAudioEnabled: Math.random() > 0.2, // 80% chance audio is enabled
-                  };
-                }
-
-                return updated;
-              });
-
-              connectedCount++;
-
-              // When all participants are connected
-              if (connectedCount >= totalParticipants) {
-                setCallStatus('connected');
-              }
-
-              // Simulate occasional speaking
-              const simulateSpeaking = () => {
-                if (Math.random() > 0.7) {
-                  // 30% chance of speaking
-                  setParticipants((prev) => {
-                    const updated = [...prev];
-
-                    // Reset all speaking states
-                    updated.forEach((p) => {
-                      p.isSpeaking = false;
-                    });
-
-                    // Set random participant as speaking
-                    const speakingIndex = Math.floor(Math.random() * updated.length);
-                    if (updated[speakingIndex]) {
-                      updated[speakingIndex].isSpeaking = true;
-                    }
-
-                    return updated;
-                  });
-                } else {
-                  // Nobody speaking
-                  setParticipants((prev) => prev.map((p) => ({ ...p, isSpeaking: false })));
-                }
-              };
-
-              // Simulate speaking every 2-5 seconds
-              const speakingInterval = setInterval(
-                () => {
-                  if (callStatus === 'connected') {
-                    simulateSpeaking();
-                  } else {
-                    clearInterval(speakingInterval);
-                  }
-                },
-                2000 + Math.random() * 3000
-              );
-            },
-            1000 + Math.random() * 2000
-          ); // Random connection time between 1-3 seconds
-        };
-
-        // Start simulating connections
-        for (let i = 0; i < totalParticipants; i++) {
-          simulateParticipantConnection(i);
-        }
-      } catch (error) {
-        console.error('Error initiating group call:', error);
-        cleanup();
-        throw error;
-      }
+      throw new Error(GROUP_CALL_UNAVAILABLE);
     },
-    [callStatus, getUserMedia, cleanup]
+    []
   );
 
-  // Add a participant to an existing call
-  const addParticipantToCall = useCallback(
-    async (participant: CallParticipant) => {
-      if (!isGroupCall || callStatus !== 'connected') {
-        throw new Error('Cannot add participant: not in an active group call');
-      }
-
-      // Add participant to state
-      setParticipants((prev) => [
-        ...prev,
-        {
-          id: participant.id,
-          name: participant.name,
-          avatar: participant.avatar,
-          stream: undefined,
-          isConnected: false,
-          isVideoEnabled: false,
-          isAudioEnabled: true,
-          isSpeaking: false,
-        },
-      ]);
-
-      // Simulate connection after a short delay
-      setTimeout(() => {
-        setParticipants((prev) => {
-          const updated = [...prev];
-          const index = updated.findIndex((p) => p.id === participant.id);
-
-          if (index >= 0) {
-            updated[index] = {
-              ...updated[index],
-              isConnected: true,
-              isVideoEnabled: Math.random() > 0.3,
-              isAudioEnabled: Math.random() > 0.2,
-            };
-          }
-
-          return updated;
-        });
-      }, 2000);
-
-      // In a real implementation, we would:
-      // 1. Send invitation to the participant via signaling server
-      // 2. Create a new peer connection
-      // 3. Exchange SDP offers/answers and ICE candidates
-      // 4. Set up media streams
-    },
-    [isGroupCall, callStatus]
-  );
+  const addParticipantToCall = useCallback(async (_participant: CallParticipant) => {
+    throw new Error(GROUP_CALL_UNAVAILABLE);
+  }, []);
 
   // Accept call with real media
   const acceptCall = useCallback(async () => {

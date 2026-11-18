@@ -166,7 +166,7 @@ export class ImageStorageService {
    */
   private async saveImageMetadata(image: StoredImage): Promise<void> {
     try {
-      const { error } = await supabase.from('user_generated_images').insert({
+      const { error } = await supabase.from('smartcrm_user_generated_images').insert({
         id: image.id,
         user_id: image.userId,
         filename: image.filename,
@@ -195,7 +195,7 @@ export class ImageStorageService {
   private async deleteImageMetadata(storagePath: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('user_generated_images')
+        .from('smartcrm_user_generated_images')
         .delete()
         .eq('storage_path', storagePath);
 

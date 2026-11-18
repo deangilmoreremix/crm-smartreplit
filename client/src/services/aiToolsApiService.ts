@@ -4,6 +4,8 @@
  * Provides typed API calls to the backend AI routes.
  */
 
+import { researchAI } from './aiGenerate';
+
 const API_BASE = '/api/ai';
 
 async function apiCall(endpoint: string, body: any): Promise<any> {
@@ -217,8 +219,13 @@ export const aiAdvanced = {
   generateReasoning: (task: string, data?: any) =>
     apiCall('/reasoning/generate', { task, data }),
 
-  researchTopic: (topic: string, depth?: string) =>
-    apiCall('/research/topic', { topic, depth }),
+  // Live web research with citations (OpenAI Responses API web search)
+  researchTopic: async (topic: string, depth?: string) => {
+    const { content, sources } = await researchAI({
+      prompt: `Research this topic${depth ? ` (${depth} depth)` : ''} and summarise the findings for a sales team: ${topic}`,
+    });
+    return { success: true, data: { research: content, sources } };
+  },
 
   getRecommendations: (type: string, data?: any, preferences?: any) =>
     apiCall('/recommendations', { type, data, preferences }),

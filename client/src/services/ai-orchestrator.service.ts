@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger.service';
+import { supabaseAnonKey } from '../lib/supabase';
 import { cacheService } from './cache.service';
 import { rateLimiter } from './rate-limiter.service';
 import { httpClient } from './http-client.service';
@@ -176,7 +177,7 @@ class AIOrchestrator {
         provider: provider.name,
         model: response.model || 'default',
         processingTime: Date.now() - startTime,
-        confidence: response.confidence || 85,
+        confidence: response.confidence ?? 0, // 0 = not reported (was a default of 85)
         cached: false,
         timestamp: new Date().toISOString(),
         cost: response.cost,
@@ -286,7 +287,7 @@ class AIOrchestrator {
 
   private async callProvider(provider: AIProvider, request: AIRequest): Promise<any> {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseKey = supabaseAnonKey;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase configuration missing');
@@ -367,9 +368,9 @@ class AIOrchestrator {
 
       return {
         result: result.response,
-        model: 'gpt-4o-assistant-persistent',
-        confidence: 95,
-        cost: 0.003, // Slightly higher cost for persistent memory
+        model: 'gpt-6.1-sol',
+        confidence: 0, // not reported by the model (was a hardcoded 95)
+        cost: undefined, // not measured (was a hardcoded 0.003)
         threadId: result.threadId,
         assistantId: result.assistantId,
         persistentMemory: result.persistentMemory,
@@ -383,7 +384,7 @@ class AIOrchestrator {
   private async callAssistantThread(provider: AIProvider, request: AIRequest): Promise<any> {
     // This method handles assistant thread-based requests
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseKey = supabaseAnonKey;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase configuration missing');

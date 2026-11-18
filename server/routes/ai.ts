@@ -3,91 +3,17 @@
  * Uses user-provided API keys from the database instead of global keys
  */
 
-import type { Express, Request, Response } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { userApiKeys } from '../../shared/schema';
+import express, { type Express, type Request, type Response } from 'express';
+import { toFile } from 'openai';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { respond, toResult, generateImage, webSearchTool, type RespondResult } from '../services/openaiResponses';
+import { ADVANCED_MODEL, IMAGE_MODEL, EMBEDDING_MODEL, TRANSCRIBE_MODEL } from '../services/openaiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
 
-// Google AI interface
-interface GoogleAIResponse {
-  candidates: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
-}
-
-// Helper: Get user's active API key for a provider
-async function getUserApiKey(userId: string, provider: 'openai' | 'gemini'): Promise<{ apiKey: string; model: string | null } | null> {
-  if (!db) return null;
-
-  // Try default key first
-  const defaultKey = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, provider),
-      eq(userApiKeys.isActive, true),
-      eq(userApiKeys.isDefault, true)
-    ),
-  });
-
-  if (defaultKey) {
-    return { apiKey: defaultKey.apiKey, model: defaultKey.model };
-  }
-
-  // Fallback to any active key
-  const anyKey = await db.query.userApiKeys.findFirst({
-    where: and(
-      eq(userApiKeys.userId, userId),
-      eq(userApiKeys.provider, provider),
-      eq(userApiKeys.isActive, true)
-    ),
-  });
-
-  if (anyKey) {
-    return { apiKey: anyKey.apiKey, model: anyKey.model };
-  }
-
-  return null;
-}
-
-// Helper: Create OpenAI client from user's key
-async function createUserOpenAIClient(userId: string): Promise<{ client: any; model: string } | null> {
-  const keyData = await getUserApiKey(userId, 'openai');
-  if (!keyData) return null;
-
-  const OpenAI = (await import('openai')).default;
-  const client = new OpenAI({ apiKey: keyData.apiKey });
-  const model = keyData.model || 'gpt-4o-mini';
-  return { client, model };
-}
-
-// Helper: Call Google AI with user's key
-async function callUserGoogleAI(userId: string, prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
-  const keyData = await getUserApiKey(userId, 'gemini');
-  if (!keyData) {
-    throw new Error('No Gemini API key configured. Please add your Gemini API key in Settings.');
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyData.apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Google AI API error: ${response.status}`);
-  }
-
-  const data: GoogleAIResponse = await response.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-}
+// Per-user OpenAI clients (user's own key; no server fallback)
+const createUserOpenAIClient = (userId: string) => getUserOpenAIClient(userId);
 
 export function registerAIRoutes(app: Express) {
   // Middleware to protect AI endpoints - require auth + ai_tools entitlement
@@ -103,7 +29,6 @@ export function registerAIRoutes(app: Express) {
         error: null as string | null,
         version: null as string | null,
       },
-      googleai: { available: false, model: 'none', error: null as string | null },
     };
 
     // Test OpenAI with user's key
@@ -118,7 +43,7 @@ export function registerAIRoutes(app: Express) {
         };
       } else {
         // Try user's preferred model first, then fallback
-        const modelsToTry = [openaiData.model, 'gpt-4o-mini', 'gpt-4o'];
+        const modelsToTry = [openaiData.model];
         let success = false;
         for (const model of modelsToTry) {
           try {
@@ -131,7 +56,7 @@ export function registerAIRoutes(app: Express) {
               available: true,
               model,
               error: null,
-              version: model.startsWith('gpt-5') ? '5.x' : '4o',
+              version: model,
             };
             success = true;
             break;
@@ -157,31 +82,11 @@ export function registerAIRoutes(app: Express) {
       };
     }
 
-    // Test Google AI with user's key
-    try {
-      const geminiKey = await getUserApiKey(userId, 'gemini');
-      if (!geminiKey) {
-        results.googleai = {
-          available: false,
-          model: 'none',
-          error: 'No Gemini API key configured. Add your key in Settings > API Keys.',
-        };
-      } else {
-        await callUserGoogleAI(userId, 'test', 'gemini-1.5-flash');
-        results.googleai = { available: true, model: 'gemini-1.5-flash', error: null };
-      }
-    } catch (error: any) {
-      results.googleai = { available: false, model: 'none', error: error.message };
-    }
-
-    const anyWorking = results.openai.available || results.googleai.available;
+    const anyWorking = results.openai.available;
 
     const capabilities: string[] = [];
     if (results.openai.available) {
       capabilities.push(`OpenAI (${results.openai.model})`);
-    }
-    if (results.googleai.available) {
-      capabilities.push(`Google Gemini (${results.googleai.model})`);
     }
     if (!anyWorking) {
       capabilities.push('Configure your API keys in Settings to enable AI features');
@@ -189,29 +94,209 @@ export function registerAIRoutes(app: Express) {
 
     res.json({
       configured: anyWorking,
-      model: results.openai.available ? results.openai.model : results.googleai.model,
+      model: results.openai.model,
       status: anyWorking ? 'ready' : 'needs_api_keys',
       openai: results.openai,
-      googleai: results.googleai,
       capabilities,
     });
   });
 
-  // Google AI Test
+  // ---- OpenAI Responses API routes (all on the user's own key) ----
+
+  const noKey = (res: Response) =>
+    res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+
+  const sendResult = (res: Response, result: RespondResult, model: string) =>
+    res.json({
+      success: true,
+      content: result.text,
+      data: result.data,
+      sources: result.sources,
+      responseId: result.id,
+      status: result.status,
+      model,
+      usage: result.usage,
+    });
+
+  /** Prompt plus optional images (URLs / data URLs) and files ({ url } or { filename, data } base64 data URL). */
+  const buildInput = (prompt: string, images?: string[], files?: Array<{ url?: string; filename?: string; data?: string }>) =>
+    images?.length || files?.length
+      ? [
+          {
+            role: 'user',
+            content: [
+              { type: 'input_text', text: prompt },
+              ...(images || []).map((url) => ({ type: 'input_image', image_url: url })),
+              ...(files || []).map((f) =>
+                f.url ? { type: 'input_file', file_url: f.url } : { type: 'input_file', filename: f.filename, file_data: f.data }
+              ),
+            ],
+          },
+        ]
+      : prompt;
+
+  /** Shared body handling for /generate and /research. */
+  const runRespond = async (req: Request, res: Response, research: boolean) => {
+    const userId = (req as any).userId;
+    try {
+      const {
+        prompt,
+        system,
+        json = false,
+        schema,
+        schemaName = 'result',
+        tier = research ? 'advanced' : 'default',
+        maxTokens = research ? 4000 : 2000,
+        images,
+        files,
+        background = false,
+      } = req.body || {};
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: 'prompt is required' });
+      }
+
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+
+      const model = tier === 'advanced' ? ADVANCED_MODEL : openaiData.model;
+      const result = await respond(openaiData.client, {
+        model,
+        instructions: system ? String(system) : undefined,
+        input: buildInput(prompt, images, files),
+        json: schema ? { name: String(schemaName), schema } : Boolean(json),
+        maxOutputTokens: maxTokens,
+        // Web search is limited to research features (POST /api/ai/research)
+        ...(research ? { tools: [webSearchTool()], include: ['web_search_call.action.sources'] } : {}),
+        background: Boolean(background),
+      });
+      sendResult(res, result, model);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'AI request failed' });
+    }
+  };
+
+  // Text / JSON / JSON Schema generation with optional image and file input (no web access)
+  app.post('/api/ai/generate', ...requireAITools, (req: Request, res: Response) => runRespond(req, res, false));
+
+  // Research with live web search and citations (social/contact research, enrichment, competitors, markets)
+  app.post('/api/ai/research', ...requireAITools, (req: Request, res: Response) => runRespond(req, res, true));
+
+  // Poll a background response (long research jobs exceed the function time limit)
+  app.get('/api/ai/responses/:id', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const response = await (openaiData.client.responses as any).retrieve(req.params.id);
+      sendResult(res, toResult(response, Boolean(response?.text?.format && response.text.format.type !== 'text')), response.model);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to fetch response' });
+    }
+  });
+
+  // Image generation and editing with the image_generation tool
+  app.post('/api/ai/image', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const { prompt, size, quality, images } = req.body || {};
+      if (!prompt) return res.status(400).json({ error: 'prompt is required' });
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const { b64, responseId } = await generateImage(openaiData.client, {
+        model: openaiData.model,
+        prompt: String(prompt),
+        size,
+        quality,
+        inputImages: Array.isArray(images) ? images : undefined,
+      });
+      res.json({ success: true, images: b64.map((b) => `data:image/png;base64,${b}`), responseId, model: IMAGE_MODEL });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Image generation failed' });
+    }
+  });
+
+  // Speech to text (Audio API transcription). The body is the raw audio file (application/octet-stream,
+  // up to 25 MB per OpenAI; Netlify functions accept about 6 MB), with ?filename=recording.webm.
   app.post(
-    '/api/googleai/test',
+    '/api/ai/transcribe',
     ...requireAITools,
+    express.raw({ type: () => true, limit: '25mb' }),
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const prompt = req.body.prompt || 'Generate a business insight';
-        const response = await callUserGoogleAI(userId, prompt);
-        res.json({ success: true, model: 'gemini-1.5-flash', output: response });
+        const audio = req.body;
+        if (!Buffer.isBuffer(audio) || audio.length === 0) {
+          return res.status(400).json({ error: 'Send the audio file as the request body' });
+        }
+        const filename = String(req.query.filename || 'audio.webm').replace(/[^\w.-]/g, '_');
+        const openaiData = await createUserOpenAIClient(userId);
+        if (!openaiData) return noKey(res);
+
+        const transcription: any = await openaiData.client.audio.transcriptions.create({
+          file: await toFile(audio, filename),
+          model: TRANSCRIBE_MODEL,
+          ...(req.query.prompt ? { prompt: String(req.query.prompt) } : {}),
+        });
+        res.json({ success: true, text: transcription.text || '', model: TRANSCRIBE_MODEL });
       } catch (error: any) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error?.message || 'Transcription failed' });
       }
     }
   );
+
+  // Conversations (replace the retired Assistants API threads); turns are stored so context carries over
+  app.post('/api/ai/conversations', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const conversation = await (openaiData.client as any).conversations.create({
+        metadata: { app: 'smartcrm', ...(req.body?.title ? { title: String(req.body.title).slice(0, 512) } : {}) },
+      });
+      res.json({ success: true, conversationId: conversation.id });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to create conversation' });
+    }
+  });
+
+  app.post('/api/ai/conversations/:id/messages', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const { message, system, tier = 'default' } = req.body || {};
+      if (!message) return res.status(400).json({ error: 'message is required' });
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const model = tier === 'advanced' ? ADVANCED_MODEL : openaiData.model;
+      const result = await respond(openaiData.client, {
+        model,
+        instructions: system ? String(system) : undefined,
+        input: String(message),
+        conversation: req.params.id,
+      });
+      sendResult(res, result, model);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Conversation request failed' });
+    }
+  });
+
+  app.get('/api/ai/conversations/:id/messages', ...requireAITools, async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    try {
+      const openaiData = await createUserOpenAIClient(userId);
+      if (!openaiData) return noKey(res);
+      const page = await (openaiData.client as any).conversations.items.list(req.params.id, { order: 'asc', limit: 100 });
+      const messages = (page.data || [])
+        .filter((item: any) => item.type === 'message')
+        .map((item: any) => ({
+          id: item.id,
+          role: item.role,
+          text: (item.content || []).map((c: any) => c.text || '').join(''),
+        }));
+      res.json({ success: true, messages });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error?.message || 'Failed to load conversation' });
+    }
+  });
 
   // OpenAI Test
   app.post(
@@ -250,7 +335,7 @@ export function registerAIRoutes(app: Express) {
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const { text, model = 'text-embedding-3-small' } = req.body;
+        const { text, model = EMBEDDING_MODEL } = req.body;
         if (!text) return res.status(400).json({ error: 'Text required' });
 
         const openaiData = await createUserOpenAIClient(userId);
@@ -280,7 +365,7 @@ export function registerAIRoutes(app: Express) {
     async (req: Request, res: Response) => {
       const userId = (req as any).userId;
       try {
-        const { prompt, model = 'dall-e-3', size = '1024x1024' } = req.body;
+        const { prompt, model = IMAGE_MODEL, size = '1024x1024' } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt required' });
 
         const openaiData = await createUserOpenAIClient(userId);
@@ -359,11 +444,7 @@ export function registerAIRoutes(app: Express) {
 
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          summary: 'Configure your OpenAI API key in Settings > API Keys for KPI analysis',
-          recommendations: ['Add OpenAI API key in Settings'],
-          needsApiKey: true,
-        });
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
       }
 
       try {
@@ -386,7 +467,7 @@ export function registerAIRoutes(app: Express) {
         });
         res.json(JSON.parse(response.choices[0].message.content || '{}'));
       } catch (error) {
-        res.json({ summary: 'Analysis unavailable', recommendations: ['Retry'] });
+        res.status(500).json({ error: (error as any)?.message || 'KPI analysis failed' });
       }
     }
   );
@@ -401,12 +482,7 @@ export function registerAIRoutes(app: Express) {
 
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          probability_score: 65,
-          risk_level: 'medium',
-          recommendations: ['Configure OpenAI API key in Settings'],
-          needsApiKey: true,
-        });
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
       }
 
       try {
@@ -429,7 +505,7 @@ export function registerAIRoutes(app: Express) {
         });
         res.json(JSON.parse(response.choices[0].message.content || '{}'));
       } catch (error) {
-        res.json({ probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] });
+        res.status(500).json({ error: (error as any)?.message || 'Deal analysis failed' });
       }
     }
   );
@@ -444,11 +520,7 @@ export function registerAIRoutes(app: Express) {
 
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) {
-        return res.json({
-          market_insights: ['Configure OpenAI API key in Settings'],
-          strategic_recommendations: ['Add your API key in Settings > API Keys'],
-          needsApiKey: true,
-        });
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
       }
 
       try {
@@ -471,7 +543,7 @@ export function registerAIRoutes(app: Express) {
         });
         res.json(JSON.parse(response.choices[0].message.content || '{}'));
       } catch (error) {
-        res.json({ market_insights: ['Retry analysis'] });
+        res.status(500).json({ error: (error as any)?.message || 'Business intelligence failed' });
       }
     }
   );
@@ -489,14 +561,13 @@ export function registerAIRoutes(app: Express) {
           schema,
           temperature = 0.4,
           max_output_tokens = 2048,
-          forceToolName,
         } = req.body;
 
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
           return res.status(400).json({
             error: 'No OpenAI API key configured',
-            message: 'Please add your OpenAI API key in Settings > AI Keys to use AI features.',
+            message: NO_KEY_MESSAGE,
             needsApiKey: true,
           });
         }
@@ -508,7 +579,10 @@ export function registerAIRoutes(app: Express) {
           },
           {
             role: 'user',
-            content: imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt,
+            // JSON mode requires the word "json" in the messages
+            content:
+              (imageUrl ? `${prompt}\n\nImage URL: ${imageUrl}` : prompt) +
+              (schema ? `\n\nRespond with valid JSON matching this schema: ${JSON.stringify(schema)}` : ''),
           },
         ];
 
@@ -518,88 +592,7 @@ export function registerAIRoutes(app: Express) {
           temperature,
           max_tokens: max_output_tokens,
           response_format: schema ? { type: 'json_object' } : undefined,
-          tools: [
-            {
-              type: 'function',
-              function: {
-                name: 'analyzeBusinessData',
-                description: 'Analyze business data and provide insights',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    dataType: { type: 'string' },
-                    analysisType: { type: 'string' },
-                    timeRange: { type: 'string' },
-                  },
-                  required: ['dataType'],
-                },
-              },
-            },
-            {
-              type: 'function',
-              function: {
-                name: 'generateRecommendations',
-                description: 'Generate business recommendations based on data',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    context: { type: 'string' },
-                    goals: { type: 'array', items: { type: 'string' } },
-                    constraints: { type: 'array', items: { type: 'string' } },
-                  },
-                },
-              },
-            },
-          ],
-          tool_choice: forceToolName
-            ? { type: 'function', function: { name: forceToolName } }
-            : 'auto',
         });
-
-        // Handle tool calls
-        const toolCalls = response.choices[0].message.tool_calls;
-        if (toolCalls && toolCalls.length > 0) {
-          const toolOutputs = await Promise.all(
-            toolCalls.map(async (tc: any) => ({
-              tool_call_id: tc.id,
-              output: await executeWLTool(tc),
-            }))
-          );
-
-          const continuedMessages = [
-            ...messages,
-            response.choices[0].message,
-            ...toolOutputs.map((o) => ({
-              role: 'tool' as const,
-              content: o.output,
-              tool_call_id: o.tool_call_id,
-            })),
-          ];
-
-          const continuedResponse = await openaiData.client.chat.completions.create({
-            model: openaiData.model,
-            messages: continuedMessages,
-            temperature,
-            max_tokens: max_output_tokens,
-            response_format: schema ? { type: 'json_object' } : undefined,
-          });
-
-          return res.json({
-            output_text: continuedResponse.choices[0].message.content,
-            output: [
-              {
-                content: [
-                  {
-                    type: 'output_text',
-                    text: continuedResponse.choices[0].message.content,
-                  },
-                ],
-              },
-            ],
-            tool_calls: toolCalls,
-            continued: true,
-          });
-        }
 
         res.json({
           output_text: response.choices[0].message.content,
@@ -672,37 +665,6 @@ export function registerAIRoutes(app: Express) {
       }
     }
   );
-
-  // Tool execution function for WL apps
-  async function executeWLTool(tc: any): Promise<string> {
-    const { name, arguments: args } = tc.function;
-    try {
-      if (name === 'analyzeBusinessData') {
-        const { dataType, analysisType, timeRange } = args || {};
-        return JSON.stringify({
-          ok: true,
-          analysis: `Analysis of ${dataType} for ${timeRange}`,
-          insights: [`Key insight 1 for ${analysisType}`, `Key insight 2 for ${analysisType}`],
-          recommendations: [`Recommendation 1`, `Recommendation 2`],
-        });
-      }
-      if (name === 'generateRecommendations') {
-        const { context, goals, constraints } = args || {};
-        return JSON.stringify({
-          ok: true,
-          recommendations:
-            goals?.map(
-              (goal: string, i: number) =>
-                `For ${goal}: Action ${i + 1} considering ${constraints?.[i] || 'no constraints'}`
-            ) || [],
-          context: context,
-        });
-      }
-      return JSON.stringify({ ok: false, error: `Unknown tool: ${name}` });
-    } catch (e: any) {
-      return JSON.stringify({ ok: false, error: e?.message || 'Tool error' });
-    }
-  }
 
   console.log('✅ AI routes registered (user API key mode)');
 }

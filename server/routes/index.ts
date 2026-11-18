@@ -31,6 +31,7 @@ import { registerAIProductivityRoutes } from './aiProductivity';
 import { registerAIAdvancedRoutes } from './aiAdvanced';
 import { registerAIAutomationRoutes } from './aiAutomation';
 import { registerPartnersRoutes } from './partners';
+import { registerLeadAutomationRoutes } from './leadAutomation';
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Register authentication routes
@@ -87,12 +88,13 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.use('/api/companies', companiesRoutes);
 
   // Register OpenAI routes
+  // These routers declare full /api/openai/... paths, so mount them at the root
   console.log('Registering OpenAI routes at /api/openai');
-  app.use('/api/openai', openaiRoutes);
+  app.use(openaiRoutes);
 
   // Register OpenAI Responses API routes
   console.log('Registering OpenAI Responses API routes at /api/openai');
-  app.use('/api/openai', openaiResponsesRoutes);
+  app.use(openaiResponsesRoutes);
 
   // Register domains routes
   console.log('Registering domains routes at /api/domains');
@@ -145,4 +147,8 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register partners routes
   console.log('Registering partners routes');
   registerPartnersRoutes(app);
+
+  // Register lead automation routes (settings, scoring, campaigns)
+  console.log('Registering lead automation routes');
+  registerLeadAutomationRoutes(app);
 }

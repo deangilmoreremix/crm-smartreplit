@@ -1,5 +1,5 @@
 import type { Express } from 'express';
-import { requireAuth(), requireAdmin } from './auth';
+import { requireAuth, requireAdmin } from './auth';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { db } from '../db';
 import {

@@ -161,8 +161,12 @@ export default function CircleProspectingDashboard() {
     <Button
       key="ai-analysis"
       variant="outline"
-      onClick={() => analyzeProspect(mockProspects[0])}
-      disabled={isAnalyzing}
+      // Analyse the selected prospect, else the first loaded one (mockProspects was never defined)
+      onClick={() => {
+        const prospect = selectedProspect || prospects[0];
+        if (prospect) analyzeProspect(prospect);
+      }}
+      disabled={isAnalyzing || (!selectedProspect && prospects.length === 0)}
     >
       <Sparkles className="h-4 w-4 mr-2" />
       {isAnalyzing ? 'Analyzing...' : 'AI Prospect Analysis'}

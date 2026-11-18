@@ -325,27 +325,6 @@ export default function SystemOverview() {
               })}
             </div>
           </GlassCard>
-
-          <GlassCard className="p-6">
-            <h3 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>📊 Implementation Statistics</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: 'Total Components', value: '156', color: isDark ? 'text-blue-400' : 'text-blue-600' },
-                { label: 'Pages Created', value: '23', color: isDark ? 'text-green-400' : 'text-green-600' },
-                { label: 'API Endpoints', value: '67', color: isDark ? 'text-purple-400' : 'text-purple-600' },
-                { label: 'UI Components', value: '89', color: isDark ? 'text-orange-400' : 'text-orange-600' },
-                { label: 'Store Actions', value: '234', color: isDark ? 'text-indigo-400' : 'text-indigo-600' },
-                { label: 'Type Definitions', value: '178', color: isDark ? 'text-pink-400' : 'text-pink-600' },
-                { label: 'Test Cases', value: '145', color: isDark ? 'text-teal-400' : 'text-teal-600' },
-                { label: 'Documentation', value: '95%', color: isDark ? 'text-red-400' : 'text-red-600' },
-              ].map((stat) => (
-                <div key={stat.label} className={`text-center p-3 rounded-lg ${isDark ? 'border border-gray-700' : 'border'}`}>
-                  <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                  <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </GlassCard>
         </div>
 
         {/* Advanced Features Demo */}

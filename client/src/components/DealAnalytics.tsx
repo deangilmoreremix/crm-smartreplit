@@ -33,11 +33,12 @@ import {
 } from 'lucide-react';
 import Avatar from './ui/Avatar';
 import { getInitials } from '../utils/avatars';
+import { dealPeriodChanges, percentChange, splitPeriods, wonDate } from '../utils/periodTrend';
 
 interface KPIMetric {
   title: string;
   value: string;
-  change: number;
+  change: number | null; // null = no prior-period data; badge hidden
   changeType: 'increase' | 'decrease';
   icon: React.ComponentType<{ className?: string }>;
   description: string;
@@ -108,6 +109,15 @@ const DealAnalytics: React.FC = () => {
     const totalContacts = Object.keys(contacts).length || 0;
     const avgDealSize = wonDeals > 0 ? totalRevenue / wonDeals : 0;
 
+    // Last 30 days vs the previous 30, from real timestamps (null when no prior data)
+    const changes = dealPeriodChanges(dealsArray);
+    const contactPeriods = splitPeriods(Object.values(contacts), (c) => c.createdAt);
+    const contactChange = percentChange(
+      contactPeriods.current.length,
+      contactPeriods.previous.length
+    );
+    const changeType = (c: number | null) => (c !== null && c < 0 ? 'decrease' : 'increase');
+
     // Get representative contacts
     const representativeContacts = Object.values(contacts)
       .slice(0, 5)
@@ -151,8 +161,8 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Total Revenue',
         value: `$${(totalRevenue / 1000).toFixed(1)}k`,
-        change: 12.5,
-        changeType: 'increase',
+        change: changes.wonRevenue,
+        changeType: changeType(changes.wonRevenue),
         icon: DollarSign,
         description: 'Revenue from closed deals',
         relatedContacts: wonDealContacts,
@@ -160,8 +170,8 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Conversion Rate',
         value: `${conversionRate.toFixed(1)}%`,
-        change: 8.2,
-        changeType: 'increase',
+        change: changes.winRateOfNew,
+        changeType: changeType(changes.winRateOfNew),
         icon: Target,
         description: 'Deals won vs total deals',
         relatedContacts: wonDealContacts,
@@ -169,8 +179,8 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Total Contacts',
         value: totalContacts.toString(),
-        change: 15.3,
-        changeType: 'increase',
+        change: contactChange,
+        changeType: changeType(contactChange),
         icon: Users,
         description: 'Active contacts in pipeline',
         relatedContacts: representativeContacts,
@@ -178,8 +188,8 @@ const DealAnalytics: React.FC = () => {
       {
         title: 'Avg Deal Size',
         value: `$${(avgDealSize / 1000).toFixed(1)}k`,
-        change: -2.1,
-        changeType: 'decrease',
+        change: changes.avgWonDealSize,
+        changeType: changeType(changes.avgWonDealSize),
         icon: TrendingUp,
         description: 'Average revenue per deal',
         relatedContacts: highValueDealContacts,
@@ -249,17 +259,34 @@ const DealAnalytics: React.FC = () => {
     };
   };
 
-  // Generate trend data
+  // Trend data: last 6 calendar months bucketed from real deal timestamps
   const generateTrendData = () => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    const totalValue = Object.values(deals).reduce((sum, deal) => sum + deal.value, 0);
+    const now = new Date();
+    const dealsArray = Object.values(deals);
+    const inMonth = (d: Date | string | number | null | undefined, year: number, month: number) => {
+      if (!d) return false;
+      const date = new Date(d);
+      return date.getFullYear() === year && date.getMonth() === month;
+    };
 
-    return months.map((month, index) => ({
-      month,
-      revenue: Math.floor((totalValue * (0.7 + Math.random() * 0.6)) / 6),
-      deals: Math.floor((Object.keys(deals).length * (0.8 + Math.random() * 0.4)) / 6),
-      pipeline: Math.floor((valuesByStatus.active * (0.6 + Math.random() * 0.8)) / 6),
-    }));
+    return Array.from({ length: 6 }, (_, i) => {
+      const start = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const y = start.getFullYear();
+      const m = start.getMonth();
+      const created = dealsArray.filter((deal) => inMonth(deal.createdAt, y, m));
+      return {
+        month: start.toLocaleString('en-US', { month: 'short' }),
+        revenue: dealsArray
+          .filter((deal) => String(deal.stage) === 'closed-won' && inMonth(wonDate(deal), y, m))
+          .reduce((sum, deal) => sum + deal.value, 0),
+        deals: created.length,
+        pipeline: created
+          .filter(
+            (deal) => String(deal.stage) !== 'closed-won' && String(deal.stage) !== 'closed-lost'
+          )
+          .reduce((sum, deal) => sum + deal.value, 0),
+      };
+    });
   };
 
   // Calculate conversion rates
@@ -384,16 +411,19 @@ const DealAnalytics: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-2">
               <metric.icon className={`h-8 w-8 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <div
-                className={`text-xs px-2 py-1 rounded-full ${
-                  metric.changeType === 'increase'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                }`}
-              >
-                {metric.changeType === 'increase' ? '+' : ''}
-                {metric.change}%
-              </div>
+              {metric.change !== null && (
+                <div
+                  title="Last 30 days vs the previous 30 days"
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    metric.changeType === 'increase'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                  }`}
+                >
+                  {metric.changeType === 'increase' ? '+' : ''}
+                  {metric.change}%
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>

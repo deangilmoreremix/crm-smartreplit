@@ -36,9 +36,10 @@ async function updateUserEntitlement(userId: string, productType: string) {
     if (email) {
       const packageType = getPackageFromZaxaaProduct(productType);
       const { error } = await supabase
-        .from('user_entitlements')
+        .from('smartcrm_user_entitlements')
         .upsert({
           email,
+          user_id: userId,
           package: packageType,
           openclaw_enabled: packageType === 'super_admin',
           admin_enabled: packageType === 'super_admin',
@@ -135,7 +136,7 @@ export async function handleZaxaaWebhook(req: Request, res: Response) {
           const email = userData?.user?.email;
           if (email) {
             await supabase
-              .from('user_entitlements')
+              .from('smartcrm_user_entitlements')
               .upsert({
                 email,
                 package: 'no_access',
@@ -160,7 +161,7 @@ export async function handleZaxaaWebhook(req: Request, res: Response) {
           const email = userData?.user?.email;
           if (email) {
             await supabase
-              .from('user_entitlements')
+              .from('smartcrm_user_entitlements')
               .upsert({
                 email,
                 package: 'no_access',

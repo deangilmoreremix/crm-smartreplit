@@ -13,6 +13,20 @@ class MemoryService {
     // no-op stub
   }
 
+  isEnabled(): boolean {
+    return false;
+  }
+
+  async recordChatInteraction(
+    _userId: string,
+    _sessionId: string,
+    _input: string,
+    _output: string,
+    _metadata?: Record<string, any>
+  ): Promise<void> {
+    // no-op stub
+  }
+
   async recordSystemEvent(
     _eventType: string,
     _content: string,

@@ -51,7 +51,7 @@ export async function checkAndTriggerWorkflows(
   const { supabase } = await import('../../supabase');
 
   const { data: workflows, error } = await supabase
-    .from('workflows')
+    .from('smartcrm_workflows')
     .select('*')
     .eq('trigger_type', triggerType)
     .eq('app_slug', objectType.toLowerCase())

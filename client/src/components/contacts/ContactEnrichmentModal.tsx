@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SourcesList } from '../ai/SourcesList';
 import { X, Zap, Loader2, CheckCircle, AlertCircle, User, Mail, Camera, Globe } from 'lucide-react';
 import { Contact } from '../../types/contact';
 import { aiEnrichmentService, ContactEnrichmentData } from '../../services/aiEnrichmentService';
@@ -360,6 +361,7 @@ const ContactEnrichmentModal: React.FC<ContactEnrichmentModalProps> = ({
                       <strong>Confidence:</strong> {enrichmentResult.confidence}%
                     </div>
                   )}
+                  <SourcesList sources={enrichmentResult.sources} />
                 </div>
               </div>
 

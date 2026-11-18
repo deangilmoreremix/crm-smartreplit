@@ -24,7 +24,8 @@ import { Contact, Deal } from '../../types';
 interface SearchResult {
   type: 'contact' | 'deal';
   item: Contact | Deal;
-  score: number;
+  /** Semantic similarity (0-1); absent for keyword matches, which have no similarity score. */
+  score?: number;
 }
 
 interface SmartSearchRealtimeProps {
@@ -37,9 +38,9 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  // Why the last search used keyword matching instead of AI (shown to the user)
+  const [keywordReason, setKeywordReason] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
-  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [filters, setFilters] = useState<{
     type: 'all' | 'contacts' | 'deals';
   }>({
@@ -59,7 +60,6 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
   });
 
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { contacts: contactsRaw } = useContactStore();
   const { deals: dealsRaw } = useDealStore();
@@ -172,50 +172,6 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     return () => clearTimeout(timeoutId);
   }, [sampleContacts.length, sampleDeals.length]);
 
-  // Generate search suggestions based on input
-  useEffect(() => {
-    if (searchQuery.length > 2) {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
-      debounceTimerRef.current = setTimeout(() => {
-        generateSearchSuggestions(searchQuery);
-      }, 300);
-    } else {
-      setShowSearchSuggestions(false);
-    }
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [searchQuery]);
-
-  // Generate search suggestions
-  const generateSearchSuggestions = async (query: string) => {
-    try {
-      // In a real implementation, call Gemini API
-      // For analysis, generate simple suggestions
-      const baseSuggestions = [
-        `${query} in technology companies`,
-        `high priority ${query}`,
-        `${query} with budget over $50k`,
-        `recently contacted ${query}`,
-        `${query} closing this month`,
-      ];
-
-      // Filter to 3 most relevant suggestions
-      setSearchSuggestions(baseSuggestions.slice(0, 3));
-      setShowSearchSuggestions(true);
-    } catch (error) {
-      // Silently handle suggestion generation errors
-      setSearchSuggestions([]);
-      setShowSearchSuggestions(false);
-    }
-  };
-
   // Perform basic keyword search as fallback
   const performBasicSearch = (query: string) => {
     const searchTerm = query.toLowerCase();
@@ -230,7 +186,6 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
           results.push({
             type: 'contact',
             item: contact,
-            score: 0.8, // Default score for keyword matching
           });
         }
       });
@@ -245,7 +200,6 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
           results.push({
             type: 'deal',
             item: deal,
-            score: 0.8, // Default score for keyword matching
           });
         }
       });
@@ -320,10 +274,12 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         }
 
         // Sort by similarity score
-        results = results.sort((a, b) => b.score - a.score).slice(0, 5);
+        results = results.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 5);
+        setKeywordReason(null);
       } else {
-        // Fallback to basic keyword search
+        // Keyword search (labelled in the UI) while the AI index is unavailable
         results = performBasicSearch(query);
+        setKeywordReason(embedData.error || 'AI search index not ready');
       }
 
       setSearchResults(results);
@@ -332,15 +288,15 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         onSearchResult(results);
       }
 
-      setShowSearchSuggestions(false);
     } catch (error: any) {
       // Handle search errors gracefully
       if (!isQuotaError(error) && !isAPIKeyError(error)) {
         console.error('Error performing search:', error);
       }
 
-      // Always fallback to basic search on error
+      // Keyword search on error, labelled with the reason in the UI
       const fallbackResults = performBasicSearch(query);
+      setKeywordReason(error?.message || 'AI search failed');
       setSearchResults(fallbackResults);
 
       if (onSearchResult) {
@@ -349,12 +305,6 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const selectSearchSuggestion = (suggestion: string) => {
-    setSearchQuery(suggestion);
-    setShowSearchSuggestions(false);
-    performSemanticSearch(suggestion);
   };
 
   // Handle search on Enter
@@ -480,34 +430,6 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
           )}
         </div>
 
-        {/* Search suggestions dropdown */}
-        <AnimatePresence>
-          {showSearchSuggestions && searchSuggestions.length > 0 && embedData.ready && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden"
-              style={{ width: searchInputRef.current?.offsetWidth }}
-            >
-              <div className="p-2">
-                {searchSuggestions.map((suggestion, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => selectSearchSuggestion(suggestion)}
-                    className="flex items-center p-2 hover:bg-blue-50 rounded-md cursor-pointer"
-                  >
-                    <Sparkles size={14} className="text-blue-500 mr-2" />
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-800">{suggestion}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
             <button
@@ -565,7 +487,12 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
         {/* Search metadata */}
         <div className="bg-gray-50 p-3 rounded-lg">
           <div className="flex items-center text-xs text-gray-500">
-            {embedData.ready ? (
+            {embedData.ready && keywordReason ? (
+              <>
+                <AlertCircle size={14} className="text-amber-500 mr-1.5" />
+                <span>Keyword search results (AI unavailable: {keywordReason})</span>
+              </>
+            ) : embedData.ready ? (
               <>
                 <CheckCircle size={14} className="text-blue-500 mr-1.5" />
                 <span>
@@ -577,8 +504,8 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
               <>
                 <AlertCircle size={14} className="text-amber-500 mr-1.5" />
                 <span>
-                  Basic keyword search active ({sampleContacts.length} contacts,{' '}
-                  {sampleDeals.length} deals)
+                  Keyword search (AI unavailable: {embedData.error || 'AI search index not ready'}) (
+                  {sampleContacts.length} contacts, {sampleDeals.length} deals)
                 </span>
               </>
             )}
@@ -644,8 +571,8 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
                         </div>
                         <div className="text-right">
                           <div className="text-xs font-medium">
-                            {embedData.ready
-                              ? `Match: ${Math.round(result.score * 100)}%`
+                            {embedData.ready && result.score !== undefined
+                              ? `Match: ${Math.round((result.score ?? 0) * 100)}%`
                               : 'Keyword Match'}
                           </div>
                           <div className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 capitalize">
@@ -669,8 +596,8 @@ const SmartSearchRealtime: React.FC<SmartSearchRealtimeProps> = ({ onSearchResul
                         </div>
                         <div className="text-right">
                           <div className="text-xs font-medium">
-                            {embedData.ready
-                              ? `Match: ${Math.round(result.score * 100)}%`
+                            {embedData.ready && result.score !== undefined
+                              ? `Match: ${Math.round((result.score ?? 0) * 100)}%`
                               : 'Keyword Match'}
                           </div>
                           <div className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-800 capitalize">

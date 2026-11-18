@@ -55,8 +55,29 @@ const SalesCycleAnalytics: React.FC = () => {
         }, 0) / activeDeals.length
       : 0;
 
-  // Get top contacts by deal value
-  const topContacts = Object.values(contacts).slice(0, 6);
+  const DAY = 1000 * 60 * 60 * 24;
+  const cycleDays = (deal: any) =>
+    Math.max(0, (new Date(deal.actualCloseDate || deal.closedAt || deal.updatedAt).getTime() - new Date(deal.createdAt).getTime()) / DAY);
+
+  // Deals created in the last 7 days
+  const newThisWeek = dealsArray.filter((d) => Date.now() - new Date(d.createdAt).getTime() <= 7 * DAY).length;
+
+  // Sales velocity = open deals × average won value × win rate ÷ average cycle length ($ per day)
+  const wonDealsList = closedDeals.filter((d) => String(d.stage) === 'closed-won');
+  const winRate = closedDeals.length > 0 ? wonDealsList.length / closedDeals.length : 0;
+  const avgWonValue = wonDealsList.length > 0 ? wonDealsList.reduce((s, d) => s + d.value, 0) / wonDealsList.length : 0;
+  const salesVelocity = avgCycleTime > 0 ? (activeDeals.length * avgWonValue * winRate) / avgCycleTime : null;
+
+  // Contacts with the shortest average cycle on their closed deals
+  const topContacts = Object.values(contacts)
+    .map((contact) => {
+      const contactClosed = closedDeals.filter((d) => String(d.contactId) === String(contact.id));
+      const avg = contactClosed.length > 0 ? contactClosed.reduce((s, d) => s + cycleDays(d), 0) / contactClosed.length : null;
+      return { contact, avg };
+    })
+    .filter((c) => c.avg !== null)
+    .sort((a, b) => (a.avg as number) - (b.avg as number))
+    .slice(0, 6);
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -130,7 +151,7 @@ const SalesCycleAnalytics: React.FC = () => {
               </div>
               <p className="text-xs text-blue-600 flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                -5 days from last month
+                Across {closedDeals.length} closed deals
               </p>
             </CardContent>
           </Card>
@@ -152,7 +173,7 @@ const SalesCycleAnalytics: React.FC = () => {
               </div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                Within target range
+                Across {activeDeals.length} open deals
               </p>
             </CardContent>
           </Card>
@@ -174,7 +195,7 @@ const SalesCycleAnalytics: React.FC = () => {
               </div>
               <p className="text-xs text-purple-600 flex items-center mt-1">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
-                +3 new this week
+                {newThisWeek} new this week
               </p>
             </CardContent>
           </Card>
@@ -186,17 +207,19 @@ const SalesCycleAnalytics: React.FC = () => {
               <CardTitle
                 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}
               >
-                Velocity Score
+                Sales Velocity
               </CardTitle>
               <Target className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                8.5/10
+                {salesVelocity !== null
+                  ? `${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(salesVelocity)}/day`
+                  : '—'}
               </div>
               <p className="text-xs text-orange-600 flex items-center mt-1">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                Excellent velocity
+                {salesVelocity !== null ? 'Open deals × avg won value × win rate ÷ cycle' : 'Needs closed deals to calculate'}
               </p>
             </CardContent>
           </Card>
@@ -216,7 +239,14 @@ const SalesCycleAnalytics: React.FC = () => {
                 const stageDeals = dealsArray.filter((d) =>
                   String(d.stage).toLowerCase().includes(stage.toLowerCase())
                 );
-                const avgStageTime = Math.floor(Math.random() * 20) + 10; // Mock data
+                // Days deals have spent in this stage (daysInStage, else days since last update)
+                const stageAges = stageDeals.map((d) =>
+                  typeof d.daysInStage === 'number'
+                    ? d.daysInStage
+                    : Math.max(0, (Date.now() - new Date(d.updatedAt).getTime()) / DAY)
+                );
+                const avgStageTime =
+                  stageAges.length > 0 ? `${Math.round(stageAges.reduce((a, b) => a + b, 0) / stageAges.length)} days` : '—';
 
                 return (
                   <div
@@ -236,7 +266,7 @@ const SalesCycleAnalytics: React.FC = () => {
                       {stageDeals.length} deals
                     </div>
                     <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Avg: {avgStageTime} days
+                      Avg in stage: {avgStageTime}
                     </div>
                   </div>
                 );
@@ -255,7 +285,10 @@ const SalesCycleAnalytics: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topContacts.map((contact) => (
+              {topContacts.length === 0 && (
+                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No contacts with closed deals yet.</p>
+              )}
+              {topContacts.map(({ contact, avg }) => (
                 <div
                   key={contact.id}
                   className={`flex items-center space-x-3 p-4 rounded-lg ${
@@ -276,7 +309,7 @@ const SalesCycleAnalytics: React.FC = () => {
                     </p>
                     <div className="flex items-center mt-1">
                       <Badge variant="secondary" className="text-xs">
-                        {Math.floor(Math.random() * 30) + 15} day avg
+                        {Math.round(avg as number)} day avg
                       </Badge>
                     </div>
                   </div>

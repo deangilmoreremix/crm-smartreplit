@@ -2,141 +2,80 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useContactStore } from '../../store/contactStore';
-import { Calendar, CheckCircle, AlertCircle, TrendingUp, ArrowRight } from 'lucide-react';
+import { useDealStore } from '../../store/dealStore';
+import { useTaskStore } from '../../store/taskStore';
+import { Users, CheckCircle, TrendingUp, ArrowRight } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import { getInitials } from '../../utils/avatars';
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+
+const timeAgo = (ms: number) => {
+  const minutes = Math.floor((Date.now() - ms) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+};
+
+const toMs = (d: Date | string | undefined) => {
+  const ms = d ? new Date(d).getTime() : NaN;
+  return Number.isNaN(ms) ? 0 : ms;
+};
 
 const RecentActivity: React.FC = () => {
   const { isDark } = useTheme();
   const { contacts } = useContactStore();
+  const { deals } = useDealStore();
+  const { tasks } = useTaskStore();
 
-  // Updated upcomingDeals with contactId instead of direct avatar
-  const upcomingDeals = [
-    {
-      id: 1,
-      company: 'TechCorp Solutions',
-      value: '$85,000',
-      probability: '85%',
-      dueDate: 'Tomorrow',
-      contactId: '1', // Changed from contact+avatar to contactId
-      status: 'online',
-    },
-    {
-      id: 2,
-      company: 'Innovation Labs',
-      value: '$120,000',
-      probability: '60%',
-      dueDate: 'Friday',
-      contactId: '2',
-      status: 'offline',
-    },
-    {
-      id: 3,
-      company: 'Global Dynamics',
-      value: '$95,500',
-      probability: '75%',
-      dueDate: 'Next Week',
-      contactId: '3',
-      status: 'online',
-    },
-  ];
+  // Upcoming = open deals, soonest expected close date first (deals without a date last)
+  const upcomingDeals = Object.values(deals)
+    .filter((d) => String(d.stage) !== 'closed-won' && String(d.stage) !== 'closed-lost')
+    .map((d) => ({ deal: d, due: toMs(d.expectedCloseDate ?? d.dueDate) }))
+    .sort((a, b) => (a.due || Infinity) - (b.due || Infinity))
+    .slice(0, 3);
 
-  const [batchJobs, setBatchJobs] = React.useState([]);
-  const [aiInsights, setAIInsights] = React.useState(new Map());
+  const completedTasks = tasks.filter((t) => t.status === 'completed').length;
+  const pendingTasks = tasks.filter(
+    (t) => t.status !== 'completed' && t.status !== 'cancelled'
+  ).length;
 
-  // DISABLED: Using demo data only - no API calls
-  React.useEffect(() => {
-    // const checkBatchJobs = async () => {
-    //   const { batchAPIService } = await import('../../services/openai-batch-api.service');
-    //   const jobs = batchAPIService.getAllBatchJobs();
-    //   setBatchJobs(jobs.slice(0, 2)); // Show latest 2 batch jobs
-    // };
-    // // Background AI processing for all visible deals
-    // const processDealsInBackground = async () => {
-    //   const { aiOrchestrator } = await import('../../services/ai-orchestrator.service');
-    //
-    //   for (const deal of upcomingDeals) {
-    //     // Generate insights without blocking UI
-    //     try {
-    //       const insightId = await aiOrchestrator.submitRequest({
-    //         type: 'insights_generation',
-    //         priority: 'low',
-    //         data: { dealId: deal.id, contactId: deal.contactId },
-    //         options: { useCache: true }
-    //       });
-    //
-    //       // Store insight ID for later retrieval
-    //       setAIInsights(prev => new Map(prev.set(deal.id, insightId)));
-    //     } catch (error) {
-    //       console.debug('Background AI processing skipped:', error);
-    //     }
-    //   }
-    // };
-    // checkBatchJobs();
-    // processDealsInBackground();
-    // const interval = setInterval(() => {
-    //   checkBatchJobs();
-    //   processDealsInBackground();
-    // }, 30000);
-    // return () => clearInterval(interval);
-  }, []);
-
+  // Real activity: most recently updated deals, tasks and contacts
   const recentActivities = [
-    ...batchJobs.map((job) => ({
-      type: 'batch_job',
-      icon:
-        job.status === 'completed'
-          ? CheckCircle
-          : job.status === 'processing'
-            ? TrendingUp
-            : AlertCircle,
-      title: `Batch ${job.type.replace('_', ' ')}`,
-      description: `${job.itemCount} items - ${job.status}`,
-      time: new Date(job.createdAt).toLocaleTimeString(),
-      color:
-        job.status === 'completed'
-          ? 'text-green-600'
-          : job.status === 'processing'
-            ? 'text-blue-600'
-            : 'text-yellow-600',
-      assistantInsight: `Cost: $${job.estimatedCost.toFixed(4)} - 50% savings with overnight processing`,
-    })),
-    {
-      type: 'deal',
+    ...Object.values(deals).map((d) => ({
+      time: toMs(d.updatedAt),
       icon: TrendingUp,
-      title: 'Deal moved to negotiation',
-      description: 'TechCorp Solutions - $85,000',
-      time: '2 hours ago',
       color: 'text-blue-600',
-      assistantInsight:
-        'Pipeline Bot: Deal velocity 23% above average. Recommend priority follow-up.',
-      assistantThreadId: 'thread_deal_techcorp_001',
-    },
-    {
-      type: 'task',
+      title: toMs(d.updatedAt) === toMs(d.createdAt) ? 'Deal created' : 'Deal updated',
+      description: `${d.title} - ${formatCurrency(d.value)} (${String(d.stage)})`,
+    })),
+    ...tasks.map((t) => ({
+      time: toMs(t.status === 'completed' ? (t.completedDate ?? t.updatedAt) : t.updatedAt),
       icon: CheckCircle,
-      title: 'Task completed',
-      description: 'Follow-up call with Innovation Labs',
-      time: '4 hours ago',
-      color: 'text-green-600',
-    },
-    {
-      type: 'meeting',
-      icon: Calendar,
-      title: 'Meeting scheduled',
-      description: 'Product demo with Global Dynamics',
-      time: '6 hours ago',
+      color: t.status === 'completed' ? 'text-green-600' : 'text-purple-600',
+      title: t.status === 'completed' ? 'Task completed' : 'Task updated',
+      description: t.title,
+    })),
+    ...Object.values(contacts).map((c) => ({
+      time: toMs(c.updatedAt),
+      icon: Users,
       color: 'text-purple-600',
-    },
-    {
-      type: 'alert',
-      icon: AlertCircle,
-      title: 'Deal at risk',
-      description: 'No activity on Enterprise Corp deal',
-      time: '1 day ago',
-      color: 'text-yellow-600',
-    },
-  ];
+      title: toMs(c.updatedAt) === toMs(c.createdAt) ? 'Contact added' : 'Contact updated',
+      description: c.name,
+    })),
+  ]
+    .filter((a) => a.time > 0)
+    .sort((a, b) => b.time - a.time)
+    .slice(0, 5);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -156,8 +95,12 @@ const RecentActivity: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {upcomingDeals.map((deal) => {
-            // Get contact data using contactId
+          {upcomingDeals.length === 0 && (
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              No open deals yet.
+            </p>
+          )}
+          {upcomingDeals.map(({ deal, due }) => {
             const contact = contacts[deal.contactId];
 
             return (
@@ -173,49 +116,27 @@ const RecentActivity: React.FC = () => {
                       alt={contact.name}
                       size="sm"
                       fallback={getInitials(contact.name)}
-                      status={deal.status as 'online' | 'offline' | 'away' | 'busy'}
                     />
                   )}
                   <div>
                     <h4
                       className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}
                     >
-                      {deal.company}
+                      {deal.title}
                     </h4>
                     <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       {contact ? contact.name : 'Unknown Contact'}
                     </p>
                   </div>
                 </div>
-                <div className="text-right group">
+                <div className="text-right">
                   <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'} text-sm`}>
-                    {deal.value}
+                    {formatCurrency(deal.value)}
                   </p>
                   <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {deal.probability} • {deal.dueDate}
+                    {deal.probability}% •{' '}
+                    {due ? new Date(due).toLocaleDateString() : 'No close date'}
                   </p>
-
-                  {/* AI Insights Tooltip - appears on hover */}
-                  <div
-                    className={`absolute right-0 top-full mt-2 w-72 p-3 rounded-lg shadow-lg z-50 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto ${
-                      isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-                    }`}
-                  >
-                    <div className="text-xs space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                        <span className="font-medium">AI Risk Score: Low (15%)</span>
-                      </div>
-                      <p className="text-xs opacity-75">
-                        Strong engagement signals. Last contact 2 days ago. Recommend follow-up by
-                        Friday.
-                      </p>
-                      <div className="flex items-center space-x-1 text-xs font-medium text-blue-400">
-                        <span>🎯</span>
-                        <span>Auto-scheduling follow-up...</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             );
@@ -231,16 +152,21 @@ const RecentActivity: React.FC = () => {
           </h3>
           <div className="flex items-center space-x-2">
             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              24 completed
+              {completedTasks} completed
             </span>
             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>•</span>
             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              8 pending
+              {pendingTasks} pending
             </span>
           </div>
         </div>
 
         <div className="space-y-4">
+          {recentActivities.length === 0 && (
+            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              No recent activity yet.
+            </p>
+          )}
           {recentActivities.map((activity, index) => {
             const Icon = activity.icon;
             return (
@@ -260,23 +186,8 @@ const RecentActivity: React.FC = () => {
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {activity.description}
                   </p>
-                  {activity.assistantInsight && (
-                    <div
-                      className={`mt-2 p-2 rounded-md text-xs ${
-                        isDark
-                          ? 'bg-blue-400/10 border border-blue-400/20 text-blue-300'
-                          : 'bg-blue-50 border border-blue-200 text-blue-700'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-1 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                        <span className="font-medium">Assistant Insight</span>
-                      </div>
-                      {activity.assistantInsight}
-                    </div>
-                  )}
                   <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
-                    {activity.time}
+                    {timeAgo(activity.time)}
                   </p>
                 </div>
               </div>

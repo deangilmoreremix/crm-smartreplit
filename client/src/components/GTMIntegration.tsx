@@ -1,5 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { generateAI } from '../services/aiGenerate';
+
+const RECOMMENDATION_SCHEMA = {
+  type: 'object',
+  properties: {
+    recommendations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          category: { type: 'string' },
+          reasoning: { type: 'string' },
+        },
+        required: ['id', 'title', 'category', 'reasoning'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['recommendations'],
+  additionalProperties: false,
+};
 
 interface Contact {
   id: number;
@@ -29,9 +52,14 @@ interface GTMIntegrationProps {
 const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) => {
   const [contact, setContact] = useState<Contact | null>(null);
   const [deal, setDeal] = useState<Deal | null>(null);
-  const [recommendedPrompts, setRecommendedPrompts] = useState<any[]>([]);
+  const [contactRecs, setContactRecs] = useState<any[]>([]);
+  const [dealRecs, setDealRecs] = useState<any[]>([]);
+  const [contactRecsLoading, setContactRecsLoading] = useState(false);
+  const [dealRecsLoading, setDealRecsLoading] = useState(false);
+  const [recsError, setRecsError] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const recommendedPrompts = [...contactRecs, ...dealRecs];
+  const loading = contactRecsLoading || dealRecsLoading;
 
   useEffect(() => {
     if (contactId) {
@@ -44,10 +72,19 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
     }
   }, [contactId, dealId]);
 
+  // Generate recommendations from the loaded record once it is available
+  useEffect(() => {
+    if (contact) generateRecommendations('contact', contact);
+  }, [contact]);
+
+  useEffect(() => {
+    if (deal) generateRecommendations('deal', deal);
+  }, [deal]);
+
   const loadContact = async (id: number) => {
     try {
       const { data, error } = await supabase
-        .from('contacts')
+        .from('smartcrm_contacts')
         .select('*')
         .eq('id', id)
         .single();
@@ -62,7 +99,7 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
   const loadDeal = async (id: number) => {
     try {
       const { data, error } = await supabase
-        .from('deals')
+        .from('smartcrm_deals')
         .select('*')
         .eq('id', id)
         .single();
@@ -96,9 +133,6 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
         const data = await response.json();
         setAnalytics(prev => ({ ...prev, contact: data }));
       }
-
-      // Generate AI recommendations based on contact data
-      generateContactRecommendations(id);
     } catch (error) {
       console.error('Error loading contact analytics:', error);
     }
@@ -126,70 +160,38 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
         const data = await response.json();
         setAnalytics(prev => ({ ...prev, deal: data }));
       }
-
-      // Generate AI recommendations based on deal data
-      generateDealRecommendations(id);
     } catch (error) {
       console.error('Error loading deal analytics:', error);
     }
   };
 
-  const generateContactRecommendations = async (contactId: number) => {
+  const generateRecommendations = async (kind: 'contact' | 'deal', record: Contact | Deal) => {
+    const setRecs = kind === 'contact' ? setContactRecs : setDealRecs;
+    const setBusy = kind === 'contact' ? setContactRecsLoading : setDealRecsLoading;
     try {
-      setLoading(true);
-      // This would call an AI service to analyze contact data and recommend prompts
-      // For now, we'll simulate some recommendations
-      const recommendations = [
-        {
-          id: 'follow_up_email',
-          title: 'Personalized Follow-up Email',
-          category: 'communication',
-          confidence: 0.85,
-          reasoning: 'Contact has been inactive for 30 days, suggesting a follow-up email to re-engage'
-        },
-        {
-          id: 'pain_point_probe',
-          title: 'Pain Point Discovery',
-          category: 'sales',
-          confidence: 0.72,
-          reasoning: 'Contact score indicates buying intent, focus on understanding their challenges'
-        }
-      ];
-
-      setRecommendedPrompts(recommendations);
+      setBusy(true);
+      setRecsError(null);
+      // enrichmentData can be large, so only send the core fields
+      const { enrichmentData, ...fields } = record as any;
+      const { data } = await generateAI({
+        system:
+          'You are a go-to-market assistant. Recommend next-step sales prompts/actions grounded only in ' +
+          'the record provided. Do not invent facts about the record.',
+        prompt:
+          `Recommend up to 3 next-step actions for this ${kind}. For each give a short snake_case id, a ` +
+          `title, a category (e.g. communication, sales, research), and reasoning that cites the ` +
+          `record's own fields.\n\n${JSON.stringify(fields)}`,
+        schema: RECOMMENDATION_SCHEMA,
+        schemaName: `${kind}_recommendations`,
+        json: true,
+      });
+      setRecs(data?.recommendations || []);
     } catch (error) {
       console.error('Error generating recommendations:', error);
+      setRecs([]);
+      setRecsError(error instanceof Error ? error.message : 'Failed to generate recommendations');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateDealRecommendations = async (dealId: number) => {
-    try {
-      setLoading(true);
-      // This would call an AI service to analyze deal data and recommend prompts
-      const recommendations = [
-        {
-          id: 'objection_handling',
-          title: 'Handle Pricing Objections',
-          category: 'sales',
-          confidence: 0.91,
-          reasoning: 'Deal is stuck in negotiation stage, likely due to pricing concerns'
-        },
-        {
-          id: 'value_proposition',
-          title: 'Reinforce Value Proposition',
-          category: 'sales',
-          confidence: 0.78,
-          reasoning: 'Deal health score indicates need to strengthen perceived value'
-        }
-      ];
-
-      setRecommendedPrompts(prev => [...prev, ...recommendations]);
-    } catch (error) {
-      console.error('Error generating recommendations:', error);
-    } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
@@ -210,7 +212,6 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
           responseData: {
             promptId: recommendation.id,
             responseText: `Applied ${recommendation.title} recommendation`,
-            qualityScore: 0.8,
             category: recommendation.category,
             context: contactId ? 'contact' : 'deal',
             entityId: contactId || dealId
@@ -282,13 +283,6 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
                   <h5 className="font-medium text-gray-900">{rec.title}</h5>
                   <div className="flex items-center space-x-2">
                     <span className="text-xs text-gray-500 capitalize">{rec.category}</span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      rec.confidence > 0.8 ? 'bg-green-100 text-green-800' :
-                      rec.confidence > 0.6 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {(rec.confidence * 100).toFixed(0)}% confidence
-                    </span>
                   </div>
                 </div>
 
@@ -308,6 +302,10 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
                 </div>
               </div>
             ))}
+          </div>
+        ) : recsError ? (
+          <div className="text-center py-8 text-red-600">
+            <p>{recsError}</p>
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
@@ -336,8 +334,8 @@ const GTMIntegration: React.FC<GTMIntegrationProps> = ({ contactId, dealId }) =>
             <div className="mb-4">
               <h5 className="text-sm font-medium text-gray-700 mb-2">Deal Progress Analytics</h5>
               <div className="bg-gray-50 p-3 rounded text-sm">
-                <p>Stagnation risk: {analytics.deal.stagnationRisk || 'Low'}</p>
-                <p>Next action recommended: {analytics.deal.nextAction || 'Follow up'}</p>
+                <p>Stagnation risk: {analytics.deal.stagnationRisk || 'N/A'}</p>
+                <p>Next action recommended: {analytics.deal.nextAction || 'N/A'}</p>
               </div>
             </div>
           )}

@@ -2,17 +2,13 @@
 // Handles CRUD operations with AI-powered contact intelligence
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import OpenAI from 'https://esm.sh/openai@4'
+import { getUserOpenAI, NO_KEY_MESSAGE, DEFAULT_MODEL, ADVANCED_MODEL } from '../_shared/userOpenAI.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-app-id',
 }
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY')!,
-})
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -49,10 +45,21 @@ Deno.serve(async (req) => {
     }
 
     if (!userId) {
-      userId = '63491d04-4227-43fc-a320-0270679ab286'
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const tenantId = '00000000-0000-0000-0000-000000000001'
+
+    // OpenAI client from the caller's own key, created on first AI use
+    let openaiClient: any = null
+    const getOpenAI = async () => {
+      openaiClient ??= await getUserOpenAI(userId!)
+      if (!openaiClient) throw Object.assign(new Error(NO_KEY_MESSAGE), { needsApiKey: true })
+      return openaiClient
+    }
 
     const { method, url } = req
     const urlObj = new URL(url)
@@ -75,7 +82,7 @@ Deno.serve(async (req) => {
         const limit = parseInt(urlObj.searchParams.get('limit') || '20')
         
         // Use OpenAI embeddings for semantic search
-        const embeddingResponse = await openai.embeddings.create({
+        const embeddingResponse = await (await getOpenAI()).embeddings.create({
           model: 'text-embedding-3-small',
           input: query,
         })
@@ -84,7 +91,7 @@ Deno.serve(async (req) => {
         
         // Search contacts with similarity (using enrichment_data for vector search)
         const { data: contacts } = await supabase
-          .from('contacts')
+          .from('smartcrm_contacts')
           .select('*')
           .or(`firstname.ilike.%${query}%,lastname.ilike.%${query}%,company.ilike.%${query}%,email.ilike.%${query}%`)
           .limit(limit)
@@ -101,8 +108,8 @@ Deno.serve(async (req) => {
               Return JSON with: relevance_score (0-1), summary (why match)`
 
             try {
-              const scoreResponse = await openai.chat.completions.create({
-                model: 'gpt-4o-mini',
+              const scoreResponse = await (await getOpenAI()).chat.completions.create({
+                model: DEFAULT_MODEL,
                 messages: [{ role: 'user', content: scorePrompt }],
                 response_format: { type: 'json_object' },
                 temperature: 0.1,
@@ -131,7 +138,7 @@ Deno.serve(async (req) => {
         const { contact_id, question } = await req.json()
         
         const { data: contact } = await supabase
-          .from('contacts')
+          .from('smartcrm_contacts')
           .select('*')
           .eq('id', contact_id)
           .single()
@@ -145,7 +152,7 @@ Deno.serve(async (req) => {
 
         // Get contact history
         const { data: activities } = await supabase
-          .from('contact_activities')
+          .from('smartcrm_contact_activities')
           .select('*')
           .eq('contact_id', contact_id)
           .order('created_at', { ascending: false })
@@ -167,8 +174,8 @@ Deno.serve(async (req) => {
           
           Return JSON with: answer, confidence (0-1), suggested_actions (array)`
 
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+        const completion = await (await getOpenAI()).chat.completions.create({
+          model: ADVANCED_MODEL,
           messages: [{ role: 'user', content: insightPrompt }],
           response_format: { type: 'json_object' },
           temperature: 0.3,
@@ -191,7 +198,7 @@ Deno.serve(async (req) => {
         if (contactId && contactId !== 'contacts') {
           if (action === 'activities') {
             const { data: activities, error } = await supabase
-              .from('contact_activities')
+              .from('smartcrm_contact_activities')
               .select('*')
               .eq('contact_id', contactId)
               .order('created_at', { ascending: false })
@@ -202,7 +209,7 @@ Deno.serve(async (req) => {
             })
           } else {
             const { data: contact, error } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -214,7 +221,7 @@ Deno.serve(async (req) => {
           }
         } else {
           const { data: contacts, error } = await supabase
-            .from('contacts')
+            .from('smartcrm_contacts')
             .select('*')
             .order('createdat', { ascending: false })
 
@@ -228,7 +235,7 @@ Deno.serve(async (req) => {
         if (contactId && action) {
           if (action === 'enrich') {
             const { data: contact } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -244,8 +251,8 @@ Deno.serve(async (req) => {
 
               Return JSON with: linkedin_url, background, company_size, revenue_range, industry_insights, interests`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
+            const completion = await (await getOpenAI()).chat.completions.create({
+              model: ADVANCED_MODEL,
               messages: [{ role: 'user', content: prompt }],
               response_format: { type: 'json_object' },
               temperature: 0.3,
@@ -254,7 +261,7 @@ Deno.serve(async (req) => {
             const enrichedData = JSON.parse(completion.choices[0].message.content || '{}')
 
             const { data: updated } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .update({
                 enrichment_data: enrichedData,
                 last_enriched_at: new Date().toISOString(),
@@ -263,7 +270,7 @@ Deno.serve(async (req) => {
               .select()
               .single()
 
-            await supabase.from('contact_activities').insert({
+            await supabase.from('smartcrm_contact_activities').insert({
               contact_id: contactId,
               activity_type: 'enrichment',
               description: 'Contact data enriched with AI',
@@ -275,7 +282,7 @@ Deno.serve(async (req) => {
             })
           } else if (action === 'score') {
             const { data: contact } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -293,8 +300,8 @@ Deno.serve(async (req) => {
 
               Return JSON with: score (0-100), rationale, lead_score, engagement_score`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
+            const completion = await (await getOpenAI()).chat.completions.create({
+              model: ADVANCED_MODEL,
               messages: [{ role: 'user', content: prompt }],
               response_format: { type: 'json_object' },
               temperature: 0.3,
@@ -303,7 +310,7 @@ Deno.serve(async (req) => {
             const scoreData = JSON.parse(completion.choices[0].message.content || '{}')
 
             const { data: updated } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .update({
                 score: scoreData.score / 100,
                 ai_score_rationale: scoreData.rationale,
@@ -312,7 +319,7 @@ Deno.serve(async (req) => {
               .select()
               .single()
 
-            await supabase.from('contact_activities').insert({
+            await supabase.from('smartcrm_contact_activities').insert({
               contact_id: contactId,
               activity_type: 'scoring',
               description: `AI score calculated: ${scoreData.score}`,
@@ -326,7 +333,7 @@ Deno.serve(async (req) => {
             const activityData = await req.json()
 
             const { data: activity } = await supabase
-              .from('contact_activities')
+              .from('smartcrm_contact_activities')
               .insert({
                 contact_id: contactId,
                 activity_type: activityData.activity_type || activityData.type,
@@ -345,7 +352,7 @@ Deno.serve(async (req) => {
             const { message_type, context } = await req.json()
             
             const { data: contact } = await supabase
-              .from('contacts')
+              .from('smartcrm_contacts')
               .select('*')
               .eq('id', contactId)
               .single()
@@ -362,8 +369,8 @@ Deno.serve(async (req) => {
               Return JSON with: subject, body, tone (professional/friendly/formal),
               estimated_response_rate (0-1), key_points_to_mention (array)`
 
-            const completion = await openai.chat.completions.create({
-              model: 'gpt-4o',
+            const completion = await (await getOpenAI()).chat.completions.create({
+              model: ADVANCED_MODEL,
               messages: [{ role: 'user', content: composePrompt }],
               response_format: { type: 'json_object' },
               temperature: 0.5,
@@ -402,7 +409,7 @@ Deno.serve(async (req) => {
           }
 
           const { data: contact } = await supabase
-            .from('contacts')
+            .from('smartcrm_contacts')
             .insert(contactData)
             .select()
             .single()
@@ -425,7 +432,7 @@ Deno.serve(async (req) => {
         if (contactId && action === 'custom-fields') {
           const customFieldsData = await req.json()
 
-          await supabase.from('contact_custom_fields').delete().eq('contact_id', contactId)
+          await supabase.from('smartcrm_contact_custom_fields').delete().eq('contact_id', contactId)
 
           if (customFieldsData && Array.isArray(customFieldsData)) {
             const fieldsToInsert = customFieldsData.map((field: any) => ({
@@ -434,7 +441,7 @@ Deno.serve(async (req) => {
               field_value: field.value || field.field_value,
             }))
 
-            await supabase.from('contact_custom_fields').insert(fieldsToInsert)
+            await supabase.from('smartcrm_contact_custom_fields').insert(fieldsToInsert)
           }
 
           return new Response(JSON.stringify({ success: true }), {
@@ -462,7 +469,7 @@ Deno.serve(async (req) => {
           updateFields.updatedat = new Date().toISOString()
 
           const { data: updated } = await supabase
-            .from('contacts')
+            .from('smartcrm_contacts')
             .update(updateFields)
             .eq('id', contactId)
             .select()
@@ -474,7 +481,7 @@ Deno.serve(async (req) => {
         }
 
       case 'DELETE':
-        const { error: deleteError } = await supabase.from('contacts').delete().eq('id', contactId)
+        const { error: deleteError } = await supabase.from('smartcrm_contacts').delete().eq('id', contactId)
 
         if (deleteError) throw deleteError
         return new Response(JSON.stringify({ success: true }), {
@@ -488,8 +495,8 @@ Deno.serve(async (req) => {
         })
     }
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: error.message, needsApiKey: error.needsApiKey || undefined }), {
+      status: error.needsApiKey ? 400 : 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
