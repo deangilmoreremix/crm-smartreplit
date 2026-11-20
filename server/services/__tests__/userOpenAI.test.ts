@@ -36,8 +36,23 @@ describe('mapLegacyModel', () => {
     expect(mapLegacyModel('gemini-1.5-flash')).toBe(DEFAULT_MODEL);
     expect(mapLegacyModel('gemini-1.5-pro')).toBe(ADVANCED_MODEL);
     expect(mapLegacyModel('gemma-2-9b-it')).toBe(DEFAULT_MODEL);
-    expect(mapLegacyModel('gpt-6.1-sol')).toBe('gpt-6.1-sol');
+    expect(mapLegacyModel('gpt-6.2-sol')).toBe('gpt-6.2-sol');
     expect(mapLegacyModel(null)).toBe(DEFAULT_MODEL);
+  });
+
+  it('upgrades earlier GPT-6 models to the 6.2 tiers', () => {
+    expect(DEFAULT_MODEL).toBe('gpt-6.2-sol');
+    expect(ADVANCED_MODEL).toBe('gpt-6.2-astra');
+    expect(mapLegacyModel('gpt-6-luna')).toBe(DEFAULT_MODEL);
+    expect(mapLegacyModel('gpt-6.1-sol')).toBe(ADVANCED_MODEL);
+  });
+
+  it('keeps GPT Image 2.6 models and maps older image models to 2.6 flare', () => {
+    expect(IMAGE_MODEL).toBe('gpt-image-2.6-flare');
+    expect(mapLegacyModel('gpt-image-2.6-sunburst')).toBe('gpt-image-2.6-sunburst');
+    expect(mapLegacyModel('gpt-image-2.6-flare')).toBe('gpt-image-2.6-flare');
+    expect(mapLegacyModel('gpt-image-2.5-flare')).toBe(IMAGE_MODEL);
+    expect(mapLegacyModel('gpt-image-1')).toBe(IMAGE_MODEL);
   });
 });
 

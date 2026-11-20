@@ -7,7 +7,7 @@ import express, { type Express, type Request, type Response } from 'express';
 import { toFile } from 'openai';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
 import { respond, toResult, generateImage, webSearchTool, type RespondResult } from '../services/openaiResponses';
-import { ADVANCED_MODEL, IMAGE_MODEL, EMBEDDING_MODEL, TRANSCRIBE_MODEL } from '../services/openaiModels';
+import { ADVANCED_MODEL, IMAGE_MODEL, IMAGE_MODELS, EMBEDDING_MODEL, TRANSCRIBE_MODEL } from '../services/openaiModels';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
@@ -47,11 +47,8 @@ export function registerAIRoutes(app: Express) {
         let success = false;
         for (const model of modelsToTry) {
           try {
-            await openaiData.client.chat.completions.create({
-              model,
-              messages: [{ role: 'user', content: 'test' }],
-              max_tokens: 1,
-            });
+            // Free check (no tokens billed): the key works and has access to the model.
+            await openaiData.client.models.retrieve(model);
             results.openai = {
               available: true,
               model,
@@ -194,22 +191,39 @@ export function registerAIRoutes(app: Express) {
     }
   });
 
-  // Image generation and editing with the image_generation tool
+  // Image generation and editing with GPT Image 2.6 (Images API). Pass `images` to edit/combine them.
   app.post('/api/ai/image', ...requireAITools, async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     try {
-      const { prompt, size, quality, images } = req.body || {};
+      const {
+        prompt, size, quality, images, model, n, background, output_format, output_compression,
+        complexity, frame_count, frame_duration_ms, mask, markup,
+      } = req.body || {};
       if (!prompt) return res.status(400).json({ error: 'prompt is required' });
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) return noKey(res);
-      const { b64, responseId } = await generateImage(openaiData.client, {
-        model: openaiData.model,
+      const result = await generateImage(openaiData.client, {
+        imageModel: model,
         prompt: String(prompt),
         size,
         quality,
+        n,
+        background,
+        output_format,
+        output_compression,
+        complexity,
+        frame_count,
+        frame_duration_ms,
+        mask,
+        markup,
         inputImages: Array.isArray(images) ? images : undefined,
       });
-      res.json({ success: true, images: b64.map((b) => `data:image/png;base64,${b}`), responseId, model: IMAGE_MODEL });
+      res.json({
+        success: true,
+        images: result.b64.map((b) => `data:${result.mime};base64,${b}`),
+        model: result.model,
+        outputFormat: result.outputFormat,
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error?.message || 'Image generation failed' });
     }
@@ -315,7 +329,7 @@ export function registerAIRoutes(app: Express) {
         const response = await openaiData.client.chat.completions.create({
           model: openaiData.model,
           messages: [{ role: 'user', content: 'Generate a business insight' }],
-          max_tokens: 50,
+          max_tokens: 200, // reasoning models need room; very small limits return empty text
         });
         res.json({
           success: true,
@@ -366,6 +380,7 @@ export function registerAIRoutes(app: Express) {
       const userId = (req as any).userId;
       try {
         const { prompt, model = IMAGE_MODEL, size = '1024x1024' } = req.body;
+        const imageModel = IMAGE_MODELS.includes(model) ? model : IMAGE_MODEL;
         if (!prompt) return res.status(400).json({ error: 'Prompt required' });
 
         const openaiData = await createUserOpenAIClient(userId);
@@ -376,8 +391,8 @@ export function registerAIRoutes(app: Express) {
           });
         }
 
-        const response = await openaiData.client.images.generate({ model, prompt, size, n: 1 });
-        res.json({ success: true, data: response.data, model });
+        const response = await openaiData.client.images.generate({ model: imageModel, prompt, size, n: 1 });
+        res.json({ success: true, data: response.data, model: imageModel });
       } catch (error: any) {
         res.status(500).json({ error: error.message });
       }
@@ -393,14 +408,7 @@ export function registerAIRoutes(app: Express) {
       const { userMetrics, timeOfDay } = req.body;
 
       const openaiData = await createUserOpenAIClient(userId);
-      if (!openaiData) {
-        return res.json({
-          greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
-          insight: userMetrics?.totalValue > 50000 ? 'Strong momentum' : 'Growing steadily',
-          source: 'fallback',
-          needsApiKey: true,
-        });
-      }
+      if (!openaiData) return noKey(res);
 
       try {
         const response = await openaiData.client.chat.completions.create({
@@ -424,12 +432,9 @@ export function registerAIRoutes(app: Express) {
           ...JSON.parse(response.choices[0].message.content || '{}'),
           source: openaiData.model,
         });
-      } catch (error) {
-        res.json({
-          greeting: `Good ${timeOfDay}!`,
-          insight: 'Your pipeline is growing',
-          source: 'fallback',
-        });
+      } catch (error: any) {
+        // Report the failure instead of returning canned "insights" as if the AI produced them.
+        res.status(502).json({ success: false, error: error?.message || 'Smart greeting failed' });
       }
     }
   );

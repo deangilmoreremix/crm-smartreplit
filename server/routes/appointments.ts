@@ -2,6 +2,8 @@ import type { Express } from 'express';
 import { requireAuth } from './auth';
 import { requireEntitlement } from '../middleware/entitlements';
 import { FeatureKey } from '../types/entitlements';
+import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
+import { respond } from '../services/openaiResponses';
 
 // In-memory storage for appointments (temporary until database schema is added)
 interface Appointment {
@@ -197,20 +199,30 @@ export function registerAppointmentRoutes(app: Express): void {
     try {
       const { title, attendees, type, duration } = req.body;
 
-      // Mock AI insights generation
-      const insights = {
-        optimalTime: '10:00 AM',
-        preparationNotes: [
-          'Review attendee profiles and previous interactions',
-          'Prepare agenda and key discussion points',
-          'Have relevant materials ready for reference',
-        ],
-        followUpActions: [
-          'Send meeting summary and action items',
-          'Schedule follow-up if needed',
-          'Update CRM with meeting outcomes',
-        ],
-      };
+      const ai = await getUserOpenAIClient();
+      if (!ai) {
+        return res.status(400).json({ error: 'No OpenAI API key configured', message: NO_KEY_MESSAGE, needsApiKey: true });
+      }
+      const result = await respond(ai.client, {
+        model: ai.model,
+        instructions: 'You are a sales meeting coach. Give concise, specific advice for this meeting.',
+        input: `Meeting: ${JSON.stringify({ title, attendees, type, duration })}`,
+        json: {
+          name: 'appointment_insights',
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['optimalTime', 'preparationNotes', 'followUpActions'],
+            properties: {
+              optimalTime: { type: 'string' },
+              preparationNotes: { type: 'array', items: { type: 'string' } },
+              followUpActions: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        },
+      });
+      if (!result.data) throw new Error('The AI returned an unreadable response');
+      const insights = result.data;
 
       res.json(insights);
     } catch (error) {

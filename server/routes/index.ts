@@ -19,7 +19,7 @@ import whitelabelRoutes from './whitelabel';
 // Import register functions
 import { registerMessagingRoutes } from './messaging';
 import { registerPhoneRoutes } from './phone';
-import { registerVideoRoutes } from './videos';
+import { registerVideoRoutes, registerVideoScriptRoute } from './videos';
 import { registerAppointmentRoutes } from './appointments';
 import { registerAIPricingRoutes } from './aiPricing';
 import { registerAIRoutes } from './ai';
@@ -70,6 +70,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Register video routes
   console.log('Registering video routes');
   registerVideoRoutes(app);
+  registerVideoScriptRoute(app); // after registerVideoRoutes, so its /api/videos auth + entitlement apply
 
   // Register appointment routes
   console.log('Registering appointment routes');

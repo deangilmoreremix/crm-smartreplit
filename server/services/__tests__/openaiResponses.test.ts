@@ -6,6 +6,8 @@ import {
   respond,
   extractSources,
   webSearchTool,
+  generateImage,
+  parseJSONText,
 } from '../openaiResponses';
 import { DEFAULT_MODEL } from '../openaiModels';
 
@@ -118,5 +120,59 @@ describe('respond', () => {
     expect(
       extractSources({ output: [{ type: 'message', content: [{ type: 'output_text', annotations: [cite, cite] }] }] })
     ).toHaveLength(1);
+  });
+});
+
+describe('generateImage (GPT Image 2.6, Images API)', () => {
+  it('generates with gpt-image-2.6-flare on /images/generations and maps legacy quality', async () => {
+    const post = vi.fn().mockResolvedValue({ data: [{ b64_json: 'AAA' }], output_format: 'webp' });
+    const out = await generateImage({ post } as any, {
+      prompt: 'logo',
+      size: '1536x1024',
+      quality: 'hd',
+      output_format: 'webp',
+      complexity: 'low',
+    });
+    expect(post).toHaveBeenCalledWith('/images/generations', {
+      body: { model: 'gpt-image-2.6-flare', prompt: 'logo', size: '1536x1024', quality: 'high', output_format: 'webp', complexity: 'low' },
+    });
+    expect(out).toEqual({ b64: ['AAA'], model: 'gpt-image-2.6-flare', outputFormat: 'webp', mime: 'image/webp' });
+  });
+
+  it('edits with gpt-image-2.6-sunburst on /images/edits with images and markup', async () => {
+    const post = vi.fn().mockResolvedValue({ data: [{ b64_json: 'BBB' }] });
+    await generateImage({ post } as any, {
+      prompt: 'blue background',
+      inputImages: ['data:image/png;base64,X'],
+      markup: 'data:image/png;base64,M',
+    });
+    expect(post).toHaveBeenCalledWith('/images/edits', {
+      body: {
+        model: 'gpt-image-2.6-sunburst',
+        prompt: 'blue background',
+        images: [{ image_url: 'data:image/png;base64,X' }],
+        markup: { image_url: 'data:image/png;base64,M' },
+      },
+    });
+  });
+
+  it('forces PNG for transparent backgrounds, clamps GIF frames and rejects mask + markup', async () => {
+    const post = vi.fn().mockResolvedValue({ data: [{ b64_json: 'C' }] });
+    await generateImage({ post } as any, { prompt: 'icon', background: 'transparent' });
+    expect(post.mock.calls[0][1].body.output_format).toBe('png');
+    await generateImage({ post } as any, { prompt: 'spin', output_format: 'gif', frame_count: 40, frame_duration_ms: 5 });
+    expect(post.mock.calls[1][1].body).toMatchObject({ frame_count: 16, frame_duration_ms: 20 });
+    await expect(
+      generateImage({ post } as any, { prompt: 'x', inputImages: ['a'], mask: 'm', markup: 'k' })
+    ).rejects.toThrow(/mask or a markup/);
+  });
+});
+
+describe('parseJSONText', () => {
+  it('parses plain, fenced and wrapped JSON and returns undefined for prose', () => {
+    expect(parseJSONText('{"a":1}')).toEqual({ a: 1 });
+    expect(parseJSONText('```json\n{"a":2}\n```')).toEqual({ a: 2 });
+    expect(parseJSONText('Here you go: {"a":3} thanks')).toEqual({ a: 3 });
+    expect(parseJSONText('no json here')).toBeUndefined();
   });
 });

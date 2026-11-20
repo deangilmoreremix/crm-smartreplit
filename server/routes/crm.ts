@@ -1,7 +1,7 @@
  import type { Express } from 'express';
   import { getUserOpenAIClient, NO_KEY_MESSAGE } from '../services/userOpenAI';
   import { ADVANCED_MODEL } from '../services/openaiModels';
-  import { respond, webSearchTool } from '../services/openaiResponses';
+  import { respond, webSearchTool, parseJSONText } from '../services/openaiResponses';
   import { eq, and, desc, sql } from 'drizzle-orm';
   import {
     contacts,
@@ -1437,12 +1437,11 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
           const completion = await openai.chat.completions.create({
             model: ADVANCED_MODEL,
             messages: [{ role: 'user', content: prompt }],
-            temperature: 0.3,
+            response_format: { type: 'json_object' },
           });
 
-          try {
-            scoreData = JSON.parse(completion.choices[0].message.content || '{}');
-          } catch (parseError) {
+          scoreData = parseJSONText(completion.choices[0].message.content || '');
+          if (!scoreData) {
             memoryService.recordObservation(
               userId,
               'error',

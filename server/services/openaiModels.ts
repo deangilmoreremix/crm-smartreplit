@@ -3,9 +3,12 @@
  * Legacy IDs (stored in user_api_keys.model or hardcoded in older code) are mapped to these.
  */
 
-export const DEFAULT_MODEL = 'gpt-6-luna'; // high-volume, low cost
-export const ADVANCED_MODEL = 'gpt-6.1-sol'; // complex analysis
-export const IMAGE_MODEL = 'gpt-image-2.5-flare';
+export const DEFAULT_MODEL = 'gpt-6.2-sol'; // everyday work
+export const ADVANCED_MODEL = 'gpt-6.2-astra'; // complex analysis
+// GPT Image 2.6 (Images API): flare = fast generation, sunburst = detail and consistent edits
+export const IMAGE_MODEL = 'gpt-image-2.6-flare';
+export const IMAGE_EDIT_MODEL = 'gpt-image-2.6-sunburst';
+export const IMAGE_MODELS = ['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst'];
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
 // Speech-to-text (Audio API; the Responses API has no transcription). Source: OpenAI speech-to-text guide,
 // which lists whisper-1 / gpt-4o-transcribe as deprecated (shutdown 2027-02-26).
@@ -18,6 +21,7 @@ const LEGACY_DEFAULT = new Set([
   'gpt-4.1-nano',
   'o4-mini',
   'o1-mini',
+  'gpt-6-luna',
 ]);
 const LEGACY_ADVANCED = new Set([
   'gpt-4o',
@@ -28,6 +32,7 @@ const LEGACY_ADVANCED = new Set([
   'o1-preview',
   'o3',
   'gpt-5',
+  'gpt-6.1-sol',
 ]);
 
 /** Map a retired or legacy OpenAI model ID to its current replacement; unknown IDs pass through. */
@@ -37,6 +42,7 @@ export function mapLegacyModel(model?: string | null): string {
   const base = model.replace(/-\d{4}-\d{2}-\d{2}$/, '').replace(/-\d{4}$/, '');
   if (LEGACY_DEFAULT.has(base)) return DEFAULT_MODEL;
   if (LEGACY_ADVANCED.has(base)) return ADVANCED_MODEL;
+  if (IMAGE_MODELS.includes(base)) return base;
   if (base.startsWith('dall-e') || base.includes('-image')) return IMAGE_MODEL;
   // Gemini/Gemma IDs from older client code: the app is OpenAI-only
   if (base.startsWith('gemini') || base.startsWith('gemma')) {

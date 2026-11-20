@@ -1,5 +1,6 @@
 /**
- * OpenAI Responses API (/v1/responses) — the only OpenAI text/vision/image interface the app uses.
+ * OpenAI Responses API (/v1/responses) — the OpenAI text/vision interface the app uses.
+ * Images use the Images API with GPT Image 2.6 (see generateImage).
  *
  * - `respond()` is the high-level helper for features (instructions, multimodal input, JSON / JSON Schema output,
  *   built-in tools such as web_search / code_interpreter / image_generation, conversations, background mode).
@@ -9,7 +10,7 @@
  * Data retention: requests default to store:false; only conversation features pass store:true.
  */
 import type OpenAI from 'openai';
-import { mapLegacyModel, IMAGE_MODEL } from './openaiModels';
+import { mapLegacyModel, IMAGE_MODEL, IMAGE_EDIT_MODEL, IMAGE_MODELS } from './openaiModels';
 
 export interface UrlSource {
   url: string;
@@ -84,23 +85,27 @@ function textFormat(json: RespondOptions['json']) {
   return { format: { type: 'json_schema', name: json.name, schema: json.schema, strict: true } };
 }
 
-export function toResult(response: any, wantJson: boolean): RespondResult {
-  const text = outputText(response);
-  let data: any;
-  if (wantJson && text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          data = JSON.parse(match[0]);
-        } catch {
-          /* leave undefined */
-        }
+/** Parse a model's JSON reply, tolerating ```json fences or text around the object; undefined if unparseable. */
+export function parseJSONText(text: string): any {
+  if (!text) return undefined;
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        /* fall through */
       }
     }
+    return undefined;
   }
+}
+
+export function toResult(response: any, wantJson: boolean): RespondResult {
+  const text = outputText(response);
+  const data = wantJson ? parseJSONText(text) : undefined;
   return {
     id: response.id,
     status: response.status,
@@ -146,37 +151,76 @@ export const webSearchTool = (userLocation?: { country?: string; city?: string; 
 });
 
 /** Generate (or edit, when inputImages are given) an image with the image_generation tool. */
+export interface ImageOptions {
+  prompt: string;
+  /** gpt-image-2.6-flare (default for generation) or gpt-image-2.6-sunburst (default for edits). */
+  imageModel?: string;
+  size?: string;
+  quality?: string;
+  n?: number;
+  background?: 'auto' | 'opaque' | 'transparent';
+  output_format?: 'png' | 'jpeg' | 'webp' | 'gif' | 'svg';
+  output_compression?: number;
+  complexity?: 'low' | 'medium' | 'high';
+  frame_count?: number;
+  frame_duration_ms?: number;
+  /** Images to edit or combine (URLs or data URLs, up to 16). When set, the edits endpoint is used. */
+  inputImages?: string[];
+  /** PNG mask (transparent = area to change); cannot be combined with markup. */
+  mask?: string;
+  /** Transparent PNG overlay with marks drawn over the first image. */
+  markup?: string;
+  /** Kept for older callers; the image model is chosen by imageModel. */
+  model?: string;
+}
+
+const MIME: Record<string, string> = { png: 'image/png', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml' };
+const QUALITY = ['auto', 'low', 'medium', 'high', 'xhigh', 'max'];
+
+/**
+ * Generate or edit images with GPT Image 2.6 on the Images API (/v1/images/generations, /v1/images/edits).
+ * Returns base64 images plus their data-URL MIME type.
+ */
 export async function generateImage(
   client: OpenAI,
-  options: { model: string; prompt: string; size?: string; quality?: string; inputImages?: string[] }
-): Promise<{ b64: string[]; responseId: string }> {
-  const input = options.inputImages?.length
-    ? [
-        {
-          role: 'user',
-          content: [
-            { type: 'input_text', text: options.prompt },
-            ...options.inputImages.map((url) => ({ type: 'input_image', image_url: url })),
-          ],
-        },
-      ]
-    : options.prompt;
-  const result = await respond(client, {
-    model: options.model,
-    input,
-    tools: [
-      {
-        type: 'image_generation',
-        model: IMAGE_MODEL,
-        ...(options.size ? { size: options.size } : {}),
-        ...(options.quality ? { quality: options.quality } : {}),
-        ...(options.inputImages?.length ? { action: 'edit' } : {}),
-      },
-    ],
-    toolChoice: { type: 'image_generation' },
-  });
-  if (!result.images.length) throw new Error(result.text || 'No image was generated');
-  return { b64: result.images, responseId: result.id };
+  options: ImageOptions
+): Promise<{ b64: string[]; responseId?: string; model: string; outputFormat: string; mime: string }> {
+  const editing = Boolean(options.inputImages?.length);
+  const model = options.imageModel && IMAGE_MODELS.includes(options.imageModel)
+    ? options.imageModel
+    : editing ? IMAGE_EDIT_MODEL : IMAGE_MODEL;
+  // Older UI values (DALL-E): hd/standard quality
+  const quality = options.quality === 'hd' ? 'high' : options.quality === 'standard' ? 'medium' : options.quality;
+  let format = options.output_format;
+  if (options.background === 'transparent' && (!format || format === 'jpeg')) format = 'png';
+
+  const body: Record<string, unknown> = { model, prompt: options.prompt };
+  if (options.size) body.size = options.size;
+  if (quality && QUALITY.includes(quality)) body.quality = quality;
+  if (options.n) body.n = Math.min(Math.max(options.n, 1), format === 'svg' ? 1 : 4);
+  if (options.background) body.background = options.background;
+  if (format) body.output_format = format;
+  if (options.complexity) body.complexity = options.complexity;
+  if (options.output_compression !== undefined && (format === 'jpeg' || format === 'webp')) {
+    body.output_compression = options.output_compression;
+  }
+  if (format === 'gif') {
+    if (options.frame_count) body.frame_count = Math.min(Math.max(options.frame_count, 2), 16);
+    if (options.frame_duration_ms) body.frame_duration_ms = Math.max(options.frame_duration_ms, 20);
+  }
+  if (editing) {
+    if (options.mask && options.markup) throw new Error('Use either a mask or a markup overlay, not both');
+    body.images = options.inputImages!.slice(0, 16).map((image_url) => ({ image_url }));
+    if (options.mask) body.mask = { image_url: options.mask };
+    if (options.markup) body.markup = { image_url: options.markup };
+  }
+
+  // client.post sends the JSON body as-is (the SDK's typed images.* methods predate the 2.6 parameters).
+  const data: any = await (client as any).post(editing ? '/images/edits' : '/images/generations', { body });
+  const b64 = (data?.data || []).map((d: any) => d.b64_json).filter(Boolean);
+  if (!b64.length) throw new Error('No image was generated');
+  const outputFormat = data?.output_format || format || 'png';
+  return { b64, model, outputFormat, mime: MIME[outputFormat] || 'image/png' };
 }
 
 // ---------------------------------------------------------------------------------------------

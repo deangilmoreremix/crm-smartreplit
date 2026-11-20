@@ -3,8 +3,8 @@
  * there is no server-wide key fallback.
  *
  * Returned clients run on the OpenAI Responses API: chat-completion calls from older code are translated to
- * /v1/responses (retired model IDs mapped, temperature dropped, store:false), and image requests use the
- * image_generation tool with url filled from the base64 result.
+ * /v1/responses (retired model IDs mapped, temperature dropped, store:false), and image requests go to the
+ * Images API (GPT Image 2.6) with url filled from the base64 result.
  */
 import OpenAI from 'openai';
 import { eq, and, desc } from 'drizzle-orm';
@@ -56,10 +56,10 @@ export function normalizeImageParams(params: any): any {
 }
 
 /**
- * Route the SDK's chat and image calls through the Responses API so every text, vision and image request
- * uses /v1/responses (embeddings keep their own endpoint).
+ * Route the SDK's chat calls through the Responses API so every text and vision request uses /v1/responses;
+ * image calls use the Images API with GPT Image 2.6 (embeddings keep their own endpoint).
  */
-function wrapClient(client: OpenAI, defaultModel: string): OpenAI {
+function wrapClient(client: OpenAI): OpenAI {
   const responsesCreate = client.responses.create.bind(client.responses);
   const createResponse = (params: any, options?: any) => {
     const { temperature: _temperature, top_p: _topP, ...rest } = params;
@@ -74,9 +74,9 @@ function wrapClient(client: OpenAI, defaultModel: string): OpenAI {
   };
 
   (client.images as any).generate = async (params: any) => {
-    const { prompt, size } = normalizeImageParams(params);
-    const { b64 } = await generateImage(client, { model: defaultModel, prompt, size });
-    return { created: Math.floor(Date.now() / 1000), data: b64.map((b) => ({ b64_json: b, url: `data:image/png;base64,${b}` })) };
+    const { prompt, size, model, quality, n } = normalizeImageParams(params);
+    const { b64, mime } = await generateImage(client, { imageModel: model, prompt, size, quality, n });
+    return { created: Math.floor(Date.now() / 1000), data: b64.map((b) => ({ b64_json: b, url: `data:${mime};base64,${b}` })) };
   };
 
   return client;
@@ -90,7 +90,7 @@ export async function getUserOpenAIClient(
   const keyData = await getUserApiKey(userId);
   if (!keyData) return null;
   return {
-    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey }), mapLegacyModel(keyData.model)),
+    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey })),
     model: mapLegacyModel(keyData.model),
   };
 }

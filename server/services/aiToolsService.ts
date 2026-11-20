@@ -9,7 +9,7 @@ import type { Response } from 'express';
 import { memoryService } from '../memory';
 import { getUserOpenAIClient, NO_KEY_MESSAGE } from './userOpenAI';
 import { DEFAULT_MODEL, ADVANCED_MODEL } from './openaiModels';
-import { respond, webSearchTool } from './openaiResponses';
+import { respond, webSearchTool, parseJSONText } from './openaiResponses';
 
 // OpenAI client for the signed-in user of the current request (their own key; no server fallback)
 async function getOpenAIClient(): Promise<OpenAI | null> {
@@ -91,8 +91,9 @@ async function callAIJson(
       max_tokens: maxTokens,
     });
 
-    const content = response.choices[0].message.content || '{}';
-    const parsedContent = JSON.parse(content);
+    const content = response.choices[0].message.content || '';
+    const parsedContent = parseJSONText(content);
+    if (parsedContent === undefined) throw new Error('The AI returned a response that was not valid JSON');
 
     // Record successful AI call to memory if userId provided
     if (userId && memoryService.isEnabled()) {

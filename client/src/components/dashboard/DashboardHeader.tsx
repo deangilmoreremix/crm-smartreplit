@@ -102,9 +102,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         }
       } catch (error) {
         console.error('GPT-5 Smart Greeting Error:', error);
-        setSmartGreeting(
-          `Good ${timeOfDay}! Your pipeline looks strong with ${deals.length} deals in progress.`
-        );
+        setSmartGreeting(`Good ${timeOfDay}! You have ${deals.length} deals in progress.`);
       } finally {
         isGeneratingRef.current = false;
         setIsLoadingAI(false);
