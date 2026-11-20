@@ -1,8 +1,8 @@
 import { supabaseAIService } from './supabaseAIService';
 import { generateImageAI, fileToDataUrl } from './aiGenerate';
 
-// Images use the OpenAI Responses API image_generation tool (POST /api/ai/image), which also edits
-// existing images. gpt-image sizes: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait).
+// Images use GPT Image 2.6 on the OpenAI Images API (POST /api/ai/image), which also edits existing
+// images. Sizes: auto, 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait).
 const GPT_IMAGE_SIZES: Record<string, string> = {
   '1792x1024': '1536x1024',
   '1024x1792': '1024x1536',
@@ -13,11 +13,18 @@ const toGptImageSize = (size?: string) => (size ? GPT_IMAGE_SIZES[size] || size 
 
 interface ImageGenerationOptions {
   prompt: string;
-  model?: 'gpt-image-2.5-flare' | 'dall-e-2' | 'dall-e-3'; // all generate with gpt-image-2.5-flare
-  size?: '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792' | '1536x1024' | '1024x1536';
-  quality?: 'standard' | 'hd';
+  model?: 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst';
+  size?: 'auto' | '256x256' | '512x512' | '1024x1024' | '1792x1024' | '1024x1792' | '1536x1024' | '1024x1536';
+  /** auto | low | medium | high | xhigh | max (legacy standard/hd are mapped on the server) */
+  quality?: string;
+  /** Not supported by GPT Image models; ignored. */
   style?: 'vivid' | 'natural';
   n?: number;
+  background?: 'auto' | 'opaque' | 'transparent';
+  output_format?: 'png' | 'jpeg' | 'webp' | 'gif' | 'svg';
+  complexity?: 'low' | 'medium' | 'high';
+  frame_count?: number;
+  frame_duration_ms?: number;
   customerId?: string;
 }
 
@@ -32,18 +39,30 @@ interface ImageGenerationResult {
 
 class OpenAIImageService {
 
-  /** Generate an image (image_generation tool on the user's OpenAI key; the server reports a missing key). */
+  /** Generate an image (GPT Image 2.6 on the user's OpenAI key; the server reports a missing key). */
   async generateImage(options: ImageGenerationOptions): Promise<ImageGenerationResult> {
     try {
       const size = toGptImageSize(options.size);
-      const [url] = await generateImageAI({ prompt: options.prompt, size });
+      const model = options.model || 'gpt-image-2.6-flare';
+      const [url] = await generateImageAI({
+        prompt: options.prompt,
+        size,
+        model,
+        quality: options.quality,
+        n: options.n,
+        background: options.background,
+        output_format: options.output_format,
+        complexity: options.complexity,
+        frame_count: options.frame_count,
+        frame_duration_ms: options.frame_duration_ms,
+      });
       if (!url) throw new Error('No image was generated');
 
       const result: ImageGenerationResult = {
         url,
-        model: 'gpt-image-2.5-flare',
+        model,
         size,
-        quality: options.quality || 'standard',
+        quality: options.quality || 'auto',
         style: options.style,
       };
 
@@ -71,7 +90,7 @@ class OpenAIImageService {
     }
   }
 
-  /** Create a variation of an image (image_generation tool with the image as input). */
+  /** Create a variation of an image (GPT Image 2.6 edit with the image as input). */
   async createVariation(imageFile: File, options?: Partial<ImageGenerationOptions>): Promise<ImageGenerationResult> {
     const size = toGptImageSize(options?.size);
     const [url] = await generateImageAI({
@@ -82,13 +101,10 @@ class OpenAIImageService {
       images: [await fileToDataUrl(imageFile)],
     });
     if (!url) throw new Error('No image was generated');
-    return { url, model: 'gpt-image-2.5-flare', size, quality: options?.quality || 'standard' };
+    return { url, model: 'gpt-image-2.6-sunburst', size, quality: options?.quality || 'auto' };
   }
 
-  /**
-   * Edit an image from a prompt. A mask, if given, is sent as a second image with an instruction
-   * to change only the masked (transparent) area.
-   */
+  /** Edit an image from a prompt. A mask (PNG; transparent = area to change) is sent as a real edit mask. */
   async editImage(
     imageFile: File,
     maskFile: File | undefined,
@@ -96,17 +112,14 @@ class OpenAIImageService {
     options?: Partial<ImageGenerationOptions>
   ): Promise<ImageGenerationResult> {
     const size = toGptImageSize(options?.size);
-    const images = [await fileToDataUrl(imageFile)];
-    if (maskFile) images.push(await fileToDataUrl(maskFile));
     const [url] = await generateImageAI({
-      prompt: maskFile
-        ? `${prompt}\n\nThe second image is a mask: change only the transparent area of the first image.`
-        : prompt,
+      prompt,
       size,
-      images,
+      images: [await fileToDataUrl(imageFile)],
+      ...(maskFile ? { mask: await fileToDataUrl(maskFile) } : {}),
     });
     if (!url) throw new Error('No image was generated');
-    return { url, model: 'gpt-image-2.5-flare', size, quality: options?.quality || 'standard' };
+    return { url, model: 'gpt-image-2.6-sunburst', size, quality: options?.quality || 'auto' };
   }
 }
 
@@ -145,17 +158,11 @@ export type { ImageGenerationOptions, ImageGenerationResult };
 export const useOpenAIImage = () => {
   const generateImage = async (
     prompt: string,
-    size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024',
-    quality: 'standard' | 'hd' = 'standard',
-    style: 'vivid' | 'natural' = 'natural'
+    size: ImageGenerationOptions['size'] = '1024x1024',
+    quality: string = 'auto',
+    options: Omit<ImageGenerationOptions, 'prompt' | 'size' | 'quality'> = {}
   ) => {
-    const result = await openaiImageService.generateImage({
-      prompt,
-      size,
-      quality,
-      style,
-      model: 'gpt-image-2.5-flare',
-    });
+    const result = await openaiImageService.generateImage({ prompt, size, quality, ...options });
 
     return {
       url: result.url,

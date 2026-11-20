@@ -239,15 +239,7 @@ class OpenAIService {
     customerId?: string,
     model?: string
   ): Promise<{ subject: string; body: string }> {
-    const serverAvailable = await this.isServerAvailable();
-    if (!serverAvailable) {
-      console.warn('AI service not available, returning fallback email');
-      return {
-        subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[AI service temporarily unavailable - please try again later]\n\nBest regards`,
-      };
-    }
-
+    // No canned fallback email: errors (e.g. missing API key) are thrown so the UI can show them.
     const tone = context.tone || 'professional';
     const systemPrompt = `You are a professional email writing assistant. Write clear, engaging emails that drive action. Always format your response as JSON with subject and body fields. Do not wrap the JSON in markdown code blocks.`;
 
@@ -291,10 +283,7 @@ class OpenAIService {
       }
     } catch (error) {
       console.error('Error generating email with OpenAI:', error);
-      return {
-        subject: `Following up: ${context.purpose}`,
-        body: `Dear ${context.recipient},\n\nI hope this email finds you well.\n\n[Generated content unavailable - please try again]\n\nBest regards`,
-      };
+      throw error;
     }
   }
 

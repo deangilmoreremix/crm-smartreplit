@@ -21,9 +21,13 @@ const ImageGeneratorContent: React.FC = () => {
   const [revisedPrompt, setRevisedPrompt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageSize, setImageSize] = useState<'1024x1024' | '1792x1024' | '1024x1792'>('1024x1024');
-  const [imageStyle, setImageStyle] = useState<'natural' | 'vivid'>('natural');
-  const [imageQuality, setImageQuality] = useState<'standard' | 'hd'>('standard');
+  const [imageSize, setImageSize] = useState<'auto' | '1024x1024' | '1536x1024' | '1024x1536'>('auto');
+  const [imageModel, setImageModel] = useState<'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst'>('gpt-image-2.6-flare');
+  const [imageQuality, setImageQuality] = useState<string>('auto');
+  const [complexity, setComplexity] = useState<'low' | 'medium' | 'high'>('low');
+  const [background, setBackground] = useState<'auto' | 'opaque' | 'transparent'>('auto');
+  const [outputFormat, setOutputFormat] = useState<'png' | 'jpeg' | 'webp' | 'gif' | 'svg'>('png');
+  const [frameCount, setFrameCount] = useState(9);
   const [promptCopied, setPromptCopied] = useState(false);
 
   // Sample prompts for quick selection
@@ -45,7 +49,13 @@ const ImageGeneratorContent: React.FC = () => {
     setError(null);
 
     try {
-      const result = await imageService.generateImage(prompt, imageSize, imageQuality, imageStyle);
+      const result = await imageService.generateImage(prompt, imageSize, imageQuality, {
+        model: imageModel,
+        complexity,
+        background,
+        output_format: outputFormat,
+        ...(outputFormat === 'gif' ? { frame_count: frameCount } : {}),
+      });
 
       setGeneratedImageUrl(result.url);
       setRevisedPrompt(result.revisedPrompt);
@@ -61,7 +71,7 @@ const ImageGeneratorContent: React.FC = () => {
     if (generatedImageUrl) {
       const link = document.createElement('a');
       link.href = generatedImageUrl;
-      link.download = `generated-image-${Date.now()}.png`;
+      link.download = `generated-image-${Date.now()}.${outputFormat === 'jpeg' ? 'jpg' : outputFormat}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -86,9 +96,10 @@ const ImageGeneratorContent: React.FC = () => {
         <div className="flex items-start">
           <Image className="text-emerald-600 mt-1 mr-3 h-5 w-5" />
           <div>
-            <h3 className="font-medium text-emerald-800">DALL·E Image Generator</h3>
+            <h3 className="font-medium text-emerald-800">GPT Image 2.6 Generator</h3>
             <p className="text-sm text-emerald-700 mt-1">
-              Create professional images for presentations, proposals, and marketing materials.
+              Create professional images for presentations, proposals, and marketing materials. Flare is
+              fastest; Sunburst gives more detail.
             </p>
           </div>
         </div>
@@ -145,24 +156,25 @@ const ImageGeneratorContent: React.FC = () => {
                 onChange={(e) => setImageSize(e.target.value as any)}
                 className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               >
+                <option value="auto">Auto</option>
                 <option value="1024x1024">Square (1:1)</option>
-                <option value="1792x1024">Landscape (16:9)</option>
-                <option value="1024x1792">Portrait (9:16)</option>
+                <option value="1536x1024">Landscape (3:2)</option>
+                <option value="1024x1536">Portrait (2:3)</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                 <Layout size={16} className="mr-1 text-gray-500" />
-                Style
+                Model
               </label>
               <select
-                value={imageStyle}
-                onChange={(e) => setImageStyle(e.target.value as any)}
+                value={imageModel}
+                onChange={(e) => setImageModel(e.target.value as any)}
                 className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <option value="natural">Natural</option>
-                <option value="vivid">Vivid</option>
+                <option value="gpt-image-2.6-flare">Flare (fast)</option>
+                <option value="gpt-image-2.6-sunburst">Sunburst (detailed)</option>
               </select>
             </div>
 
@@ -176,14 +188,93 @@ const ImageGeneratorContent: React.FC = () => {
                 onChange={(e) => setImageQuality(e.target.value as any)}
                 className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               >
-                <option value="standard">Standard</option>
-                <option value="hd">HD</option>
+                <option value="auto">Auto</option>
+                <option value="low">Low (fastest)</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="xhigh">Extra high</option>
+                <option value="max">Max</option>
               </select>
-              {imageQuality === 'hd' && (
-                <p className="text-xs text-gray-500 mt-1">HD quality uses more API credits</p>
+              {['high', 'xhigh', 'max'].includes(imageQuality) && (
+                <p className="text-xs text-gray-500 mt-1">Higher quality uses more API credits</p>
               )}
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="image-complexity" className="block text-sm font-medium text-gray-700 mb-1">
+                Planning (complexity)
+              </label>
+              <select
+                id="image-complexity"
+                value={complexity}
+                onChange={(e) => setComplexity(e.target.value as any)}
+                className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="low">Low (fastest)</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="image-format" className="block text-sm font-medium text-gray-700 mb-1">
+                Format
+              </label>
+              <select
+                id="image-format"
+                value={outputFormat}
+                onChange={(e) => {
+                  const format = e.target.value as any;
+                  setOutputFormat(format);
+                  if (format !== 'png' && format !== 'webp' && background === 'transparent') setBackground('auto');
+                }}
+                className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="webp">WebP</option>
+                <option value="gif">Animated GIF</option>
+                <option value="svg">SVG (vector)</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="image-background" className="block text-sm font-medium text-gray-700 mb-1">
+                Background
+              </label>
+              <select
+                id="image-background"
+                value={background}
+                onChange={(e) => setBackground(e.target.value as any)}
+                className="w-full p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              >
+                <option value="auto">Auto</option>
+                <option value="opaque">Opaque</option>
+                {(outputFormat === 'png' || outputFormat === 'webp') && (
+                  <option value="transparent">Transparent</option>
+                )}
+              </select>
+            </div>
+          </div>
+
+          {outputFormat === 'gif' && (
+            <div>
+              <label htmlFor="image-frames" className="block text-sm font-medium text-gray-700 mb-1">
+                GIF frames (2–16)
+              </label>
+              <input
+                id="image-frames"
+                type="number"
+                min={2}
+                max={16}
+                value={frameCount}
+                onChange={(e) => setFrameCount(Number(e.target.value))}
+                className="w-full md:w-40 p-2 border rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end">
             <button

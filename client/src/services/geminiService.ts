@@ -120,19 +120,8 @@ class GeminiAIService {
       return content;
     } catch (error) {
       logger.error('Message generation failed', error as Error);
-
-      // Return a fallback message
-      const firstName = contact.firstName || (contact.name ? contact.name.split(' ')[0] : 'there');
-      const company = contact.company || 'your company';
-      const industry = contact.industry || 'your industry';
-
-      const templates = {
-        email: `Hi ${firstName},\n\nI hope this message finds you well. I noticed your profile and was impressed by your work at ${company}.\n\nI'd love to connect and discuss how we might be able to help with your current initiatives.\n\nBest regards,\n[Your Name]`,
-        linkedin: `Hi ${firstName}, I noticed we share interests in ${industry}. Your experience at ${company} is impressive! I'd love to connect.`,
-        'cold-outreach': `Hello ${firstName},\n\nI hope this message finds you well. I've been researching leaders in ${industry} and your work at ${company} caught my attention.\n\nI'd love to schedule a brief call to discuss how we might be able to help with your goals.\n\nBest,\n[Your Name]`,
-      };
-
-      return templates[messageType];
+      // No template fallback: report the failure instead of passing off a canned message as AI output
+      throw error;
     }
   }
 }
@@ -163,33 +152,31 @@ export const useGemini = () => {
         }
       } catch (error) {
         console.error('Error in useGemini.generateContent:', error);
-        return {
-          content: "I'm sorry, I'm having trouble processing that request.",
-          model: 'fallback',
-          provider: 'fallback',
-        };
+        throw error;
       }
     },
 
     analyzeDeal: async (dealData: any, options: any = {}) => {
       try {
-        const content = await geminiService.generatePersonalizedMessage(
-          { ...dealData, analysisType: 'deal' },
-          'email'
-        );
-
-        // Return in the format expected by components
+        const started = Date.now();
+        const { data, model } = await generateAI({
+          json: true,
+          maxTokens: 1500,
+          prompt: `Analyze this sales deal and return JSON {"riskLevel": "low"|"medium"|"high", "keyInsights": string[], "recommendedActions": string[], "winProbability": number 0-100, "potentialBlockers": string[]}.
+Deal: ${JSON.stringify(dealData)}`,
+        });
+        if (!data) throw new Error('The AI returned an unreadable response');
         return {
           content: {
-            riskLevel: 'medium',
-            keyInsights: [content.substring(0, 100) + '...'],
-            recommendedActions: ['Review the deal details'],
-            winProbability: 65,
-            potentialBlockers: [],
+            riskLevel: data.riskLevel,
+            keyInsights: data.keyInsights || [],
+            recommendedActions: data.recommendedActions || [],
+            winProbability: data.winProbability,
+            potentialBlockers: data.potentialBlockers || [],
           },
-          model: 'gpt-6.2-sol',
+          model,
           provider: 'OpenAI',
-          responseTime: 1000,
+          responseTime: Date.now() - started,
           success: true,
         };
       } catch (error) {
@@ -204,23 +191,25 @@ export const useGemini = () => {
 
     analyzePipelineHealth: async (pipelineData: any, options: any = {}) => {
       try {
-        const content = await geminiService.generatePersonalizedMessage(
-          { ...pipelineData, analysisType: 'pipeline' },
-          'email'
-        );
-
-        // Return in the format expected by components
+        const started = Date.now();
+        const { data, model } = await generateAI({
+          json: true,
+          maxTokens: 1500,
+          prompt: `Analyze the health of this sales pipeline and return JSON {"healthScore": number 0-100, "keyInsights": string[], "bottlenecks": string[], "opportunities": string[], "forecastAccuracy": number 0-100}.
+Pipeline: ${JSON.stringify(pipelineData)}`,
+        });
+        if (!data) throw new Error('The AI returned an unreadable response');
         return {
           content: {
-            healthScore: 75,
-            keyInsights: [content.substring(0, 100) + '...'],
-            bottlenecks: [],
-            opportunities: [],
-            forecastAccuracy: 80,
+            healthScore: data.healthScore,
+            keyInsights: data.keyInsights || [],
+            bottlenecks: data.bottlenecks || [],
+            opportunities: data.opportunities || [],
+            forecastAccuracy: data.forecastAccuracy,
           },
-          model: 'gpt-6.2-sol',
+          model,
           provider: 'OpenAI',
-          responseTime: 1000,
+          responseTime: Date.now() - started,
           success: true,
         };
       } catch (error) {
@@ -243,10 +232,7 @@ export const useGemini = () => {
         };
       } catch (error) {
         console.error('Error in useGemini.generateEmail:', error);
-        return {
-          subject: `About: ${context.purpose || 'Your inquiry'}`,
-          body: "I'm sorry, I couldn't generate an email at this time.",
-        };
+        throw error;
       }
     },
 

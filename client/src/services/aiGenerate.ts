@@ -129,9 +129,22 @@ export async function researchAI(
 /** Generate an image, or edit / vary one when `images` (URLs or data URLs) are passed. Returns data URLs. */
 export async function generateImageAI(options: {
   prompt: string;
+  /** gpt-image-2.6-flare (fast, default) or gpt-image-2.6-sunburst (detail; default for edits) */
+  model?: 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst';
   size?: string;
+  /** auto | low | medium | high | xhigh | max */
   quality?: string;
+  n?: number;
+  background?: 'auto' | 'opaque' | 'transparent';
+  output_format?: 'png' | 'jpeg' | 'webp' | 'gif' | 'svg';
+  /** How much the model plans before rendering; low is fastest. */
+  complexity?: 'low' | 'medium' | 'high';
+  frame_count?: number;
+  frame_duration_ms?: number;
+  /** Images to edit/combine (data URLs); mask or markup apply to the first image. */
   images?: string[];
+  mask?: string;
+  markup?: string;
 }): Promise<string[]> {
   const data = await postJSON('/api/ai/image', options);
   return Array.isArray(data.images) ? data.images : [];
