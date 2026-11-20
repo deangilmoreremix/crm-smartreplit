@@ -9,6 +9,8 @@ export interface Deal {
   value: number;
   stage: DealStage;
   probability: number;
+  /** Order within its stage column (deals.position); lower first, ties fall back to updatedAt. */
+  position?: number;
   contactId: string;
   companyId?: string;
   assignedUserId?: string;

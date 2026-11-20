@@ -75,6 +75,20 @@ describe('GPT5Service error kinds', () => {
     expect((await catchErr(svc.analyzeKPITrends({}, { z: 1 }))).kind).toBe('server');
   });
 
+  it('prefers the server markers: fallback with needsApiKey false is a server error, openai passes even if it looks canned', async () => {
+    const svc = new GPT5Service();
+    fetchMock.mockResolvedValueOnce(
+      jsonRes({ summary: 'Something new', source: 'fallback', needsApiKey: false, error: 'AI request failed' })
+    );
+    expect((await catchErr(svc.analyzeKPITrends({}, { a: 1 }))).kind).toBe('server');
+
+    fetchMock.mockResolvedValueOnce(
+      jsonRes({ summary: 'Analysis unavailable', recommendations: ['Retry'], source: 'openai' })
+    );
+    const data = await svc.analyzeKPITrends({}, { b: 1 });
+    expect(data.source).toBe('openai');
+  });
+
   it('returns real data untouched and never invents defaults', async () => {
     const svc = new GPT5Service();
     fetchMock.mockResolvedValueOnce(jsonRes({ probability_score: 42, risk_level: 'low' }));

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDealStore } from '../store/dealStore';
 import { X, ArrowRight, BarChart3, DollarSign } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSafeNavigate } from './record-table/useSafeNavigate';
 
 interface PipelineModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface PipelineModalProps {
 const PipelineModal: React.FC<PipelineModalProps> = ({ isOpen, onClose }) => {
   const { deals, stageValues, totalPipelineValue } = useDealStore();
   const { isDark } = useTheme();
+  const navigate = useSafeNavigate();
   const [activeView, setActiveView] = useState<'pipeline' | 'analysis'>('pipeline');
 
   if (!isOpen) return null;
@@ -244,7 +246,7 @@ const PipelineModal: React.FC<PipelineModalProps> = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
-                  onClick={() => (window.location.href = '/pipeline')}
+                  onClick={() => navigate('/pipeline')}
                 >
                   Full Pipeline View
                 </button>
@@ -338,7 +340,7 @@ const PipelineModal: React.FC<PipelineModalProps> = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
-                  onClick={() => (window.location.href = '/analytics')}
+                  onClick={() => navigate('/analytics')}
                 >
                   Full Analysis
                 </button>

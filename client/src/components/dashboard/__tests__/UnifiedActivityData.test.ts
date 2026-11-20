@@ -45,6 +45,29 @@ describe('mergeUnifiedItems', () => {
   });
 });
 
+describe('appointmentToItem start time shapes', () => {
+  it('reads API startTime / start_time', () => {
+    expect(appointmentToItem({ id: 'a', startTime: iso(2) })!.at).toBe(NOW + 2 * 3600_000);
+    expect(appointmentToItem({ id: 'a', start_time: iso(3) })!.at).toBe(NOW + 3 * 3600_000);
+  });
+
+  it('reads the store shape `date` (Date or ISO string)', () => {
+    expect(appointmentToItem({ id: 'a', date: new Date(NOW + 3600_000) })!.at).toBe(NOW + 3600_000);
+    expect(appointmentToItem({ id: 'a', date: iso(4) })!.at).toBe(NOW + 4 * 3600_000);
+  });
+
+  it('combines `date` with an HH:MM `time`', () => {
+    const at = appointmentToItem({ id: 'a', date: '2026-11-10', time: '14:30' })!.at;
+    const d = new Date(at);
+    expect([d.getHours(), d.getMinutes()]).toEqual([14, 30]);
+  });
+
+  it('prefers startTime over date and skips rows with neither', () => {
+    expect(appointmentToItem({ id: 'a', startTime: iso(1), date: iso(9) })!.at).toBe(NOW + 3600_000);
+    expect(appointmentToItem({ id: 'a', title: 'x' })).toBeNull();
+  });
+});
+
 describe('fetchUnifiedItems defensive behavior', () => {
   const ok = (data: any) => ({ ok: true, json: async () => data }) as any;
 

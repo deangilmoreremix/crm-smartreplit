@@ -15,7 +15,7 @@ import {
   Target,
   Clock,
 } from 'lucide-react';
-import { useDealStore } from '../store/dealStore';
+import { useDealStore, compareDealsByPosition } from '../store/dealStore';
 import { Deal, DealStage } from '../types/deal';
 import SampleBadge from './SampleBadge';
 import { useContactStore } from '../store/contactStore';
@@ -344,7 +344,9 @@ const DealKanbanBoard: React.FC = () => {
       pipeline
         ? [...pipeline.stages]
             .sort((a, b) => a.order - b.order)
-            .flatMap((stage) => filteredDeals.filter((deal) => deal.stage.id === stage.id))
+            .flatMap((stage) =>
+              filteredDeals.filter((deal) => deal.stage.id === stage.id).sort(compareDealsByPosition)
+            )
         : [],
     [pipeline, filteredDeals]
   );
@@ -369,7 +371,7 @@ const DealKanbanBoard: React.FC = () => {
     const { draggableId, destination } = result;
     const newStageId = destination.droppableId;
 
-    await moveDeal(draggableId, newStageId);
+    await moveDeal(draggableId, newStageId, destination.index);
   };
 
   const handleAddDeal = (stageId: string) => {
@@ -388,7 +390,7 @@ const DealKanbanBoard: React.FC = () => {
   };
 
   const getDealsByStage = (stageId: string) => {
-    return filteredDeals.filter((deal) => deal.stage.id === stageId);
+    return filteredDeals.filter((deal) => deal.stage.id === stageId).sort(compareDealsByPosition);
   };
 
   if (!pipeline) {

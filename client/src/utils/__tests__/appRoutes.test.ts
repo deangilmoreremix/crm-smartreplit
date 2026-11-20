@@ -22,22 +22,8 @@ const toRegex = (pattern: string) =>
 const routeRegexes = allPatterns.map(toRegex);
 const resolves = (p: string) => routeRegexes.some((r) => r.test(p));
 
-// Navigation links that are known not to resolve yet (outside this change's scope).
-const KNOWN_UNRESOLVED = new Set([
-  '/analytics/kpi',
-  '/analytics/tasks',
-  '/analytics/revenue',
-  '/analytics/productivity',
-  '/analytics/insights',
-  '/business-analytics',
-  '/business-analytics/kpi',
-  '/business-analytics/deals',
-  '/business-analytics/contacts',
-  '/business-analytics/tasks',
-  '/business-analytics/revenue',
-  '/business-analytics/productivity',
-  '/business-analytics/insights',
-]);
+// Navigation links that are known not to resolve: none; every Navbar link must resolve.
+const KNOWN_UNRESOLVED = new Set<string>();
 
 describe('APP_ROUTES', () => {
   it('has every path resolving to a <Route> in App.tsx', () => {

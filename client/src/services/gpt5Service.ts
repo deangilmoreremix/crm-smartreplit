@@ -63,8 +63,8 @@ const isStringArrayEqual = (v: unknown, expected: string[]) =>
   Array.isArray(v) && v.length === expected.length && v.every((x, i) => x === expected[i]);
 
 /**
- * The server answers HTTP 200 with a canned payload when the key is missing or the AI call
- * failed. Detect those payloads so they are never shown as AI output.
+ * The server answers HTTP 200 with a canned payload (`source: 'fallback'`, `needsApiKey`) when the key
+ * is missing or the AI call failed. Detect those payloads so they are never shown as AI output.
  */
 const detectServerFallback = (endpoint: string, data: Json): AIServiceError | null => {
   if (data.needsApiKey === true) {
@@ -74,6 +74,9 @@ const detectServerFallback = (endpoint: string, data: Json): AIServiceError | nu
       'No OpenAI API key configured. Add your key in Settings > API Keys.'
     );
   }
+  // Explicit markers win: the server tags real AI output `source: 'openai'` and canned output
+  // `source: 'fallback'`. The shape checks below only cover older servers that sent no marker.
+  if (data.source === 'openai') return null;
   const canned =
     data.source === 'fallback' ||
     (endpoint.endsWith('/kpi-analysis') && data.summary === 'Analysis unavailable') ||

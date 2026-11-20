@@ -296,6 +296,15 @@ import { emitCrmEvent } from '../services/workflowTriggers';
 
   // ==================== DEALS API ====================
 
+  // JSON carries timestamps as ISO strings; drizzle timestamp columns / insert schema need Dates.
+  const coerceDealDates = (body: Record<string, any> = {}) => {
+    const out = { ...body };
+    for (const key of ['expectedCloseDate', 'actualCloseDate']) {
+      if (typeof out[key] === 'string') out[key] = new Date(out[key]);
+    }
+    return out;
+  };
+
   // Get all deals for the authenticated user
   app.get('/api/deals', requireAuth({ checkEntitlement: false }), async (req, res) => {
     try {
@@ -345,7 +354,7 @@ import { emitCrmEvent } from '../services/workflowTriggers';
 
       const { db } = await import('../db');
       const validatedData = insertDealSchema.parse({
-        ...req.body,
+        ...coerceDealDates(req.body),
         profileId: userId,
       });
 
@@ -383,7 +392,7 @@ import { emitCrmEvent } from '../services/workflowTriggers';
       const [updatedDeal] = await db
         .update(deals)
         .set({
-          ...req.body,
+          ...coerceDealDates(req.body),
           profileId: userId,
           updatedAt: new Date(),
         })

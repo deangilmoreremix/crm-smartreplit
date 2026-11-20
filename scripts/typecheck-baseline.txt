@@ -23,7 +23,7 @@ client/src/components/GTMIntegration.tsx: TS7006 2
 client/src/components/GTMPromptLibrary.tsx: TS2307 1
 client/src/components/GTMPromptLibrary.tsx: TS7006 3
 client/src/components/InCallMessaging.tsx: TS7006 1
-client/src/components/Navbar.tsx: TS2339 5
+client/src/components/Navbar.tsx: TS2339 2
 client/src/components/Navbar.tsx: TS2345 1
 client/src/components/PartnerManagement.tsx: TS2322 1
 client/src/components/PartnerManagement.tsx: TS2339 2

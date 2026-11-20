@@ -43,9 +43,11 @@ import ContactExport from '../components/contacts/ContactExport';
 import ImportContactsModal from '../components/ImportContactsModal';
 import SavedViewsMenu from '../components/SavedViewsMenu';
 import InlineEditCell from '../components/InlineEditCell';
+import { useSafeNavigate } from '../components/record-table/useSafeNavigate';
 
 const Contacts: React.FC = () => {
   const { isDark } = useTheme();
+  const navigate = useSafeNavigate();
   // Use the contact store
   const {
     contacts: storeContacts,
@@ -886,7 +888,7 @@ const Contacts: React.FC = () => {
                     contact={contact}
                     isSelected={selectedContacts.includes(contact.id)}
                     onSelect={() => toggleContactSelection(contact.id)}
-                    onClick={() => (window.location.href = `/contacts/${contact.id}`)}
+                    onClick={() => navigate(`/contacts/${contact.id}`)}
                   />
                 ))}
               </div>

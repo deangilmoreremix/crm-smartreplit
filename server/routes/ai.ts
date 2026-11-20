@@ -278,6 +278,33 @@ export function registerAIRoutes(app: Express) {
     );
   }
 
+  // Shared envelope for the analysis endpoints below. Always HTTP 200 with a `source` marker:
+  //   success            -> { ...data, source: 'openai', model }
+  //   no key / failure   -> { ...canned, source: 'fallback', needsApiKey, error? }
+  // The canned fields stay as before so older clients keep working.
+  async function respondAnalysis(
+    res: Response,
+    userId: string,
+    canned: { noKey: Record<string, unknown>; failure: Record<string, unknown> },
+    run: (openaiData: { client: any; model: string | null }) => Promise<{ data: any; model?: string }>
+  ) {
+    let openaiData: { client: any; model: string | null } | null;
+    try {
+      openaiData = await createUserOpenAIClient(userId);
+    } catch {
+      return res.json({ ...canned.failure, source: 'fallback', needsApiKey: false, error: 'AI request failed' });
+    }
+    if (!openaiData) {
+      return res.json({ ...canned.noKey, source: 'fallback', needsApiKey: true });
+    }
+    try {
+      const { data, model } = await run(openaiData);
+      return res.json({ ...data, source: 'openai', ...(model ? { model } : {}) });
+    } catch {
+      return res.json({ ...canned.failure, source: 'fallback', needsApiKey: false, error: 'AI request failed' });
+    }
+  }
+
   // Smart Greeting
   app.post(
     '/api/openai/smart-greeting',
@@ -286,40 +313,32 @@ export function registerAIRoutes(app: Express) {
       const userId = (req as any).userId;
       const { userMetrics, timeOfDay } = req.body;
 
-      const openaiData = await createUserOpenAIClient(userId);
-      if (!openaiData) {
-        return res.json({
-          greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
-          insight: userMetrics?.totalValue > 50000 ? 'Strong momentum' : 'Growing steadily',
-          source: 'fallback',
-          needsApiKey: true,
-        });
-      }
-
-      try {
-        const response = await respondJson({
-          client: openaiData.client,
-          model: openaiData.model ?? undefined,
-          tier: 'fast',
-          instructions:
-            'You are an expert business advisor. Generate personalized, strategic greetings that provide actionable insights based on user data.',
-          input: `Generate a smart greeting for ${timeOfDay}. User metrics: ${JSON.stringify(userMetrics)}. Provide both a greeting and a strategic insight in JSON format.`,
-          json: true,
-          effort: 'none',
-          temperature: 0.7,
-          maxOutputTokens: 300,
-        });
-        res.json({
-          ...response.data,
-          source: response.model,
-        });
-      } catch (error) {
-        res.json({
-          greeting: `Good ${timeOfDay}!`,
-          insight: 'Your pipeline is growing',
-          source: 'fallback',
-        });
-      }
+      await respondAnalysis(
+        res,
+        userId,
+        {
+          noKey: {
+            greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
+            insight: userMetrics?.totalValue > 50000 ? 'Strong momentum' : 'Growing steadily',
+          },
+          failure: { greeting: `Good ${timeOfDay}!`, insight: 'Your pipeline is growing' },
+        },
+        async (openaiData) => {
+          const response = await respondJson({
+            client: openaiData.client,
+            model: openaiData.model ?? undefined,
+            tier: 'fast',
+            instructions:
+              'You are an expert business advisor. Generate personalized, strategic greetings that provide actionable insights based on user data.',
+            input: `Generate a smart greeting for ${timeOfDay}. User metrics: ${JSON.stringify(userMetrics)}. Provide both a greeting and a strategic insight in JSON format.`,
+            json: true,
+            effort: 'none',
+            temperature: 0.7,
+            maxOutputTokens: 300,
+          });
+          return { data: response.data, model: response.model };
+        }
+      );
     }
   );
 
@@ -331,32 +350,32 @@ export function registerAIRoutes(app: Express) {
       const userId = (req as any).userId;
       const { historicalData, currentMetrics } = req.body;
 
-      const openaiData = await createUserOpenAIClient(userId);
-      if (!openaiData) {
-        return res.json({
-          summary: 'Configure your OpenAI API key in Settings > API Keys for KPI analysis',
-          recommendations: ['Add OpenAI API key in Settings'],
-          needsApiKey: true,
-        });
-      }
-
-      try {
-        const response = await respondJson({
-          client: openaiData.client,
-          model: openaiData.model ?? undefined,
-          tier: 'default',
-          instructions:
-            'You are an expert business analyst. Analyze KPI trends and provide strategic insights with actionable recommendations.',
-          input: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
-          json: true,
-          effort: 'none',
-          temperature: 0.3,
-          maxOutputTokens: 800,
-        });
-        res.json(response.data);
-      } catch (error) {
-        res.json({ summary: 'Analysis unavailable', recommendations: ['Retry'] });
-      }
+      await respondAnalysis(
+        res,
+        userId,
+        {
+          noKey: {
+            summary: 'Configure your OpenAI API key in Settings > API Keys for KPI analysis',
+            recommendations: ['Add OpenAI API key in Settings'],
+          },
+          failure: { summary: 'Analysis unavailable', recommendations: ['Retry'] },
+        },
+        async (openaiData) => {
+          const response = await respondJson({
+            client: openaiData.client,
+            model: openaiData.model ?? undefined,
+            tier: 'default',
+            instructions:
+              'You are an expert business analyst. Analyze KPI trends and provide strategic insights with actionable recommendations.',
+            input: `Analyze these KPI trends: Historical: ${JSON.stringify(historicalData)}, Current: ${JSON.stringify(currentMetrics)}. Provide summary, trends, predictions, and recommendations in JSON format.`,
+            json: true,
+            effort: 'none',
+            temperature: 0.3,
+            maxOutputTokens: 800,
+          });
+          return { data: response.data, model: response.model };
+        }
+      );
     }
   );
 
@@ -368,33 +387,33 @@ export function registerAIRoutes(app: Express) {
       const userId = (req as any).userId;
       const { dealData, contactHistory, marketContext } = req.body;
 
-      const openaiData = await createUserOpenAIClient(userId);
-      if (!openaiData) {
-        return res.json({
-          probability_score: 65,
-          risk_level: 'medium',
-          recommendations: ['Configure OpenAI API key in Settings'],
-          needsApiKey: true,
-        });
-      }
-
-      try {
-        const response = await respondJson({
-          client: openaiData.client,
-          model: openaiData.model ?? undefined,
-          tier: 'default',
-          instructions:
-            'You are an expert sales strategist. Provide comprehensive deal intelligence including win probability, risk factors, and strategic recommendations.',
-          input: `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext)}. Provide probability_score, risk_level, key_factors, recommendations, confidence_level, estimated_close_days, and value_optimization in JSON format.`,
-          json: true,
-          effort: 'none',
-          temperature: 0.2,
-          maxOutputTokens: 600,
-        });
-        res.json(response.data);
-      } catch (error) {
-        res.json({ probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] });
-      }
+      await respondAnalysis(
+        res,
+        userId,
+        {
+          noKey: {
+            probability_score: 65,
+            risk_level: 'medium',
+            recommendations: ['Configure OpenAI API key in Settings'],
+          },
+          failure: { probability_score: 65, risk_level: 'medium', recommendations: ['Retry'] },
+        },
+        async (openaiData) => {
+          const response = await respondJson({
+            client: openaiData.client,
+            model: openaiData.model ?? undefined,
+            tier: 'default',
+            instructions:
+              'You are an expert sales strategist. Provide comprehensive deal intelligence including win probability, risk factors, and strategic recommendations.',
+            input: `Analyze this deal: ${JSON.stringify(dealData)}. Contact history: ${JSON.stringify(contactHistory)}. Market context: ${JSON.stringify(marketContext)}. Provide probability_score, risk_level, key_factors, recommendations, confidence_level, estimated_close_days, and value_optimization in JSON format.`,
+            json: true,
+            effort: 'none',
+            temperature: 0.2,
+            maxOutputTokens: 600,
+          });
+          return { data: response.data, model: response.model };
+        }
+      );
     }
   );
 
@@ -406,32 +425,32 @@ export function registerAIRoutes(app: Express) {
       const userId = (req as any).userId;
       const { businessData, marketContext, objectives } = req.body;
 
-      const openaiData = await createUserOpenAIClient(userId);
-      if (!openaiData) {
-        return res.json({
-          market_insights: ['Configure OpenAI API key in Settings'],
-          strategic_recommendations: ['Add your API key in Settings > API Keys'],
-          needsApiKey: true,
-        });
-      }
-
-      try {
-        const response = await respondJson({
-          client: openaiData.client,
-          model: openaiData.model ?? undefined,
-          tier: 'default',
-          instructions:
-            'You are a senior business consultant. Generate strategic business intelligence including market insights, competitive advantages, risk factors, growth opportunities, and strategic recommendations.',
-          input: `Generate business intelligence for: ${JSON.stringify(businessData)}. Market context: ${JSON.stringify(marketContext)}. Objectives: ${JSON.stringify(objectives)}. Provide market_insights, competitive_advantages, risk_factors, growth_opportunities, and strategic_recommendations in JSON format.`,
-          json: true,
-          effort: 'none',
-          temperature: 0.4,
-          maxOutputTokens: 1000,
-        });
-        res.json(response.data);
-      } catch (error) {
-        res.json({ market_insights: ['Retry analysis'] });
-      }
+      await respondAnalysis(
+        res,
+        userId,
+        {
+          noKey: {
+            market_insights: ['Configure OpenAI API key in Settings'],
+            strategic_recommendations: ['Add your API key in Settings > API Keys'],
+          },
+          failure: { market_insights: ['Retry analysis'] },
+        },
+        async (openaiData) => {
+          const response = await respondJson({
+            client: openaiData.client,
+            model: openaiData.model ?? undefined,
+            tier: 'default',
+            instructions:
+              'You are a senior business consultant. Generate strategic business intelligence including market insights, competitive advantages, risk factors, growth opportunities, and strategic recommendations.',
+            input: `Generate business intelligence for: ${JSON.stringify(businessData)}. Market context: ${JSON.stringify(marketContext)}. Objectives: ${JSON.stringify(objectives)}. Provide market_insights, competitive_advantages, risk_factors, growth_opportunities, and strategic_recommendations in JSON format.`,
+            json: true,
+            effort: 'none',
+            temperature: 0.4,
+            maxOutputTokens: 1000,
+          });
+          return { data: response.data, model: response.model };
+        }
+      );
     }
   );
 

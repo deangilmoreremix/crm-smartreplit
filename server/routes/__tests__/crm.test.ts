@@ -14,18 +14,23 @@ vi.mock('../auth', () => ({
 // Drizzle-style fake: every chained call returns the same thenable chain, and each `await`
 // consumes the next queued result (default: empty list). Queue results in the order the
 // route awaits queries.
-const { queue, mockDb } = vi.hoisted(() => {
+const { queue, setCalls, mockDb } = vi.hoisted(() => {
   const queue: unknown[] = [];
+  const setCalls: any[] = [];
   const chain: any = {};
   for (const m of [
-    'select', 'from', 'where', 'orderBy', 'limit', 'insert', 'values', 'update', 'set',
+    'select', 'from', 'where', 'orderBy', 'limit', 'insert', 'values', 'update',
     'delete', 'returning',
   ]) {
     chain[m] = () => chain;
   }
+  chain.set = (values: unknown) => {
+    setCalls.push(values);
+    return chain;
+  };
   chain.then = (resolve: any, reject: any) =>
     Promise.resolve(queue.length ? queue.shift() : []).then(resolve, reject);
-  return { queue, mockDb: chain };
+  return { queue, setCalls, mockDb: chain };
 });
 const queueDb = (...results: unknown[]) => queue.push(...results);
 
@@ -37,6 +42,7 @@ describe('CRM Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queue.length = 0;
+    setCalls.length = 0;
   });
 
   describe('Contacts API', () => {
@@ -270,6 +276,38 @@ describe('CRM Routes', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.title).toBe('New Deal');
+    });
+  });
+
+  describe('Deals position and dates', () => {
+    const userId = '11111111-1111-4111-8111-111111111111';
+    const makeApp = () => {
+      const app = express();
+      app.use(express.json());
+      registerCRMRoutes(app);
+      return app;
+    };
+
+    it('PUT /api/deals/:id persists position', async () => {
+      queueDb([{ id: 1, profileId: userId }], [{ id: 1, position: 2500, profileId: userId }]);
+      const response = await request(makeApp()).put('/api/deals/1').send({ position: 2500 });
+      expect(response.status).toBe(200);
+      expect(setCalls[0]).toMatchObject({ position: 2500 });
+      expect(response.body.position).toBe(2500);
+    });
+
+    it('PUT /api/deals/:id turns ISO close dates into Date objects', async () => {
+      queueDb([{ id: 1, profileId: userId }], [{ id: 1, profileId: userId }]);
+      await request(makeApp()).put('/api/deals/1').send({ expectedCloseDate: '2026-12-01T00:00:00.000Z' });
+      expect(setCalls[0].expectedCloseDate).toBeInstanceOf(Date);
+    });
+
+    it('POST /api/deals accepts position and an ISO expectedCloseDate', async () => {
+      queueDb([{ id: 2, title: 'Dated', position: 1000, profileId: userId }]);
+      const response = await request(makeApp())
+        .post('/api/deals')
+        .send({ title: 'Dated', value: '10', stage: 'lead', position: 1000, expectedCloseDate: '2026-12-01T00:00:00.000Z' });
+      expect(response.status).toBe(201);
     });
   });
 

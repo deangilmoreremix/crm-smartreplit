@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Target, Users, TrendingUp, ExternalLink, Zap } from 'lucide-react';
@@ -8,11 +9,49 @@ import ModuleFederationPipeline from '../components/ModuleFederationPipeline';
 import GTMIntegration from '../components/GTMIntegration';
 import DealKanbanBoard from '../components/DealKanbanBoard';
 import DealsTable from '../components/record-table/DealsTable';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 const PipelinePage: React.FC = () => {
   const { isDark } = useTheme();
   const { deals } = useDealStore();
   const { contacts } = useContactStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep link: /pipeline?new=1 (Command menu "Create Deal") opens the create-deal dialog.
+  const showNewDeal = searchParams.get('new') === '1';
+  const closeNewDeal = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('new');
+    setSearchParams(next, { replace: true });
+  };
+  const stages = useDealStore((s) => s.pipelines[s.activePipelineId]?.stages ?? []);
+  const [form, setForm] = useState({ title: '', value: '', stageId: '' });
+  const [saving, setSaving] = useState(false);
+  const submitNewDeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const stage = stages.find((s) => s.id === form.stageId) ?? stages[0];
+    if (!form.title.trim() || !stage) return;
+    setSaving(true);
+    const id = await useDealStore.getState().addDeal({
+      title: form.title.trim(),
+      value: Number(form.value) || 0,
+      stage,
+      probability: stage.probability,
+      contactId: '',
+      priority: 'medium',
+      source: 'other',
+      tags: [],
+      customFields: {},
+      activities: [],
+      attachments: [],
+      currency: 'USD',
+    });
+    setSaving(false);
+    if (id) {
+      setForm({ title: '', value: '', stageId: '' });
+      closeNewDeal();
+    }
+  };
 
   // Pick up deals changed elsewhere when the user returns to this tab (at most once per 30s).
   const lastFetchRef = useRef(Date.now()); // the board fetches on mount
@@ -118,6 +157,63 @@ const PipelinePage: React.FC = () => {
           </div>
         )}
       </div>
+      <Dialog open={showNewDeal} onOpenChange={(open) => !open && closeNewDeal()}>
+        <DialogContent>
+          <form onSubmit={submitNewDeal}>
+            <DialogHeader>
+              <DialogTitle>Create Deal</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-4">
+              <label className="block text-sm font-medium">
+                Title
+                <input
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  required
+                  autoFocus
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                Value (USD)
+                <input
+                  type="number"
+                  min="0"
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900"
+                  value={form.value}
+                  onChange={(e) => setForm({ ...form, value: e.target.value })}
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                Stage
+                <select
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm text-gray-900"
+                  value={form.stageId || stages[0]?.id || ''}
+                  onChange={(e) => setForm({ ...form, stageId: e.target.value })}
+                >
+                  {stages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <DialogFooter>
+              <button type="button" onClick={closeNewDeal} className="px-4 py-2 text-sm rounded-md border">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving || !form.title.trim()}
+                className="px-4 py-2 text-sm rounded-md bg-blue-600 text-white disabled:opacity-50"
+              >
+                {saving ? 'Creating...' : 'Create deal'}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -326,19 +326,13 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
 
   // Business Intelligence Tools - Dropdown Items
   const businessIntelligenceTools = [
-    { name: 'KPI Analysis', url: '/analytics/kpi', icon: BarChart3, isExternal: false },
-    { name: 'Deal Intelligence', url: '/analytics/deals', icon: Briefcase, isExternal: false },
-    { name: 'Contact Analytics', url: '/analytics/contacts', icon: Users, isExternal: false },
-    { name: 'Task Intelligence', url: '/analytics/tasks', icon: CheckSquare, isExternal: false },
-    { name: 'Revenue Forecast', url: '/analytics/revenue', icon: TrendingUp, isExternal: false },
-    {
-      name: 'Productivity Metrics',
-      url: '/analytics/productivity',
-      icon: Activity,
-      isExternal: false,
-    },
-    { name: 'AI Business Insights', url: '/analytics/insights', icon: Brain, isExternal: false },
-    { name: 'External Analytics', url: '/business-analytics', icon: Globe, isExternal: false },
+    { name: 'KPI Analysis', url: '/analytics', icon: BarChart3 },
+    { name: 'Deal Intelligence', url: '/analytics/deals', icon: Briefcase },
+    { name: 'Contact Analytics', url: '/analytics/contacts', icon: Users },
+    { name: 'Revenue Forecast', url: '/revenue-intelligence', icon: TrendingUp },
+    { name: 'Sales Cycle Analytics', url: '/sales-cycle-analytics', icon: Activity },
+    { name: 'AI Business Insights', url: '/business-analysis', icon: Brain },
+    { name: 'External Analytics', url: '/analytics-remote', icon: Globe },
   ];
 
   // ===== All AI tool entries organized by categories =====
@@ -1545,48 +1539,20 @@ const Navbar: React.FC<NavbarProps> = React.memo(({ onOpenPipelineModal }) => {
         isDark={isDark}
       >
         <div className="p-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-          {businessIntelligenceTools.map((tool, index) =>
-            tool.isExternal ? (
-              <button
-                key={index}
-                onClick={() => {
-                  navigate(tool.url!);
-                  closeDropdown();
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
-              >
-                <tool.icon size={16} className="block overflow-visible shrink-0 text-amber-500" />
-                <span className="text-sm font-medium">{tool.name}</span>
-              </button>
-            ) : (
-              <button
-                key={index}
-                onClick={() => {
-                  // Navigate to business intelligence tools
-                  const routeMap: { [key: string]: string } = {
-                    'business-kpi': '/business-analytics/kpi',
-                    'business-deals': '/business-analytics/deals',
-                    'business-contacts': '/business-analytics/contacts',
-                    'business-tasks': '/business-analytics/tasks',
-                    'business-revenue': '/business-analytics/revenue',
-                    'business-productivity': '/business-analytics/productivity',
-                    'business-insights': '/business-analytics/insights',
-                  };
-                  const route = tool.tool
-                    ? routeMap[tool.tool] || `/business-analytics/${tool.tool}`
-                    : '#';
-                  navigate(route);
-                  closeDropdown();
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
-              >
-                <tool.icon size={16} className="block overflow-visible shrink-0 text-amber-500" />
-                <span className="text-sm font-medium">{tool.name}</span>
-              </button>
-            )
-          )}
+          {businessIntelligenceTools.map((tool, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                navigate(tool.url);
+                closeDropdown();
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full text-left flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${isDark ? 'hover:bg-white/5 text-gray-300 hover:text-white' : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'}`}
+            >
+              <tool.icon size={16} className="block overflow-visible shrink-0 text-amber-500" />
+              <span className="text-sm font-medium">{tool.name}</span>
+            </button>
+          ))}
         </div>
       </DropdownPortal>
     </>

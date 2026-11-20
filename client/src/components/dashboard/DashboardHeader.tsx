@@ -21,6 +21,12 @@ import { Deal } from '../../types/deal';
 import ClearDemoDataModal from '../ClearDemoDataModal';
 import RestoreSampleData from '../RestoreSampleData';
 
+/** Sum of deal values still in play (excludes closed-won / closed-lost). */
+export const openPipelineValue = (deals: Deal[]): number =>
+  deals
+    .filter((d) => d.stage.id !== 'closed-won' && d.stage.id !== 'closed-lost')
+    .reduce((sum, d) => sum + d.value, 0);
+
 interface DashboardHeaderProps {
   title?: string;
   subtitle?: string;
@@ -203,10 +209,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </div>
             <div>
               <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Pipeline Value
+                Open pipeline value
               </div>
               <div className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                ${deals.reduce((sum: number, deal: Deal) => sum + deal.value, 0).toLocaleString()}
+                ${openPipelineValue(deals).toLocaleString()}
               </div>
             </div>
           </div>

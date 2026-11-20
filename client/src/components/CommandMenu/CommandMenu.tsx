@@ -284,7 +284,7 @@ const items: CommandItem[] = [
     label: 'Create Deal',
     description: 'Open the pipeline to add a deal',
     category: 'Actions',
-    action: () => navigate('/pipeline')
+    action: () => navigate('/pipeline?new=1')
   },
   {
     id: 'create-task',

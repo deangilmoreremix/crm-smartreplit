@@ -129,14 +129,15 @@ export class UniversalDataSyncService {
     const dealStore = useDealStore.getState();
 
     switch (action) {
+      // Remote-app events only change local state; they must not write to this app's database.
       case 'create':
-        dealStore.addDeal(data);
+        dealStore.applyRemoteDeal('create', data);
         break;
       case 'update':
-        dealStore.updateDeal(data.id, data);
+        dealStore.applyRemoteDeal('update', data);
         break;
       case 'delete':
-        dealStore.deleteDeal(data.id);
+        dealStore.applyRemoteDeal('delete', data);
         break;
     }
   }

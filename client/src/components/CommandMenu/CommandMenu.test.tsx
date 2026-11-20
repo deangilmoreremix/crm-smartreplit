@@ -83,4 +83,9 @@ describe('helpers', () => {
     buildDefaultItems(nav).find((i) => i.id === 'tasks')!.action();
     expect(nav).toHaveBeenCalledWith('/tasks');
   });
+  it('Create Deal opens the pipeline create dialog', () => {
+    const nav = vi.fn();
+    buildDefaultItems(nav).find((i) => i.id === 'create-deal')!.action();
+    expect(nav).toHaveBeenCalledWith('/pipeline?new=1');
+  });
 });

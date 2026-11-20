@@ -36,6 +36,7 @@ The browser sends the Supabase access token as `Authorization: Bearer <jwt>` (pa
 | Env var | Default | Purpose |
 |---|---|---|
 | `VITE_PRODUCT_RESEARCH_URL` | `https://product-research-mod-uay0.bolt.host/` | Product Research iframe on the dashboard (default is a bolt.new preview host; set a stable URL in production) |
+| `VITE_AGENCY_REMOTE_URL` | `https://agency.smartcrm.vip/` | AI Goals (agency) iframe on the dashboard |
 | `VITE_WHITE_LABEL_REMOTE_URL` | `https://white-label.smartcrm.vip` | White Label Suite iframe on the dashboard |
 | `VITE_REMOTE_LOAD_TIMEOUT_MS` | `15000` | Load timeout for embedded remotes before the Retry / Open in new tab card is shown |
 

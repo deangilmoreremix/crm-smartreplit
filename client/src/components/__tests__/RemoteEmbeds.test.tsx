@@ -7,6 +7,7 @@ vi.mock('../../contexts/ThemeContext', () => ({
 
 import RemoteWhiteLabelLoader, { GatedWhiteLabelSection } from '../RemoteWhiteLabelLoader';
 import RemoteProductResearchLoader, { PRODUCT_RESEARCH_URL } from '../RemoteProductResearchLoader';
+import RemoteAIGoalsLoader, { AGENCY_REMOTE_URL } from '../RemoteAIGoalsLoader';
 import { EntitlementContext } from '../../contexts/EntitlementContext';
 import { buildRefreshUrl, remoteAppManager } from '../../utils/remoteAppManager';
 
@@ -140,6 +141,30 @@ describe('RemoteProductResearchLoader', () => {
     post('https://product-research-mod-uay0.bolt.host', iframe.contentWindow);
     expect(screen.getByText('Connected')).toBeTruthy();
     void container;
+  });
+});
+
+describe('RemoteAIGoalsLoader', () => {
+  it('defaults to the agency URL (overridable via VITE_AGENCY_REMOTE_URL)', () => {
+    expect(AGENCY_REMOTE_URL).toBe('https://agency.smartcrm.vip/');
+  });
+
+  it('times out into the fallback card and Retry remounts the iframe', () => {
+    const { container } = render(<RemoteAIGoalsLoader />);
+    expect(container.querySelector('iframe')!.getAttribute('src')).toBe(AGENCY_REMOTE_URL);
+    advance(15_001);
+    expect(screen.getByTestId('remote-embed-fallback')).toBeTruthy();
+    fireEvent.click(screen.getByText('Retry'));
+    expect(screen.queryByTestId('remote-embed-fallback')).toBeNull();
+  });
+
+  it('a load without a handshake does not show the fallback and the src never changes (no auto-refresh)', () => {
+    const { container } = render(<RemoteAIGoalsLoader showHeader={false} />);
+    const iframe = container.querySelector('iframe')!;
+    fireEvent.load(iframe);
+    advance(10 * 60_000);
+    expect(screen.queryByTestId('remote-embed-fallback')).toBeNull();
+    expect(container.querySelector('iframe')!.getAttribute('src')).toBe(AGENCY_REMOTE_URL);
   });
 });
 

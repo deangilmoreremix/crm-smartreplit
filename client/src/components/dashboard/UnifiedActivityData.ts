@@ -37,8 +37,21 @@ export function taskToItem(t: any): UnifiedItem | null {
   };
 }
 
+/** Appointment start: API `startTime`/`start_time`, else the store's `date` (Date or ISO) plus an optional "HH:MM" `time`. */
+const appointmentStartMs = (a: any): number | null => {
+  const direct = toMs(a?.startTime ?? a?.start_time);
+  if (direct != null) return direct;
+  const base = toMs(a?.date instanceof Date ? a.date.getTime() : a?.date);
+  if (base == null) return null;
+  const m = typeof a?.time === 'string' ? /^(\d{1,2}):(\d{2})/.exec(a.time) : null;
+  if (!m) return base;
+  const d = new Date(base);
+  d.setHours(Number(m[1]), Number(m[2]), 0, 0);
+  return d.getTime();
+};
+
 export function appointmentToItem(a: any): UnifiedItem | null {
-  const at = toMs(a?.startTime ?? a?.start_time);
+  const at = appointmentStartMs(a);
   if (a?.id == null || at == null) return null;
   return {
     id: `appointment:${a.id}`,

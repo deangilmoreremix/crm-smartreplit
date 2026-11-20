@@ -15,6 +15,7 @@ import { useTaskStore } from '../store/taskStore';
 import { getInitials, getAvatarByIndex } from '../utils/avatars';
 import { useTheme } from '../contexts/ThemeContext';
 import RowContextMenu from './record-table/RowContextMenu';
+import { useSafeNavigate } from './record-table/useSafeNavigate';
 
 interface TaskCardProps {
   task: {
@@ -38,6 +39,7 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   const { isDark } = useTheme();
+  const navigate = useSafeNavigate();
   const { updateTask, deleteTask } = useTaskStore();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
@@ -136,7 +138,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
   return (
     <RowContextMenu
       items={[
-        { label: 'Open', onSelect: () => (window.location.href = `/tasks/${task.id}`) },
+        { label: 'Open', onSelect: () => navigate(`/tasks?id=${task.id}`) },
         {
           label: task.completed ? 'Mark incomplete' : 'Mark complete',
           onSelect: () => updateTask(task.id, { completed: !task.completed }),
@@ -151,7 +153,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
     >
     <div
       className={`${isDark ? 'bg-gray-800/50' : 'bg-white'} backdrop-blur-xl border rounded-2xl p-6 hover:${isDark ? 'bg-gray-800/70' : 'bg-gray-50'} transition-all duration-300 group ${getCardClass(task.isHighlighted)} ${task.completed ? 'opacity-70' : ''} relative`}
-      onClick={() => (window.location.href = `/tasks/${task.id}`)}
+      onClick={() => navigate(`/tasks?id=${task.id}`)}
     >
       {task.completed && (
         <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
@@ -213,7 +215,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
                 } flex items-center space-x-2`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.location.href = `/tasks/${task.id}/edit`;
+                  navigate(`/tasks?id=${task.id}`);
                 }}
               >
                 <FileText size={14} className="text-gray-400" />

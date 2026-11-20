@@ -46,6 +46,36 @@ const STAGE_TO_API: Record<string, string> = { qualification: 'qualified' };
 export const toApiStage = (stageId: string, qualificationStage?: 'lead' | 'qualified'): string =>
   stageId === 'qualification' ? (qualificationStage ?? STAGE_TO_API.qualification) : (STAGE_TO_API[stageId] ?? stageId);
 
+/** deals.status is 'open' | 'won' | 'lost'; keep it aligned with the closed columns. */
+const toStatus = (stageId: string) =>
+  stageId === 'closed-won' ? 'won' : stageId === 'closed-lost' ? 'lost' : 'open';
+
+/** Board order within a column: position ascending, then most recently updated first. */
+export const compareDealsByPosition = (a: Deal, b: Deal): number =>
+  (a.position ?? 0) - (b.position ?? 0) || b.updatedAt.getTime() - a.updatedAt.getTime();
+
+const isServerId = (id: string) => /^\d+$/.test(id);
+
+/** Map store-side changes onto the fields /api/deals accepts; fields the API has no column for are skipped. */
+const toApiUpdate = (updates: Partial<Deal>, current: Deal): Record<string, unknown> => {
+  const body: Record<string, unknown> = {};
+  if (updates.title !== undefined) body.title = updates.title;
+  if (updates.description !== undefined) body.description = updates.description;
+  if (updates.value !== undefined) body.value = String(updates.value);
+  if (updates.probability !== undefined) body.probability = updates.probability;
+  if (updates.position !== undefined) body.position = updates.position;
+  if (updates.contactId !== undefined) {
+    body.contactId = isServerId(updates.contactId) ? Number(updates.contactId) : null;
+  }
+  if (updates.expectedCloseDate !== undefined) body.expectedCloseDate = updates.expectedCloseDate?.toISOString() ?? null;
+  if (updates.actualCloseDate !== undefined) body.actualCloseDate = updates.actualCloseDate?.toISOString() ?? null;
+  if (updates.stage !== undefined) {
+    body.stage = toApiStage(updates.stage.id, updates.qualificationStage ?? current.qualificationStage);
+    if (toStatus(updates.stage.id) !== toStatus(current.stage.id)) body.status = toStatus(updates.stage.id);
+  }
+  return body;
+};
+
 interface ApiDealRow {
   id: number | string;
   title: string;
@@ -58,6 +88,7 @@ interface ApiDealRow {
   expectedCloseDate?: string | null;
   actualCloseDate?: string | null;
   customFields?: Record<string, any> | null;
+  position?: number | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -79,6 +110,7 @@ export function fromApiDeal(r: ApiDealRow, stages: DealStage[]): Deal {
     stage,
     probability: r.probability ?? stage.probability,
     contactId: r.contactId != null ? String(r.contactId) : '',
+    position: r.position ?? 0,
     priority: 'medium',
     daysInStage: r.daysInStage ?? 0,
     source: 'other',
@@ -126,9 +158,13 @@ interface DealStore {
 
   // Actions
   fetchDeals: () => Promise<void>;
+  /** Creates the deal on the server (optimistic). Resolves to the server id, or '' when the save failed and was rolled back. */
   addDeal: (deal: Omit<Deal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updateDeal: (id: string, updates: Partial<Deal>) => Promise<void>;
   deleteDeal: (id: string) => Promise<void>;
+  /** Apply an event that came from an embedded app: LOCAL state only, never sent to the server
+   *  (remote ids can collide with this app's numeric ids, and the remote owns its own backend). */
+  applyRemoteDeal: (action: 'create' | 'update' | 'delete', data: Record<string, any>) => void;
   moveDeal: (dealId: string, newStageId: string, newIndex?: number) => Promise<void>;
   bulkUpdateDeals: (dealIds: string[], updates: Partial<Deal>) => Promise<void>;
 
@@ -194,10 +230,10 @@ export const useDealStore = create<DealStore>((set, get) => ({
   },
 
   addDeal: async (dealData) => {
-    const id = `deal_${Date.now()}`;
+    const tempId = `deal_${Date.now()}`;
     const newDeal: Deal = {
       ...dealData,
-      id,
+      id: tempId,
       createdAt: new Date(),
       updatedAt: new Date(),
       activities: [],
@@ -206,42 +242,111 @@ export const useDealStore = create<DealStore>((set, get) => ({
       tags: dealData.tags || [],
     };
 
+    // Optimistic insert with a temporary id.
     set((state) => withVisible(state, { realDeals: [...state.realDeals, newDeal] }));
-    // Emit event for universal sync (real deals only; samples are never synced)
-    window.dispatchEvent(
-      new CustomEvent('dealsChanged', {
-        detail: { deals: get().realDeals },
-      })
-    );
 
-    return id;
+    try {
+      const res = await fetch('/api/deals', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newDeal.title,
+          value: String(newDeal.value ?? 0),
+          stage: toApiStage(newDeal.stage.id, newDeal.qualificationStage),
+          probability: newDeal.probability,
+          status: toStatus(newDeal.stage.id),
+          ...(newDeal.description ? { description: newDeal.description } : {}),
+          ...(isServerId(newDeal.contactId) ? { contactId: Number(newDeal.contactId) } : {}),
+          ...(newDeal.expectedCloseDate ? { expectedCloseDate: newDeal.expectedCloseDate.toISOString() } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      const saved = (await res.json()) as ApiDealRow;
+      const serverId = String(saved.id);
+      // Swap the temporary id for the server id (keep the locally entered fields).
+      set((state) =>
+        withVisible(state, {
+          realDeals: state.realDeals.map((d) => (d.id === tempId ? { ...d, id: serverId } : d)),
+        })
+      );
+      window.dispatchEvent(new CustomEvent('dealsChanged', { detail: { deals: get().realDeals } }));
+      return serverId;
+    } catch (e) {
+      // Roll back the optimistic insert.
+      set((state) => withVisible(state, { realDeals: state.realDeals.filter((d) => d.id !== tempId) }));
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      set({ error: `Could not create deal: ${message}` });
+      toast({
+        title: 'Could not create deal',
+        description: `"${newDeal.title}" was not saved. ${message}`,
+        variant: 'destructive',
+      });
+      return '';
+    }
   },
 
   updateDeal: async (id, updates) => {
-    // Sample deals live in `demoDeals` only: local state, no sync events, no network.
-    if (isDemoId(id) || get().demoDeals.some((d) => d.id === id)) {
-      set((state) =>
-        withVisible(state, {
-          demoDeals: state.demoDeals.map((deal) =>
-            deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
-          ),
-        })
-      );
+    const before = get().realDeals.find((d) => d.id === id);
+    applyLocalUpdate(id, updates);
+    // Sample deals and locally created deals (non-numeric ids) have no server row.
+    if (!before || isDemoDeal(before) || !isServerId(id)) return;
+    const body = toApiUpdate(updates, before);
+    if (Object.keys(body).length === 0) return;
+    try {
+      const res = await fetch(`/api/deals/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+    } catch (e) {
+      // Roll back only the fields this call changed.
+      const revert = Object.fromEntries(
+        (Object.keys(updates) as (keyof Deal)[]).map((k) => [k, before[k]])
+      ) as Partial<Deal>;
+      applyLocalUpdate(id, { ...revert, updatedAt: before.updatedAt });
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      set({ error: `Could not update deal: ${message}` });
+      toast({
+        title: 'Could not update deal',
+        description: `Your changes to "${before.title}" were reverted. ${message}`,
+        variant: 'destructive',
+      });
+    }
+  },
+
+  applyRemoteDeal: (action, data) => {
+    const id = data?.id != null ? String(data.id) : '';
+    if (!id || isDemoId(id)) return;
+    if (action === 'delete') {
+      set((state) => withVisible(state, { realDeals: state.realDeals.filter((d) => d.id !== id) }));
       return;
     }
-    set((state) =>
-      withVisible(state, {
-        realDeals: state.realDeals.map((deal) =>
-          deal.id === id ? { ...deal, ...updates, updatedAt: new Date() } : deal
-        ),
-      })
-    );
-    // Emit event for universal sync (real deals only)
-    window.dispatchEvent(
-      new CustomEvent('dealsChanged', {
-        detail: { deals: get().realDeals },
-      })
-    );
+    if (action === 'update') {
+      if (get().realDeals.some((d) => d.id === id)) applyLocalUpdate(id, data as Partial<Deal>);
+      return;
+    }
+    // create: keep remote deals distinguishable from server rows and never duplicate
+    const localId = get().realDeals.some((d) => d.id === id) ? id : `remote_${id}`;
+    if (get().realDeals.some((d) => d.id === localId)) return;
+    const stage =
+      get().pipelines[get().activePipelineId]?.stages.find((st) => st.id === data?.stage?.id || st.id === data?.stage) ??
+      get().pipelines[get().activePipelineId].stages[0];
+    const now = new Date();
+    const deal = {
+      activities: [],
+      attachments: [],
+      customFields: {},
+      tags: [],
+      ...data,
+      id: localId,
+      stage,
+      createdAt: now,
+      updatedAt: now,
+    } as unknown as Deal;
+    set((state) => withVisible(state, { realDeals: [...state.realDeals, deal] }));
   },
 
   deleteDeal: async (id) => {
@@ -272,41 +377,90 @@ export const useDealStore = create<DealStore>((set, get) => ({
     }
   },
 
-  moveDeal: async (dealId, newStageId) => {
+  moveDeal: async (dealId, newStageId, newIndex) => {
     const { pipelines, activePipelineId, realDeals, demoDeals } = get();
     const newStage = pipelines[activePipelineId]?.stages.find((s) => s.id === newStageId);
     const deal = realDeals.find((d) => d.id === dealId) ?? demoDeals.find((d) => d.id === dealId);
-    if (!newStage || !deal || deal.stage.id === newStage.id) return;
+    if (!newStage || !deal) return;
+    const sameStage = deal.stage.id === newStage.id;
+    if (sameStage && newIndex === undefined) return;
 
-    const previous = { stage: deal.stage, probability: deal.probability };
+    // Where the card lands in the target column (position is an integer; leave gaps between neighbours).
+    const column = visibleDeals(get())
+      .filter((d) => d.stage.id === newStage.id && d.id !== dealId)
+      .sort(compareDealsByPosition);
+    const positions = new Map<string, number>(); // deal id -> new position
+    if (newIndex !== undefined) {
+      const at = Math.max(0, Math.min(newIndex, column.length));
+      const prev = column[at - 1]?.position ?? (at > 0 ? 0 : undefined);
+      const next = column[at]?.position ?? (at < column.length ? 0 : undefined);
+      if (prev === undefined && next === undefined) positions.set(dealId, 1000);
+      else if (next === undefined) positions.set(dealId, prev! + 1000);
+      else if (prev === undefined) positions.set(dealId, next - 1000);
+      else if (next - prev > 1) positions.set(dealId, Math.floor((prev + next) / 2));
+      else {
+        // No room between the neighbours (or they tie): renumber the column.
+        const order = [...column.slice(0, at), deal, ...column.slice(at)];
+        order.forEach((d, i) => {
+          if (d.id === dealId || (d.position ?? 0) !== (i + 1) * 1000) positions.set(d.id, (i + 1) * 1000);
+        });
+      }
+    }
+
+    const previous = new Map<string, Partial<Deal>>();
+    for (const id of positions.keys()) {
+      const d = realDeals.find((x) => x.id === id) ?? demoDeals.find((x) => x.id === id)!;
+      previous.set(id, { position: d.position, updatedAt: d.updatedAt });
+    }
+    previous.set(dealId, { ...previous.get(dealId), stage: deal.stage, probability: deal.probability });
+
     // Optimistic local move.
-    await get().updateDeal(dealId, { stage: newStage, probability: newStage.probability });
+    const moved: Partial<Deal> = sameStage ? {} : { stage: newStage, probability: newStage.probability };
+    positions.forEach((position, id) => applyLocalUpdate(id, id === dealId ? { ...moved, position } : { position }));
+    if (positions.size === 0) applyLocalUpdate(dealId, moved);
 
     // Sample deals and deals created locally (non-numeric ids) have no server row.
-    if (isDemoDeal(deal) || !/^\d+$/.test(dealId)) return;
+    const persist = (id: string) => {
+      const d = realDeals.find((x) => x.id === id);
+      return !!d && !isDemoDeal(d) && isServerId(id);
+    };
 
     // Send only the fields that changed.
-    const body: Record<string, unknown> = { stage: toApiStage(newStage.id, deal.qualificationStage) };
-    if (newStage.probability !== previous.probability) body.probability = newStage.probability;
-    // deals.status is 'open' | 'won' | 'lost'; keep it aligned with the closed columns.
-    const toStatus = (id: string) => (id === 'closed-won' ? 'won' : id === 'closed-lost' ? 'lost' : 'open');
-    if (toStatus(newStage.id) !== toStatus(previous.stage.id)) body.status = toStatus(newStage.id);
+    const requests: Array<{ id: string; body: Record<string, unknown> }> = [];
+    if (persist(dealId)) {
+      const body: Record<string, unknown> = {};
+      if (!sameStage) {
+        body.stage = toApiStage(newStage.id, deal.qualificationStage);
+        if (newStage.probability !== deal.probability) body.probability = newStage.probability;
+        // deals.status is 'open' | 'won' | 'lost'; keep it aligned with the closed columns.
+        if (toStatus(newStage.id) !== toStatus(deal.stage.id)) body.status = toStatus(newStage.id);
+      }
+      if (positions.has(dealId)) body.position = positions.get(dealId);
+      requests.push({ id: dealId, body });
+    }
+    positions.forEach((position, id) => {
+      if (id !== dealId && persist(id)) requests.push({ id, body: { position } });
+    });
 
     try {
-      const res = await fetch(`/api/deals/${dealId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error(`Request failed (${res.status})`);
+      await Promise.all(
+        requests.map(async ({ id, body }) => {
+          const res = await fetch(`/api/deals/${id}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (!res.ok) throw new Error(`Request failed (${res.status})`);
+        })
+      );
     } catch (e) {
-      await get().updateDeal(dealId, previous);
+      previous.forEach((prev, id) => applyLocalUpdate(id, prev));
       const message = e instanceof Error ? e.message : 'Unknown error';
       set({ error: `Could not move deal: ${message}` });
       toast({
         title: 'Could not move deal',
-        description: `"${deal.title}" was returned to ${previous.stage.name}. ${message}`,
+        description: `"${deal.title}" was returned to ${deal.stage.name}. ${message}`,
         variant: 'destructive',
       });
     }
@@ -567,6 +721,23 @@ export const useDealStore = create<DealStore>((set, get) => ({
     return pipelines[activePipelineId] || null;
   },
 }));
+
+/** Local-only update (no network). Sample deals stay in `demoDeals`; real-deal updates emit the sync event. */
+function applyLocalUpdate(id: string, updates: Partial<Deal>) {
+  const { demoDeals, realDeals } = useDealStore.getState();
+  const patch = (deal: Deal): Deal =>
+    deal.id === id ? { ...deal, updatedAt: new Date(), ...updates } : deal;
+  if (isDemoId(id) || demoDeals.some((d) => d.id === id)) {
+    useDealStore.setState((state) => withVisible(state, { demoDeals: state.demoDeals.map(patch) }));
+    return;
+  }
+  if (!realDeals.some((d) => d.id === id)) return;
+  useDealStore.setState((state) => withVisible(state, { realDeals: state.realDeals.map(patch) }));
+  // Emit event for universal sync (real deals only)
+  window.dispatchEvent(
+    new CustomEvent('dealsChanged', { detail: { deals: useDealStore.getState().realDeals } })
+  );
+}
 
 // Safety net: if anything writes realDeals/demoDeals/demoEnabled directly via setState,
 // re-derive the visible `deals` list. No-op when already in sync.

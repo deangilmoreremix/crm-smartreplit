@@ -203,6 +203,7 @@ describe('dealStore demo (sample) deals', () => {
   it('dealsChanged events carry real deals only and sample edits emit none', async () => {
     const seen: any[] = [];
     const h = (e: any) => seen.push(e.detail.deals);
+    (fetch as any).mockResolvedValue({ ok: true, json: async () => ({}) });
     window.addEventListener('dealsChanged', h);
     await useDealStore.getState().updateDeal('demo-1', { title: 'x' });
     expect(seen).toHaveLength(0);
@@ -258,3 +259,172 @@ describe('dealStore stage mapping round trip', () => {
   });
 });
 
+
+describe('dealStore addDeal / updateDeal server sync', () => {
+  const stages = () => useDealStore.getState().pipelines.default.stages;
+  const input = () => ({
+    ...fromApiDeal(row, stages()),
+    id: undefined as any,
+    title: 'New one',
+    value: 500,
+    contactId: '',
+    stage: stages().find((s) => s.id === 'qualification')!,
+    probability: 20,
+  });
+
+  beforeEach(() => {
+    toastMock.mockReset();
+    vi.stubGlobal('fetch', vi.fn());
+    useDealStore.setState({ realDeals: [fromApiDeal(row, stages())], demoEnabled: false, error: null });
+  });
+
+  it('addDeal POSTs to /api/deals and swaps the temp id for the server id', async () => {
+    let tempSeen = '';
+    (fetch as any).mockImplementation(async () => {
+      tempSeen = useDealStore.getState().realDeals.at(-1)!.id; // optimistic row is already visible
+      return { ok: true, json: async () => ({ id: 42, title: 'New one' }) };
+    });
+    const id = await useDealStore.getState().addDeal(input());
+    expect(id).toBe('42');
+    expect(tempSeen).toMatch(/^deal_/);
+    const [url, init] = (fetch as any).mock.calls[0];
+    expect(url).toBe('/api/deals');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({
+      title: 'New one', value: '500', stage: 'qualified', probability: 20, status: 'open',
+    });
+    expect(useDealStore.getState().realDeals.map((d) => d.id)).toEqual(['7', '42']);
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it('addDeal rolls back and toasts when the server rejects', async () => {
+    (fetch as any).mockResolvedValue({ ok: false, status: 400 });
+    const id = await useDealStore.getState().addDeal(input());
+    expect(id).toBe('');
+    expect(useDealStore.getState().realDeals.map((d) => d.id)).toEqual(['7']);
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+  });
+
+  it('updateDeal PUTs mapped fields for server deals and skips fields the API lacks', async () => {
+    (fetch as any).mockResolvedValue({ ok: true, json: async () => ({}) });
+    await useDealStore.getState().updateDeal('7', { title: 'Renamed', value: 99, priority: 'high', tags: ['x'] });
+    const [url, init] = (fetch as any).mock.calls[0];
+    expect(url).toBe('/api/deals/7');
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body)).toEqual({ title: 'Renamed', value: '99' });
+    const d = useDealStore.getState().realDeals[0];
+    expect([d.title, d.value, d.priority]).toEqual(['Renamed', 99, 'high']);
+  });
+
+  it('updateDeal makes no request when nothing maps to the API', async () => {
+    await useDealStore.getState().updateDeal('7', { priority: 'low' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('updateDeal rolls back and toasts on failure', async () => {
+    (fetch as any).mockResolvedValue({ ok: false, status: 500 });
+    await useDealStore.getState().updateDeal('7', { title: 'Nope' });
+    expect(useDealStore.getState().realDeals[0].title).toBe('Big deal');
+    expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));
+  });
+
+  it('updateDeal on local or sample deals makes no request', async () => {
+    useDealStore.setState({ demoEnabled: true });
+    await useDealStore.getState().updateDeal('demo-1', { title: 'x' });
+    useDealStore.setState({ realDeals: [{ ...useDealStore.getState().realDeals[0], id: 'deal_1' }] });
+    await useDealStore.getState().updateDeal('deal_1', { title: 'y' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('dealStore card order (position)', () => {
+  const stages = () => useDealStore.getState().pipelines.default.stages;
+  const mk = (id: number, position: number, stage = 'proposal') =>
+    fromApiDeal({ id, title: `D${id}`, value: 1, stage, position }, stages());
+  const bodies = () => (fetch as any).mock.calls.map((c: any[]) => [c[0], JSON.parse(c[1].body)]);
+
+  beforeEach(() => {
+    toastMock.mockReset();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }));
+    useDealStore.setState({
+      realDeals: [mk(1, 1000), mk(2, 2000), mk(3, 3000), mk(4, 0, 'negotiation')],
+      demoEnabled: false,
+      error: null,
+    });
+  });
+
+  it('fetchDeals maps position', async () => {
+    (fetch as any).mockResolvedValue({ ok: true, json: async () => [{ ...row, position: 5 }] });
+    await useDealStore.getState().fetchDeals();
+    expect(useDealStore.getState().realDeals[0].position).toBe(5);
+  });
+
+  it('reordering within a column sends a position between the neighbours', async () => {
+    await useDealStore.getState().moveDeal('3', 'proposal', 1); // between 1 and 2
+    expect(bodies()).toEqual([['/api/deals/3', { position: 1500 }]]);
+    expect(useDealStore.getState().realDeals.find((d) => d.id === '3')!.position).toBe(1500);
+  });
+
+  it('moving to another column sends stage and position together', async () => {
+    await useDealStore.getState().moveDeal('1', 'negotiation', 1); // after deal 4 (position 0)
+    expect(bodies()).toEqual([['/api/deals/1', { stage: 'negotiation', probability: 70, position: 1000 }]]);
+  });
+
+  it('dropping first uses a position below the first card', async () => {
+    await useDealStore.getState().moveDeal('3', 'proposal', 0);
+    expect(bodies()).toEqual([['/api/deals/3', { position: 0 }]]);
+  });
+
+  it('renumbers the column when neighbours leave no gap', async () => {
+    useDealStore.setState({ realDeals: [mk(1, 5), mk(2, 5), mk(3, 9)] });
+    await useDealStore.getState().moveDeal('3', 'proposal', 1);
+    const ids = bodies().map((b: any) => b[0]).sort();
+    expect(ids).toEqual(['/api/deals/1', '/api/deals/2', '/api/deals/3']);
+    const pos = Object.fromEntries(useDealStore.getState().realDeals.map((d) => [d.id, d.position]));
+    expect(pos['1']! < pos['3']! && pos['3']! < pos['2']!).toBe(true);
+  });
+
+  it('rolls back positions when the server rejects', async () => {
+    (fetch as any).mockResolvedValue({ ok: false, status: 500 });
+    await useDealStore.getState().moveDeal('3', 'negotiation', 0);
+    const d = useDealStore.getState().realDeals.find((x) => x.id === '3')!;
+    expect([d.stage.id, d.position]).toEqual(['proposal', 3000]);
+    expect(toastMock).toHaveBeenCalled();
+  });
+
+  it('sample deals reorder locally with no request', async () => {
+    useDealStore.setState({ demoEnabled: true });
+    const demo = DEMO_DEALS[0];
+    await useDealStore.getState().moveDeal(demo.id, demo.stage.id, 0);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('dealStore applyRemoteDeal (events from embedded apps are local-only)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+    const stages = useDealStore.getState().pipelines.default.stages;
+    useDealStore.setState({ realDeals: [fromApiDeal(row, stages)], demoEnabled: false, error: null });
+  });
+
+  it('create adds a remote_ deal and never calls the server', () => {
+    useDealStore.getState().applyRemoteDeal('create', { id: 99, title: 'From remote', value: 5 });
+    expect(useDealStore.getState().deals.map((d) => d.id)).toContain('remote_99');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('update and delete change local state only', () => {
+    useDealStore.getState().applyRemoteDeal('update', { id: '7', title: 'Renamed' });
+    expect(useDealStore.getState().realDeals[0].title).toBe('Renamed');
+    useDealStore.getState().applyRemoteDeal('delete', { id: '7' });
+    expect(useDealStore.getState().realDeals).toHaveLength(0);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('ignores sample ids and unknown updates', () => {
+    useDealStore.getState().applyRemoteDeal('update', { id: 'demo-1', title: 'x' });
+    useDealStore.getState().applyRemoteDeal('update', { id: '12345', title: 'x' });
+    expect(useDealStore.getState().realDeals.map((d) => d.id)).toEqual(['7']);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
