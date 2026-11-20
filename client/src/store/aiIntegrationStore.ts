@@ -135,7 +135,7 @@ export const useAIIntegrationStore = create<AIIntegrationState>()(
       workflows: [],
       workflowExecutions: [],
       models: [],
-      activeModel: 'gpt-6-luna',
+      activeModel: 'gpt-6.2-sol',
       suggestions: [],
       pendingSuggestions: 0,
       enrichmentRequests: [],

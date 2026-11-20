@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { DEFAULT_MODEL } from '../_shared/userOpenAI.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,25 +43,17 @@ async function getUserFromToken(token: string) {
 }
 
 async function getOpenAIApiKey(supabase: ReturnType<typeof createClient>, userId: string): Promise<string> {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('user_api_keys')
     .select('api_key')
     .eq('user_id', userId)
     .eq('provider', 'openai')
-    .single();
-  
-  if (error || !data) {
-    const { data: globalData } = await supabase
-      .from('user_api_keys')
-      .select('api_key')
-      .eq('user_id', userId)
-      .eq('provider', 'openai')
-      .single();
-    
-    if (!globalData) throw new Error('OpenAI API key not configured');
-    return globalData.api_key;
-  }
-  
+    .eq('is_active', true)
+    .order('is_default', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) throw new Error('OpenAI API key not configured');
   return data.api_key;
 }
 
@@ -75,7 +68,9 @@ async function processTranscriptWithOpenAI(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: DEFAULT_MODEL,
+      store: false,
+      text: { format: { type: 'json_object' } },
       input: `You are an AI assistant that analyzes meeting transcripts and extracts key information. 
 Analyze the following meeting transcript and provide a structured summary.
 
@@ -90,7 +85,6 @@ Provide a JSON response with the following structure:
   "sentiment": "positive/neutral/negative",
   "topics": ["topic1", "topic2", "topic3"]
 }`,
-      tools: [{ type: 'computer_20241022', display_width: 1024, display_height: 768 }],
     }),
   });
 
@@ -124,7 +118,14 @@ Provide a JSON response with the following structure:
       outputText = result.response || JSON.stringify(result);
     }
 
-    const parsed = JSON.parse(outputText);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(outputText);
+    } catch {
+      const match = outputText.match(/\{[\s\S]*\}/);
+      parsed = match ? JSON.parse(match[0]) : null;
+    }
+    if (!parsed) throw new Error('The AI returned an unreadable response');
     return {
       summary: parsed.summary || '',
       key_points: parsed.key_points || [],
@@ -133,13 +134,7 @@ Provide a JSON response with the following structure:
       topics: parsed.topics || [],
     };
   } catch (e) {
-    return {
-      summary: result.choices?.[0]?.message?.content || 'Transcript processed',
-      key_points: [],
-      action_items: [],
-      sentiment: 'neutral',
-      topics: [],
-    };
+    throw new Error(`Meeting analysis failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 

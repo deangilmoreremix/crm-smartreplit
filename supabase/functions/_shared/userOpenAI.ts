@@ -4,8 +4,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import OpenAI from 'https://esm.sh/openai@4'
 
-export const DEFAULT_MODEL = 'gpt-6-luna'
-export const ADVANCED_MODEL = 'gpt-6.1-sol'
+export const DEFAULT_MODEL = 'gpt-6.2-sol'
+export const ADVANCED_MODEL = 'gpt-6.2-astra'
 export const NO_KEY_MESSAGE = 'Add your OpenAI API key in Settings → API Keys to use AI features.'
 
 const LEGACY: Record<string, string> = {

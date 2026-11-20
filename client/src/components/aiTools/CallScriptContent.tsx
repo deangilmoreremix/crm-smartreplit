@@ -53,7 +53,7 @@ Format with clear sections and speaking points.`;
           { role: 'system', content: 'You are an expert sales call script generator. Create personalized, effective call scripts that are persuasive and professional.' },
           { role: 'user', content: prompt }
         ],
-        model: 'gpt-6-luna',
+        model: 'gpt-6.2-sol',
         featureUsed: 'call-script-generator',
         temperature: 0.7,
         maxTokens: 1500,
@@ -67,7 +67,7 @@ Format with clear sections and speaking points.`;
           { role: 'system', content: 'You are an AI assistant that provides strategic reasoning for sales and marketing decisions.' },
           { role: 'user', content: reasoningPrompt }
         ],
-        model: 'gpt-6-luna',
+        model: 'gpt-6.2-sol',
         featureUsed: 'call-script-reasoning',
         temperature: 0.4,
         maxTokens: 500,

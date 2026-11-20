@@ -18,39 +18,39 @@ export interface AIModel {
 }
 
 export const AI_MODELS: Record<string, AIModel> = {
-  'gpt-6-luna': {
-    id: 'gpt-6-luna',
-    name: 'GPT-6 Luna',
+  'gpt-6.2-sol': {
+    id: 'gpt-6.2-sol',
+    name: 'GPT-6.2 Sol',
     provider: 'openai',
     family: 'gpt',
-    version: '6',
-    contextWindow: 1000000,
+    version: '6.2',
+    contextWindow: 1050000,
     maxTokens: 128000,
     pricing: {
-      input: 0.1, // $0.10 per 1M tokens
-      output: 0.5, // $0.50 per 1M tokens
+      input: 2, // $2.00 per 1M tokens (OpenAI model page)
+      output: 10, // $10.00 per 1M tokens
     },
     capabilities: ['text-generation', 'code-generation', 'reasoning', 'multimodal', 'function-calling', 'json-mode'],
-    description: 'Efficient OpenAI model for high-volume, everyday CRM tasks.',
+    description: "OpenAI's go-to model for everyday CRM work.",
     apiEndpoint: '/api/ai/generate',
     isAvailable: true,
     recommended: true,
   },
 
-  'gpt-6.1-sol': {
-    id: 'gpt-6.1-sol',
-    name: 'GPT-6.1 Sol',
+  'gpt-6.2-astra': {
+    id: 'gpt-6.2-astra',
+    name: 'GPT-6.2 Astra',
     provider: 'openai',
     family: 'gpt',
-    version: '6.1',
+    version: '6.2',
     contextWindow: 1050000,
     maxTokens: 128000,
     pricing: {
-      input: 2, // $2.00 per 1M tokens
-      output: 10, // $10.00 per 1M tokens
+      input: 8, // $8.00 per 1M tokens (third-party source; verify on OpenAI's pricing page)
+      output: 40, // $40.00 per 1M tokens
     },
     capabilities: ['text-generation', 'code-generation', 'reasoning', 'multimodal', 'function-calling', 'json-mode', 'complex-tasks'],
-    description: 'Near-flagship OpenAI model for complex analysis and reasoning.',
+    description: 'More capable OpenAI model for difficult analysis and reasoning.',
     apiEndpoint: '/api/ai/generate',
     isAvailable: true,
     recommended: true,
@@ -98,13 +98,13 @@ export const getFastestModels = (): AIModel[] => {
 
 // Model selection helpers for different use cases
 export const AI_MODEL_RECOMMENDATIONS = {
-  EMAIL_GENERATION: ['gpt-6-luna'],
-  BUSINESS_ANALYSIS: ['gpt-6.1-sol', 'gpt-6-luna'],
-  CONTENT_CREATION: ['gpt-6-luna', 'gpt-6.1-sol'],
-  QUICK_RESPONSES: ['gpt-6-luna'],
-  COMPLEX_REASONING: ['gpt-6.1-sol'],
-  CODE_GENERATION: ['gpt-6.1-sol', 'gpt-6-luna'],
-  MULTIMODAL: ['gpt-6-luna', 'gpt-6.1-sol'],
+  EMAIL_GENERATION: ['gpt-6.2-sol'],
+  BUSINESS_ANALYSIS: ['gpt-6.2-astra', 'gpt-6.2-sol'],
+  CONTENT_CREATION: ['gpt-6.2-sol', 'gpt-6.2-astra'],
+  QUICK_RESPONSES: ['gpt-6.2-sol'],
+  COMPLEX_REASONING: ['gpt-6.2-astra'],
+  CODE_GENERATION: ['gpt-6.2-astra', 'gpt-6.2-sol'],
+  MULTIMODAL: ['gpt-6.2-sol', 'gpt-6.2-astra'],
 };
 
 export type AIModelRecommendation = keyof typeof AI_MODEL_RECOMMENDATIONS;

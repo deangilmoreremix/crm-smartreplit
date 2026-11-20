@@ -28,7 +28,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [provider, setProvider] = useState<'openai' | 'openclaw'>('openai');
   const [localApiConfig, setLocalApiConfig] = useState({
-    openai: { apiKey: '', model: 'gpt-6-luna' },
+    openai: { apiKey: '', model: 'gpt-6.2-sol' },
     openclaw: { apiKey: '', model: 'default', baseUrl: '' }
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -52,8 +52,8 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
   ];
 
   const currentModels = provider === 'openai' ? [
-    { value: 'gpt-6-luna', label: 'GPT-6 Luna', description: 'Efficient model for high-volume, everyday CRM tasks', pricing: '$0.10 / $0.50 per 1M tokens', contextLength: '1M tokens' },
-    { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', description: 'Near-flagship model for complex analysis and reasoning', pricing: '$2.00 / $10.00 per 1M tokens', contextLength: '1.05M tokens' }
+    { value: 'gpt-6.2-sol', label: 'GPT-6.2 Sol', description: "OpenAI's go-to model for everyday CRM work", pricing: '$2.00 / $10.00 per 1M tokens', contextLength: '1.05M tokens' },
+    { value: 'gpt-6.2-astra', label: 'GPT-6.2 Astra', description: 'More capable model for difficult analysis and reasoning', pricing: 'See OpenAI pricing', contextLength: 'See OpenAI model page' }
   ] : [
     { value: 'default', label: 'OpenClaw Default', description: 'Standard OpenClaw AI configuration', pricing: 'Custom pricing', contextLength: 'Varies by deployment' },
     { value: 'enhanced', label: 'OpenClaw Enhanced', description: 'Enhanced AI capabilities for advanced CRM tasks', pricing: 'Custom pricing', contextLength: 'Varies by deployment' }
@@ -66,7 +66,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
       // Pre-populate from saved config so user sees what they already have
       if (apiConfig) {
         setLocalApiConfig({
-          openai: { apiKey: apiConfig.openai?.apiKey || '', model: apiConfig.openai?.model || 'gpt-6-luna' },
+          openai: { apiKey: apiConfig.openai?.apiKey || '', model: apiConfig.openai?.model || 'gpt-6.2-sol' },
           openclaw: { apiKey: apiConfig.openclaw?.apiKey || '', model: apiConfig.openclaw?.model || 'default', baseUrl: apiConfig.openclaw?.baseUrl || '' }
         });
         // Auto-select the provider that has a saved key (or default to openai / openclaw)
@@ -188,7 +188,7 @@ export const AIApiKeySettings: React.FC<AIApiKeySettingsProps> = ({
                     <Brain size={24} className="text-white" />
                   </div>
                   <h4 className="font-semibold text-gray-800 mb-2">OpenAI</h4>
-                  <p className="text-sm text-gray-600">GPT-6 Luna and GPT-6.1 Sol for everyday tasks and advanced analysis.</p>
+                  <p className="text-sm text-gray-600">GPT-6.2 Sol and GPT-6.2 Astra for everyday tasks and advanced analysis.</p>
                 </button>
                 <button
                   onClick={() => handleProviderSelect('openclaw')}

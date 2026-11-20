@@ -236,62 +236,62 @@ Please respond in JSON format with the following structure:
 If information is not available, use empty arrays or null values.
 `;
     
-    // Try OpenAI first, then fall back to other providers
-    let aiResponse = null;
-    let usedProvider = 'openai';
-    
+    // The user's own OpenAI key, on the Responses API. No fake fallback summary: if the AI call
+    // fails we report the error instead of saving a placeholder note as if it were analysed.
     const openaiKey = userKey?.api_key;
-    
-    if (openaiKey) {
-      try {
-        const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${openaiKey}`
-          },
-          body: JSON.stringify({
-            model: "gpt-6.1-sol",
-            messages: [
-              {
-                role: "system",
-                content: "You are an AI assistant that analyzes meeting transcripts and extracts structured information. Always respond with valid JSON."
-              },
-              {
-                role: "user",
-                content: analysisPrompt
-              }
-            ],
-            max_completion_tokens: 2000,
-            response_format: { type: "json_object" }
-          })
-        });
-        
-        if (!openaiResponse.ok) {
-          throw new Error(`OpenAI API error: ${openaiResponse.status}`);
-        }
-        
-        const openaiData = await openaiResponse.json();
-        aiResponse = JSON.parse(openaiData.choices[0].message.content);
-        usedProvider = 'openai';
-      } catch (openaiError) {
-        console.warn('OpenAI failed:', openaiError.message);
+    if (!openaiKey) {
+      return createResponse({
+        error: 'No OpenAI API key configured',
+        message: 'Add your OpenAI API key in Settings → API Keys to use AI features.',
+        needsApiKey: true,
+      }, 400);
+    }
+
+    let aiResponse = null;
+    const usedProvider = 'openai';
+    try {
+      const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${openaiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-6.2-astra",
+          instructions: "You are an AI assistant that analyzes meeting transcripts and extracts structured information. Always respond with valid JSON.",
+          input: analysisPrompt,
+          max_output_tokens: 6000,
+          text: { format: { type: "json_object" } },
+          store: false
+        }),
+        signal: AbortSignal.timeout(25000)
+      });
+
+      if (!openaiResponse.ok) {
+        throw new Error(`OpenAI API error: ${openaiResponse.status}`);
       }
+
+      const openaiData = await openaiResponse.json();
+      const text = typeof openaiData.output_text === 'string' && openaiData.output_text
+        ? openaiData.output_text
+        : (openaiData.output || [])
+            .filter((item) => item.type === 'message')
+            .flatMap((item) => item.content || [])
+            .filter((part) => part.type === 'output_text')
+            .map((part) => part.text)
+            .join('');
+      try {
+        aiResponse = JSON.parse(text);
+      } catch {
+        const match = text.match(/\{[\s\S]*\}/);
+        aiResponse = match ? JSON.parse(match[0]) : null;
+      }
+      if (!aiResponse) throw new Error('The AI returned an unreadable response');
+    } catch (openaiError) {
+      console.warn('OpenAI failed:', openaiError.message);
+      return createResponse({ error: 'Meeting analysis failed', message: openaiError.message }, 502);
     }
-    
-    // If OpenAI failed or the user has no key, use a basic fallback
-    if (!aiResponse) {
-      console.warn('OpenAI unavailable, using basic fallback');
-      aiResponse = {
-        summary: `Meeting transcript for "${meetingTitle}" on ${meetingDate} with ${participants.length} participants.`,
-        action_items: [],
-        commitments: [],
-        decisions: [],
-        follow_up_meetings: []
-      };
-      usedProvider = 'fallback';
-    }
-    
+
     // Process the AI response and create CRM records
     const supabase2 = getSupabaseClient();
     

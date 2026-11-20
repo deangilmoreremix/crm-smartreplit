@@ -255,7 +255,7 @@ const Settings: React.FC = () => {
                   onChange={(e) => setNewProvider(e.target.value as 'openai')}
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 >
-                  <option value="openai">OpenAI (GPT-6 Luna, GPT-6.1 Sol)</option>
+                  <option value="openai">OpenAI (GPT-6.2 Sol, GPT-6.2 Astra)</option>
                 </select>
               </div>
 
@@ -303,7 +303,7 @@ const Settings: React.FC = () => {
                   type="text"
                   value={newModel}
                   onChange={(e) => setNewModel(e.target.value)}
-                  placeholder="gpt-6-luna"
+                  placeholder="gpt-6.2-sol"
                   className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
                 <p className="text-xs text-gray-500 mt-1">Leave empty to use the default model</p>

@@ -30,7 +30,7 @@ export interface UseAIApiKeysReturn {
   ) => Promise<{ success: boolean; message: string }>;
 }
 
-const DEFAULT_OPENAI_MODEL = 'gpt-6-luna';
+const DEFAULT_OPENAI_MODEL = 'gpt-6.2-sol';
 const isMasked = (key: string) => key.includes('****');
 
 export const useAIApiKeys = (): UseAIApiKeysReturn => {

@@ -12,7 +12,7 @@ export const useOpenAIStream = () => {
     onChunk: (chunk: string) => void,
     onComplete: () => void,
     onError: (error: Error) => void,
-    model: string = 'gpt-6-luna'
+    model: string = 'gpt-6.2-sol'
   ) => {
     try {
       const system = messages
@@ -35,7 +35,7 @@ export const useOpenAIStream = () => {
     userMessage: string,
     systemPrompt: string,
     onToken: (token: string) => void,
-    model: string = 'gpt-6-luna'
+    model: string = 'gpt-6.2-sol'
   ): Promise<string> => {
     const { content } = await generateAI({
       prompt: userMessage,

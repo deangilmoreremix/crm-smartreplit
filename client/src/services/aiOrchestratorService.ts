@@ -51,8 +51,8 @@ class AIOrchestratorService {
 
   private initializeStats() {
     const models = [
-      'gpt-6-luna',
-      'gpt-6.1-sol',
+      'gpt-6.2-sol',
+      'gpt-6.2-astra',
     ];
 
     models.forEach((model) => {
@@ -192,16 +192,16 @@ class AIOrchestratorService {
       if (status.configured) {
         // If OpenAI is available, prefer it for quality tasks
         if (context.priority === 'quality' && feature === 'business_analysis') {
-          return 'gpt-6.1-sol';
+          return 'gpt-6.2-astra';
         }
-        return 'gpt-6-luna';
+        return 'gpt-6.2-sol';
       }
     } catch (error) {
       console.warn('Failed to check server availability for model selection:', error);
     }
 
     // OpenAI is the only provider; the server reports a missing key when the call is made
-    return 'gpt-6-luna';
+    return 'gpt-6.2-sol';
   }
 
   /**
@@ -581,7 +581,7 @@ class AIOrchestratorService {
     const useGPT4 =
       (dealData.deals && dealData.deals.some((deal: any) => deal.value > 100000)) ||
       taskContext.complexity === 'high';
-    const defaultModelId = useGPT4 ? 'gpt-6.1-sol' : 'gpt-6-luna';
+    const defaultModelId = useGPT4 ? 'gpt-6.2-astra' : 'gpt-6.2-sol';
 
     const modelId = await this.getOptimalModel('deal_insights', {
       ...taskContext,
@@ -787,8 +787,8 @@ class AIOrchestratorService {
    */
   private estimateCost(modelId: string, tokens: number): number {
     const pricing: Record<string, number> = {
-      'gpt-6-luna': 0.0000001, // per input token
-      'gpt-6.1-sol': 0.000002, // per input token
+      'gpt-6.2-sol': 0.0000001, // per input token
+      'gpt-6.2-astra': 0.000002, // per input token
     };
 
     return tokens * (pricing[modelId] || 0.0000015);

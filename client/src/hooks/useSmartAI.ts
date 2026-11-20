@@ -251,16 +251,16 @@ class TaskOptimizationHelper {
     // The app runs on two OpenAI models (server/services/openaiModels.ts). No accuracy or cost
     // figures are claimed here: they are not measured.
     const fast = (reasoning: string): TaskRecommendation => ({
-      recommendedModel: 'gpt-6-luna',
+      recommendedModel: 'gpt-6.2-sol',
       recommendedProvider: 'OpenAI',
       reasoning,
-      alternativeModels: ['gpt-6.1-sol'],
+      alternativeModels: ['gpt-6.2-astra'],
     });
     const advanced = (reasoning: string): TaskRecommendation => ({
-      recommendedModel: 'gpt-6.1-sol',
+      recommendedModel: 'gpt-6.2-astra',
       recommendedProvider: 'OpenAI',
       reasoning,
-      alternativeModels: ['gpt-6-luna'],
+      alternativeModels: ['gpt-6.2-sol'],
     });
     const recommendations: Record<TaskType, TaskRecommendation> = {
       contact_scoring: fast('Scoring is a high-volume task; the efficient model is used by default.'),

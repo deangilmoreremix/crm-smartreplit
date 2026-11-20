@@ -22,8 +22,8 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
   initialMessage = "Hello! I'm your AI sales assistant. How can I help you today?",
   placeholder = 'Type your message here...',
   modelOptions = [
-    { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
-    { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
+    { value: 'gpt-6.2-sol', label: 'GPT-6.2 Sol' },
+    { value: 'gpt-6.2-astra', label: 'GPT-6.2 Astra' },
   ],
 }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -37,7 +37,7 @@ const StreamingChat: React.FC<StreamingChatProps> = ({
 
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>('gpt-6-luna');
+  const [selectedModel, setSelectedModel] = useState<string>('gpt-6.2-sol');
   const [showSettings, setShowSettings] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [typingSpeed, setTypingSpeed] = useState<'normal' | 'faster' | 'instant'>('normal');

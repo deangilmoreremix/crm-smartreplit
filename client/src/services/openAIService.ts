@@ -38,7 +38,7 @@ interface GenerateResponse {
 
 class OpenAIService {
   private apiKey: string;
-  private defaultModel: string = 'gpt-6-luna';
+  private defaultModel: string = 'gpt-6.2-sol';
 
   constructor(apiKey?: string) {
     // API key is now handled server-side only
@@ -218,8 +218,8 @@ class OpenAIService {
 
     // Default pricing if model not in database
     const pricing: Record<string, number> = {
-      'gpt-6-luna': 0.0001,
-      'gpt-6.1-sol': 0.002,
+      'gpt-6.2-sol': 0.0001,
+      'gpt-6.2-astra': 0.002,
     };
 
     const costPer1kTokens = pricing[model] || 0.0015;
@@ -272,7 +272,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         customerId,
         featureUsed: 'email-generation',
         temperature: 0.7,
@@ -338,7 +338,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         customerId,
         featureUsed: 'deal-insights',
         temperature: 0.3,
@@ -411,7 +411,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         customerId,
         featureUsed: 'pipeline-health',
         temperature: 0.3,
@@ -506,7 +506,7 @@ class OpenAIService {
     try {
       const response = await this.generateContent({
         messages,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         customerId,
         featureUsed: 'meeting-agenda',
         temperature: 0.7,

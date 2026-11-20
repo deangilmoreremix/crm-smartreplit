@@ -36,39 +36,39 @@ export interface AIUsageLog {
 
 // Fallback model configurations when database is not available
 const FALLBACK_MODELS: Record<string, AIModelConfig> = {
-  'gpt-6-luna': {
-    id: 'gpt-6-luna',
+  'gpt-6.2-sol': {
+    id: 'gpt-6.2-sol',
     provider: 'openai',
-    model_name: 'gpt-6-luna',
-    display_name: 'GPT-6 Luna',
-    pricing: {
-      input_per_1m_tokens: 0.1,
-      output_per_1m_tokens: 0.5,
-    },
-    capabilities: ['text-generation', 'reasoning', 'function-calling', 'code-generation', 'vision'],
-    context_window: 1000000,
-    max_tokens: 128000,
-    is_active: true,
-    is_recommended: true,
-    description: 'Efficient model for high-volume, everyday tasks',
-    created_at: new Date(),
-    updated_at: new Date(),
-  },
-  'gpt-6.1-sol': {
-    id: 'gpt-6.1-sol',
-    provider: 'openai',
-    model_name: 'gpt-6.1-sol',
-    display_name: 'GPT-6.1 Sol',
+    model_name: 'gpt-6.2-sol',
+    display_name: 'GPT-6.2 Sol',
     pricing: {
       input_per_1m_tokens: 2,
       output_per_1m_tokens: 10,
+    },
+    capabilities: ['text-generation', 'reasoning', 'function-calling', 'code-generation', 'vision'],
+    context_window: 1050000,
+    max_tokens: 128000,
+    is_active: true,
+    is_recommended: true,
+    description: "OpenAI's go-to model for everyday work",
+    created_at: new Date(),
+    updated_at: new Date(),
+  },
+  'gpt-6.2-astra': {
+    id: 'gpt-6.2-astra',
+    provider: 'openai',
+    model_name: 'gpt-6.2-astra',
+    display_name: 'GPT-6.2 Astra',
+    pricing: {
+      input_per_1m_tokens: 8, // third-party source; verify on OpenAI's pricing page
+      output_per_1m_tokens: 40,
     },
     capabilities: ['text-generation', 'reasoning', 'function-calling', 'code-generation', 'vision', 'complex-tasks'],
     context_window: 1050000,
     max_tokens: 128000,
     is_active: true,
     is_recommended: true,
-    description: 'Near-flagship model for complex analysis and reasoning',
+    description: 'More capable model for difficult analysis and reasoning',
     created_at: new Date(),
     updated_at: new Date(),
   },

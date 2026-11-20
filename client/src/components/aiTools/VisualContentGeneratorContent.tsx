@@ -109,7 +109,7 @@ Provide a comprehensive visual content idea including:
           { role: 'system', content: `You are an expert visual content designer specializing in ${formData.contentType}s.` },
           { role: 'user', content: prompt }
         ],
-        model: 'gpt-6-luna',
+        model: 'gpt-6.2-sol',
         featureUsed: 'visual-content-generator',
         temperature: 0.7,
         maxTokens: 1200,

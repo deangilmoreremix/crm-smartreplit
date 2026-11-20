@@ -159,7 +159,7 @@ export const useGemini = () => {
         } else {
           // Return a compatible object for the old interface
           const content = await geminiService.generatePersonalizedMessage(request, 'email');
-          return { content, model: 'gpt-6-luna', provider: 'OpenAI' };
+          return { content, model: 'gpt-6.2-sol', provider: 'OpenAI' };
         }
       } catch (error) {
         console.error('Error in useGemini.generateContent:', error);
@@ -187,7 +187,7 @@ export const useGemini = () => {
             winProbability: 65,
             potentialBlockers: [],
           },
-          model: 'gpt-6-luna',
+          model: 'gpt-6.2-sol',
           provider: 'OpenAI',
           responseTime: 1000,
           success: true,
@@ -218,7 +218,7 @@ export const useGemini = () => {
             opportunities: [],
             forecastAccuracy: 80,
           },
-          model: 'gpt-6-luna',
+          model: 'gpt-6.2-sol',
           provider: 'OpenAI',
           responseTime: 1000,
           success: true,
@@ -253,8 +253,8 @@ export const useGemini = () => {
     getAvailableModels: async () => {
       return [
         {
-          id: 'gpt-6-luna',
-          name: 'GPT-6 Luna',
+          id: 'gpt-6.2-sol',
+          name: 'GPT-6.2 Sol',
           provider: 'openai',
           capabilities: ['text-generation'],
         },
@@ -263,8 +263,8 @@ export const useGemini = () => {
 
     getRecommendedModel: async (useCase: string) => {
       return {
-        id: 'gpt-6-luna',
-        name: 'GPT-6 Luna',
+        id: 'gpt-6.2-sol',
+        name: 'GPT-6.2 Sol',
         provider: 'openai',
       };
     },

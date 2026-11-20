@@ -16,17 +16,17 @@ interface ResponsesModel {
 const RESPONSES_API_MODELS: ResponsesModel[] = [
   {
     id: DEFAULT_MODEL,
-    name: 'GPT-6 Luna',
-    description: 'Efficient model for high-volume, everyday tasks',
-    pricing: '$0.10 / $0.50 per 1M tokens',
-    contextLength: '1M tokens',
+    name: 'GPT-6.2 Sol',
+    description: "OpenAI's go-to model for everyday work",
+    pricing: '$2.00 / $10.00 per 1M tokens',
+    contextLength: '1.05M tokens',
   },
   {
     id: ADVANCED_MODEL,
-    name: 'GPT-6.1 Sol',
-    description: 'Near-flagship model for complex analysis and reasoning',
-    pricing: '$2.00 / $10.00 per 1M tokens',
-    contextLength: '1.05M tokens',
+    name: 'GPT-6.2 Astra',
+    description: 'More capable model for difficult analysis and reasoning',
+    pricing: 'See OpenAI pricing',
+    contextLength: 'See OpenAI model page',
   },
 ];
 

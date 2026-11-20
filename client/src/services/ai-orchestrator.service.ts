@@ -368,7 +368,7 @@ class AIOrchestrator {
 
       return {
         result: result.response,
-        model: 'gpt-6.1-sol',
+        model: 'gpt-6.2-astra',
         confidence: 0, // not reported by the model (was a hardcoded 95)
         cost: undefined, // not measured (was a hardcoded 0.003)
         threadId: result.threadId,

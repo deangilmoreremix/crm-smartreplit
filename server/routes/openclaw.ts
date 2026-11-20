@@ -26,6 +26,7 @@ import { FeatureKey } from '../types/entitlements';
 import { memoryService } from '../memory';
 import { listVideosForUser, createVideoForUser } from './videos';
 import { isSafeExternalUrl } from '../services/safeUrl';
+import { respond, webSearchTool, parseJSONText } from '../services/openaiResponses';
 
 const router = Router();
 
@@ -149,13 +150,12 @@ function parseId(value: any): number {
   return id;
 }
 
-// Safe JSON parse with error handling
-function safeJsonParse(text: string, fallback: any = {}): any {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return fallback;
-  }
+// Parse the model's JSON reply (tolerates fences/extra text). Unreadable output is an error,
+// not an empty object that looks like a successful result.
+function safeJsonParse(text: string): any {
+  const parsed = parseJSONText(text);
+  if (parsed === undefined) throw new Error('The AI returned a response that was not valid JSON');
+  return parsed;
 }
 
 // CRM Tools Definition for OpenClaw
@@ -1792,25 +1792,17 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
         }
 
         try {
-          const response = await client.chat.completions.create({
+          // Research: Responses API with live web search; only report what the sources support
+          const research = await respond(client, {
             model: ADVANCED_MODEL,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
-              },
-              {
-                role: 'user',
-                content: `Research and enrich this contact: ${JSON.stringify(contact)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.5,
-            max_tokens: 1500,
+            instructions:
+              'You are a contact research expert. Search the web for this person and their company. Only include details you found in sources; leave unknown fields empty. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.',
+            input: `Research and enrich this contact: ${JSON.stringify(contact)}`,
+            json: true,
+            tools: [webSearchTool()],
           });
-
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          if (!research.data) throw new Error('The AI returned a response that was not valid JSON');
+          const result = { ...research.data, sources: research.sources };
 
           memoryService
             .recordObservation(
@@ -1883,24 +1875,16 @@ async function executeCRMFunction(toolName: string, params: any, userId?: string
           : ['LinkedIn', 'Twitter', 'Instagram', 'YouTube', 'GitHub'];
 
         try {
-          const response = await client.chat.completions.create({
+          // Research: live web search, so profile URLs come from real pages instead of guesses
+          const research = await respond(client, {
             model: ADVANCED_MODEL,
-            messages: [
-              {
-                role: 'system',
-                content: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(', ')}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
-              },
-              {
-                role: 'user',
-                content: `Research social media for: ${JSON.stringify(contact)}`,
-              },
-            ],
-            response_format: { type: 'json_object' },
-            temperature: 0.5,
-            max_tokens: 1500,
+            instructions: `You are a social media research expert. Search the web for this contact's public profiles on these platforms: ${platforms.join(', ')}. Only list profiles you actually found (with their real URL); never guess usernames or URLs. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
+            input: `Research social media for: ${JSON.stringify(contact)}`,
+            json: true,
+            tools: [webSearchTool()],
           });
-
-          const result = safeJsonParse(response.choices[0].message.content || '{}');
+          if (!research.data) throw new Error('The AI returned a response that was not valid JSON');
+          const result = { ...research.data, sources: research.sources };
 
           memoryService
             .recordObservation(

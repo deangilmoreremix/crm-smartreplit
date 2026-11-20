@@ -43,7 +43,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -66,7 +66,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -96,7 +96,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6-luna',
+      model: 'gpt-6.2-sol',
       messages: [
         {
           role: 'system',
@@ -119,7 +119,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6-luna',
+      model: 'gpt-6.2-sol',
       messages: [
         {
           role: 'system',
@@ -151,7 +151,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -183,7 +183,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -206,7 +206,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -229,7 +229,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -256,7 +256,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6.1-sol',
+      model: 'gpt-6.2-astra',
       messages: [
         {
           role: 'system',
@@ -279,7 +279,7 @@ export const useOpenAI = () => {
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: 'gpt-6-luna',
+      model: 'gpt-6.2-sol',
       messages: [
         {
           role: 'system',

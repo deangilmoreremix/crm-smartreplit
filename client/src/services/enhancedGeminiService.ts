@@ -146,7 +146,7 @@ class EnhancedGeminiService {
     try {
       const response = await this.generateContent({
         prompt,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         customerId,
         featureUsed: 'business_analysis',
         systemInstruction:
@@ -214,7 +214,7 @@ class EnhancedGeminiService {
     try {
       const response = await this.generateContent({
         prompt,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         customerId,
         featureUsed: 'email-generation',
         systemInstruction:
@@ -293,7 +293,7 @@ Generate a professional proposal with sections for Executive Summary, Project Ov
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gpt-6.1-sol',
+        model: model || 'gpt-6.2-astra',
         temperature: 0.6,
         maxTokens: 2000,
         customerId,
@@ -335,7 +335,7 @@ Create a structured script with opening, discovery questions, value proposition,
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         temperature: 0.7,
         maxTokens: 1500,
         customerId,
@@ -613,7 +613,7 @@ Generate an engaging post that drives engagement and aligns with the platform's 
 
       const response = await this.generateContent({
         prompt,
-        model: model || 'gpt-6-luna',
+        model: model || 'gpt-6.2-sol',
         temperature: 0.8,
         maxTokens: 300,
         customerId,

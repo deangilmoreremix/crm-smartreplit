@@ -18,7 +18,7 @@ import {
 import { imageStorage } from '../services/imageStorageService';
 import { generateImageAI } from '../services/aiGenerate';
 
-const MODEL = 'gpt-image-2.5-flare';
+const MODEL = 'gpt-image-2.6-flare';
 
 type Props = { open: boolean; onClose: () => void };
 
