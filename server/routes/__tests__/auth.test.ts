@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createClient } from '@supabase/supabase-js';
-import authRouter from '../auth';
+// Loaded up front on purpose: the module reads SUPABASE_* when first imported, before the tests below set them
+import '../auth';
 
 const mockSupabaseClient = {
   from: vi.fn(() => ({
@@ -387,98 +388,6 @@ describe('Auth Routes', () => {
     });
   });
 
-  describe('Auth router routes', () => {
-    it('POST /api/auth/invite sends invitation email', async () => {
-      mockSupabaseClient.auth.admin.inviteUserByEmail.mockResolvedValue({
-        user: { id: 'new-user', email: 'invited@test.com' },
-      });
-
-      const app = express();
-      app.use(express.json());
-      app.use('/api/auth', authRouter);
-
-      const response = await request(app)
-        .post('/api/auth/invite')
-        .send({ email: 'invited@test.com' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('invited@test.com');
-    });
-
-    it('POST /api/auth/invite rejects invalid email', async () => {
-      const app = express();
-      app.use(express.json());
-      app.use('/api/auth', authRouter);
-
-      const response = await request(app)
-        .post('/api/auth/invite')
-        .send({ email: 'not-an-email' });
-
-      expect(response.status).toBe(400);
-      expect(response.body.error).toContain('Valid email is required');
-    });
-
-    it('POST /api/auth/invite returns 500 when service role key missing', async () => {
-      process.env.SUPABASE_SERVICE_ROLE_KEY = '';
-
-      const app = express();
-      app.use(express.json());
-      app.use('/api/auth', authRouter);
-
-      const response = await request(app)
-        .post('/api/auth/invite')
-        .send({ email: 'invited@test.com' });
-
-      expect(response.status).toBe(500);
-      expect(response.body.error).toContain('Service role key not configured');
-    });
-
-    it('GET /api/auth/users returns paginated users list', async () => {
-      mockSupabaseClient.auth.admin.listUsers.mockResolvedValue({
-        users: [{ id: '1', email: 'user@test.com' }],
-        total_metadata: { total_count: 1 },
-      });
-
-      const app = express();
-      app.use(express.json());
-      app.use('/api/auth', authRouter);
-
-      const response = await request(app).get('/api/auth/users');
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.users).toHaveLength(1);
-      expect(response.body.data.total).toBe(1);
-    });
-
-    it('DELETE /api/auth/users/:id deletes user', async () => {
-      mockSupabaseClient.auth.admin.deleteUser.mockResolvedValue({ error: null });
-
-      const app = express();
-      app.use(express.json());
-      app.use('/api/auth', authRouter);
-
-      const response = await request(app).delete('/api/auth/users/user-123');
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('user-123');
-    });
-
-    it('PATCH /api/auth/users/:id updates user metadata', async () => {
-      mockSupabaseClient.auth.admin.updateUserById.mockResolvedValue({
-        user: { id: 'user-123', email: 'updated@test.com' },
-      });
-
-      const app = express();
-      app.use(express.json());
-      app.use('/api/auth', authRouter);
-
-      const response = await request(app)
-        .patch('/api/auth/users/user-123')
-        .send({ email: 'updated@test.com' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.data.user.email).toBe('updated@test.com');
-    });
-  });
+  // The /api/auth user-management routes (invite, list, update, delete) need a super admin. Their behaviour,
+  // including rejecting anonymous callers, is covered in auth-admin-routes.test.ts.
 });

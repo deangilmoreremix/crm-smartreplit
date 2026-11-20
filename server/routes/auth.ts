@@ -204,11 +204,11 @@ export const requireAdmin = async (req: Request, res: Response, next: NextFuncti
 
 /**
  * POST /api/auth/invite
- * Send a user invitation email
+ * Send a user invitation email (super admins only: these routes use the Supabase service role key)
  *
  * Body: { "email": "user@example.com" }
  */
-router.post('/invite', async (req: Request, res: Response) => {
+router.post('/invite', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
@@ -249,7 +249,7 @@ router.post('/invite', async (req: Request, res: Response) => {
  * GET /api/auth/users
  * List all users (paginated)
  */
-router.get('/users', async (req: Request, res: Response) => {
+router.get('/users', requireAdmin, async (req: Request, res: Response) => {
   try {
     if (!serviceRoleKey) {
       return res.status(500).json({ error: 'Service role key not configured' });
@@ -286,7 +286,7 @@ router.get('/users', async (req: Request, res: Response) => {
  * DELETE /api/auth/users/:id
  * Delete a user
  */
-router.delete('/users/:id', async (req: Request, res: Response) => {
+router.delete('/users/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -317,7 +317,7 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
  * POST /api/auth/users/:id
  * Update a user
  */
-router.patch('/users/:id', async (req: Request, res: Response) => {
+router.patch('/users/:id', requireAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { email, phone, email_confirm, phone_confirm, user_metadata, app_metadata } = req.body;
