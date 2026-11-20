@@ -6,6 +6,7 @@ import { useTaskStore } from '../store/taskStore';
 import { useAppointmentStore } from '../store/appointmentStore';
 import { useAITools } from './AIToolsProvider';
 import { useTheme } from '../contexts/ThemeContext';
+import { useDemoDataSafe } from '../contexts/DemoDataContext';
 import { useWhitelabel } from '../contexts/WhitelabelContext';
 import { useDashboardLayout } from '../contexts/DashboardLayoutContext';
 import DraggableSection from './DraggableSection';
@@ -75,6 +76,7 @@ const SIZE_CLASS = { compact: 'max-w-3xl', normal: '', wide: 'lg:-mx-2 xl:-mx-4'
 
 // Memo Dashboard component to prevent unnecessary re-renders
 const Dashboard: React.FC = React.memo(() => {
+  const { showDemoData } = useDemoDataSafe();
   const { deals, fetchDeals, isLoading, error: dealsError } = useDealStore();
 
   const { contacts, fetchContacts, isLoading: contactsLoading } = useContactStore();
@@ -454,7 +456,8 @@ const Dashboard: React.FC = React.memo(() => {
 
       {/* Video Call Components */}
       <PersistentVideoCallButton />
-      <VideoCallPreviewWidget />
+      {/* Preview shows a sample participant ('Jane Doe'), so it follows the sample-data setting */}
+      {showDemoData && <VideoCallPreviewWidget />}
       <VideoCallOverlay />
 
       {/* AI Provider Settings Modal */}

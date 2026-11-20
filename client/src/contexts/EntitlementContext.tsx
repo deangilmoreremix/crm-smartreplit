@@ -38,6 +38,10 @@ interface EntitlementProviderProps {
 export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ children }) => {
   const [entitlement, setEntitlement] = useState<UserEntitlement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Email the current `entitlement` state was resolved for. Until it matches the signed-in user we are
+  // still "loading" even if `isLoading` is momentarily false (the fetch effect runs after the render in
+  // which the user first appears, and ProtectedRoute would otherwise redirect to /upgrade in that gap).
+  const [resolvedEmail, setResolvedEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
 
@@ -97,6 +101,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
     if (!isSupabaseConfigured()) {
       setIsLoading(false);
       setEntitlement(deriveEntitlementFromUser(user));
+      setResolvedEmail(user.email ?? null);
       return;
     }
 
@@ -175,6 +180,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
       }
     } finally {
       setIsLoading(false);
+      setResolvedEmail(user.email ?? null);
     }
   }, [user, isSupabaseConfigured, deriveEntitlementFromUser]);
 
@@ -229,7 +235,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
 
   const value: EntitlementContextType = {
     entitlement,
-    isLoading,
+    isLoading: isLoading || (!!user?.email && resolvedEmail !== user.email),
     error,
     hasFeature,
     canAccess,
