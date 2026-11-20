@@ -80,15 +80,23 @@ export async function generateMeetingSummary(meeting: any): Promise<string> {
   );
 }
 
-export async function analyzeMarketTrends(market: string): Promise<string> {
+export async function analyzeMarketTrends(market: string, targetMarket?: string, timeframe?: string): Promise<string> {
+  const scope = [
+    targetMarket ? `Target market: ${targetMarket}` : '',
+    timeframe ? `Timeframe: ${timeframe}` : '',
+  ].filter(Boolean).join('\n');
   return research(
-    `Analyze current market trends for: ${market}\n\nProvide insights on: Industry trends, Competitive landscape, Growth opportunities, Risk factors, Strategic recommendations.`
+    `Analyze current market trends for: ${market}${scope ? `\n${scope}` : ''}\n\nProvide insights on: Industry trends, Competitive landscape, Growth opportunities, Risk factors, Strategic recommendations.`
   );
 }
 
-export async function analyzeCompetitor(competitor: string): Promise<string> {
+export async function analyzeCompetitor(competitor: string, industry?: string, ourStrengths: string[] = []): Promise<string> {
+  const context = [
+    industry ? `Industry: ${industry}` : '',
+    ourStrengths.length ? `Our strengths to compare against: ${ourStrengths.join('; ')}` : '',
+  ].filter(Boolean).join('\n');
   return research(
-    `Provide a comprehensive competitive analysis for: ${competitor}\n\nInclude: Strengths, Weaknesses, Market position, Product offerings, Pricing strategy, Strategic moves.`
+    `Provide a comprehensive competitive analysis for: ${competitor}${context ? `\n${context}` : ''}\n\nInclude: Strengths, Weaknesses, Market position, Product offerings, Pricing strategy, Strategic moves.`
   );
 }
 

@@ -152,6 +152,19 @@ interface AIToolsProviderProps {
   children: ReactNode;
 }
 
+// Tool IDs used by the Navbar and dashboard panels that map to an existing tool
+// (without this they opened an empty "AI Tool" modal).
+const TOOL_ALIASES: Record<string, AIToolType> = {
+  'call-script-generator': 'call-script',
+  'email-composer-content': 'email-composer',
+  'ai-assistant-chat': 'ai-assistant',
+  'voice-analysis-realtime': 'speech-to-text',
+  'pipeline-analysis': 'live-deal-analysis',
+  'deal-alerts': 'live-deal-analysis',
+  'smart-insights': 'sales-insights',
+  'ai-insights': 'sales-insights',
+};
+
 export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) => {
   const { user } = useAuth();
   const [isToolOpen, setIsToolOpen] = useState(false);
@@ -169,7 +182,8 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
   };
 
   // Get tool information based on type
-  const getToolInfo = (tool: AIToolType | null) => {
+  const getToolInfo = (requestedTool: AIToolType | null) => {
+    const tool = requestedTool ? TOOL_ALIASES[requestedTool] || requestedTool : null;
     switch (tool) {
       case 'email-analysis':
         return {

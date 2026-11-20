@@ -310,13 +310,21 @@ const AITools: React.FC = () => {
       demoId: 'realtime-email',
     },
     {
-      title: 'Real-time Voice Analysis',
-      description: 'Analyze voice calls in real-time for sentiment, pacing, and coaching',
+      // Was "Real-time Voice Analysis", which had no component (opened an empty modal)
+      title: 'Speech to Text',
+      description: 'Record or upload audio and get an accurate transcript with OpenAI',
       icon: <Mic className="h-6 w-6 text-purple-600" />,
-      id: 'voice-analysis-realtime' as const,
-      categories: ['voice', 'analysis', 'realtime'],
+      id: 'speech-to-text' as const,
+      categories: ['voice'],
       new: true,
-      demoId: 'voice-analysis',
+    },
+    {
+      title: 'Structured Data Extraction',
+      description: 'Turn emails, notes or documents into structured JSON fields',
+      icon: <FileSearch className="h-6 w-6 text-indigo-600" />,
+      id: 'json-tools' as const,
+      categories: ['advanced', 'analysis'],
+      new: true,
     },
     {
       title: 'Smart Search with Typeahead',
