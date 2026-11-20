@@ -523,7 +523,7 @@ const AITools: React.FC = () => {
                 Complete AI Tools Suite
               </h2>
               <p className="text-gray-700 text-lg">
-                Experience our latest AI capabilities powered by OpenAI's GPT-4o and other advanced
+                Experience our latest AI capabilities powered by OpenAI's GPT-6.2 and GPT Image 2.6 and other advanced
                 models. Get intelligent responses, detailed analysis, and comprehensive results for
                 all your CRM and sales needs.
                 <span className="font-medium text-indigo-600 ml-1">

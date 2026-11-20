@@ -38,6 +38,10 @@ interface EntitlementProviderProps {
 export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ children }) => {
   const [entitlement, setEntitlement] = useState<UserEntitlement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Email the current entitlement was loaded for. Until it matches the signed-in user, report loading:
+  // otherwise route guards see "not loading, no entitlement" for one render after sign-in / page load
+  // and redirect to /upgrade before the fetch starts.
+  const [loadedForEmail, setLoadedForEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
 
@@ -188,7 +192,8 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
   // Fetch entitlement when user changes
   useEffect(() => {
     if (user?.email) {
-      fetchEntitlement();
+      const email = user.email;
+      fetchEntitlement().finally(() => setLoadedForEmail(email));
     } else {
       setEntitlement(null);
       setIsLoading(false);
@@ -229,7 +234,7 @@ export const EntitlementProvider: React.FC<EntitlementProviderProps> = ({ childr
 
   const value: EntitlementContextType = {
     entitlement,
-    isLoading,
+    isLoading: isLoading || Boolean(user?.email && loadedForEmail !== user.email),
     error,
     hasFeature,
     canAccess,
