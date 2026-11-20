@@ -1210,9 +1210,11 @@ import OpenAI from "openai";
 import { eq, and, desc } from "drizzle-orm";
 
 // server/services/openaiModels.ts
-var DEFAULT_MODEL = "gpt-6-luna";
-var ADVANCED_MODEL = "gpt-6.1-sol";
-var IMAGE_MODEL = "gpt-image-2.5-flare";
+var DEFAULT_MODEL = "gpt-6.2-sol";
+var ADVANCED_MODEL = "gpt-6.2-astra";
+var IMAGE_MODEL = "gpt-image-2.6-flare";
+var IMAGE_EDIT_MODEL = "gpt-image-2.6-sunburst";
+var IMAGE_MODELS = ["gpt-image-2.6-flare", "gpt-image-2.6-sunburst"];
 var EMBEDDING_MODEL = "text-embedding-3-small";
 var TRANSCRIBE_MODEL = "gpt-transcribe";
 var LEGACY_DEFAULT = /* @__PURE__ */ new Set([
@@ -1221,7 +1223,8 @@ var LEGACY_DEFAULT = /* @__PURE__ */ new Set([
   "gpt-4.1-mini",
   "gpt-4.1-nano",
   "o4-mini",
-  "o1-mini"
+  "o1-mini",
+  "gpt-6-luna"
 ]);
 var LEGACY_ADVANCED = /* @__PURE__ */ new Set([
   "gpt-4o",
@@ -1231,13 +1234,15 @@ var LEGACY_ADVANCED = /* @__PURE__ */ new Set([
   "o1",
   "o1-preview",
   "o3",
-  "gpt-5"
+  "gpt-5",
+  "gpt-6.1-sol"
 ]);
 function mapLegacyModel(model) {
   if (!model) return DEFAULT_MODEL;
   const base = model.replace(/-\d{4}-\d{2}-\d{2}$/, "").replace(/-\d{4}$/, "");
   if (LEGACY_DEFAULT.has(base)) return DEFAULT_MODEL;
   if (LEGACY_ADVANCED.has(base)) return ADVANCED_MODEL;
+  if (IMAGE_MODELS.includes(base)) return base;
   if (base.startsWith("dall-e") || base.includes("-image")) return IMAGE_MODEL;
   if (base.startsWith("gemini") || base.startsWith("gemma")) {
     return base.includes("pro") ? ADVANCED_MODEL : DEFAULT_MODEL;
@@ -1283,22 +1288,24 @@ function textFormat(json2) {
   if (json2 === true) return { format: { type: "json_object" } };
   return { format: { type: "json_schema", name: json2.name, schema: json2.schema, strict: true } };
 }
-function toResult(response, wantJson) {
-  const text2 = outputText(response);
-  let data;
-  if (wantJson && text2) {
-    try {
-      data = JSON.parse(text2);
-    } catch {
-      const match = text2.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          data = JSON.parse(match[0]);
-        } catch {
-        }
+function parseJSONText(text2) {
+  if (!text2) return void 0;
+  try {
+    return JSON.parse(text2);
+  } catch {
+    const match = text2.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
       }
     }
+    return void 0;
   }
+}
+function toResult(response, wantJson) {
+  const text2 = outputText(response);
+  const data = wantJson ? parseJSONText(text2) : void 0;
   return {
     id: response.id,
     status: response.status,
@@ -1334,32 +1341,39 @@ var webSearchTool = (userLocation) => ({
   search_context_size: "medium",
   ...userLocation ? { user_location: { type: "approximate", ...userLocation } } : {}
 });
+var MIME = { png: "image/png", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml" };
+var QUALITY = ["auto", "low", "medium", "high", "xhigh", "max"];
 async function generateImage(client, options) {
-  const input = options.inputImages?.length ? [
-    {
-      role: "user",
-      content: [
-        { type: "input_text", text: options.prompt },
-        ...options.inputImages.map((url) => ({ type: "input_image", image_url: url }))
-      ]
-    }
-  ] : options.prompt;
-  const result = await respond(client, {
-    model: options.model,
-    input,
-    tools: [
-      {
-        type: "image_generation",
-        model: IMAGE_MODEL,
-        ...options.size ? { size: options.size } : {},
-        ...options.quality ? { quality: options.quality } : {},
-        ...options.inputImages?.length ? { action: "edit" } : {}
-      }
-    ],
-    toolChoice: { type: "image_generation" }
-  });
-  if (!result.images.length) throw new Error(result.text || "No image was generated");
-  return { b64: result.images, responseId: result.id };
+  const editing = Boolean(options.inputImages?.length);
+  const model = options.imageModel && IMAGE_MODELS.includes(options.imageModel) ? options.imageModel : editing ? IMAGE_EDIT_MODEL : IMAGE_MODEL;
+  const quality = options.quality === "hd" ? "high" : options.quality === "standard" ? "medium" : options.quality;
+  let format = options.output_format;
+  if (options.background === "transparent" && (!format || format === "jpeg")) format = "png";
+  const body = { model, prompt: options.prompt };
+  if (options.size) body.size = options.size;
+  if (quality && QUALITY.includes(quality)) body.quality = quality;
+  if (options.n) body.n = Math.min(Math.max(options.n, 1), format === "svg" ? 1 : 4);
+  if (options.background) body.background = options.background;
+  if (format) body.output_format = format;
+  if (options.complexity) body.complexity = options.complexity;
+  if (options.output_compression !== void 0 && (format === "jpeg" || format === "webp")) {
+    body.output_compression = options.output_compression;
+  }
+  if (format === "gif") {
+    if (options.frame_count) body.frame_count = Math.min(Math.max(options.frame_count, 2), 16);
+    if (options.frame_duration_ms) body.frame_duration_ms = Math.max(options.frame_duration_ms, 20);
+  }
+  if (editing) {
+    if (options.mask && options.markup) throw new Error("Use either a mask or a markup overlay, not both");
+    body.images = options.inputImages.slice(0, 16).map((image_url) => ({ image_url }));
+    if (options.mask) body.mask = { image_url: options.mask };
+    if (options.markup) body.markup = { image_url: options.markup };
+  }
+  const data = await client.post(editing ? "/images/edits" : "/images/generations", { body });
+  const b64 = (data?.data || []).map((d) => d.b64_json).filter(Boolean);
+  if (!b64.length) throw new Error("No image was generated");
+  const outputFormat = data?.output_format || format || "png";
+  return { b64, model, outputFormat, mime: MIME[outputFormat] || "image/png" };
 }
 function contentToResponses(content) {
   if (typeof content === "string" || content == null) return content ?? "";
@@ -1490,7 +1504,7 @@ function normalizeImageParams(params) {
     ...quality && !["hd", "standard"].includes(quality) ? { quality } : {}
   };
 }
-function wrapClient(client, defaultModel) {
+function wrapClient(client) {
   const responsesCreate = client.responses.create.bind(client.responses);
   const createResponse2 = (params, options) => {
     const { temperature: _temperature, top_p: _topP, ...rest } = params;
@@ -1503,9 +1517,9 @@ function wrapClient(client, defaultModel) {
     return responseToChatCompletion(await createResponse2(request, options));
   };
   client.images.generate = async (params) => {
-    const { prompt, size } = normalizeImageParams(params);
-    const { b64 } = await generateImage(client, { model: defaultModel, prompt, size });
-    return { created: Math.floor(Date.now() / 1e3), data: b64.map((b) => ({ b64_json: b, url: `data:image/png;base64,${b}` })) };
+    const { prompt, size, model, quality, n } = normalizeImageParams(params);
+    const { b64, mime } = await generateImage(client, { imageModel: model, prompt, size, quality, n });
+    return { created: Math.floor(Date.now() / 1e3), data: b64.map((b) => ({ b64_json: b, url: `data:${mime};base64,${b}` })) };
   };
   return client;
 }
@@ -1514,7 +1528,7 @@ async function getUserOpenAIClient(userId = currentUserId()) {
   const keyData = await getUserApiKey(userId);
   if (!keyData) return null;
   return {
-    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey }), mapLegacyModel(keyData.model)),
+    client: wrapClient(new OpenAI({ apiKey: keyData.apiKey })),
     model: mapLegacyModel(keyData.model)
   };
 }
@@ -2750,11 +2764,10 @@ Return JSON with: score (0-100), rationale, lead_score, engagement_score`;
         const completion = await openai.chat.completions.create({
           model: ADVANCED_MODEL,
           messages: [{ role: "user", content: prompt }],
-          temperature: 0.3
+          response_format: { type: "json_object" }
         });
-        try {
-          scoreData = JSON.parse(completion.choices[0].message.content || "{}");
-        } catch (parseError) {
+        scoreData = parseJSONText(completion.choices[0].message.content || "");
+        if (!scoreData) {
           memoryService.recordObservation(
             userId,
             "error",
@@ -5288,6 +5301,53 @@ function registerVideoRoutes(app2) {
     }
   });
 }
+function registerVideoScriptRoute(app2) {
+  app2.post("/api/videos/generate-script", async (req, res) => {
+    try {
+      const { recipient, purpose, tone, length } = req.body;
+      const ai = await getUserOpenAIClient();
+      if (!ai) {
+        return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+      }
+      const result = await respond(ai.client, {
+        model: ai.model,
+        store: false,
+        instructions: "You write short, natural scripts for personal sales/marketing video messages. Write only words to be spoken.",
+        input: `Write a video message script.
+Recipient: ${recipient ? JSON.stringify(recipient) : "not specified"}
+Purpose: ${purpose || "general"}
+Tone: ${tone || "friendly"}
+Target length: ${length || "about 60 seconds"}`,
+        json: {
+          name: "video_script",
+          schema: {
+            type: "object",
+            properties: {
+              script: { type: "string" },
+              suggestions: { type: "array", items: { type: "string" } }
+            },
+            required: ["script", "suggestions"],
+            additionalProperties: false
+          }
+        }
+      });
+      if (!result.data?.script) {
+        return res.status(502).json({ error: "AI returned no script" });
+      }
+      const script = result.data.script;
+      res.json({
+        script,
+        tone,
+        estimatedDuration: Math.ceil(script.split(/\s+/).length / 150),
+        // minutes at ~150 words/min
+        suggestions: result.data.suggestions || []
+      });
+    } catch (error) {
+      console.error("Error generating script:", error);
+      res.status(500).json({ error: "Failed to generate script" });
+    }
+  });
+}
 
 // server/services/safeUrl.ts
 import { lookup } from "dns/promises";
@@ -5411,12 +5471,10 @@ async function fetchWithTimeout(url, options, timeoutMs = 1e4) {
     clearTimeout(timeout);
   }
 }
-function safeJsonParse(text2, fallback = {}) {
-  try {
-    return JSON.parse(text2);
-  } catch {
-    return fallback;
-  }
+function safeJsonParse(text2) {
+  const parsed = parseJSONText(text2);
+  if (parsed === void 0) throw new Error("The AI returned a response that was not valid JSON");
+  return parsed;
 }
 var crmTools = [
   // Contact Management
@@ -6765,23 +6823,15 @@ async function executeCRMFunction(toolName, params, userId) {
           return { error: NO_KEY_MESSAGE };
         }
         try {
-          const response = await client.chat.completions.create({
+          const research = await respond(client, {
             model: ADVANCED_MODEL,
-            messages: [
-              {
-                role: "system",
-                content: "You are a contact research expert. Enrich the contact with likely information based on what you know. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence."
-              },
-              {
-                role: "user",
-                content: `Research and enrich this contact: ${JSON.stringify(contact)}`
-              }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.5,
-            max_tokens: 1500
+            instructions: "You are a contact research expert. Search the web for this person and their company. Only include details you found in sources; leave unknown fields empty. Return JSON with fields: suggestedFields (object with field values to add), socialProfiles, companyInfo, industryInsights, confidence.",
+            input: `Research and enrich this contact: ${JSON.stringify(contact)}`,
+            json: true,
+            tools: [webSearchTool()]
           });
-          const result = safeJsonParse(response.choices[0].message.content || "{}");
+          if (!research.data) throw new Error("The AI returned a response that was not valid JSON");
+          const result = { ...research.data, sources: research.sources };
           memoryService.recordObservation(
             userId,
             "tool_use",
@@ -6837,23 +6887,15 @@ async function executeCRMFunction(toolName, params, userId) {
         }
         const platforms = params.platforms ? params.platforms.split(",").map((p) => p.trim()) : ["LinkedIn", "Twitter", "Instagram", "YouTube", "GitHub"];
         try {
-          const response = await client.chat.completions.create({
+          const research = await respond(client, {
             model: ADVANCED_MODEL,
-            messages: [
-              {
-                role: "system",
-                content: `You are a social media research expert. Research likely social media profiles for the contact on these platforms: ${platforms.join(", ")}. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`
-              },
-              {
-                role: "user",
-                content: `Research social media for: ${JSON.stringify(contact)}`
-              }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.5,
-            max_tokens: 1500
+            instructions: `You are a social media research expert. Search the web for this contact's public profiles on these platforms: ${platforms.join(", ")}. Only list profiles you actually found (with their real URL); never guess usernames or URLs. Return JSON with fields: profiles (array with platform, username, url, confidence), personalityInsights (object with communicationStyle, interests), engagementMetrics (object with bestPostingTimes, recommendedContent), monitoringRecommendations (array of strings).`,
+            input: `Research social media for: ${JSON.stringify(contact)}`,
+            json: true,
+            tools: [webSearchTool()]
           });
-          const result = safeJsonParse(response.choices[0].message.content || "{}");
+          if (!research.data) throw new Error("The AI returned a response that was not valid JSON");
+          const result = { ...research.data, sources: research.sources };
           memoryService.recordObservation(
             userId,
             "tool_use",
@@ -9004,17 +9046,17 @@ var router8 = Router8();
 var RESPONSES_API_MODELS = [
   {
     id: DEFAULT_MODEL,
-    name: "GPT-6 Luna",
-    description: "Efficient model for high-volume, everyday tasks",
-    pricing: "$0.10 / $0.50 per 1M tokens",
-    contextLength: "1M tokens"
+    name: "GPT-6.2 Sol",
+    description: "OpenAI's go-to model for everyday work",
+    pricing: "$2.00 / $10.00 per 1M tokens",
+    contextLength: "1.05M tokens"
   },
   {
     id: ADVANCED_MODEL,
-    name: "GPT-6.1 Sol",
-    description: "Near-flagship model for complex analysis and reasoning",
-    pricing: "$2.00 / $10.00 per 1M tokens",
-    contextLength: "1.05M tokens"
+    name: "GPT-6.2 Astra",
+    description: "More capable model for difficult analysis and reasoning",
+    pricing: "See OpenAI pricing",
+    contextLength: "See OpenAI model page"
   }
 ];
 function extractResponseText(response) {
@@ -14184,19 +14226,30 @@ function registerAppointmentRoutes(app2) {
   app2.post("/api/appointments/generate-insights", async (req, res) => {
     try {
       const { title, attendees, type, duration } = req.body;
-      const insights = {
-        optimalTime: "10:00 AM",
-        preparationNotes: [
-          "Review attendee profiles and previous interactions",
-          "Prepare agenda and key discussion points",
-          "Have relevant materials ready for reference"
-        ],
-        followUpActions: [
-          "Send meeting summary and action items",
-          "Schedule follow-up if needed",
-          "Update CRM with meeting outcomes"
-        ]
-      };
+      const ai = await getUserOpenAIClient();
+      if (!ai) {
+        return res.status(400).json({ error: "No OpenAI API key configured", message: NO_KEY_MESSAGE, needsApiKey: true });
+      }
+      const result = await respond(ai.client, {
+        model: ai.model,
+        instructions: "You are a sales meeting coach. Give concise, specific advice for this meeting.",
+        input: `Meeting: ${JSON.stringify({ title, attendees, type, duration })}`,
+        json: {
+          name: "appointment_insights",
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["optimalTime", "preparationNotes", "followUpActions"],
+            properties: {
+              optimalTime: { type: "string" },
+              preparationNotes: { type: "array", items: { type: "string" } },
+              followUpActions: { type: "array", items: { type: "string" } }
+            }
+          }
+        }
+      });
+      if (!result.data) throw new Error("The AI returned an unreadable response");
+      const insights = result.data;
       res.json(insights);
     } catch (error) {
       console.error("Error generating appointment insights:", error);
@@ -14880,11 +14933,7 @@ function registerAIRoutes(app2) {
         let success = false;
         for (const model of modelsToTry) {
           try {
-            await openaiData.client.chat.completions.create({
-              model,
-              messages: [{ role: "user", content: "test" }],
-              max_tokens: 1
-            });
+            await openaiData.client.models.retrieve(model);
             results.openai = {
               available: true,
               model,
@@ -15005,18 +15054,47 @@ function registerAIRoutes(app2) {
   app2.post("/api/ai/image", ...requireAITools, async (req, res) => {
     const userId = req.userId;
     try {
-      const { prompt, size, quality, images } = req.body || {};
+      const {
+        prompt,
+        size,
+        quality,
+        images,
+        model,
+        n,
+        background,
+        output_format,
+        output_compression,
+        complexity,
+        frame_count,
+        frame_duration_ms,
+        mask,
+        markup
+      } = req.body || {};
       if (!prompt) return res.status(400).json({ error: "prompt is required" });
       const openaiData = await createUserOpenAIClient(userId);
       if (!openaiData) return noKey(res);
-      const { b64, responseId } = await generateImage(openaiData.client, {
-        model: openaiData.model,
+      const result = await generateImage(openaiData.client, {
+        imageModel: model,
         prompt: String(prompt),
         size,
         quality,
+        n,
+        background,
+        output_format,
+        output_compression,
+        complexity,
+        frame_count,
+        frame_duration_ms,
+        mask,
+        markup,
         inputImages: Array.isArray(images) ? images : void 0
       });
-      res.json({ success: true, images: b64.map((b) => `data:image/png;base64,${b}`), responseId, model: IMAGE_MODEL });
+      res.json({
+        success: true,
+        images: result.b64.map((b) => `data:${result.mime};base64,${b}`),
+        model: result.model,
+        outputFormat: result.outputFormat
+      });
     } catch (error) {
       res.status(500).json({ success: false, error: error?.message || "Image generation failed" });
     }
@@ -15110,7 +15188,8 @@ function registerAIRoutes(app2) {
         const response = await openaiData.client.chat.completions.create({
           model: openaiData.model,
           messages: [{ role: "user", content: "Generate a business insight" }],
-          max_tokens: 50
+          max_tokens: 200
+          // reasoning models need room; very small limits return empty text
         });
         res.json({
           success: true,
@@ -15155,6 +15234,7 @@ function registerAIRoutes(app2) {
       const userId = req.userId;
       try {
         const { prompt, model = IMAGE_MODEL, size = "1024x1024" } = req.body;
+        const imageModel = IMAGE_MODELS.includes(model) ? model : IMAGE_MODEL;
         if (!prompt) return res.status(400).json({ error: "Prompt required" });
         const openaiData = await createUserOpenAIClient(userId);
         if (!openaiData) {
@@ -15163,8 +15243,8 @@ function registerAIRoutes(app2) {
             message: "Please add your OpenAI API key in Settings > API Keys"
           });
         }
-        const response = await openaiData.client.images.generate({ model, prompt, size, n: 1 });
-        res.json({ success: true, data: response.data, model });
+        const response = await openaiData.client.images.generate({ model: imageModel, prompt, size, n: 1 });
+        res.json({ success: true, data: response.data, model: imageModel });
       } catch (error) {
         res.status(500).json({ error: error.message });
       }
@@ -15177,14 +15257,7 @@ function registerAIRoutes(app2) {
       const userId = req.userId;
       const { userMetrics, timeOfDay } = req.body;
       const openaiData = await createUserOpenAIClient(userId);
-      if (!openaiData) {
-        return res.json({
-          greeting: `Good ${timeOfDay}! You have ${userMetrics?.totalDeals || 0} deals.`,
-          insight: userMetrics?.totalValue > 5e4 ? "Strong momentum" : "Growing steadily",
-          source: "fallback",
-          needsApiKey: true
-        });
-      }
+      if (!openaiData) return noKey(res);
       try {
         const response = await openaiData.client.chat.completions.create({
           model: openaiData.model,
@@ -15207,11 +15280,7 @@ function registerAIRoutes(app2) {
           source: openaiData.model
         });
       } catch (error) {
-        res.json({
-          greeting: `Good ${timeOfDay}!`,
-          insight: "Your pipeline is growing",
-          source: "fallback"
-        });
+        res.status(502).json({ success: false, error: error?.message || "Smart greeting failed" });
       }
     }
   );
@@ -15689,7 +15758,8 @@ function registerApiKeyRoutes(app2) {
           key: {
             id: anyKey.id,
             provider: anyKey.provider,
-            apiKey: anyKey.apiKey,
+            apiKey: maskApiKey(anyKey.apiKey),
+            // never send the plaintext key to the browser
             model: anyKey.model
           }
         });
@@ -15699,7 +15769,8 @@ function registerApiKeyRoutes(app2) {
         key: {
           id: activeKey.id,
           provider: activeKey.provider,
-          apiKey: activeKey.apiKey,
+          apiKey: maskApiKey(activeKey.apiKey),
+          // never send the plaintext key to the browser
           model: activeKey.model
         }
       });
@@ -15794,8 +15865,9 @@ async function callAIJson(systemPrompt, userPrompt, model = DEFAULT_MODEL, maxTo
       temperature: 0.3,
       max_tokens: maxTokens
     });
-    const content = response.choices[0].message.content || "{}";
-    const parsedContent = JSON.parse(content);
+    const content = response.choices[0].message.content || "";
+    const parsedContent = parseJSONText(content);
+    if (parsedContent === void 0) throw new Error("The AI returned a response that was not valid JSON");
     if (userId && memoryService.isEnabled()) {
       memoryService.recordObservation(
         userId,
@@ -18280,6 +18352,7 @@ async function registerRoutes(app2) {
   registerPhoneRoutes(app2);
   console.log("Registering video routes");
   registerVideoRoutes(app2);
+  registerVideoScriptRoute(app2);
   console.log("Registering appointment routes");
   registerAppointmentRoutes(app2);
   console.log("Registering AI routes");
@@ -18390,26 +18463,7 @@ async function checkSupabase() {
 async function checkExternalAPIs() {
   const start = Date.now();
   const results = [];
-  try {
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
-      results.push({ service: "openai", status: "warning", message: "API key not configured" });
-    } else {
-      results.push({ service: "openai", status: "healthy", message: "API key configured" });
-    }
-  } catch (error) {
-    results.push({ service: "openai", status: "unhealthy", message: error.message });
-  }
-  try {
-    const googleKey = process.env.GOOGLE_AI_API_KEY;
-    if (!googleKey) {
-      results.push({ service: "google_ai", status: "warning", message: "API key not configured" });
-    } else {
-      results.push({ service: "google_ai", status: "healthy", message: "API key configured" });
-    }
-  } catch (error) {
-    results.push({ service: "google_ai", status: "unhealthy", message: error.message });
-  }
+  results.push({ service: "openai", status: "healthy", message: "Uses each user's own API key" });
   const hasUnhealthy = results.some((r) => r.status === "unhealthy");
   const hasWarning = results.some((r) => r.status === "warning");
   return {
