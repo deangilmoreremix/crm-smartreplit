@@ -1653,7 +1653,7 @@ var requireAdmin = async (req, res, next) => {
     res.status(500).json({ error: "Internal server error during admin check" });
   }
 };
-router.post("/invite", async (req, res) => {
+router.post("/invite", requireAdmin, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email || !email.includes("@")) {
@@ -1682,7 +1682,7 @@ router.post("/invite", async (req, res) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
-router.get("/users", async (req, res) => {
+router.get("/users", requireAdmin, async (req, res) => {
   try {
     if (!serviceRoleKey) {
       return res.status(500).json({ error: "Service role key not configured" });
@@ -1710,7 +1710,7 @@ router.get("/users", async (req, res) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
-router.delete("/users/:id", async (req, res) => {
+router.delete("/users/:id", requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     if (!serviceRoleKey) {
@@ -1731,7 +1731,7 @@ router.delete("/users/:id", async (req, res) => {
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
-router.patch("/users/:id", async (req, res) => {
+router.patch("/users/:id", requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { email, phone, email_confirm, phone_confirm, user_metadata, app_metadata } = req.body;
