@@ -17,6 +17,7 @@ import {
 } from '../lib/history';
 import { imageStorage } from '../services/imageStorageService';
 import { generateImageAI } from '../services/aiGenerate';
+import { useAuth } from '../contexts/AuthContext';
 
 const MODEL = 'gpt-image-2.6-flare';
 
@@ -48,6 +49,7 @@ function uid() {
 }
 
 export default function GeminiImageModal({ open, onClose }: Props) {
+  const { user } = useAuth();
   const [feature, setFeature] = useState<FeatureKey>('Enhanced Contacts');
   const [format, setFormat] = useState<FormatKey>('Poster');
   const [benefit, setBenefit] = useState(FEATURE_BENEFITS['Enhanced Contacts']);
@@ -248,7 +250,12 @@ export default function GeminiImageModal({ open, onClose }: Props) {
 
     try {
       setSavingToCloud(true);
-      const userId = 'demo-user'; // In real app, get from auth context
+      // Save under the signed-in user's own folder (was a shared 'demo-user' folder)
+      const userId = user?.id;
+      if (!userId) {
+        alert('Please sign in to save images.');
+        return;
+      }
       const filename = `gemini-image-${Date.now()}-${index + 1}.png`;
 
       const result = await imageStorage.uploadImage(imageData, filename, userId, {
@@ -274,7 +281,12 @@ export default function GeminiImageModal({ open, onClose }: Props) {
 
     try {
       setSavingToCloud(true);
-      const userId = 'demo-user'; // In real app, get from auth context
+      // Save under the signed-in user's own folder (was a shared 'demo-user' folder)
+      const userId = user?.id;
+      if (!userId) {
+        alert('Please sign in to save images.');
+        return;
+      }
       const baseFilename = `gemini-batch-${Date.now()}`;
 
       const results = await imageStorage.uploadImages(images, baseFilename, userId, {

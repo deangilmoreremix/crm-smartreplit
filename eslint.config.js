@@ -413,7 +413,6 @@ export default [
       'server/entitlements/**',
       'server/health/**',
       'server/messaging/**',
-      'server/openai/**',
       'server/partners/**',
       // Ignore remaining problematic files
       'client/src/components/**',

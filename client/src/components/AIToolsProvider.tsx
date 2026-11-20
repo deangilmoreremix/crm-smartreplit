@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import AIToolModal from './shared/AIToolModal';
+import { useAuth } from '../contexts/AuthContext';
 import {
   Brain,
   Mail,
@@ -152,6 +153,7 @@ interface AIToolsProviderProps {
 }
 
 export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) => {
+  const { user } = useAuth();
   const [isToolOpen, setIsToolOpen] = useState(false);
   const [currentTool, setCurrentTool] = useState<AIToolType | null>(null);
 
@@ -447,7 +449,8 @@ export const AIToolsProvider: React.FC<AIToolsProviderProps> = ({ children }) =>
         return {
           title: 'My Image Gallery',
           icon: <Image size={24} />,
-          component: <ImageGallery userId="demo-user" />,
+          // Each user's own gallery folder (was a shared 'demo-user' folder visible to everyone)
+          component: user?.id ? <ImageGallery userId={user.id} /> : <p>Sign in to see your images.</p>,
         };
 
       default:

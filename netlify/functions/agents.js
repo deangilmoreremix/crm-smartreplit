@@ -1,7 +1,27 @@
+// Only signed-in users may use the gateway: it forwards requests with the server's AGENTS_API_KEY.
+async function getSignedInUser(request) {
+  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!token || !supabaseUrl || !serviceKey) return null;
+  const res = await fetch(`${supabaseUrl.replace(/\/$/, "")}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: serviceKey },
+    signal: AbortSignal.timeout(5000),
+  });
+  return res.ok ? res.json() : null;
+}
+
 export default async (request, context) => {
   try {
     if (request.method !== "POST") {
       return new Response("Method Not Allowed", { status: 405 });
+    }
+
+    if (!(await getSignedInUser(request))) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     const body = await request.json();
@@ -55,6 +75,7 @@ export default async (request, context) => {
       method,
       headers,
       body: JSON.stringify(forwardBody),
+      signal: AbortSignal.timeout(25000),
     });
 
     const text = await resp.text();

@@ -331,7 +331,7 @@ export function registerApiKeyRoutes(app: Express) {
     }
   });
 
-  // Get the active API key for a specific provider (for internal use by AI routes)
+  // Get the active API key's metadata for a provider (the key itself is masked; AI routes read it server-side)
   app.get('/api/user/api-keys/active/:provider', requireApiKeyAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
@@ -378,7 +378,7 @@ export function registerApiKeyRoutes(app: Express) {
           key: {
             id: anyKey.id,
             provider: anyKey.provider,
-            apiKey: anyKey.apiKey,
+            apiKey: maskApiKey(anyKey.apiKey), // never send the plaintext key to the browser
             model: anyKey.model,
           },
         });
@@ -389,7 +389,7 @@ export function registerApiKeyRoutes(app: Express) {
         key: {
           id: activeKey.id,
           provider: activeKey.provider,
-          apiKey: activeKey.apiKey,
+          apiKey: maskApiKey(activeKey.apiKey), // never send the plaintext key to the browser
           model: activeKey.model,
         },
       });

@@ -94,37 +94,14 @@ async function checkSupabase(): Promise<HealthCheck> {
 }
 
 /**
- * Check external API connectivity (OpenAI, Google AI)
+ * Check external API configuration (OpenAI)
  */
 async function checkExternalAPIs(): Promise<HealthCheck> {
   const start = Date.now();
   const results = [];
 
-  // Check OpenAI
-  try {
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
-      results.push({ service: 'openai', status: 'warning', message: 'API key not configured' });
-    } else {
-      // We can't make actual API calls in health checks due to rate limits
-      // Just check if the key exists and is properly formatted
-      results.push({ service: 'openai', status: 'healthy', message: 'API key configured' });
-    }
-  } catch (error: any) {
-    results.push({ service: 'openai', status: 'unhealthy', message: error.message });
-  }
-
-  // Check Google AI
-  try {
-    const googleKey = process.env.GOOGLE_AI_API_KEY;
-    if (!googleKey) {
-      results.push({ service: 'google_ai', status: 'warning', message: 'API key not configured' });
-    } else {
-      results.push({ service: 'google_ai', status: 'healthy', message: 'API key configured' });
-    }
-  } catch (error: any) {
-    results.push({ service: 'google_ai', status: 'unhealthy', message: error.message });
-  }
+  // OpenAI: AI features use each user's own key (Settings → API Keys); no server-wide key is needed.
+  results.push({ service: 'openai', status: 'healthy', message: "Uses each user's own API key" });
 
   const hasUnhealthy = results.some((r) => r.status === 'unhealthy');
   const hasWarning = results.some((r) => r.status === 'warning');

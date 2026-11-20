@@ -149,7 +149,7 @@ const AIToolContent: React.FC<AIToolContentProps> = ({
                   {saveSuccess ? 'Saved!' : 'Save'}
                 </button>
                 <button
-                  onClick={handleDownload}
+                  onClick={handleSave}
                   className="inline-flex items-center px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors ring-1 ring-gray-200"
                   title="Download as text file"
                 >
@@ -234,8 +234,14 @@ const AIToolContent: React.FC<AIToolContentProps> = ({
 
                 // Regular paragraphs with subtle highlights for important phrases
                 if (line.trim()) {
-                  // Highlight text in backticks
-                  const formattedText = line.replace(
+                  // Escape the AI text first (it can echo untrusted input, e.g. web pages), then highlight backticks
+                  const escaped = line
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                  const formattedText = escaped.replace(
                     /`(.*?)`/g,
                     '<span class="px-1 bg-indigo-50 text-indigo-700 rounded font-mono text-sm">$1</span>'
                   );
