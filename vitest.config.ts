@@ -18,7 +18,10 @@ export default defineConfig({
       '**/node_modules/**',
       '**/dist/**',
       '**/build/**',
-      'scripts/**'
+      'scripts/**',
+      // Integration test: boots the full server and needs a real Postgres and Redis, so it is not
+      // part of the unit run (it would write to whatever DATABASE_URL points at).
+      'server/tests/contact-enrichment.test.ts'
     ],
     coverage: {
       reporter: ['text', 'json', 'html'],
