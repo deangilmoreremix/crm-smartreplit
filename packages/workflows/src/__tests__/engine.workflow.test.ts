@@ -68,8 +68,9 @@ describe('WorkflowEngine', () => {
           body: 'Hello',
         }
       );
-      expect(result.success).toBe(true);
-      expect(result.output).toBeDefined();
+      // Sending is not implemented yet; the engine must say so instead of reporting success.
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not implemented');
     });
 
     it('should handle missing required fields', async () => {
@@ -108,14 +109,14 @@ describe('WorkflowEngine', () => {
       const steps = [
         {
           id: 'step-1',
-          actionType: 'CREATE_TASK',
-          configuration: { title: 'Follow up with contact' },
+          actionType: 'WAIT',
+          configuration: { duration: 1 },
           order: 1,
         },
         {
           id: 'step-2',
-          actionType: 'SEND_EMAIL',
-          configuration: { to: 'contact@example.com', subject: 'Hello', body: 'Hi there' },
+          actionType: 'BRANCH',
+          configuration: { condition: { field: 'status', operator: 'equals', value: 'active' } },
           order: 2,
         },
       ];
@@ -171,10 +172,8 @@ describe('WorkflowEngine', () => {
       const steps = [
         {
           id: 'step-1',
-          actionType: 'CODE',
-          configuration: {
-            code: 'console.log("condition passed")',
-          },
+          actionType: 'WAIT',
+          configuration: { duration: 1 },
           order: 1,
           condition: { field: 'status', operator: 'equals', value: 'active' },
         },

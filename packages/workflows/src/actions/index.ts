@@ -1,5 +1,13 @@
 import { ActionExecutor, ActionResult, WorkflowContext } from '../engine/WorkflowEngine';
 
+// These actions validate their input but do not perform the operation yet. They used to log and
+// report success, which made a workflow look like it had sent an email or created a record when
+// nothing happened. They now fail with an explicit message until a real backend is connected.
+const notImplemented = (action: string): ActionResult => ({
+  success: false,
+  error: `${action} is not implemented: the workflow engine has no backend for it yet, so nothing was done`,
+});
+
 export const sendEmailAction: ActionExecutor = async (context, config) => {
   const { to, subject, body, from } = config as {
     to: string;
@@ -12,11 +20,7 @@ export const sendEmailAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required email fields: to, subject, body' };
   }
 
-  console.log(`[Workflow ${context.workflowId}] Sending email to ${to}`);
-  return {
-    success: true,
-    output: { messageId: `email_${Date.now()}`, to, subject },
-  };
+  return notImplemented('SEND_EMAIL');
 };
 
 export const updateFieldAction: ActionExecutor = async (context, config) => {
@@ -31,13 +35,7 @@ export const updateFieldAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required fields: objectType, recordId, field' };
   }
 
-  console.log(
-    `[Workflow ${context.workflowId}] Updating ${objectType}:${recordId} ${field} = ${value}`
-  );
-  return {
-    success: true,
-    output: { objectType, recordId, field, newValue: value },
-  };
+  return notImplemented('UPDATE_FIELD');
 };
 
 export const createRecordAction: ActionExecutor = async (context, config) => {
@@ -47,12 +45,7 @@ export const createRecordAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required fields: objectType, data' };
   }
 
-  const recordId = `record_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating ${objectType} record: ${recordId}`);
-  return {
-    success: true,
-    output: { recordId, objectType, data },
-  };
+  return notImplemented('CREATE_RECORD');
 };
 
 export const createTaskAction: ActionExecutor = async (context, config) => {
@@ -67,12 +60,7 @@ export const createTaskAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required field: title' };
   }
 
-  const taskId = `task_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating task: ${title}`);
-  return {
-    success: true,
-    output: { taskId, title, assigneeId, dueDate },
-  };
+  return notImplemented('CREATE_TASK');
 };
 
 export const createNoteAction: ActionExecutor = async (context, config) => {
@@ -86,14 +74,7 @@ export const createNoteAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required fields: content, recordId' };
   }
 
-  const noteId = `note_${Date.now()}`;
-  console.log(
-    `[Workflow ${context.workflowId}] Creating note on ${recordType || 'record'}:${recordId}`
-  );
-  return {
-    success: true,
-    output: { noteId, recordId, recordType },
-  };
+  return notImplemented('CREATE_NOTE');
 };
 
 export const webhookAction: ActionExecutor = async (context, config) => {
@@ -108,11 +89,7 @@ export const webhookAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required field: url' };
   }
 
-  console.log(`[Workflow ${context.workflowId}] Calling webhook ${url}`);
-  return {
-    success: true,
-    output: { url, statusCode: 200, message: 'Webhook called successfully' },
-  };
+  return notImplemented('WEBHOOK');
 };
 
 export const codeAction: ActionExecutor = async (context, config) => {
@@ -122,13 +99,7 @@ export const codeAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required field: code' };
   }
 
-  console.log(`[Workflow ${context.workflowId}] Executing ${language || 'javascript'} code`);
-  try {
-    const result = { executed: true, timestamp: Date.now() };
-    return { success: true, output: result };
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
-  }
+  return notImplemented('CODE');
 };
 
 export const waitAction: ActionExecutor = async (context, config) => {
@@ -144,8 +115,9 @@ export const waitAction: ActionExecutor = async (context, config) => {
       : unit === 'hours'
         ? duration * 60 * 60 * 1000
         : duration;
-  console.log(`[Workflow ${context.workflowId}] Waiting ${duration} ${unit || 'ms'}`);
-  await new Promise((resolve) => setTimeout(resolve, Math.min(ms, 1000)));
+  // A run cannot be paused for longer than this; reporting a longer wait as done would be false.
+  if (ms > 1000) return notImplemented('WAIT longer than 1 second');
+  await new Promise((resolve) => setTimeout(resolve, ms));
 
   return {
     success: true,
@@ -204,11 +176,7 @@ export const sendSmsAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required fields: to, message' };
   }
 
-  console.log(`[Workflow ${context.workflowId}] Sending SMS to ${to}`);
-  return {
-    success: true,
-    output: { messageId: `sms_${Date.now()}`, to },
-  };
+  return notImplemented('SEND_SMS');
 };
 
 export const createDealAction: ActionExecutor = async (context, config) => {
@@ -223,12 +191,7 @@ export const createDealAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required field: title' };
   }
 
-  const dealId = `deal_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating deal: ${title}`);
-  return {
-    success: true,
-    output: { dealId, title, amount, stage },
-  };
+  return notImplemented('CREATE_DEAL');
 };
 
 export const createContactAction: ActionExecutor = async (context, config) => {
@@ -243,12 +206,7 @@ export const createContactAction: ActionExecutor = async (context, config) => {
     return { success: false, error: 'Missing required field: email' };
   }
 
-  const contactId = `contact_${Date.now()}`;
-  console.log(`[Workflow ${context.workflowId}] Creating contact: ${email}`);
-  return {
-    success: true,
-    output: { contactId, email, firstName, lastName },
-  };
+  return notImplemented('CREATE_CONTACT');
 };
 
 export const registerAllActions = (engine: {
